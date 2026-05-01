@@ -1,5 +1,14 @@
 # WSN-UAV Project Progress Log
 
+## ⚠️ Important: Setup Requirements
+
+**Before running any simulations, read [IMPORTANT_SETUP_NOTES.md](IMPORTANT_SETUP_NOTES.md)**
+
+Key points:
+- Python 3.13.x is required (Python 3.14.x has incompatibility)
+- Only modify files within `src/wsn-uav/` directory
+- Do NOT edit NS-3 framework files outside wsn-uav
+
 ## Quick Start
 
 To run simulations:

@@ -1,20 +1,20 @@
 metric,value
 detected,false
 detection_time_seconds,-1
-detection_node_id,95
-uav_path_length_meters,1475.48
+detection_node_id,74
+uav_path_length_meters,664.694
 cooperation_gain,0
-total_nodes,400
-candidate_nodes,120
+total_nodes,100
+candidate_nodes,30
 total_fragments_delivered,0
 fragments_from_uav,0
 
 [CONFIG]
-grid_size,20
-num_fragments,40
+grid_size,10
+num_fragments,10
 num_uavs,1
 uav_altitude_m,20
 uav_speed_mps,20
 broadcast_interval_s,0.2
-seed,2
+seed,1
 run_id,2

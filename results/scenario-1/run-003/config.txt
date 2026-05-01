@@ -10,8 +10,8 @@ Broadcast interval: 0.2 seconds
 Cooperation threshold: 0.3
 Alert threshold: 0.75
 Suspicious fraction: 0.3
-Simulation time: 200 seconds
-Seed: 3
+Simulation time: 500 seconds
+Seed: 1
 Run ID: 3
 Output dir: src/wsn-uav/results/scenario-1/run-003
 Use perfect channel: no

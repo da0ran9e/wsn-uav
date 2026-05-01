@@ -1,5 +1,15 @@
 # WSN-UAV Quick Reference
 
+## ⚠️ Prerequisites
+
+**Python 3.13.x required** (not 3.14+)
+```bash
+python3 --version  # Should show 3.13.x
+# If 3.14: brew unlink python@3.14 && brew link python@3.13
+```
+
+See [IMPORTANT_SETUP_NOTES.md](IMPORTANT_SETUP_NOTES.md) for details.
+
 ## One-Line Setup
 ```bash
 cd /Users/mophan/Github/ns-3-dev-git-ns-3.46 && \

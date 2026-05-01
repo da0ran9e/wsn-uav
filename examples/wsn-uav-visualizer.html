@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WSN-UAV Scenario 1 Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .canvas-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 600px;
+            border: 2px solid #e0e0e0;
+        }
+
+        canvas {
+            border: 1px solid #ddd;
+            background: white;
+            cursor: crosshair;
+            border-radius: 4px;
+        }
+
+        .info-panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .info-section h3 {
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-value {
+            color: #764ba2;
+            font-weight: 500;
+        }
+
+        .control-panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .control-section {
+            margin-bottom: 20px;
+        }
+
+        .control-section h3 {
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(102, 126, 234, 0.4);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(102, 126, 234, 0.4);
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            margin-right: 8px;
+            border: 1px solid #999;
+        }
+
+        .legend-item.ground .legend-color {
+            background: #4ECDC4;
+        }
+
+        .legend-item.candidate .legend-color {
+            background: #FFD93D;
+        }
+
+        .legend-item.detection .legend-color {
+            background: #FF6B6B;
+        }
+
+        .legend-item.uav .legend-color {
+            background: #667eea;
+        }
+
+        .time-display {
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .detection-status {
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .detection-status.detected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .detection-status.not-detected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .file-input-group {
+            margin-bottom: 15px;
+        }
+
+        .file-input-group input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            display: block;
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .info-panel {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WSN-UAV Scenario 1: Single UAV Fragment Dissemination</h1>
+            <p>Grid-based Ground Network with Greedy Maximum Coverage (GMC) Trajectory Planning</p>
+        </div>
+
+        <div class="main-content">
+            <div class="canvas-container">
+                <canvas id="visualizer" width="600" height="600"></canvas>
+            </div>
+
+            <div class="info-panel">
+                <div class="info-section">
+                    <h3>Simulation Results</h3>
+                    <div class="detection-status" id="detectionStatus"></div>
+                    <div class="info-item">
+                        <span class="info-label">Grid Size:</span>
+                        <span class="info-value" id="gridSize">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total Nodes:</span>
+                        <span class="info-value" id="totalNodes">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Candidate Nodes:</span>
+                        <span class="info-value" id="candidateNodes">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Detection Time:</span>
+                        <span class="info-value" id="detectionTime">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">UAV Path Length:</span>
+                        <span class="info-value" id="uavPathLength">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Cooperation Gain:</span>
+                        <span class="info-value" id="cooperationGain">-</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>Simulation Config</h3>
+                    <div class="info-item">
+                        <span class="info-label">Grid Spacing:</span>
+                        <span class="info-value" id="gridSpacing">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Num Fragments:</span>
+                        <span class="info-value" id="numFragments">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Simulation Time:</span>
+                        <span class="info-value" id="simTime">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">UAV Speed:</span>
+                        <span class="info-value" id="uavSpeed">-</span>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item ground">
+                        <div class="legend-color"></div>
+                        <span>Ground Node</span>
+                    </div>
+                    <div class="legend-item candidate">
+                        <div class="legend-color"></div>
+                        <span>Candidate Node</span>
+                    </div>
+                    <div class="legend-item detection">
+                        <div class="legend-color"></div>
+                        <span>Detection Node</span>
+                    </div>
+                    <div class="legend-item uav">
+                        <div class="legend-color"></div>
+                        <span>UAV Trajectory</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="file-input-group">
+                <input type="file" id="fileInput" accept=".js">
+                <label for="fileInput" class="file-input-label">Load visualization-data.js</label>
+            </div>
+
+            <div class="control-section">
+                <h3>Timeline Control</h3>
+                <div class="time-display">
+                    Time: <span id="currentTime">0.0</span>s / <span id="maxTime">300.0</span>s
+                </div>
+                <div class="control-group">
+                    <input type="range" id="timeSlider" min="0" max="300" value="0" step="0.1">
+                </div>
+                <div class="button-group">
+                    <button id="playBtn">▶ Play</button>
+                    <button id="pauseBtn">⏸ Pause</button>
+                    <button id="resetBtn">⏮ Reset</button>
+                    <button id="clearBtn">✕ Clear</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Display Options</h3>
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="showTrajectory" checked> Show UAV Trajectory
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="showWaypoints" checked> Show Waypoints
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="showCandidates" checked> Highlight Candidates
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="showGrid" checked> Show Grid Background
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class WsnUavVisualizer {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.data = null;
+                this.currentTime = 0;
+                this.isPlaying = false;
+                this.animationFrameId = null;
+                this.lastFrameTime = 0;
+
+                this.options = {
+                    showTrajectory: true,
+                    showWaypoints: true,
+                    showCandidates: true,
+                    showGrid: true
+                };
+
+                this.initEventListeners();
+            }
+
+            initEventListeners() {
+                document.getElementById('timeSlider').addEventListener('input', (e) => {
+                    this.currentTime = parseFloat(e.target.value);
+                    this.render();
+                    this.updateTimeDisplay();
+                });
+
+                document.getElementById('playBtn').addEventListener('click', () => this.play());
+                document.getElementById('pauseBtn').addEventListener('click', () => this.pause());
+                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+                document.getElementById('clearBtn').addEventListener('click', () => this.clear());
+
+                document.getElementById('showTrajectory').addEventListener('change', (e) => {
+                    this.options.showTrajectory = e.target.checked;
+                    this.render();
+                });
+                document.getElementById('showWaypoints').addEventListener('change', (e) => {
+                    this.options.showWaypoints = e.target.checked;
+                    this.render();
+                });
+                document.getElementById('showCandidates').addEventListener('change', (e) => {
+                    this.options.showCandidates = e.target.checked;
+                    this.render();
+                });
+                document.getElementById('showGrid').addEventListener('change', (e) => {
+                    this.options.showGrid = e.target.checked;
+                    this.render();
+                });
+
+                document.getElementById('fileInput').addEventListener('change', (e) => {
+                    this.loadFile(e.target.files[0]);
+                });
+
+                // Try to auto-load visualization-data.js from same directory
+                this.autoLoadData();
+            }
+
+            autoLoadData() {
+                // Skip if data is already embedded (standalone mode)
+                if (typeof window.WSN_UAV_DATA_EMBEDDED !== 'undefined') {
+                    console.log('ℹ Standalone mode detected (data embedded)');
+                    return;
+                }
+
+                // Attempt to load visualization-data.js automatically using fetch
+                fetch('visualization-data.js')
+                    .then(response => {
+                        if (!response.ok) throw new Error('File not found');
+                        return response.text();
+                    })
+                    .then(content => {
+                        // Extract JSON from JavaScript file
+                        const match = content.match(/const\s+WSN_UAV_DATA\s*=\s*(\{[\s\S]*\});/);
+                        if (match) {
+                            this.data = JSON.parse(match[1]);
+                            this.onDataLoaded();
+                            // Hide file input since data is already loaded
+                            document.getElementById('fileInput').style.display = 'none';
+                            document.querySelector('.file-input-label').style.display = 'none';
+                            console.log('✓ Auto-loaded visualization-data.js');
+                        }
+                    })
+                    .catch(error => {
+                        console.log('visualization-data.js not found in same directory, using file picker');
+                    });
+            }
+
+            loadFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        // Extract JSON from JavaScript file
+                        const content = e.target.result;
+                        const match = content.match(/const\s+WSN_UAV_DATA\s*=\s*(\{[\s\S]*\});/);
+                        if (match) {
+                            this.data = JSON.parse(match[1]);
+                            this.onDataLoaded();
+                        } else {
+                            alert('Invalid visualization data format');
+                        }
+                    } catch (error) {
+                        alert('Error loading file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            onDataLoaded() {
+                const config = this.data.config;
+
+                // Update slider
+                const maxTime = config.simTime || 300;
+                document.getElementById('timeSlider').max = maxTime;
+                document.getElementById('maxTime').textContent = maxTime.toFixed(1);
+
+                // Update info panel
+                document.getElementById('gridSize').textContent = `${config.gridSize}×${config.gridSize}`;
+                document.getElementById('totalNodes').textContent = config.numNodes;
+                document.getElementById('candidateNodes').textContent =
+                    Math.ceil(config.numNodes * 0.3); // Approximate
+                document.getElementById('gridSpacing').textContent = config.gridSpacing + ' m';
+                document.getElementById('numFragments').textContent = config.numFragments;
+                document.getElementById('simTime').textContent = maxTime.toFixed(1) + ' s';
+
+                const detectionStatus = document.getElementById('detectionStatus');
+                if (config.detected) {
+                    detectionStatus.className = 'detection-status detected';
+                    detectionStatus.textContent = `✓ Detection: YES at ${config.detectionTime.toFixed(3)}s`;
+                    document.getElementById('detectionTime').textContent =
+                        config.detectionTime.toFixed(3) + ' s';
+                } else {
+                    detectionStatus.className = 'detection-status not-detected';
+                    detectionStatus.textContent = `✗ Detection: NO (timeout)`;
+                    document.getElementById('detectionTime').textContent = 'N/A';
+                }
+
+                document.getElementById('uavPathLength').textContent =
+                    config.uavPathLength.toFixed(2) + ' m';
+                document.getElementById('cooperationGain').textContent =
+                    (config.cooperationGain * 100).toFixed(1) + '%';
+                document.getElementById('uavSpeed').textContent = '20 m/s'; // From params
+
+                this.reset();
+            }
+
+            play() {
+                if (!this.data) {
+                    alert('Load a visualization file first');
+                    return;
+                }
+                this.isPlaying = true;
+                this.lastFrameTime = Date.now();
+                this.animate();
+            }
+
+            pause() {
+                this.isPlaying = false;
+                if (this.animationFrameId) {
+                    cancelAnimationFrame(this.animationFrameId);
+                }
+            }
+
+            reset() {
+                this.currentTime = 0;
+                document.getElementById('timeSlider').value = 0;
+                this.pause();
+                this.render();
+                this.updateTimeDisplay();
+            }
+
+            clear() {
+                this.data = null;
+                this.currentTime = 0;
+                this.pause();
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                document.getElementById('fileInput').value = '';
+            }
+
+            animate() {
+                if (!this.isPlaying) return;
+
+                const now = Date.now();
+                const deltaTime = (now - this.lastFrameTime) / 1000; // seconds
+                this.lastFrameTime = now;
+
+                const maxTime = this.data.config.simTime || 300;
+                this.currentTime += deltaTime;
+
+                if (this.currentTime >= maxTime) {
+                    this.currentTime = maxTime;
+                    this.pause();
+                }
+
+                document.getElementById('timeSlider').value = this.currentTime;
+                this.render();
+                this.updateTimeDisplay();
+
+                this.animationFrameId = requestAnimationFrame(() => this.animate());
+            }
+
+            updateTimeDisplay() {
+                document.getElementById('currentTime').textContent = this.currentTime.toFixed(1);
+            }
+
+            render() {
+                if (!this.data) return;
+
+                const config = this.data.config;
+                const nodes = this.data.nodes;
+                const trajectory = this.data.uavTrajectory;
+
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Calculate scale and offset
+                const gridSize = config.gridSize;
+                const spacing = config.gridSpacing;
+                const networkSize = spacing * (gridSize - 1);
+                const padding = 30;
+
+                const scale = (this.canvas.width - 2 * padding) / networkSize;
+                const offsetX = padding;
+                const offsetY = padding;
+
+                // Helper to convert grid coords to canvas coords
+                const toCanvasX = (x) => offsetX + x * scale;
+                const toCanvasY = (y) => offsetY + y * scale;
+
+                // Draw grid background
+                if (this.options.showGrid) {
+                    this.ctx.strokeStyle = '#f0f0f0';
+                    this.ctx.lineWidth = 0.5;
+                    for (let i = 0; i < gridSize; i++) {
+                        const x = i * spacing;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(toCanvasX(0), toCanvasY(x));
+                        this.ctx.lineTo(toCanvasX(networkSize), toCanvasY(x));
+                        this.ctx.stroke();
+                    }
+                    for (let i = 0; i < gridSize; i++) {
+                        const y = i * spacing;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(toCanvasX(y), toCanvasY(0));
+                        this.ctx.lineTo(toCanvasX(y), toCanvasY(networkSize));
+                        this.ctx.stroke();
+                    }
+                }
+
+                // Draw ground nodes
+                const detectionNodeId = config.detected ? nodes.length : -1;
+                nodes.forEach(node => {
+                    const x = toCanvasX(node.x);
+                    const y = toCanvasY(node.y);
+
+                    // Determine node color
+                    let color = '#4ECDC4'; // Ground node
+                    let radius = 4;
+
+                    if (node.isDetectionNode) {
+                        color = '#FF6B6B'; // Detection node
+                        radius = 6;
+                    } else if (this.options.showCandidates && node.isCandidate) {
+                        color = '#FFD93D'; // Candidate node
+                        radius = 5;
+                    }
+
+                    this.ctx.fillStyle = color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                    this.ctx.fill();
+                });
+
+                // Draw UAV trajectory (past path)
+                if (this.options.showTrajectory && trajectory.length > 0) {
+                    this.ctx.strokeStyle = '#667eea';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.globalAlpha = 0.6;
+
+                    let firstPoint = true;
+                    for (const point of trajectory) {
+                        if (point.t > this.currentTime) break;
+
+                        const x = toCanvasX(point.x);
+                        const y = toCanvasY(point.y);
+
+                        if (firstPoint) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(x, y);
+                            firstPoint = false;
+                        } else {
+                            this.ctx.lineTo(x, y);
+                        }
+                    }
+                    this.ctx.stroke();
+                    this.ctx.globalAlpha = 1.0;
+                }
+
+                // Find and draw current UAV position
+                let currentUavPos = null;
+                for (let i = 0; i < trajectory.length; i++) {
+                    if (trajectory[i].t > this.currentTime) {
+                        if (i > 0) {
+                            const p1 = trajectory[i - 1];
+                            const p2 = trajectory[i];
+                            const t = (this.currentTime - p1.t) / (p2.t - p1.t);
+                            currentUavPos = {
+                                x: p1.x + (p2.x - p1.x) * t,
+                                y: p1.y + (p2.y - p1.y) * t
+                            };
+                        }
+                        break;
+                    }
+                }
+
+                if (!currentUavPos && trajectory.length > 0) {
+                    currentUavPos = trajectory[trajectory.length - 1];
+                }
+
+                if (currentUavPos) {
+                    const x = toCanvasX(currentUavPos.x);
+                    const y = toCanvasY(currentUavPos.y);
+
+                    // Draw UAV circle
+                    this.ctx.fillStyle = '#667eea';
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                    this.ctx.fill();
+
+                    // Draw UAV halo
+                    this.ctx.strokeStyle = 'rgba(102, 126, 234, 0.3)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 15, 0, 2 * Math.PI);
+                    this.ctx.stroke();
+                }
+
+                // Draw waypoints (future path indicators)
+                if (this.options.showWaypoints && trajectory.length > 0) {
+                    this.ctx.strokeStyle = 'rgba(102, 126, 234, 0.2)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.setLineDash([4, 4]);
+
+                    let firstFuture = true;
+                    for (const point of trajectory) {
+                        if (point.t <= this.currentTime) continue;
+
+                        const x = toCanvasX(point.x);
+                        const y = toCanvasY(point.y);
+
+                        if (firstFuture) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(toCanvasX(currentUavPos.x), toCanvasY(currentUavPos.y));
+                            firstFuture = false;
+                        }
+                        this.ctx.lineTo(x, y);
+                    }
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+            }
+        }
+
+        // Initialize visualizer
+        const visualizer = new WsnUavVisualizer('visualizer');
+    </script>
+</body>
+</html>

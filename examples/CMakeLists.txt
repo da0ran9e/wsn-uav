@@ -1,11 +1,11 @@
-add_executable(scenario-1-single-uav scenario-1-single-uav.cc)
-
-target_link_libraries(scenario-1-single-uav
-  PRIVATE
+build_lib_example(
+  NAME scenario-1-single-uav
+  SOURCE_FILES scenario-1-single-uav.cc
+  LIBRARIES_TO_LINK
     ${libwsn-uav}
-    ${libspectrum}
-    ${libmobility}
-    ${libnetwork}
     ${libcore}
+    ${libnetwork}
+    ${libmobility}
+    ${libspectrum}
     ${libwsn}
 )

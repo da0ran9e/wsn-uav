@@ -40,6 +40,3 @@ build_lib(
     ${libspectrum}
     ${libwsn}
 )
-
-# Build examples
-add_subdirectory(examples)

@@ -1,18 +1,18 @@
 Simulation Configuration
 =======================
-Grid size: 10x10
+Grid size: 70x70
 Grid spacing: 20 meters
-Total nodes: 100
+Total nodes: 4900
 Num fragments: 10
 UAV altitude: 20 meters
-UAV speed: 20 m/s
+UAV speed: 80 m/s
 Broadcast interval: 0.2 seconds
 Cooperation threshold: 0.3
 Alert threshold: 0.75
 Suspicious fraction: 0.3
 Simulation time: 500 seconds
 Seed: 1
-Run ID: 2
-Output dir: src/wsn-uav/results/scenario-1/run-002
+Run ID: 1
+Output dir: src/wsn-uav/results/scenario-3/run-001
 Use perfect channel: no
 Use GMC: yes

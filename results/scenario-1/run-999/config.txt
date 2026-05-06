@@ -12,7 +12,7 @@ Alert threshold: 0.75
 Suspicious fraction: 0.3
 Simulation time: 500 seconds
 Seed: 1
-Run ID: 1
-Output dir: src/wsn-uav/results/scenario-1/run-001
+Run ID: 999
+Output dir: src/wsn-uav/results/scenario-1/run-999
 Use perfect channel: no
 Use GMC: yes

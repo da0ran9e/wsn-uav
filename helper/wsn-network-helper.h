@@ -11,6 +11,7 @@
 #include "ns3/ptr.h"
 #include "ns3/mac16-address.h"
 #include "ns3/packet.h"
+#include "ns3/spectrum-channel.h"
 #include "topology-helper.h"
 #include "trajectory-helper.h"
 #include "result-writer.h"
@@ -135,6 +136,7 @@ private:
     NodeContainer m_uavNodes;
     NetDeviceContainer m_groundDevices;
     NetDeviceContainer m_uavDevices;
+    Ptr<SpectrumChannel> m_channel;  // Shared channel for all nodes
 
     // MAC layers
     std::map<uint32_t, Ptr<WsnUavMac>> m_groundMacs;  // nodeId -> WsnUavMac

@@ -133,8 +133,8 @@ void WsnNetworkHelper::InstallRadios() {
     // Use CC2420 from wsn module
     wsn::Cc2420Helper cc2420;
 
-    // Create channel
-    auto channel = cc2420.CreateChannel();
+    // Create shared channel (used by both ground and UAV nodes)
+    m_channel = cc2420.CreateChannel();
 
     // Configure PHY
     cc2420.SetPhyAttribute("TxPower", DoubleValue(params::TX_POWER_DBM));
@@ -142,7 +142,7 @@ void WsnNetworkHelper::InstallRadios() {
     cc2420.SetPhyAttribute("PerfectChannel", BooleanValue(m_config.usePerfectChannel));
     cc2420.SetPhyAttribute("EnableShadowing", BooleanValue(!m_config.usePerfectChannel));
 
-    cc2420.SetChannel(channel);
+    cc2420.SetChannel(m_channel);
 
     // Install on nodes
     m_groundDevices = cc2420.Install(m_groundNodes);
@@ -152,20 +152,22 @@ void WsnNetworkHelper::InstallRadios() {
 
 void WsnNetworkHelper::InstallUavRadios() {
     wsn::Cc2420Helper cc2420;
-    auto channel = cc2420.CreateChannel();
-    
+
+    // Reuse shared channel created in InstallRadios()
+    NS_ASSERT_MSG(m_channel, "Channel must be created in InstallRadios() first");
+
     cc2420.SetPhyAttribute("TxPower", DoubleValue(params::TX_POWER_DBM));
     cc2420.SetPhyAttribute("RxSensitivity", DoubleValue(params::RX_SENSITIVITY_DBM));
     cc2420.SetPhyAttribute("PerfectChannel", BooleanValue(m_config.usePerfectChannel));
     cc2420.SetPhyAttribute("EnableShadowing", BooleanValue(!m_config.usePerfectChannel));
-    
-    cc2420.SetChannel(channel);
-    
+
+    cc2420.SetChannel(m_channel);
+
     for (uint32_t i = 0; i < m_uavNodes.GetN(); i++) {
         auto dev = cc2420.Install(NodeContainer(m_uavNodes.Get(i)));
         m_uavDevices.Add(dev.Get(0));
     }
-    NS_LOG_INFO("Radios installed on " << m_uavNodes.GetN() << " UAV nodes");
+    NS_LOG_INFO("Radios installed on " << m_uavNodes.GetN() << " UAV nodes, shared channel");
 }
 
 // ============================================================================

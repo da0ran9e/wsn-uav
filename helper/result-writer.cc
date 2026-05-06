@@ -40,16 +40,38 @@ void ResultWriter::WriteMetrics(const SimulationResults& results, const Simulati
     out << "detected," << (results.detected ? "true" : "false") << "\n";
     out << "detection_time_seconds," << results.detectionTime << "\n";
     out << "detection_node_id," << results.detectionNodeId << "\n";
-    out << "uav_path_length_meters," << results.uavPathLength << "\n";
+    out << "uav_count," << config.numUavs << "\n";
+    for (const auto& kv : results.uavPathLengths) {
+        out << "uav_" << kv.first << "_path_length_meters," << kv.second << "\n";
+    }
+    out << "total_uav_path_length_meters," << results.totalUavPathLength << "\n";
+    out << "cooperation_overlap_ratio," << results.cooperationOverlapRatio << "\n";
     out << "cooperation_gain," << results.cooperationGain << "\n";
     out << "total_nodes," << results.totalNodes << "\n";
     out << "candidate_nodes," << results.candidateNodes << "\n";
     out << "total_fragments_delivered," << results.totalFragmentsDelivered << "\n";
     out << "fragments_from_uav," << results.fragmentsFromUav << "\n";
+
+    // Per-UAV fragment assignments and sizes
+    for (const auto& kv : results.uavFragmentIds) {
+        out << "uav_" << kv.first << "_fragment_count," << kv.second.size() << "\n";
+        out << "uav_" << kv.first << "_fragment_ids,";
+        for (size_t i = 0; i < kv.second.size(); i++) {
+            if (i > 0) out << ",";
+            out << kv.second[i];
+        }
+        out << "\n";
+    }
+
+    // Fragment sizes
+    for (const auto& kv : results.fragmentSizesBytes) {
+        out << "fragment_" << kv.first << "_size_bytes," << kv.second << "\n";
+    }
+
     out << "\n[CONFIG]\n";
     out << "grid_size," << config.gridSize << "\n";
     out << "num_fragments," << config.numFragments << "\n";
-    out << "num_uavs," << 1 << "\n";
+    out << "num_uavs," << config.numUavs << "\n";
     out << "uav_altitude_m," << config.uavAltitude << "\n";
     out << "uav_speed_mps," << config.uavSpeed << "\n";
     out << "broadcast_interval_s," << config.broadcastInterval << "\n";
@@ -99,12 +121,9 @@ void ResultWriter::WritePackets(Ptr<StatisticsCollector> collector, const NodeCo
 
     auto packets = collector->GetPacketRecords();
 
-    // Output only UAV packets (srcNodeId >= groundNodes.GetN())
-    // This matches the visualization filter for consistency
+    // Include both UAV and G2G packets for full analysis
     for (const auto& record : packets) {
-        if (record.srcNodeId < groundNodes.GetN()) {
-            continue;  // Skip ground node packets
-        }
+        // We include all packets now!
 
         out << record.timeSeconds << ","
             << record.srcNodeId << ","
@@ -172,7 +191,7 @@ void ResultWriter::WriteVisualizationData(const SimulationResults& results,
     data_json << "    \"simTime\": " << config.simTime << ",\n";
     data_json << "    \"detectionTime\": " << results.detectionTime << ",\n";
     data_json << "    \"detected\": " << (results.detected ? "true" : "false") << ",\n";
-    data_json << "    \"uavPathLength\": " << std::fixed << std::setprecision(2) << results.uavPathLength << ",\n";
+    data_json << "    \"uavPathLength\": " << std::fixed << std::setprecision(2) << results.totalUavPathLength << ",\n";
     data_json << "    \"cooperationGain\": " << std::setprecision(4) << results.cooperationGain << "\n";
     data_json << "  },\n";
 
@@ -197,38 +216,86 @@ void ResultWriter::WriteVisualizationData(const SimulationResults& results,
         firstNode = false;
     }
 
-    // Add UAV node (node ID = groundNodes.GetN() + 1, to match wsn-network-helper line 215)
-    Vector uavPos(0, 0, config.uavAltitude);
-    if (collector && !collector->GetUavPositions().empty()) {
-        const auto& firstPos = collector->GetUavPositions()[0];
-        uavPos = Vector(firstPos.x, firstPos.y, firstPos.z);
+    // Add UAV nodes: one entry per UAV, keyed by groundNodes.GetN() + uavId + 1
+    if (collector) {
+        // Determine number of UAVs from trajectory records
+        uint32_t maxUavId = 0;
+        for (const auto& rec : collector->GetUavPositions()) {
+            if (rec.uavId > maxUavId) maxUavId = rec.uavId;
+        }
+        for (uint32_t uid = 0; uid <= maxUavId; uid++) {
+            // Find first position of this UAV
+            Vector uavPos(0, 0, config.uavAltitude);
+            for (const auto& rec : collector->GetUavPositions()) {
+                if (rec.uavId == uid) {
+                    uavPos = Vector(rec.x, rec.y, rec.z);
+                    break;
+                }
+            }
+            uint32_t uavNodeId = groundNodes.GetN() + uid + 1;
+            if (!firstNode) data_json << ",\n";
+            data_json << "    \"" << uavNodeId << "\": {\"id\": " << uavNodeId
+                      << ", \"x\": " << std::fixed << std::setprecision(1) << uavPos.x
+                      << ", \"y\": " << uavPos.y << ", \"z\": " << uavPos.z
+                      << ", \"isCandidate\": false, \"isDetectionNode\": false, \"isUav\": true, \"uavId\": " << uid << "}";
+            firstNode = false;
+        }
+    } else {
+        // Fallback: single UAV
+        uint32_t uavNodeId = groundNodes.GetN() + 1;
+        if (!firstNode) data_json << ",\n";
+        data_json << "    \"" << uavNodeId << "\": {\"id\": " << uavNodeId
+                  << ", \"x\": 0, \"y\": 0, \"z\": " << config.uavAltitude
+                  << ", \"isCandidate\": false, \"isDetectionNode\": false, \"isUav\": true, \"uavId\": 0}\n";
     }
-    uint32_t uavNodeId = groundNodes.GetN() + 1;
-    if (!firstNode) {
-        data_json << ",\n";
-    }
-    data_json << "    \"" << uavNodeId << "\": {\"id\": " << uavNodeId
-              << ", \"x\": " << std::fixed << std::setprecision(1) << uavPos.x
-              << ", \"y\": " << uavPos.y << ", \"z\": " << uavPos.z
-              << ", \"isCandidate\": false, \"isDetectionNode\": false}\n";
 
     data_json << "  },\n";
 
+    // uavTrajectories: object keyed by uavId, each value is array of {t,x,y,z}
+    data_json << "  \"uavTrajectories\": {\n";
+    if (collector) {
+        const auto& positions = collector->GetUavPositions();
+        // Group by uavId
+        std::map<uint32_t, std::vector<const UavPositionRecord*>> perUav;
+        for (const auto& rec : positions) {
+            perUav[rec.uavId].push_back(&rec);
+        }
+        bool firstUav = true;
+        for (const auto& kv : perUav) {
+            if (!firstUav) data_json << ",\n";
+            firstUav = false;
+            data_json << "    \"" << kv.first << "\": [\n";
+            const auto& recs = kv.second;
+            for (size_t i = 0; i < recs.size(); i++) {
+                const auto& r = *recs[i];
+                data_json << "      {\"t\": " << std::fixed << std::setprecision(2) << r.timeSeconds
+                          << ", \"x\": " << std::setprecision(1) << r.x
+                          << ", \"y\": " << r.y
+                          << ", \"z\": " << r.z << "}";
+                if (i < recs.size() - 1) data_json << ",\n"; else data_json << "\n";
+            }
+            data_json << "    ]";
+        }
+        data_json << "\n";
+    }
+    data_json << "  },\n";
+
+    // Legacy single uavTrajectory (UAV 0 only, for backward compat)
     data_json << "  \"uavTrajectory\": [\n";
     if (collector) {
         const auto& positions = collector->GetUavPositions();
+        bool first = true;
         for (size_t i = 0; i < positions.size(); i++) {
             const auto& record = positions[i];
+            if (record.uavId != 0) continue;  // Only UAV 0
+            if (!first) data_json << ",\n";
+            first = false;
             data_json << "    {\"t\": " << std::fixed << std::setprecision(2) << record.timeSeconds
                       << ", \"x\": " << std::setprecision(1) << record.x
                       << ", \"y\": " << record.y
                       << ", \"z\": " << record.z << "}";
-            if (i < positions.size() - 1) {
-                data_json << ",\n";
-            } else {
-                data_json << "\n";
-            }
         }
+        if (!first) data_json << "\n";
     }
     data_json << "  ],\n";
 
@@ -236,13 +303,15 @@ void ResultWriter::WriteVisualizationData(const SimulationResults& results,
     if (collector) {
         const auto& packets = collector->GetPacketRecords();
         bool firstPacket = true;
-        for (size_t i = 0; i < packets.size(); i++) {
+        // Limit packets in HTML to 5000 to keep file size manageable
+        // Full packet data is always available in packets.csv
+        size_t limit = std::min(packets.size(), (size_t)5000);
+        for (size_t i = 0; i < limit; i++) {
             const auto& pkt = packets[i];
-
             // Determine packet type: UAV (src >= groundNodes.GetN()) or G2G (src < groundNodes.GetN())
             bool isUav = (pkt.srcNodeId >= groundNodes.GetN());
 
-            // Skip G2G (ground-to-ground) cooperation packets
+            // Skip G2G (ground-to-ground) cooperation packets as requested
             if (!isUav) {
                 continue;
             }
@@ -277,6 +346,24 @@ void ResultWriter::WriteVisualizationData(const SimulationResults& results,
         }
         if (!firstPacket) {
             data_json << "\n";
+        }
+    }
+    data_json << "  ],\n";
+    
+    // Add node states
+    data_json << "  \"nodeStates\": [\n";
+    if (collector) {
+        const auto& states = collector->GetNodeStateRecords();
+        for (size_t i = 0; i < states.size(); i++) {
+            const auto& s = states[i];
+            data_json << "    {\"t\": " << std::fixed << std::setprecision(2) << s.timeSeconds
+                      << ", \"id\": " << s.nodeId
+                      << ", \"frags\": " << s.fragmentCount << "}";
+            if (i < states.size() - 1) {
+                data_json << ",\n";
+            } else {
+                data_json << "\n";
+            }
         }
     }
     data_json << "  ]\n";
@@ -352,69 +439,117 @@ void ResultWriter::WriteVisualizationData(const SimulationResults& results,
     out << "</div></div>";
     out << "<button onclick='exp()' style='margin-top:6px;padding:4px 6px;font-size:9px'>📥 JSON</button>";
     out << "</div></div>";
-    out << "<script>";
-    out << "const d=" << json_data << ";";
-    out << "const c=document.getElementById('canvas');const ctx=c.getContext('2d');";
-    out << "let t=0,p=false,zm=200,ox=0,oy=0;";
-    out << "c.width=c.offsetWidth;c.height=c.offsetHeight;";
-    out << "window.addEventListener('resize',()=>{c.width=c.offsetWidth;c.height=c.offsetHeight;});";
-    out << "c.addEventListener('wheel',(e)=>{e.preventDefault();const oldZm=zm;zm*=e.deltaY<0?1.1:0.9;zm=Math.max(0.1,Math.min(500,zm));const zoomFactor=zm/oldZm;ox=e.x+(ox-e.x)*zoomFactor;oy=e.y+(oy-e.y)*zoomFactor;document.getElementById('zoomLabel').textContent=(zm/10).toFixed(0)+'x';render();});";
-    out << "let dx=0,dy=0;c.addEventListener('mousedown',(e)=>{dx=e.x;dy=e.y;});";
-    out << "c.addEventListener('mousemove',(e)=>{if(e.buttons){ox+=e.x-dx;oy+=e.y-dy;dx=e.x;dy=e.y;render();}});";
-    out << "function zoomIn(){const oldZm=zm;zm=Math.min(500,zm*1.2);const zoomFactor=zm/oldZm;ox=c.width/2+(ox-c.width/2)*zoomFactor;oy=c.height/2+(oy-c.height/2)*zoomFactor;document.getElementById('zoomLabel').textContent=(zm/10).toFixed(0)+'x';render();}";
-    out << "function zoomOut(){const oldZm=zm;zm=Math.max(0.1,zm/1.2);const zoomFactor=zm/oldZm;ox=c.width/2+(ox-c.width/2)*zoomFactor;oy=c.height/2+(oy-c.height/2)*zoomFactor;document.getElementById('zoomLabel').textContent=(zm/10).toFixed(0)+'x';render();}";
-    out << "function gp(x,y){const g=d.config.gridSize;const s=d.config.gridSpacing;const gridMax=s*(g-1);const pd=10;const baseW=c.width-2*pd;const baseH=c.height-2*pd;const sc=Math.min(baseW,baseH)/gridMax*zm;const offsetX=ox+pd+(gridMax/2)*sc/s;const offsetY=oy+pd+(gridMax/2)*sc/s;return{x:offsetX+x*sc/s,y:offsetY+y*sc/s};}";
-    out << "function render(){";
-    out << "ctx.fillStyle='#1a1a1a';ctx.fillRect(0,0,c.width,c.height);";
-    out << "const g=d.config.gridSize;const s=d.config.gridSpacing;";
-    out << "if(document.getElementById('c1').checked){ctx.strokeStyle='#444';ctx.lineWidth=0.5;";
-    out << "for(let i=0;i<g;i++){const p1=gp(0,i*s);const p2=gp((g-1)*s,i*s);ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}";
-    out << "for(let i=0;i<g;i++){const p3=gp(i*s,0);const p4=gp(i*s,(g-1)*s);ctx.beginPath();ctx.moveTo(p3.x,p3.y);ctx.lineTo(p4.x,p4.y);ctx.stroke();}}";
-    out << "if(document.getElementById('c6').checked && d.packets){ctx.fillStyle='rgba(255,0,0,0.4)';ctx.strokeStyle='#FF0000';ctx.lineWidth=1.5;";
-    out << "for(let pk of d.packets){if(pk.t>t)break;if(!pk.success){const dst=d.nodes[pk.dst];if(dst){const p=gp(dst.x,dst.y);if(p.x>-50&&p.x<c.width+50&&p.y>-50&&p.y<c.height+50){ctx.beginPath();ctx.moveTo(p.x-4,p.y-4);ctx.lineTo(p.x+4,p.y+4);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x+4,p.y-4);ctx.lineTo(p.x-4,p.y+4);ctx.stroke();}}}}}";
-    out << "if(document.getElementById('c5').checked && d.packets){let renderCount=0;const fadeWindow=2.0;";
-    out << "for(let pk of d.packets){if(pk.t>t)break;const dst=d.nodes[pk.dst];if(dst){";
-    out << "const age=t-pk.t;const fadeFactor=Math.max(0,1-age/fadeWindow);";
-    out << "const alpha=Math.max(0.1,fadeFactor*0.8);";
-    out << "if(pk.type==='uav'){";
-    out << "ctx.strokeStyle=pk.success?`rgba(100,200,100,${alpha})`:`rgba(255,100,100,${alpha})`;";
-    out << "}else if(pk.type==='g2g'){";
-    out << "ctx.strokeStyle=pk.success?`rgba(255,255,100,${alpha})`:`rgba(200,150,100,${alpha})`;";  // Yellow for successful G2G, muted yellow for failed
-    out << "}";
-    out << "ctx.lineWidth=1.5;";
-    out << "const p1=gp(pk.srcX,pk.srcY);const p2=gp(dst.x,dst.y);ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();renderCount++;}}}";
-    out << "ctx.fillStyle='#FFFF00';ctx.font='12px monospace';ctx.fillText('TX packets:'+d.packets.length+' (t='+t.toFixed(1)+')',10,20);";
-    out << "if(document.getElementById('c3').checked){ctx.strokeStyle='#667eea';ctx.lineWidth=2;ctx.globalAlpha=0.6;ctx.beginPath();let f=true;";
-    out << "for(let pt of d.uavTrajectory){if(pt.t>t)break;const p=gp(pt.x,pt.y);if(f){ctx.moveTo(p.x,p.y);f=false;}else{ctx.lineTo(p.x,p.y);}}";
-    out << "ctx.stroke();ctx.globalAlpha=1;}";
-    out << "if(document.getElementById('c2').checked){";
-    out << "const nodeFrags={};";
-    out << "for(let pk of d.packets){if(pk.t>t)break;if(pk.success){if(!nodeFrags[pk.dst])nodeFrags[pk.dst]=new Set();nodeFrags[pk.dst].add(pk.fragId);}}";
-    out << "for(let nid in d.nodes){const n=d.nodes[nid];if(!n)continue;const p=gp(n.x,n.y);if(p.x>-50&&p.x<c.width+50&&p.y>-50&&p.y<c.height+50){";
-    out << "let col='#4A5B7F';let r=6;";  // Muted dark blue for no fragments
-    out << "const fragCount=nodeFrags[nid]?nodeFrags[nid].size:0;";
-    out << "if(fragCount>0){";
-    out << "const maxFrags=d.config.numFragments;const ratio=Math.min(1,fragCount/maxFrags);";
-    out << "const hue=Math.floor(240-ratio*240);col=`hsl(${hue},60%,55%)`;r=6+ratio*2;}";  // Reduced saturation from 100% to 60%, lightness from 50% to 55%
-    out << "ctx.fillStyle=col;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();";
-    out << "if(n.isDetectionNode){ctx.strokeStyle='#C85A54';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,r+3,0,Math.PI*2);ctx.stroke();}";  // Red outline for detection node
-    out << "if(document.getElementById('c4').checked && n.isCandidate){ctx.strokeStyle='#9E8C42';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,r+2,0,Math.PI*2);ctx.stroke();}}}}";  // Muted yellow for candidates
-    out << "let up=null;for(let i=0;i<d.uavTrajectory.length;i++){if(d.uavTrajectory[i].t>t){if(i>0){const p1=d.uavTrajectory[i-1];const p2=d.uavTrajectory[i];const tt=(t-p1.t)/(p2.t-p1.t);up={x:p1.x+(p2.x-p1.x)*tt,y:p1.y+(p2.y-p1.y)*tt};}break;}}";
-    out << "if(!up && d.uavTrajectory.length>0)up=d.uavTrajectory[d.uavTrajectory.length-1];";
-    out << "if(up){const p=gp(up.x,up.y);if(p.x>-50&&p.x<c.width+50&&p.y>-50&&p.y<c.height+50){ctx.fillStyle='#667eea';ctx.beginPath();ctx.arc(p.x,p.y,8,0,Math.PI*2);ctx.fill();";
-    out << "ctx.strokeStyle='rgba(102,126,234,0.3)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,16,0,Math.PI*2);ctx.stroke();}}}";
-    out << "function upd(){document.getElementById('timeLabel').textContent=t.toFixed(1);";
-    out << "document.getElementById('maxLabel').textContent=d.config.simTime.toFixed(1);";
-    out << "document.getElementById('slider').max=d.config.simTime;";
-    out << "document.getElementById('info1').textContent=d.config.detected?'✓ Detected':'✗ Not detected';";
-    out << "if(d.config.detected)document.getElementById('info1').textContent+=' @ '+d.config.detectionTime.toFixed(1)+'s';";
-    out << "document.getElementById('info2').textContent='Path: '+d.config.uavPathLength.toFixed(0)+'m';";
-    out << "render();}";
-    out << "function anim(){if(p){t+=0.05;if(t>=d.config.simTime)p=false;document.getElementById('slider').value=t;upd();}requestAnimationFrame(anim);}";
-    out << "function play(){p=true;}function pause(){p=false;}function reset(){t=0;p=false;ox=0;oy=0;zm=200;document.getElementById('slider').value=0;document.getElementById('zoomLabel').textContent='20x';upd();}";
-    out << "function seek(v){t=parseFloat(v);upd();}";
-    out << "function exp(){const j=JSON.stringify(d,null,2);const b=new Blob([j],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='wsn-uav-result.json';a.click();URL.revokeObjectURL(u);}";
-    out << "upd();anim();";
+    out << "<script>\n";
+    out << "const d=" << json_data << ";\n";
+    out << "const c=document.getElementById('canvas');const ctx=c.getContext('2d');\n";
+    out << "let t=0,p=false,zm=200,ox=0,oy=0;\n";
+    out << "c.width=c.offsetWidth;c.height=c.offsetHeight;\n";
+    out << "window.addEventListener('resize',()=>{c.width=c.offsetWidth;c.height=c.offsetHeight;});\n";
+    out << "c.addEventListener('wheel',(e)=>{e.preventDefault();const oldZm=zm;zm*=e.deltaY<0?1.1:0.9;zm=Math.max(0.1,Math.min(500,zm));const zoomFactor=zm/oldZm;ox=e.x+(ox-e.x)*zoomFactor;oy=e.y+(oy-e.y)*zoomFactor;document.getElementById('zoomLabel').textContent=(zm/10).toFixed(0)+'x';render();});\n";
+    out << "let dx=0,dy=0;\n";
+    out << "c.addEventListener('mousedown',(e)=>{dx=e.x;dy=e.y;});\n";
+    out << "c.addEventListener('mousemove',(e)=>{if(e.buttons){ox+=e.x-dx;oy+=e.y-dy;dx=e.x;dy=e.y;render();}});\n";
+    out << "function zoomIn(){const oldZm=zm;zm=Math.min(500,zm*1.2);const zoomFactor=zm/oldZm;ox=c.width/2+(ox-c.width/2)*zoomFactor;oy=c.height/2+(oy-c.height/2)*zoomFactor;document.getElementById('zoomLabel').textContent=(zm/10).toFixed(0)+'x';render();}\n";
+    out << "function zoomOut(){const oldZm=zm;zm=Math.max(0.1,zm/1.2);const zoomFactor=zm/oldZm;ox=c.width/2+(ox-c.width/2)*zoomFactor;oy=c.height/2+(oy-c.height/2)*zoomFactor;document.getElementById('zoomLabel').textContent=(zm/10).toFixed(0)+'x';render();}\n";
+    out << "function gp(x,y){\n";
+    out << "const g=d.config.gridSize;const s=d.config.gridSpacing;\n";
+    out << "const gridMax=s*(g-1);const pd=10;\n";
+    out << "const baseW=c.width-2*pd;const baseH=c.height-2*pd;\n";
+    out << "const sc=Math.min(baseW,baseH)/gridMax*zm;\n";
+    out << "const offsetX=ox+pd+(gridMax/2)*sc/s;\n";
+    out << "const offsetY=oy+pd+(gridMax/2)*sc/s;\n";
+    out << "return{x:offsetX+x*sc/s,y:offsetY+y*sc/s};}\n";
+    out << "function render(){\n";
+    out << "ctx.fillStyle='#1a1a1a';ctx.fillRect(0,0,c.width,c.height);\n";
+    out << "const g=d.config.gridSize;const s=d.config.gridSpacing;\n";
+    out << "if(document.getElementById('c1').checked){\n";
+    out << "ctx.strokeStyle='#444';ctx.lineWidth=0.5;\n";
+    out << "for(let i=0;i<g;i++){const p1=gp(0,i*s);const p2=gp((g-1)*s,i*s);ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}\n";
+    out << "for(let i=0;i<g;i++){const p3=gp(i*s,0);const p4=gp(i*s,(g-1)*s);ctx.beginPath();ctx.moveTo(p3.x,p3.y);ctx.lineTo(p4.x,p4.y);ctx.stroke();}}\n";
+    out << "if(document.getElementById('c6').checked&&d.packets){\n";
+    out << "ctx.fillStyle='rgba(255,0,0,0.4)';ctx.strokeStyle='#FF0000';ctx.lineWidth=1.5;\n";
+    out << "for(let pk of d.packets){\n";
+    out << "if(pk.t>t)break;\n";
+    out << "if(!pk.success){const dst=d.nodes[pk.dst];if(dst){\n";
+    out << "const p=gp(dst.x,dst.y);\n";
+    out << "if(p.x>-50&&p.x<c.width+50&&p.y>-50&&p.y<c.height+50){\n";
+    out << "ctx.beginPath();ctx.moveTo(p.x-4,p.y-4);ctx.lineTo(p.x+4,p.y+4);ctx.stroke();\n";
+    out << "ctx.beginPath();ctx.moveTo(p.x+4,p.y-4);ctx.lineTo(p.x-4,p.y+4);ctx.stroke();}}}}}\n";
+    out << "if(document.getElementById('c5').checked&&d.packets){\n";
+    out << "const fadeWindow=2.0;\n";
+    out << "for(let pk of d.packets){\n";
+    out << "if(pk.t>t)break;\n";
+    out << "const dst=d.nodes[pk.dst];\n";
+    out << "if(dst){\n";
+    out << "const age=t-pk.t;const fadeFactor=Math.max(0,1-age/fadeWindow);\n";
+    out << "const alpha=Math.max(0.1,fadeFactor*0.8);\n";
+    out << "if(pk.type==='uav'){ctx.strokeStyle=pk.success?`rgba(100,200,100,${alpha})`:`rgba(255,100,100,${alpha})`;}\n";
+    out << "else if(pk.type==='g2g'){ctx.strokeStyle=pk.success?`rgba(255,255,100,${alpha})`:`rgba(200,150,100,${alpha})`;}\n";
+    out << "ctx.lineWidth=1.5;\n";
+    out << "const p1=gp(pk.srcX,pk.srcY);const p2=gp(dst.x,dst.y);\n";
+    out << "ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}}}\n";
+    out << "ctx.fillStyle='#FFFF00';ctx.font='12px monospace';\n";
+    out << "ctx.fillText('TX:'+d.packets.length+' t='+t.toFixed(1)+'s',10,20);\n";
+    out << "if(document.getElementById('c3').checked){\n";
+    out << "const uavColors=['#667eea','#ff7043','#26c6da','#66bb6a','#ffa726'];\n";
+    out << "const trajs=d.uavTrajectories||{'0':d.uavTrajectory};\n";
+    out << "for(const uid in trajs){\n";
+    out << "const traj=trajs[uid];const col=uavColors[parseInt(uid)%uavColors.length];\n";
+    out << "ctx.strokeStyle=col;ctx.lineWidth=2;ctx.globalAlpha=0.6;ctx.beginPath();let f=true;\n";
+    out << "for(let pt of traj){if(pt.t>t)break;const p=gp(pt.x,pt.y);if(f){ctx.moveTo(p.x,p.y);f=false;}else{ctx.lineTo(p.x,p.y);}}\n";
+    out << "ctx.stroke();}\n";
+    out << "ctx.globalAlpha=1;}\n";
+    out << "if(document.getElementById('c2').checked){\n";
+    out << "const nodeFrags={};\n";
+    out << "if(d.nodeStates){for(let s of d.nodeStates){if(s.t>t)break;nodeFrags[s.id]=s.frags;}}\n";
+    out << "else{for(let pk of d.packets){if(pk.t>t)break;if(pk.success){if(!nodeFrags[pk.dst])nodeFrags[pk.dst]=new Set();nodeFrags[pk.dst].add(pk.fragId);}}}\n";
+    out << "for(let nid in d.nodes){\n";
+    out << "const n=d.nodes[nid];if(!n)continue;\n";
+    out << "const p=gp(n.x,n.y);\n";
+    out << "if(p.x>-50&&p.x<c.width+50&&p.y>-50&&p.y<c.height+50){\n";
+    out << "let col='#4A5B7F';let r=6;\n";
+    out << "const fragCount=(nodeFrags[nid] instanceof Set)?nodeFrags[nid].size:(nodeFrags[nid]||0);\n";
+    out << "if(fragCount>0){\n";
+    out << "const maxFrags=d.config.numFragments;\n";
+    out << "const ratio=Math.min(1,fragCount/maxFrags);\n";
+    out << "const hue=Math.floor(240-ratio*240);\n";
+    out << "col=`hsl(${hue},60%,55%)`;r=6+ratio*2;}\n";
+    out << "ctx.fillStyle=col;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();\n";
+    out << "if(n.isDetectionNode){ctx.strokeStyle='#C85A54';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,r+3,0,Math.PI*2);ctx.stroke();}\n";
+    out << "if(document.getElementById('c4').checked&&n.isCandidate){ctx.strokeStyle='#9E8C42';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,r+2,0,Math.PI*2);ctx.stroke();}}}\n";
+    out << "}\n";
+    out << "const uavColors2=['#667eea','#ff7043','#26c6da','#66bb6a','#ffa726'];\n";
+    out << "const trajs2=d.uavTrajectories||{'0':d.uavTrajectory};\n";
+    out << "for(const uid in trajs2){\n";
+    out << "const traj=trajs2[uid];const col2=uavColors2[parseInt(uid)%uavColors2.length];\n";
+    out << "let up=null;\n";
+    out << "for(let i=0;i<traj.length;i++){\n";
+    out << "if(traj[i].t>t){\n";
+    out << "if(i>0){const p1=traj[i-1];const p2=traj[i];const tt=(t-p1.t)/(p2.t-p1.t);up={x:p1.x+(p2.x-p1.x)*tt,y:p1.y+(p2.y-p1.y)*tt};}\n";
+    out << "break;}}\n";
+    out << "if(!up&&traj.length>0)up=traj[traj.length-1];\n";
+    out << "if(up){\n";
+    out << "const p=gp(up.x,up.y);\n";
+    out << "if(p.x>-50&&p.x<c.width+50&&p.y>-50&&p.y<c.height+50){\n";
+    out << "ctx.fillStyle=col2;ctx.beginPath();ctx.arc(p.x,p.y,8,0,Math.PI*2);ctx.fill();\n";
+    out << "ctx.strokeStyle=col2+'44';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,16,0,Math.PI*2);ctx.stroke();\n";
+    out << "ctx.fillStyle='white';ctx.font='9px monospace';ctx.fillText('U'+uid,p.x-5,p.y+3);}}}\n";
+    out << "}\n";
+    out << "function upd(){\n";
+    out << "document.getElementById('timeLabel').textContent=t.toFixed(1);\n";
+    out << "document.getElementById('maxLabel').textContent=d.config.simTime.toFixed(1);\n";
+    out << "document.getElementById('slider').max=d.config.simTime;\n";
+    out << "document.getElementById('info1').textContent=d.config.detected?'Detected':'Not detected';\n";
+    out << "if(d.config.detected)document.getElementById('info1').textContent+=' @ '+d.config.detectionTime.toFixed(1)+'s';\n";
+    out << "document.getElementById('info2').textContent='Path: '+d.config.uavPathLength.toFixed(0)+'m';\n";
+    out << "render();}\n";
+    out << "function anim(){if(p){t+=0.05;if(t>=d.config.simTime)p=false;document.getElementById('slider').value=t;upd();}requestAnimationFrame(anim);}\n";
+    out << "function play(){p=true;}\n";
+    out << "function pause(){p=false;}\n";
+    out << "function reset(){t=0;p=false;ox=0;oy=0;zm=200;document.getElementById('slider').value=0;document.getElementById('zoomLabel').textContent='20x';upd();}\n";
+    out << "function seek(v){t=parseFloat(v);upd();}\n";
+    out << "function exp(){const j=JSON.stringify(d,null,2);const b=new Blob([j],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='wsn-uav-result.json';a.click();URL.revokeObjectURL(u);}\n";
+    out << "upd();anim();\n";
     out << "</script></body></html>";
 
     out.close();

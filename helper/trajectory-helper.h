@@ -28,6 +28,8 @@ struct GmcConfig {
     bool useCellAware = true;             // enable cell-aware expansion
     bool useKMeans = true;                // add k-means centroids
     uint32_t maxCentroids = 8;            // max k for k-means
+    double uavSpeed = 20.0;               // UAV speed (for dynamic k per UAV)
+    uint32_t randomSeed = 0;              // random seed for k-means initialization
 };
 
 // ============================================================================
@@ -62,7 +64,8 @@ private:
         const std::set<uint32_t>& nodes,
         const NodeContainer& allNodes,
         uint32_t k,
-        uint32_t maxIterations = 10);
+        uint32_t maxIterations = 10,
+        uint32_t randomSeed = 0);
     
     // Compute coverage set for a waypoint (nodes within broadcastRadius)
     static std::set<uint32_t> ComputeCoverageSet(

@@ -1,5 +1,6 @@
 #include "statistics-collector.h"
 #include "ns3/type-id.h"
+#include <iostream>
 
 namespace ns3 {
 namespace wsn {
@@ -24,10 +25,12 @@ void StatisticsCollector::RecordDetection(uint32_t nodeId, double timeSeconds) {
         m_detectionTime = timeSeconds;
         m_detectionNodeId = nodeId;
     }
+    // Also record all detections into a new list if needed, or simply log it.
+    std::cout << "StatisticsCollector: Node " << nodeId << " detected event at " << timeSeconds << "s\n";
 }
 
-void StatisticsCollector::RecordUavPosition(double timeSeconds, const Vector& pos) {
-    m_uavPositions.push_back({timeSeconds, pos.x, pos.y, pos.z});
+void StatisticsCollector::RecordUavPosition(double timeSeconds, const Vector& pos, uint32_t uavId) {
+    m_uavPositions.push_back({timeSeconds, uavId, pos.x, pos.y, pos.z});
 }
 
 void StatisticsCollector::RecordPacketSent(uint32_t srcId, uint32_t dstId, uint32_t fragId, const Vector& srcPos) {
@@ -119,8 +122,32 @@ void StatisticsCollector::RecordPacketDropped(uint32_t srcId, uint32_t dstId, ui
     m_packetRecords.push_back(dropRec);
 }
 
+void StatisticsCollector::RecordMacDrop(uint32_t srcId, uint32_t dstId) {
+    uint32_t fragId = 0;
+    Vector srcPos(0,0,0);
+    // Find the fragment ID and position from the most recently sent packet by srcId
+    for (auto it = m_packetRecords.rbegin(); it != m_packetRecords.rend(); ++it) {
+        if (it->srcNodeId == srcId) {
+            fragId = it->fragmentId;
+            srcPos = Vector(it->srcX, it->srcY, it->srcZ);
+            break;
+        }
+    }
+    RecordPacketDropped(srcId, dstId, fragId, srcPos);
+}
+
 void StatisticsCollector::RecordCooperation(uint32_t srcId, uint32_t dstId, uint32_t fragId) {
     m_cooperationRecords.push_back({Simulator::Now().GetSeconds(), srcId, dstId, fragId});
+}
+
+void StatisticsCollector::RecordNodeState(uint32_t nodeId, double timeSeconds, uint32_t fragmentCount) {
+    // Only record if this is the first record for this node or if fragment count has changed
+    // to keep visualization data small and avoid 'Unexpected end of input' errors
+    static std::map<uint32_t, uint32_t> lastCounts;
+    if (lastCounts.find(nodeId) == lastCounts.end() || lastCounts[nodeId] != fragmentCount) {
+        m_nodeStateRecords.push_back({timeSeconds, nodeId, fragmentCount});
+        lastCounts[nodeId] = fragmentCount;
+    }
 }
 
 double StatisticsCollector::GetUavPathLength() const {

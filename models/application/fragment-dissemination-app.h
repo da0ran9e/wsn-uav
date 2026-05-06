@@ -47,6 +47,7 @@ public:
     void SetThresholds(double cooperationThreshold, double alertThreshold);
     void SetBfsLevel(uint32_t level);  // For cooperation stagger delay
     void SetGroundNodeCount(uint32_t count);  // To identify UAV packets (srcNodeId >= count)
+    void SetAssignedUavRegion(uint32_t uavId);  // For spatial filtering (load-balanced mode)
     void SetStatisticsCollector(Ptr<StatisticsCollector> stats);
 
     // Callbacks
@@ -80,6 +81,7 @@ private:
     void ScheduleCooperation(CoopTrigger trigger);
     void DoCooperation();
     void SendManifest();
+    void SendCooperationRequest(uint32_t dstNodeId, const std::set<uint32_t>& requestedFrags);
     void ProcessIncomingManifest(uint32_t srcNodeId, const std::set<uint32_t>& theirFragments);
     void SendMissingFragmentTo(uint32_t dstNodeId, uint32_t fragmentId);
     
@@ -91,6 +93,7 @@ private:
     uint32_t m_expectedFragmentCount = 10;
     uint32_t m_bfsLevel = 0;
     uint32_t m_groundNodeCount = 0;  // For identifying UAV: srcNodeId >= m_groundNodeCount means UAV
+    uint32_t m_assignedUavRegion = UINT32_MAX;  // For spatial filtering in load-balanced mode; UINT32_MAX = disabled
     
     // Confidence tracking
     ConfidenceModel m_confidenceModel{0, 10};

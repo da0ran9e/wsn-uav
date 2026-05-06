@@ -76,7 +76,8 @@ constexpr double DATA_RATE_BPS = 250000.0;  // 250 kbps (IEEE 802.15.4)
 constexpr double GMC_ALPHA = 0.2;  // coverage/cost tradeoff factor
 constexpr bool USE_CELL_AWARE_EXPANSION = true;
 constexpr bool USE_KMEANS_CENTROIDS = true;
-constexpr uint32_t MAX_KMEANS_CENTROIDS = 8;
+constexpr uint32_t MAX_KMEANS_CENTROIDS = 128;  // Increased to support dynamic k per UAV based on speed
+                                                // Fast UAVs get higher k for complex paths
 
 }  // namespace params
 }  // namespace uav

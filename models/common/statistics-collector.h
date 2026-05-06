@@ -23,6 +23,7 @@ namespace uav {
 
 struct UavPositionRecord {
     double timeSeconds = 0.0;
+    uint32_t uavId = 0;
     double x = 0.0, y = 0.0, z = 0.0;
 };
 
@@ -44,6 +45,12 @@ struct CooperationRecord {
     uint32_t fragmentId = 0;
 };
 
+struct NodeStateRecord {
+    double timeSeconds = 0.0;
+    uint32_t nodeId = 0;
+    uint32_t fragmentCount = 0;
+};
+
 // ============================================================================
 // StatisticsCollector Class
 // ============================================================================
@@ -57,12 +64,15 @@ public:
     
     // Recording events
     void RecordDetection(uint32_t nodeId, double timeSeconds);
-    void RecordUavPosition(double timeSeconds, const Vector& pos);
+    void RecordUavPosition(double timeSeconds, const Vector& pos, uint32_t uavId = 0);
     void RecordPacketSent(uint32_t srcId, uint32_t dstId, uint32_t fragId, const Vector& srcPos);
     void RecordPacketReceived(uint32_t srcId, uint32_t dstId, uint32_t fragId,
                               bool success, double rssiDbm = 0.0);
     void RecordPacketDropped(uint32_t srcId, uint32_t dstId, uint32_t fragId, const Vector& srcPos);
+    void RecordMacDrop(uint32_t srcId, uint32_t dstId);
     void RecordCooperation(uint32_t srcId, uint32_t dstId, uint32_t fragId);
+    
+    void RecordNodeState(uint32_t nodeId, double timeSeconds, uint32_t fragmentCount);
     
     // Query results
     bool IsDetected() const { return m_detectionTime >= 0.0; }
@@ -77,6 +87,7 @@ public:
     const std::vector<UavPositionRecord>& GetUavPositions() const { return m_uavPositions; }
     const std::vector<PacketRecord>& GetPacketRecords() const { return m_packetRecords; }
     const std::vector<CooperationRecord>& GetCooperationRecords() const { return m_cooperationRecords; }
+    const std::vector<NodeStateRecord>& GetNodeStateRecords() const { return m_nodeStateRecords; }
 
     // Get fragment distribution per node
     const std::map<uint32_t, std::set<uint32_t>>& GetNodeFragments() const { return m_nodeFragments; }
@@ -94,6 +105,7 @@ private:
     std::vector<UavPositionRecord> m_uavPositions;
     std::vector<PacketRecord> m_packetRecords;
     std::vector<CooperationRecord> m_cooperationRecords;
+    std::vector<NodeStateRecord> m_nodeStateRecords;
 
     // Track which fragments each node has received (successful receptions only)
     std::map<uint32_t, std::set<uint32_t>> m_nodeFragments;  // nodeId -> set of fragmentIds

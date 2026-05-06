@@ -5,6 +5,7 @@
 #include "fragment-model.h"
 #include <cmath>
 #include <algorithm>
+#include <random>
 
 namespace ns3 {
 namespace wsn {
@@ -162,12 +163,54 @@ std::vector<bool> FragmentCollection::GetPresenceMask() const {
     for (const auto& [id, frag] : m_fragments) {
         maxId = std::max(maxId, id);
     }
-    
+
     std::vector<bool> mask(maxId + 1, false);
     for (const auto& [id, frag] : m_fragments) {
         mask[id] = true;
     }
     return mask;
+}
+
+// ============================================================================
+// FragmentCollection::GenerateWithSizes()
+// ============================================================================
+//
+// Generates K fragments with random sizes in [minSizeBytes, maxSizeBytes],
+// sorted by size (large → small). Fragment IDs are reassigned so that
+// fragment 0 = largest, fragment K-1 = smallest. This enables load-balanced
+// distribution to UAVs: UAV 0 gets largest, UAV N gets smallest.
+
+FragmentCollection FragmentCollection::GenerateWithSizes(uint32_t count, uint32_t minSizeBytes,
+                                                         uint32_t maxSizeBytes, uint32_t seed,
+                                                         double masterConfidence) {
+    // Step 1: Generate base fragments with correct evidence values
+    FragmentCollection baseFragments = Generate(count, masterConfidence);
+
+    // Step 2: Assign random sizes and collect into vector for sorting
+    std::mt19937 rng(seed);
+    std::uniform_int_distribution<uint32_t> sizeDist(minSizeBytes, maxSizeBytes);
+
+    std::vector<Fragment> sorted_frags;
+    for (const auto& [baseId, baseFrag] : baseFragments.All()) {
+        Fragment frag = baseFrag;
+        frag.sizeBytes = sizeDist(rng);
+        sorted_frags.push_back(frag);
+    }
+
+    // Step 3: Sort by size (largest first)
+    std::sort(sorted_frags.begin(), sorted_frags.end(),
+        [](const Fragment& a, const Fragment& b) {
+            return a.sizeBytes > b.sizeBytes;  // descending order
+        });
+
+    // Step 4: Reassign IDs (0 = largest, K-1 = smallest) and rebuild collection
+    FragmentCollection result;
+    for (uint32_t i = 0; i < sorted_frags.size(); i++) {
+        sorted_frags[i].id = i;
+        result.Add(sorted_frags[i]);
+    }
+
+    return result;
 }
 
 }  // namespace uav

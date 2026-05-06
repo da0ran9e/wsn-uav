@@ -18,6 +18,7 @@
 #include "../models/common/types.h"
 #include "../models/application/fragment-model.h"
 #include "../models/mac/wsn-uav-mac.h"
+#include "../models/application/fragment-dissemination-app.h"
 #include <string>
 #include <map>
 #include <set>
@@ -37,9 +38,15 @@ struct SimulationConfig {
     
     // Fragments
     uint32_t numFragments = 10;
+    uint32_t fragmentMinSizeBytes = 1000;   // 1 KB min
+    uint32_t fragmentMaxSizeBytes = 20000;  // 20 KB max
     
     // UAV
     uint32_t numUavs = 1;  // Scenario 1 uses 1 UAV
+    std::vector<double> uavStartingX = {};
+    std::vector<double> uavStartingY = {};
+    std::vector<double> uavStartingZ = {};
+    bool validatePerUavConfig = false;
     double uavAltitude = 20.0;
     double uavSpeed = 20.0;
     
@@ -61,7 +68,16 @@ struct SimulationConfig {
     // Options
     bool usePerfectChannel = false;
     bool useGmc = true;  // false = nearest-neighbor baseline
-    
+
+    // Size-based UAV speed adjustment (Phase 1)
+    bool useLoadBasedSpeed = true;
+    double minSpeedFactor = 0.4;   // 40% of base speed for heaviest UAV (increased difference)
+    double maxSpeedFactor = 1.2;   // 120% of base speed for lightest UAV (doubled speed spread)
+
+    // Directional trajectory bias (Phase 1: experimental)
+    // Tradeoff: ±30m offsets → ~20.6s detection (vs 17.7s baseline, 16% slower)
+    bool useDirectionalBias = false;  // Disabled by default; opt-in for testing
+
     bool Validate(std::string& errMsg) const;
 };
 
@@ -73,8 +89,13 @@ struct SimulationResults {
     bool detected = false;
     double detectionTime = -1.0;  // -1 = not detected
     uint32_t detectionNodeId = 0;
-    double uavPathLength = 0.0;
+    std::map<uint32_t, double> uavPathLengths;
+    double totalUavPathLength = 0.0;
+    double cooperationOverlapRatio = 0.0;
+    std::map<uint32_t, uint32_t> fragmentsPerUav;
     double cooperationGain = 0.0;  // fragsFromCoop / total
+    std::map<uint32_t, std::vector<uint32_t>> uavFragmentIds;   // per-UAV fragment IDs
+    std::map<uint32_t, uint32_t> fragmentSizesBytes;            // fragmentId → size
     uint32_t totalNodes = 0;
     uint32_t candidateNodes = 0;
     uint32_t totalFragmentsDelivered = 0;
@@ -104,12 +125,6 @@ public:
     const std::set<uint32_t>& GetCandidateNodes() const { return m_candidateNodes; }
 
 private:
-    // MAC layer callbacks
-    void OnGroundNodeMacIndication(uint32_t nodeId, Ptr<Packet> packet,
-                                   Mac16Address source, double rssiDbm);
-    void OnUavNodeMacIndication(uint32_t nodeId, Ptr<Packet> packet,
-                                Mac16Address source, double rssiDbm);
-
     // Configuration and state
     SimulationConfig m_config;
     SimulationResults m_results;
@@ -117,13 +132,13 @@ private:
     
     // Nodes and devices
     NodeContainer m_groundNodes;
-    Ptr<Node> m_uavNode;
+    NodeContainer m_uavNodes;
     NetDeviceContainer m_groundDevices;
     NetDeviceContainer m_uavDevices;
 
     // MAC layers
     std::map<uint32_t, Ptr<WsnUavMac>> m_groundMacs;  // nodeId -> WsnUavMac
-    Ptr<WsnUavMac> m_uavMac;
+    std::map<uint32_t, Ptr<WsnUavMac>> m_uavMacs;
 
     // Topology information
     CellInfo m_cellInfo;
@@ -132,7 +147,11 @@ private:
 
     // Fragments and trajectory
     FragmentCollection m_fragments;
-    std::vector<Waypoint> m_uavWaypoints;
+    std::map<uint32_t, FragmentCollection> m_uavFragments;  // per-UAV fragment subset
+    std::map<uint32_t, std::vector<Waypoint>> m_uavWaypoints;
+    std::map<uint32_t, double> m_uavSpeeds;  // per-UAV adjusted speed (Phase 1)
+    std::map<uint32_t, Ptr<FragmentDisseminationApp>> m_uavApps;
+    std::map<uint32_t, uint32_t> m_groundNodeRegion;  // ground_node_id -> assigned_uav_id (for spatial filtering)
 
     // Build steps
     void CreateNodes();
@@ -142,11 +161,21 @@ private:
     void PlanTrajectory();
     void InstallApplications();
 
+    // Multi-UAV methods
+    uint32_t GetUavCount() const { return m_uavNodes.GetN(); }
+    void CreateUavNodes(uint32_t count);
+    void InstallUavRadios();
+    void InstallUavApplications();
+    void ScheduleUavFlights();
+    void DistributeFragmentsToUavs();
+    void AdjustUavSpeedByLoad();  // Phase 1: Adjust speeds based on fragment load
+    void OnUavDetection(uint32_t uavId, uint32_t nodeId, double timeSeconds);
+
     // Packet drop callback
     void OnPacketDropped(uint32_t srcNodeId, uint32_t dstNodeId, uint32_t fragmentId);
 
     // Callbacks
-    void OnDetection(uint32_t nodeId, double timeSeconds);
+    static void OnDetection(uint32_t nodeId, double timeSeconds);
 };
 
 }  // namespace uav

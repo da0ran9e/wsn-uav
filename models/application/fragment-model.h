@@ -23,6 +23,7 @@ namespace uav {
 struct Fragment {
     uint32_t id = 0;  // fragment index [0, K)
     double evidence = 0.0;  // p_i ∈ (0, 1) - individual confidence
+    uint32_t sizeBytes = 0;  // fragment size in bytes (for transmission time modeling)
     std::vector<uint8_t> data;  // payload bytes
 };
 
@@ -33,9 +34,15 @@ struct Fragment {
 class FragmentCollection {
 public:
     // Generate K fragments with pixel-stride interleaving
-    // Algorithm: stride over 416x416x3 pixel image, distribute evidence 
+    // Algorithm: stride over 416x416x3 pixel image, distribute evidence
     //           proportional to pixel count per fragment
     static FragmentCollection Generate(uint32_t count, double masterConfidence = 0.90);
+
+    // Generate K fragments with random sizes, sorted by size (large → small)
+    // Fragments assigned to UAVs based on size: UAV 0 gets largest, UAV N gets smallest
+    static FragmentCollection GenerateWithSizes(uint32_t count, uint32_t minSizeBytes,
+                                                 uint32_t maxSizeBytes, uint32_t seed,
+                                                 double masterConfidence = 0.90);
     
     // Add/check fragments
     bool Add(const Fragment& frag);

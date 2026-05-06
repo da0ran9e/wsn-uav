@@ -62,6 +62,10 @@ void FragmentDisseminationApp::SetGroundNodeCount(uint32_t count) {
     m_groundNodeCount = count;
 }
 
+void FragmentDisseminationApp::SetAssignedUavRegion(uint32_t uavId) {
+    m_assignedUavRegion = uavId;
+}
+
 void FragmentDisseminationApp::SetStatisticsCollector(Ptr<StatisticsCollector> stats) {
     m_stats = stats;
 }
@@ -110,14 +114,27 @@ void FragmentDisseminationApp::DoBroadcast() {
     if (m_detected) {
         return;  // Mission complete
     }
-    
-    uint32_t fragId = m_nextFragmentIndex % m_expectedFragmentCount;
+
+    // Use actual fragment IDs from this node's fragment collection
+    auto ids = m_allFragments.GetIds();
+    if (ids.empty()) {
+        return;  // No fragments to broadcast
+    }
+
+    uint32_t fragId = ids[m_nextFragmentIndex % ids.size()];
     SendFragment(fragId);
-    
     m_nextFragmentIndex++;
-    
+
+    // Compute transmission time based on fragment size
+    double txTime = params::FRAGMENT_BROADCAST_INTERVAL;  // fallback
+    const Fragment* frag = m_allFragments.Get(fragId);
+    if (frag && frag->sizeBytes > 0) {
+        // txTime = (sizeBytes * 8 bits) / DATA_RATE_BPS
+        txTime = (frag->sizeBytes * 8.0) / params::DATA_RATE_BPS;
+    }
+
     m_broadcastEvent = Simulator::Schedule(
-        Seconds(params::FRAGMENT_BROADCAST_INTERVAL),
+        Seconds(txTime),
         &FragmentDisseminationApp::DoBroadcast, this);
 }
 
@@ -193,6 +210,20 @@ void FragmentDisseminationApp::OnPacketReceived(Ptr<const Packet> pkt, double rs
         uint32_t srcNodeId = fragHeader.GetSourceId();
         bool fromUav = (srcNodeId >= m_groundNodeCount);
 
+        // DISABLED: Spatial filtering removed - all nodes accept fragments from all UAVs
+        // This allows cooperative multi-UAV dissemination where:
+        // - All UAVs broadcast all fragments
+        // - UAVs with lighter fragments (smaller tx time) fly faster
+        // - UAVs with heavier fragments (larger tx time) fly slower
+        // - All work together to cover the entire network efficiently
+        //
+        // if (fromUav && m_assignedUavRegion < UINT32_MAX) {
+        //     uint32_t srcUavId = srcNodeId - m_groundNodeCount;
+        //     if (srcUavId != m_assignedUavRegion) {
+        //         return;  // Reject packet from non-assigned UAV
+        //     }
+        // }
+
         // Reconstruct fragment object
         Fragment frag;
         frag.id = fragHeader.GetFragmentId();
@@ -240,8 +271,8 @@ void FragmentDisseminationApp::ProcessFragment(const Fragment& frag, bool fromUa
     NS_LOG_INFO("Node " << m_nodeId << ": received fragment " << frag.id 
                 << " (confidence=" << m_confidenceModel.GetConfidence() << ")");
     
-    // Check detection condition
-    if (m_nodeId == m_detectionNodeId && m_confidenceModel.Above(m_alertThreshold)) {
+    // Check detection condition (allow multiple nodes to trigger detection for statistics)
+    if (!m_detected && m_confidenceModel.Above(m_alertThreshold)) {
         m_detected = true;
         NS_LOG_INFO("Node " << m_nodeId << ": DETECTION TRIGGERED at t=" 
                     << Simulator::Now().GetSeconds() << "s");
@@ -254,11 +285,12 @@ void FragmentDisseminationApp::ProcessFragment(const Fragment& frag, bool fromUa
             m_stats->RecordDetection(m_nodeId, Simulator::Now().GetSeconds());
         }
         
-        Simulator::Stop(Seconds(1.0));
-        return;
+        // Do NOT stop the simulator here. Let it run to simTime to collect cooperation statistics.
     }
-    
-    // Schedule cooperation if first fragment and not complete
+
+    // Phase 1: Enable cooperation for ground nodes
+    // When confidence reaches threshold, nodes start sharing fragments with neighbors
+    // This allows nodes from different clusters to combine fragments and achieve detection
     if (!m_coopScheduled && m_role == Role::GROUND_NODE) {
         m_coopScheduled = true;
         ScheduleCooperation(CoopTrigger::CONFIDENCE_REACHED);
@@ -269,20 +301,20 @@ void FragmentDisseminationApp::ScheduleCooperation(CoopTrigger trigger) {
     if (m_confidenceModel.IsComplete()) {
         return;  // Already have all fragments
     }
-    
-    // Cooperation delay: K * broadcastInterval + 0.5s + bfsLevel * stagger + jitter
-    Time baseDelay = Seconds(m_expectedFragmentCount * params::FRAGMENT_BROADCAST_INTERVAL + 0.5);
-    Time bfsDelay = Seconds(m_bfsLevel * params::COOPERATION_STAGGER_STEP);
-    
+
+    // Improved cooperation: much shorter delay, periodic execution
+    // Earlier delay: 2-3x broadcastInterval instead of K*broadcastInterval
+    Time baseDelay = Seconds(params::FRAGMENT_BROADCAST_INTERVAL * (2 + m_bfsLevel * 0.3));
+
     Ptr<UniformRandomVariable> rng = CreateObject<UniformRandomVariable>();
-    Time jitterDelay = Seconds(rng->GetValue(0, params::COOPERATION_JITTER_MAX));
-    
-    Time totalDelay = baseDelay + bfsDelay + jitterDelay;
-    
+    Time jitterDelay = Seconds(rng->GetValue(0, 0.05));  // Reduced jitter
+
+    Time totalDelay = baseDelay + jitterDelay;
+
     if (m_cooperationEvent.IsPending()) {
         Simulator::Cancel(m_cooperationEvent);
     }
-    
+
     m_cooperationEvent = Simulator::Schedule(totalDelay,
                                              &FragmentDisseminationApp::DoCooperation, this);
 }
@@ -291,13 +323,16 @@ void FragmentDisseminationApp::DoCooperation() {
     if (m_confidenceModel.IsComplete() || m_detected) {
         return;
     }
-    
+
     NS_LOG_DEBUG("Node " << m_nodeId << ": initiating cooperation");
     SendManifest();
-    
-    // Reschedule if still incomplete
+
+    // Reschedule more frequently (every 2-3 seconds instead of once)
     if (!m_confidenceModel.IsComplete()) {
-        ScheduleCooperation(CoopTrigger::CONTACT_ENDED);
+        Ptr<UniformRandomVariable> rng = CreateObject<UniformRandomVariable>();
+        Time nextDelay = Seconds(2.0 + rng->GetValue(0, 1.0));
+        m_cooperationEvent = Simulator::Schedule(nextDelay,
+                                                  &FragmentDisseminationApp::DoCooperation, this);
     }
 }
 
@@ -335,18 +370,48 @@ void FragmentDisseminationApp::SendManifest() {
                  << fragmentIds.size() << " fragments");
 }
 
+void FragmentDisseminationApp::SendCooperationRequest(uint32_t dstNodeId,
+                                                       const std::set<uint32_t>& requestedFrags) {
+    // Send request for specific fragments to a neighbor
+    if (!m_device) {
+        NS_LOG_WARN("Node " << m_nodeId << ": device is null, cannot send request");
+        return;
+    }
+
+    std::vector<uint32_t> fragIds(requestedFrags.begin(), requestedFrags.end());
+
+    Ptr<Packet> p = Create<Packet>();
+
+    CooperationPacket coop;
+    coop.SetRequesterId(m_nodeId);
+    coop.SetCellId(-1);
+    coop.SetAvailableFragments(fragIds);  // Reuse field for requested fragments
+
+    PacketHeader baseHeader;
+    baseHeader.SetType(PACKET_TYPE_COOPERATION);
+
+    p->AddHeader(coop);
+    p->AddHeader(baseHeader);
+
+    Mac16Address dstAddr((uint16_t)dstNodeId);
+    m_device->Send(p, dstAddr, 0);
+    NS_LOG_DEBUG("Node " << m_nodeId << ": sent cooperation request to node " << dstNodeId
+                 << " for " << requestedFrags.size() << " fragments");
+}
+
 void FragmentDisseminationApp::ProcessIncomingManifest(uint32_t srcNodeId,
                                                        const std::set<uint32_t>& theirFragments) {
-    // They have fragments theirFragments - send them what they're missing
-    auto ourMissing = m_confidenceModel.GetMissingIds();
-    
+    // They have fragments theirFragments - send them what we have that they're missing
+    const auto& ourFragments = m_confidenceModel.GetFragments().All();
+
     std::set<uint32_t> toSend;
-    for (uint32_t fragId : ourMissing) {
+    for (const auto& pair : ourFragments) {
+        uint32_t fragId = pair.first;
         if (!theirFragments.count(fragId)) {
             toSend.insert(fragId);
         }
     }
-    
+
     for (uint32_t fragId : toSend) {
         SendMissingFragmentTo(srcNodeId, fragId);
     }

@@ -25,9 +25,55 @@ std::vector<Waypoint> TrajectoryHelper::PlanGmc(
     std::vector<Waypoint> waypoints;
     if (candidateNodes.empty()) return waypoints;
 
-    // Simplified K-means approach: compute centroids and visit in nearest-neighbor order
-    uint32_t k = std::min(cfg.maxCentroids, (uint32_t)std::max(1u, (uint32_t)(candidateNodes.size() / 8)));
-    auto centroids = ComputeKMeansCentroids(candidateNodes, allNodes, k);
+    // Calculate grid extent from node positions
+    double minX = std::numeric_limits<double>::max(), maxX = -std::numeric_limits<double>::max();
+    double minY = std::numeric_limits<double>::max(), maxY = -std::numeric_limits<double>::max();
+    for (uint32_t nodeId : candidateNodes) {
+        Vector pos = allNodes.Get(nodeId)->GetObject<MobilityModel>()->GetPosition();
+        minX = std::min(minX, pos.x);
+        maxX = std::max(maxX, pos.x);
+        minY = std::min(minY, pos.y);
+        maxY = std::max(maxY, pos.y);
+    }
+
+    double gridWidth = maxX - minX;
+    double gridHeight = maxY - minY;
+    double gridDiameter = std::max(gridWidth, gridHeight);
+
+    // Calculate k dynamically: ensure no gap between waypoints
+    // k must be sufficient so that 2 * broadcastRadius >= gridDiameter / k
+    // Therefore: k >= gridDiameter / (2 * broadcastRadius)
+    uint32_t minCentroids = (uint32_t)std::ceil(gridDiameter / (2.0 * cfg.broadcastRadius));
+
+    // Also consider nodes density: at least 1 centroid per 8 nodes
+    uint32_t nodeBasedCentroids = (uint32_t)std::max(1u, (uint32_t)(candidateNodes.size() / 8));
+
+    // Take the maximum to ensure full coverage
+    uint32_t k = std::max(minCentroids, nodeBasedCentroids);
+    k = std::min(k, cfg.maxCentroids);  // Cap at maxCentroids for performance
+
+    // Phase 1: Dynamic k per UAV based on speed
+    // Faster UAVs handle more complex paths (higher k)
+    // Assign different k for each UAV based on relative speed percentile
+    if (cfg.uavSpeed > 0) {
+        // Thresholds are flexible; use percentiles relative to expected speed range
+        // For base speed 80 m/s: slow≈48, medium≈52, fast≈62
+        double speedFactor = 0.8;  // slow UAV default
+        if (cfg.uavSpeed >= 60.0) {
+            speedFactor = 1.2;  // fast UAV
+        } else if (cfg.uavSpeed >= 50.0) {
+            speedFactor = 1.0;  // medium UAV
+        }
+        uint32_t speedAdjustedK = (uint32_t)std::ceil(k * speedFactor);
+        k = std::min(speedAdjustedK, cfg.maxCentroids);
+    }
+
+    // Debug: Print k calculation
+    std::cerr << "[GMC] gridDiameter=" << gridDiameter << "m, speed=" << cfg.uavSpeed << " m/s, "
+              << "minCentroids=" << minCentroids << ", nodeBasedCentroids=" << nodeBasedCentroids
+              << ", speedAdjustedK=" << k << ", maxCentroids=" << cfg.maxCentroids << std::endl;
+
+    auto centroids = ComputeKMeansCentroids(candidateNodes, allNodes, k, 10, cfg.randomSeed);
 
     // Nearest-neighbor visiting of centroids
     std::set<size_t> visited;
@@ -55,11 +101,11 @@ std::vector<Waypoint> TrajectoryHelper::PlanGmc(
         Waypoint wp;
         wp.x = centroids[nearest].x;
         wp.y = centroids[nearest].y;
-        wp.z = centroids[nearest].z;
+        wp.z = startPos.z;  // Keep UAV at specified altitude instead of dropping to Z=0
         wp.arrivalTimeSec = cumulativeTime;
 
         waypoints.push_back(wp);
-        currentPos = centroids[nearest];
+        currentPos = Vector(centroids[nearest].x, centroids[nearest].y, startPos.z);
     }
 
     // Return to starting position
@@ -119,13 +165,13 @@ std::vector<Waypoint> TrajectoryHelper::PlanNearestNeighbor(
         Waypoint wp;
         wp.x = pos.x;
         wp.y = pos.y;
-        wp.z = pos.z;
+        wp.z = startPos.z; // Keep UAV at specified altitude
         wp.arrivalTimeSec = waypoints.empty() ? arrivalTime : 
                              (waypoints.back().arrivalTimeSec + arrivalTime);
         
         waypoints.push_back(wp);
         visited.insert(nearest);
-        currentPos = pos;
+        currentPos = Vector(pos.x, pos.y, startPos.z);
     }
 
     // Return to starting position
@@ -172,7 +218,8 @@ std::vector<Vector> TrajectoryHelper::ComputeKMeansCentroids(
     const std::set<uint32_t>& nodes,
     const NodeContainer& allNodes,
     uint32_t k,
-    uint32_t maxIterations) {
+    uint32_t maxIterations,
+    uint32_t randomSeed) {
 
     if (nodes.size() < k) {
         std::vector<Vector> result;
@@ -192,10 +239,25 @@ std::vector<Vector> TrajectoryHelper::ComputeKMeansCentroids(
         nodeIds.push_back(nodeId);
     }
 
-    // Initialize centroids: spread across positions
+    // Initialize centroids: random selection if seed > 0, else spread across positions
     std::vector<Vector> centroids;
-    for (uint32_t i = 0; i < k && i < positions.size(); i++) {
-        centroids.push_back(positions[i * positions.size() / k]);
+    if (randomSeed > 0) {
+        // Random initialization: pick k random positions as initial centroids
+        srand(randomSeed);
+        std::vector<bool> used(positions.size(), false);
+        for (uint32_t i = 0; i < k && i < positions.size(); i++) {
+            uint32_t randomIdx;
+            do {
+                randomIdx = rand() % positions.size();
+            } while (used[randomIdx] && i < positions.size());
+            used[randomIdx] = true;
+            centroids.push_back(positions[randomIdx]);
+        }
+    } else {
+        // Spread initialization: space centroids evenly
+        for (uint32_t i = 0; i < k && i < positions.size(); i++) {
+            centroids.push_back(positions[i * positions.size() / k]);
+        }
     }
 
     // K-means iteration

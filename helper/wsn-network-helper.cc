@@ -67,13 +67,12 @@ WsnNetworkHelper::~WsnNetworkHelper() {}
 // ============================================================================
 
 void WsnNetworkHelper::Build() {
-    NS_LOG_INFO("Building network: " << m_config.gridSize << "x" << m_config.gridSize 
+    NS_LOG_INFO("Building network: " << m_config.gridSize << "x" << m_config.gridSize
                 << " nodes, " << m_config.numFragments << " fragments");
-    
+
     CreateNodes();
     CreateUavNodes(m_config.numUavs);
-    InstallRadios();
-    InstallUavRadios();
+    InstallRadios();  // Unified: installs both ground and UAV nodes on shared channel
     BuildTopology();
     SelectCandidatesAndFragments();
     DistributeFragmentsToUavs();  // Enable load-balanced fragment distribution
@@ -81,7 +80,7 @@ void WsnNetworkHelper::Build() {
     ScheduleUavFlights();
     InstallApplications();
     InstallUavApplications();
-    
+
     m_results.totalNodes = m_groundNodes.GetN();
     m_results.candidateNodes = m_candidateNodes.size();
 }
@@ -128,46 +127,40 @@ void WsnNetworkHelper::CreateUavNodes(uint32_t count) {
 // ============================================================================
 // WsnNetworkHelper::InstallRadios()
 // ============================================================================
+// Unified radio installation for all nodes (ground + UAV) on shared channel
+// This ensures all devices use the same SpectrumChannel object for communication
+// ============================================================================
 
 void WsnNetworkHelper::InstallRadios() {
-    // Use CC2420 from wsn module
+    // Create SINGLE helper instance and SINGLE channel for ALL nodes
     wsn::Cc2420Helper cc2420;
 
-    // Create shared channel (used by both ground and UAV nodes)
+    // Create shared channel ONCE (used by both ground and UAV nodes)
     m_channel = cc2420.CreateChannel();
+    m_context.spectrumChannel = m_channel;
 
-    // Configure PHY
+    // Configure PHY attributes (applied uniformly to all nodes)
     cc2420.SetPhyAttribute("TxPower", DoubleValue(params::TX_POWER_DBM));
     cc2420.SetPhyAttribute("RxSensitivity", DoubleValue(params::RX_SENSITIVITY_DBM));
     cc2420.SetPhyAttribute("PerfectChannel", BooleanValue(m_config.usePerfectChannel));
     cc2420.SetPhyAttribute("EnableShadowing", BooleanValue(!m_config.usePerfectChannel));
 
+    // Set channel for this helper
     cc2420.SetChannel(m_channel);
 
-    // Install on nodes
+    // Install on GROUND nodes using same helper and channel
     m_groundDevices = cc2420.Install(m_groundNodes);
+    m_context.groundDevices = m_groundDevices;
 
     NS_LOG_INFO("Radios installed on " << m_groundNodes.GetN() << " ground nodes");
-}
 
-void WsnNetworkHelper::InstallUavRadios() {
-    wsn::Cc2420Helper cc2420;
+    // Install on UAV nodes using SAME helper and SAME channel
+    // This is the critical fix: all devices share m_channel object
+    m_uavDevices = cc2420.Install(m_uavNodes);
+    m_context.uavDevices = m_uavDevices;
 
-    // Reuse shared channel created in InstallRadios()
-    NS_ASSERT_MSG(m_channel, "Channel must be created in InstallRadios() first");
-
-    cc2420.SetPhyAttribute("TxPower", DoubleValue(params::TX_POWER_DBM));
-    cc2420.SetPhyAttribute("RxSensitivity", DoubleValue(params::RX_SENSITIVITY_DBM));
-    cc2420.SetPhyAttribute("PerfectChannel", BooleanValue(m_config.usePerfectChannel));
-    cc2420.SetPhyAttribute("EnableShadowing", BooleanValue(!m_config.usePerfectChannel));
-
-    cc2420.SetChannel(m_channel);
-
-    for (uint32_t i = 0; i < m_uavNodes.GetN(); i++) {
-        auto dev = cc2420.Install(NodeContainer(m_uavNodes.Get(i)));
-        m_uavDevices.Add(dev.Get(0));
-    }
-    NS_LOG_INFO("Radios installed on " << m_uavNodes.GetN() << " UAV nodes, shared channel");
+    NS_LOG_INFO("Radios installed on " << m_uavNodes.GetN() << " UAV nodes");
+    NS_LOG_INFO("All nodes (ground + UAV) on shared channel: " << m_channel);
 }
 
 // ============================================================================

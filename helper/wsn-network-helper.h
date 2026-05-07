@@ -29,6 +29,24 @@ namespace wsn {
 namespace uav {
 
 // ============================================================================
+// Build Context: Centralized Simulation State
+// ============================================================================
+
+struct BuildContext {
+    // Topology
+    ns3::NodeContainer groundNodes;
+    ns3::NodeContainer uavNodes;
+
+    // Radio infrastructure (SHARED)
+    // All nodes (ground + UAV) attached to same channel object for communication
+    ns3::Ptr<ns3::SpectrumChannel> spectrumChannel;
+
+    // Devices
+    ns3::NetDeviceContainer groundDevices;
+    ns3::NetDeviceContainer uavDevices;
+};
+
+// ============================================================================
 // Simulation Configuration
 // ============================================================================
 
@@ -130,8 +148,9 @@ private:
     SimulationConfig m_config;
     SimulationResults m_results;
     Ptr<StatisticsCollector> m_stats;
-    
-    // Nodes and devices
+    BuildContext m_context;  // Centralized simulation state
+
+    // Nodes and devices (references to context)
     NodeContainer m_groundNodes;
     NodeContainer m_uavNodes;
     NetDeviceContainer m_groundDevices;
@@ -157,7 +176,7 @@ private:
 
     // Build steps
     void CreateNodes();
-    void InstallRadios();
+    void InstallRadios();  // Unified: installs all nodes (ground + UAV) on shared channel
     void BuildTopology();
     void SelectCandidatesAndFragments();
     void PlanTrajectory();
@@ -166,7 +185,6 @@ private:
     // Multi-UAV methods
     uint32_t GetUavCount() const { return m_uavNodes.GetN(); }
     void CreateUavNodes(uint32_t count);
-    void InstallUavRadios();
     void InstallUavApplications();
     void ScheduleUavFlights();
     void DistributeFragmentsToUavs();

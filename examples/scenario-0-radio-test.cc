@@ -1,90 +1,90 @@
 /*
- * Scenario 0: Radio Transmission Test
+ * Scenario 0: Radio Transmission Test - With Actual Packet Flow
  *
  * 3 nodes test: 1 UAV + 2 ground nodes
- * Goal: Verify actual packet transmission via CC2420 radio
+ * Goal: Verify actual packet transmission and reception via CC2420 radio
  *
  * Key Questions:
  * 1. Does UAV transmit packets successfully?
  * 2. Do ground nodes receive UAV packets?
- * 3. Can we observe packets on the channel?
+ * 3. Are packets actually propagating through the shared/broken channel?
  *
  * Usage:
- *   ./ns3 run scenario-0-radio-test -- --testMode=shared --verbose=true
- *   ./ns3 run scenario-0-radio-test -- --testMode=broken --verbose=true
+ *   ./ns3 run scenario-0-radio-test -- --testMode=shared
+ *   ./ns3 run scenario-0-radio-test -- --testMode=broken
  */
 
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
 #include "ns3/spectrum-module.h"
+#include "ns3/cc2420-helper.h"
+#include "ns3/cc2420-net-device.h"
+#include "ns3/cc2420-mac.h"
 
 #include <iostream>
 #include <iomanip>
+#include <map>
 
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE("Scenario0Radio");
 
-// Global counters for packet events
-struct RadioStats {
-    uint32_t txCount = 0;           // TX events from any node
-    uint32_t rxCount = 0;           // RX events at any node
-    uint32_t uavTxCount = 0;        // TX from UAV specifically
-    uint32_t groundRxCount = 0;     // RX at ground nodes specifically
-    uint32_t uavToGroundRx = 0;     // RX at ground from UAV source
+// Global packet tracking
+struct PacketStats {
+    uint32_t txCount = 0;
+    uint32_t rxCount = 0;
+    std::map<uint32_t, uint32_t> rxPerNode;  // node -> rx count
 };
 
-RadioStats g_stats;
+PacketStats g_stats;
 
 // ============================================================================
-// Callback: PHY TX Begin
+// Callbacks
 // ============================================================================
+
 void OnPhyTxBegin(std::string context, Ptr<const Packet> pkt) {
     g_stats.txCount++;
-
-    // Extract node ID from context (format: "/NodeList/X/DeviceList/...")
     size_t pos = context.find("/NodeList/");
     size_t nodeIdStart = pos + 10;
     size_t nodeIdEnd = context.find("/", nodeIdStart);
     uint32_t nodeId = std::stoi(context.substr(nodeIdStart, nodeIdEnd - nodeIdStart));
 
-    if (nodeId >= 100) {  // Assuming UAV IDs start at 100
-        g_stats.uavTxCount++;
-    }
-
-    if (ns3::Simulator::Now().GetSeconds() > 5.0) {  // After startup
-        std::cout << "[" << std::fixed << std::setprecision(6)
-                  << ns3::Simulator::Now().GetSeconds() << "s] "
-                  << "Node " << nodeId << " TX: " << pkt->GetSize() << " bytes\n";
-    }
+    std::cout << "[" << std::fixed << std::setprecision(3)
+              << Simulator::Now().GetSeconds() << "s] TX: Node " << nodeId
+              << " sending " << pkt->GetSize() << " bytes\n";
 }
 
-// ============================================================================
-// Callback: PHY RX Begin
-// ============================================================================
 void OnPhyRxBegin(std::string context, Ptr<const Packet> pkt) {
     g_stats.rxCount++;
-
-    // Extract node ID from context
     size_t pos = context.find("/NodeList/");
     size_t nodeIdStart = pos + 10;
     size_t nodeIdEnd = context.find("/", nodeIdStart);
     uint32_t nodeId = std::stoi(context.substr(nodeIdStart, nodeIdEnd - nodeIdStart));
 
-    if (nodeId < 100) {  // Ground node receiving
-        g_stats.groundRxCount++;
-        // TODO: Extract source node ID from packet to count UAV→Ground specifically
-        // For now, assume if ground receives something, it could be from UAV
-    }
+    g_stats.rxPerNode[nodeId]++;
 
-    if (ns3::Simulator::Now().GetSeconds() > 5.0) {  // After startup
-        std::cout << "[" << std::fixed << std::setprecision(6)
-                  << ns3::Simulator::Now().GetSeconds() << "s] "
-                  << "Node " << nodeId << " RX: " << pkt->GetSize() << " bytes\n";
-    }
+    std::cout << "[" << std::fixed << std::setprecision(3)
+              << Simulator::Now().GetSeconds() << "s] RX: Node " << nodeId
+              << " received " << pkt->GetSize() << " bytes\n";
 }
 
+void SendPacketFromUav(Ptr<NetDevice> uavDev) {
+    if (!uavDev) return;
+
+    g_stats.txCount++;
+
+    Ptr<Packet> pkt = Create<Packet>(32);  // 32 bytes test packet
+    // Use broadcast address appropriate for CC2420 (Mac16Address)
+    bool sendOk = uavDev->Send(pkt, Mac16Address("ff:ff"), 0);
+
+    std::cout << "[" << std::fixed << std::setprecision(3)
+              << Simulator::Now().GetSeconds() << "s] TX: UAV sent broadcast packet (status="
+              << (sendOk ? "OK" : "FAIL") << ")\n";
+
+    // Schedule next packet
+    Simulator::Schedule(Seconds(1.0), &SendPacketFromUav, uavDev);
+}
 
 // ============================================================================
 // Main
@@ -92,153 +92,153 @@ void OnPhyRxBegin(std::string context, Ptr<const Packet> pkt) {
 
 int main(int argc, char* argv[]) {
     std::string testMode = "shared";
-    bool verbose = false;
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("testMode", "Test mode: 'shared' or 'broken'", testMode);
-    cmd.AddValue("verbose", "Enable verbose logging", verbose);
     cmd.Parse(argc, argv);
 
-    if (verbose) {
-        LogComponentEnable("Scenario0Radio", LOG_LEVEL_INFO);
-    }
-
     std::cout << "\n========================================\n";
-    std::cout << "Scenario 0: Radio Transmission Test\n";
+    std::cout << "Scenario 0: Radio Packet Flow Test\n";
     std::cout << "Test Mode: " << testMode << "\n";
     std::cout << "========================================\n\n";
 
-    // =========================================================================
-    // Create Nodes: 2 Ground + 1 UAV
-    // =========================================================================
-
+    // Create nodes: 2 ground + 1 UAV
     NodeContainer groundNodes;
     groundNodes.Create(2);
-
     NodeContainer uavNodes;
     uavNodes.Create(1);
 
-    std::cout << "Nodes created:\n";
-    std::cout << "  Ground Node 0 (ID=" << groundNodes.Get(0)->GetId() << ")\n";
-    std::cout << "  Ground Node 1 (ID=" << groundNodes.Get(1)->GetId() << ")\n";
-    std::cout << "  UAV Node 0    (ID=" << uavNodes.Get(0)->GetId() << ")\n\n";
+    std::cout << "Nodes:\n";
+    std::cout << "  Ground 0: ID=" << groundNodes.Get(0)->GetId() << "\n";
+    std::cout << "  Ground 1: ID=" << groundNodes.Get(1)->GetId() << "\n";
+    std::cout << "  UAV 0:    ID=" << uavNodes.Get(0)->GetId() << "\n\n";
 
-    // =========================================================================
-    // Install Mobility: Fixed positions
-    // =========================================================================
-
+    // Install mobility
     MobilityHelper mobility;
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(groundNodes);
     mobility.Install(uavNodes);
 
-    Ptr<MobilityModel> mob0 = groundNodes.Get(0)->GetObject<MobilityModel>();
-    Ptr<MobilityModel> mob1 = groundNodes.Get(1)->GetObject<MobilityModel>();
-    Ptr<MobilityModel> mob2 = uavNodes.Get(0)->GetObject<MobilityModel>();
+    groundNodes.Get(0)->GetObject<MobilityModel>()->SetPosition(Vector(0, 0, 0));
+    groundNodes.Get(1)->GetObject<MobilityModel>()->SetPosition(Vector(100, 0, 0));
+    uavNodes.Get(0)->GetObject<MobilityModel>()->SetPosition(Vector(50, 0, 20));
 
-    // All within 100m range
-    mob0->SetPosition(Vector(0, 0, 0));       // Ground 0
-    mob1->SetPosition(Vector(100, 0, 0));     // Ground 1
-    mob2->SetPosition(Vector(50, 0, 20));     // UAV (altitude 20m)
+    std::cout << "Positions set (all within 100m RF range)\n\n";
 
-    std::cout << "Positions:\n";
-    std::cout << "  Ground 0: (0, 0, 0)\n";
-    std::cout << "  Ground 1: (100, 0, 0)\n";
-    std::cout << "  UAV:      (50, 0, 20)\n\n";
-
-    // =========================================================================
-    // Demonstrate Channel Architecture (No actual devices in this demo)
-    // =========================================================================
-    // Note: In real wsn-uav, would use wsn::Cc2420Helper to create actual
-    // devices. This test demonstrates the channel isolation concept only.
-
-    std::cout << "Radio Setup (" << testMode << " mode):\n";
-
+    // Install radios
     NetDeviceContainer groundDevices, uavDevices;
-    Ptr<SpectrumChannel> sharedChannel = nullptr;
-
-    // Note: Since this is a minimal test, we use basic spectrum setup
-    // Real implementation uses wsn::Cc2420Helper, but for clarity here we
-    // demonstrate the channel isolation issue
 
     if (testMode == "shared") {
-        std::cout << "  Creating SINGLE shared channel\n";
-        std::cout << "  Installing both ground and UAV on this channel\n";
+        std::cout << "Radio Setup: SHARED CHANNEL (correct)\n";
+        std::cout << "  - Single Cc2420Helper instance\n";
+        std::cout << "  - Both ground and UAV on same channel\n\n";
 
-        // Would be: single Cc2420Helper, install both types on same object
-        // For this test, just verify the concept
-        sharedChannel = CreateObject<SingleModelSpectrumChannel>();
+        ns3::wsn::Cc2420Helper cc2420;
+        auto channel = cc2420.CreateChannel();
+        cc2420.SetChannel(channel);
+        cc2420.SetPhyAttribute("TxPower", DoubleValue(-10));
+        cc2420.SetPhyAttribute("RxSensitivity", DoubleValue(-95));
 
-        std::cout << "  Channel object ptr: " << sharedChannel << "\n";
-        std::cout << "  Status: Both ground and UAV → SAME channel ✓\n";
+        groundDevices = cc2420.Install(groundNodes);
+        uavDevices = cc2420.Install(uavNodes);
+
+        std::cout << "Channel ptr: " << channel << "\n";
+        std::cout << "Ground devices: " << groundDevices.GetN() << "\n";
+        std::cout << "UAV devices: " << uavDevices.GetN() << "\n";
+        std::cout << "Status: ✓ SAME channel for all\n\n";
 
     } else if (testMode == "broken") {
-        std::cout << "  Creating TWO separate channels\n";
-        std::cout << "  Ground nodes on channel A\n";
-        std::cout << "  UAV nodes on channel B (DIFFERENT!)\n";
+        std::cout << "Radio Setup: BROKEN (separate channels for demo)\n";
+        std::cout << "  - Ground: separate Cc2420Helper + channel\n";
+        std::cout << "  - UAV: different Cc2420Helper + channel\n\n";
 
-        // Would be: separate Cc2420Helper instances, each calling CreateChannel()
-        Ptr<SpectrumChannel> channelA = CreateObject<SingleModelSpectrumChannel>();
-        Ptr<SpectrumChannel> channelB = CreateObject<SingleModelSpectrumChannel>();
+        ns3::wsn::Cc2420Helper cc2420_ground;
+        auto channelA = cc2420_ground.CreateChannel();
+        cc2420_ground.SetChannel(channelA);
+        cc2420_ground.SetPhyAttribute("TxPower", DoubleValue(-10));
+        cc2420_ground.SetPhyAttribute("RxSensitivity", DoubleValue(-95));
+        groundDevices = cc2420_ground.Install(groundNodes);
 
-        std::cout << "  Ground channel ptr: " << channelA << "\n";
-        std::cout << "  UAV channel ptr:    " << channelB << "\n";
-        std::cout << "  Status: Different channels → NO cross communication ✗\n";
+        ns3::wsn::Cc2420Helper cc2420_uav;
+        auto channelB = cc2420_uav.CreateChannel();
+        cc2420_uav.SetChannel(channelB);
+        cc2420_uav.SetPhyAttribute("TxPower", DoubleValue(-10));
+        cc2420_uav.SetPhyAttribute("RxSensitivity", DoubleValue(-95));
+        uavDevices = cc2420_uav.Install(uavNodes);
+
+        std::cout << "Ground channel ptr: " << channelA << "\n";
+        std::cout << "UAV channel ptr:    " << channelB << "\n";
+        std::cout << "Status: ✗ DIFFERENT channels (isolation bug)\n\n";
     }
 
-    std::cout << "\n";
+    // Setup MAC-layer packet sniffer for ground nodes
+    std::cout << "Connecting MAC-layer packet sniffer...\n";
 
-    // =========================================================================
-    // Applications (Not Demonstrated)
-    // =========================================================================
+    for (uint32_t i = 0; i < groundDevices.GetN(); i++) {
+        auto groundDev = DynamicCast<ns3::wsn::Cc2420NetDevice>(groundDevices.Get(i));
+        if (groundDev) {
+            auto groundMac = groundDev->GetMac();
+            if (groundMac) {
+                // Bind MAC callback to record received packets
+                groundMac->SetMcpsDataIndicationCallback(
+                    [i](Ptr<Packet> pkt, Mac16Address src, double rssi) {
+                        g_stats.rxCount++;
+                        g_stats.rxPerNode[i]++;
+                        std::cout << "[" << std::fixed << std::setprecision(3)
+                                  << Simulator::Now().GetSeconds() << "s] RX: Ground node " << i
+                                  << " received " << pkt->GetSize() << " bytes from "
+                                  << src << " (RSSI=" << rssi << " dBm)\n";
+                    });
+                std::cout << "  Ground node " << i << ": MAC callback wired\n";
+            }
+        }
+    }
 
-    std::cout << "Note: In real deployment:\n";
-    std::cout << "  UAV would broadcast 64-byte packets every 1 second\n";
-    std::cout << "  Ground nodes would listen for incoming packets\n\n";
+    // Schedule UAV to send packets
+    std::cout << "Scheduling UAV broadcasts starting at t=5s...\n\n";
+    Simulator::Schedule(Seconds(5.0), &SendPacketFromUav, uavDevices.Get(0));
 
-    // =========================================================================
-    // Note: Trace Setup Skipped
-    // =========================================================================
-    // In a real test with actual devices, would connect to:
-    //   /NodeList/*/DeviceList/*/Phy/PhyTxBegin
-    //   /NodeList/*/DeviceList/*/Phy/PhyRxBegin
-    // For this architecture demonstration, we just show channel concept.
-
-    std::cout << "Trace Callbacks: (skipped - no actual devices in this demo)\n\n";
-
-    // =========================================================================
-    // Analysis: Channel Architecture Verified
-    // =========================================================================
-
+    // Run simulation
     std::cout << "========================================\n";
-    std::cout << "CHANNEL ARCHITECTURE VERIFICATION\n";
-    std::cout << "========================================\n\n";
+    std::cout << "PACKET FLOW TRACE (5s - 10s)\n";
+    std::cout << "========================================\n";
+    Simulator::Stop(Seconds(10.0));
+    Simulator::Run();
+    Simulator::Destroy();
 
-    if (testMode == "shared") {
-        std::cout << "Test Mode: SHARED CHANNEL\n";
-        std::cout << "Configuration: ✓ Correct\n";
-        std::cout << "  - Single Cc2420Helper instance\n";
-        std::cout << "  - Both ground and UAV on same channel object\n";
-        std::cout << "  - Expected: Full bidirectional communication\n\n";
-        std::cout << "Result: ✓ PASS\n";
-        std::cout << "  Channel pointers match → packets will propagate\n";
-    } else {
-        std::cout << "Test Mode: SEPARATE CHANNELS\n";
-        std::cout << "Configuration: This is the CURRENT BUG in wsn-uav\n";
-        std::cout << "  - Two separate Cc2420Helper instances\n";
-        std::cout << "  - Ground on channel A, UAV on channel B\n";
-        std::cout << "  - Expected: NO cross-channel communication\n\n";
-        std::cout << "Result: ✓ VERIFIED\n";
-        std::cout << "  Channel pointers differ → packets will NOT propagate\n";
-        std::cout << "  This explains why metrics show 0 UAV fragments!\n";
-    }
-
+    // Results
     std::cout << "\n========================================\n";
-    std::cout << "DOCUMENTATION\n";
+    std::cout << "RESULTS\n";
     std::cout << "========================================\n";
-    std::cout << "For detailed explanation of CC2420 implementation:\n";
-    std::cout << "  - wsn/docs/progress/CC2420_CHANNEL_ANALYSIS.md\n";
-    std::cout << "  - wsn-uav/docs/progress/CC2420_IMPLEMENTATION_EXPLAINED.md\n\n";
+    std::cout << "Total TX packets: " << g_stats.txCount << "\n";
+    std::cout << "Total RX packets: " << g_stats.rxCount << "\n";
+
+    if (!g_stats.rxPerNode.empty()) {
+        std::cout << "RX per node:\n";
+        for (auto& p : g_stats.rxPerNode) {
+            std::cout << "  Node " << p.first << ": " << p.second << " packets\n";
+        }
+    }
+
+    std::cout << "\nAnalysis:\n";
+    if (testMode == "shared") {
+        if (g_stats.rxCount > 0) {
+            std::cout << "✓ PASS: Ground nodes received UAV packets\n";
+            std::cout << "  Shared channel is working correctly!\n";
+        } else {
+            std::cout << "✗ FAIL: No packets received despite shared channel\n";
+            std::cout << "  Issue may be in application layer or packet format\n";
+        }
+    } else {
+        if (g_stats.rxCount == 0) {
+            std::cout << "✓ VERIFIED: No cross-channel communication (as expected)\n";
+            std::cout << "  Broken channel isolation confirmed\n";
+        } else {
+            std::cout << "✗ UNEXPECTED: Received packets on separate channels\n";
+        }
+    }
+
+    std::cout << "\n========================================\n\n";
 
     return 0;
 }

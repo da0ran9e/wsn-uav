@@ -17,6 +17,7 @@ build_lib(
     helper/trajectory-helper.cc
     helper/result-writer.cc
     helper/wsn-network-helper.cc
+    helper/packet-tracing-helper.cc
 
   HEADER_FILES
     models/common/parameters.h
@@ -32,6 +33,7 @@ build_lib(
     helper/result-writer.h
     helper/wsn-network-helper.h
     helper/wsn-uav-helper.h
+    helper/packet-tracing-helper.h
 
   LIBRARIES_TO_LINK
     ${libcore}

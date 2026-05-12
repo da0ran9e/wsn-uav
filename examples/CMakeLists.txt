@@ -1,15 +1,4 @@
-build_lib_example(
-  NAME scenario-0-channel-test
-  SOURCE_FILES scenario-0-channel-test.cc
-  LIBRARIES_TO_LINK
-    ${libwsn-uav}
-    ${libcore}
-    ${libnetwork}
-    ${libmobility}
-    ${libspectrum}
-    ${libwsn}
-)
-
+# Build scenario-0 example (CC2420)
 build_lib_example(
   NAME scenario-0-radio-test
   SOURCE_FILES scenario-0-radio-test.cc
@@ -22,38 +11,55 @@ build_lib_example(
     ${libwsn}
 )
 
+# Build scenario-0.1 example (Native LR-WPAN)
 build_lib_example(
-  NAME scenario-1-single-uav
-  SOURCE_FILES scenario-1-single-uav.cc
+  NAME scenario-0-1-lr-wpan-test
+  SOURCE_FILES scenario-0-1-lr-wpan-test.cc
   LIBRARIES_TO_LINK
     ${libwsn-uav}
     ${libcore}
     ${libnetwork}
     ${libmobility}
     ${libspectrum}
-    ${libwsn}
+    ${liblr-wpan}
 )
 
+# Build scenario-0.2 example (Custom Network Layer over LR-WPAN)
 build_lib_example(
-  NAME scenario-2-multi-uav-2
-  SOURCE_FILES scenario-2-multi-uav-2.cc
+  NAME scenario-0-2-custom-network-test
+  SOURCE_FILES scenario-0-2-custom-network-test.cc
   LIBRARIES_TO_LINK
     ${libwsn-uav}
     ${libcore}
     ${libnetwork}
     ${libmobility}
     ${libspectrum}
-    ${libwsn}
+    ${liblr-wpan}
 )
 
+# Build scenario-0.3 example (Energy-Aware LR-WPAN)
 build_lib_example(
-  NAME scenario-3-load-balanced-fragments
-  SOURCE_FILES scenario-3-load-balanced-fragments.cc
+  NAME scenario-0-3-energy-test
+  SOURCE_FILES scenario-0-3-energy-test.cc
   LIBRARIES_TO_LINK
     ${libwsn-uav}
     ${libcore}
     ${libnetwork}
     ${libmobility}
     ${libspectrum}
-    ${libwsn}
+    ${liblr-wpan}
+    ${libenergy}
+)
+
+# Build scenario-1 example (UAV-Assisted WSN)
+build_lib_example(
+  NAME scenario-1-test
+  SOURCE_FILES scenario-1-test.cc
+  LIBRARIES_TO_LINK
+    ${libwsn-uav}
+    ${libcore}
+    ${libnetwork}
+    ${libmobility}
+    ${libspectrum}
+    ${liblr-wpan}
 )

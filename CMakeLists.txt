@@ -1,39 +1,37 @@
-# Build configuration for wsn-uav module
+# Build configuration for wsn-uav module v1
 # Fragment dissemination for UAV-assisted IoT networks
-# Reproduces paper baseline: "Joint Fragment Dissemination and Edge Fusion
-#   for Fast Target Detection in UAV-Assisted Urban IoT"
 
 build_lib(
   LIBNAME wsn-uav
 
   SOURCE_FILES
-    models/common/statistics-collector.cc
-    models/common/packet-header.cc
-    models/application/fragment-model.cc
-    models/application/confidence-model.cc
-    models/application/fragment-dissemination-app.cc
-    models/mac/wsn-uav-mac.cc
-    helper/topology-helper.cc
-    helper/trajectory-helper.cc
-    helper/result-writer.cc
-    helper/wsn-network-helper.cc
-    helper/packet-tracing-helper.cc
+    models/common/stub.cc
+    models/common/log.cc
+    models/network/scenario1-network.cc
+    models/application/basestation-app.cc
+    models/application/uav-app.cc
+    models/application/ground-node-app.cc
+    helper/scenario0-1/scenario0-1-config.cc
+    helper/scenario0-1/scenario0-1-mac.cc
+    helper/scenario0-2/scenario0-2-config.cc
+    helper/scenario0-2/scenario0-2-network.cc
+    helper/scenario0-3/scenario0-3-config.cc
+    helper/scenario0-3/scenario0-3-energy.cc
+    helper/scenario1/scenario1-config.cc
 
   HEADER_FILES
-    models/common/parameters.h
-    models/common/types.h
-    models/common/statistics-collector.h
-    models/common/packet-header.h
-    models/application/fragment-model.h
-    models/application/confidence-model.h
-    models/application/fragment-dissemination-app.h
-    models/mac/wsn-uav-mac.h
-    helper/topology-helper.h
-    helper/trajectory-helper.h
-    helper/result-writer.h
-    helper/wsn-network-helper.h
-    helper/wsn-uav-helper.h
-    helper/packet-tracing-helper.h
+    models/common/log.h
+    models/network/scenario1-network.h
+    models/application/basestation-app.h
+    models/application/uav-app.h
+    models/application/ground-node-app.h
+    helper/scenario0-1/scenario0-1-config.h
+    helper/scenario0-1/scenario0-1-mac.h
+    helper/scenario0-2/scenario0-2-config.h
+    helper/scenario0-2/scenario0-2-network.h
+    helper/scenario0-3/scenario0-3-config.h
+    helper/scenario0-3/scenario0-3-energy.h
+    helper/scenario1/scenario1-config.h
 
   LIBRARIES_TO_LINK
     ${libcore}
@@ -41,4 +39,6 @@ build_lib(
     ${libmobility}
     ${libspectrum}
     ${libwsn}
+    ${liblr-wpan}
+    ${libenergy}
 )

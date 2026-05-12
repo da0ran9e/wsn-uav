@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WSN-UAV Network Visualization</title>
+    <link rel="stylesheet" href="visualize/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Canvas Section (Left) -->
+        <div id="canvas-container">
+            <canvas id="networkCanvas"></canvas>
+        </div>
+
+        <!-- Info Panel (Right) -->
+        <div id="info-panel">
+            <div id="info-panel-header">
+                <h3>Simulation Info</h3>
+                <p class="subtitle">Real-time network statistics</p>
+            </div>
+
+            <div id="info-panel-content">
+                <!-- Simulation Status -->
+                <div class="info-section">
+                    <h4>Status</h4>
+                    <div style="padding: var(--space-sm) 0;">
+                        <span class="status-badge not-ready" id="info-status-badge">
+                            <span class="indicator"></span>
+                            <span>Not Ready</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Network Status -->
+                <div class="info-section">
+                    <h4>Network</h4>
+                    <div class="info-item">
+                        <span class="label">Time</span>
+                        <span class="value" id="info-time">0.00s</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Nodes</span>
+                        <span class="value" id="info-nodes">10</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">UAVs</span>
+                        <span class="value" id="info-uavs">1</span>
+                    </div>
+                </div>
+
+                <!-- Connectivity -->
+                <div class="info-section">
+                    <h4>Connectivity</h4>
+                    <div class="info-item">
+                        <span class="label">Active Links</span>
+                        <span class="value" id="info-links">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Packets TX</span>
+                        <span class="value" id="info-tx">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Packets RX</span>
+                        <span class="value" id="info-rx">0</span>
+                    </div>
+                </div>
+
+                <!-- Detection Status -->
+                <div class="info-section">
+                    <h4>Detection</h4>
+                    <div class="info-item">
+                        <span class="label">Status</span>
+                        <span class="badge badge-warning" id="info-detection-status">Pending</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Confidence</span>
+                        <span class="value" id="info-confidence">0%</span>
+                    </div>
+                    <div style="margin-top: var(--space-sm);">
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="confidence-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fragment Status -->
+                <div class="info-section">
+                    <h4>Fragments</h4>
+                    <div class="info-item">
+                        <span class="label">Received</span>
+                        <span class="value" id="info-fragments">0/10</span>
+                    </div>
+                    <div style="margin-top: var(--space-sm);">
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="fragment-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UAV Status -->
+                <div class="info-section">
+                    <h4>UAV Status</h4>
+                    <div class="info-item">
+                        <span class="label">Position</span>
+                        <span class="value" id="info-uav-pos">(-200, -200)</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Altitude</span>
+                        <span class="value" id="info-uav-alt">20m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel (Bottom) -->
+        <div id="control-panel">
+            <div class="button-group">
+                <button class="btn-primary" id="btn-play-pause">▶</button>
+                <button class="btn-secondary" id="btn-reset">↻</button>
+            </div>
+
+            <div class="control-label">
+                <span>Speed:</span>
+                <select id="speed-control">
+                    <option value="0.25">0.25x</option>
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="2">2x</option>
+                    <option value="4">4x</option>
+                </select>
+            </div>
+
+            <div class="control-spacer"></div>
+
+            <!-- Layer Controls -->
+            <div class="layers-panel">
+                <button class="layer-toggle active" id="layer-grid" data-layer="grid">Grid</button>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-ghost" id="btn-export">⬇</button>
+                <button class="btn-ghost" id="btn-help">⚙</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">Settings</div>
+
+            <div class="modal-section">
+                <h4>Appearance</h4>
+                <div class="setting-item">
+                    <span class="setting-label">Dark Mode</span>
+                    <div class="toggle-switch" id="toggle-dark-mode"></div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btn-close-settings">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="visualize/app.js"></script>
+</body>
+</html>

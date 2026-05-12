@@ -1,3 +1,3 @@
-# wscript - NS-3 Waf build configuration (stub)
-# This project uses CMake exclusively; wscript is not used.
-# Kept for compatibility with legacy NS-3 build systems.
+# WAF build script stub - CMake-only project
+# This file exists for ns-3 compatibility but is not used
+# All builds use CMake via CMakeLists.txt

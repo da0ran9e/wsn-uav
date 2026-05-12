@@ -57,8 +57,9 @@ private:
     ns3::Ptr<UavApp> m_uavApp;
     std::vector<ns3::Ptr<GroundNodeApp>> m_groundApps;
 
-    // Helper function for staggered startup
+    // Helper functions
     void RandomDelayedStartUp(double delayThreshold);
+    void VerifyUavTrajectory();
 };
 
 }  // namespace ns3::wsn::uav

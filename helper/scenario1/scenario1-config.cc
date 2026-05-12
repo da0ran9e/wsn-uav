@@ -2,6 +2,7 @@
 #include "../../models/common/log.h"
 
 #include "ns3/core-module.h"
+#include "ns3/mobility-module.h"
 #include "ns3/random-variable-stream.h"
 
 #include <iomanip>
@@ -122,6 +123,28 @@ void Scenario1Config::Schedule() {
     LogM("Scenario1Config") << "Simulation Schedule:\n";
     LogM("Scenario1Config") << "  t=" << startTimeSec << "s  : UAV starts broadcasting\n";
     LogM("Scenario1Config") << "  t=" << simulationDurationSec << ".0s : Stop simulation\n\n";
+
+    // Schedule UAV trajectory verification callback every 1 second
+    LogM("Scenario1Config") << "UAV trajectory verification enabled (every 1s)\n";
+    Simulator::Schedule(Seconds(startTimeSec), [this]() { VerifyUavTrajectory(); });
+}
+
+void Scenario1Config::VerifyUavTrajectory() {
+    Ptr<Node> uavNode = m_setup.uavNode.Get(0);
+    Ptr<MobilityModel> mob = uavNode->GetObject<MobilityModel>();
+
+    if (mob) {
+        Vector pos = mob->GetPosition();
+        Vector vel = mob->GetVelocity();
+        double speed = std::sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
+        LogN(uavNode) << "Trajectory check: pos=(" << pos.x << "," << pos.y << ","
+                      << pos.z << ") speed=" << speed << "m/s";
+    }
+
+    double t = Simulator::Now().GetSeconds();
+    if (t < simulationDurationSec) {
+        Simulator::Schedule(Seconds(1.0), [this]() { VerifyUavTrajectory(); });
+    }
 }
 
 void Scenario1Config::RandomDelayedStartUp(double delayThreshold) {

@@ -26,25 +26,21 @@ NetworkSetup Scenario1Network::Build(LrWpanHelper& lrWpan) {
 }
 
 void Scenario1Network::CreateNodes(NetworkSetup& setup) {
-    // Sensor nodes (N×N grid)
-    setup.sensorNodes.Create(m_cfg.gridSize * m_cfg.gridSize);
-
-    // BaseStation node
+    // Order matters: BS first (ID=0), UAV next (ID=1), sensors after (ID=2+)
     setup.baseStationNode.Create(1);
-
-    // UAV node
     setup.uavNode.Create(1);
+    setup.sensorNodes.Create(m_cfg.gridSize * m_cfg.gridSize);
 
     setup.bsNodeId = setup.baseStationNode.Get(0)->GetId();
     setup.uavNodeId = setup.uavNode.Get(0)->GetId();
 
     LogM("Scenario1Network") << "Node Creation:\n";
     LogM("Scenario1Network") << "  BaseStation ID=" << setup.bsNodeId << "\n";
+    LogM("Scenario1Network") << "  UAV ID=" << setup.uavNodeId << "\n";
     LogM("Scenario1Network") << "  Sensors: " << m_cfg.gridSize << "×" << m_cfg.gridSize << " (IDs="
               << setup.sensorNodes.Get(0)->GetId() << "-"
               << setup.sensorNodes.Get(m_cfg.gridSize * m_cfg.gridSize - 1)->GetId()
               << ")\n";
-    LogM("Scenario1Network") << "  UAV ID=" << setup.uavNodeId << "\n";
 }
 
 void Scenario1Network::SetupMobility(NetworkSetup& setup) {
@@ -56,7 +52,7 @@ void Scenario1Network::SetupMobility(NetworkSetup& setup) {
     staticMobility.Install(setup.baseStationNode);
 
     MobilityHelper uavMobility;
-    uavMobility.SetMobilityModel("ns3::WaypointMobilityModel");
+    uavMobility.SetMobilityModel("ns3::ConstantVelocityMobilityModel");
     uavMobility.Install(setup.uavNode);
 
     // BaseStation position
@@ -107,10 +103,33 @@ void Scenario1Network::InstallRadio(NetworkSetup& setup, LrWpanHelper& lrWpan) {
     setup.baseStationDevice = lrWpan.Install(setup.baseStationNode);
     setup.uavDevice = lrWpan.Install(setup.uavNode);
 
+    // Set TX power = 0 dBm on every device's PHY (default channel 11).
+    // Custom propagation model will further limit range later.
+    const double txPowerDbm = m_cfg.txPowerDbm;
+    const double rxSensitivityDbm = m_cfg.rxSensitivityDbm;
+    constexpr uint32_t lrwpanChannel = 11;
+    lrwpan::LrWpanSpectrumValueHelper svh;
+    Ptr<SpectrumValue> txPsd = svh.CreateTxPowerSpectralDensity(txPowerDbm, lrwpanChannel);
+    auto applyPhy = [&txPsd, rxSensitivityDbm](Ptr<NetDevice> dev) {
+        Ptr<lrwpan::LrWpanNetDevice> lrDev = DynamicCast<lrwpan::LrWpanNetDevice>(dev);
+        if (lrDev) {
+            lrDev->GetPhy()->SetTxPowerSpectralDensity(txPsd);
+            lrDev->GetPhy()->SetRxSensitivity(rxSensitivityDbm);
+        }
+    };
+    for (uint32_t i = 0; i < setup.sensorDevices.GetN(); ++i) applyPhy(setup.sensorDevices.Get(i));
+    applyPhy(setup.baseStationDevice.Get(0));
+    applyPhy(setup.uavDevice.Get(0));
+
     LogM("Scenario1Network") << "Radio Stack (LR-WPAN):\n";
     LogM("Scenario1Network") << "  Sensor devices: " << setup.sensorDevices.GetN() << "\n";
     LogM("Scenario1Network") << "  BaseStation devices: " << setup.baseStationDevice.GetN() << "\n";
     LogM("Scenario1Network") << "  UAV devices: " << setup.uavDevice.GetN() << "\n";
+    LogM("Scenario1Network") << "  TX power: " << txPowerDbm << " dBm, RX sens: "
+                              << rxSensitivityDbm << " dBm, channel: " << lrwpanChannel << "\n";
+    LogM("Scenario1Network") << "  Path loss: LogDistance n=" << m_cfg.pathLossExponent
+                              << " refLoss=" << m_cfg.referenceLoss << "dB @ "
+                              << m_cfg.referenceDistance << "m\n";
     LogM("Scenario1Network") << "  Channel: shared (IEEE 802.15.4)\n";
 }
 

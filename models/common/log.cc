@@ -92,6 +92,11 @@ LogRow LogN(ns3::Ptr<ns3::Node> node, std::string submodule) {
     return LogRow(t, m.str());
 }
 
+LogRow LogT(std::string module) {
+    double t = ns3::Simulator::Now().GetSeconds();
+    return LogRow(t, std::move(module));
+}
+
 // ---------------------------------------------------------------------------
 // File management
 // ---------------------------------------------------------------------------

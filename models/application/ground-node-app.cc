@@ -35,36 +35,36 @@ void GroundNodeApp::SetNetDevice(Ptr<NetDevice> dev) {
     m_device = dev;
 }
 
+static std::string GroundLabel(uint32_t id) {
+    return "ground-node[" + std::to_string(id) + "]";
+}
+
 void GroundNodeApp::StartApplication() {
-    LogN(GetNode()) << "Ground Node #" << m_nodeId << " started";
-    // Send a single beacon upon startup.
-    // The random startup delay naturally staggers TX times across nodes.
+    LogT(GroundLabel(m_nodeId)) << "started";
     SendBeacon();
 }
 
 void GroundNodeApp::StopApplication() {
-    LogN(GetNode()) << "Ground Node #" << m_nodeId << " stopped";
+    LogT(GroundLabel(m_nodeId)) << "stopped";
 }
 
 void GroundNodeApp::SendBeacon() {
-    // Create beacon packet (node ID as payload)
     uint32_t beaconPayload = m_nodeId;
     Ptr<Packet> pkt = Create<Packet>((const uint8_t*)&beaconPayload, sizeof(uint32_t));
 
-    // Broadcast to all neighbors
     Mac16Address broadcast("ff:ff");
     bool success = m_device->Send(pkt, broadcast, 0x00);
 
-    LogN(GetNode()) << "Ground Node #" << m_nodeId << " TX beacon (size="
-                    << pkt->GetSize() << " bytes) " << (success ? "[OK]" : "[FAIL]");
+    LogT(GroundLabel(m_nodeId)) << "TX beacon (size=" << pkt->GetSize() << "B) "
+                                 << (success ? "[OK]" : "[FAIL]");
 }
 
 bool GroundNodeApp::OnReceive(Ptr<NetDevice> dev,
                               Ptr<const Packet> pkt,
                               uint16_t proto,
                               const Address& from) {
-    LogN(GetNode()) << "Ground Node #" << m_nodeId << " RX packet (size="
-                    << pkt->GetSize() << " bytes, from=" << from << ")";
+    LogT(GroundLabel(m_nodeId)) << "RX packet (size=" << pkt->GetSize()
+                                 << "B, from=" << from << ")";
     return true;
 }
 

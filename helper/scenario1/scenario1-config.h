@@ -59,7 +59,6 @@ private:
 
     // Helper functions
     void RandomDelayedStartUp(double delayThreshold);
-    void VerifyUavTrajectory();
 };
 
 }  // namespace ns3::wsn::uav

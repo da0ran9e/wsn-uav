@@ -24,7 +24,7 @@ struct NetworkConfig {
     // Radio
     double txPowerDbm = 0.0;
     double rxSensitivityDbm = -95.0;
-    double pathLossExponent = 2.0;
+    double pathLossExponent = 3.0;
     double referenceDistance = 1.0;
     double referenceLoss = 46.6;
 };

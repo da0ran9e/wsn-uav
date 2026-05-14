@@ -2,7 +2,6 @@
 #include "../../models/common/log.h"
 
 #include "ns3/core-module.h"
-#include "ns3/mobility-module.h"
 #include "ns3/random-variable-stream.h"
 
 #include <iomanip>
@@ -40,6 +39,8 @@ void Scenario1Config::Build() {
     m_bsApp = CreateObject<BaseStationApp>();
     m_bsApp->SetNodeId(m_setup.bsNodeId);
     m_bsApp->SetNetDevice(m_setup.baseStationDevice.Get(0));
+    m_bsApp->SetSensorNodes(m_setup.sensorNodes);
+    m_bsApp->SetUavNode(m_setup.uavNode);
     m_setup.baseStationNode.Get(0)->AddApplication(m_bsApp);
     m_bsApp->SetStartTime(Seconds(0.0));
     m_bsApp->SetStopTime(Seconds(simulationDurationSec));
@@ -51,12 +52,8 @@ void Scenario1Config::Build() {
     m_uavApp->SetBroadcastInterval(broadcastIntervalSec);
     m_uavApp->SetNumFragments(numFragmentsToSend);
 
-    // Flight: cover the sensor grid [0..(N-1)*spacing] in both axes.
-    double areaMax = (gridSize - 1) * gridSpacing;
-    m_uavApp->SetFlightArea(0.0, 0.0, areaMax, areaMax);
-    m_uavApp->SetFlightAltitude(uavStartHeight);
-    m_uavApp->SetFlightSpeed(20.0);
-    m_uavApp->SetRowSpacing(gridSpacing);
+    // Flight area / altitude / speed are derived inside the UAV app from
+    // the topology packet sent by the BS. The UAV decides when to take off.
 
     m_setup.uavNode.Get(0)->AddApplication(m_uavApp);
     m_uavApp->SetStartTime(Seconds(startTimeSec));
@@ -79,39 +76,38 @@ void Scenario1Config::Build() {
 
     for (uint32_t i = 0; i < m_setup.sensorDevices.GetN(); i++) {
         Ptr<NetDevice> dev = m_setup.sensorDevices.Get(i);
-        Ptr<Node> node = m_setup.sensorNodes.Get(i);
-        uint32_t nodeId = node->GetId();
+        uint32_t nodeId = m_setup.sensorNodes.Get(i)->GetId();
         dev->SetReceiveCallback(
-            [node, nodeId](Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const Address&) {
-                LogN(node) << "Ground Node #" << nodeId << " RX packet (size="
-                           << pkt->GetSize() << " bytes)";
+            [nodeId](Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const Address&) {
+                uint32_t sz = pkt->GetSize();
+                // Beacons (4B) are broadcast, accept all. Directed messages
+                // (>4B) start with [destId:uint8] — drop if not for us.
+                if (sz > 4) {
+                    uint8_t destId = 0;
+                    pkt->CopyData(&destId, 1);
+                    if (destId != nodeId) return true;  // drop silently
+                }
+                LogT("ground-node[" + std::to_string(nodeId) + "]")
+                    << "RX packet (size=" << sz << "B)";
                 return true;
             }
         );
     }
     LogM("Scenario1Config") << "RX callbacks enabled on " << m_setup.sensorDevices.GetN() << " ground nodes";
 
-    Ptr<Node> bsNode = m_setup.baseStationNode.Get(0);
-    uint32_t bsId = m_setup.bsNodeId;
     m_setup.baseStationDevice.Get(0)->SetReceiveCallback(
-        [bsNode, bsId](Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const Address&) {
-            LogN(bsNode) << "BaseStation #" << bsId << " RX packet (size="
-                         << pkt->GetSize() << " bytes)";
-            return true;
+        [this](Ptr<NetDevice> dev, Ptr<const Packet> pkt, uint16_t proto, const Address& from) {
+            return m_bsApp->OnMessageReceived(dev, pkt, proto, from);
         }
     );
-    LogM("Scenario1Config") << "RX callback enabled on BaseStation";
+    LogM("Scenario1Config") << "RX callback hooked to BaseStation application";
 
-    Ptr<Node> uavNode = m_setup.uavNode.Get(0);
-    uint32_t uavId = m_setup.uavNodeId;
     m_setup.uavDevice.Get(0)->SetReceiveCallback(
-        [uavNode, uavId](Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const Address&) {
-            LogN(uavNode) << "UAV #" << uavId << " RX packet (size="
-                          << pkt->GetSize() << " bytes)";
-            return true;
+        [this](Ptr<NetDevice> dev, Ptr<const Packet> pkt, uint16_t proto, const Address& from) {
+            return m_uavApp->OnMessageReceived(dev, pkt, proto, from);
         }
     );
-    LogM("Scenario1Config") << "RX callback enabled on UAV";
+    LogM("Scenario1Config") << "RX callback hooked to UAV application";
 
     LogFlush();  // checkpoint: build complete
 }
@@ -123,28 +119,6 @@ void Scenario1Config::Schedule() {
     LogM("Scenario1Config") << "Simulation Schedule:\n";
     LogM("Scenario1Config") << "  t=" << startTimeSec << "s  : UAV starts broadcasting\n";
     LogM("Scenario1Config") << "  t=" << simulationDurationSec << ".0s : Stop simulation\n\n";
-
-    // Schedule UAV trajectory verification callback every 1 second
-    LogM("Scenario1Config") << "UAV trajectory verification enabled (every 1s)\n";
-    Simulator::Schedule(Seconds(startTimeSec), [this]() { VerifyUavTrajectory(); });
-}
-
-void Scenario1Config::VerifyUavTrajectory() {
-    Ptr<Node> uavNode = m_setup.uavNode.Get(0);
-    Ptr<MobilityModel> mob = uavNode->GetObject<MobilityModel>();
-
-    if (mob) {
-        Vector pos = mob->GetPosition();
-        Vector vel = mob->GetVelocity();
-        double speed = std::sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
-        LogN(uavNode) << "Trajectory check: pos=(" << pos.x << "," << pos.y << ","
-                      << pos.z << ") speed=" << speed << "m/s";
-    }
-
-    double t = Simulator::Now().GetSeconds();
-    if (t < simulationDurationSec) {
-        Simulator::Schedule(Seconds(1.0), [this]() { VerifyUavTrajectory(); });
-    }
 }
 
 void Scenario1Config::RandomDelayedStartUp(double delayThreshold) {

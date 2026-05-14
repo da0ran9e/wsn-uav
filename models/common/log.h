@@ -54,6 +54,7 @@ LogRow Log(double t, std::string module);                           // event wit
 LogRow LogM(std::string module);                                    // info from a named module
 LogRow LogN(ns3::Ptr<ns3::Node> node,
             std::string submodule = "Application");                 // auto: t=Now(), module=Node[<id>].<submodule>
+LogRow LogT(std::string module);                                    // auto: t=Now(), with explicit module name
 
 // File: src/wsn-uav/docs/visualize/result/<scenarioName>/<dd-MM-yy>/<hh-mm-ss>.md
 // cwd-relative; ns3 is run from the ns-3 root.

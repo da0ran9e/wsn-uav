@@ -89,6 +89,12 @@ Test: ✗ (RX callbacks still not firing)
 - **Run executables:** `python3.10 ./ns3 run scenario-X -- --param=value`
 - **Check Python version before any build**
 
+### Workflow Rules (User-Enforced)
+- **NEVER commit unless explicitly asked** — user controls when to commit
+- **Follow user instructions exactly** — don't add features beyond what's requested
+- **No debug/verification code in final form** — remove probe callbacks once behavior is confirmed
+- **Don't modify CMakeLists.txt** unless adding NEW source/header files
+
 ### Code Organization
 - **Modify only:** `src/wsn-uav/` directory
 - **Don't modify:** `src/wsn/`, root files, other modules
@@ -134,6 +140,25 @@ Test: ✗ (RX callbacks still not firing)
 - **UAV speed:** 20.0m/s
 - **Broadcast radius:** 50.0m
 - **All in** `models/common/parameters.h`
+
+### Node ID Convention (Scenario 1)
+Creation order in `Scenario1Network::CreateNodes()` determines node IDs:
+- **BS = ID 0** (created first)
+- **UAV = ID 1** (created second)
+- **Sensors = IDs 2+** (created last, N×N grid)
+
+Don't change creation order — downstream code (topology packets, k-means, log labels) depends on it.
+
+### LR-WPAN MTU Constraint
+- **PSDU = 127 bytes** (IEEE 802.15.4) includes MAC header (~13B) + FCS (2B). **App payload safe ceiling ≈ 100B**, NOT 127. Test result: 125B payload → `Send()` returns FAIL; 100B → OK.
+- **Topology / control packets MUST use compact binary** (no JSON, no verbose strings).
+- **Multi-packet topology format** (`BroadcastTopology` in BS app):
+  - Header (6B): `[destId:u8][totalCount:u16][thisCount:u8][startIdx:u16]`
+  - Entry (7B): `[id:u8, x:i16_dm, y:i16_dm, z:i16_dm]`
+  - MAX_ENTRIES = (100 - 6) / 7 = 13 nodes/packet
+  - UAV reassembles by `startIdx`; tracks `m_topoReceived` until `totalCount` reached
+- **Back-to-back `Send()` calls need ≥200ms stagger** — otherwise MAC queue overflows and most packets FAIL. Schedule each packet via `Simulator::Schedule(Seconds(0.2 * pktIdx), ...)`. 50ms is NOT enough (verified).
+- **Always check `Send()` return value** — silent FAIL appears as `sent=FAIL` in log.
 
 ### Output & Directories
 - **Always create output directories explicitly:** `std::filesystem::create_directories(dirPath)`

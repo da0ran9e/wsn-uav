@@ -27,6 +27,10 @@ data/results/
 data/temp/
 visualization/exports/
 
+# Generated simulation logs (LogReset writes dated markdown here) and demo CSVs
+docs/visualize/result/
+docs/visualize/sample-run/
+
 # Temporary files
 *.tmp
 *.bak

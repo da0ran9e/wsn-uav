@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cstdint>
 
 namespace ns3::wsn::uav {
 

@@ -83,6 +83,32 @@ sample). Load a real run's `trajectories.csv` / `events.csv` / `metrics.csv`
 (e.g. from `docs/visualize/sample-run/`) to replay UAV flight, beacons, divert
 and the completion moment on a top-down map with a timeline scrubber.
 
+## Round-1 results (100 / 25 seeds, 4 UAVs, 8 frags, maxFrag 4 KB)
+
+Primary metric = `timeToCompleteData_s` (lower better); airtime = mean `pktRecv`.
+
+Grid 6×6 (100 seeds, simTime 600):
+| scheme   | compl% | mean t | median t | airtime |
+|----------|--------|--------|----------|---------|
+| proposed | 99%    | 30.5 s | 30.1 s   | 2 367   |
+| nocoop   | 68%    | 25.1 s | 27.2 s   | 14 854  |
+| single   | 97%    | 24.3 s | 22.5 s   | 3 822   |
+
+Grid 10×10 (25 seeds, simTime 1000):
+| scheme   | compl% | mean t | median t | airtime |
+|----------|--------|--------|----------|---------|
+| proposed | 100%   | 40.8 s | 39.5 s   | 4 739   |
+| nocoop   | 84%    | 49.5 s | 44.6 s   | 44 793  |
+| single   | 100%   | 45.1 s | 44.5 s   | 10 517  |
+
+Reading: in a small area, brute-force baselines reach near the victim quickly so
+they edge out on raw latency, but they flood the channel (collisions → nocoop
+only 68% complete) and burn 6× the airtime. As the area grows (10×10), the
+proposed cooperative + targeted-delivery scheme **wins on all three**: fastest
+mean/median time, 100% completion (most reliable), and ~10× less airtime than
+nocoop / ~2× less than single. The approach pays off at scale — the regime SAR
+actually targets.
+
 ## Round-1 scope / not yet modelled
 - Single altitude; no UAV battery/no-fly constraints; AoI/TTL not yet penalised.
 - Detection is a trigger only (no CV); custody/provenance is metadata-level.

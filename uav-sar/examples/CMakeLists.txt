@@ -40,3 +40,17 @@ build_lib_example(
     ${libuav-sar}
     ${libcore}
 )
+
+# End-to-end SAR scenario.
+build_lib_example(
+  NAME scenario-sar
+  SOURCE_FILES scenario-sar.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+    ${libnetwork}
+    ${libmobility}
+    ${libspectrum}
+    ${libpropagation}
+    ${liblr-wpan}
+)

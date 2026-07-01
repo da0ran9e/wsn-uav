@@ -1,0 +1,77 @@
+#ifndef UAV_SAR_DATA_UAV_APP_H
+#define UAV_SAR_DATA_UAV_APP_H
+
+// DATA-team UAV: climbs and loiters at a staging point (does not listen to the
+// ground directly). On a relayed SUMMON (A2A) it claims the event (fleet-shared
+// token so exactly one responds), diverts to the victim region, delivers the
+// FULL dataset, and on CONFIRM flies back to the BS and sends a small report.
+
+#include "flight-controller.h"
+#include "../common/target-profile.h"
+
+#include "ns3/application.h"
+#include "ns3/net-device.h"
+#include "ns3/event-id.h"
+#include "ns3/vector.h"
+#include "ns3/address.h"
+#include "ns3/ptr.h"
+
+#include <cstdint>
+#include <memory>
+#include <vector>
+
+namespace ns3::uavsar {
+
+class SarMetrics;
+
+class SarDataUavApp : public ns3::Application {
+public:
+    static ns3::TypeId GetTypeId();
+    SarDataUavApp();
+    ~SarDataUavApp() override;
+
+    void SetNodeId(uint32_t id) { m_nodeId = id; }
+    void SetDevice(ns3::Ptr<ns3::NetDevice> d) { m_dev = d; }
+    void SetMetrics(SarMetrics* m) { m_metrics = m; }
+    void SetFullDataset(const std::vector<Fragment>& f) { m_full = f; }
+    void SetCruise(double alt, double speed) { m_alt = alt; m_speed = speed; }
+    void SetLoiter(ns3::Vector c) { m_loiter = c; }
+    void SetClaimToken(std::shared_ptr<int32_t> t) { m_claim = std::move(t); }
+    void SetBs(ns3::Vector pos, ns3::Address addr) { m_bsPos = pos; m_bsAddr = addr; }
+
+    bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
+                   uint16_t proto, const ns3::Address& from);
+
+private:
+    void StartApplication() override;
+    void StopApplication() override;
+    void TakeOff();
+    void ControlTick();
+    void TrajTick();
+    void SendFullChunk(size_t fi, uint16_t seq);
+    void TryClaimDivert(double x, double y);
+
+    enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, DIVERT, DELIVER, RETURN, DONE };
+
+    uint32_t m_nodeId = 0;
+    ns3::Ptr<ns3::NetDevice> m_dev;
+    SarMetrics* m_metrics = nullptr;
+    std::vector<Fragment> m_full;
+    double m_alt = 20.0, m_speed = 15.0;
+    ns3::Vector m_loiter{0, 0, 0};
+    ns3::Vector m_divert{0, 0, 0};
+    ns3::Vector m_bsPos{0, 0, 0};
+    ns3::Address m_bsAddr;
+    std::shared_ptr<int32_t> m_claim;
+    bool m_claimed = false;
+    bool m_confirmed = false;
+    double m_divertStartDist = 0;
+
+    State m_state = State::IDLE;
+    ns3::EventId m_ctrl, m_traj;
+    FlightController m_fc;
+};
+
+}  // namespace ns3::uavsar
+
+#endif  // UAV_SAR_DATA_UAV_APP_H

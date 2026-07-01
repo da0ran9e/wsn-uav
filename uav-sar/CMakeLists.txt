@@ -13,6 +13,14 @@ build_lib(
     models/network/sar-network.cc
     models/common/target-profile.cc
     models/common/clue-field.cc
+    models/common/sar-metrics.cc
+    models/application/flight-controller.cc
+    models/application/region-coordinator.cc
+    models/application/sar-ground-app.cc
+    models/application/sar-fast-uav-app.cc
+    models/application/sar-data-uav-app.cc
+    models/application/sar-bs-app.cc
+    helper/sar-config.cc
 
   HEADER_FILES
     models/common/sar-info.h
@@ -23,6 +31,15 @@ build_lib(
     models/network/sar-network.h
     models/common/target-profile.h
     models/common/clue-field.h
+    models/common/sar-types.h
+    models/common/sar-metrics.h
+    models/application/flight-controller.h
+    models/application/region-coordinator.h
+    models/application/sar-ground-app.h
+    models/application/sar-fast-uav-app.h
+    models/application/sar-data-uav-app.h
+    models/application/sar-bs-app.h
+    helper/sar-config.h
 
   LIBRARIES_TO_LINK
     ${libcore}

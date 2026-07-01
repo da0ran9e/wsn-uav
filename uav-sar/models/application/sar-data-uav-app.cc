@@ -1,0 +1,160 @@
+#include "sar-data-uav-app.h"
+#include "../common/sar-metrics.h"
+#include "../common/sar-types.h"
+#include "../common/sar-params.h"
+
+#include "ns3/core-module.h"
+#include "ns3/packet.h"
+#include "ns3/mac16-address.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+
+using namespace ns3;
+
+namespace ns3::uavsar {
+
+NS_OBJECT_ENSURE_REGISTERED(SarDataUavApp);
+
+TypeId SarDataUavApp::GetTypeId() {
+    static TypeId tid = TypeId("ns3::uavsar::SarDataUavApp")
+                            .SetParent<Application>().SetGroupName("uav-sar")
+                            .AddConstructor<SarDataUavApp>();
+    return tid;
+}
+SarDataUavApp::SarDataUavApp() = default;
+SarDataUavApp::~SarDataUavApp() = default;
+
+void SarDataUavApp::StartApplication() {
+    m_fc.AttachTo(GetNode());
+    Simulator::Schedule(Seconds(1.0 + 0.3 * m_nodeId), &SarDataUavApp::TakeOff, this);
+}
+void SarDataUavApp::StopApplication() {
+    Simulator::Cancel(m_ctrl); Simulator::Cancel(m_traj);
+    m_fc.Hover(); m_fc.SetClimb(0);
+}
+
+void SarDataUavApp::TakeOff() {
+    if (m_metrics) { Vector p = m_fc.GetPosition();
+        m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA", "takeoff", "", p.x, p.y, p.z); }
+    m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);
+    m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarDataUavApp::ControlTick, this);
+    TrajTick();
+}
+
+void SarDataUavApp::TryClaimDivert(double x, double y) {
+    if (m_claimed || m_state == State::DELIVER || m_state == State::RETURN) return;
+    if (m_claim) {
+        if (*m_claim == -1) *m_claim = (int32_t)m_nodeId;
+        if (*m_claim != (int32_t)m_nodeId) return;  // another DATA UAV owns it
+    }
+    m_claimed = true;
+    Vector p = m_fc.GetPosition();
+    m_divert = Vector(x, y, m_alt);
+    m_divertStartDist = std::hypot(x - p.x, y - p.y);
+    m_state = State::DIVERT;
+    if (m_metrics) {
+        m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA", "divert", "to region", p.x, p.y, p.z);
+        m_metrics->AddDeviation(m_divertStartDist);
+    }
+}
+
+void SarDataUavApp::ControlTick() {
+    Vector p = m_fc.GetPosition();
+    double arriveR = std::max(1.0, m_speed * params::kControlTickS * 1.5);
+    switch (m_state) {
+        case State::CLIMB:
+            if (p.z >= m_alt) { m_fc.SetClimb(0); m_state = State::GOTO_CENTER;
+                m_fc.Turn(std::atan2(m_loiter.y - p.y, m_loiter.x - p.x) * 180 / M_PI);
+                m_fc.Forward(m_speed); }
+            break;
+        case State::GOTO_CENTER:
+            if (std::hypot(m_loiter.x - p.x, m_loiter.y - p.y) <= arriveR) {
+                m_fc.Hover(); m_state = State::LOITER; }
+            break;
+        case State::LOITER:
+            break;  // wait for A2A relay
+        case State::DIVERT: {
+            double d = std::hypot(m_divert.x - p.x, m_divert.y - p.y);
+            m_fc.Turn(std::atan2(m_divert.y - p.y, m_divert.x - p.x) * 180 / M_PI);
+            m_fc.Forward(m_speed);
+            if (d <= arriveR) { m_fc.Hover(); m_state = State::DELIVER;
+                if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                                "deliver_start", "", p.x, p.y, p.z);
+                SendFullChunk(0, 0); }
+            break;
+        }
+        case State::DELIVER:
+            break;  // delivery chain runs; then we wait for CONFIRM
+        case State::RETURN: {
+            double d = std::hypot(m_bsPos.x - p.x, m_bsPos.y - p.y);
+            m_fc.Turn(std::atan2(m_bsPos.y - p.y, m_bsPos.x - p.x) * 180 / M_PI);
+            m_fc.Forward(m_speed);
+            if (d <= arriveR) {
+                m_fc.Hover(); m_state = State::DONE;
+                if (m_dev) {  // send small report to BS
+                    std::vector<uint8_t> b(kReportLen);
+                    uint8_t* q = b.data();
+                    *q++ = (uint8_t)Msg::REPORT; *q++ = 0x00;
+                    uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2; *q++ = 255;
+                    m_dev->Send(Create<Packet>(b.data(), b.size()), m_bsAddr, 0);
+                    if (m_metrics) m_metrics->AddSent();
+                }
+                if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                                "report_tx", "to BS", p.x, p.y, p.z);
+                return;
+            }
+            break;
+        }
+        case State::IDLE: case State::DONE: return;
+    }
+    m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarDataUavApp::ControlTick, this);
+}
+
+void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
+    if (fi >= m_full.size()) return;  // delivery done; wait for CONFIRM (ControlTick idle in DELIVER)
+    const Fragment& f = m_full[fi];
+    uint16_t total = (uint16_t)std::max(1u, (f.sizeBytes + kFullChunkBytes - 1) / kFullChunkBytes);
+    if (m_dev) {
+        std::vector<uint8_t> b(kFullHdr + kFullChunkBytes, 0);
+        uint8_t* p = b.data();
+        *p++ = (uint8_t)Msg::FULL; *p++ = kBroadcast;
+        uint16_t id = (uint16_t)f.id; std::memcpy(p, &id, 2); p += 2;
+        std::memcpy(p, &seq, 2); p += 2;
+        std::memcpy(p, &total, 2); p += 2;
+        *p++ = (uint8_t)f.layer;
+        m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+        if (m_metrics) m_metrics->AddSent();
+    }
+    uint16_t ns = seq + 1; size_t nf = fi;
+    if (ns >= total) { ns = 0; nf = fi + 1; }
+    Simulator::Schedule(Seconds(params::kDeliverStaggerS), &SarDataUavApp::SendFullChunk, this, nf, ns);
+}
+
+void SarDataUavApp::TrajTick() {
+    if (m_metrics) { Vector p = m_fc.GetPosition();
+        m_metrics->Traj(Simulator::Now().GetSeconds(), m_nodeId, "DATA", p.x, p.y, p.z); }
+    if (m_state != State::DONE)
+        m_traj = Simulator::Schedule(Seconds(params::kTrajLogS), &SarDataUavApp::TrajTick, this);
+}
+
+bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const Address&) {
+    uint32_t sz = pkt->GetSize();
+    if (sz < 2) return true;
+    std::vector<uint8_t> b(sz); pkt->CopyData(b.data(), sz);
+    uint8_t type = b[0];
+    if (type == (uint8_t)Msg::A2A && sz >= kA2ALen) {
+        int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
+        TryClaimDivert(cx / 10.0, cy / 10.0);
+    } else if (type == (uint8_t)Msg::CONFIRM && sz >= kConfirmLen) {
+        // our delivery confirmed -> head back to BS to report.
+        if (m_claimed && !m_confirmed && (m_state == State::DELIVER || m_state == State::DIVERT)) {
+            m_confirmed = true;
+            m_state = State::RETURN;
+        }
+    }
+    return true;
+}
+
+}  // namespace ns3::uavsar

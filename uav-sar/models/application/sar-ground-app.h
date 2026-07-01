@@ -38,6 +38,8 @@ public:
     void SetProfile(const std::vector<Fragment>& frags);
     void SetClueQuality(double q) { m_clueQuality = q; }
     void SetThresholds(double coop, double confirm) { m_coop = coop; m_confirm = confirm; }
+    void SetIsTarget(bool t) { m_isTarget = t; }
+    void SetStopOnComplete(bool s) { m_stopOnComplete = s; }  // baselines end on complete
 
     // Called by the coordinator when this node is elected region leader.
     void StartSummon(uint16_t regionId, double cx, double cy);
@@ -66,6 +68,8 @@ private:
 
     // region-leader summon state
     bool m_isLeader = false;
+    bool m_isTarget = false;
+    bool m_stopOnComplete = false;
     bool m_confirmed = false;
     uint16_t m_regionId = 0;
     double m_cx = 0, m_cy = 0;

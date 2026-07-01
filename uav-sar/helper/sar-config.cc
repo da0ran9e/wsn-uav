@@ -17,11 +17,15 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     RngSeedManager::SetSeed(1);
     RngSeedManager::SetRun(cfg.seed);
 
+    const bool proposed = (cfg.scheme == "proposed");
+    uint32_t numUav = cfg.numUav;
+    if (cfg.scheme == "pure-uav") numUav = 1;   // single UAV, no WSN cooperation
+
     // 1) network
     SarNetworkConfig net;
     net.gridSize = cfg.gridSize;
     net.gridSpacing = cfg.gridSpacing;
-    net.numUav = cfg.numUav;
+    net.numUav = numUav;
     m_lr = std::make_unique<LrWpanHelper>();
     SarNetwork network(net);
     SarNetworkSetup s = network.Build(*m_lr);
@@ -56,15 +60,17 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     for (auto& f : tp.OfLayer(Layer::L1_DESCRIPTOR)) cues.push_back(f);
     std::vector<Fragment> full = tp.All();
 
-    m_metrics.SetMeta(cfg.seed, cfg.gridSize, cfg.numUav, cfg.scheme, targetId);
+    m_metrics.SetMeta(cfg.seed, cfg.gridSize, numUav, cfg.scheme, targetId);
 
-    // 5) region coordinator (control-plane, event-level)
-    m_coord.Init(&m_plan, &m_routing, &m_metrics,
-                 params::kAlertThreshold, params::kCoopThreshold,
-                 [this](uint32_t leaderNode, uint16_t rid, double x, double y) {
-                     auto it = m_groundById.find(leaderNode);
-                     if (it != m_groundById.end()) it->second->StartSummon(rid, x, y);
-                 });
+    // 5) region coordinator (control-plane, event-level) — proposed only
+    if (proposed) {
+        m_coord.Init(&m_plan, &m_routing, &m_metrics,
+                     params::kAlertThreshold, params::kCoopThreshold,
+                     [this](uint32_t leaderNode, uint16_t rid, double x, double y) {
+                         auto it = m_groundById.find(leaderNode);
+                         if (it != m_groundById.end()) it->second->StartSummon(rid, x, y);
+                     });
+    }
 
     // 6) BS app
     Ptr<SarBsApp> bs = CreateObject<SarBsApp>();
@@ -86,9 +92,29 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     cx /= s.sensorPositions.size(); cy /= s.sensorPositions.size();
 
     // 7) UAV apps
-    uint32_t fastCount = std::max<uint32_t>(1, (uint32_t)(cfg.numUav * cfg.fastRatio));
+    uint32_t fastCount = proposed ? std::max<uint32_t>(1, (uint32_t)(numUav * cfg.fastRatio)) : 0;
     auto claim = std::make_shared<int32_t>(-1);
-    for (uint32_t u = 0; u < cfg.numUav; u++) {
+    for (uint32_t u = 0; u < numUav; u++) {
+        if (!proposed) {
+            // baseline: every UAV sweeps the grid and dwell-dumps the full dataset.
+            Ptr<SarDataUavApp> app = CreateObject<SarDataUavApp>();
+            app->SetNodeId(s.uavs.Get(u)->GetId());
+            app->SetDevice(s.uavDevs.Get(u));
+            app->SetMetrics(&m_metrics);
+            app->SetFullDataset(full);
+            app->SetMode(SarDataUavApp::Mode::SWEEP_DUMP);
+            app->SetSensorPositions(s.sensorPositions);
+            app->SetCruise(params::kCruiseAltitudeM, params::kDataSpeedMps);
+            app->SetBs(bsPos, bsAddr);
+            s.uavs.Get(u)->AddApplication(app);
+            app->SetStartTime(Seconds(0));
+            app->SetStopTime(Seconds(cfg.simTime));
+            s.uavDevs.Get(u)->SetReceiveCallback(
+                [app](Ptr<NetDevice> d, Ptr<const Packet> p, uint16_t pr, const Address& f) {
+                    return app->OnReceive(d, p, pr, f);
+                });
+            continue;
+        }
         bool isFast = (u < fastCount);
         if (isFast) {
             Ptr<SarFastUavApp> app = CreateObject<SarFastUavApp>();
@@ -132,10 +158,12 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetNodeId(id);
         app->SetDevice(s.sensorDevs.Get(i));
         app->SetMetrics(&m_metrics);
-        app->SetCoordinator(&m_coord);
+        app->SetCoordinator(proposed ? &m_coord : nullptr);
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);
         app->SetThresholds(params::kCoopThreshold, params::kConfirmThreshold);
+        app->SetIsTarget(id == targetId);
+        app->SetStopOnComplete(!proposed);
         s.sensors.Get(i)->AddApplication(app);
         app->SetStartTime(Seconds(0));
         app->SetStopTime(Seconds(cfg.simTime));

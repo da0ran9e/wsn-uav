@@ -3,6 +3,8 @@
 #include "../common/sar-types.h"
 #include "../common/sar-params.h"
 
+#include "../common/gmc.h"
+
 #include "ns3/core-module.h"
 #include "ns3/packet.h"
 #include "ns3/mac16-address.h"
@@ -38,6 +40,12 @@ void SarDataUavApp::StopApplication() {
 void SarDataUavApp::TakeOff() {
     if (m_metrics) { Vector p = m_fc.GetPosition();
         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA", "takeoff", "", p.x, p.y, p.z); }
+    if (m_mode == Mode::SWEEP_DUMP) {
+        // plan sweep with the design coverage radius (see FAST app note).
+        m_radius = params::kUavBroadcastRadiusM;
+        m_targets = BuildGmc(m_sensors, m_radius, m_fc.GetPosition(), m_alt, m_speed);
+        m_ti = 0;
+    }
     m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);
     m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarDataUavApp::ControlTick, this);
     TrajTick();
@@ -73,7 +81,12 @@ void SarDataUavApp::ControlTick() {
         case State::CLIMB:
             if (p.z >= m_alt) {
                 m_fc.SetClimb(0);
-                if (m_pendingDivert) {   // claimed before takeoff -> go straight to region
+                if (m_mode == Mode::SWEEP_DUMP) {
+                    if (m_targets.empty()) { m_state = State::DONE; return; }
+                    m_state = State::SWEEP;
+                    Vector t = m_targets[m_ti];
+                    m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI); m_fc.Forward(m_speed);
+                } else if (m_pendingDivert) {   // claimed before takeoff -> region
                     m_pendingDivert = false;
                     m_state = State::DIVERT;
                 } else {
@@ -83,6 +96,14 @@ void SarDataUavApp::ControlTick() {
                 }
             }
             break;
+        case State::SWEEP: {
+            Vector t = m_targets[m_ti];
+            if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
+                m_fc.Hover(); m_state = State::DELIVER;
+                SendFullChunk(0, 0);   // dwell-dump full at this cell
+            }
+            break;
+        }
         case State::GOTO_CENTER:
             if (std::hypot(m_loiter.x - p.x, m_loiter.y - p.y) <= arriveR) {
                 m_fc.Hover(); m_state = State::LOITER; }
@@ -127,7 +148,19 @@ void SarDataUavApp::ControlTick() {
 }
 
 void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
-    if (fi >= m_full.size()) return;  // delivery done; wait for CONFIRM (ControlTick idle in DELIVER)
+    if (fi >= m_full.size()) {
+        // finished one full-dataset dump
+        if (m_mode == Mode::SWEEP_DUMP) {
+            m_ti++;
+            Vector p = m_fc.GetPosition();
+            if (m_ti >= m_targets.size()) { m_state = State::DONE; return; }
+            m_state = State::SWEEP;
+            Vector t = m_targets[m_ti];
+            m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI); m_fc.Forward(m_speed);
+            // ControlTick is still looping (from DELIVER); it will service SWEEP.
+        }
+        return;  // SUMMONED: wait for CONFIRM
+    }
     const Fragment& f = m_full[fi];
     uint16_t total = (uint16_t)std::max(1u, (f.sizeBytes + kFullChunkBytes - 1) / kFullChunkBytes);
     if (m_dev) {

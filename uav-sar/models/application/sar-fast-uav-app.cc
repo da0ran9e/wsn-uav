@@ -28,10 +28,10 @@ SarFastUavApp::~SarFastUavApp() = default;
 
 void SarFastUavApp::StartApplication() {
     m_fc.AttachTo(GetNode());
-    double exponent = (0.0 - params::kRxSensitivityDbm - params::kRefLossDb) /
-                      (10.0 * params::kA2GExponent);
-    double slant = std::pow(10.0, exponent);
-    m_radius = (slant > m_alt) ? std::sqrt(slant * slant - m_alt * m_alt) : 0.0;
+    // Plan the sweep with the (conservative) design coverage radius, not the
+    // optimistic LoS link-budget range — otherwise coverage degenerates to a
+    // single waypoint and the sweep becomes meaningless.
+    m_radius = params::kUavBroadcastRadiusM;
     Simulator::Schedule(Seconds(1.0 + 0.3 * m_nodeId), &SarFastUavApp::TakeOff, this);
 }
 void SarFastUavApp::StopApplication() {

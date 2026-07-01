@@ -33,6 +33,7 @@ build_lib(
     models/common/clue-field.h
     models/common/sar-types.h
     models/common/sar-metrics.h
+    models/common/gmc.h
     models/application/flight-controller.h
     models/application/region-coordinator.h
     models/application/sar-ground-app.h

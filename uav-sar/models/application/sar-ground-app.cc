@@ -97,18 +97,19 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         m_fullChunks[fragId].insert(seq);
         if (m_metrics) m_metrics->AddRecv();
         if (m_fullChunks[fragId].size() >= total) m_haveFull.insert(fragId);
-        // Only the region leader confirms (it's at the region centre).
-        if (m_isLeader && !m_confirmed && ReceivedConfidence() >= m_confirm) {
+        // Region leader (proposed) or the victim node (baseline) closes the loop.
+        if ((m_isLeader || m_isTarget) && !m_confirmed && ReceivedConfidence() >= m_confirm) {
             m_confirmed = true;
             Simulator::Cancel(m_beaconEvent);
             Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
             if (m_metrics) {
                 m_metrics->MarkCompleteData(Simulator::Now().GetSeconds());
-                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "CL",
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
+                                 m_isLeader ? "CL" : "target",
                                  "confirm", "full data received", p.x, p.y, p.z);
             }
-            // broadcast CONFIRM so the DATA UAV can return and report.
-            if (m_dev) {
+            // Proposed: broadcast CONFIRM so the DATA UAV returns and reports.
+            if (m_isLeader && m_dev) {
                 std::vector<uint8_t> c(kConfirmLen);
                 uint8_t* q = c.data();
                 *q++ = (uint8_t)Msg::CONFIRM; *q++ = kBroadcast;
@@ -117,6 +118,8 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                 m_dev->Send(Create<Packet>(c.data(), c.size()), Mac16Address("ff:ff"), 0);
                 if (m_metrics) m_metrics->AddSent();
             }
+            // Baselines have no report loop: end the run on complete.
+            if (m_stopOnComplete) Simulator::Stop(Seconds(0.5));
         }
     }
     return true;

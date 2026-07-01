@@ -39,6 +39,12 @@ public:
     void SetClaimToken(std::shared_ptr<int32_t> t) { m_claim = std::move(t); }
     void SetBs(ns3::Vector pos, ns3::Address addr) { m_bsPos = pos; m_bsAddr = addr; }
 
+    // Baseline behaviour: instead of loiter+summon, sweep the grid and dwell-dump
+    // the full dataset at every visited cell (no ground cooperation).
+    enum class Mode { SUMMONED, SWEEP_DUMP };
+    void SetMode(Mode m) { m_mode = m; }
+    void SetSensorPositions(const std::vector<ns3::Vector>& p) { m_sensors = p; }
+
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
 
@@ -51,12 +57,17 @@ private:
     void SendFullChunk(size_t fi, uint16_t seq);
     void TryClaimDivert(double x, double y);
 
-    enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, DIVERT, DELIVER, RETURN, DONE };
+    enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, DIVERT, DELIVER, SWEEP, RETURN, DONE };
 
     uint32_t m_nodeId = 0;
     ns3::Ptr<ns3::NetDevice> m_dev;
     SarMetrics* m_metrics = nullptr;
+    Mode m_mode = Mode::SUMMONED;
     std::vector<Fragment> m_full;
+    std::vector<ns3::Vector> m_sensors;   // for SWEEP_DUMP GMC
+    std::vector<ns3::Vector> m_targets;
+    size_t m_ti = 0;
+    double m_radius = 50.0;
     double m_alt = 20.0, m_speed = 15.0;
     ns3::Vector m_loiter{0, 0, 0};
     ns3::Vector m_divert{0, 0, 0};

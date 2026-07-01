@@ -9,8 +9,14 @@ build_lib(
     models/common/log.cc
     models/common/uav-trajectory.cc
     models/common/kmeans-model.cc
+    models/common/semantic-fragment.cc
+    models/common/cell-layer.cc
+    models/common/local-clue.cc
+    models/common/cooperation-phy-mac.cc
     models/network/scenario1-network.cc
+    models/network/a2g-log-distance-loss.cc
     models/application/basestation-app.cc
+    models/application/uav-dissemination-model.cc
     models/application/uav-app.cc
     models/application/uav-flight-controller.cc
     models/application/ground-node-app.cc
@@ -26,8 +32,14 @@ build_lib(
     models/common/log.h
     models/common/uav-trajectory.h
     models/common/kmeans-model.h
+    models/common/semantic-fragment.h
+    models/common/cell-layer.h
+    models/common/local-clue.h
+    models/common/cooperation-phy-mac.h
     models/network/scenario1-network.h
+    models/network/a2g-log-distance-loss.h
     models/application/basestation-app.h
+    models/application/uav-dissemination-model.h
     models/application/uav-app.h
     models/application/uav-flight-controller.h
     models/application/ground-node-app.h

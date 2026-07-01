@@ -17,9 +17,9 @@ struct NetworkPosition {
 struct NetworkConfig {
     // Topology
     uint32_t gridSize = 10;
-    double gridSpacing = 20.0;
-    NetworkPosition baseStationPos{-200.0, -200.0, 0.0};
-    NetworkPosition uavStartPos{-200.0, -200.0, 20.0};
+    double gridSpacing = 45.0;
+    NetworkPosition baseStationPos{-100.0, -100.0, 0.0};
+    NetworkPosition uavStartPos{-100.0, -100.0, 20.0};
 
     // Radio
     double txPowerDbm = 0.0;

@@ -129,10 +129,14 @@ Test: ✗ (RX callbacks still not firing)
 - **Broadcast vs Unicast:** Mac16Address("ff:ff") for broadcast
 - **Namespace:** LrWpan classes in `ns3::lrwpan::` namespace (e.g., `ns3::lrwpan::LrWpanNetDevice`)
 
-### Fragment Generation
-- **Algorithm:** Pixel-stride interleaving over 416×416×3 pixels
-- **Formula:** `evidence_i = 1 - (1 - 0.90)^(pixelCount_i / totalPixels)`
-- **Don't deviate** — paper baseline depends on exact match
+### Fragment Generation (semantic-layer model)
+- **Model:** coarse-to-fine semantic target profile, NOT pixel chunks. See `docs/progress/SEMANTIC_FRAGMENTATION_STORY.md`.
+- **Code:** `models/common/semantic-fragment.h/.cc` (pure data, no ns-3 dep). `TargetProfile::Generate(totalFragments, layerSplit, fullPayloadBytes)`.
+- **4 layers** (`SemanticLayer` enum): IDENTITY_CUE → SEMANTIC_DESCRIPTOR → LOCAL_DETAIL → FULL_REFERENCE.
+- **Default profile** (28 fragments, layerSplit {4,8,12,4}): L0 4×16B, L1 8×48B, L2 12×128B, L3 4×2048B. `fullPayloadBytes>0` collapses L3 to 1 fragment of that size.
+- **Confidence:** noisy-OR `C = 1 - ∏(1-utility_i)` — progressive, diminishing returns.
+- **Per-layer utility** (placeholder, tunable): 0.30 / 0.12 / 0.05 / 0.40 → cumulative C ≈ 0.76 / 0.91 / 0.95 / 0.99.
+- The old pixel-stride formula is **superseded** — do not reintroduce it.
 
 ### Network Parameters
 - **Grid spacing:** 20.0m (NOT 45m)

@@ -53,7 +53,13 @@ void SarDataUavApp::TryClaimDivert(double x, double y) {
     Vector p = m_fc.GetPosition();
     m_divert = Vector(x, y, m_alt);
     m_divertStartDist = std::hypot(x - p.x, y - p.y);
-    m_state = State::DIVERT;
+    // If already cruising (loiter/en-route), divert now; if still on the ground
+    // or climbing, remember it and divert once we reach cruise altitude — else a
+    // late TakeOff would clobber the DIVERT state.
+    if (m_state == State::LOITER || m_state == State::GOTO_CENTER)
+        m_state = State::DIVERT;
+    else
+        m_pendingDivert = true;
     if (m_metrics) {
         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA", "divert", "to region", p.x, p.y, p.z);
         m_metrics->AddDeviation(m_divertStartDist);
@@ -65,9 +71,17 @@ void SarDataUavApp::ControlTick() {
     double arriveR = std::max(1.0, m_speed * params::kControlTickS * 1.5);
     switch (m_state) {
         case State::CLIMB:
-            if (p.z >= m_alt) { m_fc.SetClimb(0); m_state = State::GOTO_CENTER;
-                m_fc.Turn(std::atan2(m_loiter.y - p.y, m_loiter.x - p.x) * 180 / M_PI);
-                m_fc.Forward(m_speed); }
+            if (p.z >= m_alt) {
+                m_fc.SetClimb(0);
+                if (m_pendingDivert) {   // claimed before takeoff -> go straight to region
+                    m_pendingDivert = false;
+                    m_state = State::DIVERT;
+                } else {
+                    m_state = State::GOTO_CENTER;
+                    m_fc.Turn(std::atan2(m_loiter.y - p.y, m_loiter.x - p.x) * 180 / M_PI);
+                    m_fc.Forward(m_speed);
+                }
+            }
             break;
         case State::GOTO_CENTER:
             if (std::hypot(m_loiter.x - p.x, m_loiter.y - p.y) <= arriveR) {

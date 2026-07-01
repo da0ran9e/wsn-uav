@@ -64,6 +64,7 @@ private:
     ns3::Address m_bsAddr;
     std::shared_ptr<int32_t> m_claim;
     bool m_claimed = false;
+    bool m_pendingDivert = false;   // claimed before airborne; divert after climb
     bool m_confirmed = false;
     double m_divertStartDist = 0;
 

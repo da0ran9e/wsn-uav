@@ -17,3 +17,17 @@ build_lib_example(
     ${libuav-sar}
     ${libcore}
 )
+
+# Phase 2 channel smoke test (PDR vs distance/altitude).
+build_lib_example(
+  NAME uav-sar-channel-test
+  SOURCE_FILES channel-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+    ${libnetwork}
+    ${libmobility}
+    ${libspectrum}
+    ${libpropagation}
+    ${liblr-wpan}
+)

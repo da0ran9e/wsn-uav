@@ -9,12 +9,16 @@ build_lib(
     models/common/sar-info.cc
     models/common/cell-grid.cc
     models/common/inter-cell-routing.cc
+    models/network/air-ground-loss.cc
+    models/network/sar-network.cc
 
   HEADER_FILES
     models/common/sar-info.h
     models/common/sar-params.h
     models/common/cell-grid.h
     models/common/inter-cell-routing.h
+    models/network/air-ground-loss.h
+    models/network/sar-network.h
 
   LIBRARIES_TO_LINK
     ${libcore}

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAV-WSN Search &amp; Rescue — Simulation Replay</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel2: #1c2330;
+    --border: #2a3340;
+    --text: #d7dde6;
+    --muted: #8b97a7;
+    --accent: #4fa8ff;
+    --fast: #ffb347;
+    --data: #4fd1c5;
+    --target: #ff4d5e;
+    --bs: #b388ff;
+    --good: #46d369;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    overflow: hidden;
+  }
+  header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, #131a26, #0d1117);
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; letter-spacing: .3px; }
+  header h1 .accent { color: var(--accent); }
+  header .filebar { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn {
+    background: var(--panel2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 12px; cursor: pointer; font-size: 12px;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #06121f; border-color: var(--accent); font-weight: 600; }
+  .loadstate { font-size: 11px; color: var(--muted); }
+  .loadstate b { color: var(--good); }
+
+  #main {
+    display: flex; height: calc(100% - 53px);
+  }
+  #mapwrap {
+    flex: 1 1 auto; position: relative;
+    display: flex; flex-direction: column;
+    min-width: 0;
+  }
+  #drop {
+    flex: 1 1 auto; position: relative; min-height: 0;
+  }
+  #drop.dragover::after {
+    content: "Drop trajectories.csv / events.csv / metrics.csv";
+    position: absolute; inset: 12px;
+    border: 2px dashed var(--accent); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: 16px; background: rgba(79,168,255,.06);
+    pointer-events: none;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  #controls {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 14px; background: var(--panel);
+    border-top: 1px solid var(--border);
+  }
+  #controls .time { font-variant-numeric: tabular-nums; min-width: 92px; color: var(--accent); font-weight: 600; }
+  #scrub { flex: 1 1 auto; cursor: pointer; }
+  #controls label { color: var(--muted); font-size: 11px; }
+  select, input[type=range] { accent-color: var(--accent); }
+  select { background: var(--panel2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; }
+
+  #side {
+    width: 340px; flex: 0 0 340px;
+    border-left: 1px solid var(--border);
+    background: var(--panel);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .section { border-bottom: 1px solid var(--border); }
+  .section h2 {
+    margin: 0; padding: 8px 12px; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--muted); background: var(--panel2);
+  }
+  #metrics { padding: 8px 12px; }
+  #metrics .primary {
+    background: rgba(70,211,105,.08); border: 1px solid rgba(70,211,105,.35);
+    border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+  }
+  #metrics .primary .label { color: var(--muted); font-size: 11px; }
+  #metrics .primary .val { font-size: 22px; font-weight: 700; color: var(--good); }
+  #metrics .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  #metrics .grid div { display: flex; justify-content: space-between; gap: 6px; padding: 1px 0; }
+  #metrics .grid .k { color: var(--muted); }
+  #metrics .grid .v { font-variant-numeric: tabular-nums; }
+
+  #log { flex: 1 1 auto; overflow-y: auto; }
+  .logrow {
+    display: flex; gap: 8px; padding: 5px 12px; cursor: pointer;
+    border-left: 3px solid transparent; align-items: baseline;
+    border-bottom: 1px solid rgba(255,255,255,.03);
+  }
+  .logrow:hover { background: var(--panel2); }
+  .logrow .lt { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 44px; font-size: 11px; }
+  .logrow .le { font-weight: 600; }
+  .logrow .ld { color: var(--muted); font-size: 11px; }
+
+  #legend { padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  #legend span { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  #legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .empty { color: var(--muted); padding: 10px 12px; font-style: italic; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="accent">UAV-WSN</span> Search &amp; Rescue — Simulation Replay</h1>
+  <div class="filebar">
+    <span class="loadstate" id="loadstate"></span>
+    <button class="btn" id="loadBtn">Load CSVs…</button>
+    <button class="btn primary" id="sampleBtn">Load sample</button>
+    <input type="file" id="fileInput" accept=".csv" multiple style="display:none">
+  </div>
+</header>
+
+<div id="main">
+  <div id="mapwrap">
+    <div id="drop"><canvas id="cv"></canvas></div>
+    <div id="controls">
+      <button class="btn" id="playBtn">▶ Play</button>
+      <span class="time" id="timeLabel">0.00 s</span>
+      <input type="range" id="scrub" min="0" max="100" value="0" step="0.01">
+      <label>Speed</label>
+      <select id="speed">
+        <option value="0.25">0.25×</option>
+        <option value="0.5">0.5×</option>
+        <option value="1" selected>1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+        <option value="8">8×</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="side">
+    <div class="section">
+      <h2>Metrics</h2>
+      <div id="metrics"><div class="empty">No metrics loaded</div></div>
+    </div>
+    <div class="section">
+      <h2>Legend</h2>
+      <div id="legend">
+        <span><i style="background:var(--fast)"></i>FAST UAV</span>
+        <span><i style="background:var(--data)"></i>DATA UAV</span>
+        <span><i style="background:var(--bs)"></i>Base Station</span>
+        <span><i style="background:var(--target)"></i>Target node</span>
+        <span><i style="background:#3a4655"></i>Sensor</span>
+      </div>
+    </div>
+    <div class="section" style="flex:1 1 auto; display:flex; flex-direction:column; min-height:0;">
+      <h2>Event Log</h2>
+      <div id="log"><div class="empty">No events loaded</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Event color palette (by event type)
+   ============================================================ */
+const EVENT_COLORS = {
+  takeoff:     "#9aa7b8",
+  frag_tx:     "#ffb347",
+  frag_rx:     "#d99b3a",
+  detect:      "#ff4d5e",
+  confirm_req: "#ff7aa0",
+  confirm_ack: "#ff9ec2",
+  beacon:      "#b388ff",
+  divert:      "#4fd1c5",
+  fulldata_tx: "#46d369",
+  fulldata_rx: "#3ab058",
+  complete:    "#4fa8ff",
+  // uav-sar (round-2) events
+  summon_start:"#b388ff",
+  deliver_start:"#46d369",
+  report_tx:   "#ffd166",
+  report_rx:   "#4fa8ff",
+};
+function eventColor(e){ return EVENT_COLORS[e] || "#7d8aa0"; }
+
+/* ============================================================
+   Robust CSV parser (handles quoted fields w/ commas, CRLF,
+   trailing newlines). Returns array of row objects keyed by header.
+   ============================================================ */
+function parseCSV(text){
+  const rows = [];
+  let field = "", row = [], inQ = false;
+  text = text.replace(/^﻿/, ""); // strip BOM
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (inQ){
+      if (c === '"'){
+        if (text[i+1] === '"'){ field += '"'; i++; }
+        else inQ = false;
+      } else field += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ','){ row.push(field); field = ""; }
+      else if (c === '\n' || c === '\r'){
+        if (c === '\r' && text[i+1] === '\n') i++;
+        row.push(field); field = "";
+        if (row.length > 1 || row[0] !== "") rows.push(row);
+        row = [];
+      } else field += c;
+    }
+  }
+  if (field !== "" || row.length){ row.push(field); if (row.length>1 || row[0]!=="") rows.push(row); }
+  if (!rows.length) return [];
+  const header = rows[0].map(h => h.trim());
+  return rows.slice(1).map(r => {
+    const o = {};
+    header.forEach((h,idx) => o[h] = (r[idx] !== undefined ? r[idx].trim() : ""));
+    return o;
+  });
+}
+const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+
+/* ============================================================
+   Application state
+   ============================================================ */
+const state = {
+  trajectories: [],   // {t,uavId,role,x,y,z}
+  uavs: {},           // uavId -> {role, samples:[{t,x,y,z}]}
+  events: [],         // {t,nodeId,role,event,detail,x,y,z}
+  metrics: null,      // object
+  tMin: 0, tMax: 30,
+  time: 0,
+  playing: false,
+  speed: 1,
+  bounds: null,       // {minx,maxx,miny,maxy}
+  spacing: 20,
+  targetId: null,
+  flashUntil: {},     // event index -> flash deadline
+};
+
+/* ============================================================
+   Data ingestion
+   ============================================================ */
+function loadTrajectories(text){
+  const rows = parseCSV(text);
+  state.trajectories = rows.map(r => ({
+    t: num(r.t), uavId: parseInt(r.uavId), role: r.role || "",
+    x: num(r.x), y: num(r.y), z: num(r.z)
+  })).filter(r => !isNaN(r.uavId));
+  rebuildUavs();
+  recomputeBounds(); recomputeTimeRange(); resetUI();
+}
+function loadEvents(text){
+  const rows = parseCSV(text);
+  state.events = rows.map(r => ({
+    t: num(r.t), nodeId: r.nodeId, role: r.role || "", event: r.event || "",
+    detail: r.detail || "", x: num(r.x), y: num(r.y), z: num(r.z)
+  })).sort((a,b) => a.t - b.t);
+  inferTarget();
+  recomputeBounds(); recomputeTimeRange(); resetUI();
+}
+function loadMetrics(text){
+  const rows = parseCSV(text);
+  state.metrics = rows.length ? rows[0] : null;
+  if (state.metrics && state.metrics.targetNodeId !== undefined &&
+      state.metrics.targetNodeId !== "" && num(state.metrics.targetNodeId) >= 0){
+    state.targetId = String(parseInt(state.metrics.targetNodeId));
+  }
+  inferTarget();
+  renderMetrics(); resetUI();
+}
+
+function rebuildUavs(){
+  state.uavs = {};
+  for (const s of state.trajectories){
+    if (!state.uavs[s.uavId]) state.uavs[s.uavId] = { role: s.role, samples: [] };
+    state.uavs[s.uavId].samples.push({ t: s.t, x: s.x, y: s.y, z: s.z });
+    if (s.role) state.uavs[s.uavId].role = s.role;
+  }
+  for (const id in state.uavs) state.uavs[id].samples.sort((a,b)=>a.t-b.t);
+}
+
+function inferTarget(){
+  if (state.targetId !== null) return;
+  // from events with role "target", else "detect"/"complete" nodeId
+  const tEv = state.events.find(e => e.role === "target");
+  if (tEv){ state.targetId = String(tEv.nodeId); return; }
+  const dEv = state.events.find(e => e.event === "detect");
+  if (dEv){ state.targetId = String(dEv.nodeId); }
+}
+
+function recomputeBounds(){
+  let minx=Infinity, maxx=-Infinity, miny=Infinity, maxy=-Infinity;
+  const add = (x,y) => { if (x<minx)minx=x; if (x>maxx)maxx=x; if (y<miny)miny=y; if (y>maxy)maxy=y; };
+  for (const s of state.trajectories) add(s.x, s.y);
+  for (const e of state.events) add(e.x, e.y);
+  if (!isFinite(minx)){ state.bounds = null; return; }
+  state.bounds = { minx, maxx, miny, maxy };
+  // infer grid extent: sensors live in positive quadrant; spacing guess 20
+  const ext = Math.max(maxx, maxy, 0);
+  state.spacing = 20;
+  state.gridN = ext > 0 ? Math.round(ext / state.spacing) + 1 : 8;
+}
+
+function recomputeTimeRange(){
+  let mn=Infinity, mx=-Infinity;
+  for (const s of state.trajectories){ mn=Math.min(mn,s.t); mx=Math.max(mx,s.t); }
+  for (const e of state.events){ mn=Math.min(mn,e.t); mx=Math.max(mx,e.t); }
+  if (!isFinite(mn)){ state.tMin=0; state.tMax=30; return; }
+  state.tMin = Math.min(0, mn);
+  state.tMax = Math.max(mx, state.tMin + 1);
+}
+
+/* ============================================================
+   Interpolated UAV position at a given time
+   ============================================================ */
+function uavPosAt(uav, t){
+  const s = uav.samples;
+  if (!s.length) return null;
+  if (t <= s[0].t) return { x:s[0].x, y:s[0].y, z:s[0].z };
+  if (t >= s[s.length-1].t){ const l=s[s.length-1]; return { x:l.x, y:l.y, z:l.z }; }
+  for (let i=0; i<s.length-1; i++){
+    if (t >= s[i].t && t <= s[i+1].t){
+      const a=s[i], b=s[i+1];
+      const f = (b.t===a.t) ? 0 : (t-a.t)/(b.t-a.t);
+      return { x: a.x+(b.x-a.x)*f, y: a.y+(b.y-a.y)*f, z: a.z+(b.z-a.z)*f };
+    }
+  }
+  const l=s[s.length-1]; return { x:l.x, y:l.y, z:l.z };
+}
+// trail: samples + current interpolated point within last `window` seconds
+function uavTrail(uav, t, window){
+  const pts = [];
+  for (const s of uav.samples){ if (s.t <= t && s.t >= t-window) pts.push({x:s.x,y:s.y}); }
+  const cur = uavPosAt(uav, t);
+  if (cur) pts.push({x:cur.x,y:cur.y});
+  return pts;
+}
+function roleColor(role){ return role === "DATA" ? getCss("--data") : getCss("--fast"); }
+function getCss(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+/* ============================================================
+   Canvas rendering
+   ============================================================ */
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+let view = { scale:1, ox:0, oy:0 }; // world->screen
+
+function resizeCanvas(){
+  const r = cv.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.max(1, Math.floor(r.width*dpr));
+  cv.height = Math.max(1, Math.floor(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  computeView(r.width, r.height);
+  draw();
+}
+function computeView(w, h){
+  const b = state.bounds;
+  let minx=-220,maxx=160,miny=-220,maxy=160;
+  if (b){ minx=b.minx; maxx=b.maxx; miny=b.miny; maxy=b.maxy; }
+  const pad = 40;
+  const ww = Math.max(maxx-minx, 1), wh = Math.max(maxy-miny, 1);
+  const sx = (w-2*pad)/ww, sy = (h-2*pad)/wh;
+  const sc = Math.min(sx, sy);
+  view.scale = sc;
+  // center; world y up -> screen y down (flip)
+  view.ox = pad + (w-2*pad - ww*sc)/2 - minx*sc;
+  view.oy = h - pad - (h-2*pad - wh*sc)/2 + miny*sc;
+}
+function wx(x){ return view.ox + x*view.scale; }
+function wy(y){ return view.oy - y*view.scale; }
+
+function draw(){
+  const w = cv.clientWidth, h = cv.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  // bg grid faint
+  drawSensorGrid();
+  drawBS();
+  drawEventPulses();
+  drawTarget();
+  drawUavs();
+}
+
+function drawSensorGrid(){
+  const n = state.gridN || 8, sp = state.spacing;
+  ctx.fillStyle = "#3a4655";
+  ctx.strokeStyle = "rgba(120,140,170,.10)";
+  ctx.lineWidth = 1;
+  for (let r=0; r<n; r++){
+    for (let c=0; c<n; c++){
+      const px = wx(c*sp), py = wy(r*sp);
+      const isTarget = isTargetCell(c, r);
+      ctx.fillStyle = isTarget ? "#5a2530" : "#3a4655";
+      ctx.fillRect(px-3, py-3, 6, 6);
+    }
+  }
+}
+// identify the grid cell that matches the target node location
+function targetWorld(){
+  if (state.targetId === null) return null;
+  // try events for that nodeId with a position
+  const ev = state.events.find(e => String(e.nodeId)===String(state.targetId) && (e.x||e.y));
+  if (ev) return { x: ev.x, y: ev.y };
+  const det = state.events.find(e => e.event==="detect");
+  if (det) return { x: det.x, y: det.y };
+  return null;
+}
+function isTargetCell(c, r){
+  const tw = targetWorld(); if (!tw) return false;
+  return Math.abs(c*state.spacing - tw.x) < 1 && Math.abs(r*state.spacing - tw.y) < 1;
+}
+
+function drawBS(){
+  let bs = null;
+  const ev = state.events.find(e => e.role==="BS");
+  if (ev) bs = {x:ev.x, y:ev.y};
+  else if (!state.events.length && !state.trajectories.length) bs = {x:-200,y:-200};
+  if (!bs) return;
+  const px=wx(bs.x), py=wy(bs.y);
+  ctx.fillStyle = getCss("--bs");
+  ctx.beginPath();
+  ctx.moveTo(px, py-10); ctx.lineTo(px+9, py+7); ctx.lineTo(px-9, py+7); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#06121f"; ctx.font = "bold 9px sans-serif"; ctx.textAlign="center";
+  ctx.fillText("BS", px, py+5);
+  ctx.fillStyle = getCss("--muted"); ctx.font="10px sans-serif";
+  ctx.fillText("Base Station", px, py+22);
+}
+
+function drawTarget(){
+  const tw = targetWorld(); if (!tw) return;
+  const px=wx(tw.x), py=wy(tw.y);
+  const pulse = 1 + 0.25*Math.sin(Date.now()/250);
+  ctx.strokeStyle = getCss("--target"); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(px, py, 11*pulse, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2);
+  ctx.fillStyle = getCss("--target"); ctx.fill();
+  ctx.fillStyle = getCss("--target"); ctx.font="bold 10px sans-serif"; ctx.textAlign="center";
+  ctx.fillText("TARGET" + (state.targetId!==null?(" #"+state.targetId):""), px, py-16);
+}
+
+function drawEventPulses(){
+  const now = Date.now();
+  state.events.forEach((e, i) => {
+    if (e.t > state.time) return;
+    const flashEnd = state.flashUntil[i];
+    if (!flashEnd || now > flashEnd) return;
+    if (!(e.x || e.y)) return;
+    const age = 1 - (flashEnd - now)/900; // 0..1
+    const px=wx(e.x), py=wy(e.y);
+    ctx.globalAlpha = Math.max(0, 1-age);
+    ctx.strokeStyle = eventColor(e.event); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(px, py, 6 + age*28, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = Math.max(0, 1-age);
+    ctx.fillStyle = eventColor(e.event); ctx.font="bold 10px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(e.event, px, py - 12 - age*10);
+    ctx.globalAlpha = 1;
+  });
+}
+
+function drawUavs(){
+  for (const id in state.uavs){
+    const uav = state.uavs[id];
+    const col = roleColor(uav.role);
+    // trail
+    const trail = uavTrail(uav, state.time, 8);
+    if (trail.length > 1){
+      for (let i=1; i<trail.length; i++){
+        const a=trail[i-1], b=trail[i];
+        ctx.globalAlpha = 0.12 + 0.6*(i/trail.length);
+        ctx.strokeStyle = col; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(wx(a.x),wy(a.y)); ctx.lineTo(wx(b.x),wy(b.y)); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    const p = uavPosAt(uav, state.time); if (!p) continue;
+    const px=wx(p.x), py=wy(p.y);
+    // heading from last segment
+    let ang = -Math.PI/2;
+    if (trail.length>1){ const a=trail[trail.length-2], b=trail[trail.length-1];
+      if (a.x!==b.x || a.y!==b.y) ang = Math.atan2(-(b.y-a.y), b.x-a.x); }
+    ctx.save();
+    ctx.translate(px,py); ctx.rotate(ang);
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.moveTo(9,0); ctx.lineTo(-6,5); ctx.lineTo(-6,-5); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = col; ctx.font="bold 9px sans-serif"; ctx.textAlign="center";
+    ctx.fillText(uav.role + " #" + id, px, py - 11);
+  }
+}
+
+/* ============================================================
+   Metrics panel
+   ============================================================ */
+const METRIC_LABELS = {
+  seed:"Seed", gridSize:"Grid size", numUav:"# UAVs", numFrag:"# Fragments",
+  scheme:"Scheme", targetNodeId:"Target node",
+  timeToCompleteData_s:"Time to complete data (s)",
+  timeToReportAtBS_s:"Time to report at BS (s)",
+  timeToLocalize_s:"Time to localize (s)",
+  timeToFirstBeacon_s:"Time to first beacon (s)",
+  timeToConfirm_s:"Time to confirm (s)",
+  regionCells:"Region cells", intraShares:"Intra-cell shares",
+  interShares:"Inter-cell shares",
+  fragDeliveredPct:"Frag delivered %", pdr:"PDR",
+  beaconCount:"Beacon count", custodyHandoffs:"Custody handoffs",
+  pktSent:"Packets sent", pktRecv:"Packets recv",
+  uavEnergyJ:"UAV energy (J)", routeDeviation_m:"Route deviation (m)"
+};
+function fmtMetric(k, v){
+  if (v === undefined || v === "") return "—";
+  const n = parseFloat(v);
+  if (!isNaN(n) && n === -1) return "—";
+  return v;
+}
+function renderMetrics(){
+  const el = document.getElementById("metrics");
+  if (!state.metrics){ el.innerHTML = '<div class="empty">No metrics loaded</div>'; return; }
+  const m = state.metrics;
+  // uav-sar primary = time to report at BS (falls back to complete-data).
+  const primaryKey = (m.timeToReportAtBS_s !== undefined) ? "timeToReportAtBS_s" : "timeToCompleteData_s";
+  const primary = fmtMetric(primaryKey, m[primaryKey]);
+  let html = `<div class="primary"><div class="label">${METRIC_LABELS[primaryKey]}</div>
+    <div class="val">${primary === "—" ? "— (not achieved)" : primary + " s"}</div></div>`;
+  html += '<div class="grid">';
+  for (const k of Object.keys(METRIC_LABELS)){
+    if (k === primaryKey) continue;
+    if (m[k] === undefined) continue;
+    html += `<div><span class="k">${METRIC_LABELS[k]}</span><span class="v">${fmtMetric(k,m[k])}</span></div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+/* ============================================================
+   Event log panel
+   ============================================================ */
+function renderLog(){
+  const el = document.getElementById("log");
+  if (!state.events.length){ el.innerHTML = '<div class="empty">No events loaded</div>'; return; }
+  const visible = [];
+  state.events.forEach((e,i) => { if (e.t <= state.time + 1e-6) visible.push([e,i]); });
+  if (!visible.length){ el.innerHTML = '<div class="empty">No events yet at this time</div>'; return; }
+  visible.reverse();
+  let html = "";
+  for (const [e,i] of visible){
+    const c = eventColor(e.event);
+    const det = e.detail ? `<span class="ld">${escapeHtml(e.detail)}</span>` : "";
+    html += `<div class="logrow" data-t="${e.t}" style="border-left-color:${c}">
+      <span class="lt">${e.t.toFixed(2)}</span>
+      <span class="le" style="color:${c}">${escapeHtml(e.event)}</span>
+      <span class="ld">${escapeHtml(e.role)}${e.nodeId!==""?(" #"+escapeHtml(e.nodeId)):""}</span>
+      ${det}
+    </div>`;
+  }
+  el.innerHTML = html;
+  el.querySelectorAll(".logrow").forEach(row => {
+    row.addEventListener("click", () => { setTime(parseFloat(row.dataset.t)); });
+  });
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ============================================================
+   Playback control
+   ============================================================ */
+const scrub = document.getElementById("scrub");
+const timeLabel = document.getElementById("timeLabel");
+const playBtn = document.getElementById("playBtn");
+
+function resetUI(){
+  scrub.min = state.tMin; scrub.max = state.tMax; scrub.step = 0.01;
+  if (state.time < state.tMin || state.time > state.tMax) state.time = state.tMin;
+  scrub.value = state.time;
+  updateLoadState();
+  renderMetrics(); renderLog(); updateTimeLabel(); draw();
+}
+function setTime(t){
+  const prev = state.time;
+  state.time = Math.max(state.tMin, Math.min(state.tMax, t));
+  // flash events crossed (forward only)
+  if (state.time > prev){
+    state.events.forEach((e,i) => {
+      if (e.t > prev && e.t <= state.time) state.flashUntil[i] = Date.now() + 900;
+    });
+  }
+  scrub.value = state.time;
+  updateTimeLabel(); renderLog();
+}
+function updateTimeLabel(){ timeLabel.textContent = state.time.toFixed(2) + " s"; }
+function updateLoadState(){
+  const parts = [];
+  parts.push(state.trajectories.length ? "traj <b>✓</b>" : "traj —");
+  parts.push(state.events.length ? "events <b>✓</b>" : "events —");
+  parts.push(state.metrics ? "metrics <b>✓</b>" : "metrics —");
+  document.getElementById("loadstate").innerHTML = parts.join(" · ");
+}
+
+playBtn.addEventListener("click", () => { state.playing = !state.playing; playBtn.textContent = state.playing ? "⏸ Pause" : "▶ Play"; });
+scrub.addEventListener("input", () => { state.playing=false; playBtn.textContent="▶ Play"; setTime(parseFloat(scrub.value)); });
+document.getElementById("speed").addEventListener("change", e => { state.speed = parseFloat(e.target.value); });
+
+let lastFrame = performance.now();
+function loop(now){
+  const dt = (now - lastFrame)/1000; lastFrame = now;
+  if (state.playing){
+    let nt = state.time + dt*state.speed;
+    if (nt >= state.tMax){ nt = state.tMax; state.playing=false; playBtn.textContent="▶ Play"; }
+    setTime(nt);
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============================================================
+   File loading (picker + drag/drop)
+   ============================================================ */
+function dispatchFile(name, text){
+  const n = name.toLowerCase();
+  if (n.includes("traj")) loadTrajectories(text);
+  else if (n.includes("event")) loadEvents(text);
+  else if (n.includes("metric")) loadMetrics(text);
+  else {
+    // guess by header
+    const head = text.slice(0, 200).toLowerCase();
+    if (head.includes("uavid")) loadTrajectories(text);
+    else if (head.includes("event")) loadEvents(text);
+    else if (head.includes("timetocompletedata")) loadMetrics(text);
+  }
+}
+function readFiles(files){
+  for (const f of files){
+    const reader = new FileReader();
+    reader.onload = () => dispatchFile(f.name, reader.result);
+    reader.readAsText(f);
+  }
+}
+document.getElementById("loadBtn").addEventListener("click", () => document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change", e => readFiles(e.target.files));
+
+const drop = document.getElementById("drop");
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("dragover"); }));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("dragover"); }));
+drop.addEventListener("drop", e => { if (e.dataTransfer.files.length) readFiles(e.dataTransfer.files); });
+
+document.getElementById("sampleBtn").addEventListener("click", loadSample);
+
+/* ============================================================
+   Embedded synthetic SAMPLE dataset
+   8x8 grid (spacing 20 -> 0..140), BS (-200,-200),
+   4 UAVs (2 FAST, 2 DATA). Target sensor near (120,100).
+   ============================================================ */
+const SAMPLE = {
+trajectories:
+`t,uavId,role,x,y,z
+0,1,FAST,-200,-200,0
+2,1,FAST,-180,-150,20
+6,1,FAST,0,0,20
+10,1,FAST,40,40,20
+14,1,FAST,80,60,20
+18,1,FAST,120,80,20
+22,1,FAST,140,140,20
+28,1,FAST,140,140,20
+0,2,FAST,-200,-200,0
+2,2,FAST,-150,-180,20
+6,2,FAST,0,140,20
+10,2,FAST,40,120,20
+14,2,FAST,80,140,20
+18,2,FAST,120,120,20
+22,2,FAST,20,20,20
+28,2,FAST,0,0,20
+0,3,DATA,-200,-200,0
+2,3,DATA,-170,-170,20
+6,3,DATA,-40,-40,20
+10,3,DATA,0,20,20
+14,3,DATA,20,40,20
+18,3,DATA,40,60,20
+19.2,3,DATA,60,70,20
+22,3,DATA,100,90,20
+24,3,DATA,120,100,20
+28,3,DATA,120,100,20
+0,4,DATA,-200,-200,0
+2,4,DATA,-160,-190,20
+6,4,DATA,-20,0,20
+10,4,DATA,20,0,20
+14,4,DATA,60,20,20
+18,4,DATA,100,20,20
+22,4,DATA,140,40,20
+28,4,DATA,140,40,20
+`,
+events:
+`t,nodeId,role,event,detail,x,y,z
+0,0,BS,beacon,BS online,-200,-200,0
+2,1,FAST,takeoff,FAST UAV airborne,-200,-200,0
+2,2,FAST,takeoff,FAST UAV airborne,-200,-200,0
+2,3,DATA,takeoff,DATA UAV airborne,-200,-200,0
+2,4,DATA,takeoff,DATA UAV airborne,-200,-200,0
+6,1,FAST,frag_tx,"frag 1/8 broadcast",0,0,20
+8,10,sensor,frag_rx,"frag 1/8 stored",0,20,0
+10,1,FAST,frag_tx,"frag 3/8 broadcast",40,40,20
+12,18,sensor,frag_rx,"frag 4/8 stored",40,60,0
+14,2,FAST,frag_tx,"frag 5/8 broadcast",80,140,20
+18,38,target,detect,"anomaly detected node 38",120,100,0
+18.5,38,target,confirm_req,"request confirmation",120,100,0
+18.7,1,FAST,confirm_ack,"FAST confirms target",120,80,20
+19,38,target,beacon,"distress beacon emitted",120,100,0
+19.2,3,DATA,divert,"DATA UAV diverting to target",60,70,20
+24,3,DATA,fulldata_tx,"request full payload",120,100,20
+24.5,38,target,fulldata_tx,"sending full image",120,100,0
+25,3,DATA,fulldata_rx,"full payload received",120,100,20
+28,0,BS,complete,"mission complete, data delivered",-200,-200,0
+`,
+metrics:
+`seed,gridSize,numUav,numFrag,scheme,targetNodeId,timeToCompleteData_s,timeToFirstBeacon_s,timeToConfirm_s,fragDeliveredPct,pdr,beaconCount,custodyHandoffs,pktSent,pktRecv,uavEnergyJ,routeDeviation_m
+42,8,4,8,fast-data-relay,38,28.0,19.0,18.7,100.0,0.97,3,1,212,206,1840.5,86.3
+`
+};
+function loadSample(){
+  state.targetId = null;
+  loadTrajectories(SAMPLE.trajectories);
+  loadEvents(SAMPLE.events);
+  loadMetrics(SAMPLE.metrics);
+  state.time = state.tMin;
+  resetUI();
+}
+
+/* ============================================================
+   Init
+   ============================================================ */
+window.addEventListener("resize", resizeCanvas);
+loadSample();
+resizeCanvas();
+</script>
+</body>
+</html>

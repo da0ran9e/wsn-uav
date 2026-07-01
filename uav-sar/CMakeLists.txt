@@ -7,9 +7,14 @@ build_lib(
 
   SOURCE_FILES
     models/common/sar-info.cc
+    models/common/cell-grid.cc
+    models/common/inter-cell-routing.cc
 
   HEADER_FILES
     models/common/sar-info.h
+    models/common/sar-params.h
+    models/common/cell-grid.h
+    models/common/inter-cell-routing.h
 
   LIBRARIES_TO_LINK
     ${libcore}

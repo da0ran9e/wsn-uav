@@ -8,3 +8,12 @@ build_lib_example(
     ${libuav-sar}
     ${libcore}
 )
+
+# Phase 1 substrate verification (pure logic; no ns-3 sim).
+build_lib_example(
+  NAME uav-sar-substrate-test
+  SOURCE_FILES substrate-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+)

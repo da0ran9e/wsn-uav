@@ -34,6 +34,7 @@ build_lib(
     models/common/kmeans-model.h
     models/common/semantic-fragment.h
     models/common/cell-layer.h
+    models/common/hex-cells-reference.h
     models/common/local-clue.h
     models/common/cooperation-phy-mac.h
     models/network/scenario1-network.h

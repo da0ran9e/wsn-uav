@@ -31,3 +31,12 @@ build_lib_example(
     ${libpropagation}
     ${liblr-wpan}
 )
+
+# Phase 3 fragment + clue verification (pure logic).
+build_lib_example(
+  NAME uav-sar-signal-test
+  SOURCE_FILES signal-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+)

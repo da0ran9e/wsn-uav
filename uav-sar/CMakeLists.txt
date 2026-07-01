@@ -11,6 +11,8 @@ build_lib(
     models/common/inter-cell-routing.cc
     models/network/air-ground-loss.cc
     models/network/sar-network.cc
+    models/common/target-profile.cc
+    models/common/clue-field.cc
 
   HEADER_FILES
     models/common/sar-info.h
@@ -19,6 +21,8 @@ build_lib(
     models/common/inter-cell-routing.h
     models/network/air-ground-loss.h
     models/network/sar-network.h
+    models/common/target-profile.h
+    models/common/clue-field.h
 
   LIBRARIES_TO_LINK
     ${libcore}

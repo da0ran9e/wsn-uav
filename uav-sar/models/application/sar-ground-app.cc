@@ -133,20 +133,37 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                     m_coord->ReportClue(m_nodeId, eff, Simulator::Now().GetSeconds());
             }
 
-            // Loop closure: leader (proposed) or victim node (baselines) must
-            // hold the ENTIRE dataset — every fragment id complete.
-            if ((m_isLeader || m_isTarget) && !m_confirmed && HasEntireDataset()) {
+            // Loop closure on holding the ENTIRE dataset (every fragment id).
+            //  - metric timeToCompleteData = the VICTIM's node (ground truth).
+            //  - control-plane CONFIRM = ANY completing node in cooperative
+            //    mode, so one shadow-blocked leader cannot deadlock the DATA
+            //    UAV (the leader additionally retries its CONFIRM).
+            if (!m_confirmed && HasEntireDataset()) {
                 m_confirmed = true;
                 Simulator::Cancel(m_beaconEvent);
                 Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
-                if (m_metrics) {
-                    m_metrics->MarkCompleteData(Simulator::Now().GetSeconds());
+                if (m_metrics && (m_isTarget || m_isLeader)) {
+                    if (m_isTarget) m_metrics->MarkCompleteData(Simulator::Now().GetSeconds());
                     m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
                                      m_isLeader ? "CL" : "target", "confirm",
                                      "entire dataset received", p.x, p.y, p.z);
                 }
-                if (m_isLeader) SendConfirm();          // retried broadcast
-                if (m_stopOnComplete) Simulator::Stop(Seconds(0.5));
+                if (m_coord) {
+                    if (m_isLeader) {
+                        SendConfirm();  // retried broadcast
+                    } else if (m_dev) {
+                        std::vector<uint8_t> c(kConfirmLen);
+                        uint8_t* q = c.data();
+                        *q++ = (uint8_t)Msg::CONFIRM;
+                        *q++ = kBroadcast;
+                        std::memcpy(q, &m_regionId, 2); q += 2;
+                        *q++ = (uint8_t)(m_nodeId & 0xFF);
+                        m_dev->Send(Create<Packet>(c.data(), c.size()),
+                                    Mac16Address("ff:ff"), 0);
+                        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(c.size()); }
+                    }
+                }
+                if (m_stopOnComplete && m_isTarget) Simulator::Stop(Seconds(0.5));
             }
         }
     }

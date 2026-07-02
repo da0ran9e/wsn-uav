@@ -46,8 +46,12 @@ public:
     void SetCoopThreshold(double coop) { m_coop = coop; }
     void SetIsTarget(bool t) { m_isTarget = t; }
     void SetStopOnComplete(bool s) { m_stopOnComplete = s; }
+    // Designated by the region ticket: the strongest-evidence node; it alone
+    // confirms the delivery (its footage is what the data is checked against).
+    void SetVerifier(bool v) { m_isVerifier = v; }
 
-    // Called by the coordinator when this node is elected region leader.
+    // Called on the region leader; (cx,cy) = the verifier's position, embedded
+    // in the SUMMON so the DATA UAV delivers directly over the verifier.
     void StartSummon(uint16_t regionId, double cx, double cy);
 
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
@@ -75,9 +79,11 @@ private:
 
     bool m_isLeader = false;
     bool m_isTarget = false;
+    bool m_isVerifier = false;
     bool m_stopOnComplete = false;
     bool m_confirmed = false;
     uint16_t m_regionId = 0;
+    double m_cx = 0, m_cy = 0;   // beacon coords = verifier position
     uint32_t m_beacons = 0;
     uint32_t m_confirmsSent = 0;
     ns3::EventId m_beaconEvent;

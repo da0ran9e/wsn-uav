@@ -69,9 +69,18 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     if (proposed) {
         m_coord.Init(&m_plan, &m_routing, &m_metrics,
                      params::kAlertThreshold, params::kCoopThreshold, cfg.seed,
-                     [this](uint32_t leaderNode, uint16_t rid, double x, double y) {
-                         auto it = m_groundById.find(leaderNode);
-                         if (it != m_groundById.end()) it->second->StartSummon(rid, x, y);
+                     [this](uint32_t leaderNode, uint32_t verifierNode, uint16_t rid,
+                            double /*cx*/, double /*cy*/) {
+                         // The ticket designates the verifier; the summon
+                         // carries the verifier's position so the DATA UAV
+                         // delivers directly over the node that must confirm.
+                         auto vit = m_groundById.find(verifierNode);
+                         auto lit = m_groundById.find(leaderNode);
+                         double vx = 0, vy = 0;
+                         auto nit = m_plan.nodes.find(verifierNode);
+                         if (nit != m_plan.nodes.end()) { vx = nit->second.x; vy = nit->second.y; }
+                         if (vit != m_groundById.end()) vit->second->SetVerifier(true);
+                         if (lit != m_groundById.end()) lit->second->StartSummon(rid, vx, vy);
                      });
     }
 

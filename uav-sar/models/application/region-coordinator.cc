@@ -131,6 +131,19 @@ void RegionCoordinator::CloseWindow() {
         ws += w;
     }
 
+    // Verifier = strongest-evidence node inside the region (tie: lowest id).
+    uint32_t verifier = m_plan->cells.at(leaderCell).leaderId;
+    double bestNodeEv = -1;
+    for (auto& [nid, ev] : m_nodeEvidence) {
+        int32_t c = m_plan->nodes.at(nid).cellId;
+        if (!region.count(c)) continue;
+        if (ev > bestNodeEv + 1e-9 ||
+            (std::fabs(ev - bestNodeEv) <= 1e-9 && nid < verifier)) {
+            bestNodeEv = ev;
+            verifier = nid;
+        }
+    }
+
     if (m_metrics) {
         m_metrics->SetRegionCells((uint32_t)region.size());
         for (uint32_t i = 0; i < interOk; i++) m_metrics->AddInterShare();
@@ -140,7 +153,7 @@ void RegionCoordinator::CloseWindow() {
     m_summoned = true;
     uint32_t leaderNode = m_plan->cells.at(leaderCell).leaderId;
     if (m_onSummon)
-        m_onSummon(leaderNode, 1, ws > 0 ? wx / ws : 0, ws > 0 ? wy / ws : 0);
+        m_onSummon(leaderNode, verifier, 1, ws > 0 ? wx / ws : 0, ws > 0 ? wy / ws : 0);
 }
 
 }  // namespace ns3::uavsar

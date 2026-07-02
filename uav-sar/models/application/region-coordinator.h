@@ -24,8 +24,11 @@ class SarMetrics;
 
 class RegionCoordinator {
 public:
-    // onSummon(leaderNodeId, regionId, centroidX, centroidY)
-    using SummonCb = std::function<void(uint32_t, uint16_t, double, double)>;
+    // onSummon(leaderNodeId, verifierNodeId, regionId, centroidX, centroidY).
+    // The verifier is the strongest-evidence node in the region — the node
+    // whose clue raised the alarm; it alone confirms the delivery (its footage
+    // is what the full data must be checked against).
+    using SummonCb = std::function<void(uint32_t, uint32_t, uint16_t, double, double)>;
 
     void Init(const CellGridPlan* plan, const InterCellRouting* routing,
               SarMetrics* metrics, double alertThreshold, double coopThreshold,

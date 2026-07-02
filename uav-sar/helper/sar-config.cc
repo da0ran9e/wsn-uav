@@ -6,6 +6,7 @@
 #include "ns3/core-module.h"
 #include "ns3/mobility-module.h"
 
+#include <algorithm>
 #include <random>
 #include <vector>
 
@@ -41,7 +42,9 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     }
     CellGridConfig cg;
     cg.cellRadius = params::kHexCellRadiusM;
-    cg.neighborRange = params::kNeighborRangeM;
+    // Ground link range derived from the G2G budget so the substrate never
+    // assumes links the PHY cannot sustain (review finding F6). ~37 m here.
+    cg.neighborRange = params::DeriveG2gRangeM();
     m_plan = BuildCellGrid(nodePos, cg);
     m_routing = BuildInterCellRouting(m_plan);
 
@@ -65,7 +68,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     // 5) region coordinator (control-plane, event-level) — proposed only
     if (proposed) {
         m_coord.Init(&m_plan, &m_routing, &m_metrics,
-                     params::kAlertThreshold, params::kCoopThreshold,
+                     params::kAlertThreshold, params::kCoopThreshold, cfg.seed,
                      [this](uint32_t leaderNode, uint16_t rid, double x, double y) {
                          auto it = m_groundById.find(leaderNode);
                          if (it != m_groundById.end()) it->second->StartSummon(rid, x, y);
@@ -91,19 +94,32 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     for (auto& p : s.sensorPositions) { cx += p.x; cy += p.y; }
     cx /= s.sensorPositions.size(); cy /= s.sensorPositions.size();
 
+    // Partition the sensor set into k contiguous x-bands so sweeping UAVs
+    // divide the area instead of flying identical GMC paths in convoy
+    // (review finding F5). Band i of k gets a contiguous slice sorted by x.
+    auto partition = [&](uint32_t i, uint32_t k) {
+        std::vector<Vector> sorted = s.sensorPositions;
+        std::sort(sorted.begin(), sorted.end(), [](const Vector& a, const Vector& b) {
+            return a.x != b.x ? a.x < b.x : a.y < b.y;
+        });
+        size_t n = sorted.size();
+        size_t lo = n * i / k, hi = n * (i + 1) / k;
+        return std::vector<Vector>(sorted.begin() + lo, sorted.begin() + hi);
+    };
+
     // 7) UAV apps
     uint32_t fastCount = proposed ? std::max<uint32_t>(1, (uint32_t)(numUav * cfg.fastRatio)) : 0;
     auto claim = std::make_shared<int32_t>(-1);
     for (uint32_t u = 0; u < numUav; u++) {
         if (!proposed) {
-            // baseline: every UAV sweeps the grid and dwell-dumps the full dataset.
+            // baseline: every UAV sweeps ITS band and dwell-dumps the dataset.
             Ptr<SarDataUavApp> app = CreateObject<SarDataUavApp>();
             app->SetNodeId(s.uavs.Get(u)->GetId());
             app->SetDevice(s.uavDevs.Get(u));
             app->SetMetrics(&m_metrics);
             app->SetFullDataset(full);
             app->SetMode(SarDataUavApp::Mode::SWEEP_DUMP);
-            app->SetSensorPositions(s.sensorPositions);
+            app->SetSensorPositions(partition(u, numUav));
             app->SetCruise(params::kCruiseAltitudeM, params::kDataSpeedMps);
             app->SetBs(bsPos, bsAddr);
             s.uavs.Get(u)->AddApplication(app);
@@ -121,7 +137,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetNodeId(s.uavs.Get(u)->GetId());
             app->SetDevice(s.uavDevs.Get(u));
             app->SetMetrics(&m_metrics);
-            app->SetSensorPositions(s.sensorPositions);
+            app->SetSensorPositions(partition(u, fastCount));
             app->SetCues(cues);
             app->SetCruise(params::kCruiseAltitudeM, params::kFastSpeedMps);
             s.uavs.Get(u)->AddApplication(app);
@@ -161,7 +177,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetCoordinator(proposed ? &m_coord : nullptr);
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);
-        app->SetThresholds(params::kCoopThreshold, params::kConfirmThreshold);
+        app->SetCoopThreshold(params::kCoopThreshold);
         app->SetIsTarget(id == targetId);
         app->SetStopOnComplete(!proposed);
         s.sensors.Get(i)->AddApplication(app);

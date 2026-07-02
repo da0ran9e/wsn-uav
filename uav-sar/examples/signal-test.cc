@@ -32,7 +32,8 @@ int main() {
     std::cout << "Confidence: L0only=" << cL0 << "  FAST(L0+L1)=" << cFast
               << "  FULL=" << cFull << "\n";
     std::cout << "thresholds: alert=" << params::kAlertThreshold
-              << " confirm=" << params::kConfirmThreshold << "\n\n";
+              << " coop=" << params::kCoopThreshold
+              << " (confirm = possession of the ENTIRE dataset)\n\n";
 
     // --- clue field on an 8x8 grid, victim near centre ---
     const uint32_t G = 8;
@@ -77,7 +78,7 @@ int main() {
         checks++; if (!ok) { fails++; std::cout << "  FAIL: " << m << "\n"; }
     };
     CHECK(cL0 < cFast && cFast < cFull, "confidence must grow L0<FAST<FULL");
-    CHECK(cFull >= params::kConfirmThreshold, "full data must reach confirm threshold");
+    CHECK(cFull >= 0.99, "full-dataset confidence should be near certain");
     CHECK(field.at(target).clueQuality >= 0.5, "victim node clue quality should be high");
     // monotonic-ish: a node far away should have ~0 quality (unless FP)
     uint32_t farId = 0;  // corner (0,0) far from centre

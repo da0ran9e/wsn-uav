@@ -100,7 +100,9 @@ void SarDataUavApp::ControlTick() {
             Vector t = m_targets[m_ti];
             if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
                 m_fc.Hover(); m_state = State::DELIVER;
-                SendFullChunk(0, 0);   // dwell-dump full at this cell
+                // blind dwell: cycle chunks for a fixed budget (no feedback)
+                m_dwellUntil = Simulator::Now().GetSeconds() + params::kBaselineDwellS;
+                SendFullChunk(0, 0);
             }
             break;
         }
@@ -128,16 +130,9 @@ void SarDataUavApp::ControlTick() {
             m_fc.Forward(m_speed);
             if (d <= arriveR) {
                 m_fc.Hover(); m_state = State::DONE;
-                if (m_dev) {  // send small report to BS
-                    std::vector<uint8_t> b(kReportLen);
-                    uint8_t* q = b.data();
-                    *q++ = (uint8_t)Msg::REPORT; *q++ = 0x00;
-                    uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2; *q++ = 255;
-                    m_dev->Send(Create<Packet>(b.data(), b.size()), m_bsAddr, 0);
-                    if (m_metrics) m_metrics->AddSent();
-                }
                 if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
                                                 "report_tx", "to BS", p.x, p.y, p.z);
+                SendReport();   // retried until quota (F2: no single-shot loss)
                 return;
             }
             break;
@@ -148,9 +143,14 @@ void SarDataUavApp::ControlTick() {
 }
 
 void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
+    if (m_state != State::DELIVER || m_full.empty()) return;  // stopped / nothing to send
     if (fi >= m_full.size()) {
-        // finished one full-dataset dump
+        // One full pass over the dataset finished.
         if (m_mode == Mode::SWEEP_DUMP) {
+            if (Simulator::Now().GetSeconds() < m_dwellUntil) {
+                SendFullChunk(0, 0);   // keep cycling within the dwell budget
+                return;
+            }
             m_ti++;
             Vector p = m_fc.GetPosition();
             if (m_ti >= m_targets.size()) { m_state = State::DONE; return; }
@@ -158,13 +158,18 @@ void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
             Vector t = m_targets[m_ti];
             m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI); m_fc.Forward(m_speed);
             // ControlTick is still looping (from DELIVER); it will service SWEEP.
+            return;
         }
-        return;  // SUMMONED: wait for CONFIRM
+        // SUMMONED: cycle until the leader's CONFIRM stops us — the cooperation
+        // feedback is exactly what lets us retransmit lost chunks and stop.
+        SendFullChunk(0, 0);
+        return;
     }
     const Fragment& f = m_full[fi];
-    uint16_t total = (uint16_t)std::max(1u, (f.sizeBytes + kFullChunkBytes - 1) / kFullChunkBytes);
+    uint16_t total = (uint16_t)std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
     if (m_dev) {
-        std::vector<uint8_t> b(kFullHdr + kFullChunkBytes, 0);
+        uint32_t payloadLen = std::min(kChunkBytes, f.sizeBytes - seq * kChunkBytes);
+        std::vector<uint8_t> b(kChunkHdr + payloadLen, 0);
         uint8_t* p = b.data();
         *p++ = (uint8_t)Msg::FULL; *p++ = kBroadcast;
         uint16_t id = (uint16_t)f.id; std::memcpy(p, &id, 2); p += 2;
@@ -172,16 +177,33 @@ void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
         std::memcpy(p, &total, 2); p += 2;
         *p++ = (uint8_t)f.layer;
         m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
-        if (m_metrics) m_metrics->AddSent();
+        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
     }
     uint16_t ns = seq + 1; size_t nf = fi;
     if (ns >= total) { ns = 0; nf = fi + 1; }
     Simulator::Schedule(Seconds(params::kDeliverStaggerS), &SarDataUavApp::SendFullChunk, this, nf, ns);
 }
 
+void SarDataUavApp::SendReport() {
+    if (m_reportsSent >= params::kReportRetries) return;
+    if (m_dev) {
+        std::vector<uint8_t> b(kReportLen);
+        uint8_t* q = b.data();
+        *q++ = (uint8_t)Msg::REPORT; *q++ = 0x00;
+        uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2; *q++ = 255;
+        m_dev->Send(Create<Packet>(b.data(), b.size()), m_bsAddr, 0);
+        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+    }
+    m_reportsSent++;
+    Simulator::Schedule(Seconds(params::kReportRetryS), &SarDataUavApp::SendReport, this);
+}
+
 void SarDataUavApp::TrajTick() {
-    if (m_metrics) { Vector p = m_fc.GetPosition();
-        m_metrics->Traj(Simulator::Now().GetSeconds(), m_nodeId, "DATA", p.x, p.y, p.z); }
+    if (m_metrics) {
+        Vector p = m_fc.GetPosition();
+        m_metrics->Traj(Simulator::Now().GetSeconds(), m_nodeId, "DATA", p.x, p.y, p.z);
+        m_metrics->AddEnergy(params::EnergyPowerW(m_fc.Speed()) * params::kTrajLogS);
+    }
     if (m_state != State::DONE)
         m_traj = Simulator::Schedule(Seconds(params::kTrajLogS), &SarDataUavApp::TrajTick, this);
 }

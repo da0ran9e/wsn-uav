@@ -1,5 +1,6 @@
 #include "sar-network.h"
 #include "air-ground-loss.h"
+#include "pair-shadowing-loss.h"
 #include "../common/sar-params.h"
 
 #include "ns3/core-module.h"
@@ -27,13 +28,10 @@ Ptr<SpectrumChannel> BuildSarChannel() {
     nak->SetAttribute("m2", DoubleValue(params::kNakagamiM));
     channel->AddPropagationLossModel(nak);
 
-    // 3) log-normal shadowing (zero-mean Normal in dB, cached per node pair)
-    Ptr<RandomPropagationLossModel> shad = CreateObject<RandomPropagationLossModel>();
-    Ptr<NormalRandomVariable> nrv = CreateObject<NormalRandomVariable>();
-    nrv->SetAttribute("Mean", DoubleValue(0.0));
-    nrv->SetAttribute("Variance",
-                      DoubleValue(params::kShadowingSigmaDb * params::kShadowingSigmaDb));
-    shad->SetAttribute("Variable", PointerValue(nrv));
+    // 3) log-normal shadowing, spatially persistent: ONE draw per node pair for
+    // the whole run (ns-3's RandomPropagationLossModel redraws per packet,
+    // which acts like extra fast fading — see review finding F3).
+    Ptr<PairShadowingLossModel> shad = CreateObject<PairShadowingLossModel>();
     channel->AddPropagationLossModel(shad);
 
     channel->SetPropagationDelayModel(CreateObject<ConstantSpeedPropagationDelayModel>());

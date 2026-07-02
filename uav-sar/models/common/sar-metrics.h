@@ -35,6 +35,8 @@ public:
     void AddCustody()      { m_custody++; }
     void AddSent()         { m_sent++; }
     void AddRecv()         { m_recv++; }
+    void AddSentBytes(uint64_t b) { m_sentBytes += b; }
+    void AddRecvBytes(uint64_t b) { m_recvBytes += b; }
     void AddEnergy(double j){ m_energyJ += j; }
     void AddDeviation(double m){ m_devM += m; }
 
@@ -47,6 +49,7 @@ private:
     double m_tLocalize=-1, m_tComplete=-1, m_tReport=-1;
     uint32_t m_intraShares=0, m_interShares=0, m_regionCells=0, m_beacons=0, m_custody=0;
     uint32_t m_sent=0, m_recv=0;
+    uint64_t m_sentBytes=0, m_recvBytes=0;
     double m_energyJ=0, m_devM=0;
     std::vector<MEvent> m_events;
     std::vector<MTraj> m_traj;

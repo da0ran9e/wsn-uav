@@ -56,7 +56,9 @@ private:
     std::vector<Fragment> m_cues;
     std::vector<ns3::Vector> m_targets;
     size_t m_ti = 0;
-    size_t m_cueIdx = 0;
+    size_t m_cueIdx = 0;      // fragment index in m_cues
+    uint16_t m_cueSeq = 0;    // chunk seq within the current cue fragment
+    bool m_summonSeen = false;  // once a summon is relayed, stop spreading cues
     double m_alt = 20.0, m_speed = 25.0, m_radius = 50.0;
     State m_state = State::IDLE;
     ns3::EventId m_ctrl, m_dis, m_traj;

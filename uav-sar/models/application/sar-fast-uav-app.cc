@@ -101,24 +101,35 @@ void SarFastUavApp::ControlTick() {
 }
 
 void SarFastUavApp::DisseminateTick() {
-    if (m_state == State::CRUISE && !m_cues.empty() && m_dev) {
+    // Byte-honest cue dissemination: cue fragments are chunked exactly like
+    // full-data fragments (same header), cycling (frag, seq). Stops once a
+    // summon has been relayed — the region is found, cues are moot.
+    if (m_state == State::CRUISE && !m_summonSeen && !m_cues.empty() && m_dev) {
         const Fragment& f = m_cues[m_cueIdx % m_cues.size()];
-        std::vector<uint8_t> b(kCueLen);
+        uint16_t total = (uint16_t)std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
+        uint32_t payloadLen = std::min(kChunkBytes, f.sizeBytes - m_cueSeq * kChunkBytes);
+        std::vector<uint8_t> b(kChunkHdr + payloadLen, 0);
         uint8_t* p = b.data();
         *p++ = (uint8_t)Msg::CUE; *p++ = kBroadcast;
         uint16_t id = (uint16_t)f.id; std::memcpy(p, &id, 2); p += 2;
+        std::memcpy(p, &m_cueSeq, 2); p += 2;
+        std::memcpy(p, &total, 2); p += 2;
         *p++ = (uint8_t)f.layer;
-        *p++ = (uint8_t)std::min(255.0, f.utility * 255.0);
         m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
-        if (m_metrics) m_metrics->AddSent();
-        m_cueIdx++;
+        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+        m_cueSeq++;
+        if (m_cueSeq >= total) { m_cueSeq = 0; m_cueIdx = (m_cueIdx + 1) % m_cues.size(); }
     }
     m_dis = Simulator::Schedule(Seconds(params::kDisseminateStaggerS), &SarFastUavApp::DisseminateTick, this);
 }
 
 void SarFastUavApp::TrajTick() {
-    if (m_metrics) { Vector p = m_fc.GetPosition();
-        m_metrics->Traj(Simulator::Now().GetSeconds(), m_nodeId, "FAST", p.x, p.y, p.z); }
+    if (m_metrics) {
+        Vector p = m_fc.GetPosition();
+        m_metrics->Traj(Simulator::Now().GetSeconds(), m_nodeId, "FAST", p.x, p.y, p.z);
+        // Propulsion energy over the last second (Zeng-Xu-Zhang rotary model).
+        m_metrics->AddEnergy(params::EnergyPowerW(m_fc.Speed()) * params::kTrajLogS);
+    }
     m_traj = Simulator::Schedule(Seconds(params::kTrajLogS), &SarFastUavApp::TrajTick, this);
 }
 
@@ -128,10 +139,15 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     std::vector<uint8_t> b(sz); pkt->CopyData(b.data(), sz);
     if (b[0] == (uint8_t)Msg::SUMMON && sz >= kSummonLen && m_dev) {
         // relay to DATA team over A2A (same body, different type).
+        m_summonSeen = true;   // region found -> stop spreading cues
         std::vector<uint8_t> r(b.begin(), b.begin() + kSummonLen);
         r[0] = (uint8_t)Msg::A2A;
         m_dev->Send(Create<Packet>(r.data(), r.size()), Mac16Address("ff:ff"), 0);
-        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddCustody(); }
+        if (m_metrics) {
+            m_metrics->AddSent();
+            m_metrics->AddSentBytes(r.size());
+            m_metrics->AddCustody();
+        }
     }
     return true;
 }

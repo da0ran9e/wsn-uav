@@ -1,11 +1,17 @@
 #ifndef UAV_SAR_GROUND_APP_H
 #define UAV_SAR_GROUND_APP_H
 
-// Ground sensor node. Receives identity cues from FAST UAVs, corroborates them
-// with its local clue quality, and reports soft evidence to the region
-// coordinator (its cell leader). If elected region leader it broadcasts the
-// single SUMMON. Receives the full dataset from the DATA UAV and, once its
-// confidence reaches the confirm threshold, broadcasts CONFIRM.
+// Ground sensor node (v2 after logic review).
+//   - Fragments arrive as byte-honest chunks over CUE (FAST) or FULL (DATA);
+//     both paths fill the SAME per-fragment chunk set, so a fragment counts
+//     exactly once however it arrived (fixes F1 double-counting).
+//   - A fragment is possessed when all its chunks are held. Node evidence =
+//     Confidence(possessed) * clueQuality, reported to the coordinator.
+//   - CONFIRM fires only when the node possesses the ENTIRE dataset (every
+//     fragment id complete) — the literal "toàn bộ dữ liệu" endpoint — and is
+//     retransmitted a bounded number of times (fixes F2 single-shot loss).
+//   - The region leader's SUMMON carries its OWN position, so the DATA UAV
+//     delivers directly overhead (reliable point-blank link).
 
 #include "../common/target-profile.h"
 
@@ -37,9 +43,9 @@ public:
     void SetCoordinator(RegionCoordinator* c) { m_coord = c; }
     void SetProfile(const std::vector<Fragment>& frags);
     void SetClueQuality(double q) { m_clueQuality = q; }
-    void SetThresholds(double coop, double confirm) { m_coop = coop; m_confirm = confirm; }
+    void SetCoopThreshold(double coop) { m_coop = coop; }
     void SetIsTarget(bool t) { m_isTarget = t; }
-    void SetStopOnComplete(bool s) { m_stopOnComplete = s; }  // baselines end on complete
+    void SetStopOnComplete(bool s) { m_stopOnComplete = s; }
 
     // Called by the coordinator when this node is elected region leader.
     void StartSummon(uint16_t regionId, double cx, double cy);
@@ -51,30 +57,31 @@ private:
     void StartApplication() override;
     void StopApplication() override;
     void BeaconTick();
-    double ReceivedConfidence() const;
+    void SendConfirm();                 // retried kConfirmRetries times
+    double PossessedConfidence() const;
+    bool HasEntireDataset() const;
 
     uint32_t m_nodeId = 0;
     ns3::Ptr<ns3::NetDevice> m_dev;
     SarMetrics* m_metrics = nullptr;
     RegionCoordinator* m_coord = nullptr;
 
-    std::map<uint16_t, Fragment> m_byId;      // fragId -> fragment (utilities)
-    std::set<uint16_t> m_haveCue;             // cue frags received
-    std::map<uint16_t, std::set<uint16_t>> m_fullChunks;  // fragId -> seqs
-    std::set<uint16_t> m_haveFull;            // full frags completed
+    std::map<uint16_t, Fragment> m_byId;                 // full profile (briefing)
+    std::map<uint16_t, std::set<uint16_t>> m_chunks;     // fragId -> received seqs
+    std::map<uint16_t, uint16_t> m_totals;               // fragId -> total chunks
+    std::set<uint16_t> m_have;                           // complete fragment ids
     double m_clueQuality = 0.0;
     double m_coop = 0.30;
-    double m_confirm = 0.95;
 
-    // region-leader summon state
     bool m_isLeader = false;
     bool m_isTarget = false;
     bool m_stopOnComplete = false;
     bool m_confirmed = false;
     uint16_t m_regionId = 0;
-    double m_cx = 0, m_cy = 0;
     uint32_t m_beacons = 0;
+    uint32_t m_confirmsSent = 0;
     ns3::EventId m_beaconEvent;
+    ns3::EventId m_confirmEvent;
 };
 
 }  // namespace ns3::uavsar

@@ -30,14 +30,16 @@ for r in rows: by.setdefault(r['scheme'],[]).append(r)
 def f(x):
     try: return float(x)
     except: return -1
-print(f"{'scheme':<10}{'runs':>5}{'compl%':>8}{'complete mean':>15}{'median':>9}{'report mean':>13}{'pktRecv':>10}{'regCells':>9}")
+print(f"{'scheme':<10}{'runs':>5}{'compl%':>8}{'report%':>8}{'complete mean':>15}{'median':>9}{'report mean':>13}{'MB recv':>9}{'kJ':>8}{'regCells':>9}")
 for sch,rs in sorted(by.items()):
     comp=[f(r['timeToCompleteData_s']) for r in rs if f(r['timeToCompleteData_s'])>=0]
     rep=[f(r['timeToReportAtBS_s']) for r in rs if f(r['timeToReportAtBS_s'])>=0]
-    air=[f(r['pktRecv']) for r in rs]
+    mb=[f(r.get('bytesRecv',0))/1e6 for r in rs]
+    kj=[f(r.get('uavEnergyJ',0))/1e3 for r in rs]
     reg=[f(r['regionCells']) for r in rs if f(r['regionCells'])>0]
-    rate=100.0*len(comp)/len(rs) if rs else 0
+    crate=100.0*len(comp)/len(rs) if rs else 0
+    rrate=100.0*len(rep)/len(rs) if rs else 0
     cm=st.mean(comp) if comp else float('nan'); cmed=st.median(comp) if comp else float('nan')
     rm=st.mean(rep) if rep else float('nan')
-    print(f"{sch:<10}{len(rs):>5}{rate:>7.1f}%{cm:>15.2f}{cmed:>9.2f}{rm:>13.2f}{st.mean(air):>10.0f}{(st.mean(reg) if reg else 0):>9.2f}")
+    print(f"{sch:<10}{len(rs):>5}{crate:>7.1f}%{rrate:>7.1f}%{cm:>15.2f}{cmed:>9.2f}{rm:>13.2f}{st.mean(mb):>9.2f}{st.mean(kj):>8.1f}{(st.mean(reg) if reg else 0):>9.2f}")
 PY

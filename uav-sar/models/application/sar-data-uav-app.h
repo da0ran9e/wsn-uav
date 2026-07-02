@@ -55,6 +55,7 @@ private:
     void ControlTick();
     void TrajTick();
     void SendFullChunk(size_t fi, uint16_t seq);
+    void SendReport();
     void TryClaimDivert(double x, double y);
 
     enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, DIVERT, DELIVER, SWEEP, RETURN, DONE };
@@ -78,6 +79,8 @@ private:
     bool m_pendingDivert = false;   // claimed before airborne; divert after climb
     bool m_confirmed = false;
     double m_divertStartDist = 0;
+    double m_dwellUntil = 0;        // SWEEP_DUMP: cycle chunks until this time
+    uint32_t m_reportsSent = 0;     // REPORT retransmissions (bounded)
 
     State m_state = State::IDLE;
     ns3::EventId m_ctrl, m_traj;

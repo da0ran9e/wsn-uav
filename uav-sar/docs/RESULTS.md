@@ -1,52 +1,79 @@
-# uav-sar — Round-2 results (round 1 of the new build)
+# uav-sar — Results v2 (sau lượt rà soát logic F1–F7)
 
-Setup: grid 8×8 (64 sensors), 4 UAVs, 100 seeds, realistic channel
-(A2G 2.2 / G2G 3.5 + Nakagami + shadowing). Params in `sar-params.h`
-(literature values pending PDFs — see PARAMETERS.md).
+Setup: 4 UAV (2 FAST + 2 DATA cho proposed), 100 seeds/grid, kênh thực tế
+(A2G 2.2 / G2G 3.5 + Nakagami m=1.5 + **shadowing bám theo cặp** σ=8.7 dB).
+Semantics đã sửa: fragment đến theo **chunk byte-thật** (CUE/FULL hợp nhất,
+không đếm trùng); **complete = node nạn nhân giữ TOÀN BỘ fragment** (ground
+truth); vòng đóng khi **verifier** (node evidence mạnh nhất do ticket chỉ định)
+xác nhận và UAV **báo cáo về BS**; CONFIRM/REPORT có retry; hợp tác liên-cell
+có **chi phí thật** (per-hop delay, p_intra=0.92, p_inter=0.82, region window
+1 s); sweep **phân vùng** giữa các UAV; baseline dwell-cycle 25 s/waypoint.
 
-## 100-seed aggregate
+## Grid 8×8 (64 sensors, 100 seeds)
 
-| scheme   | compl% | complete mean (s) | median | report@BS mean (s) | airtime (pktRecv) | region cells |
-|----------|--------|-------------------|--------|--------------------|-------------------|--------------|
-| proposed | 100%   | 26.75             | 27.96  | **51.57**          | 68 117            | 1.51         |
-| nocoop   | 100%   | 26.09             | 25.70  | — (no loop)        | 21 744            | 0            |
-| pure-uav | 100%   | 33.50             | 36.66  | — (no loop)        | 21 543            | 0            |
+| scheme   | strict compl% | **report%** | complete mean | median | report mean | MB recv | kJ   | region cells |
+|----------|---------------|-------------|----------------|--------|--------------|---------|------|--------------|
+| proposed | 94%           | **100%**    | 35.9 s         | 34.8   | **61.4 s**   | **2.92**| 41.9 | 1.73         |
+| nocoop   | 100%          | 0%          | 36.1 s         | 35.9   | —            | 10.21   | 21.0 | 0            |
+| pure-uav | 100%          | 0%          | 44.2 s         | 36.4   | —            | 5.71    | 6.7  | 0            |
 
-`complete` = time the victim's node holds the full dataset (comparable across
-schemes). `report@BS` = full loop closed (only the cooperative scheme does this).
+## Grid 12×12 (144 sensors, 100 seeds) — scale study
 
-## Reading (honest)
+| scheme   | strict compl% | **report%** | complete mean | median | report mean | MB recv | kJ   | region cells |
+|----------|---------------|-------------|----------------|--------|--------------|---------|------|--------------|
+| proposed | 83%           | **100%**    | 39.6 s         | 39.5   | **68.6 s**   | **5.28**| 49.1 | 1.79         |
+| nocoop   | 100%          | 0%          | 39.3 s         | 38.5   | —            | 21.83   | 22.9 | 0            |
+| pure-uav | 98%           | 0%          | 62.8 s         | 39.0   | —            | 25.43   | 11.3 | 0            |
 
-1. **Only `proposed` closes the loop.** Baselines get complete data onto the
-   victim's node, but the system never *knows* or *reports* it — in real SAR that
-   means no rescuer is dispatched. Proposed detects → localizes → delivers →
-   confirms → **reports to BS** (mean 51.6 s). This is the qualitative win and
-   matches the agreed endpoint.
-2. **Cross-cell cooperation is real:** mean region size 1.51 cells → in a good
-   fraction of runs the victim's evidence spans >1 cell and is merged via CGW /
-   inter-cell routing into one summon (no call storm).
-3. **On raw complete-time, proposed ≈ nocoop, both beat pure-uav.** At this small
-   scale (8×8) with the current wide A2G range, blanket-dumping (nocoop, 4 UAVs)
-   reaches the victim about as fast. Round-1 showed the cooperative scheme pulls
-   ahead on time at larger scale — to confirm here, rerun at 10–15 grid.
-4. **Airtime caveat (important):** `pktRecv` counts *packets*, so proposed looks
-   costlier (68k) because FAST cues (tiny, 150 B) are broadcast to the whole grid
-   for a long time and counted once per receiver. In **bytes**, baselines dump
-   the full 16 KB dataset at *every* cell while proposed delivers it *once* at the
-   victim — so byte-airtime should strongly favour proposed. Adding a
-   byte-weighted airtime metric is the next fairness fix.
+## Đọc kết quả (trung thực)
 
-## Known tuning items (pending literature params)
-- A2G LoS range ~300 m (0 dBm / −95 dBm) makes cue spread + localization near-
-  instant; shortening effective range (TX power / reference loss from Al-Hourani
-  / Khawaja / 3GPP) will make the FAST sweep matter and sharpen the time story.
-- Byte-weighted airtime + energy (Zeng-Zhang) to replace packet-count proxy.
-- Scale study (grid 10–15, more UAVs) to reproduce round-1's at-scale advantage.
+1. **Chỉ proposed đóng vòng, và giờ đóng 100% ở cả hai quy mô.** Mỗi run đều:
+   khoanh vùng → triệu hồi → giao tận nơi → verifier xác nhận → UAV về BS báo
+   cáo. Baseline rải được data nhưng hệ thống **không bao giờ biết** — không ai
+   được điều đi cứu. (Trước fix F2/verifier: 92% rồi 99%; giờ 100/100.)
+2. **Airtime (byte) — cách biệt NỚI RỘNG theo quy mô:** proposed dùng ít hơn
+   nocoop **3.5×** ở grid-8 và **4.1×** ở grid-12 (2.92→5.28 MB so với
+   10.2→21.8 MB). Pure-uav cũng nặng (25.4 MB ở grid-12). Giao-có-chủ-đích
+   thắng rõ về chi phí kênh truyền, càng rộng càng thắng.
+3. **Thời gian complete: ngang nocoop, bỏ xa pure-uav khi scale** (pure-uav
+   44→63 s khi diện tích gấp 2.25×; proposed 36→40 s). Nocoop giữ được thời
+   gian nhờ 4 UAV chia vùng + dump mù mọi nơi — nhưng trả giá bằng airtime ở
+   (2) và không có vòng đóng ở (1).
+4. **Hợp tác liên-cell là thật và có phí:** region trung bình 1.73–1.79 cell,
+   hình thành qua region-window 1 s + share qua CGW với p=0.82 (share rớt thì
+   cell không vào vùng).
+5. **Năng lượng:** proposed tốn hơn (41.9–49.1 kJ do 4 UAV bay trọn vòng gồm cả
+   lượt về báo cáo; Zeng-Xu-Zhang P(V), hover 168.5 W). Đây là giá của dịch vụ
+   trọn gói; baseline rẻ điện hơn nhưng không hoàn thành nhiệm vụ đúng nghĩa.
+6. **Strict-complete 94%/83% — residual trung thực:** ticket chỉ định verifier
+   = node evidence mạnh nhất; đôi khi verifier ≠ node-nạn-nhân (halo nhiều node
+   hơn ở grid lớn) và link UAV↔target rút phải shadow chặn cố định → verifier
+   xong, UAV rời đi, target thiếu vài chunk. Về mặt **hệ thống** nhiệm vụ vẫn
+   thành công (dữ liệu nằm ở node có manh mối mạnh nhất, cách nạn nhân ≤~40 m,
+   camera của nó nhiều khả năng cũng thấy nạn nhân — chính vì thế evidence nó
+   cao). Chúng tôi báo cả hai: **mission success (report) = 100%**, strict
+   ground-truth = 94/83%. Muốn kéo strict lên: UAV nán thêm N pass sau CONFIRM
+   (knob, chưa bật).
+
+## Các fix từ lượt rà soát (đã vào code)
+F1 đếm-trùng cue/full (confirm giả sau 66 ms) → chunk hợp nhất + đủ-toàn-bộ.
+F2 CONFIRM/REPORT một-phát (8/100 hở vòng) → retry + delivery lặp tới CONFIRM.
+F3 shadowing per-packet ("ăn may xa") → PairShadowingLossModel bám theo cặp.
+F4 regionWindow + chi phí intra/inter thật (trước đó miễn phí, tức thời).
+F5 sweep phân vùng (hết bay "đoàn tàu"), dwell-cycle cho baseline, validate scheme.
+F6 neighborRange dẫn xuất từ link budget G2G (~37 m, hết mâu thuẫn 80 m).
+F7 airtime theo byte + năng lượng Zeng-Xu-Zhang + report-rate trong aggregator.
+Verifier-designated confirm (sửa false-success của hotfix "ai xong cũng confirm").
+
+## Còn mở
+- Tham số `[Lit?]` chờ PDF (Al-Hourani a,b/η; Khawaja m,σ theo rừng; hệ số
+  năng lượng) — thay trong `sar-params.h`, không đụng logic.
+- Knob "nán thêm sau CONFIRM" nếu muốn strict-complete ~100%.
+- Battery budget/no-fly, đổi role động, AoI/TTL: future work.
 
 ## Reproduce
 ```bash
-# in the ns-3 tree with uav-sar as src/uav-sar
 python3.10 ./ns3 build
-bash src/uav-sar/tools/run_batch.sh 100 8 4 500
-# -> data/results/uav-sar/summary.csv + printed table
+bash src/uav-sar/tools/run_batch.sh 100 8 4 600    # grid 8
+bash src/uav-sar/tools/run_batch.sh 100 12 4 1200  # grid 12
 ```

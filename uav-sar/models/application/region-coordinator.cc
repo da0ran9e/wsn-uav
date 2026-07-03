@@ -7,8 +7,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <queue>
 #include <set>
+#include <string>
 
 namespace ns3::uavsar {
 
@@ -44,7 +46,19 @@ void RegionCoordinator::EvidenceArrive(uint32_t nodeId, double evidence) {
     if (m_summoned) return;
     double& e = m_nodeEvidence[nodeId];
     if (evidence > e) e = evidence;
-    if (m_metrics) m_metrics->AddIntraShare();
+    if (m_metrics) {
+        m_metrics->AddIntraShare();
+        // viz: node -> its CL up the intra-cell tree. No commas in detail so
+        // the CSV row stays unquoted for simple parsers.
+        const CellNodeInfo& ni = m_plan->nodes.at(nodeId);
+        const CellInfo& ci = m_plan->cells.at(ni.cellId);
+        const CellNodeInfo& li = m_plan->nodes.at(ci.leaderId);
+        char det[64];
+        std::snprintf(det, sizeof det, "ev=%.2f dst=%u@%.0f;%.0f",
+                      evidence, ci.leaderId, li.x, li.y);
+        m_metrics->Event(ns3::Simulator::Now().GetSeconds(), nodeId, "node",
+                         "clue_report", det, ni.x, ni.y, 0);
+    }
 
     if (m_windowOpen) return;
 
@@ -106,6 +120,17 @@ void RegionCoordinator::CloseWindow() {
             interOk++;
             region.insert(adj);
             bfs.push(adj);
+            if (m_metrics) {  // viz: CL(c) -> CL(adj) through the CGW link
+                const CellNodeInfo& sl = m_plan->nodes.at(cit->second.leaderId);
+                const CellNodeInfo& dl =
+                    m_plan->nodes.at(m_plan->cells.at(adj).leaderId);
+                char det[64];
+                std::snprintf(det, sizeof det, "c%d->c%d dst=%u@%.0f;%.0f",
+                              c, adj, m_plan->cells.at(adj).leaderId, dl.x, dl.y);
+                m_metrics->Event(ns3::Simulator::Now().GetSeconds(),
+                                 cit->second.leaderId, "CL", "share", det,
+                                 sl.x, sl.y, 0);
+            }
         }
     }
 
@@ -148,6 +173,14 @@ void RegionCoordinator::CloseWindow() {
         m_metrics->SetRegionCells((uint32_t)region.size());
         for (uint32_t i = 0; i < interOk; i++) m_metrics->AddInterShare();
         m_metrics->MarkLocalize(ns3::Simulator::Now().GetSeconds());
+        // viz: the formed region — cell ids + verifier, at the weighted centroid.
+        std::string cellsStr;
+        for (int32_t c : region)
+            cellsStr += (cellsStr.empty() ? "" : ";") + std::to_string(c);
+        m_metrics->Event(ns3::Simulator::Now().GetSeconds(),
+                         m_plan->cells.at(leaderCell).leaderId, "CL", "region",
+                         "cells=" + cellsStr + " verifier=" + std::to_string(verifier),
+                         ws > 0 ? wx / ws : 0, ws > 0 ? wy / ws : 0, 0);
     }
 
     m_summoned = true;

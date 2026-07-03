@@ -177,7 +177,15 @@ void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
         std::memcpy(p, &total, 2); p += 2;
         *p++ = (uint8_t)f.layer;
         m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
-        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+        if (m_metrics) {
+            m_metrics->AddSent(); m_metrics->AddSentBytes(b.size());
+            // viz: decimated A2G full-data broadcast marker (1 in 50 chunks)
+            if (++m_fullTxCount % 50 == 1) {
+                Vector p = m_fc.GetPosition();
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                 "full_tx", "", p.x, p.y, p.z);
+            }
+        }
     }
     uint16_t ns = seq + 1; size_t nf = fi;
     if (ns >= total) { ns = 0; nf = fi + 1; }

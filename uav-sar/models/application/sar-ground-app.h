@@ -82,6 +82,7 @@ private:
     bool m_isVerifier = false;
     bool m_stopOnComplete = false;
     bool m_confirmed = false;
+    bool m_heardCue = false;   // viz: first-cue marker emitted
     uint16_t m_regionId = 0;
     double m_cx = 0, m_cy = 0;   // beacon coords = verifier position
     uint32_t m_beacons = 0;

@@ -116,7 +116,15 @@ void SarFastUavApp::DisseminateTick() {
         std::memcpy(p, &total, 2); p += 2;
         *p++ = (uint8_t)f.layer;
         m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
-        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+        if (m_metrics) {
+            m_metrics->AddSent(); m_metrics->AddSentBytes(b.size());
+            // viz: decimated A2G cue broadcast marker (1 in 25 sends)
+            if (++m_cueTxCount % 25 == 1) {
+                Vector p = m_fc.GetPosition();
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "FAST",
+                                 "cue_tx", "", p.x, p.y, p.z);
+            }
+        }
         m_cueSeq++;
         if (m_cueSeq >= total) { m_cueSeq = 0; m_cueIdx = (m_cueIdx + 1) % m_cues.size(); }
     }
@@ -147,6 +155,10 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             m_metrics->AddSent();
             m_metrics->AddSentBytes(r.size());
             m_metrics->AddCustody();
+            // viz: A2A relay marker at the relaying FAST UAV
+            Vector p = m_fc.GetPosition();
+            m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "FAST",
+                             "a2a_relay", "", p.x, p.y, p.z);
         }
     }
     return true;

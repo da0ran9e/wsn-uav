@@ -120,6 +120,13 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         std::memcpy(&seq, &b[4], 2);
         std::memcpy(&total, &b[6], 2);
         if (m_metrics) { m_metrics->AddRecv(); m_metrics->AddRecvBytes(sz); }
+        // viz: first cue ever heard by this node — the dissemination front.
+        if (type == (uint8_t)Msg::CUE && !m_heardCue && m_metrics) {
+            m_heardCue = true;
+            Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+            m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "node",
+                             "cue_rx", "", p.x, p.y, p.z);
+        }
 
         bool wasComplete = m_have.count(fragId) > 0;
         m_chunks[fragId].insert(seq);

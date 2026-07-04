@@ -132,9 +132,10 @@ int main(int argc, char* argv[]) {
               << "error model: IEEE 802.15.4 O-QPSK BER over SINR (chunked),\n"
               << "noise floor derived from RxSensitivity " << params::kRxSensitivityDbm
               << " dBm (ns-3.46 SetRxSensitivity -> noise factor, NF~11.6 dB),\n"
-              << "Nakagami m=" << params::kNakagamiM << ", per-pair shadowing sigma="
-              << params::kShadowingSigmaDb << " dB, A2G n=" << params::kA2GExponent
-              << " / G2G n=" << params::kG2GExponent << "\n\n";
+              << "Nakagami m=" << params::kNakagamiM << ", pair shadowing sigma g2g/a2g="
+              << params::kShadowingSigmaDb << "/" << params::kShadowSigmaA2gDb
+              << " dB; A2G = elevation-angle LoS (Al-Hourani) + ITU-R P.833 foliage;"
+              << " G2G n=" << params::kG2GExponent << "\n\n";
 
     auto table = [&](bool a2g, const std::vector<double>& dists) {
         std::cout << (a2g ? "--- A2G (UAV alt 20 m -> ground), 3D dist ---\n"

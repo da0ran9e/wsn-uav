@@ -107,3 +107,23 @@ bằng chứng định lượng vì sao cần tầng FAST relay A2A.
 Phát hiện addressing: LrWpanHelper không cấp short address (mọi device chung
 địa chỉ mặc định → MAC unicast không hề lọc). Đã cấp Mac16 duy nhất/device;
 REPORT giờ là unicast thật và BS trả MAC-ACK 802.15.4 thật.
+
+
+## Phụ lục v3: Elevation-angle LoS + foliage (đẩy realism thêm một bậc)
+
+Thay chuyển A2G/G2G nhị phân bằng vật lý theo hình học UAV-node:
+P_LoS(θ) Al-Hourani (a=4.88, b=0.43, frozen-quantile mỗi cặp — link lật
+NLoS→LoS đúng MỘT lần khi UAV tiến lại gần), NLoS = xuyên tán ITU-R P.833
+(canopy/sinθ, γ=0.5 dB/m, Amax=35 dB); σ shadowing tách lớp (G2G 8.7 / A2G 4 dB
+residual, tránh đếm trùng thực vật).
+
+Footprint A2G đo được (phy-error-test, alt 20 m): chắc ≤100 m (99.9%@50m),
+loang lổ 100–300 m (chỉ cặp LoS sống, 12–75%), **chết hẳn ≥350 m** (θ<3.3° →
+xuyên >260 m tán). → Cái caveat "cue phủ gần cả map làm localize tức thì" đã
+được giải bằng vật lý, không phải bằng chỉnh tay công suất.
+
+Mission 40×40 seed 3 dưới v3: localize 44.6 s (FAST phải quét tới gần thật),
+summon→divert 13 s (beacon lặp tới khi FAST vào footprint của CL rồi relay),
+verifier = CHÍNH node nạn nhân, strict-complete 86.5 s (hết residual −1),
+report@BS 162.2 s, năng lượng 128.6 kJ. Grid-8 (3 seed): proposed đóng vòng
+58–66 s; baselines complete ~33–37 s nhưng không bao giờ report.

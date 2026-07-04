@@ -77,3 +77,33 @@ python3.10 ./ns3 build
 bash src/uav-sar/tools/run_batch.sh 100 8 4 600    # grid 8
 bash src/uav-sar/tools/run_batch.sh 100 12 4 1200  # grid 12
 ```
+
+---
+
+## Phụ lục: Độ chân thực PHY & đánh giá lỗi mức gói (v3)
+
+Xác minh (không phải giả định): trong ns-3.46 lr-wpan, số phận MỖI GÓI do vật
+lý quyết định — error model O-QPSK IEEE 802.15.4 tính PER theo SINR từng chunk
+trong suốt quá trình thu (nhiễu đồng kênh cộng dồn, collision khi BUSY_RX),
+và nền nhiễu được suy từ RxSensitivity −95 dBm → NF ≈ 11.6 dB (cỡ CC2420).
+Kèm Nakagami m=1.5 + shadowing bám-cặp σ=8.7 dB.
+
+Validation (`uav-sar-phy-error-test`, 200 gói × 8 hướng/điểm, 8/8 checks):
+
+| link | vùng tin cậy | waterfall | đuôi |
+|---|---|---|---|
+| G2G (n=3.5) | ≤25 m (PDR 89–97%) | 30–55 m, perFail+weak trộn | 70 m: 8% |
+| A2G (n=2.2, alt 20 m) | ≤150 m (85–97%) | 200–500 m, perFail rõ | 600 m: weak thống trị; 1–2/8 receiver "khoảng trống rừng" vẫn nhận |
+
+Ghi chú vật lý: −95 dBm là điểm PER<1%, không phải vách đá — DSSS O-QPSK vẫn
+giải mã ~50% ở +2 dB SNR; shadowing bám-cặp giữ vài link sống ở cự ly xa.
+
+Mỗi run giờ xuất bảng phân rã lỗi gói theo nguyên nhân × lớp link vào
+metrics.csv (phyOk/phyPer/phyWeak/phyCol × a2g/a2a/g2g/bs). Run 40×40 seed 3:
+1.07M receptions; PER(hoàn tất)=27.7%; collision=15k; đặc biệt g2g:
+**chỉ ~2.2% gói SUMMON mặt-đất giải mã được** (101.6k weak / 1.65k ok) —
+bằng chứng định lượng vì sao cần tầng FAST relay A2A.
+
+Phát hiện addressing: LrWpanHelper không cấp short address (mọi device chung
+địa chỉ mặc định → MAC unicast không hề lọc). Đã cấp Mac16 duy nhất/device;
+REPORT giờ là unicast thật và BS trả MAC-ACK 802.15.4 thật.

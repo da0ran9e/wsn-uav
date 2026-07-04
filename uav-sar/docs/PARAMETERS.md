@@ -43,6 +43,9 @@ Cập nhật: 2026-07. Trạng thái: bản nghiên cứu sơ bộ (self-researc
 | TX power | 0 dBm (dải −25…+5) | [Lit✓] CC2420/CC2650 datasheet |
 | RX sensitivity | spec −85 dBm; thực tế −95 dBm (CC2420), −100 dBm (CC2650) | [Lit✓] datasheet |
 | Kênh | 11 (2.405 GHz) | [Design] |
+| Error model | O-QPSK BER theo SINR, chunked (mặc định lr-wpan) | [Lit✓] IEEE 802.15.4 App.E |
+| Noise figure | ≈11.6 dB — ns-3.46 suy từ RxSensitivity −95 | [Lit✓ dẫn xuất] CC2420-class |
+| Short address | cấp duy nhất/device (helper không tự cấp) | [Fix] |
 
 ---
 

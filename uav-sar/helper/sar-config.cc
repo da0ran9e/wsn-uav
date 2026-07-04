@@ -31,6 +31,12 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     SarNetwork network(net);
     SarNetworkSetup s = network.Build(*m_lr);
 
+    // Packet-level PHY error accounting on every device (instrumentation only).
+    m_phyStats.Attach(s.sensorDevs, 'g');
+    m_phyStats.Attach(s.bsDev, 'b');
+    m_phyStats.Attach(s.uavDevs, 'u');
+    m_phyStats.BuildAddressMap();
+
     // 2) substrate over the actual sensor node ids
     std::vector<NodePos> nodePos;
     std::vector<CluePos> cluePos;
@@ -203,6 +209,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     Simulator::Stop(Seconds(cfg.simTime));
     Simulator::Run();
     Simulator::Destroy();
+    m_metrics.SetExtra(m_phyStats.Counters());
     m_metrics.Finalize(cfg.outputDir);
 }
 

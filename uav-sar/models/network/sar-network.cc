@@ -14,6 +14,20 @@ namespace ns3::uavsar {
 
 using namespace ns3;
 
+uint16_t AssignShortAddresses(const NetDeviceContainer& devs, uint16_t first) {
+    for (uint32_t i = 0; i < devs.GetN(); i++) {
+        Ptr<lrwpan::LrWpanNetDevice> d =
+            DynamicCast<lrwpan::LrWpanNetDevice>(devs.Get(i));
+        if (!d) continue;
+        uint8_t buf[2] = {(uint8_t)(first >> 8), (uint8_t)(first & 0xff)};
+        Mac16Address a;
+        a.CopyFrom(buf);
+        d->GetMac()->SetShortAddress(a);
+        first++;
+    }
+    return first;
+}
+
 Ptr<SpectrumChannel> BuildSarChannel() {
     Ptr<SingleModelSpectrumChannel> channel = CreateObject<SingleModelSpectrumChannel>();
 
@@ -75,6 +89,11 @@ SarNetworkSetup SarNetwork::Build(LrWpanHelper& lrWpan) {
     s.sensorDevs = lrWpan.Install(s.sensors);
     s.bsDev = lrWpan.Install(s.bs);
     s.uavDevs = lrWpan.Install(s.uavs);
+
+    // Unique short addresses (helper leaves them all at the default).
+    uint16_t next = AssignShortAddresses(s.sensorDevs, 1);
+    next = AssignShortAddresses(s.bsDev, next);
+    AssignShortAddresses(s.uavDevs, next);
 
     lrwpan::LrWpanSpectrumValueHelper svh;
     Ptr<SpectrumValue> txPsd =

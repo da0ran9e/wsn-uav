@@ -6,6 +6,7 @@
 // Writes metrics.csv (1 row), events.csv, trajectories.csv, config.txt.
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -40,6 +41,9 @@ public:
     void AddEnergy(double j){ m_energyJ += j; }
     void AddDeviation(double m){ m_devM += m; }
 
+    // Extra name->value columns appended to metrics.csv (e.g. PHY error stats).
+    void SetExtra(const std::map<std::string, uint64_t>& e) { m_extra = e; }
+
     double ReportTime() const { return m_tReport; }
     void Finalize(const std::string& outDir);
 
@@ -51,6 +55,7 @@ private:
     uint32_t m_sent=0, m_recv=0;
     uint64_t m_sentBytes=0, m_recvBytes=0;
     double m_energyJ=0, m_devM=0;
+    std::map<std::string, uint64_t> m_extra;
     std::vector<MEvent> m_events;
     std::vector<MTraj> m_traj;
 };

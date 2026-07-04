@@ -6,6 +6,7 @@
 // metrics. One end-to-end SAR run.
 
 #include "../models/network/sar-network.h"
+#include "../models/network/phy-stats.h"
 #include "../models/common/cell-grid.h"
 #include "../models/common/inter-cell-routing.h"
 #include "../models/common/sar-metrics.h"
@@ -42,6 +43,7 @@ public:
 private:
     std::unique_ptr<ns3::LrWpanHelper> m_lr;
     SarMetrics m_metrics;
+    PhyStats m_phyStats;
     CellGridPlan m_plan;
     InterCellRouting m_routing;
     RegionCoordinator m_coord;

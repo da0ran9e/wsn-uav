@@ -38,14 +38,18 @@ void SarMetrics::Finalize(const std::string& outDir) {
         f << "seed,gridSize,numUav,scheme,targetNodeId,"
              "timeToReportAtBS_s,timeToLocalize_s,timeToCompleteData_s,"
              "regionCells,intraShares,interShares,beaconCount,custodyHandoffs,"
-             "pktSent,pktRecv,bytesSent,bytesRecv,uavEnergyJ,routeDeviation_m\n";
+             "pktSent,pktRecv,bytesSent,bytesRecv,uavEnergyJ,routeDeviation_m";
+        for (auto& [k, v] : m_extra) f << "," << k;
+        f << "\n";
         f << std::fixed << std::setprecision(4)
           << m_seed << "," << m_grid << "," << m_numUav << "," << m_scheme << ","
           << m_target << "," << m_tReport << "," << m_tLocalize << "," << m_tComplete << ","
           << m_regionCells << "," << m_intraShares << "," << m_interShares << ","
           << m_beacons << "," << m_custody << "," << m_sent << "," << m_recv << ","
           << m_sentBytes << "," << m_recvBytes << ","
-          << m_energyJ << "," << m_devM << "\n";
+          << m_energyJ << "," << m_devM;
+        for (auto& [k, v] : m_extra) f << "," << v;
+        f << "\n";
     }
     {
         std::ofstream f(outDir + "/events.csv");

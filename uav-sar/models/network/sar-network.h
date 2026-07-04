@@ -23,6 +23,12 @@ namespace ns3::uavsar {
 // log-normal shadowing + constant-speed delay.
 ns3::Ptr<ns3::SpectrumChannel> BuildSarChannel();
 
+// LrWpanHelper only assigns EXTENDED (64-bit) addresses; short 16-bit
+// addresses stay at the default, so every device would share one address and
+// MAC unicast filtering would never filter. Assign unique short addresses.
+// Returns the next free address value.
+uint16_t AssignShortAddresses(const ns3::NetDeviceContainer& devs, uint16_t first);
+
 struct SarNetworkConfig {
     uint32_t gridSize = 8;
     double gridSpacing = 20.0;   // m

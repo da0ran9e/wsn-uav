@@ -54,3 +54,17 @@ build_lib_example(
     ${libpropagation}
     ${liblr-wpan}
 )
+
+# Packet-level PHY error validation (PER waterfall + drop causes).
+build_lib_example(
+  NAME uav-sar-phy-error-test
+  SOURCE_FILES phy-error-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+    ${libnetwork}
+    ${libmobility}
+    ${libspectrum}
+    ${libpropagation}
+    ${liblr-wpan}
+)

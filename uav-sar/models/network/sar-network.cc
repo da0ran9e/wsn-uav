@@ -1,5 +1,6 @@
 #include "sar-network.h"
 #include "air-ground-loss.h"
+#include "forest-a2g-loss.h"
 #include "pair-shadowing-loss.h"
 #include "../common/sar-params.h"
 
@@ -31,8 +32,10 @@ uint16_t AssignShortAddresses(const NetDeviceContainer& devs, uint16_t first) {
 Ptr<SpectrumChannel> BuildSarChannel() {
     Ptr<SingleModelSpectrumChannel> channel = CreateObject<SingleModelSpectrumChannel>();
 
-    // 1) deterministic A2G/G2G large-scale path loss
-    Ptr<AirGroundLossModel> pl = CreateObject<AirGroundLossModel>();
+    // 1) deterministic large-scale path loss: elevation-angle LoS (Al-Hourani)
+    // + ITU-R P.833 foliage crossing for A2G, in-forest n=3.5 for G2G,
+    // free-space for A2A (realism v3; replaces the binary exponent switch).
+    Ptr<ForestA2gLossModel> pl = CreateObject<ForestA2gLossModel>();
     channel->AddPropagationLossModel(pl);
 
     // 2) small-scale multipath fading (Nakagami-m)

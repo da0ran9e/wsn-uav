@@ -23,6 +23,7 @@ public:
     ~PairShadowingLossModel() override = default;
 
     void SetSigmaDb(double s) { m_sigmaDb = s; }
+    void SetSigmaA2gDb(double s) { m_sigmaA2gDb = s; }
 
 private:
     double DoCalcRxPower(double txPowerDbm,
@@ -30,7 +31,8 @@ private:
                          ns3::Ptr<ns3::MobilityModel> b) const override;
     int64_t DoAssignStreams(int64_t stream) override;
 
-    double m_sigmaDb;
+    double m_sigmaDb;      // ground-ground (woodland total)
+    double m_sigmaA2gDb;   // residual once LoS/foliage is explicit
     ns3::Ptr<ns3::NormalRandomVariable> m_rv;
     mutable std::map<std::pair<uint32_t, uint32_t>, double> m_cache;  // pair -> dB
 };

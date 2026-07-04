@@ -12,6 +12,7 @@ build_lib(
     models/network/air-ground-loss.cc
     models/network/pair-shadowing-loss.cc
     models/network/phy-stats.cc
+    models/network/forest-a2g-loss.cc
     models/network/sar-network.cc
     models/common/target-profile.cc
     models/common/clue-field.cc
@@ -32,6 +33,7 @@ build_lib(
     models/network/air-ground-loss.h
     models/network/pair-shadowing-loss.h
     models/network/phy-stats.h
+    models/network/forest-a2g-loss.h
     models/network/sar-network.h
     models/common/target-profile.h
     models/common/clue-field.h

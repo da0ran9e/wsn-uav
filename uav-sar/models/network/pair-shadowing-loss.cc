@@ -20,7 +20,8 @@ ns3::TypeId PairShadowingLossModel::GetTypeId() {
 }
 
 PairShadowingLossModel::PairShadowingLossModel()
-    : m_sigmaDb(params::kShadowingSigmaDb) {
+    : m_sigmaDb(params::kShadowingSigmaDb),
+      m_sigmaA2gDb(params::kShadowSigmaA2gDb) {
     m_rv = ns3::CreateObject<ns3::NormalRandomVariable>();
     m_rv->SetAttribute("Mean", ns3::DoubleValue(0.0));
     m_rv->SetAttribute("Variance", ns3::DoubleValue(1.0));  // scaled by sigma below
@@ -38,10 +39,16 @@ double PairShadowingLossModel::DoCalcRxPower(double txPowerDbm,
 
     auto it = m_cache.find(key);
     if (it == m_cache.end()) {
-        double dB = m_rv->GetValue() * m_sigmaDb;  // one persistent draw per pair
-        it = m_cache.emplace(key, dB).first;
+        double unit = m_rv->GetValue();  // one persistent UNIT draw per pair
+        it = m_cache.emplace(key, unit).first;
     }
-    return txPowerDbm + it->second;  // add (signed) shadowing gain/loss in dB
+    // Scale by the link-class sigma: links with an airborne endpoint use the
+    // smaller residual (LoS/foliage excess is now explicit in ForestA2gLoss;
+    // keeping the full woodland sigma there would double-count vegetation).
+    bool air = a->GetPosition().z > params::kAltThresholdM ||
+               b->GetPosition().z > params::kAltThresholdM;
+    double sigma = air ? m_sigmaA2gDb : m_sigmaDb;
+    return txPowerDbm + it->second * sigma;
 }
 
 int64_t PairShadowingLossModel::DoAssignStreams(int64_t stream) {

@@ -24,8 +24,24 @@ inline constexpr uint32_t kLrwpanChannel = 11;      // [Design]
 inline constexpr double kA2GExponent     = 2.2;     // [Lit] 3GPP 36.777 LoS
 inline constexpr double kG2GExponent     = 3.5;     // [Lit] ground NLoS
 inline constexpr double kAltThresholdM   = 15.0;    // [Assume] canopy top: A2G above
-inline constexpr double kShadowingSigmaDb= 8.7;     // [Lit/Assume] woodland
+inline constexpr double kShadowingSigmaDb= 8.7;     // [Lit/Assume] woodland (G2G)
 inline constexpr double kNakagamiM       = 1.5;     // [Assume] partial-LoS forest
+
+// ---- Elevation-angle LoS + foliage model (A2G realism v3) ------------------
+// P_LoS(theta) = 1 / (1 + a*exp(-b*(theta - a)))   [Al-Hourani 2014]
+// Suburban class as the nearest published proxy for sparse forest; the pair's
+// LoS state uses a frozen per-pair quantile so it flips exactly once as the
+// UAV's elevation angle rises (spatially consistent, no per-packet lottery).
+inline constexpr double kLosA            = 4.88;    // [Lit?] Al-Hourani suburban
+inline constexpr double kLosB            = 0.43;    // [Lit?]
+inline constexpr double kEtaLosDb        = 0.1;     // [Lit?] LoS excess loss
+// NLoS excess = foliage crossing per ITU-R P.833 capped exponential:
+//   A = Amax * (1 - exp(-d_veg * gamma / Amax)),  d_veg = canopy/sin(theta)
+inline constexpr double kVegGammaDbPerM  = 0.5;     // [Lit] ITU-R P.833 0.3-0.8 @2GHz
+inline constexpr double kVegAmaxDb       = 35.0;    // [Lit] ITU-R P.833 10-40
+// Residual A2G shadowing once LoS/foliage is explicit (avoid double counting
+// the 8.7 dB woodland sigma, which folds vegetation variability in).
+inline constexpr double kShadowSigmaA2gDb = 4.0;    // [Assume] residual
 
 // ---- Topology / PECEE substrate -------------------------------------------
 inline constexpr double kGridSpacingM    = 20.0;    // [Design] sensor spacing

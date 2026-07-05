@@ -127,3 +127,39 @@ summon→divert 13 s (beacon lặp tới khi FAST vào footprint của CL rồi 
 verifier = CHÍNH node nạn nhân, strict-complete 86.5 s (hết residual −1),
 report@BS 162.2 s, năng lượng 128.6 kJ. Grid-8 (3 seed): proposed đóng vòng
 58–66 s; baselines complete ~33–37 s nhưng không bao giờ report.
+
+## Phụ lục v4: Quét spacing (20/30/40 m) — ngưỡng sập hợp tác liên-cell
+
+Grid 40×40, scheme proposed, 3 seed/spacing, mọi tham số khác giữ nguyên
+(TX 0 dBm → tầm G2G lý thuyết ≈ 37 m).
+
+| spacing | map (m) | report (s) | localize (s) | strict-complete (s) | region cells | inter-shares | g2gOk | G2G decode % | năng lượng (kJ) |
+|---|---|---|---|---|---|---|---|---|---|
+| 20 m | 780 | **110.2** | 37.7 | 85.3 | 1.67 | 0.67 | 1813 | 1.33% | 86.7 |
+| 30 m | 1170 | 170.2 | 60.1 | 116.3 | 1.00 | 0 | 698 | 0.73% | 134.5 |
+| 40 m | 1560 | 206.9 | 83.6 | 150.6 | 1.00 | 0 | 363 | 0.36% | 163.4 |
+
+(Per-seed: spacing 20 → report 105.9/113.8/111.0; spacing 30 → 138.8/152.5/219.3;
+spacing 40 → 192.3/195.6/232.9. Cả 9/9 run đều report thành công.)
+
+Ba hiệu ứng tách bạch:
+
+1. **Scaling tuyến tính theo map.** Cạnh map tăng 780→1560 m nên thời gian quét
+   FAST và mọi mốc thời gian giãn theo. Chuẩn hoá report/cạnh-map:
+   0.141 / 0.145 / 0.133 s/m — gần phẳng, tức phần lớn độ chậm chỉ là diện tích
+   lớn hơn, KHÔNG phải giao thức tệ đi.
+2. **Hợp tác liên-cell sập giữa 20 m và 30 m.** Ở 20 m: 2/3 seed cho region
+   2-cell với inter-share qua CGW. Ở 30/40 m: region luôn 1 cell, inter-share = 0.
+   Nguyên nhân kép: (a) mật độ node/cell giảm → vành đai clue yếu quanh nạn nhân
+   thưa đi, cell hàng xóm không còn đủ evidence vượt kCoopThreshold; (b) link
+   ground 30 m ăn vào vùng waterfall (chéo 42.4 m đứt hẳn), 40 m vượt hẳn ngân
+   sách 37 m — g2gOk rơi 1813→363, decode 1.33%→0.36% (phần còn sống ở 40 m là
+   đuôi shadowing may mắn, PHY trung thực).
+3. **Caveat trung thực:** control-plane sự kiện (RegionCoordinator) tính node
+   cô lập = 1 hop lossy (p_intra 0.92) — ở spacing 40 điều này *rộng lượng hơn
+   radio thật* (node→CL đa phần sẽ đứt). Kết quả 40 m nên đọc là "chặn trên".
+
+Hệ quả thiết kế: triển khai thưa (≥30 m) cần một trong hai: tăng TX ground
+0→+5 dBm (tầm G2G 37→52 m, phủ lại spacing 40 m) hoặc bỏ qua CL mà alert
+thẳng node→UAV khi mặt đất phân mảnh. Cơ chế vùng đa-cell chỉ đáng giá ở
+mật độ dày (spacing ≲ 25 m với ngân sách link hiện tại).

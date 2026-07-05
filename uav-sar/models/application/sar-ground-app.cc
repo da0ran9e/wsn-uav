@@ -114,6 +114,11 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
     pkt->CopyData(b.data(), sz);
     uint8_t type = b[0];
 
+    if (type == (uint8_t)Msg::CONFIRM) {
+        // someone confirmed the delivery -> every beaconing CL goes quiet
+        Simulator::Cancel(m_beaconEvent);
+        return true;
+    }
     if ((type == (uint8_t)Msg::CUE || type == (uint8_t)Msg::FULL) && sz >= kChunkHdr) {
         uint16_t fragId, seq, total;
         std::memcpy(&fragId, &b[2], 2);

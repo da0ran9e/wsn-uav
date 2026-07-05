@@ -75,18 +75,20 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     if (proposed) {
         m_coord.Init(&m_plan, &m_routing, &m_metrics,
                      params::kAlertThreshold, params::kCoopThreshold, cfg.seed,
-                     [this](uint32_t leaderNode, uint32_t verifierNode, uint16_t rid,
-                            double /*cx*/, double /*cy*/) {
-                         // The ticket designates the verifier; the summon
-                         // carries the verifier's position so the DATA UAV
-                         // delivers directly over the node that must confirm.
-                         auto vit = m_groundById.find(verifierNode);
-                         auto lit = m_groundById.find(leaderNode);
+                     [this](const std::vector<uint32_t>& leaders,
+                            uint32_t verifierNode, uint16_t rid) {
+                         // Ticket designates the verifier; EVERY region CL
+                         // beacons the same ticket (verifier position inside)
+                         // so a sweeping FAST anywhere near the region hears it.
                          double vx = 0, vy = 0;
                          auto nit = m_plan.nodes.find(verifierNode);
                          if (nit != m_plan.nodes.end()) { vx = nit->second.x; vy = nit->second.y; }
+                         auto vit = m_groundById.find(verifierNode);
                          if (vit != m_groundById.end()) vit->second->SetVerifier(true);
-                         if (lit != m_groundById.end()) lit->second->StartSummon(rid, vx, vy);
+                         for (uint32_t ln : leaders) {
+                             auto lit = m_groundById.find(ln);
+                             if (lit != m_groundById.end()) lit->second->StartSummon(rid, vx, vy);
+                         }
                      });
     }
 
@@ -125,6 +127,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     // 7) UAV apps
     uint32_t fastCount = proposed ? std::max<uint32_t>(1, (uint32_t)(numUav * cfg.fastRatio)) : 0;
     auto claim = std::make_shared<int32_t>(-1);
+    auto reportClaim = std::make_shared<int32_t>(-1);
     for (uint32_t u = 0; u < numUav; u++) {
         if (!proposed) {
             // baseline: every UAV sweeps ITS band and dwell-dumps the dataset.
@@ -155,6 +158,8 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetSensorPositions(partition(u, fastCount));
             app->SetCues(cues);
             app->SetCruise(params::kCruiseAltitudeM, params::kFastSpeedMps);
+            app->SetBs(bsPos, bsAddr);
+            app->SetReportClaim(reportClaim);
             s.uavs.Get(u)->AddApplication(app);
             app->SetStartTime(Seconds(0));
             app->SetStopTime(Seconds(cfg.simTime));

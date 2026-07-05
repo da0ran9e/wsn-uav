@@ -81,6 +81,8 @@ private:
     double m_divertStartDist = 0;
     double m_dwellUntil = 0;        // SWEEP_DUMP: cycle chunks until this time
     uint32_t m_reportsSent = 0;     // REPORT retransmissions (bounded)
+    uint32_t m_handoffsSent = 0;    // HANDOFF broadcasts to the FAST team
+    void SendHandoff();
     uint32_t m_fullTxCount = 0;     // for decimated viz markers
 
     State m_state = State::IDLE;

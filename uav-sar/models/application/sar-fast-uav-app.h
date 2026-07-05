@@ -16,6 +16,7 @@
 #include "ns3/address.h"
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace ns3::uavsar {
@@ -34,6 +35,9 @@ public:
     void SetSensorPositions(const std::vector<ns3::Vector>& p) { m_sensors = p; }
     void SetCues(const std::vector<Fragment>& c) { m_cues = c; }
     void SetCruise(double alt, double speed) { m_alt = alt; m_speed = speed; }
+    void SetBs(ns3::Vector pos, ns3::Address addr) { m_bsPos = pos; m_bsAddr = addr; }
+    // Fleet-shared claim so exactly ONE fast UAV becomes the report courier.
+    void SetReportClaim(std::shared_ptr<int32_t> t) { m_reportClaim = std::move(t); }
 
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
@@ -47,7 +51,7 @@ private:
     void DisseminateTick();
     void TrajTick();
 
-    enum class State { IDLE, CLIMB, CRUISE, DONE };
+    enum class State { IDLE, CLIMB, CRUISE, RETURN_BS, DONE };
 
     uint32_t m_nodeId = 0;
     ns3::Ptr<ns3::NetDevice> m_dev;
@@ -62,6 +66,12 @@ private:
     bool m_summonSeen = false;  // once a summon is relayed, stop spreading cues
     double m_alt = 20.0, m_speed = 25.0, m_radius = 50.0;
     State m_state = State::IDLE;
+    ns3::Vector m_bsPos{0, 0, 0};
+    ns3::Address m_bsAddr;
+    std::shared_ptr<int32_t> m_reportClaim;
+    bool m_courier = false;
+    uint32_t m_reportsSent = 0;
+    void SendReport();
     ns3::EventId m_ctrl, m_dis, m_traj;
     FlightController m_fc;
 };

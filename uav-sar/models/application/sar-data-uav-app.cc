@@ -206,6 +206,20 @@ void SarDataUavApp::SendReport() {
     Simulator::Schedule(Seconds(params::kReportRetryS), &SarDataUavApp::SendReport, this);
 }
 
+void SarDataUavApp::SendHandoff() {
+    if (m_handoffsSent >= params::kConfirmRetries) return;
+    if (m_dev) {
+        std::vector<uint8_t> b(kHandoffLen);
+        uint8_t* q = b.data();
+        *q++ = (uint8_t)Msg::HANDOFF; *q++ = kBroadcast;
+        uint16_t rid = 1; std::memcpy(q, &rid, 2);
+        m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+    }
+    m_handoffsSent++;
+    Simulator::Schedule(Seconds(params::kConfirmRetryS), &SarDataUavApp::SendHandoff, this);
+}
+
 void SarDataUavApp::TrajTick() {
     if (m_metrics) {
         Vector p = m_fc.GetPosition();
@@ -225,10 +239,13 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
         TryClaimDivert(cx / 10.0, cy / 10.0);
     } else if (type == (uint8_t)Msg::CONFIRM && sz >= kConfirmLen) {
-        // our delivery confirmed -> head back to BS to report.
+        // our delivery confirmed -> hand the report to the FAST team (25 m/s
+        // courier beats our 15 m/s) and still fly home as the fallback; the BS
+        // deduplicates, first REPORT wins.
         if (m_claimed && !m_confirmed && (m_state == State::DELIVER || m_state == State::DIVERT)) {
             m_confirmed = true;
             m_state = State::RETURN;
+            SendHandoff();
         }
     }
     return true;

@@ -184,9 +184,9 @@ void RegionCoordinator::CloseWindow() {
     }
 
     m_summoned = true;
-    uint32_t leaderNode = m_plan->cells.at(leaderCell).leaderId;
-    if (m_onSummon)
-        m_onSummon(leaderNode, verifier, 1, ws > 0 ? wx / ws : 0, ws > 0 ? wy / ws : 0);
+    std::vector<uint32_t> leaders;
+    for (int32_t c : region) leaders.push_back(m_plan->cells.at(c).leaderId);
+    if (m_onSummon) m_onSummon(leaders, verifier, 1);
 }
 
 }  // namespace ns3::uavsar

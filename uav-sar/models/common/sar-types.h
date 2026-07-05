@@ -17,6 +17,7 @@ enum class Msg : uint8_t {
     FULL     = 4,   // DATA -> ground: full-data chunk           [id:u16][seq:u16][total:u16][layer:u8]
     CONFIRM  = 5,   // ground -> DATA: full dataset received/confirmed [regionId:u16][nodeId:u8]
     REPORT   = 6,   // UAV -> BS: mission report (small)          [regionId:u16][resultQ8:u8]
+    HANDOFF  = 7,   // DATA -> FAST: carry the report home (fast) [regionId:u16]
 };
 
 inline constexpr uint8_t kBroadcast = 0xFF;
@@ -28,6 +29,7 @@ inline constexpr uint32_t kSummonLen  = 1 + 1 + 2 + 2 + 2;      // 8
 inline constexpr uint32_t kA2ALen     = 1 + 1 + 2 + 2 + 2;      // 8 (same body)
 inline constexpr uint32_t kConfirmLen = 1 + 1 + 2 + 1;          // 5
 inline constexpr uint32_t kReportLen  = 1 + 1 + 2 + 1;          // 5
+inline constexpr uint32_t kHandoffLen = 1 + 1 + 2;              // 4
 
 inline constexpr uint32_t kMaxPayload = 100;                    // safe app payload
 inline constexpr uint32_t kChunkBytes = kMaxPayload - kChunkHdr;  // 91

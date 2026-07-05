@@ -17,6 +17,7 @@
 #include <functional>
 #include <map>
 #include <random>
+#include <vector>
 
 namespace ns3::uavsar {
 
@@ -24,11 +25,16 @@ class SarMetrics;
 
 class RegionCoordinator {
 public:
-    // onSummon(leaderNodeId, verifierNodeId, regionId, centroidX, centroidY).
+    // onSummon(regionLeaderNodes, verifierNodeId, regionId).
+    // ALL Cell Leaders of the formed region beacon the SAME ticket — under
+    // realistic A2G footprints a single beaconing CL is a needle for the
+    // sweeping FAST team; the region's CLs together form a bigger acoustic
+    // surface while staying bounded (|region| x quota, still no node storm).
     // The verifier is the strongest-evidence node in the region — the node
     // whose clue raised the alarm; it alone confirms the delivery (its footage
     // is what the full data must be checked against).
-    using SummonCb = std::function<void(uint32_t, uint32_t, uint16_t, double, double)>;
+    using SummonCb =
+        std::function<void(const std::vector<uint32_t>&, uint32_t, uint16_t)>;
 
     void Init(const CellGridPlan* plan, const InterCellRouting* routing,
               SarMetrics* metrics, double alertThreshold, double coopThreshold,

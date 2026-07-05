@@ -88,6 +88,18 @@ void SarFastUavApp::ControlTick() {
         if (p.z >= m_alt) { m_fc.SetClimb(0); m_state = State::CRUISE;
             Vector t = m_targets[m_ti];
             m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI); m_fc.Forward(m_speed); }
+    } else if (m_state == State::RETURN_BS) {
+        double d = std::hypot(m_bsPos.x - p.x, m_bsPos.y - p.y);
+        m_fc.Turn(std::atan2(m_bsPos.y - p.y, m_bsPos.x - p.x) * 180 / M_PI);
+        m_fc.Forward(m_speed);
+        if (d <= arriveR) {
+            m_fc.Hover(); m_state = State::DONE;
+            if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
+                                            "FAST", "report_tx", "courier at BS",
+                                            p.x, p.y, p.z);
+            SendReport();
+            return;
+        }
     } else if (m_state == State::CRUISE) {
         Vector t = m_targets[m_ti];
         if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
@@ -141,10 +153,40 @@ void SarFastUavApp::TrajTick() {
     m_traj = Simulator::Schedule(Seconds(params::kTrajLogS), &SarFastUavApp::TrajTick, this);
 }
 
+void SarFastUavApp::SendReport() {
+    if (m_reportsSent >= params::kReportRetries) return;
+    if (m_dev) {
+        std::vector<uint8_t> b(kReportLen);
+        uint8_t* q = b.data();
+        *q++ = (uint8_t)Msg::REPORT; *q++ = 0x00;
+        uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2; *q++ = 255;
+        m_dev->Send(Create<Packet>(b.data(), b.size()), m_bsAddr, 0);
+        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+    }
+    m_reportsSent++;
+    Simulator::Schedule(Seconds(params::kReportRetryS), &SarFastUavApp::SendReport, this);
+}
+
 bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const Address&) {
     uint32_t sz = pkt->GetSize();
     if (sz < 2) return true;
     std::vector<uint8_t> b(sz); pkt->CopyData(b.data(), sz);
+    if (b[0] == (uint8_t)Msg::HANDOFF && sz >= kHandoffLen && !m_courier) {
+        // fast courier: exactly one FAST claims and races the report home
+        if (m_reportClaim) {
+            if (*m_reportClaim == -1) *m_reportClaim = (int32_t)m_nodeId;
+            if (*m_reportClaim != (int32_t)m_nodeId) return true;
+        }
+        m_courier = true;
+        m_state = State::RETURN_BS;
+        if (m_metrics) {
+            Vector p = m_fc.GetPosition();
+            m_metrics->AddCustody();
+            m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "FAST",
+                             "report_pickup", "courier claimed", p.x, p.y, p.z);
+        }
+        return true;
+    }
     if (b[0] == (uint8_t)Msg::SUMMON && sz >= kSummonLen && m_dev) {
         // relay to DATA team over A2A (same body, different type).
         m_summonSeen = true;   // region found -> stop spreading cues

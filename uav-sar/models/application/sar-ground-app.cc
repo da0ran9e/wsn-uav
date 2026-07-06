@@ -112,11 +112,48 @@ void SarGroundApp::DeliverEvidence(uint16_t orig, double ev) {
     // Cell Leader is the sink: aggregate locally (its own sensing, or a report
     // that already reached it over the radio). Members send an RPT up the tree.
     if (m_isCellLeader) {
-        if (m_coord) m_coord->ReportClue(orig, ev, Simulator::Now().GetSeconds());
+        LeaderIngest(orig, ev);   // our own sensing feeds the cell aggregate
         return;
     }
     uint8_t evQ8 = (uint8_t)std::min(255.0, ev * 255.0);
     SendRpt(orig, evQ8, m_treeParent, (uint8_t)params::kRptTtl);
+}
+
+void SarGroundApp::LeaderIngest(uint16_t orig, double ev) {
+    // Cell Leader aggregates its cell's evidence (union over members). The first
+    // time the cell corroborates (>= coop) it floods a SHARE so adjacent cell
+    // leaders learn of it over the real radio and the region can merge across.
+    double& e = m_cellEvidence[orig];
+    if (ev > e) e = ev;
+    if (!m_sharedFlooded) {
+        double u = 0.0;
+        for (auto& [n, v] : m_cellEvidence) u = 1.0 - (1.0 - u) * (1.0 - v);
+        if (u >= m_coop) FloodShare();
+    }
+    if (m_coord) m_coord->ReportClue(orig, ev, Simulator::Now().GetSeconds());
+}
+
+void SarGroundApp::FloodShare() {
+    m_sharedFlooded = true;
+    double u = 0.0;
+    for (auto& [n, v] : m_cellEvidence) u = 1.0 - (1.0 - u) * (1.0 - v);
+    uint8_t evQ8 = (uint8_t)std::min(255.0, u * 255.0);
+    SendShare(m_cellId, evQ8, (int16_t)(m_cellCx * 10), (int16_t)(m_cellCy * 10),
+              (uint8_t)params::kShareTtl);
+}
+
+void SarGroundApp::SendShare(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy, uint8_t ttl) {
+    if (!m_dev) return;
+    std::vector<uint8_t> b(kShareLen);
+    uint8_t* q = b.data();
+    *q++ = (uint8_t)Msg::SHARE;
+    uint16_t c = (uint16_t)cell; std::memcpy(q, &c, 2); q += 2;
+    *q++ = evQ8;
+    std::memcpy(q, &cx, 2); q += 2;
+    std::memcpy(q, &cy, 2); q += 2;
+    *q++ = ttl;
+    m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+    if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
 }
 
 void SarGroundApp::SendRpt(uint16_t orig, uint8_t evQ8, int32_t nextHop, uint8_t ttl) {
@@ -157,13 +194,32 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         double ev = evQ8 / 255.0;
         if (m_isCellLeader) {
             // the report reached its Cell Leader over the real radio.
-            if (m_coord) m_coord->ReportClue(orig, ev, Simulator::Now().GetSeconds());
+            LeaderIngest(orig, ev);
         } else if (ttl > 0) {
             // forward one hop further up the tree, after a small MAC-desync jitter.
             Simulator::Schedule(Seconds(m_rng->GetValue(0.0, params::kFwdStaggerMaxS)),
                                 &SarGroundApp::SendRpt, this, orig, evQ8,
                                 m_treeParent, (uint8_t)(ttl - 1));
         }
+        return true;
+    }
+    if (type == (uint8_t)Msg::SHARE && sz >= kShareLen) {
+        uint16_t origCell; std::memcpy(&origCell, &b[1], 2);
+        uint8_t evQ8 = b[3];
+        int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
+        uint8_t ttl = b[8];
+        if (m_metrics) { m_metrics->AddRecv(); m_metrics->AddRecvBytes(sz); }
+        auto sit = m_shareSeen.find(origCell);
+        if (sit != m_shareSeen.end() && sit->second >= evQ8) return true;  // dup/stale
+        m_shareSeen[origCell] = evQ8;
+        // a Cell Leader hearing ANOTHER cell's SHARE = the cross-cell link was
+        // carried by the real radio; register the edge for region growth.
+        if (m_isCellLeader && (int32_t)origCell != m_cellId && m_coord)
+            m_coord->RecordShare((int32_t)origCell, m_cellId);
+        if (ttl > 0)
+            Simulator::Schedule(Seconds(m_rng->GetValue(0.0, params::kFwdStaggerMaxS)),
+                                &SarGroundApp::SendShare, this, (int32_t)origCell, evQ8,
+                                cx, cy, (uint8_t)(ttl - 1));
         return true;
     }
     if ((type == (uint8_t)Msg::CUE || type == (uint8_t)Msg::FULL) && sz >= kChunkHdr) {

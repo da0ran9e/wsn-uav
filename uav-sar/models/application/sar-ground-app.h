@@ -54,6 +54,8 @@ public:
     // the Cell Leader / tree root), and whether I am the Cell Leader (sink).
     void SetTreeParent(int32_t p) { m_treeParent = p; }
     void SetCellLeader(bool v) { m_isCellLeader = v; }
+    void SetCellId(int32_t c) { m_cellId = c; }
+    void SetCellCenter(double x, double y) { m_cellCx = x; m_cellCy = y; }
 
     // Called on the region leader; (cx,cy) = the verifier's position, embedded
     // in the SUMMON so the DATA UAV delivers directly over the verifier.
@@ -69,6 +71,9 @@ private:
     void SendConfirm();                 // retried kConfirmRetries times
     void DeliverEvidence(uint16_t orig, double ev);  // to CL: local, or via RPT radio
     void SendRpt(uint16_t orig, uint8_t evQ8, int32_t nextHop, uint8_t ttl);
+    void LeaderIngest(uint16_t orig, double ev);     // CL aggregation + SHARE trigger
+    void FloodShare();
+    void SendShare(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy, uint8_t ttl);
     double PossessedConfidence() const;
     bool HasEntireDataset() const;
 
@@ -87,6 +92,11 @@ private:
     bool m_isCellLeader = false;
     ns3::Ptr<ns3::UniformRandomVariable> m_rng;
     std::map<uint16_t, uint8_t> m_rptSeen;  // origNode -> best evQ8 seen (RPT dedup)
+    int32_t m_cellId = -1;
+    double m_cellCx = 0, m_cellCy = 0;
+    std::map<uint16_t, double> m_cellEvidence;  // CL: origNode -> evidence (own cell)
+    bool m_sharedFlooded = false;
+    std::map<uint16_t, uint8_t> m_shareSeen;    // SHARE flood dedup by origCell
 
     bool m_isLeader = false;
     bool m_isTarget = false;

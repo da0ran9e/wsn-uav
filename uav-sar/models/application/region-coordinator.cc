@@ -37,6 +37,11 @@ void RegionCoordinator::ReportClue(uint32_t nodeId, double evidence, double /*tN
     EvidenceArrive(nodeId, evidence);
 }
 
+void RegionCoordinator::RecordShare(int32_t fromCell, int32_t toCell) {
+    if (m_summoned) return;
+    m_shareEdges.emplace(fromCell, toCell);
+}
+
 void RegionCoordinator::EvidenceArrive(uint32_t nodeId, double evidence) {
     if (m_summoned) return;
     double& e = m_nodeEvidence[nodeId];
@@ -107,11 +112,11 @@ void RegionCoordinator::CloseWindow() {
             if (region.count(adj)) continue;
             auto eit = cellEv.find(adj);
             if (eit == cellEv.end() || eit->second < m_coop) continue;
-            // gateway must exist and the share must survive the inter-cell link
-            bool hasGw = m_routing && m_routing->gateway.count(c) &&
-                         m_routing->gateway.at(c).count(adj);
-            if (!hasGw) continue;
-            if (m_u01(m_rng) > params::kCoopSuccInter) continue;  // share lost
+            // The corroborating cell's SHARE must have physically reached a
+            // leader across the boundary over the real radio (either direction
+            // of the flood) — no probability proxy any more.
+            if (!m_shareEdges.count({c, adj}) && !m_shareEdges.count({adj, c}))
+                continue;
             interOk++;
             region.insert(adj);
             bfs.push(adj);

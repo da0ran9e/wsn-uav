@@ -17,6 +17,8 @@
 #include <functional>
 #include <map>
 #include <random>
+#include <set>
+#include <utility>
 #include <vector>
 
 namespace ns3::uavsar {
@@ -44,6 +46,11 @@ public:
     // simulated (per-hop delay + intra-cell success probability).
     void ReportClue(uint32_t nodeId, double evidence, double tNow);
 
+    // A cross-cell SHARE flood physically reached toCell's leader from fromCell
+    // over the real radio — record the edge so region growth uses only links the
+    // channel actually carried (replaces the kCoopSuccInter probability proxy).
+    void RecordShare(int32_t fromCell, int32_t toCell);
+
     bool Summoned() const { return m_summoned; }
 
 private:
@@ -60,6 +67,7 @@ private:
     std::uniform_real_distribution<double> m_u01{0.0, 1.0};
 
     std::map<uint32_t, double> m_nodeEvidence;  // nodeId -> strongest evidence at CL
+    std::set<std::pair<int32_t, int32_t>> m_shareEdges;  // cross-cell links via real SHARE
     bool m_windowOpen = false;
     bool m_summoned = false;
 };

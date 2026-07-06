@@ -34,7 +34,7 @@ struct SarNetworkConfig {
     double gridSpacing = 20.0;   // m
     uint32_t numUav = 4;
     ns3::Vector bsPos{-200.0, -200.0, 0.0};
-    double uavStartAltitude = 20.0;
+    double uavStartAltitude = 0.0;   // launch from the ground; the app climbs
 };
 
 struct SarNetworkSetup {

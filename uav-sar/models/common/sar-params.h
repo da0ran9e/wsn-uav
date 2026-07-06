@@ -35,6 +35,9 @@ inline constexpr double kNakagamiM       = 1.5;     // [Assume] partial-LoS fore
 inline constexpr double kLosA            = 4.88;    // [Lit?] Al-Hourani suburban
 inline constexpr double kLosB            = 0.43;    // [Lit?]
 inline constexpr double kEtaLosDb        = 0.1;     // [Lit?] LoS excess loss
+inline constexpr double kNlosExcessDb    = 10.0;   // [Assume] NLoS diffraction excess on
+                                                   // top of foliage (LoS/NLoS both cross
+                                                   // the canopy to reach a ground sensor)
 // NLoS excess = foliage crossing per ITU-R P.833 capped exponential:
 //   A = Amax * (1 - exp(-d_veg * gamma / Amax)),  d_veg = canopy/sin(theta)
 inline constexpr double kVegGammaDbPerM  = 0.5;     // [Lit] ITU-R P.833 0.3-0.8 @2GHz

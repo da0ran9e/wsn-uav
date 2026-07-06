@@ -71,7 +71,13 @@ double ForestA2gLossModel::DoCalcRxPower(double txPowerDbm,
         double fspl =
             params::kRefLossDb + 20.0 * std::log10(d / params::kRefDistanceM);
         bool los = it->second < PLos(theta);
-        pl = fspl + (los ? params::kEtaLosDb : VegLossDb(theta));
+        // Even a LoS ray must penetrate the canopy to reach an UNDER-canopy
+        // ground sensor, so the foliage loss applies to BOTH regimes. Previously
+        // veg loss was on the NLoS branch only, so a low-angle "LoS" link got
+        // just FSPL+0.1 dB and reached ~560 m — lighting up the field before any
+        // UAV arrived. NLoS adds a diffraction excess on top of the foliage.
+        double veg = VegLossDb(theta);
+        pl = fspl + veg + params::kEtaLosDb + (los ? 0.0 : params::kNlosExcessDb);
     }
     return txPowerDbm - pl;
 }

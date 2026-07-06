@@ -9,6 +9,7 @@
 #include "ns3/mac16-address.h"
 #include "ns3/mobility-model.h"
 
+#include <algorithm>
 #include <cstring>
 #include <vector>
 
@@ -25,7 +26,7 @@ TypeId SarGroundApp::GetTypeId() {
                             .AddConstructor<SarGroundApp>();
     return tid;
 }
-SarGroundApp::SarGroundApp() = default;
+SarGroundApp::SarGroundApp() : m_rng(CreateObject<UniformRandomVariable>()) {}
 SarGroundApp::~SarGroundApp() = default;
 
 void SarGroundApp::SetProfile(const std::vector<Fragment>& frags) {
@@ -107,6 +108,30 @@ void SarGroundApp::SendConfirm() {
                                          &SarGroundApp::SendConfirm, this);
 }
 
+void SarGroundApp::DeliverEvidence(uint16_t orig, double ev) {
+    // Cell Leader is the sink: aggregate locally (its own sensing, or a report
+    // that already reached it over the radio). Members send an RPT up the tree.
+    if (m_isCellLeader) {
+        if (m_coord) m_coord->ReportClue(orig, ev, Simulator::Now().GetSeconds());
+        return;
+    }
+    uint8_t evQ8 = (uint8_t)std::min(255.0, ev * 255.0);
+    SendRpt(orig, evQ8, m_treeParent, (uint8_t)params::kRptTtl);
+}
+
+void SarGroundApp::SendRpt(uint16_t orig, uint8_t evQ8, int32_t nextHop, uint8_t ttl) {
+    if (!m_dev || nextHop < 0) return;   // no route up (isolated / no parent)
+    std::vector<uint8_t> b(kRptLen);
+    uint8_t* q = b.data();
+    *q++ = (uint8_t)Msg::RPT;
+    uint16_t nh = (uint16_t)nextHop; std::memcpy(q, &nh, 2); q += 2;
+    std::memcpy(q, &orig, 2); q += 2;
+    *q++ = evQ8;
+    *q++ = ttl;
+    m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+    if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+}
+
 bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const Address&) {
     uint32_t sz = pkt->GetSize();
     if (sz < 2) return true;
@@ -117,6 +142,28 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
     if (type == (uint8_t)Msg::CONFIRM) {
         // someone confirmed the delivery -> every beaconing CL goes quiet
         Simulator::Cancel(m_beaconEvent);
+        return true;
+    }
+    if (type == (uint8_t)Msg::RPT && sz >= kRptLen) {
+        uint16_t nextHop, orig;
+        std::memcpy(&nextHop, &b[1], 2);
+        std::memcpy(&orig, &b[3], 2);
+        uint8_t evQ8 = b[5], ttl = b[6];
+        if (nextHop != (uint16_t)m_nodeId) return true;      // not my hop
+        if (m_metrics) { m_metrics->AddRecv(); m_metrics->AddRecvBytes(sz); }
+        auto sit = m_rptSeen.find(orig);
+        if (sit != m_rptSeen.end() && sit->second >= evQ8) return true;  // stale/dup
+        m_rptSeen[orig] = evQ8;
+        double ev = evQ8 / 255.0;
+        if (m_isCellLeader) {
+            // the report reached its Cell Leader over the real radio.
+            if (m_coord) m_coord->ReportClue(orig, ev, Simulator::Now().GetSeconds());
+        } else if (ttl > 0) {
+            // forward one hop further up the tree, after a small MAC-desync jitter.
+            Simulator::Schedule(Seconds(m_rng->GetValue(0.0, params::kFwdStaggerMaxS)),
+                                &SarGroundApp::SendRpt, this, orig, evQ8,
+                                m_treeParent, (uint8_t)(ttl - 1));
+        }
         return true;
     }
     if ((type == (uint8_t)Msg::CUE || type == (uint8_t)Msg::FULL) && sz >= kChunkHdr) {
@@ -139,11 +186,13 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         if (!wasComplete && m_chunks[fragId].size() >= total) {
             m_have.insert(fragId);
 
-            // New fragment possessed -> evidence may have grown; report to CL.
+            // New fragment possessed -> evidence may have grown; report it to the
+            // Cell Leader. This now crosses the REAL radio (RPT, forwarded up the
+            // cell tree, subject to the G2G channel) unless we ARE the leader.
             if (m_coord) {
                 double eff = PossessedConfidence() * m_clueQuality;
                 if (eff >= m_coop)
-                    m_coord->ReportClue(m_nodeId, eff, Simulator::Now().GetSeconds());
+                    DeliverEvidence((uint16_t)m_nodeId, eff);
             }
 
             // Loop closure on holding the ENTIRE dataset (every fragment id).

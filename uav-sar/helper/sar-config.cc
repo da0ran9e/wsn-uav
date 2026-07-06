@@ -198,6 +198,9 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);
         app->SetCoopThreshold(params::kCoopThreshold);
+        // Intra-cell tree so clue reports (RPT) climb to the CL over real radio.
+        app->SetTreeParent(m_plan.nodes.at(id).parentId);
+        app->SetCellLeader(m_plan.nodes.at(id).isLeader);
         app->SetIsTarget(id == targetId);
         app->SetStopOnComplete(!proposed);
         s.sensors.Get(i)->AddApplication(app);

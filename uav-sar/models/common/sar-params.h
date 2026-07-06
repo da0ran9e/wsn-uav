@@ -77,6 +77,15 @@ inline constexpr double kCoopSuccIntra   = 0.92;    // [Assume] node->CL report 
 inline constexpr double kCoopSuccInter   = 0.82;    // [Assume] CL<->CL share success
 inline constexpr double kHopDelayS       = 0.02;    // [Assume] per ground hop latency
 
+// Packet-level control plane: the clue report (RPT, up the cell tree) and the
+// cross-cell share (SHARE, flooded) now cross the REAL radio, so their loss and
+// latency come from the channel, not from kCoopSucc*/kHopDelayS above (which now
+// serve only as a fallback for the legacy event-level path).
+inline constexpr uint32_t kRptTtl        = 12;      // [Design] max up-tree hops
+inline constexpr uint32_t kShareTtl      = 4;       // [Design] SHARE flood radius (hops)
+inline constexpr double kFwdStaggerMaxS  = 0.03;    // [Design] random per-hop forward
+                                                    // jitter, desync the shared MAC
+
 // Reliability of the closing handshake (F2): the CONFIRM broadcast and the
 // final REPORT are retransmitted a bounded number of times.
 inline constexpr uint32_t kConfirmRetries = 5;      // [Design]

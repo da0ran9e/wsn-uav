@@ -20,6 +20,7 @@
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
 #include "ns3/address.h"
+#include "ns3/random-variable-stream.h"
 
 #include <cstdint>
 #include <map>
@@ -49,6 +50,10 @@ public:
     // Designated by the region ticket: the strongest-evidence node; it alone
     // confirms the delivery (its footage is what the data is checked against).
     void SetVerifier(bool v) { m_isVerifier = v; }
+    // Distributed control plane: my next hop up the intra-cell tree (-1 if I am
+    // the Cell Leader / tree root), and whether I am the Cell Leader (sink).
+    void SetTreeParent(int32_t p) { m_treeParent = p; }
+    void SetCellLeader(bool v) { m_isCellLeader = v; }
 
     // Called on the region leader; (cx,cy) = the verifier's position, embedded
     // in the SUMMON so the DATA UAV delivers directly over the verifier.
@@ -62,6 +67,8 @@ private:
     void StopApplication() override;
     void BeaconTick();
     void SendConfirm();                 // retried kConfirmRetries times
+    void DeliverEvidence(uint16_t orig, double ev);  // to CL: local, or via RPT radio
+    void SendRpt(uint16_t orig, uint8_t evQ8, int32_t nextHop, uint8_t ttl);
     double PossessedConfidence() const;
     bool HasEntireDataset() const;
 
@@ -76,6 +83,10 @@ private:
     std::set<uint16_t> m_have;                           // complete fragment ids
     double m_clueQuality = 0.0;
     double m_coop = 0.30;
+    int32_t m_treeParent = -1;
+    bool m_isCellLeader = false;
+    ns3::Ptr<ns3::UniformRandomVariable> m_rng;
+    std::map<uint16_t, uint8_t> m_rptSeen;  // origNode -> best evQ8 seen (RPT dedup)
 
     bool m_isLeader = false;
     bool m_isTarget = false;

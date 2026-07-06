@@ -28,18 +28,13 @@ void RegionCoordinator::Init(const CellGridPlan* plan, const InterCellRouting* r
 
 void RegionCoordinator::ReportClue(uint32_t nodeId, double evidence, double /*tNow*/) {
     if (m_summoned || !m_plan) return;
-    auto it = m_plan->nodes.find(nodeId);
-    if (it == m_plan->nodes.end()) return;
+    if (m_plan->nodes.find(nodeId) == m_plan->nodes.end()) return;
 
-    // Transport up the intra-cell tree: per-hop delay; success p_intra.
-    // A failed report is simply lost — the node will report again on its next
-    // fragment completion (natural retry).
-    if (m_u01(m_rng) > params::kCoopSuccIntra) return;
-    uint32_t hops = it->second.hopToLeader;
-    if (hops == 0xFFFFFFFF) hops = 1;  // isolated-in-cell: treat as one lossy hop
-    double delay = std::max<uint32_t>(1, hops) * params::kHopDelayS;
-    ns3::Simulator::Schedule(ns3::Seconds(delay),
-                             &RegionCoordinator::EvidenceArrive, this, nodeId, evidence);
+    // The evidence has already crossed the REAL radio to reach this node's Cell
+    // Leader (RPT, forwarded up the cell tree; the CL relays it here) — or it is
+    // the CL's own local evidence. Aggregate it directly: the intra-cell
+    // transport loss/latency is now the channel's, not a probability/delay proxy.
+    EvidenceArrive(nodeId, evidence);
 }
 
 void RegionCoordinator::EvidenceArrive(uint32_t nodeId, double evidence) {

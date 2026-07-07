@@ -23,8 +23,33 @@ TypeId SarFastUavApp::GetTypeId() {
                             .AddConstructor<SarFastUavApp>();
     return tid;
 }
-SarFastUavApp::SarFastUavApp() = default;
+SarFastUavApp::SarFastUavApp() : m_rng(CreateObject<UniformRandomVariable>()) {}
 SarFastUavApp::~SarFastUavApp() = default;
+
+void SarFastUavApp::SendClaim(uint8_t role) {
+    if (!m_dev) return;
+    std::vector<uint8_t> b(kClaimLen);
+    uint8_t* q = b.data();
+    *q++ = (uint8_t)Msg::CLAIM;
+    uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2;
+    *q++ = role;
+    uint16_t id = (uint16_t)m_nodeId; std::memcpy(q, &id, 2);
+    m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+    if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+}
+
+void SarFastUavApp::ClaimCourier() {
+    if (m_yieldedCourier || m_courier) return;   // another FAST is the courier
+    SendClaim(1);
+    m_courier = true;
+    m_state = State::RETURN_BS;
+    if (m_metrics) {
+        Vector p = m_fc.GetPosition();
+        m_metrics->AddCustody();
+        m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "FAST",
+                         "report_pickup", "courier claimed", p.x, p.y, p.z);
+    }
+}
 
 void SarFastUavApp::StartApplication() {
     m_fc.AttachTo(GetNode());
@@ -171,19 +196,20 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     uint32_t sz = pkt->GetSize();
     if (sz < 2) return true;
     std::vector<uint8_t> b(sz); pkt->CopyData(b.data(), sz);
-    if (b[0] == (uint8_t)Msg::HANDOFF && sz >= kHandoffLen && !m_courier) {
-        // fast courier: exactly one FAST claims and races the report home
-        if (m_reportClaim) {
-            if (*m_reportClaim == -1) *m_reportClaim = (int32_t)m_nodeId;
-            if (*m_reportClaim != (int32_t)m_nodeId) return true;
-        }
-        m_courier = true;
-        m_state = State::RETURN_BS;
-        if (m_metrics) {
-            Vector p = m_fc.GetPosition();
-            m_metrics->AddCustody();
-            m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "FAST",
-                             "report_pickup", "courier claimed", p.x, p.y, p.z);
+    if (b[0] == (uint8_t)Msg::HANDOFF && sz >= kHandoffLen) {
+        // Radio courier election: schedule a CLAIM after a short backoff; the
+        // first FAST to claim on the radio wins, the rest yield.
+        if (!m_courier && !m_yieldedCourier && !m_courierEvent.IsPending())
+            m_courierEvent = Simulator::Schedule(
+                Seconds(m_rng->GetValue(0.0, params::kClaimBackoffS)),
+                &SarFastUavApp::ClaimCourier, this);
+        return true;
+    }
+    if (b[0] == (uint8_t)Msg::CLAIM && sz >= kClaimLen) {
+        uint8_t role = b[3]; uint16_t id; std::memcpy(&id, &b[4], 2);
+        if (role == 1 && id != (uint16_t)m_nodeId && !m_courier) {
+            m_yieldedCourier = true;               // another FAST is the courier
+            Simulator::Cancel(m_courierEvent);
         }
         return true;
     }

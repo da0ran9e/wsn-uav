@@ -25,7 +25,7 @@ TypeId SarDataUavApp::GetTypeId() {
                             .AddConstructor<SarDataUavApp>();
     return tid;
 }
-SarDataUavApp::SarDataUavApp() = default;
+SarDataUavApp::SarDataUavApp() : m_rng(CreateObject<UniformRandomVariable>()) {}
 SarDataUavApp::~SarDataUavApp() = default;
 
 void SarDataUavApp::StartApplication() {
@@ -33,7 +33,7 @@ void SarDataUavApp::StartApplication() {
     Simulator::Schedule(Seconds(1.0 + 0.3 * m_nodeId), &SarDataUavApp::TakeOff, this);
 }
 void SarDataUavApp::StopApplication() {
-    Simulator::Cancel(m_ctrl); Simulator::Cancel(m_traj);
+    Simulator::Cancel(m_ctrl); Simulator::Cancel(m_traj); Simulator::Cancel(m_claimEvent);
     m_fc.Hover(); m_fc.SetClimb(0);
 }
 
@@ -51,12 +51,26 @@ void SarDataUavApp::TakeOff() {
     TrajTick();
 }
 
+void SarDataUavApp::SendClaim(uint8_t role) {
+    if (!m_dev) return;
+    std::vector<uint8_t> b(kClaimLen);
+    uint8_t* q = b.data();
+    *q++ = (uint8_t)Msg::CLAIM;
+    uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2;
+    *q++ = role;
+    uint16_t id = (uint16_t)m_nodeId; std::memcpy(q, &id, 2);
+    m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+    if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+}
+
+void SarDataUavApp::ClaimDivert() {
+    if (m_yieldedDivert || m_claimed) return;   // someone else already claimed
+    SendClaim(0);                               // announce on the radio, then act
+    TryClaimDivert(m_pendX, m_pendY);
+}
+
 void SarDataUavApp::TryClaimDivert(double x, double y) {
     if (m_claimed || m_state == State::DELIVER || m_state == State::RETURN) return;
-    if (m_claim) {
-        if (*m_claim == -1) *m_claim = (int32_t)m_nodeId;
-        if (*m_claim != (int32_t)m_nodeId) return;  // another DATA UAV owns it
-    }
     m_claimed = true;
     Vector p = m_fc.GetPosition();
     m_divert = Vector(x, y, m_alt);
@@ -237,7 +251,20 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     uint8_t type = b[0];
     if (type == (uint8_t)Msg::A2A && sz >= kA2ALen) {
         int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
-        TryClaimDivert(cx / 10.0, cy / 10.0);
+        // Radio mutual exclusion: schedule a CLAIM after a short backoff; if a
+        // peer's CLAIM arrives first we yield, so exactly one DATA UAV diverts.
+        if (!m_claimed && !m_yieldedDivert && !m_claimEvent.IsPending() &&
+            m_state != State::DELIVER && m_state != State::RETURN) {
+            m_pendX = cx / 10.0; m_pendY = cy / 10.0;
+            m_claimEvent = Simulator::Schedule(Seconds(m_rng->GetValue(0.0, params::kClaimBackoffS)),
+                                               &SarDataUavApp::ClaimDivert, this);
+        }
+    } else if (type == (uint8_t)Msg::CLAIM && sz >= kClaimLen) {
+        uint8_t role = b[3]; uint16_t id; std::memcpy(&id, &b[4], 2);
+        if (role == 0 && id != (uint16_t)m_nodeId && !m_claimed) {
+            m_yieldedDivert = true;                 // another DATA UAV took it
+            Simulator::Cancel(m_claimEvent);
+        }
     } else if (type == (uint8_t)Msg::CONFIRM && sz >= kConfirmLen) {
         // our delivery confirmed -> hand the report to the FAST team (25 m/s
         // courier beats our 15 m/s) and still fly home as the fallback; the BS

@@ -24,6 +24,9 @@ enum class Msg : uint8_t {
                     //   [nextHop:u16][origNode:u16][evQ8:u8][hopsLeft:u8][x:i16][y:i16]
     SHARE    = 9,   // Cell Leader -> flood: cross-cell evidence share
                     //   [origCell:u16][evQ8:u8][cx:i16][cy:i16][hopsLeft:u8]
+    CLAIM    = 10,  // UAV -> fleet: I am taking this role (radio mutual exclusion,
+                    //   replaces the shared-memory token) [regionId:u16][role:u8][id:u16]
+                    //   role 0 = DATA delivery diverter, 1 = FAST report courier
 };
 
 inline constexpr uint8_t kBroadcast = 0xFF;
@@ -38,6 +41,7 @@ inline constexpr uint32_t kReportLen  = 1 + 1 + 2 + 1;              // 5
 inline constexpr uint32_t kHandoffLen = 1 + 1 + 2;                  // 4
 inline constexpr uint32_t kRptLen     = 1 + 2 + 2 + 1 + 1 + 2 + 2;  // 11 (+self GPS)
 inline constexpr uint32_t kShareLen   = 1 + 2 + 1 + 2 + 2 + 1;      // 9
+inline constexpr uint32_t kClaimLen   = 1 + 2 + 1 + 2;              // 6 [region][role][id]
 
 inline constexpr uint32_t kMaxPayload = 100;                    // safe app payload
 inline constexpr uint32_t kChunkBytes = kMaxPayload - kChunkHdr;  // 91

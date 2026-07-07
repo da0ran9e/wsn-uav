@@ -110,8 +110,8 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
 
     // 7) UAV apps
     uint32_t fastCount = proposed ? std::max<uint32_t>(1, (uint32_t)(numUav * cfg.fastRatio)) : 0;
-    auto claim = std::make_shared<int32_t>(-1);
-    auto reportClaim = std::make_shared<int32_t>(-1);
+    // UAV role coordination (who diverts, who couriers) is now a radio CLAIM with
+    // suppression — no shared-memory tokens.
     for (uint32_t u = 0; u < numUav; u++) {
         if (!proposed) {
             // baseline: every UAV sweeps ITS band and dwell-dumps the dataset.
@@ -143,7 +143,6 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetCues(cues);
             app->SetCruise(params::kCruiseAltitudeM, params::kFastSpeedMps);
             app->SetBs(bsPos, bsAddr);
-            app->SetReportClaim(reportClaim);
             s.uavs.Get(u)->AddApplication(app);
             app->SetStartTime(Seconds(0));
             app->SetStopTime(Seconds(cfg.simTime));
@@ -159,7 +158,6 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetFullDataset(full);
             app->SetCruise(params::kCruiseAltitudeM, params::kDataSpeedMps);
             app->SetLoiter(Vector(cx, cy, params::kCruiseAltitudeM));
-            app->SetClaimToken(claim);
             app->SetBs(bsPos, bsAddr);
             s.uavs.Get(u)->AddApplication(app);
             app->SetStartTime(Seconds(0));

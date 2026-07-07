@@ -88,6 +88,9 @@ inline constexpr uint32_t kRptTtl        = 12;      // [Design] max up-tree hops
 inline constexpr uint32_t kShareTtl      = 4;       // [Design] SHARE flood radius (hops)
 inline constexpr double kFwdStaggerMaxS  = 0.03;    // [Design] random per-hop forward
                                                     // jitter, desync the shared MAC
+inline constexpr double kClaimBackoffS    = 0.15;   // [Design] UAV role claim: broadcast a
+                                                    // CLAIM after U(0,this); first wins, the
+                                                    // rest yield (replaces shared-mem token).
 inline constexpr double kElectBackoffS   = 0.6;     // [Design] distributed region-leader
                                                     // election: a cell that crosses ALERT
                                                     // waits kElectBackoffS·(1−evidence)

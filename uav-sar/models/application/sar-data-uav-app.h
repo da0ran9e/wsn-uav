@@ -2,9 +2,10 @@
 #define UAV_SAR_DATA_UAV_APP_H
 
 // DATA-team UAV: climbs and loiters at a staging point (does not listen to the
-// ground directly). On a relayed SUMMON (A2A) it claims the event (fleet-shared
-// token so exactly one responds), diverts to the victim region, delivers the
-// FULL dataset, and on CONFIRM flies back to the BS and sends a small report.
+// ground directly). On a relayed SUMMON (A2A) it claims the event over the radio
+// (a broadcast CLAIM with suppression, so exactly one responds — no shared-memory
+// token), diverts to the victim region, delivers the FULL dataset, and on CONFIRM
+// flies back to the BS and sends a small report.
 
 #include "flight-controller.h"
 #include "../common/target-profile.h"
@@ -15,6 +16,7 @@
 #include "ns3/vector.h"
 #include "ns3/address.h"
 #include "ns3/ptr.h"
+#include "ns3/random-variable-stream.h"
 
 #include <cstdint>
 #include <memory>
@@ -36,7 +38,6 @@ public:
     void SetFullDataset(const std::vector<Fragment>& f) { m_full = f; }
     void SetCruise(double alt, double speed) { m_alt = alt; m_speed = speed; }
     void SetLoiter(ns3::Vector c) { m_loiter = c; }
-    void SetClaimToken(std::shared_ptr<int32_t> t) { m_claim = std::move(t); }
     void SetBs(ns3::Vector pos, ns3::Address addr) { m_bsPos = pos; m_bsAddr = addr; }
 
     // Baseline behaviour: instead of loiter+summon, sweep the grid and dwell-dump
@@ -56,6 +57,8 @@ private:
     void TrajTick();
     void SendFullChunk(size_t fi, uint16_t seq);
     void SendReport();
+    void ClaimDivert();                 // won the radio CLAIM -> divert+deliver
+    void SendClaim(uint8_t role);       // broadcast a role claim (mutual exclusion)
     void TryClaimDivert(double x, double y);
 
     enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, DIVERT, DELIVER, SWEEP, RETURN, DONE };
@@ -74,8 +77,11 @@ private:
     ns3::Vector m_divert{0, 0, 0};
     ns3::Vector m_bsPos{0, 0, 0};
     ns3::Address m_bsAddr;
-    std::shared_ptr<int32_t> m_claim;
+    ns3::Ptr<ns3::UniformRandomVariable> m_rng;
     bool m_claimed = false;
+    bool m_yieldedDivert = false;   // heard another UAV's CLAIM first -> stand down
+    double m_pendX = 0, m_pendY = 0;
+    ns3::EventId m_claimEvent;
     bool m_pendingDivert = false;   // claimed before airborne; divert after climb
     bool m_confirmed = false;
     double m_divertStartDist = 0;

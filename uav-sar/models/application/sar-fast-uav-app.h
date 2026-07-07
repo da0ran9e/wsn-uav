@@ -14,6 +14,7 @@
 #include "ns3/vector.h"
 #include "ns3/ptr.h"
 #include "ns3/address.h"
+#include "ns3/random-variable-stream.h"
 
 #include <cstdint>
 #include <memory>
@@ -36,8 +37,6 @@ public:
     void SetCues(const std::vector<Fragment>& c) { m_cues = c; }
     void SetCruise(double alt, double speed) { m_alt = alt; m_speed = speed; }
     void SetBs(ns3::Vector pos, ns3::Address addr) { m_bsPos = pos; m_bsAddr = addr; }
-    // Fleet-shared claim so exactly ONE fast UAV becomes the report courier.
-    void SetReportClaim(std::shared_ptr<int32_t> t) { m_reportClaim = std::move(t); }
 
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
@@ -68,10 +67,14 @@ private:
     State m_state = State::IDLE;
     ns3::Vector m_bsPos{0, 0, 0};
     ns3::Address m_bsAddr;
-    std::shared_ptr<int32_t> m_reportClaim;
+    ns3::Ptr<ns3::UniformRandomVariable> m_rng;
     bool m_courier = false;
+    bool m_yieldedCourier = false;
+    ns3::EventId m_courierEvent;
     uint32_t m_reportsSent = 0;
     void SendReport();
+    void ClaimCourier();          // won the radio CLAIM -> race the report home
+    void SendClaim(uint8_t role); // broadcast a role claim (mutual exclusion)
     ns3::EventId m_ctrl, m_dis, m_traj;
     FlightController m_fc;
 };

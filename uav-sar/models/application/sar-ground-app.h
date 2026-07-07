@@ -100,6 +100,9 @@ private:
     bool m_sharedFlooded = false;
     std::map<uint16_t, uint8_t> m_shareSeen;    // SHARE flood dedup by origCell
     std::set<int32_t> m_regionNeighbors;        // corroborating cells heard via SHARE
+    std::map<int32_t, double> m_neighborEv;     // cellId -> strongest shared evidence
+    double m_lastFloodEv = 0;                   // re-flood SHARE as evidence grows
+    uint32_t m_deferCount = 0;                  // times we yielded to a stronger cell
 
     // distributed region-leader election
     bool m_electScheduled = false;

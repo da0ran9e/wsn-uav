@@ -101,12 +101,16 @@ void SarGroundApp::LeaderIngest(uint16_t orig, double ev, double x, double y) {
         char det[48]; std::snprintf(det, sizeof det, "ev=%.2f -> CL %u", ev, m_nodeId);
         m_metrics->Event(Simulator::Now().GetSeconds(), orig, "node", "clue_report", det, x, y, 0);
     }
-    if (!m_sharedFlooded && CellAggregate() >= m_coop) FloodShare();
+    // Flood (or re-flood) our current cell strength so neighbours can compare —
+    // the first flood at coop, then again each time evidence grows notably.
+    double agg = CellAggregate();
+    if (agg >= m_coop && agg >= m_lastFloodEv + 0.20) FloodShare();
     MaybeElect();
 }
 
 void SarGroundApp::FloodShare() {
     m_sharedFlooded = true;
+    m_lastFloodEv = CellAggregate();
     uint8_t evQ8 = (uint8_t)std::min(255.0, CellAggregate() * 255.0);
     SendShare(m_cellId, evQ8, (int16_t)(m_cellCx * 10), (int16_t)(m_cellCy * 10),
               (uint8_t)params::kShareTtl);
@@ -142,11 +146,28 @@ void SarGroundApp::MaybeElect() {
 
 void SarGroundApp::Elect() {
     if (m_regionFormed) return;                    // someone summoned first
-    // Delivery target = the strongest node this leader heard, at the GPS that
-    // node reported over the radio (no ground-truth position table).
-    double bestEv = -1; double vx = m_cellCx, vy = m_cellCy;
-    for (auto& [n, ne] : m_cellEvidence)
-        if (ne.ev > bestEv) { bestEv = ne.ev; vx = ne.x; vy = ne.y; }
+    // Defer to a stronger nearby cell: if a neighbour has SHARE'd higher evidence
+    // than ours, let IT summon (its SUMMON will suppress us). Bounded retries so a
+    // silent neighbour can't stall us forever. This picks the strongest cell
+    // instead of merely the earliest to cross the alert (distributed region window).
+    double agg = CellAggregate(), maxNb = 0;
+    for (auto& [c, e] : m_neighborEv) maxNb = std::max(maxNb, e);
+    if (maxNb > agg + 0.05 && m_deferCount < 3) {
+        m_deferCount++;
+        m_electEvent = Simulator::Schedule(Seconds(params::kElectBackoffS),
+                                           &SarGroundApp::Elect, this);
+        return;
+    }
+    // Delivery target = evidence^2-weighted centroid of the reporting nodes, at
+    // the GPS each reported over the radio (no ground-truth table). Weighting by
+    // evidence^2 concentrates on the high-evidence cluster around the victim and
+    // is robust to a single outlier node that merely caught the most cues.
+    double wx = 0, wy = 0, ws = 0;
+    for (auto& [n, ne] : m_cellEvidence) {
+        double w = ne.ev * ne.ev;
+        wx += w * ne.x; wy += w * ne.y; ws += w;
+    }
+    double vx = ws > 0 ? wx / ws : m_cellCx, vy = ws > 0 ? wy / ws : m_cellCy;
     if (m_metrics) {
         m_metrics->MarkLocalize(Simulator::Now().GetSeconds());
         m_metrics->SetRegionCells((uint32_t)(1 + m_regionNeighbors.size()));
@@ -255,6 +276,8 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // the cross-cell link was carried by the real radio: count it and grow
         // this leader's region view.
         if (m_isCellLeader && (int32_t)origCell != m_cellId && (evQ8 / 255.0) >= m_coop) {
+            double nev = evQ8 / 255.0;
+            if (nev > m_neighborEv[(int32_t)origCell]) m_neighborEv[(int32_t)origCell] = nev;
             if (m_regionNeighbors.insert((int32_t)origCell).second && m_metrics) {
                 m_metrics->AddInterShare();
                 Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();

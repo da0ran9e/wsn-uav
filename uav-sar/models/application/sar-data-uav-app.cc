@@ -131,6 +131,7 @@ void SarDataUavApp::ControlTick() {
             m_fc.Turn(std::atan2(m_divert.y - p.y, m_divert.x - p.x) * 180 / M_PI);
             m_fc.Forward(m_speed);
             if (d <= arriveR) { m_fc.Hover(); m_state = State::DELIVER;
+                m_deliverUntil = Simulator::Now().GetSeconds() + params::kMinDeliverDwellS;
                 if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
                                                 "deliver_start", "", p.x, p.y, p.z);
                 SendFullChunk(0, 0); }
@@ -271,11 +272,20 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // deduplicates, first REPORT wins.
         if (m_claimed && !m_confirmed && (m_state == State::DELIVER || m_state == State::DIVERT)) {
             m_confirmed = true;
-            m_state = State::RETURN;
-            SendHandoff();
+            // Keep delivering until the coverage dwell elapses so the whole
+            // localized footprint (incl. a slightly-off victim) reconstructs the
+            // data — then head home and hand the report to the FAST courier.
+            double wait = std::max(0.0, m_deliverUntil - Simulator::Now().GetSeconds());
+            Simulator::Schedule(Seconds(wait), &SarDataUavApp::BeginReturn, this);
         }
     }
     return true;
+}
+
+void SarDataUavApp::BeginReturn() {
+    if (m_state == State::RETURN || m_state == State::DONE) return;
+    m_state = State::RETURN;
+    SendHandoff();
 }
 
 }  // namespace ns3::uavsar

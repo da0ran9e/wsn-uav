@@ -177,6 +177,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetDevice(s.sensorDevs.Get(i));
         app->SetMetrics(&m_metrics);
         app->SetCooperative(proposed);
+        app->SetMinObserve(cfg.minObserveS);
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);
         app->SetCoopThreshold(params::kCoopThreshold);

@@ -139,9 +139,13 @@ void SarGroundApp::MaybeElect() {
     // SUMMON first; every other leader suppresses on hearing it (merge). No
     // central brain, no global view — only what reached us over the radio.
     m_electScheduled = true;
+    double now = Simulator::Now().GetSeconds();
     double backoff = params::kElectBackoffS * (1.0 - agg) +
                      m_rng->GetValue(0.0, params::kFwdStaggerMaxS);
-    m_electEvent = Simulator::Schedule(Seconds(backoff), &SarGroundApp::Elect, this);
+    // Hold the first summon until the sweep has had time to cover the area, so a
+    // late-swept but stronger (victim) cell can still win the election.
+    double fireAt = std::max(now + backoff, m_minObserveS);
+    m_electEvent = Simulator::Schedule(Seconds(fireAt - now), &SarGroundApp::Elect, this);
 }
 
 void SarGroundApp::Elect() {

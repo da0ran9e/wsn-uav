@@ -18,6 +18,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("fastRatio", "fraction of UAVs on the FAST team", cfg.fastRatio);
     cmd.AddValue("seed", "RNG run seed", cfg.seed);
     cmd.AddValue("simTime", "sim duration (s)", cfg.simTime);
+    cmd.AddValue("minObserve", "proposed: hold first summon until this time (s)", cfg.minObserveS);
     cmd.AddValue("scheme", "proposed | nocoop | pure-uav", cfg.scheme);
     cmd.AddValue("outputDir", "results dir", outputDir);
     cmd.Parse(argc, argv);

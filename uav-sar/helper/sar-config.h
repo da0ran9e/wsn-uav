@@ -32,6 +32,7 @@ struct SarScenarioConfig {
     double fastRatio = 0.5;
     uint32_t seed = 1;
     double simTime = 200.0;
+    double minObserveS = 20.0;   // proposed: hold the first summon this long (coverage)
     std::string scheme = "proposed";
     std::string outputDir = "data/results/uav-sar/run-1";
 };

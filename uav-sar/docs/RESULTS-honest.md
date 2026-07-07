@@ -56,6 +56,37 @@ dataset at each cell.
    holding the reference dataset. Reported both ways so the comparison is not
    silently framed to favor the proposed scheme.
 
+## Observation-window sweep — accuracy is resolution-limited (N = 30)
+
+`--minObserve=S` holds the first summon until `t = S`, giving the FAST sweep time
+to cover more of the area before any cell commits.
+
+| minObserve | localize (s) | loc-err median / p90 (m) | victim served | report (s) |
+|---:|---:|---:|---:|---:|
+| 0  | 19.7 | **40 / 57** | 40 % | 53.4 |
+| 10 | 19.7 | **40 / 57** | 40 % | 53.4 |
+| 20 | 20.0 | **40 / 57** | 47 % | 55.7 |
+| 30 | 30.0 | **40 / 57** | 63 % | 58.0 |
+| 45 | 45.0 | **40 / 57** | 60 % | 72.7 |
+
+Two things this makes unambiguous:
+
+1. **Pointing accuracy is flat (40 m median / 57 m p90) for every window.** Waiting
+   longer does *not* sharpen the location estimate — the error is a **sensing
+   resolution floor** set by the clue-field decay scale (~60 m) and the 20 m
+   sensor grid, not by election timing. No amount of observation fixes it; it is
+   a property of the substrate.
+
+2. **The victim-served gain is a coverage effect, not an accuracy effect.** With a
+   larger window, several alert cells reach `t = S` together and summon *at the
+   same instant*, so suppression no longer collapses them to one — the fleet does
+   **multiple targeted deliveries** to the few high-evidence candidate cells. That
+   raises the chance one drop lands on the victim (40 → 63 %) at the cost of
+   latency, moving `proposed` from a single best-guess delivery toward *targeted
+   multi-candidate* delivery (a middle ground between one-shot and the baselines'
+   blind carpet-dump — still far fewer packets than carpet). The default is
+   `--minObserve=20` (a fast, mostly-single-delivery balance).
+
 ## Honesty ledger (what is real vs assumed)
 
 - **Real over radio, channel-subject:** cue dissemination, intra-cell clue

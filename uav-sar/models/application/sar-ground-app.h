@@ -43,6 +43,7 @@ public:
     void SetDevice(ns3::Ptr<ns3::NetDevice> d) { m_dev = d; }
     void SetMetrics(SarMetrics* m) { m_metrics = m; }
     void SetCooperative(bool v) { m_cooperative = v; }  // proposed = true
+    void SetMinObserve(double s) { m_minObserveS = s; } // hold first summon until s
     void SetProfile(const std::vector<Fragment>& frags);
     void SetClueQuality(double q) { m_clueQuality = q; }
     void SetCoopThreshold(double coop) { m_coop = coop; }
@@ -81,6 +82,7 @@ private:
     ns3::Ptr<ns3::NetDevice> m_dev;
     SarMetrics* m_metrics = nullptr;
     bool m_cooperative = false;
+    double m_minObserveS = 20.0;
 
     std::map<uint16_t, Fragment> m_byId;                 // full profile (briefing)
     std::map<uint16_t, std::set<uint16_t>> m_chunks;     // fragId -> received seqs

@@ -87,6 +87,39 @@ Two things this makes unambiguous:
    blind carpet-dump — still far fewer packets than carpet). The default is
    `--minObserve=20` (a fast, mostly-single-delivery balance).
 
+## Sensor-spacing sweep — connectivity threshold + resolution source (N = 30)
+
+`--gridSpacing=S` on an 8×8 grid (default S = 20 m). Proposed scheme.
+
+| spacing | localize fires | loc-err median (m) | victim served | intra shares | inter shares |
+|---:|---:|---:|---:|---:|---:|
+| 15 m | 100 % | 33 | 43 % | 77 | 3.8 |
+| 20 m | 100 % | 40 | 47 % | 56 | 8.5 |
+| 25 m | 93 %  | 25 | 47 % | 31 | 11.2 |
+| 30 m | 90 %  | 30 | 33 % | 21 | 11.7 |
+| 40 m | **10 %** | — | 10 % | **0** | 4.7 |
+
+1. **Cooperation collapses when spacing exceeds the G2G radio range (~37 m).** At
+   40 m the intra-cell tree is disconnected: members cannot reach their Cell
+   Leader, intra shares fall to **0**, and localization fires in only 10 % of
+   runs. The whole distributed control plane depends on a *connected* WSN — the
+   deployment must keep spacing below the derived G2G range (`DeriveG2gRangeM`,
+   ~37 m here). (This is the honest, radio-level re-measurement of the old
+   "spacing-40 collapse"; the earlier study saw the effect but on a build where
+   the control plane bypassed the radio, so it under-counted the collapse.)
+
+2. **Localization accuracy does NOT improve with denser sensors** (33/40/25/30 m
+   across 15–30 m spacing — noise, no trend). This *refutes* the natural "denser
+   grid → sharper localization" hypothesis: the error floor is set by the
+   **clue-field decay scale (~60 m sensing range)**, not by spatial sampling.
+   Spending sensors below ~20 m spacing buys connectivity margin and more
+   cooperative traffic, but not a better location estimate — to sharpen that you
+   would need sharper *sensing* (steeper clue decay), not more nodes.
+
+3. **Inter-cell cooperation traffic peaks at medium spacing** (3.8 → 11.7 shares
+   as 15 → 30 m): tighter grids fit in fewer hex cells (fewer boundaries to share
+   across); wider grids span more cells until connectivity collapses at 40 m.
+
 ## Honesty ledger (what is real vs assumed)
 
 - **Real over radio, channel-subject:** cue dissemination, intra-cell clue

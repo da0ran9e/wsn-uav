@@ -9,6 +9,7 @@
 #include "ns3/mobility-model.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
 #include <vector>
 
@@ -95,7 +96,11 @@ void SarGroundApp::LeaderIngest(uint16_t orig, double ev, double x, double y) {
     if (ev > ne.ev) { ne.ev = ev; ne.x = x; ne.y = y; }
     // A member's report that actually reached the CL over the radio is one real
     // intra-cell cooperative delivery (our own sensing is not a "share").
-    if (orig != (uint16_t)m_nodeId && m_metrics) m_metrics->AddIntraShare();
+    if (orig != (uint16_t)m_nodeId && m_metrics) {
+        m_metrics->AddIntraShare();
+        char det[48]; std::snprintf(det, sizeof det, "ev=%.2f -> CL %u", ev, m_nodeId);
+        m_metrics->Event(Simulator::Now().GetSeconds(), orig, "node", "clue_report", det, x, y, 0);
+    }
     if (!m_sharedFlooded && CellAggregate() >= m_coop) FloodShare();
     MaybeElect();
 }
@@ -250,8 +255,12 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // the cross-cell link was carried by the real radio: count it and grow
         // this leader's region view.
         if (m_isCellLeader && (int32_t)origCell != m_cellId && (evQ8 / 255.0) >= m_coop) {
-            if (m_regionNeighbors.insert((int32_t)origCell).second && m_metrics)
+            if (m_regionNeighbors.insert((int32_t)origCell).second && m_metrics) {
                 m_metrics->AddInterShare();
+                Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+                char det[48]; std::snprintf(det, sizeof det, "c%d -> c%d", (int)origCell, m_cellId);
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "CL", "share", det, p.x, p.y, 0);
+            }
         }
         if (ttl > 0)
             Simulator::Schedule(Seconds(m_rng->GetValue(0.0, params::kFwdStaggerMaxS)),

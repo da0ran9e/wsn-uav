@@ -71,26 +71,10 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
 
     m_metrics.SetMeta(cfg.seed, cfg.gridSize, numUav, cfg.scheme, targetId);
 
-    // 5) region coordinator (control-plane, event-level) — proposed only
-    if (proposed) {
-        m_coord.Init(&m_plan, &m_routing, &m_metrics,
-                     params::kAlertThreshold, params::kCoopThreshold, cfg.seed,
-                     [this](const std::vector<uint32_t>& leaders,
-                            uint32_t verifierNode, uint16_t rid) {
-                         // Ticket designates the verifier; EVERY region CL
-                         // beacons the same ticket (verifier position inside)
-                         // so a sweeping FAST anywhere near the region hears it.
-                         double vx = 0, vy = 0;
-                         auto nit = m_plan.nodes.find(verifierNode);
-                         if (nit != m_plan.nodes.end()) { vx = nit->second.x; vy = nit->second.y; }
-                         auto vit = m_groundById.find(verifierNode);
-                         if (vit != m_groundById.end()) vit->second->SetVerifier(true);
-                         for (uint32_t ln : leaders) {
-                             auto lit = m_groundById.find(ln);
-                             if (lit != m_groundById.end()) lit->second->StartSummon(rid, vx, vy);
-                         }
-                     });
-    }
+    // 5) Control plane is now FULLY DISTRIBUTED in the ground apps: each Cell
+    // Leader aggregates its cell from RPTs, floods SHARE across boundaries, and
+    // runs an evidence-weighted-backoff + SUMMON-suppression election on radio.
+    // No central RegionCoordinator (removed the global-view / pointer bypass).
 
     // 6) BS app
     Ptr<SarBsApp> bs = CreateObject<SarBsApp>();
@@ -194,7 +178,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetNodeId(id);
         app->SetDevice(s.sensorDevs.Get(i));
         app->SetMetrics(&m_metrics);
-        app->SetCoordinator(proposed ? &m_coord : nullptr);
+        app->SetCooperative(proposed);
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);
         app->SetCoopThreshold(params::kCoopThreshold);

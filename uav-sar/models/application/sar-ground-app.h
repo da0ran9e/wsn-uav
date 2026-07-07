@@ -1,17 +1,19 @@
 #ifndef UAV_SAR_GROUND_APP_H
 #define UAV_SAR_GROUND_APP_H
 
-// Ground sensor node (v2 after logic review).
+// Ground sensor node — fully distributed control plane (no central coordinator).
 //   - Fragments arrive as byte-honest chunks over CUE (FAST) or FULL (DATA);
-//     both paths fill the SAME per-fragment chunk set, so a fragment counts
-//     exactly once however it arrived (fixes F1 double-counting).
-//   - A fragment is possessed when all its chunks are held. Node evidence =
-//     Confidence(possessed) * clueQuality, reported to the coordinator.
-//   - CONFIRM fires only when the node possesses the ENTIRE dataset (every
-//     fragment id complete) — the literal "toàn bộ dữ liệu" endpoint — and is
-//     retransmitted a bounded number of times (fixes F2 single-shot loss).
-//   - The region leader's SUMMON carries its OWN position, so the DATA UAV
-//     delivers directly overhead (reliable point-blank link).
+//     both fill the SAME per-fragment chunk set (a fragment counts once).
+//   - Node evidence = Confidence(possessed) * clueQuality. When it crosses the
+//     coop threshold the node sends an RPT (carrying its OWN GPS) up the cell
+//     tree to its Cell Leader over the real radio.
+//   - The Cell Leader aggregates its cell (union), floods a SHARE across the
+//     boundary when it corroborates, and — when its cell crosses ALERT — runs a
+//     DISTRIBUTED election: it schedules a SUMMON after an evidence-weighted
+//     backoff and suppresses it if it hears another leader's SUMMON first. The
+//     winner beacons the SUMMON carrying the strongest node's (radio-reported)
+//     position as the delivery target.
+//   - Any node that reconstructs the ENTIRE dataset broadcasts CONFIRM.
 
 #include "../common/target-profile.h"
 
@@ -30,7 +32,6 @@
 namespace ns3::uavsar {
 
 class SarMetrics;
-class RegionCoordinator;
 
 class SarGroundApp : public ns3::Application {
 public:
@@ -41,46 +42,45 @@ public:
     void SetNodeId(uint32_t id) { m_nodeId = id; }
     void SetDevice(ns3::Ptr<ns3::NetDevice> d) { m_dev = d; }
     void SetMetrics(SarMetrics* m) { m_metrics = m; }
-    void SetCoordinator(RegionCoordinator* c) { m_coord = c; }
+    void SetCooperative(bool v) { m_cooperative = v; }  // proposed = true
     void SetProfile(const std::vector<Fragment>& frags);
     void SetClueQuality(double q) { m_clueQuality = q; }
     void SetCoopThreshold(double coop) { m_coop = coop; }
     void SetIsTarget(bool t) { m_isTarget = t; }
     void SetStopOnComplete(bool s) { m_stopOnComplete = s; }
-    // Designated by the region ticket: the strongest-evidence node; it alone
-    // confirms the delivery (its footage is what the data is checked against).
-    void SetVerifier(bool v) { m_isVerifier = v; }
-    // Distributed control plane: my next hop up the intra-cell tree (-1 if I am
-    // the Cell Leader / tree root), and whether I am the Cell Leader (sink).
+    // Intra-cell tree: next hop up toward the Cell Leader (-1 if I am the CL),
+    // whether I am the CL, my cell id and centre.
     void SetTreeParent(int32_t p) { m_treeParent = p; }
     void SetCellLeader(bool v) { m_isCellLeader = v; }
     void SetCellId(int32_t c) { m_cellId = c; }
     void SetCellCenter(double x, double y) { m_cellCx = x; m_cellCy = y; }
 
-    // Called on the region leader; (cx,cy) = the verifier's position, embedded
-    // in the SUMMON so the DATA UAV delivers directly over the verifier.
-    void StartSummon(uint16_t regionId, double cx, double cy);
-
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
 
 private:
+    struct NodeEv { double ev = 0, x = 0, y = 0; };
+
     void StartApplication() override;
     void StopApplication() override;
+    void StartSummon(double cx, double cy);   // I won the election -> beacon
     void BeaconTick();
-    void SendConfirm();                 // retried kConfirmRetries times
-    void DeliverEvidence(uint16_t orig, double ev);  // to CL: local, or via RPT radio
-    void SendRpt(uint16_t orig, uint8_t evQ8, int32_t nextHop, uint8_t ttl);
-    void LeaderIngest(uint16_t orig, double ev);     // CL aggregation + SHARE trigger
+    void SendConfirm();                        // retried kConfirmRetries times
+    void DeliverEvidence(double ev);           // my own evidence -> CL (local or RPT)
+    void SendRpt(uint16_t orig, uint8_t evQ8, int16_t x, int16_t y, int32_t nextHop, uint8_t ttl);
+    void LeaderIngest(uint16_t orig, double ev, double x, double y);  // CL aggregation
     void FloodShare();
     void SendShare(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy, uint8_t ttl);
+    void MaybeElect();                         // schedule a summon if I lead
+    void Elect();                              // fire the summon (winner)
     double PossessedConfidence() const;
     bool HasEntireDataset() const;
+    double CellAggregate() const;
 
     uint32_t m_nodeId = 0;
     ns3::Ptr<ns3::NetDevice> m_dev;
     SarMetrics* m_metrics = nullptr;
-    RegionCoordinator* m_coord = nullptr;
+    bool m_cooperative = false;
 
     std::map<uint16_t, Fragment> m_byId;                 // full profile (briefing)
     std::map<uint16_t, std::set<uint16_t>> m_chunks;     // fragId -> received seqs
@@ -88,24 +88,32 @@ private:
     std::set<uint16_t> m_have;                           // complete fragment ids
     double m_clueQuality = 0.0;
     double m_coop = 0.30;
+
+    // intra-cell tree + CL aggregation
     int32_t m_treeParent = -1;
     bool m_isCellLeader = false;
-    ns3::Ptr<ns3::UniformRandomVariable> m_rng;
-    std::map<uint16_t, uint8_t> m_rptSeen;  // origNode -> best evQ8 seen (RPT dedup)
     int32_t m_cellId = -1;
     double m_cellCx = 0, m_cellCy = 0;
-    std::map<uint16_t, double> m_cellEvidence;  // CL: origNode -> evidence (own cell)
+    ns3::Ptr<ns3::UniformRandomVariable> m_rng;
+    std::map<uint16_t, uint8_t> m_rptSeen;      // origNode -> best evQ8 seen (RPT dedup)
+    std::map<uint16_t, NodeEv> m_cellEvidence;  // CL: origNode -> {ev, GPS}
     bool m_sharedFlooded = false;
     std::map<uint16_t, uint8_t> m_shareSeen;    // SHARE flood dedup by origCell
+    std::set<int32_t> m_regionNeighbors;        // corroborating cells heard via SHARE
 
+    // distributed region-leader election
+    bool m_electScheduled = false;
+    bool m_regionFormed = false;                // I fired, or heard, a SUMMON
+    ns3::EventId m_electEvent;
+
+    // region-leader beaconing + closure
     bool m_isLeader = false;
     bool m_isTarget = false;
-    bool m_isVerifier = false;
     bool m_stopOnComplete = false;
     bool m_confirmed = false;
-    bool m_heardCue = false;   // viz: first-cue marker emitted
-    uint16_t m_regionId = 0;
-    double m_cx = 0, m_cy = 0;   // beacon coords = verifier position
+    bool m_heardCue = false;    // viz: first-cue marker emitted
+    uint16_t m_regionId = 1;
+    double m_cx = 0, m_cy = 0;  // beacon coords = strongest node position
     uint32_t m_beacons = 0;
     uint32_t m_confirmsSent = 0;
     ns3::EventId m_beaconEvent;

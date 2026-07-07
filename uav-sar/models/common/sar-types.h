@@ -13,14 +13,15 @@ namespace ns3::uavsar {
 
 enum class Msg : uint8_t {
     CUE      = 1,   // FAST -> ground: chunk of a cue fragment (same layout as FULL)
-    SUMMON   = 2,   // region-leader -> sky: come to me          [regionId:u16][cx:i16][cy:i16]
+    SUMMON   = 2,   // region-leader -> sky: come here  [regionId:u16][cx:i16][cy:i16]
+                    //   (cx,cy) = strongest node's own GPS, learned via RPT
     A2A      = 3,   // FAST -> DATA relay of a SUMMON            (SUMMON body)
     FULL     = 4,   // DATA -> ground: full-data chunk           [id:u16][seq:u16][total:u16][layer:u8]
     CONFIRM  = 5,   // ground -> DATA: full dataset received/confirmed [regionId:u16][nodeId:u8]
     REPORT   = 6,   // UAV -> BS: mission report (small)          [regionId:u16][resultQ8:u8]
     HANDOFF  = 7,   // DATA -> FAST: carry the report home (fast) [regionId:u16]
-    RPT      = 8,   // member -> up the cell tree -> Cell Leader: clue evidence
-                    //   [nextHop:u16][origNode:u16][evQ8:u8][hopsLeft:u8]
+    RPT      = 8,   // member -> up the cell tree -> Cell Leader: clue evidence + own GPS
+                    //   [nextHop:u16][origNode:u16][evQ8:u8][hopsLeft:u8][x:i16][y:i16]
     SHARE    = 9,   // Cell Leader -> flood: cross-cell evidence share
                     //   [origCell:u16][evQ8:u8][cx:i16][cy:i16][hopsLeft:u8]
 };
@@ -29,14 +30,14 @@ inline constexpr uint8_t kBroadcast = 0xFF;
 
 // CUE and FULL share the chunk layout so a fragment is byte-honest whichever
 // path delivered it: [type][dst][fragId:u16][seq:u16][total:u16][layer:u8]+payload.
-inline constexpr uint32_t kChunkHdr   = 1 + 1 + 2 + 2 + 2 + 1;  // 9, payload follows
-inline constexpr uint32_t kSummonLen  = 1 + 1 + 2 + 2 + 2;      // 8
-inline constexpr uint32_t kA2ALen     = 1 + 1 + 2 + 2 + 2;      // 8 (same body)
-inline constexpr uint32_t kConfirmLen = 1 + 1 + 2 + 1;          // 5
-inline constexpr uint32_t kReportLen  = 1 + 1 + 2 + 1;          // 5
-inline constexpr uint32_t kHandoffLen = 1 + 1 + 2;              // 4
-inline constexpr uint32_t kRptLen     = 1 + 2 + 2 + 1 + 1;      // 7
-inline constexpr uint32_t kShareLen   = 1 + 2 + 1 + 2 + 2 + 1;  // 9
+inline constexpr uint32_t kChunkHdr   = 1 + 1 + 2 + 2 + 2 + 1;      // 9, payload follows
+inline constexpr uint32_t kSummonLen  = 1 + 1 + 2 + 2 + 2;          // 8
+inline constexpr uint32_t kA2ALen     = 1 + 1 + 2 + 2 + 2;          // 8 (same body)
+inline constexpr uint32_t kConfirmLen = 1 + 1 + 2 + 1;              // 5
+inline constexpr uint32_t kReportLen  = 1 + 1 + 2 + 1;              // 5
+inline constexpr uint32_t kHandoffLen = 1 + 1 + 2;                  // 4
+inline constexpr uint32_t kRptLen     = 1 + 2 + 2 + 1 + 1 + 2 + 2;  // 11 (+self GPS)
+inline constexpr uint32_t kShareLen   = 1 + 2 + 1 + 2 + 2 + 1;      // 9
 
 inline constexpr uint32_t kMaxPayload = 100;                    // safe app payload
 inline constexpr uint32_t kChunkBytes = kMaxPayload - kChunkHdr;  // 91

@@ -88,6 +88,11 @@ inline constexpr uint32_t kRptTtl        = 12;      // [Design] max up-tree hops
 inline constexpr uint32_t kShareTtl      = 4;       // [Design] SHARE flood radius (hops)
 inline constexpr double kFwdStaggerMaxS  = 0.03;    // [Design] random per-hop forward
                                                     // jitter, desync the shared MAC
+inline constexpr double kElectBackoffS   = 0.6;     // [Design] distributed region-leader
+                                                    // election: a cell that crosses ALERT
+                                                    // waits kElectBackoffS·(1−evidence)
+                                                    // before summoning; stronger fires
+                                                    // first, others suppress on its SUMMON.
 
 // Reliability of the closing handshake (F2): the CONFIRM broadcast and the
 // final REPORT are retransmitted a bounded number of times.

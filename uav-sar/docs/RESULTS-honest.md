@@ -109,16 +109,45 @@ Two things this makes unambiguous:
    the control plane bypassed the radio, so it under-counted the collapse.)
 
 2. **Localization accuracy does NOT improve with denser sensors** (33/40/25/30 m
-   across 15–30 m spacing — noise, no trend). This *refutes* the natural "denser
-   grid → sharper localization" hypothesis: the error floor is set by the
-   **clue-field decay scale (~60 m sensing range)**, not by spatial sampling.
-   Spending sensors below ~20 m spacing buys connectivity margin and more
-   cooperative traffic, but not a better location estimate — to sharpen that you
-   would need sharper *sensing* (steeper clue decay), not more nodes.
+   across 15–30 m spacing — noise, no trend). This *refutes* the "denser grid →
+   sharper localization" hypothesis. (Where the floor actually comes from is
+   settled by the clue-decay sweep below — it is NOT sensor density.)
 
 3. **Inter-cell cooperation traffic peaks at medium spacing** (3.8 → 11.7 shares
    as 15 → 30 m): tighter grids fit in fewer hex cells (fewer boundaries to share
    across); wider grids span more cells until connectivity collapses at 40 m.
+
+## Clue-field decay sweep — what the ~30 m floor is (and isn't) (N = 30)
+
+`--clueDecay=D` sets the on-node detector's sensing range (evidence falloff scale
+around the victim). If localization were sensing-limited, error should scale ∝ D.
+
+| clueDecay D | localize fires | loc-err median (m) | loc-err mean (m) | mean/D |
+|---:|---:|---:|---:|---:|
+| 30 m  | 90 %  | 28 | 28.2 | 0.94 |
+| 45 m  | 97 %  | 28 | 29.4 | 0.65 |
+| 60 m  | 100 % | 40 | 33.9 | 0.56 |
+| 90 m  | 100 % | 34 | 31.2 | 0.35 |
+| 120 m | 100 % | 34 | 31.2 | 0.26 |
+
+**The error is flat (~28–34 m) while D varies 4×** — it does NOT scale with the
+sensing range. `mean/D` falls from 0.94 to 0.26, i.e. the "clue-field-limited"
+hypothesis is **refuted** too (a sharper detector does not sharpen the estimate;
+a broader one does not blur it much).
+
+### Triangulated conclusion — the floor is cell-granularity / election dynamics
+
+Three independent sweeps — observation window, sensor spacing, and clue decay —
+all leave localization error pinned at ~30 m. It is therefore **not** set by any
+continuous knob (sensing range, sensor density, wait time). It is set by the
+**discrete election**: which node ends up reporting is decided by *cue-coverage
+timing* (did the sweep pass it before some other cell crossed alert), not by clue
+strength — so the summon routinely lands on a node one cell-hop (~20–40 m) from
+the true victim. The residual is a granularity/timing floor of the distributed
+scheme itself. Reducing it needs a *different mechanism* — finer cells, or an
+election that provably selects the victim's own cell (the observation window
+tried the latter and merely degenerated into multi-candidate delivery). This is
+the honest ceiling of the current design, and a concrete target for future work.
 
 ## Honesty ledger (what is real vs assumed)
 

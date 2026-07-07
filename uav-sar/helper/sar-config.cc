@@ -61,6 +61,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     ClueFieldConfig cc;
     cc.targetNodeId = targetId;
     cc.seed = cfg.seed;
+    cc.decay = cfg.clueDecayM;          // sensing range knob (localization-resolution study)
     auto field = BuildClueField(cluePos, cc);
 
     // 4) target profile

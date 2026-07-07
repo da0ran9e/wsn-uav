@@ -33,6 +33,7 @@ struct SarScenarioConfig {
     uint32_t seed = 1;
     double simTime = 200.0;
     double minObserveS = 20.0;   // proposed: hold the first summon this long (coverage)
+    double clueDecayM = 60.0;    // clue-field decay (on-node detector sensing range)
     std::string scheme = "proposed";
     std::string outputDir = "data/results/uav-sar/run-1";
 };

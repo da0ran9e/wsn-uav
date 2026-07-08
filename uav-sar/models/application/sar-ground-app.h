@@ -107,6 +107,12 @@ private:
     double m_lastFloodEv = 0;                   // re-flood SHARE as evidence grows
     uint32_t m_deferCount = 0;                  // times we yielded to a stronger cell
 
+    // periodic report retry (single-shot RPTs die on deep trees / large areas)
+    double m_lastEff = 0;
+    uint32_t m_rptRepeats = 0;
+    ns3::EventId m_rptRepeatEvent;
+    void RptRepeatTick();
+
     // distributed region-leader election
     bool m_electScheduled = false;
     bool m_regionFormed = false;                // I fired, or heard, a SUMMON

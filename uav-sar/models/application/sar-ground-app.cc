@@ -38,6 +38,7 @@ void SarGroundApp::StopApplication() {
     Simulator::Cancel(m_beaconEvent);
     Simulator::Cancel(m_confirmEvent);
     Simulator::Cancel(m_electEvent);
+    Simulator::Cancel(m_rptRepeatEvent);
 }
 
 double SarGroundApp::PossessedConfidence() const {
@@ -128,6 +129,15 @@ void SarGroundApp::SendShare(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy,
     *q++ = ttl;
     m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
     if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+}
+
+void SarGroundApp::RptRepeatTick() {
+    // stop once the region is being handled (SUMMON heard) or the quota is spent.
+    if (m_regionFormed || m_rptRepeats >= params::kRptRepeatMax) return;
+    m_rptRepeats++;
+    DeliverEvidence(m_lastEff);
+    m_rptRepeatEvent = Simulator::Schedule(Seconds(params::kRptRepeatS),
+                                           &SarGroundApp::RptRepeatTick, this);
 }
 
 void SarGroundApp::MaybeElect() {
@@ -325,10 +335,18 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
             m_have.insert(fragId);
 
             // New fragment possessed -> evidence grew; report to the Cell Leader
-            // over the real radio (RPT up the cell tree). Proposed only.
+            // over the real radio (RPT up the cell tree). Proposed only. Keep
+            // re-sending at a low rate while relevant: a single-shot report dies
+            // on deep trees / large areas (standard sensor-report retry).
             if (m_cooperative) {
                 double eff = PossessedConfidence() * m_clueQuality;
-                if (eff >= m_coop) DeliverEvidence(eff);
+                if (eff >= m_coop) {
+                    m_lastEff = eff;
+                    DeliverEvidence(eff);
+                    if (!m_rptRepeatEvent.IsPending())
+                        m_rptRepeatEvent = Simulator::Schedule(Seconds(params::kRptRepeatS),
+                                                               &SarGroundApp::RptRepeatTick, this);
+                }
             }
 
             // Loop closure on holding the ENTIRE dataset. Proposed: any node that

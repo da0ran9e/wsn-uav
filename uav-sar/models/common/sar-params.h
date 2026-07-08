@@ -85,6 +85,11 @@ inline constexpr double kHopDelayS       = 0.02;    // [Assume] per ground hop l
 // latency come from the channel, not from kCoopSucc*/kHopDelayS above (which now
 // serve only as a fallback for the legacy event-level path).
 inline constexpr uint32_t kRptTtl        = 12;      // [Design] max up-tree hops
+inline constexpr double kRptRepeatS      = 2.0;     // [Design] re-send my RPT while my
+inline constexpr uint32_t kRptRepeatMax  = 30;      // evidence >= coop and no SUMMON
+                                                    // heard — single-shot reports die on
+                                                    // deep trees / large areas (measured:
+                                                    // 40x40 intra-deliveries 4/1600 nodes).
 inline constexpr uint32_t kShareTtl      = 4;       // [Design] SHARE flood radius (hops)
 inline constexpr double kFwdStaggerMaxS  = 0.03;    // [Design] random per-hop forward
                                                     // jitter, desync the shared MAC

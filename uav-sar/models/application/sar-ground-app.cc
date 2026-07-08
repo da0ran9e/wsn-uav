@@ -155,21 +155,28 @@ void SarGroundApp::Elect() {
     // silent neighbour can't stall us forever. This picks the strongest cell
     // instead of merely the earliest to cross the alert (distributed region window).
     double agg = CellAggregate(), maxNb = 0;
-    for (auto& [c, e] : m_neighborEv) maxNb = std::max(maxNb, e);
+    for (auto& [c, nb] : m_neighborEv) maxNb = std::max(maxNb, nb.ev);
     if (maxNb > agg + 0.05 && m_deferCount < 3) {
         m_deferCount++;
         m_electEvent = Simulator::Schedule(Seconds(params::kElectBackoffS),
                                            &SarGroundApp::Elect, this);
         return;
     }
-    // Delivery target = evidence^2-weighted centroid of the reporting nodes, at
-    // the GPS each reported over the radio (no ground-truth table). Weighting by
-    // evidence^2 concentrates on the high-evidence cluster around the victim and
-    // is robust to a single outlier node that merely caught the most cues.
+    // Delivery target = cross-cell interpolation of the evidence peak, built ONLY
+    // from what reached this leader over the radio:
+    //  - fine grain: my members' RPTs (per-node evidence + self-reported GPS),
+    //  - coarse grain: neighbouring cells' SHAREs (cell aggregate + cell centre).
+    // Weighting by evidence^2 concentrates on the high-evidence cluster; the
+    // neighbour terms pull the estimate toward the true peak when the victim sits
+    // near a cell boundary (the diagnosed ~1-cell-hop error mode).
     double wx = 0, wy = 0, ws = 0;
     for (auto& [n, ne] : m_cellEvidence) {
         double w = ne.ev * ne.ev;
         wx += w * ne.x; wy += w * ne.y; ws += w;
+    }
+    for (auto& [c, nb] : m_neighborEv) {
+        double w = nb.ev * nb.ev;
+        wx += w * nb.x; wy += w * nb.y; ws += w;
     }
     double vx = ws > 0 ? wx / ws : m_cellCx, vy = ws > 0 ? wy / ws : m_cellCy;
     if (m_metrics) {
@@ -187,8 +194,10 @@ void SarGroundApp::StartSummon(double cx, double cy) {
     m_cx = cx; m_cy = cy;
     if (m_metrics) {
         Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+        char det[64];
+        std::snprintf(det, sizeof det, "target=%.1f;%.1f", cx, cy);
         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "CL",
-                         "summon_start", "region leader", p.x, p.y, p.z);
+                         "summon_start", det, p.x, p.y, p.z);
     }
     BeaconTick();
 }
@@ -281,7 +290,8 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // this leader's region view.
         if (m_isCellLeader && (int32_t)origCell != m_cellId && (evQ8 / 255.0) >= m_coop) {
             double nev = evQ8 / 255.0;
-            if (nev > m_neighborEv[(int32_t)origCell]) m_neighborEv[(int32_t)origCell] = nev;
+            NbInfo& nb = m_neighborEv[(int32_t)origCell];
+            if (nev > nb.ev) { nb.ev = nev; nb.x = cx / 10.0; nb.y = cy / 10.0; }
             if (m_regionNeighbors.insert((int32_t)origCell).second && m_metrics) {
                 m_metrics->AddInterShare();
                 Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();

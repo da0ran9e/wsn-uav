@@ -112,7 +112,7 @@ inline constexpr double kBaselineDwellS  = 25.0;    // [Design] see RESULTS.md
 // Proposed coverage dwell: after the first CONFIRM the DATA UAV keeps delivering
 // for at least this long so the whole localized footprint — not just the node
 // nearest the drop — reconstructs the data (raises victim-served rate).
-inline constexpr double kMinDeliverDwellS = 8.0;    // [Design]
+inline constexpr double kMinDeliverDwellS = 20.0;    // [Design]
 
 // ---- Timing (sim mechanics) ------------------------------------------------
 inline constexpr double kControlTickS    = 0.1;     // flight state machine

@@ -102,7 +102,8 @@ private:
     bool m_sharedFlooded = false;
     std::map<uint16_t, uint8_t> m_shareSeen;    // SHARE flood dedup by origCell
     std::set<int32_t> m_regionNeighbors;        // corroborating cells heard via SHARE
-    std::map<int32_t, double> m_neighborEv;     // cellId -> strongest shared evidence
+    struct NbInfo { double ev = 0, x = 0, y = 0; };
+    std::map<int32_t, NbInfo> m_neighborEv;     // cellId -> {shared evidence, cell centre}
     double m_lastFloodEv = 0;                   // re-flood SHARE as evidence grows
     uint32_t m_deferCount = 0;                  // times we yielded to a stronger cell
 

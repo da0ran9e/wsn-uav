@@ -88,22 +88,31 @@ dwell constants as the other baselines — only the trajectory logic is theirs.
 Faithfulness note: this is their *fly-hover* design; their LP speed-optimized
 variant would shave some travel time but cannot change the structural gap below.
 
-| Metric (N = 30, 8×8) | tsp-mc (Zeng'18) | proposed |
-|---|---:|---:|
-| Report reaches BS | 100 % @ **254.4 s** | 100 % @ **66.1 s** |
-| Victim node has full data | **100 %** @ 102.2 s | 97 % @ 42.7 s |
-| Packets sent | 9169 | **1942** |
-| UAV energy | **40.9 kJ** (1 UAV) | 44.4 kJ (4 UAV) |
-| Localization output | none | ±16 m estimate |
+Redundancy is modeled explicitly: their coded multicast sends *more than the
+file* so GTs recover despite erasures — the per-VBS connection time is sized to
+`kMcRedundancy = 3×` the dataset airtime. The fleet variant bands the GT set
+(like nocoop) with one VBS/TSP tour per UAV, and the mission completes only when
+**every** UAV has returned and reported (the BS counts distinct reporters).
 
-**Honest reading.** Their design *guarantees* the victim's data by construction
-(it multicasts to everyone — 100 % vs our 97 %) with a single airframe and
-comparable total energy. But without edge cooperation it cannot know where the
-victim is, so it must pay the full multicast tour: mission completion is
-**3.8× slower** (254 vs 66 s), radio cost **4.7× higher**, and it produces **no
-location estimate** for the rescue team. The WSN's clue field + distributed
-control plane is precisely what converts "serve everyone eventually" into
-"serve the right place now, and say where it is".
+| Metric (N = 30, 8×8) | tsp-mc × 1 UAV | tsp-mc × 4 UAV | proposed × 4 UAV |
+|---|---:|---:|---:|
+| Mission complete (all reports @ BS) | 100 % @ 216.2 s | 100 % @ **114.9 s** | 100 % @ **66.1 s** |
+| Victim node has full data | 97 % @ 86.6 s | **100 %** @ 45.2 s | 97 % @ 42.7 s |
+| Packets sent | 7259 | 9576 | **1942** |
+| UAV energy | **34.5 kJ** | 65.7 kJ | 44.4 kJ |
+| Localization output | none | none | **±16 m estimate** |
+
+**Honest reading.** With an equal fleet their gap narrows but does not close:
+4 UAVs cut their completion 216 → 115 s (sub-linear — the makespan is the
+farthest band's transit + dwells) and the banded carpet even reaches the victim
+node about as fast as we do (45 vs 43 s) with a structural 100 % guarantee. But
+the mission itself — everyone home, BS informed — is still **1.7× slower**, at
+**1.5× the energy** (hover-dwelling every VBS with 3× redundancy is expensive)
+and **4.9× the packets**, and it still produces **no location estimate**: the
+rescue team knows the file was disseminated, not where the victim is. Edge
+cooperation is what converts "serve everyone eventually" into "serve the right
+place now, and say where it is". Their single-UAV strength (min hardware, min
+energy) remains real and is reported as such.
 
 ## Sensor-spacing sweep — connectivity threshold (N = 30)
 

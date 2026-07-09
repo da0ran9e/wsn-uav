@@ -26,7 +26,10 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     // then (our mission definition) returns to the BS and reports.
     const bool tspMc = (cfg.scheme == "tsp-mc");
     uint32_t numUav = cfg.numUav;
-    if (cfg.scheme == "pure-uav" || tspMc) numUav = 1;   // single UAV, no WSN coop
+    if (cfg.scheme == "pure-uav") numUav = 1;   // single UAV, no WSN cooperation
+    // tsp-mc flies cfg.numUav UAVs: the GT set is banded like nocoop and each
+    // UAV runs the Zeng'18 VBS/TSP tour on its band (--numUav=1 reproduces the
+    // paper's single-UAV setting). The mission completes when ALL have reported.
 
     // 1) network
     SarNetworkConfig net;
@@ -87,6 +90,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     Ptr<SarBsApp> bs = CreateObject<SarBsApp>();
     bs->SetNodeId(s.bsId);
     bs->SetMetrics(&m_metrics);
+    bs->SetExpectedReports(tspMc ? numUav : 1);   // fleet multicast: ALL must report
     s.bs.Get(0)->AddApplication(bs);
     bs->SetStartTime(Seconds(0));
     bs->SetStopTime(Seconds(cfg.simTime));
@@ -130,9 +134,10 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetMode(SarDataUavApp::Mode::SWEEP_DUMP);
             app->SetSensorPositions(partition(u, numUav));
             if (tspMc) {
-                // Zeng'18 trajectory: minimum-disk VBS cover of ALL GTs + TSP
-                // tour from the BS, flown fly-hover; report at the BS to finish.
-                app->SetTourOverride(BuildVbsTour(s.sensorPositions,
+                // Zeng'18 trajectory: minimum-disk VBS cover of THIS UAV's band
+                // + TSP tour from the BS, flown fly-hover with the redundancy
+                // dwell; report back at the BS to finish.
+                app->SetTourOverride(BuildVbsTour(partition(u, numUav),
                                                   params::kUavBroadcastRadiusM,
                                                   Vector(bsPos.x, bsPos.y,
                                                          params::kCruiseAltitudeM),

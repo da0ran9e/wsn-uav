@@ -116,8 +116,18 @@ void SarDataUavApp::ControlTick() {
             Vector t = m_targets[m_ti];
             if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
                 m_fc.Hover(); m_state = State::DELIVER;
-                // blind dwell: cycle chunks for a fixed budget (no feedback)
-                m_dwellUntil = Simulator::Now().GetSeconds() + params::kBaselineDwellS;
+                // blind dwell: cycle chunks with no ground feedback. tsp-mc sizes
+                // the connection time as kMcRedundancy x the dataset airtime (the
+                // coded-multicast overhead of Zeng'18: send extra to ride out
+                // drops); nocoop keeps the fixed design budget.
+                double dwell = params::kBaselineDwellS;
+                if (m_reportAtEnd) {
+                    uint32_t chunks = 0;
+                    for (const auto& f : m_full)
+                        chunks += std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
+                    dwell = params::kMcRedundancy * chunks * params::kDeliverStaggerS;
+                }
+                m_dwellUntil = Simulator::Now().GetSeconds() + dwell;
                 SendFullChunk(0, 0);
             }
             break;

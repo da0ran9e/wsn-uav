@@ -114,6 +114,10 @@ inline constexpr double  kReportRetryS    = 1.0;    // [Design]
 // Baseline blind dwell: with no ground feedback a sweeping UAV cannot know when
 // a dump landed, so it cycles chunks at each waypoint for a fixed time.
 inline constexpr double kBaselineDwellS  = 25.0;    // [Design] see RESULTS.md
+// tsp-mc (Zeng'18) redundancy: coded multicast sends MORE than the file so GTs
+// recover despite erasures — the per-VBS connection time is sized to R x the
+// dataset airtime (their recovery-probability margin, made explicit).
+inline constexpr double kMcRedundancy    = 3.0;     // [Design<-Lit] overhead factor
 // Proposed coverage dwell: after the first CONFIRM the DATA UAV keeps delivering
 // for at least this long so the whole localized footprint — not just the node
 // nearest the drop — reconstructs the data (raises victim-served rate).

@@ -10,6 +10,7 @@
   --text:#0b0b0b; --text2:#52514e; --muted:#8a8983;
   --fast:#2a78d6; --data:#1baf7a; --cl:#4a3aa7; --victim:#e34948;
   --bs:#0b0b0b; --good:#008300; --accent:#2a78d6;
+  --evd:#e8842c; --share:#9333ea;
   --cellA:rgba(237,161,0,.10); --cellB:rgba(42,120,214,.08);
   --cellC:rgba(232,123,164,.10); --cellD:rgba(0,131,0,.08);
   --cellE:rgba(74,58,167,.08);  --cellF:rgba(235,104,52,.10);
@@ -100,6 +101,10 @@ canvas{width:100%;border:1px solid var(--border);border-radius:8px;background:va
       <span class="it"><span class="sw ring"></span>victim node</span>
       <span class="it"><span class="sw" style="background:var(--bs)"></span>BS</span>
       <span class="it"><span class="sw" style="background:var(--cellA);border:1px solid var(--border)"></span>hex cell (màu theo lớp)</span>
+      <span class="it"><span class="sw" style="background:var(--evd);border-radius:50%"></span>node có bằng chứng (đậm = mạnh)</span>
+      <span class="it"><span class="sw" style="background:linear-gradient(90deg,var(--evd),transparent);height:3px"></span>RPT → Cell Leader</span>
+      <span class="it"><span class="sw" style="background:linear-gradient(90deg,var(--share),transparent);height:3px"></span>sóng SHARE liên-cell</span>
+      <span class="it"><span class="sw ring" style="border-color:var(--victim)"></span>region + target giao hàng</span>
     </div></div>
   </div>
 
@@ -469,7 +474,26 @@ document.getElementById("metrics").innerHTML =
 /* event log */
 const EV_COLOR={takeoff:"var(--muted)",summon_start:"var(--cl)",divert:"var(--data)",
   deliver_start:"var(--data)",confirm:"var(--victim)",report_tx:"var(--fast)",
-  report_rx:"var(--good)"};
+  report_rx:"var(--good)",clue_report:"var(--evd)",share:"var(--share)",
+  cue_rx:"var(--fast)",report_pickup:"var(--fast)",return_yield:"var(--data)"};
+
+/* ---------- clue-propagation layers (all from radio-delivered events) -------
+   REPORTS : a node's evidence physically reached its Cell Leader (RPT chain)
+   SHARES  : a cell's aggregate crossed a boundary (SHARE flood, CL heard it)
+   SUMMONS : the elected leader + its interpolated delivery target            */
+const REPORTS=EVENTS.filter(e=>e.ev==="clue_report").map(e=>{
+  const m=/ev=([\d.]+)/.exec(e.det||"");
+  return {t:e.t,id:e.id,evv:m?+m[1]:0,x:e.x,y:e.y};
+});
+const SHARES=EVENTS.filter(e=>e.ev==="share").map(e=>{
+  const m=/c(-?\d+) -> c(-?\d+)/.exec(e.det||"");
+  return {t:e.t,from:m?+m[1]:-1,to:m?+m[2]:-1};
+});
+const SUMMONS=EVENTS.filter(e=>e.ev==="summon_start").map(e=>{
+  const m=/target=([-\d.]+);([-\d.]+)/.exec(e.det||"");
+  return {t:e.t,id:e.id,tx:m?+m[1]:e.x,ty:m?+m[2]:e.y};
+});
+const sensorById=new Map(sensors.map(s=>[s.id,s]));
 const logEl=document.getElementById("log");
 logEl.innerHTML=EVENTS.map((e,i)=>
   `<div class="row" data-t="${e.t}" data-i="${i}">
@@ -521,6 +545,59 @@ function draw(){
   for(const s of sensors){
     ctx.fillStyle=cssVar("--muted");
     ctx.fillRect(view.wx(s.x)-2.5,view.wy(s.y)-2.5,5,5);
+  }
+  /* ---- clue propagation: evidence tint (nodes whose report REACHED a CL) ---- */
+  const evNow=new Map();
+  for(const r of REPORTS){ if(r.t>curT)break;
+    const p=evNow.get(r.id); if(!p||r.evv>p) evNow.set(r.id,r.evv); }
+  for(const [nid,evv] of evNow){
+    const s=sensorById.get(nid); if(!s)continue;
+    ctx.beginPath();ctx.arc(view.wx(s.x),view.wy(s.y),3.5+3*evv,0,7);
+    ctx.fillStyle=cssVar("--evd");ctx.globalAlpha=.30+.55*Math.min(1,evv);
+    ctx.fill();ctx.globalAlpha=1;
+  }
+  /* ---- clue propagation: RPT pulses node -> its Cell Leader (1.6 s tail) ---- */
+  for(const r of REPORTS){
+    const dt=curT-r.t; if(dt<0||dt>1.6)continue;
+    const s=sensorById.get(r.id); if(!s)continue;
+    const L=sensorById.get(cells[s.cell].leader); if(!L)continue;
+    const f=dt/1.6;
+    ctx.beginPath();ctx.moveTo(view.wx(s.x),view.wy(s.y));ctx.lineTo(view.wx(L.x),view.wy(L.y));
+    ctx.strokeStyle=cssVar("--evd");ctx.globalAlpha=.7*(1-f);ctx.lineWidth=1.5;ctx.stroke();
+    const mx=s.x+(L.x-s.x)*f, my=s.y+(L.y-s.y)*f;      /* packet dot climbing the tree */
+    ctx.beginPath();ctx.arc(view.wx(mx),view.wy(my),3,0,7);
+    ctx.fillStyle=cssVar("--evd");ctx.globalAlpha=1-f;ctx.fill();ctx.globalAlpha=1;
+  }
+  /* ---- clue propagation: SHARE waves CL -> CL across the boundary (2.4 s) ---- */
+  for(const sh of SHARES){
+    const dt=curT-sh.t; if(dt<0||dt>2.4)continue;
+    const A=cells[sh.from],B=cells[sh.to]; if(!A||!B)continue;
+    const f=dt/2.4;
+    ctx.beginPath();ctx.moveTo(view.wx(A.cx),view.wy(A.cy));
+    const midx=(A.cx+B.cx)/2, midy=(A.cy+B.cy)/2+30;   /* slight arc */
+    ctx.quadraticCurveTo(view.wx(midx),view.wy(midy),view.wx(B.cx),view.wy(B.cy));
+    ctx.strokeStyle=cssVar("--share");ctx.globalAlpha=.75*(1-f);ctx.lineWidth=2;ctx.stroke();
+    const q=1-f, px=q*q*A.cx+2*q*f*midx+f*f*B.cx, py=q*q*A.cy+2*q*f*midy+f*f*B.cy;
+    ctx.beginPath();ctx.arc(view.wx(px),view.wy(py),3.5,0,7);
+    ctx.fillStyle=cssVar("--share");ctx.globalAlpha=1-f;ctx.fill();ctx.globalAlpha=1;
+  }
+  /* ---- region + delivery target after the summon ---- */
+  for(const sm of SUMMONS){
+    if(sm.t>curT)break;
+    const ls=sensorById.get(sm.id); if(!ls)continue;
+    const lc=cells[ls.cell];
+    const region=new Set([lc.id]);
+    for(const sh of SHARES) if(sh.t<=sm.t&&sh.to===lc.id) region.add(sh.from);
+    for(const cid of region){ const c=cells[cid]; if(!c)continue;
+      hexPath(c);ctx.strokeStyle=cssVar("--victim");ctx.globalAlpha=.8;
+      ctx.lineWidth=2.5;ctx.stroke();ctx.globalAlpha=1; }
+    const bl=4+2*Math.abs(Math.sin(performance.now()/300));
+    const tx=view.wx(sm.tx),ty=view.wy(sm.ty);
+    ctx.strokeStyle=cssVar("--victim");ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(tx-8-bl,ty);ctx.lineTo(tx+8+bl,ty);
+    ctx.moveTo(tx,ty-8-bl);ctx.lineTo(tx,ty+8+bl);ctx.stroke();
+    ctx.beginPath();ctx.arc(tx,ty,6,0,7);ctx.stroke();
+    break;   /* first summon defines the mission region */
   }
   /* cell leaders */
   for(const c of cells){

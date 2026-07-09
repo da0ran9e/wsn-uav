@@ -266,6 +266,18 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             m_yieldedDivert = true;                 // another DATA UAV took it
             Simulator::Cancel(m_claimEvent);
         }
+        // A FAST courier claimed the report over the radio: the faster UAV owns
+        // the trip home now — stop our slow (15 vs 25 m/s) fallback return and
+        // hover in place, saving the transit energy.
+        if (role == 1 && m_confirmed && m_state == State::RETURN) {
+            m_fc.Hover();
+            m_state = State::DONE;
+            if (m_metrics) {
+                Vector p = m_fc.GetPosition();
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                 "return_yield", "courier took the report", p.x, p.y, p.z);
+            }
+        }
     } else if (type == (uint8_t)Msg::CONFIRM && sz >= kConfirmLen) {
         // our delivery confirmed -> hand the report to the FAST team (25 m/s
         // courier beats our 15 m/s) and still fly home as the fallback; the BS

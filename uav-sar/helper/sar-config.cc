@@ -2,6 +2,7 @@
 #include "../models/common/target-profile.h"
 #include "../models/common/clue-field.h"
 #include "../models/common/sar-params.h"
+#include "../models/common/gmc.h"
 
 #include "ns3/core-module.h"
 #include "ns3/mobility-module.h"
@@ -19,8 +20,13 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     RngSeedManager::SetRun(cfg.seed);
 
     const bool proposed = (cfg.scheme == "proposed");
+    // tsp-mc: Zeng-Xu-Zhang (TWC'18) UAV-enabled multicasting baseline — a single
+    // UAV flies a completion-time-minimizing VBS/TSP tour multicasting the full
+    // dataset to EVERY ground terminal (no edge cooperation, no localization),
+    // then (our mission definition) returns to the BS and reports.
+    const bool tspMc = (cfg.scheme == "tsp-mc");
     uint32_t numUav = cfg.numUav;
-    if (cfg.scheme == "pure-uav") numUav = 1;   // single UAV, no WSN cooperation
+    if (cfg.scheme == "pure-uav" || tspMc) numUav = 1;   // single UAV, no WSN coop
 
     // 1) network
     SarNetworkConfig net;
@@ -123,6 +129,16 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetFullDataset(full);
             app->SetMode(SarDataUavApp::Mode::SWEEP_DUMP);
             app->SetSensorPositions(partition(u, numUav));
+            if (tspMc) {
+                // Zeng'18 trajectory: minimum-disk VBS cover of ALL GTs + TSP
+                // tour from the BS, flown fly-hover; report at the BS to finish.
+                app->SetTourOverride(BuildVbsTour(s.sensorPositions,
+                                                  params::kUavBroadcastRadiusM,
+                                                  Vector(bsPos.x, bsPos.y,
+                                                         params::kCruiseAltitudeM),
+                                                  params::kCruiseAltitudeM));
+                app->SetReportAtEnd(true);
+            }
             app->SetCruise(params::kCruiseAltitudeM, params::kDataSpeedMps);
             app->SetBs(bsPos, bsAddr);
             s.uavs.Get(u)->AddApplication(app);
@@ -190,7 +206,9 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetCellId(cid);
         app->SetCellCenter(m_plan.cells.at(cid).centerX, m_plan.cells.at(cid).centerY);
         app->SetIsTarget(id == targetId);
-        app->SetStopOnComplete(!proposed);
+        // tsp-mc's mission (like proposed) only completes at the BS report; the
+        // victim's completion is still recorded as a metric.
+        app->SetStopOnComplete(!proposed && !tspMc);
         s.sensors.Get(i)->AddApplication(app);
         app->SetStartTime(Seconds(0));
         app->SetStopTime(Seconds(cfg.simTime));

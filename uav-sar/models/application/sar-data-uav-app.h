@@ -45,6 +45,10 @@ public:
     enum class Mode { SUMMONED, SWEEP_DUMP };
     void SetMode(Mode m) { m_mode = m; }
     void SetSensorPositions(const std::vector<ns3::Vector>& p) { m_sensors = p; }
+    // tsp-mc baseline: fly THESE waypoints (VBS tour) instead of building a GMC
+    // sweep, and return to the BS to report once the tour is done.
+    void SetTourOverride(const std::vector<ns3::Vector>& t) { m_tourOverride = t; }
+    void SetReportAtEnd(bool v) { m_reportAtEnd = v; }
 
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
@@ -69,6 +73,8 @@ private:
     Mode m_mode = Mode::SUMMONED;
     std::vector<Fragment> m_full;
     std::vector<ns3::Vector> m_sensors;   // for SWEEP_DUMP GMC
+    std::vector<ns3::Vector> m_tourOverride;  // tsp-mc: pre-planned VBS tour
+    bool m_reportAtEnd = false;               // tsp-mc: tour -> BS -> REPORT
     std::vector<ns3::Vector> m_targets;
     size_t m_ti = 0;
     double m_radius = 50.0;

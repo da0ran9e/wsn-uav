@@ -20,13 +20,14 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("simTime", "sim duration (s)", cfg.simTime);
     cmd.AddValue("minObserve", "proposed: hold first summon until this time (s)", cfg.minObserveS);
     cmd.AddValue("clueDecay", "clue-field decay / on-node sensing range (m)", cfg.clueDecayM);
-    cmd.AddValue("scheme", "proposed | nocoop | pure-uav", cfg.scheme);
+    cmd.AddValue("scheme", "proposed | nocoop | pure-uav | tsp-mc", cfg.scheme);
     cmd.AddValue("outputDir", "results dir", outputDir);
     cmd.Parse(argc, argv);
 
-    if (cfg.scheme != "proposed" && cfg.scheme != "nocoop" && cfg.scheme != "pure-uav") {
+    if (cfg.scheme != "proposed" && cfg.scheme != "nocoop" && cfg.scheme != "pure-uav" &&
+        cfg.scheme != "tsp-mc") {
         std::cerr << "unknown --scheme=" << cfg.scheme
-                  << " (expected proposed | nocoop | pure-uav)\n";
+                  << " (expected proposed | nocoop | pure-uav | tsp-mc)\n";
         return 1;
     }
 

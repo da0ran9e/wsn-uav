@@ -43,7 +43,9 @@ void SarDataUavApp::TakeOff() {
     if (m_mode == Mode::SWEEP_DUMP) {
         // plan sweep with the design coverage radius (see FAST app note).
         m_radius = params::kUavBroadcastRadiusM;
-        m_targets = BuildGmc(m_sensors, m_radius, m_fc.GetPosition(), m_alt, m_speed);
+        m_targets = m_tourOverride.empty()
+                        ? BuildGmc(m_sensors, m_radius, m_fc.GetPosition(), m_alt, m_speed)
+                        : m_tourOverride;   // tsp-mc: pre-planned VBS/TSP tour
         m_ti = 0;
     }
     m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);
@@ -168,7 +170,12 @@ void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
             }
             m_ti++;
             Vector p = m_fc.GetPosition();
-            if (m_ti >= m_targets.size()) { m_state = State::DONE; return; }
+            if (m_ti >= m_targets.size()) {
+                // tsp-mc: mission ends only when the UAV is back at the BS and
+                // the report is received — fly home now (ControlTick services it).
+                m_state = m_reportAtEnd ? State::RETURN : State::DONE;
+                return;
+            }
             m_state = State::SWEEP;
             Vector t = m_targets[m_ti];
             m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI); m_fc.Forward(m_speed);

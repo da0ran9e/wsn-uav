@@ -73,6 +73,38 @@ close the loop). `pure-uav` remains the energy-minimal but slowest option.
    at footprint edge). Dwell 20 s → **victim served 100 %**, +12 s report
    latency. This was diagnosed (hypothesis → single-knob test), not tuned blind.
 
+## Literature baseline: UAV-enabled multicasting (Zeng–Xu–Zhang, TWC 2018)
+
+`--scheme=tsp-mc` implements the core contribution of *"Trajectory Design for
+Completion Time Minimization in UAV-Enabled Multicasting"* (Zeng, Xu, Zhang,
+IEEE TWC 17(4), 2018), adapted to our scenario: a **single UAV** covers ALL
+ground terminals with a minimum-disk **virtual-base-station placement**, flies a
+**TSP tour** over the VBSs (nearest-neighbour + 2-opt, from the BS), and
+fly-hovers at each VBS for a connection-time dwell so every GT in the disk
+recovers the multicast file (their network-coded accumulation maps to our
+order-insensitive chunk model). Per our mission definition the UAV must then
+**return to the BS and report** to complete. Same radio, channel, chunking and
+dwell constants as the other baselines — only the trajectory logic is theirs.
+Faithfulness note: this is their *fly-hover* design; their LP speed-optimized
+variant would shave some travel time but cannot change the structural gap below.
+
+| Metric (N = 30, 8×8) | tsp-mc (Zeng'18) | proposed |
+|---|---:|---:|
+| Report reaches BS | 100 % @ **254.4 s** | 100 % @ **66.1 s** |
+| Victim node has full data | **100 %** @ 102.2 s | 97 % @ 42.7 s |
+| Packets sent | 9169 | **1942** |
+| UAV energy | **40.9 kJ** (1 UAV) | 44.4 kJ (4 UAV) |
+| Localization output | none | ±16 m estimate |
+
+**Honest reading.** Their design *guarantees* the victim's data by construction
+(it multicasts to everyone — 100 % vs our 97 %) with a single airframe and
+comparable total energy. But without edge cooperation it cannot know where the
+victim is, so it must pay the full multicast tour: mission completion is
+**3.8× slower** (254 vs 66 s), radio cost **4.7× higher**, and it produces **no
+location estimate** for the rescue team. The WSN's clue field + distributed
+control plane is precisely what converts "serve everyone eventually" into
+"serve the right place now, and say where it is".
+
 ## Sensor-spacing sweep — connectivity threshold (N = 30)
 
 | spacing | localize fires | delivery err (med) | intra shares | inter shares |

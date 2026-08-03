@@ -1,98 +1,92 @@
-> ## 🛑 SUPERSEDED — read `AUDIT-SYNTHESIS.md` first
->
-> Four independent audits (2026-08) concluded this document is **not publishable
-> as written**. The headline 1.74x speedup measures two asymmetries, not the
-> schemes: it becomes **1.01x** under a symmetric completion rule and equal cruise
-> speed, and the baseline *wins by 1.26x* once given the rateless coding its
-> source paper specifies. The energy claim **reverses sign** at a common
-> milestone. The localization contribution **loses to a one-line argmax rule**.
-> The entire `proposed` column of the head-to-head table below is **stale**.
->
-> The underlying result is real but lives at **scale**, not at the 8x8 headline
-> configuration: 8x8 = 1.01x, 8x8@30m = 1.20x, 16x16 = 2.13x (and 1.46x even
-> against a maximally charitable baseline) — with a reliability cost that must be
-> reported alongside. See `AUDIT-SYNTHESIS.md`.
->
-> ## Earlier partial-supersede notice (retained)
->
-> An independent correctness audit (2026-08) invalidated three headline claims in
-> this document. **Do not cite the following until they are fixed and re-measured:**
->
-> - **Energy comparison** — the metric reduces to `numUav x sim_duration`, and the
->   baselines' duration is set by a ground-truth stop criterion (audit B1). The
->   stated cause ("two extra UAVs loiter instead of sweeping") is also factually
->   wrong: `nocoop` flies the same four UAVs.
-> - **Distributed election with SUMMON suppression** — cannot fire in the evaluated
->   topology: cell leaders are 63-156 m apart, the ground radio reaches 37 m
->   (audit B2). Measured: 2-3 independent summons, never suppressed.
-> - **"BS report with a +/-16 m location estimate"** — the report is a constant
->   token; no coordinates are ever transmitted to the BS (audit B3).
->
-> Also: localization accuracy here is measured on a **noise-free** clue field with
-> exact GPS (audit M9), `nocoop`'s dwell is 4.0 passes not 3.27 (m6), and the
-> victim-served figure in the head-to-head table (100%) contradicts the 97%
-> measured elsewhere in this file (m7).
->
-> A 100-seed re-analysis with confidence intervals and significance tests is in
-> `AUDIT-2026-08.md`. It shows the victim-service difference between schemes is
-> **not statistically significant** (Fisher p = 0.62), so no parity or superiority
-> claim on that metric is supported.
+# UAV-SAR — Results (post-audit, re-levelled)
 
-# UAV-SAR — Honest results (bypass-free build)
+> **Provenance.** Every number below was regenerated from the current binary
+> after the four independent audits (see `AUDIT-SYNTHESIS.md`) and the
+> re-levelling commits. Numbers in earlier revisions of this file are void.
 
-**Scope.** Measured on the fully audited build: the whole cooperation control
-plane runs over the real radio (RPT/SHARE/SUMMON/CLAIM/A2A/FULL/CONFIRM/REPORT),
-region formation + leader election are distributed (evidence backoff + SUMMON
-suppression), and every earlier shortcut (central coordinator, pointer
-actuation, shared-memory tokens, ground-truth position injection) is removed.
-Channel: Forest-A2G (Al-Hourani LoS + ITU-R P.833 foliage) + Nakagami +
-per-pair shadowing. **The old "round-2 100-seed" numbers are invalid** (they ran
-on a build where cues reached the field ~300 m before any UAV arrived).
+## The comparison is now symmetric
 
-**Declared assumptions (not per-run cheats).** The PECEE substrate — hex cells,
-cell leaders, intra-cell routing trees, gateways — is computed at setup and
-loaded into the nodes, i.e. the network is assumed *already initialized* (a
-surveyed deployment); topology formation itself is out of scope. UAVs know
-sensor positions for sweep planning. The victim node self-identifies only for
-the `timeToCompleteData` metric and the baselines' stop criterion.
+Four audits showed the previous headline measured two asymmetries rather than
+the schemes. All are removed, and each change makes the comparison **harder for
+the proposed scheme or more generous to the baseline**:
 
----
+| Was | Now |
+|---|---|
+| proposed's FAST UAVs 25 m/s, every baseline UAV 15 m/s | **one cruise speed, 20 m/s, all schemes** (`--fastSpeed/--dataSpeed` keep the two-tier fleet as a declared variable) |
+| proposed's mission ended when 1-of-4 UAVs reported, with 3 still airborne; tsp-mc needed 4-of-4 | **every UAV returns to the BS and reports, all schemes** (`--allHome`) |
+| baselines' simulation ended when the ground-truth victim node finished — an oracle that set their energy and packet totals | **no scheme stops on the oracle**; all arms end at the same milestone |
+| baseline replayed identical chunk indices (uncoded), needing R=3 | **rateless recovery** per Zeng'18; the baseline meets its own goal (98.8 % of GTs, 100 % of victims) at **R=1.2**, halving every hover |
+| `nocoop`/`pure-uav` could never complete the mission (0 % by construction) | they fly home and report too — **all four arms reach 100 %** |
+| `timeToLocalize` reported the `--minObserve` knob | window applied first, evidence-ordered backoff on top |
 
-## ⚠ Correction: the localization metric was wrong (kept for the record)
+## Head-to-head (N = 20 seeds, medians with bootstrap 95 % CI)
 
-Earlier revisions of this document concluded that localization error was "flat
-at ~30–40 m across every knob" and blamed a granularity floor in the election.
-That conclusion was an **artifact of a mismeasured metric**: the analysis read
-the `summon_start` event coordinates, which log the *region leader's own
-position* — a grid-quantized point that is structurally ~1 cell away from the
-victim and insensitive to targeting improvements. The quantity that matters is
-the **delivery error**: distance from where the DATA UAV actually drops the
-dataset (`deliver_start`) to the victim. With the correct metric every
-conclusion below was re-measured. The wrong-metric sweeps are superseded by the
-tables in this file; the moral stands on its own: *validate the metric before
-trusting the sweep*.
+**8×8 — 64 sensors, 140×140 m**
 
----
+| scheme | mission complete | t_report | victim served | energy | packets |
+|---|---:|---:|---:|---:|---:|
+| **proposed** | 95 % | **63.0 s** [59.0, 65.5] | 95 % | **41.7 kJ** | **1 866** |
+| tsp-mc (coded, R=1.2) | 100 % | 81.2 s | 100 % | 53.1 kJ | 6 134 |
+| nocoop | 100 % | 111.8 s | 100 % | 73.5 kJ | 12 246 |
 
-## Final head-to-head (N = 30 seeds, median, default config¹)
+**16×16 — 256 sensors, 300×300 m**
 
-| Metric | proposed | nocoop (4 UAV) | pure-uav (1 UAV) |
-|---|---:|---:|---:|
-| Localize fired / time | **100 % @ 20 s** | — | — |
-| Report reaches BS / time | **100 % @ 67 s** | — | — |
-| **Delivery error (median / p90)** | **15.8 / 28.1 m** | — | — |
-| Victim node has full data | **100 % @ 43.4 s** | 100 % @ 45.2 s | 97 % @ 68.5 s |
-| Packets sent | **1876** | 3312 | 1878 |
-| UAV energy | 47 kJ | 27 kJ | **10.8 kJ** |
+| scheme | mission complete | t_report | victim served | energy | packets |
+|---|---:|---:|---:|---:|---:|
+| **proposed** | 95 % | **90.6 s** [84.3, 103.6] | 100 % | **58.6 kJ** | **2 861** |
+| tsp-mc (coded, R=1.2) | 100 % | 184.9 s | 100 % | 120.6 kJ | 21 421 |
+| nocoop | 100 % | 266.0 s | 100 % | 174.8 kJ | 36 701 |
 
-¹ default = `--minObserve=20`, delivery dwell 20 s, 8×8 grid @ 20 m, 4 UAV.
+## The result is a scaling law
 
-**Honest reading.** With the aiming + dwell fixes, `proposed` now matches the
-carpet-dump baseline on victim outcome (100 %, slightly faster) while *also*
-producing what baselines cannot: a location estimate (±16 m) and a report at the
-BS — at 43 % fewer packets than nocoop. The cost is energy (47 vs 27 kJ: two
-extra UAVs loiter/divert instead of sweeping) and pipeline latency (67 s to
-close the loop). `pure-uav` remains the energy-minimal but slowest option.
+Paired comparison against the charitable coded baseline (same seed ⇒ same
+channel realisation; Wilcoxon signed-rank, Cliff's δ):
+
+| metric | 64 sensors | 256 sensors | paired evidence |
+|---|---:|---:|---|
+| mission time | **1.29×** | **2.04×** | 19/19 wins, δ = +1.00 |
+| energy | **1.27×** | **2.06×** | 19/19 wins, δ = +1.00 |
+| application packets | **3.29×** | **7.49×** | 19/19 wins, δ = +1.00 |
+
+**The advantage roughly doubles from 64 to 256 sensors.** Blind coverage cost
+scales with area; evidence-directed delivery cost scales with
+(time-to-localize + transit). The 8×8 configuration used for the previous
+headline is near the crossover, which is exactly why an honest reading there
+looked like a tie.
+
+*Statistical caveat, stated because it matters:* `tsp-mc` is **deterministic
+across seeds** (IQR exactly 0 on time, energy and packets — an open-loop
+schedule cannot exploit a good channel). The matched pair therefore carries no
+channel information for that arm, so the Wilcoxon p is floor-bounded by n
+(p = 1.3e-4 at n = 19 for a perfect split) and reflects complete separation
+rather than an unusually strong sample. Cliff's δ = +1.00 is the honest effect
+statement. The flip side is a genuine baseline virtue: a **predictable makespan
+bound**.
+
+## The cost, reported alongside the benefit
+
+`proposed` completes the mission in **95 %** of runs at both scales; every
+baseline completes in **100 %**. Localization can fail where blind coverage
+cannot — the scheme trades a small reliability margin for a large cost margin.
+Any use of these results must state both.
+
+Delivery error (distance from the drop point to the true victim) is
+**19.7 m** median at 8×8 and **18.2 m** at 16×16 — but see the open items below
+before treating that as an accuracy result.
+
+## Still open — do not cite these as settled
+
+- **B2** The distributed election cannot fire in the evaluated topology (cell
+  leaders 63–156 m apart, ground radio 37 m). What runs is "every alerting cell
+  summons independently". Unfixed.
+- **M9 / W1** The clue field is noise-free with exact GPS, and the victim is
+  always co-located with a sensor node — so aiming at the single strongest
+  reporter (`--aimArgmax`, now implemented) is expected to beat the centroid.
+  The ablation must be run and reported before any localization claim.
+- **W2** The aiming rule is Weighted Centroid Localization under another name;
+  an ML/NLS estimator and a CRLB are needed to make the accuracy interpretable.
+- **W4** All baselines are open-loop; a closed-loop non-cooperative baseline is
+  needed to attribute the gain to *cooperation* rather than to feedback.
 
 ## The causal chain that got us here (each link measured)
 

@@ -31,6 +31,14 @@ public:
                double x = 0, double y = 0, double z = 0);
     void Traj(double t, uint32_t uav, const std::string& role, double x, double y, double z);
 
+    // audit B3: the localization estimate the BS actually RECEIVED over the radio
+    // (decoded from the REPORT payload), not an estimate read out of simulator
+    // state. This is the only number the rescue team would ever hold, so it is
+    // the one the paper may quote as the scheme's localization output.
+    void MarkVictimFix(double t, double x, double y) {
+        if (m_tFix < 0) { m_tFix = t; m_fixX = x; m_fixY = y; m_hasFix = true; }
+    }
+
     void MarkLocalize(double t)     { if (m_tLocalize < 0) m_tLocalize = t; }
     void MarkCompleteData(double t) { if (m_tComplete < 0) m_tComplete = t; }
     void MarkReportAtBS(double t)   { if (m_tReport < 0) m_tReport = t; }
@@ -58,6 +66,8 @@ private:
     double m_vx=0, m_vy=0, m_spacing=0;
     std::string m_scheme="proposed";
     double m_tLocalize=-1, m_tComplete=-1, m_tReport=-1;
+    bool m_hasFix=false;
+    double m_tFix=-1, m_fixX=0, m_fixY=0;
     uint32_t m_intraShares=0, m_interShares=0, m_regionCells=0, m_beacons=0, m_custody=0;
     uint32_t m_sent=0, m_recv=0;
     uint64_t m_sentBytes=0, m_recvBytes=0;

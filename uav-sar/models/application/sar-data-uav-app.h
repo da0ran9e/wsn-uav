@@ -98,6 +98,8 @@ private:
     ns3::EventId m_claimEvent;
     bool m_pendingDivert = false;   // claimed before airborne; divert after climb
     bool m_confirmed = false;
+    bool m_hasFix = false;          // audit B3: carry the victim fix home
+    double m_fixX = 0, m_fixY = 0;
     double m_divertStartDist = 0;
     double m_dwellUntil = 0;        // SWEEP_DUMP: cycle chunks until this time
     uint32_t m_reportsSent = 0;     // REPORT retransmissions (bounded)

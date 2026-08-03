@@ -75,6 +75,10 @@ void SarDataUavApp::TryClaimDivert(double x, double y) {
     if (m_claimed || m_state == State::DELIVER || m_state == State::RETURN) return;
     m_claimed = true;
     Vector p = m_fc.GetPosition();
+    // audit B3: the SUMMON coordinates ARE the localization output. Hold them so
+    // they can be flown home in the REPORT (or handed to a courier) — until this
+    // the BS learned only *that* a delivery happened, never *where*.
+    m_hasFix = true; m_fixX = x; m_fixY = y;
     m_divert = Vector(x, y, m_alt);
     m_divertStartDist = std::hypot(x - p.x, y - p.y);
     // If already cruising (loiter/en-route), divert now; if still on the ground
@@ -227,10 +231,13 @@ void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
 void SarDataUavApp::SendReport() {
     if (m_reportsSent >= params::kReportRetries) return;
     if (m_dev) {
-        std::vector<uint8_t> b(kReportLen);
+        std::vector<uint8_t> b(kReportLen, 0);
         uint8_t* q = b.data();
-        *q++ = (uint8_t)Msg::REPORT; *q++ = 0x00;
+        *q++ = (uint8_t)Msg::REPORT; *q++ = m_hasFix ? kFlagHasFix : 0x00;
         uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2; *q++ = 255;
+        int16_t fx = (int16_t)std::lround(m_fixX * 10.0);
+        int16_t fy = (int16_t)std::lround(m_fixY * 10.0);
+        std::memcpy(q, &fx, 2); q += 2; std::memcpy(q, &fy, 2);
         m_dev->Send(Create<Packet>(b.data(), b.size()), m_bsAddr, 0);
         if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
     }
@@ -241,10 +248,15 @@ void SarDataUavApp::SendReport() {
 void SarDataUavApp::SendHandoff() {
     if (m_handoffsSent >= params::kConfirmRetries) return;
     if (m_dev) {
-        std::vector<uint8_t> b(kHandoffLen);
+        std::vector<uint8_t> b(kHandoffLen, 0);
         uint8_t* q = b.data();
-        *q++ = (uint8_t)Msg::HANDOFF; *q++ = kBroadcast;
-        uint16_t rid = 1; std::memcpy(q, &rid, 2);
+        *q++ = (uint8_t)Msg::HANDOFF; *q++ = m_hasFix ? kFlagHasFix : 0x00;
+        uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2;
+        // audit B3: the courier must inherit the fix, otherwise handing the
+        // report to a faster UAV would silently throw the location away.
+        int16_t fx = (int16_t)std::lround(m_fixX * 10.0);
+        int16_t fy = (int16_t)std::lround(m_fixY * 10.0);
+        std::memcpy(q, &fx, 2); q += 2; std::memcpy(q, &fy, 2);
         m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
         if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
     }

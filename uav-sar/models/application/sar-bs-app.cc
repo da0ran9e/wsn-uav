@@ -5,6 +5,7 @@
 #include "ns3/core-module.h"
 #include "ns3/packet.h"
 
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -32,6 +33,21 @@ bool SarBsApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const 
             m_metrics->Event(t, m_nodeId, "BS", "report_rx",
                              "reporter " + std::to_string(m_reporters.size()) + "/" +
                                  std::to_string(m_expected));
+        }
+        // audit B3: decode the victim fix, if this UAV carried one. The BS knows
+        // a position ONLY because these bytes arrived; a blind-coverage baseline
+        // reports mission-done with the flag clear and no position is recorded.
+        if (m_metrics && pkt->GetSize() >= kReportLen) {
+            std::vector<uint8_t> b(kReportLen);
+            pkt->CopyData(b.data(), kReportLen);
+            if (b[1] & kFlagHasFix) {
+                int16_t fx, fy;
+                std::memcpy(&fx, &b[5], 2);
+                std::memcpy(&fy, &b[7], 2);
+                m_metrics->MarkVictimFix(t, fx / 10.0, fy / 10.0);
+                m_metrics->Event(t, m_nodeId, "BS", "fix_rx", "victim fix decoded",
+                                 fx / 10.0, fy / 10.0, 0.0);
+            }
         }
         // mission complete only when every expected UAV has reported.
         if (m_reporters.size() >= m_expected) {

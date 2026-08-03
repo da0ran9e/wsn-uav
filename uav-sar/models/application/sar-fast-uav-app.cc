@@ -191,10 +191,13 @@ void SarFastUavApp::TrajTick() {
 void SarFastUavApp::SendReport() {
     if (m_reportsSent >= params::kReportRetries) return;
     if (m_dev) {
-        std::vector<uint8_t> b(kReportLen);
+        std::vector<uint8_t> b(kReportLen, 0);
         uint8_t* q = b.data();
-        *q++ = (uint8_t)Msg::REPORT; *q++ = 0x00;
+        *q++ = (uint8_t)Msg::REPORT; *q++ = m_hasFix ? kFlagHasFix : 0x00;
         uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2; *q++ = 255;
+        int16_t fx = (int16_t)std::lround(m_fixX * 10.0);
+        int16_t fy = (int16_t)std::lround(m_fixY * 10.0);
+        std::memcpy(q, &fx, 2); q += 2; std::memcpy(q, &fy, 2);
         m_dev->Send(Create<Packet>(b.data(), b.size()), m_bsAddr, 0);
         if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
     }
@@ -207,6 +210,11 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     if (sz < 2) return true;
     std::vector<uint8_t> b(sz); pkt->CopyData(b.data(), sz);
     if (b[0] == (uint8_t)Msg::HANDOFF && sz >= kHandoffLen) {
+        // audit B3: take custody of the fix as well as of the errand.
+        if (b[1] & kFlagHasFix) {
+            int16_t fx, fy; std::memcpy(&fx, &b[4], 2); std::memcpy(&fy, &b[6], 2);
+            m_hasFix = true; m_fixX = fx / 10.0; m_fixY = fy / 10.0;
+        }
         // Radio courier election: schedule a CLAIM after a short backoff; the
         // first FAST to claim on the radio wins, the rest yield.
         if (!m_courier && !m_yieldedCourier && !m_courierEvent.IsPending())
@@ -233,6 +241,12 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     if (b[0] == (uint8_t)Msg::SUMMON && sz >= kSummonLen && m_dev) {
         // relay to DATA team over A2A (same body, different type).
         m_summonSeen = true;   // region found -> stop spreading cues
+        // audit B3: a relaying FAST heard the coordinates itself, so it can also
+        // carry them home — the fix is not the courier's private property.
+        {
+            int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
+            m_hasFix = true; m_fixX = cx / 10.0; m_fixY = cy / 10.0;
+        }
         std::vector<uint8_t> r(b.begin(), b.begin() + kSummonLen);
         r[0] = (uint8_t)Msg::A2A;
         m_dev->Send(Create<Packet>(r.data(), r.size()), Mac16Address("ff:ff"), 0);

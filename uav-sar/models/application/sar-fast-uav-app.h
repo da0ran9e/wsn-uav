@@ -66,6 +66,8 @@ private:
     uint16_t m_cueSeq = 0;    // chunk seq within the current cue fragment
     uint32_t m_cueTxCount = 0;  // for decimated viz markers
     bool m_summonSeen = false;  // once a summon is relayed, stop spreading cues
+    bool m_hasFix = false;      // audit B3: victim fix to carry home in the REPORT
+    double m_fixX = 0, m_fixY = 0;
     double m_alt = 20.0, m_speed = 25.0, m_radius = 50.0;
     State m_state = State::IDLE;
     ns3::Vector m_bsPos{0, 0, 0};

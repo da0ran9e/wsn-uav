@@ -5,12 +5,19 @@
 import subprocess, csv, statistics as st, sys, os
 BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-optimized"
 SP=sys.argv[1]; N=int(sys.argv[2]); NUAV=sys.argv[3] if len(sys.argv)>3 else "4"
+# audit F4: `coded` is Zeng'18's own semantics (rateless/network-coded symbols,
+# recovery after ~1.05x file-worth of ANY symbols).  `uncoded` replays identical
+# chunk indices, which is NOT their scheme and is what inflated the required R.
+CODED = "0" if (len(sys.argv)>4 and sys.argv[4]=="uncoded") else "1"
+GRID  = sys.argv[5] if len(sys.argv)>5 else "8"
+print(f"# codedMulticast={CODED} gridSize={GRID} numUav={NUAV} N={N}")
 print(f"{'R':>4} {'GTcov%':>7} {'victim%':>8} {'mission_s':>10} {'energy_kJ':>10} {'pkts':>7}")
-for R in [1.0,1.5,2.0,3.0,4.0]:
+for R in [1.0,1.1,1.2,1.5,2.0,3.0]:
     cov=[];vic=0;rep=[];en=[];pk=[]
     for seed in range(1,N+1):
         out=f"{SP}/r{R}-{seed}"
         subprocess.run([BIN,f"--seed={seed}","--scheme=tsp-mc",f"--numUav={NUAV}",
+                        f"--gridSize={GRID}",f"--codedMulticast={CODED}",
                         f"--mcRedundancy={R}","--simTime=600",f"--outputDir={out}"],
                        stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         try: m=list(csv.DictReader(open(f"{out}/metrics.csv")))[0]

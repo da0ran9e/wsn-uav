@@ -20,7 +20,12 @@ Audit findings fixed in this file:
   S2   the censoring horizon (--simTime) differed per scheme under one metric
        name; it is now printed, with the count of runs censored by it.
 
-Usage:  campaign_stats.py <outdir> <N seeds> [--quick]
+  B3   the localization output was only ever observed inside the simulator
+       (the `deliver_start` position).  metrics.csv now also carries the fix
+       the BS actually DECODED from a REPORT packet, and it is reported as a
+       separate metric -- see `fixerr` below.
+
+Usage:  campaign_stats.py <outdir> <N seeds> [--quick] [--grid=N]
 """
 import csv, math, os, random, subprocess, sys, statistics as st
 
@@ -248,6 +253,12 @@ def run_scheme(tag, outdir, n_seeds):
                          cmp=float(m["timeToCompleteData_s"]),
                          loc=float(m["timeToLocalize_s"]),
                          derr=derr,
+                         # B3: error of the fix the BS decoded off the radio.
+                         # -1 when no UAV ever delivered a position, which is
+                         # the correct and permanent outcome for every
+                         # blind-coverage baseline -- their cell reads n/a.
+                         fixerr=float(m.get("reportErr_m", -1) or -1),
+                         tfix=float(m.get("timeToFixAtBS_s", -1) or -1),
                          energy=float(m["uavEnergyJ"]),
                          pkts=float(m["pktSent"])))
     return rows
@@ -271,6 +282,17 @@ def series(rows, key):
 def main():
     outdir, n = sys.argv[1], int(sys.argv[2])
     os.makedirs(outdir, exist_ok=True)
+    # W8: the scaling claim needs the same campaign at two densities, so the
+    # grid is a parameter of the campaign rather than a rebuild.
+    for a in sys.argv[3:]:
+        if a.startswith("--grid="):
+            g = int(a.split("=", 1)[1])
+            # S2: the horizon must grow with the area or the slow arms get
+            # censored and their "failures" would be a truncation artifact.
+            scale = max(1.0, (g / 8.0) ** 2)
+            for tag in list(SCHEMES):
+                args, t = SCHEMES[tag]
+                SCHEMES[tag] = (args + [f"--gridSize={g}"], int(t * scale))
     tags = list(SCHEMES) if "--quick" not in sys.argv else ["proposed", "tsp-mc-x4"]
     data = {}
     for tag in tags:
@@ -323,7 +345,8 @@ summon_start metric is RETRACTED (S8) and is not computed anywhere here.""")
     print("-" * 96)
     METRICS = [("rep", "t_report s", 1.0), ("cmp", "t_victim s", 1.0),
                ("loc", "t_localize s", 1.0), ("energy", "energy kJ", 1e-3),
-               ("pkts", "packets", 1.0), ("derr", "delivery err m", 1.0)]
+               ("pkts", "packets", 1.0), ("derr", "delivery err m", 1.0),
+               ("tfix", "t_fix@BS s", 1.0), ("fixerr", "BS fix err m", 1.0)]
     for tag in tags:
         for key, lbl, scale in METRICS:
             xs = [v * scale for v in series(data[tag], key)]
@@ -343,40 +366,46 @@ summon_start metric is RETRACTED (S8) and is not computed anywhere here.""")
         return
 
     # ---- S11: paired inference is PRIMARY -------------------------------
-    print("### PRIMARY: paired tests vs proposed -- mission completion time ###")
+    print("### PRIMARY: paired tests vs proposed ###")
     print("  Design is matched-pairs: seed k gives the same channel realisation")
     print("  to every scheme, so a paired test is the correct one.  Pairs where")
     print("  either arm has no value are dropped (count reported).")
-    print(f"\n{'comparison':<24} {'pairs':>6} {'W+':>9} {'z':>8} {'p':>11} {'sig':<5} "
-          f"{'median diff':>12} {'wins P/other':>13} {'Cliff d':>9} {'':<11}")
-    print("-" * 118)
-    base_by_seed = {r["seed"]: r["rep"] for r in included(data["proposed"])
-                    if r["rep"] >= 0}
-    base_vals = list(base_by_seed.values())
-    for tag in tags:
-        if tag == "proposed":
-            continue
-        other_by_seed = {r["seed"]: r["rep"] for r in included(data[tag])
-                         if r["rep"] >= 0}
-        if not other_by_seed:
-            print(f"{'proposed vs ' + tag:<24} n/a - no BS-report stage by design "
-                  f"(M1: metric is 0%-by-construction for this arm)")
-            continue
-        seeds = sorted(set(base_by_seed) & set(other_by_seed))
-        pairs = [(base_by_seed[s], other_by_seed[s]) for s in seeds]
-        if not pairs:
-            print(f"{'proposed vs ' + tag:<24} n/a - no seed produced a value in both arms")
-            continue
-        w = wilcoxon_signed_rank(pairs)
-        diffs = [a - b for a, b in pairs]
-        n_prop = sum(1 for d in diffs if d < 0)   # proposed faster
-        n_oth = sum(1 for d in diffs if d > 0)
-        d, lab = cliffs_delta([a for a, _ in pairs], [b for _, b in pairs])
-        print(f"{'proposed vs ' + tag:<24} {len(pairs):>6} {w['w_plus']:>9.1f} "
-              f"{w['z']:>+8.2f} {fmt_p(w['p']):>11} {stars(w['p']):<5} "
-              f"{st.median(diffs):>+11.1f}s {n_prop:>6}/{n_oth:<6} "
-              f"{d:>+9.3f} {lab:<11}")
-    print("  median diff = median(proposed - other), negative = proposed faster.")
+    print("  Reported for all three cost metrics -- a scheme that is faster only")
+    print("  by spending more energy or airtime has not actually won.")
+    base_vals = [r["rep"] for r in included(data["proposed"]) if r["rep"] >= 0]
+    for key, lbl, scale, unit in [("rep", "mission time", 1.0, "s"),
+                                  ("energy", "UAV energy", 1e-3, "kJ"),
+                                  ("pkts", "app packets", 1.0, "")]:
+        print(f"\n-- {lbl} --")
+        print(f"{'comparison':<24} {'pairs':>6} {'W+':>9} {'z':>8} {'p':>11} {'sig':<5} "
+              f"{'median diff':>12} {'wins P/other':>13} {'Cliff d':>9} {'':<11}")
+        print("-" * 118)
+        base_by_seed = {r["seed"]: r[key] * scale for r in included(data["proposed"])
+                        if r[key] >= 0}
+        for tag in tags:
+            if tag == "proposed":
+                continue
+            other_by_seed = {r["seed"]: r[key] * scale for r in included(data[tag])
+                             if r[key] >= 0}
+            if not other_by_seed:
+                print(f"{'proposed vs ' + tag:<24} n/a - stage absent by design "
+                      f"(M1: metric is 0%-by-construction for this arm)")
+                continue
+            seeds = sorted(set(base_by_seed) & set(other_by_seed))
+            pairs = [(base_by_seed[s], other_by_seed[s]) for s in seeds]
+            if not pairs:
+                print(f"{'proposed vs ' + tag:<24} n/a - no seed produced a value in both arms")
+                continue
+            w = wilcoxon_signed_rank(pairs)
+            diffs = [a - b for a, b in pairs]
+            n_prop = sum(1 for d in diffs if d < 0)   # proposed cheaper/faster
+            n_oth = sum(1 for d in diffs if d > 0)
+            d, lab = cliffs_delta([a for a, _ in pairs], [b for _, b in pairs])
+            print(f"{'proposed vs ' + tag:<24} {len(pairs):>6} {w['w_plus']:>9.1f} "
+                  f"{w['z']:>+8.2f} {fmt_p(w['p']):>11} {stars(w['p']):<5} "
+                  f"{st.median(diffs):>+11.1f}{unit:<1} {n_prop:>6}/{n_oth:<6} "
+                  f"{d:>+9.3f} {lab:<11}")
+    print("\n  median diff = median(proposed - other), negative = proposed cheaper.")
     print("  wins P/other = pairs where proposed / the other arm was faster.")
     print("  Cliff d sign: negative = proposed's times are smaller.")
     print("  |d|<0.147 negligible, <0.33 small, <0.474 medium, else large.")

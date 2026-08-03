@@ -37,8 +37,13 @@ inline constexpr uint32_t kChunkHdr   = 1 + 1 + 2 + 2 + 2 + 1;      // 9, payloa
 inline constexpr uint32_t kSummonLen  = 1 + 1 + 2 + 2 + 2;          // 8
 inline constexpr uint32_t kA2ALen     = 1 + 1 + 2 + 2 + 2;          // 8 (same body)
 inline constexpr uint32_t kConfirmLen = 1 + 1 + 2 + 1;              // 5
-inline constexpr uint32_t kReportLen  = 1 + 1 + 2 + 1;              // 5
-inline constexpr uint32_t kHandoffLen = 1 + 1 + 2;                  // 4
+// audit B3: REPORT and HANDOFF carry the victim fix (decimetres, i16) so the
+// estimate physically travels to the BS over the radio instead of being read out
+// of simulator state. flags bit0 = "a fix follows"; a UAV that never learned one
+// (every blind-coverage baseline) clears it and the BS records no position.
+inline constexpr uint8_t  kFlagHasFix = 0x01;
+inline constexpr uint32_t kReportLen  = 1 + 1 + 2 + 1 + 2 + 2;      // 9
+inline constexpr uint32_t kHandoffLen = 1 + 1 + 2 + 2 + 2;          // 8
 inline constexpr uint32_t kRptLen     = 1 + 2 + 2 + 1 + 1 + 2 + 2;  // 11 (+self GPS)
 inline constexpr uint32_t kShareLen   = 1 + 2 + 1 + 2 + 2 + 1;      // 9
 inline constexpr uint32_t kClaimLen   = 1 + 2 + 1 + 2;              // 6 [region][role][id]

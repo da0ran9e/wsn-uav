@@ -1,5 +1,6 @@
 #include "sar-metrics.h"
 
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -38,16 +39,24 @@ void SarMetrics::Finalize(const std::string& outDir) {
         f << "seed,gridSize,gridSpacing,numUav,scheme,targetNodeId,victimX,victimY,"
              "timeToReportAtBS_s,timeToLocalize_s,timeToCompleteData_s,"
              "regionCells,intraShares,interShares,beaconCount,custodyHandoffs,"
-             "pktSent,pktRecv,bytesSent,bytesRecv,uavEnergyJ,routeDeviation_m";
+             "pktSent,pktRecv,bytesSent,bytesRecv,uavEnergyJ,routeDeviation_m,"
+             // audit B3: the fix as DECODED AT THE BS (-1 / empty = the BS never
+             // learned a position, which is the honest outcome for every
+             // blind-coverage baseline).
+             "timeToFixAtBS_s,reportedX,reportedY,reportErr_m";
         for (auto& [k, v] : m_extra) f << "," << k;
         f << "\n";
+        const double fixErr =
+            m_hasFix ? std::hypot(m_fixX - m_vx, m_fixY - m_vy) : -1.0;
         f << std::fixed << std::setprecision(4)
           << m_seed << "," << m_grid << "," << m_spacing << "," << m_numUav << ","
           << m_scheme << "," << m_target << "," << m_vx << "," << m_vy << "," << m_tReport << "," << m_tLocalize << "," << m_tComplete << ","
           << m_regionCells << "," << m_intraShares << "," << m_interShares << ","
           << m_beacons << "," << m_custody << "," << m_sent << "," << m_recv << ","
           << m_sentBytes << "," << m_recvBytes << ","
-          << m_energyJ << "," << m_devM;
+          << m_energyJ << "," << m_devM << ","
+          << m_tFix << "," << (m_hasFix ? m_fixX : -1.0) << ","
+          << (m_hasFix ? m_fixY : -1.0) << "," << fixErr;
         for (auto& [k, v] : m_extra) f << "," << v;
         f << "\n";
     }

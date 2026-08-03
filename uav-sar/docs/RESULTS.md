@@ -1,4 +1,22 @@
-# uav-sar — Results v2 (sau lượt rà soát logic F1–F7)
+> # ⚠️ VOID — DO NOT CITE ANY NUMBER IN THIS FILE
+>
+> Superseded in full by **`RESULTS-honest.md`**. Kept only as a record of what
+> was measured before the audits, because deleting it would erase the evidence
+> that these numbers were ever published.
+>
+> Every table below was produced under rules that four independent audits found
+> to be non-comparable: the proposed scheme's UAVs flew 25 m/s against the
+> baselines' 15 m/s; the proposed mission ended when 1-of-4 UAVs reported while
+> the baselines needed 4-of-4; the baselines' simulation was stopped by a
+> ground-truth oracle (which set their energy and packet totals); the
+> `report%` column reads 0 % for `nocoop`/`pure-uav` because those arms had no
+> report stage *by construction*, not because they failed; and the coded
+> baseline was given uncoded repetition, inflating its required redundancy 3×.
+>
+> The re-levelled comparison is in `RESULTS-honest.md`; the reasoning is in
+> `AUDIT-SYNTHESIS.md`.
+
+# uav-sar — Results v2 (sau lượt rà soát logic F1–F7) — VOID
 
 Setup: 4 UAV (2 FAST + 2 DATA cho proposed), 100 seeds/grid, kênh thực tế
 (A2G 2.2 / G2G 3.5 + Nakagami m=1.5 + **shadowing bám theo cặp** σ=8.7 dB).

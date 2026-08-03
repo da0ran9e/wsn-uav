@@ -294,6 +294,23 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         if (role == 0 && id != (uint16_t)m_nodeId && !m_claimed) {
             m_yieldedDivert = true;                 // another DATA UAV took it
             Simulator::Cancel(m_claimEvent);
+            // Yielding means this UAV has no task left. Waiting for a CONFIRM
+            // instead was a hover-forever trap: CONFIRM is a one-hop ground
+            // broadcast from the victim region, and at 300x300 m a UAV loitering
+            // at its staging point usually cannot hear it — 3/20 runs at 16x16
+            // never came home, which is where the 620 kJ p90 came from. The
+            // peer's CLAIM is itself radio-delivered local information, so
+            // acting on it needs no oracle.
+            if (m_allHome && (m_state == State::LOITER || m_state == State::GOTO_CENTER ||
+                              m_state == State::CLIMB || m_state == State::IDLE)) {
+                m_state = State::RETURN;
+                if (m_metrics) {
+                    Vector p = m_fc.GetPosition();
+                    m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                     "yield_return", "peer claimed the divert",
+                                     p.x, p.y, p.z);
+                }
+            }
         }
         // A FAST courier claimed the report over the radio: the faster UAV owns
         // the trip home now — stop our slow (15 vs 25 m/s) fallback return and

@@ -248,9 +248,11 @@ void SarGroundApp::StartSummon(double cx, double cy) {
     // suppression half never arrived and every alerting cell summoned its own
     // UAV -- the redundant deliveries that inflated the proposed scheme's
     // packet count and split the fleet across duplicate regions.
-    m_rclaimSeen.insert((uint16_t)m_cellId);
-    SendRclaim(m_cellId, (uint8_t)std::min(255.0, CellAggregate() * 255.0),
-               (int16_t)(cx * 10), (int16_t)(cy * 10), (uint8_t)params::kShareTtl);
+    if (m_electSuppress) {
+        m_rclaimSeen.insert((uint16_t)m_cellId);
+        SendRclaim(m_cellId, (uint8_t)std::min(255.0, CellAggregate() * 255.0),
+                   (int16_t)(cx * 10), (int16_t)(cy * 10), (uint8_t)params::kShareTtl);
+    }
     if (m_metrics) {
         Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
         char det[64];

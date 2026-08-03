@@ -52,6 +52,11 @@ public:
     // audit W1: aiming rule ablation. "argmax" = deliver to the single
     // highest-evidence reporting node; "centroid" = evidence^2-weighted mean.
     void SetAimArgmax(bool v) { m_aimArgmax = v; }
+    // audit B2 ablation: with suppression off, no leader ever hears another's
+    // stand-down (the pre-fix behaviour), so every alerting cell summons its own
+    // UAV. Turning it off is how the election's value is measured rather than
+    // asserted.
+    void SetElectSuppress(bool v) { m_electSuppress = v; }
     void SetMinObserve(double s) { m_minObserveS = s; } // hold first summon until s
     void SetProfile(const std::vector<Fragment>& frags);
     void SetClueQuality(double q) { m_clueQuality = q; }
@@ -95,6 +100,7 @@ private:
     bool m_cooperative = false;
     bool m_codedRecovery = false;
     bool m_aimArgmax = false;
+    bool m_electSuppress = true;
     uint32_t m_chunksRx = 0;      // total chunks received (duplicates count: coded)
     double m_minObserveS = 20.0;
 

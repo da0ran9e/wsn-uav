@@ -251,20 +251,34 @@ benefit.
 
 ## 6. Fix order (consolidated across all four audits)
 
-**Tier 0 — nothing is publishable until these are done**
-1. Equalize cruise speed across schemes; expose `--fastSpeed/--dataSpeed` (F1).
-2. One termination rule applied identically to every arm (F2, B1, S2).
-3. Give the baseline rateless/coded multicast semantics, or state the deviation
-   and re-derive R (F4).
-4. Withdraw the energy claim; re-report per-UAV-second to a common milestone (F5).
-5. Regenerate the head-to-head table from the current binary (S1).
-6. Fix `fireAt = max(now, minObserve) + backoff`; stop reporting the knob (M4/S5).
-7. Carry coordinates to the BS; emit `victimX/Y`, `reportedX/Y`, `gridSpacing`
-   in `metrics.csv` (B3, S9, W8).
-8. Run and report the argmax ablation; if the centroid does not beat it under
-   realistic noise, replace it (W1).
-9. Two one-line tool fixes: `math.erfc`, pass `gridSpacing` (S10, S9). Delete the
-   `summon_start` path from four scripts and repoint the Reproduce section (S8).
+**Tier 0 — nothing is publishable until these are done** — *all closed; see
+`RESULTS-honest.md` for the regenerated numbers.*
+1. ✅ Equalize cruise speed across schemes; expose `--fastSpeed/--dataSpeed` (F1).
+   → `kCruiseSpeedMps = 20` for every arm; the two-tier fleet is now a declared
+   variable, not a hidden advantage.
+2. ✅ One termination rule applied identically to every arm (F2, B1, S2).
+   → `--allHome` (default on): every UAV flies home and reports. The baselines'
+   ground-truth stop condition is gone.
+3. ✅ Give the baseline rateless/coded multicast semantics (F4).
+   → `--codedMulticast` (default on). Required R drops 3.0 → 1.1; we run 1.2,
+   which the dwell quantization actually realizes as 2.0 passes.
+4. ✅ Energy claim withdrawn and re-measured under symmetric rules (F5).
+   → It now holds against the 4-UAV baselines and **loses** to `tsp-mc × 1`,
+   which is reported as a loss.
+5. ✅ Head-to-head regenerated from the current binary (S1).
+6. ✅ `fireAt = max(now, minObserve) + backoff` (M4/S5).
+7. ✅ Coordinates carried to the BS over the radio; `victimX/Y`, `reportedX/Y`,
+   `gridSpacing`, `reportErr_m`, `timeToFixAtBS_s` in `metrics.csv` (B3, S9, W8).
+8. ✅ Argmax ablation run and reported (W1) — **and it came back negative**: the
+   centroid is statistically indistinguishable from argmax (δ = +0.17 at 8×8,
+   −0.03 at 16×16). No estimator claim is made; the contribution is scoped to
+   the pipeline that produces a fix at all.
+9. ✅ Tool fixes: `math.erfc`, `gridSpacing` plumbed, `summon_start` path deleted
+   (S10, S9, S8).
+10. ✅ The distributed election now actually suppresses (B2) — moved up from
+    Tier 1 because it was a described-but-not-executed mechanism, not a
+    presentation issue. RCLAIM floods the stand-down on the SHARE plane;
+    summons per run went from several to exactly one.
 
 **Tier 1 — required for a top-tier venue**
 10. Move the headline configuration to 16×16; report the scale sweep as the
@@ -277,5 +291,6 @@ benefit.
 16. N ≥ 100 for all delivery-error claims; decouple victim-position from channel
     variance; report median + IQR + p90 + CDFs (S6, S7).
 17. Related work across six areas, SARDO mandatory (W5).
-18. Resolve what the distributed election is *for*, prove it with an ablation, or
-    remove it from the contribution claims (B2).
+18. ~~Resolve what the distributed election is *for* (B2)~~ — **done**, promoted
+    to Tier 0 item 10. What remains here is the *ablation*: quantify what the
+    election buys versus letting every alerting cell summon.

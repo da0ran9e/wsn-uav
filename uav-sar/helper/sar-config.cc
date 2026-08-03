@@ -225,6 +225,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         // audit F4: rateless recovery for the coded-multicast baseline only.
         app->SetCodedRecovery(tspMc && cfg.codedMulticast);
         app->SetAimArgmax(cfg.aimArgmax);          // audit W1 ablation
+        app->SetElectSuppress(cfg.electSuppress);  // audit B2 ablation
         app->SetMinObserve(cfg.minObserveS);
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);

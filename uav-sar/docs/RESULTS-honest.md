@@ -16,26 +16,38 @@ the proposed scheme or more generous to the baseline**:
 | proposed's mission ended when 1-of-4 UAVs reported, with 3 still airborne; tsp-mc needed 4-of-4 | **every UAV returns to the BS and reports, all schemes** (`--allHome`) |
 | baselines' simulation ended when the ground-truth victim node finished — an oracle that set their energy and packet totals | **no scheme stops on the oracle**; all arms end at the same milestone |
 | baseline replayed identical chunk indices (uncoded), needing R=3 | **rateless recovery** per Zeng'18; the baseline meets its own goal (98.8 % of GTs, 100 % of victims) at **R=1.2**, halving every hover |
-| `nocoop`/`pure-uav` could never complete the mission (0 % by construction) | they fly home and report too — **all four arms reach 100 %** |
+| `nocoop`/`pure-uav` could never complete the mission (0 % by construction) | they fly home and report too — **all arms reach 100 %** |
 | `timeToLocalize` reported the `--minObserve` knob | window applied first, evidence-ordered backoff on top |
+| the election's stand-down was a one-hop SUMMON that could not reach another leader; every alerting cell summoned independently | **RCLAIM floods the stand-down** — exactly one summon per run (B2) |
+| the victim fix existed only in simulator state | **carried to the BS in the REPORT packet** and reported as `reportErr_m` (B3) |
 
-## Head-to-head (N = 20 seeds, medians with bootstrap 95 % CI)
+## Head-to-head — 8×8, 64 sensors, 140×140 m
 
-**8×8 — 64 sensors, 140×140 m**
+N = 20 seeds, medians with bootstrap 95 % CI. `tools/campaign_stats.py OUT 20 --grid=8`.
 
-| scheme | mission complete | t_report | victim served | energy | packets |
-|---|---:|---:|---:|---:|---:|
-| **proposed** | 95 % | **63.0 s** [59.0, 65.5] | 95 % | **41.7 kJ** | **1 866** |
-| tsp-mc (coded, R=1.2) | 100 % | 81.2 s | 100 % | 53.1 kJ | 6 134 |
-| nocoop | 100 % | 111.8 s | 100 % | 73.5 kJ | 12 246 |
+| scheme | mission | victim | t_report | energy | packets | **fix at BS** |
+|---|---:|---:|---:|---:|---:|---:|
+| **proposed** × 4 | 100 % | 95 % | **63.0 s** [59.0, 65.9] | 42.0 kJ | 2 024 | **15.4 m @ 46.5 s** |
+| tsp-mc × 4 (coded, R=1.2) | 100 % | 100 % | 81.2 s | 53.1 kJ | 6 134 | — none — |
+| tsp-mc × 1 | 100 % | 100 % | 146.2 s | **25.1 kJ** | 4 585 | — none — |
+| nocoop × 4 | 100 % | 100 % | 111.8 s | 73.5 kJ | 12 246 | — none — |
+| pure-uav | 100 % | 100 % | 309.3 s | 52.7 kJ | 12 225 | — none — |
 
-**16×16 — 256 sensors, 300×300 m**
+The **fix at BS** column is the point of the scheme and is measured, not
+asserted: it is the error of the coordinates the base station decoded out of a
+REPORT packet that physically arrived. Note it lands at **46.5 s — 16.5 s
+before** the mission formally completes, because the fix rides home with the
+first returning UAV while the rest of the fleet is still inbound. No baseline
+ever produces this column, at any parameter setting, because blind coverage has
+no position to carry.
 
-| scheme | mission complete | t_report | victim served | energy | packets |
-|---|---:|---:|---:|---:|---:|
-| **proposed** | 95 % | **90.6 s** [84.3, 103.6] | 100 % | **58.6 kJ** | **2 861** |
-| tsp-mc (coded, R=1.2) | 100 % | 184.9 s | 100 % | 120.6 kJ | 21 421 |
-| nocoop | 100 % | 266.0 s | 100 % | 174.8 kJ | 36 701 |
+**The one loss, stated plainly: `tsp-mc × 1` wins on energy**, 25.1 kJ vs 42.0,
+in 19/19 paired seeds (δ = +1.00). One UAV flying one tour is the minimum-energy
+way to blanket a field. The proposed scheme's energy advantage is over *equal
+fleets*, not over minimum hardware — and it buys 2.3× faster completion and a
+position for that extra energy.
+
+## Head-to-head — 16×16, 256 sensors, 300×300 m
 
 ## The result is a scaling law
 
@@ -65,28 +77,38 @@ bound**.
 
 ## The cost, reported alongside the benefit
 
-`proposed` completes the mission in **95 %** of runs at both scales; every
-baseline completes in **100 %**. Localization can fail where blind coverage
-cannot — the scheme trades a small reliability margin for a large cost margin.
-Any use of these results must state both.
+Two costs, both real:
 
-Delivery error (distance from the drop point to the true victim) is
-**19.7 m** median at 8×8 and **18.2 m** at 16×16 — but see the open items below
-before treating that as an accuracy result.
+1. **Reliability.** `proposed` serves the victim in **95 %** of runs; every
+   blind-coverage baseline serves it in **100 %**. Directed delivery can miss
+   where a carpet cannot. (Mission completion itself is 100 % for every arm
+   since B2 — before the election could suppress, a run could also fail to
+   complete outright, which is one of the failure modes that fix removed.)
+2. **Energy against minimum hardware.** `tsp-mc × 1` uses 25.1 kJ to our 42.0.
+   See the head-to-head table.
+
+Neither is hidden in an appendix: a deployment that values guaranteed coverage
+over speed and a position should not use this scheme.
 
 ## Still open — do not cite these as settled
 
-- **B2** The distributed election cannot fire in the evaluated topology (cell
-  leaders 63–156 m apart, ground radio 37 m). What runs is "every alerting cell
-  summons independently". Unfixed.
-- **M9 / W1** The clue field is noise-free with exact GPS, and the victim is
-  always co-located with a sensor node — so aiming at the single strongest
-  reporter (`--aimArgmax`, now implemented) is expected to beat the centroid.
-  The ablation must be run and reported before any localization claim.
+- **M9 / W3** The clue field is **noise-free with exact GPS**, and the victim is
+  always co-located with a sensor node. Every accuracy number here is therefore
+  an upper bound on a real system. Sensing noise, GPS error and a detector ROC
+  are the single largest remaining threat to the localization results — the
+  aiming ablation below already shows the estimator is not the limiting factor,
+  so the noise model is what would move these numbers.
 - **W2** The aiming rule is Weighted Centroid Localization under another name;
-  an ML/NLS estimator and a CRLB are needed to make the accuracy interpretable.
-- **W4** All baselines are open-loop; a closed-loop non-cooperative baseline is
-  needed to attribute the gain to *cooperation* rather than to feedback.
+  an ML/NLS estimator and a CRLB are needed to make the accuracy *interpretable*
+  rather than merely reported.
+- **W4** All baselines are open-loop. A closed-loop non-cooperative baseline is
+  needed to attribute the gain to *cooperation* specifically rather than to
+  having any feedback at all.
+- **W7** Lattice deployment with the victim on a node. Random (PPP) deployment
+  and a continuous victim position would remove a favourable coincidence.
+- **Repro gap** The HTML replay viewers in `docs/visualize/` were generated ad
+  hoc and have no committed generator; they are illustrations, not evidence.
+  Every number in this file comes from a committed script in `tools/`.
 
 ## What limits the localization accuracy (mechanism)
 
@@ -246,12 +268,13 @@ Below that threshold, density buys connectivity margin — not accuracy.
 ## Honesty ledger
 
 - **Real over radio, channel-subject:** cue dissemination, intra-cell reports
-  (RPT, multi-hop up the cell tree), inter-cell shares (SHARE flood), summon +
-  suppression election, A2A relay, role claims (CLAIM), full-data delivery,
-  confirm, report, courier handoff.
+  (RPT, multi-hop up the cell tree), inter-cell shares (SHARE flood), summon,
+  election stand-down (RCLAIM flood), A2A relay, role claims (CLAIM), full-data
+  delivery, confirm, report + victim fix, courier handoff.
 - **Distributed:** no global-view object; all decisions are taken by node apps
   from bytes that physically arrived. Delivery coordinates are radio-reported
-  node GPS, interpolated on the leader.
+  node GPS, interpolated on the leader, and the coordinates the BS ends up
+  holding are the ones it decoded out of a REPORT packet — not simulator state.
 - **Assumed (declared):** pre-initialized PECEE substrate (cells/trees/leaders
   loaded at setup); UAVs know sensor positions for sweep planning; victim
   self-identifies for metrics/baseline-stop only.

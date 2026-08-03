@@ -27,6 +27,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("allHome", "mission completes only when EVERY UAV reported", cfg.allHome);
     cmd.AddValue("codedMulticast", "tsp-mc: rateless recovery (Zeng'18 semantics)", cfg.codedMulticast);
     cmd.AddValue("aimArgmax", "aim at strongest reporter instead of centroid", cfg.aimArgmax);
+    cmd.AddValue("electSuppress", "flood the election stand-down (0 = ablation)", cfg.electSuppress);
     cmd.AddValue("scheme", "proposed | nocoop | pure-uav | tsp-mc", cfg.scheme);
     cmd.AddValue("outputDir", "results dir", outputDir);
     cmd.Parse(argc, argv);

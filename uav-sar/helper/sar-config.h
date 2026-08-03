@@ -45,6 +45,8 @@ struct SarScenarioConfig {
                                  // has returned to the BS and reported (all schemes)
     bool   codedMulticast = true;// audit F4: rateless semantics for tsp-mc GTs
     bool   aimArgmax = false;    // audit W1: aim at strongest reporter (ablation)
+    bool   electSuppress = true; // audit B2: flood the stand-down (off = ablation:
+                                 // every alerting cell summons independently)
     std::string scheme = "proposed";
     std::string outputDir = "data/results/uav-sar/run-1";
 };

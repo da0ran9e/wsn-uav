@@ -27,6 +27,12 @@ enum class Msg : uint8_t {
     CLAIM    = 10,  // UAV -> fleet: I am taking this role (radio mutual exclusion,
                     //   replaces the shared-memory token) [regionId:u16][role:u8][id:u16]
                     //   role 0 = DATA delivery diverter, 1 = FAST report courier
+    RCLAIM   = 11,  // audit B2: Cell Leader -> flood: I have summoned, stand down.
+                    //   Same body and flood machinery as SHARE. SUMMON is a
+                    //   ONE-HOP broadcast, but cell leaders sit 63-156 m apart
+                    //   while the ground radio reaches ~37 m, so the suppression
+                    //   half of the election could never physically arrive and
+                    //   every alerting cell summoned independently.
 };
 
 inline constexpr uint8_t kBroadcast = 0xFF;
@@ -46,6 +52,7 @@ inline constexpr uint32_t kReportLen  = 1 + 1 + 2 + 1 + 2 + 2;      // 9
 inline constexpr uint32_t kHandoffLen = 1 + 1 + 2 + 2 + 2;          // 8
 inline constexpr uint32_t kRptLen     = 1 + 2 + 2 + 1 + 1 + 2 + 2;  // 11 (+self GPS)
 inline constexpr uint32_t kShareLen   = 1 + 2 + 1 + 2 + 2 + 1;      // 9
+inline constexpr uint32_t kRclaimLen  = kShareLen;                  // same body
 inline constexpr uint32_t kClaimLen   = 1 + 2 + 1 + 2;              // 6 [region][role][id]
 
 inline constexpr uint32_t kMaxPayload = 100;                    // safe app payload

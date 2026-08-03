@@ -127,6 +127,21 @@ void SarGroundApp::FloodShare() {
               (uint8_t)params::kShareTtl);
 }
 
+void SarGroundApp::SendRclaim(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy,
+                              uint8_t ttl) {
+    if (!m_dev) return;
+    std::vector<uint8_t> b(kRclaimLen);
+    uint8_t* q = b.data();
+    *q++ = (uint8_t)Msg::RCLAIM;
+    uint16_t c = (uint16_t)cell; std::memcpy(q, &c, 2); q += 2;
+    *q++ = evQ8;
+    std::memcpy(q, &cx, 2); q += 2;
+    std::memcpy(q, &cy, 2); q += 2;
+    *q++ = ttl;
+    m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+    if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+}
+
 void SarGroundApp::SendShare(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy, uint8_t ttl) {
     if (!m_dev) return;
     std::vector<uint8_t> b(kShareLen);
@@ -228,6 +243,14 @@ void SarGroundApp::StartSummon(double cx, double cy) {
     m_isLeader = true;
     m_regionFormed = true;
     m_cx = cx; m_cy = cy;
+    // audit B2: announce the win on the flood plane, which is the only plane that
+    // physically reaches the other cell leaders. Without this the election's
+    // suppression half never arrived and every alerting cell summoned its own
+    // UAV -- the redundant deliveries that inflated the proposed scheme's
+    // packet count and split the fleet across duplicate regions.
+    m_rclaimSeen.insert((uint16_t)m_cellId);
+    SendRclaim(m_cellId, (uint8_t)std::min(255.0, CellAggregate() * 255.0),
+               (int16_t)(cx * 10), (int16_t)(cy * 10), (uint8_t)params::kShareTtl);
     if (m_metrics) {
         Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
         char det[64];
@@ -289,6 +312,34 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // Suppression: hearing another leader's SUMMON means the region is being
         // formed by a stronger/earlier leader — stand down our own election.
         if (!m_regionFormed) { m_regionFormed = true; Simulator::Cancel(m_electEvent); }
+        return true;
+    }
+    if (type == (uint8_t)Msg::RCLAIM && sz >= kRclaimLen) {
+        // audit B2: the same suppression, but carried by the multi-hop flood so
+        // it can actually reach a leader 63-156 m away over a ~37 m radio.
+        // First claim wins: the backoff is evidence-ordered, so the strongest
+        // alerting cell is the one that gets to fire first.
+        uint16_t origCell; std::memcpy(&origCell, &b[1], 2);
+        uint8_t evQ8 = b[3];
+        int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
+        uint8_t ttl = b[8];
+        if (!m_rclaimSeen.insert(origCell).second) return true;   // already flooded
+        if (m_metrics) { m_metrics->AddRecv(); m_metrics->AddRecvBytes(sz); }
+        if ((int32_t)origCell != m_cellId && !m_regionFormed) {
+            m_regionFormed = true;
+            Simulator::Cancel(m_electEvent);
+            if (m_isCellLeader && m_metrics) {
+                Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+                char det[48];
+                std::snprintf(det, sizeof det, "c%d yields to c%d", m_cellId, (int)origCell);
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "CL",
+                                 "elect_yield", det, p.x, p.y, 0);
+            }
+        }
+        if (ttl > 0)
+            Simulator::Schedule(Seconds(m_rng->GetValue(0.0, params::kFwdStaggerMaxS)),
+                                &SarGroundApp::SendRclaim, this, (int32_t)origCell,
+                                evQ8, cx, cy, (uint8_t)(ttl - 1));
         return true;
     }
     if (type == (uint8_t)Msg::RPT && sz >= kRptLen) {

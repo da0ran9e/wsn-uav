@@ -81,6 +81,8 @@ private:
     void LeaderIngest(uint16_t orig, double ev, double x, double y);  // CL aggregation
     void FloodShare();
     void SendShare(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy, uint8_t ttl);
+    // audit B2: multi-hop election suppression on the SHARE plane.
+    void SendRclaim(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy, uint8_t ttl);
     void MaybeElect();                         // schedule a summon if I lead
     void Elect();                              // fire the summon (winner)
     double PossessedConfidence() const;
@@ -113,6 +115,7 @@ private:
     std::map<uint16_t, NodeEv> m_cellEvidence;  // CL: origNode -> {ev, GPS}
     bool m_sharedFlooded = false;
     std::map<uint16_t, uint8_t> m_shareSeen;    // SHARE flood dedup by origCell
+    std::set<uint16_t> m_rclaimSeen;            // RCLAIM flood dedup by origCell
     std::set<int32_t> m_regionNeighbors;        // corroborating cells heard via SHARE
     struct NbInfo { double ev = 0, x = 0, y = 0; };
     std::map<int32_t, NbInfo> m_neighborEv;     // cellId -> {shared evidence, cell centre}

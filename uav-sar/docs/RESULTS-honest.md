@@ -18,7 +18,7 @@ the proposed scheme or more generous to the baseline**:
 | baseline replayed identical chunk indices (uncoded), needing R=3 | **rateless recovery** per Zeng'18; the baseline meets its own goal (98.8 % of GTs, 100 % of victims) at **R=1.2**, halving every hover |
 | `nocoop`/`pure-uav` could never complete the mission (0 % by construction) | they fly home and report too — **all arms reach 100 %** |
 | `timeToLocalize` reported the `--minObserve` knob | window applied first, evidence-ordered backoff on top |
-| the election's stand-down was a one-hop SUMMON that could not reach another leader; every alerting cell summoned independently | **RCLAIM floods the stand-down** — exactly one summon per run (B2) |
+| the election's stand-down was a one-hop SUMMON that could not reach another leader; 30–40 % of runs formed two competing regions | **RCLAIM floods the stand-down** — 0/20 duplicate regions, at +4–8 % packets (B2, ablated below) |
 | the victim fix existed only in simulator state | **carried to the BS in the REPORT packet** and reported as `reportErr_m` (B3) |
 
 ## Head-to-head — 8×8, 64 sensors, 140×140 m
@@ -27,7 +27,7 @@ N = 20 seeds, medians with bootstrap 95 % CI. `tools/campaign_stats.py OUT 20 --
 
 | scheme | mission | victim | t_report | energy | packets | **fix at BS** |
 |---|---:|---:|---:|---:|---:|---:|
-| **proposed** × 4 | 100 % | 95 % | **63.0 s** [59.0, 65.9] | 42.0 kJ | 2 024 | **15.4 m @ 46.5 s** |
+| **proposed** × 4 | 100 % | 95 % | **63.0 s** [59.0, 65.9] | **40.7 kJ** | **2 019** | **15.4 m @ 46.5 s** |
 | tsp-mc × 4 (coded, R=1.2) | 100 % | 100 % | 81.2 s | 53.1 kJ | 6 134 | — none — |
 | tsp-mc × 1 | 100 % | 100 % | 146.2 s | **25.1 kJ** | 4 585 | — none — |
 | nocoop × 4 | 100 % | 100 % | 111.8 s | 73.5 kJ | 12 246 | — none — |
@@ -41,7 +41,7 @@ first returning UAV while the rest of the fleet is still inbound. No baseline
 ever produces this column, at any parameter setting, because blind coverage has
 no position to carry.
 
-**The one loss, stated plainly: `tsp-mc × 1` wins on energy**, 25.1 kJ vs 42.0,
+**The one loss, stated plainly: `tsp-mc × 1` wins on energy**, 25.1 kJ vs 40.7,
 in 19/19 paired seeds (δ = +1.00). One UAV flying one tour is the minimum-energy
 way to blanket a field. The proposed scheme's energy advantage is over *equal
 fleets*, not over minimum hardware — and it buys 2.3× faster completion and a
@@ -49,46 +49,58 @@ position for that extra energy.
 
 ## Head-to-head — 16×16, 256 sensors, 300×300 m
 
+`tools/campaign_stats.py OUT 20 --grid=16 --quick`.
+
+| scheme | mission | victim | t_report | energy | packets | **fix at BS** |
+|---|---:|---:|---:|---:|---:|---:|
+| **proposed** × 4 | 100 % | 100 % | **88.3 s** [82.2, 101.8] | **55.5 kJ** | **2 939** | **17.3 m @ 72.6 s** |
+| tsp-mc × 4 (coded, R=1.2) | 100 % | 100 % | 184.9 s | 120.6 kJ | 21 421 | — none — |
+
 ## The result is a scaling law
 
-Paired comparison against the charitable coded baseline (same seed ⇒ same
-channel realisation; Wilcoxon signed-rank, Cliff's δ):
+Paired against the charitable coded baseline (same seed ⇒ same channel
+realisation; Wilcoxon signed-rank, Cliff's δ):
 
 | metric | 64 sensors | 256 sensors | paired evidence |
 |---|---:|---:|---|
-| mission time | **1.29×** | **2.04×** | 19/19 wins, δ = +1.00 |
-| energy | **1.27×** | **2.06×** | 19/19 wins, δ = +1.00 |
-| application packets | **3.29×** | **7.49×** | 19/19 wins, δ = +1.00 |
+| mission time | **1.29×** | **2.09×** | 19/19 → 20/20, δ = −1.00, p ≤ 1.3e-4 |
+| UAV energy | **1.30×** | **2.17×** | 19/19 → 20/20, δ = −1.00, p ≤ 1.3e-4 |
+| application packets | **3.04×** | **7.29×** | 19/19 → 20/20, δ = −1.00, p ≤ 1.3e-4 |
 
-**The advantage roughly doubles from 64 to 256 sensors.** Blind coverage cost
-scales with area; evidence-directed delivery cost scales with
-(time-to-localize + transit). The 8×8 configuration used for the previous
-headline is near the crossover, which is exactly why an honest reading there
-looked like a tie.
+**The advantage roughly doubles from 64 to 256 sensors, on all three cost axes
+simultaneously.** That is the paper's claim, and it is a claim about *how the
+costs scale*, not about a single operating point: blind coverage cost grows with
+area, while evidence-directed delivery cost grows with
+(time-to-localize + transit). 8×8 sits near the crossover — which is exactly why
+an honest reading there once looked like a tie, and why the earlier headline had
+to be manufactured to make 8×8 look decisive.
 
 *Statistical caveat, stated because it matters:* `tsp-mc` is **deterministic
 across seeds** (IQR exactly 0 on time, energy and packets — an open-loop
 schedule cannot exploit a good channel). The matched pair therefore carries no
 channel information for that arm, so the Wilcoxon p is floor-bounded by n
-(p = 1.3e-4 at n = 19 for a perfect split) and reflects complete separation
-rather than an unusually strong sample. Cliff's δ = +1.00 is the honest effect
-statement. The flip side is a genuine baseline virtue: a **predictable makespan
-bound**.
+(1.3e-4 at n = 19, 8.9e-5 at n = 20, for a perfect split) and reflects complete
+separation rather than an unusually strong sample. **Cliff's δ = −1.00 is the
+honest effect statement.** The flip side is a genuine baseline virtue: a
+**predictable makespan bound**, which the proposed scheme does not offer
+(t_report IQR 22.5 s at 16×16).
 
 ## The cost, reported alongside the benefit
 
 Two costs, both real:
 
-1. **Reliability.** `proposed` serves the victim in **95 %** of runs; every
-   blind-coverage baseline serves it in **100 %**. Directed delivery can miss
-   where a carpet cannot. (Mission completion itself is 100 % for every arm
-   since B2 — before the election could suppress, a run could also fail to
-   complete outright, which is one of the failure modes that fix removed.)
-2. **Energy against minimum hardware.** `tsp-mc × 1` uses 25.1 kJ to our 42.0.
+1. **Reliability at low density.** `proposed` serves the victim in **95 %** of
+   runs at 8×8 (100 % at 16×16); every blind-coverage baseline serves it in
+   100 % everywhere. Directed delivery can miss where a carpet cannot.
+2. **Energy against minimum hardware.** `tsp-mc × 1` uses 25.1 kJ to our 40.7.
    See the head-to-head table.
+3. **Makespan predictability.** The baselines' completion time has zero
+   variance; ours has a 22.5 s IQR at 16×16. A planner that must promise a
+   deadline is better served by the open-loop schedule.
 
-Neither is hidden in an appendix: a deployment that values guaranteed coverage
-over speed and a position should not use this scheme.
+None of these is hidden in an appendix. A deployment that values guaranteed
+coverage, minimum airframes, or a hard deadline over speed and a position
+should not use this scheme.
 
 ## Still open — do not cite these as settled
 
@@ -136,10 +148,30 @@ the table above, not the 15.8 m an earlier revision of this file quoted.
    **No claim is made for the centroid estimator.** The contribution under test
    is the cooperative pipeline that produces *any* fix at all, not the
    arithmetic that turns reports into a coordinate.
-3. **Observation window buys accuracy and coverage.** `--minObserve` 0→30 s:
+3. **The distributed election is a tail-risk fix, not a median improvement —
+   and it costs packets.** `--electSuppress=0` restores the pre-fix behaviour
+   (the stand-down was a one-hop SUMMON that could not reach a leader 63–156 m
+   away over a ~37 m radio). Paired over 20 seeds:
+
+   | | 8×8 ON | 8×8 OFF | 16×16 ON | 16×16 OFF |
+   |---|---:|---:|---:|---:|
+   | runs forming **two** competing regions | **0/20** | 8/20 | **0/20** | 6/20 |
+   | mission complete | **100 %** | 95 % | 100 % | 100 % |
+   | fix error (median) | 16.4 m | 17.4 m | 17.3 m | 17.3 m |
+   | packets (median) | 2 010 | 1 864 | 2 939 | 2 806 |
+   | t_report / energy | — no measurable difference — | | | |
+
+   Read honestly: the *median* run already elected one region without the flood,
+   because the SHARE-plane deferral (yield to a stronger neighbouring cell) was
+   doing that work. What the flood removes is the **tail** — the 30–40 % of runs
+   that split the fleet across two simultaneous deliveries, which is where the
+   5 % mission failure at 8×8 lived. It buys that for **+4 % to +8 % packets**
+   and no latency or energy change. It is a robustness mechanism, and this study
+   claims nothing more for it.
+4. **Observation window buys accuracy and coverage.** `--minObserve` 0→30 s:
    delivery error 18.4 → 10.8 m and the ≤20 m rate 63 → 90 %, at +5–10 s
    latency.
-4. **Victim completion is dwell-limited, not aiming-limited.** At 8 s dwell only
+5. **Victim completion is dwell-limited, not aiming-limited.** At 8 s dwell only
    ~47 % of runs completed the victim's dataset even though it sat inside the
    delivery footprint; 20 s dwell → 100 %, +12 s latency. Diagnosed by
    single-knob test, not tuned blind.

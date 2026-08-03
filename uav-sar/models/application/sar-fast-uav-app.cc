@@ -129,7 +129,17 @@ void SarFastUavApp::ControlTick() {
         Vector t = m_targets[m_ti];
         if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
             m_ti++;
-            if (m_ti >= m_targets.size()) { m_fc.Hover(); /* stay, keep spreading cues */ }
+            if (m_ti >= m_targets.size()) {
+                // A UAV with no task left flies home. Previously it hovered in
+                // place forever waiting for a CONFIRM it often could not hear
+                // (single-hop broadcast, 300x300 m field), so at 16x16 the
+                // mission never closed in 52% of runs and the fleet burned
+                // energy until the simulation horizon. Returning on task
+                // completion is the bounded, symmetric behaviour; the CONFIRM
+                // handler remains as the early-return optimisation.
+                if (m_allHome) { m_state = State::RETURN_BS; }
+                else { m_fc.Hover(); }
+            }
             else { Vector n = m_targets[m_ti];
                 m_fc.Turn(std::atan2(n.y - p.y, n.x - p.x) * 180 / M_PI); m_fc.Forward(m_speed); }
         }

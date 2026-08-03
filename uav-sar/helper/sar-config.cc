@@ -137,12 +137,14 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
                 // Zeng'18 trajectory: minimum-disk VBS cover of THIS UAV's band
                 // + TSP tour from the BS, flown fly-hover with the redundancy
                 // dwell; report back at the BS to finish.
-                app->SetTourOverride(BuildVbsTour(partition(u, numUav),
-                                                  params::kUavBroadcastRadiusM,
+                double mcR = cfg.mcRadiusM > 0 ? cfg.mcRadiusM
+                                               : params::kUavBroadcastRadiusM;
+                app->SetTourOverride(BuildVbsTour(partition(u, numUav), mcR,
                                                   Vector(bsPos.x, bsPos.y,
                                                          params::kCruiseAltitudeM),
                                                   params::kCruiseAltitudeM));
                 app->SetReportAtEnd(true);
+                app->SetMcRedundancy(cfg.mcRedundancy);
             }
             app->SetCruise(params::kCruiseAltitudeM, params::kDataSpeedMps);
             app->SetBs(bsPos, bsAddr);

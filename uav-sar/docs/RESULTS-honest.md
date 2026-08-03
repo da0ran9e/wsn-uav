@@ -104,15 +104,80 @@ file* so GTs recover despite erasures — the per-VBS connection time is sized t
 
 **Honest reading.** With an equal fleet their gap narrows but does not close:
 4 UAVs cut their completion 216 → 115 s (sub-linear — the makespan is the
-farthest band's transit + dwells) and the banded carpet even reaches the victim
-node about as fast as we do (45 vs 43 s) with a structural 100 % guarantee. But
-the mission itself — everyone home, BS informed — is still **1.7× slower**, at
-**1.5× the energy** (hover-dwelling every VBS with 3× redundancy is expensive)
-and **4.9× the packets**, and it still produces **no location estimate**: the
-rescue team knows the file was disseminated, not where the victim is. Edge
-cooperation is what converts "serve everyone eventually" into "serve the right
-place now, and say where it is". Their single-UAV strength (min hardware, min
-energy) remains real and is reported as such.
+farthest band's transit + dwells) and the banded carpet reaches the victim node
+about as fast as we do (45 vs 43 s). But the mission itself — everyone home, BS
+informed — is still **1.7× slower**, at **1.5× the energy** (hover-dwelling
+every VBS with 3× redundancy is expensive) and **4.9× the packets**, and it
+still produces **no location estimate**: the rescue team knows the file was
+disseminated, not where the victim is. Edge cooperation is what converts "serve
+everyone eventually" into "serve the right place now, and say where it is".
+Their single-UAV strength (min hardware, min energy) remains real and is
+reported as such.
+
+### Is the baseline's hover time fair? (audit)
+
+The hover/dwell time is the one knob that could silently rig this comparison, so
+it is derived, not chosen, and both of its degrees of freedom were swept.
+
+**How each scheme's dwell is computed** (identical 0.02 s per-chunk stagger, and
+the same 382-chunk dataset — 8×150 B + 2×600 B + 4×4000 B + 1×16000 B at 91 B
+payload — so one full pass costs **7.64 s** of airtime for everyone):
+
+| scheme | dwell per stop | in passes |
+|---|---|---|
+| `tsp-mc` | `R × 382 × 0.02 s` = 22.9 s at R = 3 | exactly R = 3.0 |
+| `nocoop` | fixed `kBaselineDwellS` = 25 s | 3.27 |
+| `proposed` | transmit **until CONFIRM**, then `kMinDeliverDwellS` = 20 s | ≥ 2.62, feedback-driven |
+
+So the baseline is *not* given a shorter dwell than the other blind scheme
+(3.0 vs nocoop's 3.27 passes). `proposed` is not given a longer one either — its
+delivery is feedback-terminated, which is the cooperation benefit under test,
+and it pays that cost at **one** stop while `tsp-mc` pays it at **every** VBS.
+
+**Sweep 1 — is R = 3 generous or stingy?** Their paper sizes the connection time
+to just meet a target recovery probability, so the fair R is the smallest one
+that meets *their own* goal: every GT recovers the file (not just the victim).
+
+| R | GT coverage | victim served | mission | energy | packets |
+|---:|---:|---:|---:|---:|---:|
+| 1.0 | 54.0 % | 63 % | 80.7 s | 43.8 kJ | 3081 |
+| 1.5 | 88.8 % | 90 % | 96.1 s | 54.2 kJ | 6137 |
+| 2.0 | 90.3 % | 97 % | 99.6 s | 55.4 kJ | 6520 |
+| **3.0** | **96.8 %** | **100 %** | **114.9 s** | 65.7 kJ | 9576 |
+| 4.0 | 98.9 % | 100 % | 137.9 s | 77.3 kJ | 13019 |
+
+R = 3 is **the stingiest setting that still meets their goal** (~97 % of all GTs,
+100 % of victims); R = 2 drops a tenth of the network and R = 1 fails outright.
+Nothing is inflated in their favour or against them — if anything R = 3 leaves
+them 3 % short of full coverage, so **their victim guarantee is probabilistic,
+not structural** (an earlier draft of this document called it structural; that
+was wrong and is corrected here).
+
+**Sweep 2 — does the 50 m VBS radius penalize them?** Their disk cover uses the
+conservative design radius while the measured reliable A2G range is ~60–80 m, so
+a too-small radius would force extra hovers.
+
+| VBS radius | VBS per band | GT coverage | mission | energy |
+|---:|---:|---:|---:|---:|
+| 40 m | 3 | 99.7 % | 146.5 s | 87.4 kJ |
+| **50 m** | **2** | **96.8 %** | **114.9 s** | 65.7 kJ |
+| 60 m | 3 | 98.5 % | 143.1 s | 83.1 kJ |
+| 70 m | 2 | 82.9 % | 108.7 s | 63.0 kJ |
+| 80 m | 2 | 82.9 % | 108.7 s | 63.0 kJ |
+
+The default 50 m is **tied-best** on tour length (2 VBS per band, the minimum
+observed) *and* keeps coverage high — it is a favourable configuration for them,
+not a handicap. The non-monotonicity (60 m needs *more* disks than 50 m) is a
+greedy set-cover artifact on the banded strip geometry, not noise: the cover
+sizes are deterministic (verified by replaying the algorithm offline). Pushing
+to 70–80 m does buy them ~6 s but collapses GT coverage to 83 %, i.e. it breaks
+the multicast guarantee that justifies the scheme.
+
+**Verdict.** Both dwell degrees of freedom sit at settings that are neutral-to-
+favourable for the baseline, and the qualitative conclusion is insensitive to
+them: even at their most permissive coverage-preserving configuration
+(R = 3, 70 m → 108.7 s) the baseline is still ~1.6× slower than `proposed` and
+still yields no location estimate. Knobs: `--mcRedundancy`, `--mcRadius`.
 
 ## Sensor-spacing sweep — connectivity threshold (N = 30)
 

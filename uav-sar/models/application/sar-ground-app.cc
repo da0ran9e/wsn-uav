@@ -365,6 +365,12 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                                          m_isTarget ? "target" : "node", "confirm",
                                          "entire dataset received", p.x, p.y, p.z);
                     SendConfirm();
+                } else if (m_metrics) {
+                    // multicast baselines: log every GT's completion so the
+                    // fairness analysis can check the ACTUAL multicast goal
+                    // (all GTs recover the file), not just the victim.
+                    m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
+                                     "node", "gt_done", "", p.x, p.y, p.z);
                 }
                 if (m_stopOnComplete && m_isTarget) Simulator::Stop(Seconds(0.5));
             }

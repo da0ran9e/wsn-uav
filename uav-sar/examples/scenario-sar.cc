@@ -20,6 +20,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("simTime", "sim duration (s)", cfg.simTime);
     cmd.AddValue("minObserve", "proposed: hold first summon until this time (s)", cfg.minObserveS);
     cmd.AddValue("clueDecay", "clue-field decay / on-node sensing range (m)", cfg.clueDecayM);
+    cmd.AddValue("mcRedundancy", "tsp-mc: coded-multicast overhead factor", cfg.mcRedundancy);
+    cmd.AddValue("mcRadius", "tsp-mc: VBS coverage radius m (0=design default)", cfg.mcRadiusM);
     cmd.AddValue("scheme", "proposed | nocoop | pure-uav | tsp-mc", cfg.scheme);
     cmd.AddValue("outputDir", "results dir", outputDir);
     cmd.Parse(argc, argv);

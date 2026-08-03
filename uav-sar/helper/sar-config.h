@@ -34,6 +34,8 @@ struct SarScenarioConfig {
     double simTime = 200.0;
     double minObserveS = 20.0;   // proposed: hold the first summon this long (coverage)
     double clueDecayM = 60.0;    // clue-field decay (on-node detector sensing range)
+    double mcRedundancy = 3.0;   // tsp-mc: coded-multicast overhead factor (dwell sizing)
+    double mcRadiusM = 0.0;      // tsp-mc: VBS coverage radius (0 = kUavBroadcastRadiusM)
     std::string scheme = "proposed";
     std::string outputDir = "data/results/uav-sar/run-1";
 };

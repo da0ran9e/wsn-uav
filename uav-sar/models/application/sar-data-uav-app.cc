@@ -125,7 +125,7 @@ void SarDataUavApp::ControlTick() {
                     uint32_t chunks = 0;
                     for (const auto& f : m_full)
                         chunks += std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
-                    dwell = params::kMcRedundancy * chunks * params::kDeliverStaggerS;
+                    dwell = m_mcRedundancy * chunks * params::kDeliverStaggerS;
                 }
                 m_dwellUntil = Simulator::Now().GetSeconds() + dwell;
                 SendFullChunk(0, 0);

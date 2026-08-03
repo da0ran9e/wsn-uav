@@ -34,8 +34,17 @@ struct SarScenarioConfig {
     double simTime = 200.0;
     double minObserveS = 20.0;   // proposed: hold the first summon this long (coverage)
     double clueDecayM = 60.0;    // clue-field decay (on-node detector sensing range)
-    double mcRedundancy = 3.0;   // tsp-mc: coded-multicast overhead factor (dwell sizing)
+    // audit F4: under RATELESS recovery the baseline meets its own goal (98.8% of
+    // GTs, 100% of victims) at R=1.2; the old default of 3.0 was an artifact of
+    // the uncoded-repetition implementation and inflated every hover ~2.5x.
+    double mcRedundancy = 1.2;   // tsp-mc: coded-multicast overhead factor (dwell sizing)
     double mcRadiusM = 0.0;      // tsp-mc: VBS coverage radius (0 = kUavBroadcastRadiusM)
+    double fastSpeedMps = 0.0;   // 0 = kFastSpeedMps (audit F1: equal by default)
+    double dataSpeedMps = 0.0;   // 0 = kDataSpeedMps
+    bool   allHome = true;       // audit F2: mission completes only when EVERY UAV
+                                 // has returned to the BS and reported (all schemes)
+    bool   codedMulticast = true;// audit F4: rateless semantics for tsp-mc GTs
+    bool   aimArgmax = false;    // audit W1: aim at strongest reporter (ablation)
     std::string scheme = "proposed";
     std::string outputDir = "data/results/uav-sar/run-1";
 };

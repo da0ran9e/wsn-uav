@@ -1,25 +1,25 @@
 import subprocess, csv, math, statistics as st, os, sys
+from campaign_common import victim_pos, p90   # S9 (spacing), S15 (p90 index)
 BIN=os.path.expanduser("build/src/uav-sar/examples/ns3.46-scenario-sar-optimized")
 SP=sys.argv[1]; scheme=sys.argv[2]; N=int(sys.argv[3])
-def victim_pos(tid, grid, numuav):
-    k=tid-(1+numuav); return ((k%grid)*20.0, (k//grid)*20.0)
 rows=[]
 for seed in range(1,N+1):
     out=f"{SP}/{scheme}-{seed}"
     subprocess.run([BIN,f"--seed={seed}",f"--scheme={scheme}",f"--outputDir={out}"],
                    stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     m=list(csv.DictReader(open(f"{out}/metrics.csv")))[0]
-    grid=int(m["gridSize"]); numuav=int(m["numUav"]); tid=int(m["targetNodeId"])
-    vx,vy=victim_pos(tid,grid,numuav)
+    vx,vy=victim_pos(m)
     rep=float(m["timeToReportAtBS_s"]); loc=float(m["timeToLocalize_s"]); cmp=float(m["timeToCompleteData_s"])
-    # first summon target
-    lerr=None
+    # S8: first summon target == the region LEADER's own grid-quantized cell,
+    # not where data is delivered.  RETRACTED as a localization metric (reads
+    # ~2.5x high); retained only for historical comparison.
+    leader_cell_err=None
     try:
         for e in csv.DictReader(open(f"{out}/events.csv")):
             if e["event"]=="summon_start":
-                lerr=math.hypot(float(e["x"])-vx, float(e["y"])-vy); break
+                leader_cell_err=math.hypot(float(e["x"])-vx, float(e["y"])-vy); break
     except FileNotFoundError: pass
-    rows.append(dict(seed=seed,rep=rep,loc=loc,cmp=cmp,lerr=lerr,
+    rows.append(dict(seed=seed,rep=rep,loc=loc,cmp=cmp,leader_cell_err=leader_cell_err,
                      energy=float(m["uavEnergyJ"]),rc=int(m["regionCells"]),
                      intra=int(m["intraShares"]),inter=int(m["interShares"])))
 def frac(f): return sum(1 for r in rows if f(r))/len(rows)
@@ -28,10 +28,13 @@ print(f"=== scheme={scheme}  N={len(rows)} ===")
 print(f"localize fired : {frac(lambda r:r['loc']>=0)*100:.0f}%")
 print(f"report @BS ok  : {frac(lambda r:r['rep']>=0)*100:.0f}%")
 print(f"victim served  : {frac(lambda r:r['cmp']>=0)*100:.0f}%  (cmp != -1)")
-le=vals('lerr',lambda r:r['loc']>=0)
+le=vals('leader_cell_err',lambda r:r['loc']>=0)
 if le:
     le.sort()
-    print(f"localize error : mean {st.mean(le):.1f}m  median {st.median(le):.1f}m  p90 {le[int(0.9*len(le))-1]:.1f}m  max {max(le):.1f}m")
+    print("leader_cell_error [RETRACTED metric (S8) - NOT the localization error;")
+    print("                   it is the leader's own cell centre. DELIVERY error")
+    print("                   is in campaign_analyze2.py / campaign_sweep2.py]")
+    print(f"  mean {st.mean(le):.1f}m  median {st.median(le):.1f}m  p90 {p90(le):.1f}m  max {max(le):.1f}m")
     print(f"  within 20m: {sum(1 for x in le if x<=20)/len(le)*100:.0f}%   within 40m: {sum(1 for x in le if x<=40)/len(le)*100:.0f}%")
 for k,lbl in [('rep','report@BS s'),('loc','localize s'),('cmp','completeData s'),('energy','energy J')]:
     v=vals(k)

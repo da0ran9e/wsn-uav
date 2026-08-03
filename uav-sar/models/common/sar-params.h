@@ -56,8 +56,16 @@ inline constexpr double kUavBroadcastRadiusM = 50.0;// [Lit dẫn xuất] link b
 
 // ---- UAV flight ------------------------------------------------------------
 inline constexpr double kCruiseAltitudeM = 20.0;    // [Design] single mode
-inline constexpr double kFastSpeedMps    = 25.0;    // [Design]
-inline constexpr double kDataSpeedMps    = 15.0;    // [Design]
+// FAIRNESS (audit F1): every scheme flies ONE cruise speed by default. The
+// former two-tier fleet (FAST 25 / DATA 15) gave the proposed scheme's
+// critical path a 1.67x speed advantage over every baseline UAV with nothing in
+// the model implementing it (EnergyPowerW has no mass term; "payload" is bytes
+// in a vector). The identical 5-byte REPORT was flown home at 25 m/s by one
+// scheme and 15 m/s by the other. Two-tier speeds remain reachable via
+// --fastSpeed/--dataSpeed so they can be studied as a declared variable.
+inline constexpr double kCruiseSpeedMps  = 20.0;    // [Design] all schemes
+inline constexpr double kFastSpeedMps    = kCruiseSpeedMps;   // override: --fastSpeed
+inline constexpr double kDataSpeedMps    = kCruiseSpeedMps;   // override: --dataSpeed
 inline constexpr double kClimbRateMps    = 5.0;     // [Design]
 
 // ---- UAV energy (Zeng-Zhang 2019 rotary-wing) -----------------------------

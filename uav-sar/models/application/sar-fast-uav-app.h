@@ -37,6 +37,9 @@ public:
     void SetCues(const std::vector<Fragment>& c) { m_cues = c; }
     void SetCruise(double alt, double speed) { m_alt = alt; m_speed = speed; }
     void SetBs(ns3::Vector pos, ns3::Address addr) { m_bsPos = pos; m_bsAddr = addr; }
+    // audit F2: symmetric completion — every UAV flies home and reports, so the
+    // mission clock is not stopped by a single courier while peers stay airborne.
+    void SetAllHome(bool v) { m_allHome = v; }
 
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
@@ -70,6 +73,7 @@ private:
     ns3::Ptr<ns3::UniformRandomVariable> m_rng;
     bool m_courier = false;
     bool m_yieldedCourier = false;
+    bool m_allHome = true;
     ns3::EventId m_courierEvent;
     uint32_t m_reportsSent = 0;
     void SendReport();

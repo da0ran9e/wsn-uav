@@ -22,6 +22,11 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("clueDecay", "clue-field decay / on-node sensing range (m)", cfg.clueDecayM);
     cmd.AddValue("mcRedundancy", "tsp-mc: coded-multicast overhead factor", cfg.mcRedundancy);
     cmd.AddValue("mcRadius", "tsp-mc: VBS coverage radius m (0=design default)", cfg.mcRadiusM);
+    cmd.AddValue("fastSpeed", "FAST UAV cruise m/s (0 = common speed)", cfg.fastSpeedMps);
+    cmd.AddValue("dataSpeed", "DATA UAV cruise m/s (0 = common speed)", cfg.dataSpeedMps);
+    cmd.AddValue("allHome", "mission completes only when EVERY UAV reported", cfg.allHome);
+    cmd.AddValue("codedMulticast", "tsp-mc: rateless recovery (Zeng'18 semantics)", cfg.codedMulticast);
+    cmd.AddValue("aimArgmax", "aim at strongest reporter instead of centroid", cfg.aimArgmax);
     cmd.AddValue("scheme", "proposed | nocoop | pure-uav | tsp-mc", cfg.scheme);
     cmd.AddValue("outputDir", "results dir", outputDir);
     cmd.Parse(argc, argv);

@@ -35,15 +35,15 @@ void SarMetrics::Finalize(const std::string& outDir) {
     std::filesystem::create_directories(outDir);
     {
         std::ofstream f(outDir + "/metrics.csv");
-        f << "seed,gridSize,numUav,scheme,targetNodeId,"
+        f << "seed,gridSize,gridSpacing,numUav,scheme,targetNodeId,victimX,victimY,"
              "timeToReportAtBS_s,timeToLocalize_s,timeToCompleteData_s,"
              "regionCells,intraShares,interShares,beaconCount,custodyHandoffs,"
              "pktSent,pktRecv,bytesSent,bytesRecv,uavEnergyJ,routeDeviation_m";
         for (auto& [k, v] : m_extra) f << "," << k;
         f << "\n";
         f << std::fixed << std::setprecision(4)
-          << m_seed << "," << m_grid << "," << m_numUav << "," << m_scheme << ","
-          << m_target << "," << m_tReport << "," << m_tLocalize << "," << m_tComplete << ","
+          << m_seed << "," << m_grid << "," << m_spacing << "," << m_numUav << ","
+          << m_scheme << "," << m_target << "," << m_vx << "," << m_vy << "," << m_tReport << "," << m_tLocalize << "," << m_tComplete << ","
           << m_regionCells << "," << m_intraShares << "," << m_interShares << ","
           << m_beacons << "," << m_custody << "," << m_sent << "," << m_recv << ","
           << m_sentBytes << "," << m_recvBytes << ","

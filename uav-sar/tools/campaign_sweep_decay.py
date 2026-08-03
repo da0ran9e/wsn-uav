@@ -1,8 +1,14 @@
+# NOTE (S8): the error column below is the RETRACTED leader-cell metric
+# (||summon_start - victim||, i.e. the region leader's own grid-quantized
+# position, ~2.5x higher than the delivery error the docs report).  It is kept
+# only for historical comparison and is NOT the localization metric.  For the
+# real DELIVERY error use:  campaign_sweep2.py <dir> <N> clueDecay 30,45,60,90,120
 import subprocess, csv, math, statistics as st, sys
+from campaign_common import victim_pos, p90   # S9 (spacing), S15 (p90 index)
 BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-optimized"
 SP=sys.argv[1]; N=int(sys.argv[2])
-def vpos(tid,g,nu): k=tid-(1+nu); return ((k%g)*20.0,(k//g)*20.0)
-print(f"{'decay_m':>7} {'locFire%':>8} {'lerr_med':>8} {'lerr_mean':>9} {'lerr_p90':>8} {'err/decay':>9}")
+print("[S8] 'lcell_*' is the RETRACTED leader-cell error, not localization error")
+print(f"{'decay_m':>7} {'locFire%':>8} {'lcell_med':>9} {'lcell_mean':>10} {'lcell_p90':>9} {'err/decay':>9}")
 for dec in [30,45,60,90,120]:
     err=[];fire=0
     for seed in range(1,N+1):
@@ -11,12 +17,12 @@ for dec in [30,45,60,90,120]:
                         f"--outputDir={out}"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         try: m=list(csv.DictReader(open(f"{out}/metrics.csv")))[0]
         except: continue
-        g,nu,tid=int(m["gridSize"]),int(m["numUav"]),int(m["targetNodeId"]); vx,vy=vpos(tid,g,nu)
+        vx,vy=victim_pos(m)
         if float(m["timeToLocalize_s"])>=0: fire+=1
         try:
             for e in csv.DictReader(open(f"{out}/events.csv")):
                 if e["event"]=="summon_start": err.append(math.hypot(float(e["x"])-vx,float(e["y"])-vy)); break
         except: pass
-    err.sort(); p90=err[int(0.9*len(err))-1] if err else float('nan')
-    em=st.median(err); ea=st.mean(err)
-    print(f"{dec:>7} {100*fire/N:>7.0f}% {em:>8.1f} {ea:>9.1f} {p90:>8.1f} {ea/dec:>9.2f}")
+    err.sort(); p90v=p90(err) if err else float('nan')
+    em=st.median(err) if err else float('nan'); ea=st.mean(err) if err else float('nan')
+    print(f"{dec:>7} {100*fire/N:>7.0f}% {em:>9.1f} {ea:>10.1f} {p90v:>9.1f} {ea/dec:>9.2f}")

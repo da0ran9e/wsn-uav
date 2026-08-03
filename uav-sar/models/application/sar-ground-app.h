@@ -43,6 +43,15 @@ public:
     void SetDevice(ns3::Ptr<ns3::NetDevice> d) { m_dev = d; }
     void SetMetrics(SarMetrics* m) { m_metrics = m; }
     void SetCooperative(bool v) { m_cooperative = v; }  // proposed = true
+    // audit F4: Zeng'18 multicasts RATELESS/network-coded symbols — a terminal
+    // recovers after ~1.05x file-worth of ANY symbols. Replaying identical chunk
+    // indices (uncoded repetition) instead forces a GT to see all 382 distinct
+    // indices, demanding per-packet success q>=0.878 where the coded scheme needs
+    // q>=0.35 — which is what inflated the baseline's required redundancy to 3x.
+    void SetCodedRecovery(bool v) { m_codedRecovery = v; }
+    // audit W1: aiming rule ablation. "argmax" = deliver to the single
+    // highest-evidence reporting node; "centroid" = evidence^2-weighted mean.
+    void SetAimArgmax(bool v) { m_aimArgmax = v; }
     void SetMinObserve(double s) { m_minObserveS = s; } // hold first summon until s
     void SetProfile(const std::vector<Fragment>& frags);
     void SetClueQuality(double q) { m_clueQuality = q; }
@@ -82,6 +91,9 @@ private:
     ns3::Ptr<ns3::NetDevice> m_dev;
     SarMetrics* m_metrics = nullptr;
     bool m_cooperative = false;
+    bool m_codedRecovery = false;
+    bool m_aimArgmax = false;
+    uint32_t m_chunksRx = 0;      // total chunks received (duplicates count: coded)
     double m_minObserveS = 20.0;
 
     std::map<uint16_t, Fragment> m_byId;                 // full profile (briefing)

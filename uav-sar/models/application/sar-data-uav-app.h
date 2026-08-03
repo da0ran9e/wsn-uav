@@ -48,8 +48,12 @@ public:
     // tsp-mc baseline: fly THESE waypoints (VBS tour) instead of building a GMC
     // sweep, and return to the BS to report once the tour is done.
     void SetTourOverride(const std::vector<ns3::Vector>& t) { m_tourOverride = t; }
-    void SetReportAtEnd(bool v) { m_reportAtEnd = v; }
+    void SetReportAtEnd(bool v) { m_reportAtEnd = v; }   // fly home + REPORT
+    // separate from the return policy: only the coded-multicast baseline sizes
+    // its hover as redundancy x dataset airtime; nocoop keeps its design budget.
+    void SetMcDwell(bool v) { m_mcDwell = v; }
     void SetMcRedundancy(double r) { m_mcRedundancy = r; }
+    void SetAllHome(bool v) { m_allHome = v; }        // audit F2
 
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
@@ -76,7 +80,9 @@ private:
     std::vector<ns3::Vector> m_sensors;   // for SWEEP_DUMP GMC
     std::vector<ns3::Vector> m_tourOverride;  // tsp-mc: pre-planned VBS tour
     bool m_reportAtEnd = false;               // tsp-mc: tour -> BS -> REPORT
+    bool m_mcDwell = false;                   // use the redundancy dwell
     double m_mcRedundancy = 3.0;              // tsp-mc: coded-multicast overhead
+    bool m_allHome = true;                    // audit F2: always fly home
     std::vector<ns3::Vector> m_targets;
     size_t m_ti = 0;
     double m_radius = 50.0;

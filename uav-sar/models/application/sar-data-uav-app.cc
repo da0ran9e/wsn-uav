@@ -121,7 +121,7 @@ void SarDataUavApp::ControlTick() {
                 // coded-multicast overhead of Zeng'18: send extra to ride out
                 // drops); nocoop keeps the fixed design budget.
                 double dwell = params::kBaselineDwellS;
-                if (m_reportAtEnd) {
+                if (m_mcDwell) {
                     uint32_t chunks = 0;
                     for (const auto& f : m_full)
                         chunks += std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
@@ -286,7 +286,9 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // A FAST courier claimed the report over the radio: the faster UAV owns
         // the trip home now — stop our slow (15 vs 25 m/s) fallback return and
         // hover in place, saving the transit energy.
-        if (role == 1 && m_confirmed && m_state == State::RETURN) {
+        // audit F2: under the symmetric completion rule every UAV must come home,
+        // so the courier hand-off no longer cancels our own return leg.
+        if (role == 1 && m_confirmed && m_state == State::RETURN && !m_allHome) {
             m_fc.Hover();
             m_state = State::DONE;
             if (m_metrics) {
@@ -296,6 +298,13 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             }
         }
     } else if (type == (uint8_t)Msg::CONFIRM && sz >= kConfirmLen) {
+        // audit F2: a DATA UAV that never won the divert is still loitering; the
+        // mission is over for it too, so it flies home and reports like the rest.
+        if (m_allHome && !m_claimed &&
+            (m_state == State::LOITER || m_state == State::GOTO_CENTER)) {
+            m_state = State::RETURN;
+            return true;
+        }
         // our delivery confirmed -> hand the report to the FAST team (25 m/s
         // courier beats our 15 m/s) and still fly home as the fallback; the BS
         // deduplicates, first REPORT wins.

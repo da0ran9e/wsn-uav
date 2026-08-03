@@ -205,6 +205,13 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
                 &SarFastUavApp::ClaimCourier, this);
         return true;
     }
+    if (b[0] == (uint8_t)Msg::CONFIRM && m_allHome && m_state == State::CRUISE) {
+        // audit F2: the delivery is done -> this UAV's task is over; fly home and
+        // report like every baseline UAV must.  (Symmetric completion rule.)
+        m_summonSeen = true;                 // stop spreading cues
+        m_state = State::RETURN_BS;
+        return true;
+    }
     if (b[0] == (uint8_t)Msg::CLAIM && sz >= kClaimLen) {
         uint8_t role = b[3]; uint16_t id; std::memcpy(&id, &b[4], 2);
         if (role == 1 && id != (uint16_t)m_nodeId && !m_courier) {

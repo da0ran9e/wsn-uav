@@ -19,6 +19,12 @@ class SarMetrics {
 public:
     void SetMeta(uint32_t seed, uint32_t gridSize, uint32_t numUav,
                  const std::string& scheme, uint32_t targetNodeId);
+    // audit S9/W8: emit ground truth and the swept parameters, so analysis scripts
+    // stop reconstructing the victim position from a hard-coded 20 m spacing
+    // (which was ~11x wrong at any other spacing) and a run dir is self-describing.
+    void SetGroundTruth(double vx, double vy, double spacing) {
+        m_vx = vx; m_vy = vy; m_spacing = spacing;
+    }
 
     void Event(double t, uint32_t id, const std::string& role,
                const std::string& ev, const std::string& detail,
@@ -49,6 +55,7 @@ public:
 
 private:
     uint32_t m_seed=0, m_grid=0, m_numUav=0, m_target=0;
+    double m_vx=0, m_vy=0, m_spacing=0;
     std::string m_scheme="proposed";
     double m_tLocalize=-1, m_tComplete=-1, m_tReport=-1;
     uint32_t m_intraShares=0, m_interShares=0, m_regionCells=0, m_beacons=0, m_custody=0;

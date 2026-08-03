@@ -52,7 +52,17 @@ double SarGroundApp::PossessedConfidence() const {
 }
 
 bool SarGroundApp::HasEntireDataset() const {
-    return !m_byId.empty() && m_have.size() >= m_byId.size();
+    if (m_byId.empty()) return false;
+    if (m_codedRecovery) {
+        // Rateless: any ~1.05x file-worth of symbols reconstructs the file, so
+        // duplicates are useful. Count total received chunks against the coded
+        // overhead threshold rather than requiring every distinct index.
+        uint32_t need = 0;
+        for (const auto& [id, f] : m_byId)
+            need += std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
+        return m_chunksRx >= (uint32_t)(1.05 * need);
+    }
+    return m_have.size() >= m_byId.size();
 }
 
 double SarGroundApp::CellAggregate() const {
@@ -154,7 +164,11 @@ void SarGroundApp::MaybeElect() {
                      m_rng->GetValue(0.0, params::kFwdStaggerMaxS);
     // Hold the first summon until the sweep has had time to cover the area, so a
     // late-swept but stronger (victim) cell can still win the election.
-    double fireAt = std::max(now + backoff, m_minObserveS);
+    // audit M4/S5: clamping the SUM discarded both the evidence weighting and
+    // the desync jitter, so co-alerted cells fired at the identical instant and
+    // timeToLocalize simply reported the knob. Apply the window first, then the
+    // evidence-ordered backoff on top of it.
+    double fireAt = std::max(now, m_minObserveS) + backoff;
     m_electEvent = Simulator::Schedule(Seconds(fireAt - now), &SarGroundApp::Elect, this);
 }
 
@@ -179,6 +193,18 @@ void SarGroundApp::Elect() {
     // Weighting by evidence^2 concentrates on the high-evidence cluster; the
     // neighbour terms pull the estimate toward the true peak when the victim sits
     // near a cell boundary (the diagnosed ~1-cell-hop error mode).
+    if (m_aimArgmax) {
+        // audit W1 ablation: aim at the single strongest reporter.
+        double bestEv = -1, ax = m_cellCx, ay = m_cellCy;
+        for (auto& [n, ne] : m_cellEvidence)
+            if (ne.ev > bestEv) { bestEv = ne.ev; ax = ne.x; ay = ne.y; }
+        if (m_metrics) {
+            m_metrics->MarkLocalize(Simulator::Now().GetSeconds());
+            m_metrics->SetRegionCells((uint32_t)(1 + m_regionNeighbors.size()));
+        }
+        StartSummon(ax, ay);
+        return;
+    }
     double wx = 0, wy = 0, ws = 0;
     for (auto& [n, ne] : m_cellEvidence) {
         double w = ne.ev * ne.ev;
@@ -328,6 +354,7 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                              "cue_rx", "", p.x, p.y, p.z);
         }
 
+        m_chunksRx++;                     // coded recovery counts duplicates
         bool wasComplete = m_have.count(fragId) > 0;
         m_chunks[fragId].insert(seq);
         m_totals[fragId] = total;

@@ -80,6 +80,12 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     std::vector<Fragment> full = tp.All();
 
     m_metrics.SetMeta(cfg.seed, cfg.gridSize, numUav, cfg.scheme, targetId);
+    // audit S9/W8: emit the victim's true position + spacing instead of forcing
+    // every analysis script to reconstruct them from the node-ID convention.
+    {
+        Vector vp = s.sensors.Get(tIdx)->GetObject<MobilityModel>()->GetPosition();
+        m_metrics.SetGroundTruth(vp.x, vp.y, cfg.gridSpacing);
+    }
 
     // 5) Control plane is now FULLY DISTRIBUTED in the ground apps: each Cell
     // Leader aggregates its cell from RPTs, floods SHARE across boundaries, and
@@ -90,7 +96,11 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     Ptr<SarBsApp> bs = CreateObject<SarBsApp>();
     bs->SetNodeId(s.bsId);
     bs->SetMetrics(&m_metrics);
-    bs->SetExpectedReports(tspMc ? numUav : 1);   // fleet multicast: ALL must report
+    // audit F2: ONE completion rule for every scheme — the mission is complete
+    // only when every UAV has returned to the BS and reported. Previously the
+    // proposed scheme stopped the clock on its first courier while three of its
+    // UAVs were still airborne, against tsp-mc's 4-of-4 requirement.
+    bs->SetExpectedReports(cfg.allHome ? numUav : (tspMc ? numUav : 1));
     s.bs.Get(0)->AddApplication(bs);
     bs->SetStartTime(Seconds(0));
     bs->SetStopTime(Seconds(cfg.simTime));
@@ -120,6 +130,9 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     };
 
     // 7) UAV apps
+    // audit F1: one cruise speed for all schemes unless explicitly overridden.
+    const double fastSpd = cfg.fastSpeedMps > 0 ? cfg.fastSpeedMps : params::kFastSpeedMps;
+    const double dataSpd = cfg.dataSpeedMps > 0 ? cfg.dataSpeedMps : params::kDataSpeedMps;
     uint32_t fastCount = proposed ? std::max<uint32_t>(1, (uint32_t)(numUav * cfg.fastRatio)) : 0;
     // UAV role coordination (who diverts, who couriers) is now a radio CLAIM with
     // suppression — no shared-memory tokens.
@@ -144,10 +157,16 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
                                                          params::kCruiseAltitudeM),
                                                   params::kCruiseAltitudeM));
                 app->SetReportAtEnd(true);
+                app->SetMcDwell(true);
                 app->SetMcRedundancy(cfg.mcRedundancy);
             }
-            app->SetCruise(params::kCruiseAltitudeM, params::kDataSpeedMps);
+            // audit M1: under the symmetric rule EVERY sweeping UAV returns and
+            // reports, so timeToReportAtBS is reachable by all four arms rather
+            // than being 0%-by-construction for nocoop/pure-uav.
+            if (cfg.allHome) app->SetReportAtEnd(true);
+            app->SetCruise(params::kCruiseAltitudeM, dataSpd);
             app->SetBs(bsPos, bsAddr);
+            app->SetAllHome(cfg.allHome);
             s.uavs.Get(u)->AddApplication(app);
             app->SetStartTime(Seconds(0));
             app->SetStopTime(Seconds(cfg.simTime));
@@ -165,8 +184,9 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetMetrics(&m_metrics);
             app->SetSensorPositions(partition(u, fastCount));
             app->SetCues(cues);
-            app->SetCruise(params::kCruiseAltitudeM, params::kFastSpeedMps);
+            app->SetCruise(params::kCruiseAltitudeM, fastSpd);
             app->SetBs(bsPos, bsAddr);
+            app->SetAllHome(cfg.allHome);
             s.uavs.Get(u)->AddApplication(app);
             app->SetStartTime(Seconds(0));
             app->SetStopTime(Seconds(cfg.simTime));
@@ -180,9 +200,10 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetDevice(s.uavDevs.Get(u));
             app->SetMetrics(&m_metrics);
             app->SetFullDataset(full);
-            app->SetCruise(params::kCruiseAltitudeM, params::kDataSpeedMps);
+            app->SetCruise(params::kCruiseAltitudeM, dataSpd);
             app->SetLoiter(Vector(cx, cy, params::kCruiseAltitudeM));
             app->SetBs(bsPos, bsAddr);
+            app->SetAllHome(cfg.allHome);
             s.uavs.Get(u)->AddApplication(app);
             app->SetStartTime(Seconds(0));
             app->SetStopTime(Seconds(cfg.simTime));
@@ -201,6 +222,9 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetDevice(s.sensorDevs.Get(i));
         app->SetMetrics(&m_metrics);
         app->SetCooperative(proposed);
+        // audit F4: rateless recovery for the coded-multicast baseline only.
+        app->SetCodedRecovery(tspMc && cfg.codedMulticast);
+        app->SetAimArgmax(cfg.aimArgmax);          // audit W1 ablation
         app->SetMinObserve(cfg.minObserveS);
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);
@@ -213,9 +237,12 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetCellId(cid);
         app->SetCellCenter(m_plan.cells.at(cid).centerX, m_plan.cells.at(cid).centerY);
         app->SetIsTarget(id == targetId);
-        // tsp-mc's mission (like proposed) only completes at the BS report; the
-        // victim's completion is still recorded as a metric.
-        app->SetStopOnComplete(!proposed && !tspMc);
+        // audit B1: the ground-truth victim stop is an ORACLE — it set the
+        // baselines' simulated lifetime, and therefore their energy and packet
+        // totals, from information no node has. Under the symmetric rule no
+        // scheme stops on it; every arm ends at the same milestone (all UAVs
+        // home + reported). The victim's completion time is still recorded.
+        app->SetStopOnComplete(cfg.allHome ? false : (!proposed && !tspMc));
         s.sensors.Get(i)->AddApplication(app);
         app->SetStartTime(Seconds(0));
         app->SetStopTime(Seconds(cfg.simTime));

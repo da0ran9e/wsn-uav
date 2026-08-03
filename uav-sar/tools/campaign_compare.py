@@ -1,5 +1,5 @@
 import subprocess, csv, math, statistics as st, os, sys, json
-BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-default"
+BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-optimized"
 SP=sys.argv[1]; N=int(sys.argv[2])
 def vpos(tid,grid,nu): k=tid-(1+nu); return ((k%grid)*20.0,(k//grid)*20.0)
 def run(scheme):

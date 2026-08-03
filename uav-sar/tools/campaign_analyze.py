@@ -1,5 +1,5 @@
 import subprocess, csv, math, statistics as st, os, sys
-BIN=os.path.expanduser("build/src/uav-sar/examples/ns3.46-scenario-sar-default")
+BIN=os.path.expanduser("build/src/uav-sar/examples/ns3.46-scenario-sar-optimized")
 SP=sys.argv[1]; scheme=sys.argv[2]; N=int(sys.argv[3])
 def victim_pos(tid, grid, numuav):
     k=tid-(1+numuav); return ((k%grid)*20.0, (k//grid)*20.0)

@@ -1,3 +1,28 @@
+> ## ⚠️ SUPERSEDED IN PART — read `AUDIT-2026-08.md` first
+>
+> An independent correctness audit (2026-08) invalidated three headline claims in
+> this document. **Do not cite the following until they are fixed and re-measured:**
+>
+> - **Energy comparison** — the metric reduces to `numUav x sim_duration`, and the
+>   baselines' duration is set by a ground-truth stop criterion (audit B1). The
+>   stated cause ("two extra UAVs loiter instead of sweeping") is also factually
+>   wrong: `nocoop` flies the same four UAVs.
+> - **Distributed election with SUMMON suppression** — cannot fire in the evaluated
+>   topology: cell leaders are 63-156 m apart, the ground radio reaches 37 m
+>   (audit B2). Measured: 2-3 independent summons, never suppressed.
+> - **"BS report with a +/-16 m location estimate"** — the report is a constant
+>   token; no coordinates are ever transmitted to the BS (audit B3).
+>
+> Also: localization accuracy here is measured on a **noise-free** clue field with
+> exact GPS (audit M9), `nocoop`'s dwell is 4.0 passes not 3.27 (m6), and the
+> victim-served figure in the head-to-head table (100%) contradicts the 97%
+> measured elsewhere in this file (m7).
+>
+> A 100-seed re-analysis with confidence intervals and significance tests is in
+> `AUDIT-2026-08.md`. It shows the victim-service difference between schemes is
+> **not statistically significant** (Fisher p = 0.62), so no parity or superiority
+> claim on that metric is supported.
+
 # UAV-SAR — Honest results (bypass-free build)
 
 **Scope.** Measured on the fully audited build: the whole cooperation control

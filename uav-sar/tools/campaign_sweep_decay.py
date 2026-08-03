@@ -1,5 +1,5 @@
 import subprocess, csv, math, statistics as st, sys
-BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-default"
+BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-optimized"
 SP=sys.argv[1]; N=int(sys.argv[2])
 def vpos(tid,g,nu): k=tid-(1+nu); return ((k%g)*20.0,(k//g)*20.0)
 print(f"{'decay_m':>7} {'locFire%':>8} {'lerr_med':>8} {'lerr_mean':>9} {'lerr_p90':>8} {'err/decay':>9}")

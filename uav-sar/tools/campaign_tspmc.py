@@ -1,5 +1,5 @@
 import subprocess, csv, statistics as st, sys
-BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-default"
+BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-optimized"
 SP=sys.argv[1]; N=int(sys.argv[2])
 def med(xs): xs=[x for x in xs if x>=0]; return st.median(xs) if xs else float('nan')
 for scheme,extra,stime in [("tsp-mc",["--numUav=4"],400),("tsp-mc",["--numUav=1"],700),("proposed",[],300)]:

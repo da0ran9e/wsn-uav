@@ -1,6 +1,6 @@
 # unified sweep with the CORRECT metric: delivery error (deliver_start -> victim)
 import subprocess, csv, math, statistics as st, sys
-BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-default"
+BIN="build/src/uav-sar/examples/ns3.46-scenario-sar-optimized"
 SP=sys.argv[1]; N=int(sys.argv[2]); knob=sys.argv[3]; vals=[float(v) for v in sys.argv[4].split(",")]
 def vpos(tid,g,nu,sp=20.0): k=tid-(1+nu); return ((k%g)*sp,(k//g)*sp)
 print(f"{'val':>6} {'fire%':>5} {'deliv_med':>9} {'deliv_p90':>9} {'<=20m':>6} {'vic%':>5} {'rep_s':>6}")

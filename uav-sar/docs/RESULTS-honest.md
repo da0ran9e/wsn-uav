@@ -1,4 +1,19 @@
-> ## ⚠️ SUPERSEDED IN PART — read `AUDIT-2026-08.md` first
+> ## 🛑 SUPERSEDED — read `AUDIT-SYNTHESIS.md` first
+>
+> Four independent audits (2026-08) concluded this document is **not publishable
+> as written**. The headline 1.74x speedup measures two asymmetries, not the
+> schemes: it becomes **1.01x** under a symmetric completion rule and equal cruise
+> speed, and the baseline *wins by 1.26x* once given the rateless coding its
+> source paper specifies. The energy claim **reverses sign** at a common
+> milestone. The localization contribution **loses to a one-line argmax rule**.
+> The entire `proposed` column of the head-to-head table below is **stale**.
+>
+> The underlying result is real but lives at **scale**, not at the 8x8 headline
+> configuration: 8x8 = 1.01x, 8x8@30m = 1.20x, 16x16 = 2.13x (and 1.46x even
+> against a maximally charitable baseline) — with a reliability cost that must be
+> reported alongside. See `AUDIT-SYNTHESIS.md`.
+>
+> ## Earlier partial-supersede notice (retained)
 >
 > An independent correctness audit (2026-08) invalidated three headline claims in
 > this document. **Do not cite the following until they are fixed and re-measured:**

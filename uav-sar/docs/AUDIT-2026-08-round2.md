@@ -129,7 +129,7 @@ The paper should present this as an **operating-point curve** (audit W8's
 request) rather than pick one number: the proposed scheme dominates the baseline
 along the whole curve, and the curve states what the extra time buys.
 
-## A10 — The observation window is NOT a free knob (SERIOUS, unfixed)
+## A10 — The observation window is NOT a free knob (SERIOUS, FIXED)
 
 At 8×8 the same sweep **fails completely** at `minObserve` ≥ 45: zero fixes in
 60/60 seeds. Diagnosed on seed 1 — the summon fires at 45.1 s, but the FAST UAVs
@@ -142,12 +142,19 @@ So the usable window is **bounded above by the FAST sweep duration**, which
 scales with area: 45 s works at 16×16 (sweep ~90 s) and destroys 8×8 (sweep
 ~40 s). A wall-clock constant is therefore the wrong parameterization — it is
 a hidden function of grid size, and a reviewer who runs the released code at a
-third grid size will get a silent zero. **The window must be expressed relative
-to sweep completion** (or, better, made adaptive: fire when the leader's own
-evidence stops growing, or after k reports). Not fixed in this round; it is a
-design change, not a defect fix.
+third grid size will get a silent zero.
 
-## A11 — RCLAIM suppression is racy at a hard window edge (MODERATE, unfixed)
+**Fixed, and it took two attempts.** Making the window adaptive alone (fire when
+the leader's own evidence stops growing) made 8×8 *worse* — 63 % mission
+completion — which is what showed the window was the symptom and the departing
+FAST relay was the cause. The relay is the only thing that can carry a SUMMON to
+the loitering DATA team, so it now holds station for a bounded grace
+(`kRelayGraceS = 30 s`) before flying home. Bounded, so it cannot regress to the
+old hover-forever trap. With both: 8×8 recovers to 93 %, and the fix error
+improves at both scales (19.2 → 15.6 m and 20.2 → 14.7 m). `--adaptiveWindow=0`
+keeps the fixed window as the ablation and reproduces the pre-fix numbers.
+
+## A11 — RCLAIM suppression is racy at a hard window edge (MODERATE, mitigated + scoped)
 
 The same seed shows **two** `summon_start` events, 0.1 s apart (45.1 and 45.2) —
 despite B2's flood. The stand-down cannot outrun a 0.1 s gap over a multi-hop

@@ -284,6 +284,17 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     # W8: the scaling claim needs the same campaign at two densities, so the
     # grid is a parameter of the campaign rather than a rebuild.
+    # M9/W3/W7: pass realism knobs through to EVERY arm, so the comparison can be
+    # made at a common operating point instead of the proposed scheme alone being
+    # re-measured under noise. (The blind-coverage arms ignore the clue field, so
+    # only --victimOnNode can move them -- which is exactly why it must be set
+    # identically for all of them rather than assumed away.)
+    passthrough = [a for a in sys.argv[3:]
+                   if a.startswith(("--senseSigma=", "--gpsSigma=", "--victimOnNode="))]
+    if passthrough:
+        for tag in list(SCHEMES):
+            args, t = SCHEMES[tag]
+            SCHEMES[tag] = (args + passthrough, t)
     for a in sys.argv[3:]:
         if a.startswith("--grid="):
             g = int(a.split("=", 1)[1])

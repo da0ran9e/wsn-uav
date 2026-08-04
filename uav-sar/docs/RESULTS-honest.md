@@ -84,7 +84,62 @@ Same protocol: N = 120, one build, adaptive window, realistic sensing, ITT.
 | **proposed** × 4 | 97.5 % | 90.0 % | **113.3 s** [105.5, 116.6] | **68.6 s** (IQR 16.9) | **72.6 kJ** | **3 583** | **14.6 m @ 90.4 s** |
 | tsp-mc × 4 (coded, R=1.2) | 100 % | 97.5 % | 184.9 s | 80.9 s (IQR 51.8) | 120.6 kJ | 21 421 | — none — |
 
-## The result is a scaling law, and it is now properly powered
+## What cooperation actually buys — and what it does not (audit W4)
+
+**This is the most important result in the document, and it contradicts the
+thesis the study started with.**
+
+Every other baseline is *open-loop*: it blankets the field and never reacts to
+anything. So the large cost advantage over them could equally be explained by
+**closing the loop** rather than by *cooperation*. `--scheme=closed-loop` settles
+it: identical fleet, identical cue sweep, identical delivery, identical
+completion rule, and the only difference is that the ground has **no cooperative
+substrate** — a node that crosses the threshold answers whatever UAV is overhead
+with a direct single-hop ECHO. No cell tree, no cross-cell SHARE, no election.
+
+16×16, **N = 120 paired seeds**, one build, realistic sensing:
+
+| metric | proposed | closed-loop | proposed wins | Cliff δ | p |
+|---|---:|---:|---:|---:|---:|
+| mission time | 103.9 s | **99.2 s** | 17/117 | +0.479 | 6.6e-15 |
+| UAV energy | 68.3 kJ | **61.1 kJ** | 15/120 | +0.569 | 7.5e-18 |
+| application packets | 3 471 | **1 616** | **0/120** | +0.997 | 2.0e-21 |
+| fix error (median) | **14.6 m** | 19.0 m | 51/117 | −0.159 | 0.0047 |
+| fix error (p90) | **29.9 m** | 42.0 m | — | — | — |
+| victim served | **92.5 %** | 87.5 % | — | — | — |
+
+**Read it plainly: the cooperative scheme is beaten on every cost axis by a
+non-cooperative one that merely closes the loop.** On packets it does not win a
+single one of 120 paired seeds. The cost advantage this study has been reporting
+against blind coverage is therefore attributable to **feedback**, not to
+cooperation — and any claim that "edge cooperation makes SAR faster and cheaper"
+is not supported by this data.
+
+What cooperation does buy, at a cost of +5 % time, +12 % energy and +115 %
+packets:
+
+- **Tail accuracy — the strongest of the three.** p90 fix error 29.9 m vs 42.0 m
+  (−29 %). Aggregating a region beats trusting the loudest thing one UAV
+  happened to overhear, precisely when that single overheard reading is bad.
+- **Median accuracy — real but small.** 14.6 m vs 19.0 m, δ = −0.159 (*small*),
+  p = 0.005. Note proposed is closer in only 51/117 pairs: it wins by margin,
+  not by frequency.
+- **Reliability — directional, not established at this N.** 92.5 % vs 87.5 %.
+
+The mechanism is what the design predicts: a single-hop ECHO is simply never
+heard when no UAV is overhead, so the closed-loop arm aims from whatever it
+caught in passing. The cooperative substrate exists to carry evidence that no
+UAV was in position to hear. That is a **quality-of-estimate** argument, and it
+is the only one this study can defend.
+
+**Consequence for the paper.** The claim must be narrowed to: *closing the loop
+is what delivers the cost advantage over blind coverage; edge cooperation buys a
+markedly better tail on the delivered position, at a measurable cost in time,
+energy and airtime.* The scaling-law tables below remain valid against the
+open-loop baselines — but the closed-loop arm, not `tsp-mc`, is now the honest
+comparator for any claim about cooperation.
+
+## The scaling law against open-loop baselines (still valid, but no longer the headline)
 
 Paired against the charitable coded baseline (same seed ⇒ same channel
 realisation; Wilcoxon signed-rank, Cliff's δ), N = 120 at both scales:

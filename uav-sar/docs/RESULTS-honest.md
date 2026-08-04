@@ -10,6 +10,11 @@
 > `config.txt` in every run directory records the binary's build stamp, and
 > `campaign_common.assert_one_build()` refuses to aggregate a run set that spans
 > builds.
+>
+> **Read "What cooperation actually buys" first.** The closed-loop
+> non-cooperative baseline (audit W4) shows the cost advantage comes from
+> closing the loop, not from cooperation, and it narrows what this study may
+> claim.
 
 ## The comparison is now symmetric
 
@@ -272,9 +277,10 @@ should not use this scheme as it currently stands.
   depending on whether you care about the median or the tail, which means
   neither is near optimal. An ML/NLS estimator and a CRLB would say how much is
   being left on the table.
-- **W4** All baselines are open-loop. A closed-loop non-cooperative baseline is
-  needed to attribute the gain to *cooperation* specifically rather than to
-  having any feedback at all.
+- ~~**W4** All baselines are open-loop~~ — **done, and it went against us.**
+  See "What cooperation actually buys". The closed-loop non-cooperative arm is
+  cheaper than the cooperative one on time, energy and packets; cooperation's
+  defensible gain is a −29 % p90 fix error. The thesis is narrowed accordingly.
 - **W7 is only HALF addressed — this is not random deployment.** `--victimOnNode=0`
   displaces the victim uniformly in [−s/2, +s/2]², which *is* the Voronoi cell of
   the lattice point. Consequences, both verified (audit A3): the nearest node is

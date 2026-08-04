@@ -102,7 +102,7 @@ private:
     SarMetrics* m_metrics = nullptr;
     bool m_cooperative = false;
     bool m_codedRecovery = false;
-    bool m_aimArgmax = false;
+    bool m_aimArgmax = true;
     bool m_electSuppress = true;
     double m_gpsBiasX = 0, m_gpsBiasY = 0;
     uint32_t m_chunksRx = 0;      // total chunks received (duplicates count: coded)

@@ -143,31 +143,53 @@ the table above, not the 15.8 m an earlier revision of this file quoted.
    answer. `tools/campaign_noise.py` walks away from that, scoring the fix the
    BS decoded, with both estimators paired at every point (8×8, N = 20):
 
+   **8×8, N = 20:**
+
    | detector σ | GPS σ | victim | centroid med / p90 | argmax med / p90 | Cliff δ | victim served |
    |---:|---:|---|---:|---:|---:|---:|
    | 0.00 | 0 m | on node | **16.4** / 25.5 m | 20.0 / 28.3 m | −0.28 | 95 % |
    | 0.00 | 0 m | continuous | 19.9 / 31.6 m | 17.8 / 34.1 m | +0.01 | 85 % |
-   | 0.05 | 2 m | continuous | 19.0 / 30.3 m | 16.5 / 34.0 m | +0.14 | 95 % |
-   | 0.10 | 5 m | continuous | 21.8 / 33.3 m | 18.0 / 37.8 m | −0.01 | 95 % |
-   | 0.20 | 10 m | continuous | 39.8 / **59.1** m | **25.3** / 84.9 m | +0.16 | 70 % |
+   | 0.05 | 2 m | continuous | 19.0 / 30.3 m | **16.5** / 34.0 m | +0.14 | 95 % |
+   | 0.10 | 5 m | continuous | 21.8 / 33.3 m | **18.0** / 37.8 m | −0.01 | 95 % |
+   | 0.20 | 10 m | continuous | 39.8 / 59.1 m | **25.3** / 84.9 m | +0.16 | 70 % |
 
-   Two things to read here, one of them unflattering:
+   **16×16, N = 20:**
 
-   - **Removing the victim-on-a-node coincidence alone costs 16.4 → 19.9 m**, with
-     no noise added at all. That much of the published accuracy was a property
-     of the deployment, not of the scheme.
-   - **The estimator hypothesis is refuted on the median.** Averaging several
-     noisy reports was supposed to beat trusting the loudest one, and the gap
-     was supposed to *grow* with noise. It does not: at the harshest setting
-     argmax's median is better (25.3 vs 39.8 m). What the centroid does buy is
-     the **tail** — its p90 is lower at *every* operating point, by 3–26 m. So
-     the centroid is a **robustness** choice, not an accuracy one, and this
-     study claims nothing more for it.
+   | detector σ | GPS σ | victim | centroid med / p90 | argmax med / p90 | Cliff δ | victim served |
+   |---:|---:|---|---:|---:|---:|---:|
+   | 0.00 | 0 m | on node | **17.3** / 24.7 m | 20.0 / 28.3 m | +0.04 | 100 % |
+   | 0.00 | 0 m | continuous | **14.9** / 24.6 m | 18.2 / 28.3 m | −0.09 | 90 % |
+   | 0.05 | 2 m | continuous | 19.6 / 30.2 m | **16.9** / 27.3 m | +0.14 | 95 % |
+   | 0.10 | 5 m | continuous | 19.0 / 34.4 m | **18.2** / 35.4 m | −0.06 | 100 % |
+   | 0.20 | 10 m | continuous | 64.6 / 104.4 m | **24.1** / 64.5 m | **+0.51** | 30 % |
 
-   This is also what makes W2 (an ML/NLS estimator with a CRLB) the right next
-   step rather than a formality: two reasonable heuristics disagree about which
-   is better and neither dominates, which is the signature of both sitting well
-   away from the bound.
+   Three readings, two of them unflattering:
+
+   - **Removing the victim-on-a-node coincidence alone costs 16.4 → 19.9 m at
+     8×8**, with no noise added. That much of the published accuracy was a
+     property of the deployment, not of the scheme. (At 16×16 it happens to
+     help, 17.3 → 14.9 m: denser reporting absorbs the offset.)
+   - **The estimator hypothesis is refuted.** Averaging several noisy reports was
+     supposed to beat trusting the loudest one, with the gap *growing* in noise.
+     The opposite happens: **argmax is better or tied at every noisy operating
+     point on both grids**, and at σ = 0.20 the centroid collapses (64.6 m
+     median, 104 m p90, Cliff δ = +0.51 — a large effect against it). The
+     evidence²-weighted centroid is not robust: a distant false positive enters
+     with *squared* weight and drags the estimate off the victim, and false
+     positives are exactly what detector noise manufactures.
+   - An earlier revision of this file claimed the centroid at least won the tail
+     "at every operating point". That was read off the 8×8 sweep alone and **is
+     wrong** — the 16×16 sweep contradicts it in two rows and reverses it
+     catastrophically in the last.
+
+   **Consequence, applied rather than noted:** the default aiming rule is now
+   argmax (`--aimArgmax=0` selects the centroid as the ablation). This is audit
+   item W1's own stated remedy — *if the centroid does not beat argmax under
+   realistic noise, replace it* — and the data says replace it.
+
+   It also makes W2 (an ML/NLS estimator with a CRLB) the right next step rather
+   than a formality: a rule as crude as "believe the loudest sensor" beating a
+   weighted estimator is the signature of both sitting far from the bound.
 3. **The distributed election is a tail-risk fix, not a median improvement —
    and it costs packets.** `--electSuppress=0` restores the pre-fix behaviour
    (the stand-down was a one-hop SUMMON that could not reach a leader 63–156 m

@@ -44,7 +44,14 @@ struct SarScenarioConfig {
     bool   allHome = true;       // audit F2: mission completes only when EVERY UAV
                                  // has returned to the BS and reported (all schemes)
     bool   codedMulticast = true;// audit F4: rateless semantics for tsp-mc GTs
-    bool   aimArgmax = false;    // audit W1: aim at strongest reporter (ablation)
+    // audit W1: aim at the strongest reporter. This is the DEFAULT because the
+    // noise sweep (tools/campaign_noise.py, both grids, N=20) found argmax
+    // better or tied at every noisy operating point, and found the
+    // evidence^2-weighted centroid collapsing at detector sigma 0.20 (64.6 m
+    // median vs 24.1, Cliff delta +0.51) -- a distant false positive enters the
+    // centroid with SQUARED weight. --aimArgmax=0 selects the centroid as the
+    // ablation arm.
+    bool   aimArgmax = true;
     bool   electSuppress = true; // audit B2: flood the stand-down (off = ablation:
                                  // every alerting cell summons independently)
     // audit M9/W3/W7: realism knobs for the sensing side. All default to the

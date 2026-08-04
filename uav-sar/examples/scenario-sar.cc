@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("dataSpeed", "DATA UAV cruise m/s (0 = common speed)", cfg.dataSpeedMps);
     cmd.AddValue("allHome", "mission completes only when EVERY UAV reported", cfg.allHome);
     cmd.AddValue("codedMulticast", "tsp-mc: rateless recovery (Zeng'18 semantics)", cfg.codedMulticast);
-    cmd.AddValue("aimArgmax", "aim at strongest reporter instead of centroid", cfg.aimArgmax);
+    cmd.AddValue("aimArgmax", "aim at strongest reporter (default; 0 = centroid ablation)", cfg.aimArgmax);
     cmd.AddValue("electSuppress", "flood the election stand-down (0 = ablation)", cfg.electSuppress);
     cmd.AddValue("senseSigma", "detector noise sigma on clue quality (0 = ideal)", cfg.senseSigma);
     cmd.AddValue("gpsSigma", "per-node GPS error sigma in m (0 = exact)", cfg.gpsSigmaM);

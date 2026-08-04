@@ -226,30 +226,39 @@ belongs in the paper.
 - **The statistics code self-tests.** `campaign_stats.py --selftest` passes
   against hand-computed Wilcoxon, Cliff's δ, erfc-based p, and nearest-rank p90.
 
-## Status and what must happen before submission
+## Status
 
-**Done in this round:** A4 (cross-cell aiming implemented, +7.5 pp reliability),
-A5 (SHARE geometry now consistently GPS-biased), A6 (dormant oracle deleted),
-A9 (error budget decomposed; two prior explanations retracted).
+**Closed:**
 
-**Blocking, before any new baseline:**
+| id | fix | evidence it worked |
+|---|---|---|
+| A2 | cost metrics reported intention-to-treat; paired tests use the same rule | bias was 0.4–2.8 %, all favourable; now zero |
+| A3 | docs say "victim off-lattice", never "random deployment" | — |
+| A4 | SHARE carries each cell's peak reporter + its evidence, so aiming crosses cells | victim served 82.5 → **90.0 %** at 16×16, N=120 |
+| A5 | SHARE geometry is GPS-biased like everything else | centroid ablation no longer flattered |
+| A6 | dormant ground-truth stop **deleted**, not fenced | no `Simulator::Stop` on `m_isTarget` remains |
+| A9 | "sensing-limited" retracted in place; real mechanism documented | error budget table, 5 configurations |
+| A10 | adaptive window + bounded relay hold | 8×8 no longer fails; fix error 19.2 → **15.6 m**, 20.2 → **14.7 m** |
+| A11 | B2's claim scoped to `minObserve = 20` | — |
+| meta | build stamp in `config.txt`; `assert_one_build()` **raises** | a mixed-binary campaign now cannot be aggregated |
 
-1. **A10 — reparameterize the observation window** relative to sweep completion,
-   or make it adaptive. Right now the released code silently produces zero
-   localizations at 8×8 with `minObserve ≥ 45`. This is the one finding that
-   would embarrass the work if a reviewer ran it.
-2. **A1 — re-run the head-to-head at N ≥ 120** and restate every ratio. Two
-   published figures moved by >40 % between N = 20 and N = 120; the cost ratios
-   have not yet been re-derived at the corrected sample size.
-3. **A2 — report cost metrics intention-to-treat.** Mechanical, ≤ 2.8 % effect.
-4. **A11 — scope B2's "0/20 duplicate regions" to `minObserve = 20`**, or fix
-   the race, before claiming the election is sound in general.
-5. **A3 — fix the W7 language.** Say "victim off-lattice", never "random
-   deployment".
+**A1 (N ≥ 120) is in progress** — the definitive head-to-head is running at both
+grids on a single build. Every ratio in `RESULTS-honest.md` must be restated
+from it before submission.
 
-**Then, and only then, add baselines.** Every new arm must be run at N ≥ 120 at
-the chosen operating point; adding one to an under-powered comparison multiplies
-the cost of re-powering it later.
+**Still open, and deliberately not attempted in an audit round:**
+
+- **A7** seed confounds victim position with channel; needs a second RNG stream.
+- **A8** the 2 FAST + 2 DATA split gives the proposed scheme half the delivering
+  airframes of `tsp-mc × 4`. Conservative, but state it in the paper.
+- **W2** ML/NLS estimator + CRLB. A9 makes this well-motivated rather than a
+  formality: two crude heuristics tie, which means both sit far from the bound.
+- **W4** closed-loop non-cooperative baseline.
+- **W7 (full)** PPP deployment where the victim can fall in a coverage gap.
+
+**Only then add baselines.** Every new arm must be run at N ≥ 120 at the chosen
+operating point; adding one to an under-powered comparison multiplies the cost of
+re-powering it later.
 
 ## Meta-finding: two process failures worth recording
 

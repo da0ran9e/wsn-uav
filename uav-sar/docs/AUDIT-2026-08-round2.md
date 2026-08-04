@@ -79,7 +79,91 @@ coverage holes. **A PPP deployment where the victim can fall in a gap is still
 open**, and would attack the victim-served rate far harder than this does. The
 docs must say "victim off-lattice", not "random deployment".
 
-## A4 — The aiming scope is one cell (DESIGN LIMIT, unfixed)
+## A9 — The ~20 m error floor was misexplained TWICE (SERIOUS, now resolved)
+
+`tools/campaign_error_budget.py` — decomposing the fix error at 16×16, N = 60:
+
+| detector σ | GPS σ | victim | median | p90 |
+|---:|---:|---|---:|---:|
+| 0.00 | 0 m | on node (fully ideal) | 20.0 m | 28.3 m |
+| 0.00 | 0 m | continuous | 18.1 m | 30.3 m |
+| 0.00 | 5 m | continuous | 19.3 m | 32.4 m |
+| 0.10 | 0 m | continuous | 18.9 m | 36.1 m |
+| 0.10 | 5 m | continuous (realistic) | 20.7 m | 38.7 m |
+
+**The median is ~18–21 m in every configuration, including the perfect one.**
+Noise moves the p90 (28 → 39 m) and almost nothing else. Two explanations
+previously given in this project are therefore wrong:
+
+- *"Accuracy is sensing-limited"* (earlier `RESULTS-honest.md`) — it is not. A
+  noise-free detector with exact GPS lands in the same place.
+- *"The aiming scope is capped at one cell"* (A4, this round) — fixing it moved
+  the median by 0.8 m.
+
+The actual cause is **decision time**. A leader aims at the strongest reporter
+*it has heard from*, and a node reports only once the FAST sweep has delivered
+it enough cues to cross the cooperation threshold. Firing early means aiming
+from a sparse, biased sample of the evidence field. Sweeping the window at the
+realistic operating point (16×16, N = 60) confirms it and nothing else does:
+
+| `--minObserve` | fix median | p90 | ≤ 20 m | t_report | victim served | energy |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0–20 (default) | 20.2 m | 38.7 m | 50 % | 92.3 s | 87 % | 57.2 kJ |
+| 30 | 17.2 m | 35.5 m | 57 % | 99.7 s | 88 % | 60.5 kJ |
+| **45** | **14.6 m** | **25.9 m** | **72 %** | 103.7 s | 100 % | 67.8 kJ |
+| 60 | 14.5 m | 27.3 m | 73 % | 114.8 s | 95 % | 77.2 kJ |
+
+Re-measured at **N = 120** (because N = 60 was optimistic, exactly as A1 warns):
+`minObserve = 45` gives **15.9 m** median / 29.9 m p90 / **95.8 %** victim served
+/ 103.6 s / 67.8 kJ — against the default's 21.4 m / 36.8 m / 90.0 % / 92.8 s /
+57.2 kJ.
+
+**This is the single most consequential finding of the audit.** The default
+(`minObserve = 20`) sits at a bad operating point. Moving to 45 s buys −26 %
+error, −19 % p90 and +5.8 pp reliability for +12 % mission time and +19 %
+energy. Against `tsp-mc × 4` (184.9 s / 120.6 kJ) that is still **1.79× faster
+and 1.78× less energy**, *with* a 15.9 m position the baseline cannot produce at
+any setting.
+
+The paper should present this as an **operating-point curve** (audit W8's
+request) rather than pick one number: the proposed scheme dominates the baseline
+along the whole curve, and the curve states what the extra time buys.
+
+## A10 — The observation window is NOT a free knob (SERIOUS, unfixed)
+
+At 8×8 the same sweep **fails completely** at `minObserve` ≥ 45: zero fixes in
+60/60 seeds. Diagnosed on seed 1 — the summon fires at 45.1 s, but the FAST UAVs
+finished their sweep and were already flying home; their reports reach the BS at
+46.5 s and 52.5 s. There is no `divert` and no `deliver_start` at all, because
+the A2A relay that carries the SUMMON to the DATA team no longer has anyone
+airborne to carry it.
+
+So the usable window is **bounded above by the FAST sweep duration**, which
+scales with area: 45 s works at 16×16 (sweep ~90 s) and destroys 8×8 (sweep
+~40 s). A wall-clock constant is therefore the wrong parameterization — it is
+a hidden function of grid size, and a reviewer who runs the released code at a
+third grid size will get a silent zero. **The window must be expressed relative
+to sweep completion** (or, better, made adaptive: fire when the leader's own
+evidence stops growing, or after k reports). Not fixed in this round; it is a
+design change, not a defect fix.
+
+## A11 — RCLAIM suppression is racy at a hard window edge (MODERATE, unfixed)
+
+The same seed shows **two** `summon_start` events, 0.1 s apart (45.1 and 45.2) —
+despite B2's flood. The stand-down cannot outrun a 0.1 s gap over a multi-hop
+flood. The evidence-ordered backoff normally desynchronizes leaders, but
+clamping every cell to the same window edge re-synchronizes them, which is the
+M4/S5 failure mode returning at large `minObserve`. B2's measured "0/20 duplicate
+regions" was obtained at `minObserve = 20` and **does not generalize to larger
+windows**; the claim must be scoped to the window it was measured at.
+
+## A4 — The aiming scope is one cell (DESIGN LIMIT, FIXED — but not for the reason expected)
+
+*Update after measuring:* implemented (SHARE now carries each cell's peak
+reporter and its evidence). It did **not** move the error floor (see A9), but it
+substantially improved **reliability**: victim served at 16×16 went 82.5 % →
+**90.0 %** (N = 120), for +4.6 % packets. Kept on those grounds. Original
+finding below.
 
 `Elect()` under argmax searches `m_cellEvidence`, which holds **only the winning
 leader's own cell members**. Neighbouring cells reach the leader through SHARE,
@@ -142,13 +226,39 @@ belongs in the paper.
 - **The statistics code self-tests.** `campaign_stats.py --selftest` passes
   against hand-computed Wilcoxon, Cliff's δ, erfc-based p, and nearest-rank p90.
 
-## What must happen before submission
+## Status and what must happen before submission
 
-1. Re-report every cost metric intention-to-treat (A2). *(mechanical)*
-2. Re-run the head-to-head at N ≥ 60 and restate the ratios (A1). *(running)*
-3. Fix the docs' W7 language (A3). *(mechanical)*
-4. Decide on A4 — either implement argmax-over-neighbours and re-measure, or
-   state the one-cell bound as a known limit of the design.
-5. Remove or fence the dormant oracle (A6).
-6. Only then add further baselines. Adding a baseline to an under-powered
-   comparison multiplies the work of re-powering it later.
+**Done in this round:** A4 (cross-cell aiming implemented, +7.5 pp reliability),
+A5 (SHARE geometry now consistently GPS-biased), A6 (dormant oracle deleted),
+A9 (error budget decomposed; two prior explanations retracted).
+
+**Blocking, before any new baseline:**
+
+1. **A10 — reparameterize the observation window** relative to sweep completion,
+   or make it adaptive. Right now the released code silently produces zero
+   localizations at 8×8 with `minObserve ≥ 45`. This is the one finding that
+   would embarrass the work if a reviewer ran it.
+2. **A1 — re-run the head-to-head at N ≥ 120** and restate every ratio. Two
+   published figures moved by >40 % between N = 20 and N = 120; the cost ratios
+   have not yet been re-derived at the corrected sample size.
+3. **A2 — report cost metrics intention-to-treat.** Mechanical, ≤ 2.8 % effect.
+4. **A11 — scope B2's "0/20 duplicate regions" to `minObserve = 20`**, or fix
+   the race, before claiming the election is sound in general.
+5. **A3 — fix the W7 language.** Say "victim off-lattice", never "random
+   deployment".
+
+**Then, and only then, add baselines.** Every new arm must be run at N ≥ 120 at
+the chosen operating point; adding one to an under-powered comparison multiplies
+the cost of re-powering it later.
+
+## Meta-finding: two process failures worth recording
+
+- **A rebuild during two in-flight campaigns** silently mixed binaries within
+  one campaign. Caught, and the outputs were deleted rather than reported — but
+  only because the timing happened to be noticed. Campaign scripts should record
+  the binary's hash in `config.txt` and refuse to aggregate across hashes.
+- **Three separate claims in this project were stated before being measured**
+  ("accuracy is sensing-limited", "the centroid wins the tail at every operating
+  point", "the aiming scope causes the error floor"). All three were wrong, and
+  all three were caught only by running the measurement afterwards. The pattern
+  is stating a mechanism from a plausible story rather than from data.

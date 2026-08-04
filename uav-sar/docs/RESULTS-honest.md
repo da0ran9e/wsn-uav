@@ -1,8 +1,15 @@
 # UAV-SAR — Results (post-audit, re-levelled)
 
-> **Provenance.** Every number below was regenerated from the current binary
-> after the four independent audits (see `AUDIT-SYNTHESIS.md`) and the
-> re-levelling commits. Numbers in earlier revisions of this file are void.
+> **Provenance.** Every head-to-head number below comes from **N = 120 seeds on
+> a single build**, after two rounds of audit (`AUDIT-SYNTHESIS.md`,
+> `AUDIT-2026-08-round2.md`). Numbers in earlier revisions of this file are
+> void — in particular anything measured at N = 20, which audit A1 showed to be
+> wrong in both directions (it missed a real 3.3 % failure mode at 8×8 and
+> understated the 16×16 delivery error by 42 %).
+>
+> `config.txt` in every run directory records the binary's build stamp, and
+> `campaign_common.assert_one_build()` refuses to aggregate a run set that spans
+> builds.
 
 ## The comparison is now symmetric
 
@@ -16,26 +23,24 @@ the proposed scheme or more generous to the baseline**:
 | proposed's mission ended when 1-of-4 UAVs reported, with 3 still airborne; tsp-mc needed 4-of-4 | **every UAV returns to the BS and reports, all schemes** (`--allHome`) |
 | baselines' simulation ended when the ground-truth victim node finished — an oracle that set their energy and packet totals | **no scheme stops on the oracle**; all arms end at the same milestone |
 | baseline replayed identical chunk indices (uncoded), needing R=3 | **rateless recovery** per Zeng'18; the baseline meets its own goal (98.8 % of GTs, 100 % of victims) at **R=1.2**, halving every hover |
-| `nocoop`/`pure-uav` could never complete the mission (0 % by construction) | they fly home and report too — **all arms reach 100 %** |
+| `nocoop`/`pure-uav` could never complete the mission (0 % by construction) | they fly home and report too — every arm has a real completion rate (baselines 100 %, proposed 95.0 / 97.5 % at N = 120) |
 | `timeToLocalize` reported the `--minObserve` knob | window applied first, evidence-ordered backoff on top |
 | the election's stand-down was a one-hop SUMMON that could not reach another leader; 30–40 % of runs formed two competing regions | **RCLAIM floods the stand-down** — 0/20 duplicate regions **at `minObserve = 20`**, at +4–8 % packets (B2; audit A11 shows this does *not* hold at a hard 45 s window edge, where two summons fired 0.1 s apart — faster than a multi-hop flood can suppress) |
 | the victim fix existed only in simulator state | **carried to the BS in the REPORT packet** and reported as `reportErr_m` (B3) |
 
 ## Operating points
 
-Everything below is reported at **two** operating points, because the difference
-between them is itself a result:
-
-- **Realistic** — detector σ = 0.10, GPS σ = 5 m, victim at a continuous
-  position. **This is the headline.**
-- **Idealized** — noise-free detector, exact GPS, victim exactly on a sensor.
-  This is the configuration earlier revisions reported as if it were reality;
-  it is kept only as the **upper bound**.
+Every head-to-head below is at the **realistic** point — detector σ = 0.10,
+GPS σ = 5 m, victim at a continuous position, adaptive observation window. The
+idealized configuration (noise-free detector, exact GPS, victim on a sensor)
+that earlier revisions reported *as if it were reality* is retained only as an
+ablation, in "When to summon" and the noise sweep.
 
 The realism knobs are passed to *every* arm, not just the proposed one. The
 blind-coverage baselines ignore the clue field entirely, so their numbers are
-identical at both points — which is not a shortcut, it is the finding: **nothing
-about sensing realism touches the cost comparison. It touches reliability only.**
+byte-identical at both points — verified across all seeds, not assumed. That is
+not a shortcut, it is the finding: **sensing realism does not touch the cost
+comparison at all. It costs reliability, and it costs accuracy in the tail.**
 
 ## Head-to-head — 8×8, 64 sensors, 140×140 m
 
@@ -72,50 +77,47 @@ to blanket a field. And every baseline beats us on victim-served (99.2 % vs
 
 ## Head-to-head — 16×16, 256 sensors, 300×300 m
 
-| scheme | mission | victim | t_report | energy | packets | **fix at BS** |
-|---|---:|---:|---:|---:|---:|---:|
-| **proposed** × 4 | 100 % | **75 %** | **90.0 s** [79.5, 103.6] | **55.2 kJ** | **2 989** | **15.6 m @ 65.5 s** |
-| tsp-mc × 4 (coded, R=1.2) | 100 % | 100 % | 184.9 s | 120.6 kJ | 21 421 | — none — |
+Same protocol: N = 120, one build, adaptive window, realistic sensing, ITT.
 
-*Idealized upper bound, same seeds:* proposed 88.3 s / 55.5 kJ / 2 939 pkts /
-**17.3 m** fix, victim served 100 %.
+| scheme | mission | victim | t_report | t_victim | energy | packets | **fix at BS** |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| **proposed** × 4 | 97.5 % | 90.0 % | **113.3 s** [105.5, 116.6] | **68.6 s** (IQR 16.9) | **72.6 kJ** | **3 583** | **14.6 m @ 90.4 s** |
+| tsp-mc × 4 (coded, R=1.2) | 100 % | 97.5 % | 184.9 s | 80.9 s (IQR 51.8) | 120.6 kJ | 21 421 | — none — |
 
-**The 75 % is the most important number in this document.** At the realistic
-operating point, one run in four never gets the full dataset to the victim at
-256 sensors. Blind coverage gets it there every time. See "The cost" below.
-
-## The result is a scaling law — and it survives sensing realism intact
+## The result is a scaling law, and it is now properly powered
 
 Paired against the charitable coded baseline (same seed ⇒ same channel
-realisation; Wilcoxon signed-rank, Cliff's δ), **at the realistic operating
-point**:
+realisation; Wilcoxon signed-rank, Cliff's δ), N = 120 at both scales:
 
-| metric | 64 sensors | 256 sensors | paired evidence |
+| metric | 64 sensors | 256 sensors | paired evidence at 256 |
 |---|---:|---:|---|
-| mission time | **1.28×** | **2.05×** | 18/18 → 15/15, δ = −1.00, p ≤ 6.6e-4 |
-| UAV energy | **1.31×** | **2.18×** | 18/18 → 15/15, δ = −1.00, p ≤ 6.6e-4 |
-| application packets | **3.10×** | **7.17×** | 18/18 → 15/15, δ = −1.00, p ≤ 6.6e-4 |
+| mission time | 1.07× | **1.63×** | 117/117, δ = −1.00, p = 6.2e-21 |
+| UAV energy | 1.10× | **1.66×** | 117/120, δ = −0.95, p = 1.0e-17 |
+| application packets | 2.91× | **5.98×** | 120/120, δ = −1.00, p = 2.0e-21 |
 
-*Idealized, for comparison:* 1.29× → 2.09×, 1.30× → 2.17×, 3.04× → 7.29×.
+**The effect emerges with scale — it does not merely grow.** At 64 sensors the
+time and energy advantages are marginal and the paired statistics say so
+(δ = −0.474, *medium*, 84/114 wins on time). At 256 they are decisive
+(δ = −1.00, 117/117). Blind coverage cost grows with area; evidence-directed
+delivery cost grows with (time-to-localize + transit), which is nearly flat in
+area. So 8×8 sits at or below the crossover and 16×16 sits clearly above it.
 
-**The two sets of ratios are the same to within a percent or two.** That is the
-substantive claim this study can defend most strongly: the efficiency advantage
-is a property of *directing* effort rather than of *sensing perfectly*, so it
-does not evaporate when the detector gets noisy, the GPS gets sloppy, or the
-victim stops sitting on a sensor. What realism costs is reliability, not cost —
-and that cost is reported above rather than absorbed.
+This is a **cleaner** thesis than the earlier "the advantage roughly doubles",
+which was measured at N = 20 and reported 1.29× → 2.09× with δ = −1.00
+everywhere. Properly powered, the honest statement is *a tie at 64 sensors, a
+clear win at 256* — a scaling claim needs a regime where the effect is absent,
+and now the study has one.
 
-(Pair counts fall from 20 to 18 and 15 because runs where the victim was never
-served are excluded from every distribution under the single stated inclusion
-rule; they are still counted in the rate columns.)
+Two secondary findings at 256 sensors, both in the proposed scheme's favour and
+neither previously noticed:
 
-**The advantage roughly doubles from 64 to 256 sensors, on all three cost axes
-simultaneously.** That is the paper's claim, and it is a claim about *how the
-costs scale*, not about a single operating point: blind coverage cost grows with
-area, while evidence-directed delivery cost grows with
-(time-to-localize + transit). 8×8 sits near the crossover — which is exactly why
-an honest reading there once looked like a tie, and why the earlier headline had
-to be manufactured to make 8×8 look decisive.
+- **We reach the victim faster than blind coverage does**, 68.6 s vs 80.9 s —
+  despite spending the first ~40 s not delivering anything at all.
+- **And far more predictably**: t_victim IQR 16.9 s vs the baseline's 51.8 s.
+  The baseline's *makespan* is deterministic, but *when it happens to reach the
+  particular node that matters* is a lottery over tour order. That distinction
+  is worth making explicitly, because "predictable makespan" is otherwise the
+  baseline's strongest selling point.
 
 *Statistical caveat, stated because it matters:* `tsp-mc` is **deterministic
 across seeds** (IQR exactly 0 on time, energy and packets — an open-loop
@@ -131,25 +133,31 @@ honest effect statement.** The flip side is a genuine baseline virtue: a
 
 Three costs, all real:
 
-1. **Reliability, and it is the real one.** Victim served:
+1. **Reliability, and it is the real one.** Victim served, N = 120:
 
    | | 8×8 | 16×16 |
    |---|---:|---:|
-   | proposed, idealized sensing | 95 % | 100 % |
-   | **proposed, realistic sensing** | **90 %** | **75 %** |
-   | every blind-coverage baseline | 100 % | 100 % |
+   | **proposed** | **87.5 %** [80.4, 92.3] | **90.0 %** [83.3, 94.2] |
+   | tsp-mc × 4 | 99.2 % | 97.5 % |
+   | nocoop × 4 | 99.2 % | — |
 
-   Directed delivery misses where a carpet cannot, and **the miss rate grows
-   with scale under realistic sensing** — the opposite direction to the cost
-   advantage. At 256 sensors with a noisy detector, one run in four fails to
-   deliver the dataset. This is the scheme's central weakness and it is not
-   presently solved; a fallback sweep after a failed delivery is the obvious
-   remedy and has not been implemented or evaluated.
-2. **Energy against minimum hardware.** `tsp-mc × 1` uses 25.1 kJ to our 40.5,
-   in 18/18 paired seeds.
-3. **Makespan predictability.** The baselines' completion time has zero
-   variance; ours has a 24.1 s IQR at 16×16. A planner that must promise a
-   deadline is better served by the open-loop schedule.
+   Directed delivery misses where a carpet cannot: a 7.5–11.7 pp gap that does
+   **not** close with scale. This is the scheme's central weakness and it is not
+   solved. The obvious remedy — on a delivery that draws no CONFIRM, re-elect
+   the next-strongest region and re-deliver — is unimplemented and unevaluated.
+   Mission completion is also below 100 % (95.0 % / 97.5 %), which the N = 20
+   campaigns missed entirely.
+2. **Energy against minimum hardware.** `tsp-mc × 1` uses 25.1 kJ to our 48.4,
+   in 120/120 paired seeds (δ = +1.00).
+3. **Makespan predictability.** The baselines' *completion time* has exactly
+   zero variance; ours has a 22.9 s IQR at 16×16. A planner that must promise a
+   deadline is better served by the open-loop schedule. (But see above: the
+   baseline's *time to the victim specifically* is far less predictable than
+   ours, IQR 51.8 s vs 16.9 s. The two "predictability" claims point opposite
+   ways and both belong in the paper.)
+4. **At 64 sensors, the cost advantage is marginal** — 1.07× time, 1.10× energy,
+   with a medium rather than large effect size. Anyone deploying at that density
+   should choose on the localization output, not on cost.
 
 None of these is hidden in an appendix. A deployment that values guaranteed
 coverage, minimum airframes, or a hard deadline over speed and a position

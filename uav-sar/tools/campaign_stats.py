@@ -29,7 +29,7 @@ Usage:  campaign_stats.py <outdir> <N seeds> [--quick] [--grid=N]
 """
 import csv, math, os, random, subprocess, sys, statistics as st
 
-from campaign_common import victim_pos, p90, iqr
+from campaign_common import victim_pos, p90, iqr, assert_one_build
 
 BIN = "build/src/uav-sar/examples/ns3.46-scenario-sar-optimized"
 random.seed(12345)  # bootstrap determinism
@@ -264,15 +264,28 @@ def run_scheme(tag, outdir, n_seeds):
     return rows
 
 
+# audit A2: gating the COST metrics on victim-served was survivorship bias.
+# t_report / energy / packets are defined whenever the MISSION completes, which
+# is a different and much more frequent event, so dropping runs for a
+# victim-delivery failure drops them for a reason unrelated to the metric -- and
+# the dropped runs are systematically the awkward ones. Measured at N=120, every
+# such delta favoured the proposed scheme (0.4-2.8%). These are now reported
+# intention-to-treat. The victim-served gate survives only where the metric
+# genuinely does not exist otherwise.
+ITT_KEYS = {"rep", "energy", "pkts", "tfix", "fixerr", "loc"}
+GATED_KEYS = {"cmp", "derr"}
+
+
 def included(rows):
-    """The single inclusion rule, applied to every distribution below."""
+    """Runs that reached the victim -- the gate for victim-dependent metrics."""
     return [r for r in rows if r["cmp"] >= 0]
 
 
 def series(rows, key):
-    """Defined values of `key` among included runs (-1 == stage never reached)."""
+    """Defined values of `key`, intention-to-treat unless the metric needs the gate."""
+    src = included(rows) if key in GATED_KEYS else rows
     out = []
-    for r in included(rows):
+    for r in src:
         v = r[key]
         if v is not None and v >= 0:
             out.append(v)
@@ -308,6 +321,9 @@ def main():
     data = {}
     for tag in tags:
         data[tag] = run_scheme(tag, outdir, n)
+        # Refuse to aggregate a campaign that spans binaries (audit meta-finding).
+        assert_one_build([os.path.join(outdir, f"{tag}-{s_}")
+                          for s_ in range(1, n + 1)], label=f"scheme '{tag}'")
         print(f"  [{tag}] {len(data[tag])} runs collected", file=sys.stderr)
 
     print(f"\n### Campaign with 95% confidence intervals (N={n} seeds/scheme) ###")
@@ -316,7 +332,11 @@ INCLUSION RULE (one rule, applied to EVERY distribution in this report --
 latency, energy, packets and delivery error alike; energy and packets used to
 include failed runs while latencies excluded them, which made the columns
 mutually incomparable):
-  a run enters a distribution iff {INCLUSION}.
+  cost metrics (t_report, energy, packets, t_fix, fix error) are reported
+  INTENTION-TO-TREAT over every run -- they are defined whenever the MISSION
+  completes, so gating them on {INCLUSION} would drop runs for an unrelated
+  reason and, measured, always in the proposed scheme's favour (audit A2).
+  Only victim-dependent metrics (t_victim, delivery error) keep that gate.
   Rates are over ALL runs.  Within the included set a metric that is still -1
   means the stage does not exist for that scheme (see M1) -- its cell reads
   n/a and the per-cell n shows how many runs contributed.
@@ -383,7 +403,7 @@ summon_start metric is RETRACTED (S8) and is not computed anywhere here.""")
     print("  either arm has no value are dropped (count reported).")
     print("  Reported for all three cost metrics -- a scheme that is faster only")
     print("  by spending more energy or airtime has not actually won.")
-    base_vals = [r["rep"] for r in included(data["proposed"]) if r["rep"] >= 0]
+    base_vals = [r["rep"] for r in data["proposed"] if r["rep"] >= 0]
     for key, lbl, scale, unit in [("rep", "mission time", 1.0, "s"),
                                   ("energy", "UAV energy", 1e-3, "kJ"),
                                   ("pkts", "app packets", 1.0, "")]:
@@ -391,13 +411,13 @@ summon_start metric is RETRACTED (S8) and is not computed anywhere here.""")
         print(f"{'comparison':<24} {'pairs':>6} {'W+':>9} {'z':>8} {'p':>11} {'sig':<5} "
               f"{'median diff':>12} {'wins P/other':>13} {'Cliff d':>9} {'':<11}")
         print("-" * 118)
-        base_by_seed = {r["seed"]: r[key] * scale for r in included(data["proposed"])
-                        if r[key] >= 0}
+        base_rows = included(data["proposed"]) if key in GATED_KEYS else data["proposed"]
+        base_by_seed = {r["seed"]: r[key] * scale for r in base_rows if r[key] >= 0}
         for tag in tags:
             if tag == "proposed":
                 continue
-            other_by_seed = {r["seed"]: r[key] * scale for r in included(data[tag])
-                             if r[key] >= 0}
+            other_rows = included(data[tag]) if key in GATED_KEYS else data[tag]
+            other_by_seed = {r["seed"]: r[key] * scale for r in other_rows if r[key] >= 0}
             if not other_by_seed:
                 print(f"{'proposed vs ' + tag:<24} n/a - stage absent by design "
                       f"(M1: metric is 0%-by-construction for this arm)")

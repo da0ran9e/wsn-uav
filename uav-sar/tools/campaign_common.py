@@ -14,6 +14,7 @@ See tools/README.md for the metric definitions and for which metric is
 retracted (S8).
 """
 import math
+import os
 import sys
 
 LEGACY_SPACING = 20.0  # the value that used to be hard-coded everywhere
@@ -79,6 +80,41 @@ def victim_pos(m, fallback_spacing=None):
     sp = grid_spacing(m, fallback_spacing)
     k = tid - (1 + nuav)
     return (k % grid) * sp, (k // grid) * sp
+
+
+def build_id(run_dir):
+    """The binary's build stamp for one run, from config.txt (or None)."""
+    try:
+        for line in open(os.path.join(run_dir, "config.txt")):
+            if line.startswith("build="):
+                return line.split("=", 1)[1].strip()
+    except Exception:
+        pass
+    return None
+
+
+def assert_one_build(run_dirs, label=""):
+    """Refuse to aggregate runs produced by different binaries.
+
+    Audit meta-finding: rebuilding while a campaign was in flight silently mixed
+    two binaries inside one result set, and it was caught only because the
+    timing happened to be noticed. A campaign that spans builds is not a
+    campaign, so this raises rather than warns.
+    """
+    seen = {}
+    for d in run_dirs:
+        b = build_id(d)
+        if b is not None:
+            seen.setdefault(b, []).append(d)
+    if len(seen) > 1:
+        lines = "\n".join(f"    {b}: {len(v)} runs (e.g. {v[0]})"
+                          for b, v in sorted(seen.items()))
+        raise SystemExit(
+            f"REFUSING to aggregate {label or 'these runs'}: they span "
+            f"{len(seen)} different binaries.\n{lines}\n"
+            "  Delete the output directory and re-run the whole campaign on one build."
+        )
+    return next(iter(seen), None)
 
 
 def nearest_rank(xs, q):

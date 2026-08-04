@@ -78,6 +78,12 @@ void SarMetrics::Finalize(const std::string& outDir) {
         std::ofstream f(outDir + "/config.txt");
         f << "seed=" << m_seed << "\ngridSize=" << m_grid << "\nnumUav=" << m_numUav
           << "\nscheme=" << m_scheme << "\ntargetNodeId=" << m_target << "\n";
+        // Audit meta-finding: a rebuild during two in-flight campaigns silently
+        // mixed binaries within one campaign, and it was caught only because the
+        // timing happened to be noticed. Stamping the build identity into every
+        // run lets the analysis scripts REFUSE to aggregate across builds
+        // instead of relying on someone remembering.
+        f << "build=" << __DATE__ << " " << __TIME__ << "\n";
     }
 }
 

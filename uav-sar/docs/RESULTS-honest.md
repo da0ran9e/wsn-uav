@@ -21,17 +21,37 @@ the proposed scheme or more generous to the baseline**:
 | the election's stand-down was a one-hop SUMMON that could not reach another leader; 30–40 % of runs formed two competing regions | **RCLAIM floods the stand-down** — 0/20 duplicate regions, at +4–8 % packets (B2, ablated below) |
 | the victim fix existed only in simulator state | **carried to the BS in the REPORT packet** and reported as `reportErr_m` (B3) |
 
+## Operating points
+
+Everything below is reported at **two** operating points, because the difference
+between them is itself a result:
+
+- **Realistic** — detector σ = 0.10, GPS σ = 5 m, victim at a continuous
+  position. **This is the headline.**
+- **Idealized** — noise-free detector, exact GPS, victim exactly on a sensor.
+  This is the configuration earlier revisions reported as if it were reality;
+  it is kept only as the **upper bound**.
+
+The realism knobs are passed to *every* arm, not just the proposed one. The
+blind-coverage baselines ignore the clue field entirely, so their numbers are
+identical at both points — which is not a shortcut, it is the finding: **nothing
+about sensing realism touches the cost comparison. It touches reliability only.**
+
 ## Head-to-head — 8×8, 64 sensors, 140×140 m
 
-N = 20 seeds, medians with bootstrap 95 % CI. `tools/campaign_stats.py OUT 20 --grid=8`.
+N = 20 seeds, medians with bootstrap 95 % CI.
+`tools/campaign_stats.py OUT 20 --grid=8 --senseSigma=0.10 --gpsSigma=5 --victimOnNode=0`
 
 | scheme | mission | victim | t_report | energy | packets | **fix at BS** |
 |---|---:|---:|---:|---:|---:|---:|
-| **proposed** × 4 | 100 % | 95 % | **63.0 s** [59.0, 65.9] | **40.7 kJ** | **2 019** | **15.4 m @ 46.5 s** |
+| **proposed** × 4 | 100 % | 90 % | **63.4 s** [59.3, 64.6] | **40.5 kJ** | **1 981** | **18.0 m @ 46.5 s** |
 | tsp-mc × 4 (coded, R=1.2) | 100 % | 100 % | 81.2 s | 53.1 kJ | 6 134 | — none — |
 | tsp-mc × 1 | 100 % | 100 % | 146.2 s | **25.1 kJ** | 4 585 | — none — |
 | nocoop × 4 | 100 % | 100 % | 111.8 s | 73.5 kJ | 12 246 | — none — |
 | pure-uav | 100 % | 100 % | 309.3 s | 52.7 kJ | 12 225 | — none — |
+
+*Idealized upper bound, same seeds:* proposed 63.0 s / 40.7 kJ / 2 019 pkts /
+**15.4 m** fix, victim served 95 %.
 
 The **fix at BS** column is the point of the scheme and is measured, not
 asserted: it is the error of the coordinates the base station decoded out of a
@@ -41,31 +61,50 @@ first returning UAV while the rest of the fleet is still inbound. No baseline
 ever produces this column, at any parameter setting, because blind coverage has
 no position to carry.
 
-**The one loss, stated plainly: `tsp-mc × 1` wins on energy**, 25.1 kJ vs 40.7,
-in 19/19 paired seeds (δ = +1.00). One UAV flying one tour is the minimum-energy
+**The one loss, stated plainly: `tsp-mc × 1` wins on energy**, 25.1 kJ vs 40.5,
+in 18/18 paired seeds (δ = +1.00). One UAV flying one tour is the minimum-energy
 way to blanket a field. The proposed scheme's energy advantage is over *equal
 fleets*, not over minimum hardware — and it buys 2.3× faster completion and a
 position for that extra energy.
 
 ## Head-to-head — 16×16, 256 sensors, 300×300 m
 
-`tools/campaign_stats.py OUT 20 --grid=16 --quick`.
-
 | scheme | mission | victim | t_report | energy | packets | **fix at BS** |
 |---|---:|---:|---:|---:|---:|---:|
-| **proposed** × 4 | 100 % | 100 % | **88.3 s** [82.2, 101.8] | **55.5 kJ** | **2 939** | **17.3 m @ 72.6 s** |
+| **proposed** × 4 | 100 % | **75 %** | **90.0 s** [79.5, 103.6] | **55.2 kJ** | **2 989** | **15.6 m @ 65.5 s** |
 | tsp-mc × 4 (coded, R=1.2) | 100 % | 100 % | 184.9 s | 120.6 kJ | 21 421 | — none — |
 
-## The result is a scaling law
+*Idealized upper bound, same seeds:* proposed 88.3 s / 55.5 kJ / 2 939 pkts /
+**17.3 m** fix, victim served 100 %.
+
+**The 75 % is the most important number in this document.** At the realistic
+operating point, one run in four never gets the full dataset to the victim at
+256 sensors. Blind coverage gets it there every time. See "The cost" below.
+
+## The result is a scaling law — and it survives sensing realism intact
 
 Paired against the charitable coded baseline (same seed ⇒ same channel
-realisation; Wilcoxon signed-rank, Cliff's δ):
+realisation; Wilcoxon signed-rank, Cliff's δ), **at the realistic operating
+point**:
 
 | metric | 64 sensors | 256 sensors | paired evidence |
 |---|---:|---:|---|
-| mission time | **1.29×** | **2.09×** | 19/19 → 20/20, δ = −1.00, p ≤ 1.3e-4 |
-| UAV energy | **1.30×** | **2.17×** | 19/19 → 20/20, δ = −1.00, p ≤ 1.3e-4 |
-| application packets | **3.04×** | **7.29×** | 19/19 → 20/20, δ = −1.00, p ≤ 1.3e-4 |
+| mission time | **1.28×** | **2.05×** | 18/18 → 15/15, δ = −1.00, p ≤ 6.6e-4 |
+| UAV energy | **1.31×** | **2.18×** | 18/18 → 15/15, δ = −1.00, p ≤ 6.6e-4 |
+| application packets | **3.10×** | **7.17×** | 18/18 → 15/15, δ = −1.00, p ≤ 6.6e-4 |
+
+*Idealized, for comparison:* 1.29× → 2.09×, 1.30× → 2.17×, 3.04× → 7.29×.
+
+**The two sets of ratios are the same to within a percent or two.** That is the
+substantive claim this study can defend most strongly: the efficiency advantage
+is a property of *directing* effort rather than of *sensing perfectly*, so it
+does not evaporate when the detector gets noisy, the GPS gets sloppy, or the
+victim stops sitting on a sensor. What realism costs is reliability, not cost —
+and that cost is reported above rather than absorbed.
+
+(Pair counts fall from 20 to 18 and 15 because runs where the victim was never
+served are excluded from every distribution under the single stated inclusion
+rule; they are still counted in the rate columns.)
 
 **The advantage roughly doubles from 64 to 256 sensors, on all three cost axes
 simultaneously.** That is the paper's claim, and it is a claim about *how the
@@ -79,39 +118,51 @@ to be manufactured to make 8×8 look decisive.
 across seeds** (IQR exactly 0 on time, energy and packets — an open-loop
 schedule cannot exploit a good channel). The matched pair therefore carries no
 channel information for that arm, so the Wilcoxon p is floor-bounded by n
-(1.3e-4 at n = 19, 8.9e-5 at n = 20, for a perfect split) and reflects complete
+(2.0e-4 at n = 18, 6.6e-4 at n = 15, for a perfect split) and reflects complete
 separation rather than an unusually strong sample. **Cliff's δ = −1.00 is the
 honest effect statement.** The flip side is a genuine baseline virtue: a
 **predictable makespan bound**, which the proposed scheme does not offer
-(t_report IQR 22.5 s at 16×16).
+(t_report IQR 24.1 s at 16×16).
 
 ## The cost, reported alongside the benefit
 
-Two costs, both real:
+Three costs, all real:
 
-1. **Reliability at low density.** `proposed` serves the victim in **95 %** of
-   runs at 8×8 (100 % at 16×16); every blind-coverage baseline serves it in
-   100 % everywhere. Directed delivery can miss where a carpet cannot.
-2. **Energy against minimum hardware.** `tsp-mc × 1` uses 25.1 kJ to our 40.7.
-   See the head-to-head table.
+1. **Reliability, and it is the real one.** Victim served:
+
+   | | 8×8 | 16×16 |
+   |---|---:|---:|
+   | proposed, idealized sensing | 95 % | 100 % |
+   | **proposed, realistic sensing** | **90 %** | **75 %** |
+   | every blind-coverage baseline | 100 % | 100 % |
+
+   Directed delivery misses where a carpet cannot, and **the miss rate grows
+   with scale under realistic sensing** — the opposite direction to the cost
+   advantage. At 256 sensors with a noisy detector, one run in four fails to
+   deliver the dataset. This is the scheme's central weakness and it is not
+   presently solved; a fallback sweep after a failed delivery is the obvious
+   remedy and has not been implemented or evaluated.
+2. **Energy against minimum hardware.** `tsp-mc × 1` uses 25.1 kJ to our 40.5,
+   in 18/18 paired seeds.
 3. **Makespan predictability.** The baselines' completion time has zero
-   variance; ours has a 22.5 s IQR at 16×16. A planner that must promise a
+   variance; ours has a 24.1 s IQR at 16×16. A planner that must promise a
    deadline is better served by the open-loop schedule.
 
 None of these is hidden in an appendix. A deployment that values guaranteed
 coverage, minimum airframes, or a hard deadline over speed and a position
-should not use this scheme.
+should not use this scheme as it currently stands.
 
 ## Still open — do not cite these as settled
 
-- **M9 / W3 / W7 — now implemented and swept, but the headline table is still
-  the idealized point.** `--senseSigma`, `--gpsSigma` and `--victimOnNode=0`
-  exist and the degradation curve is measured above. The head-to-head tables,
-  however, are still run at σ = 0 with the victim on a node, because that is
-  what the baselines were measured under and re-levelling a second time needs
-  the baselines re-run at matching noise. **Quote the head-to-head accuracy as
-  an upper bound**, and the noise table for what a real detector would see.
-  Re-running every arm at a common realistic operating point is the next job.
+- **Delivery reliability under realistic sensing (75 % at 16×16)** is the
+  largest open problem, and it is a *design* gap rather than a measurement one:
+  there is no fallback when the elected region is wrong. The obvious remedy —
+  on a delivery that draws no CONFIRM, re-elect from the next-strongest region
+  and re-deliver — is unimplemented and unevaluated.
+- **The noise model is a first cut.** Additive Gaussian on the clue quality with
+  a per-node frozen GPS offset is defensible but not derived from a real
+  detector; a measured ROC from an actual person-detector on forest imagery
+  would replace a modelling assumption with data.
 - **W2** The aiming rule is Weighted Centroid Localization under another name.
   The noise sweep now gives this teeth: centroid and argmax swap places
   depending on whether you care about the median or the tail, which means
@@ -364,7 +415,8 @@ scenario-sar --seed=S --scheme={proposed,nocoop,pure-uav,tsp-mc}
              [--allHome=1] [--codedMulticast=1] [--mcRedundancy=1.2] [--mcRadius=50]
              [--fastSpeed=0] [--dataSpeed=0] [--aimArgmax=0]
 
-tools/campaign_stats.py       OUT 20 --grid=8    # head-to-head + paired inference
+tools/campaign_stats.py OUT 20 --grid=8 \
+    --senseSigma=0.10 --gpsSigma=5 --victimOnNode=0   # head-to-head (realistic)
 tools/campaign_stats.py       OUT 20 --grid=16   # the scaling arm
 tools/campaign_stats.py       --selftest         # validates the statistics code
 tools/campaign_mc_redundancy.py OUT 20 4 coded 8 # baseline fairness sweep (F4)

@@ -104,15 +104,19 @@ should not use this scheme.
 
 ## Still open — do not cite these as settled
 
-- **M9 / W3** The clue field is **noise-free with exact GPS**, and the victim is
-  always co-located with a sensor node. Every accuracy number here is therefore
-  an upper bound on a real system. Sensing noise, GPS error and a detector ROC
-  are the single largest remaining threat to the localization results — the
-  aiming ablation below already shows the estimator is not the limiting factor,
-  so the noise model is what would move these numbers.
-- **W2** The aiming rule is Weighted Centroid Localization under another name;
-  an ML/NLS estimator and a CRLB are needed to make the accuracy *interpretable*
-  rather than merely reported.
+- **M9 / W3 / W7 — now implemented and swept, but the headline table is still
+  the idealized point.** `--senseSigma`, `--gpsSigma` and `--victimOnNode=0`
+  exist and the degradation curve is measured above. The head-to-head tables,
+  however, are still run at σ = 0 with the victim on a node, because that is
+  what the baselines were measured under and re-levelling a second time needs
+  the baselines re-run at matching noise. **Quote the head-to-head accuracy as
+  an upper bound**, and the noise table for what a real detector would see.
+  Re-running every arm at a common realistic operating point is the next job.
+- **W2** The aiming rule is Weighted Centroid Localization under another name.
+  The noise sweep now gives this teeth: centroid and argmax swap places
+  depending on whether you care about the median or the tail, which means
+  neither is near optimal. An ML/NLS estimator and a CRLB would say how much is
+  being left on the table.
 - **W4** All baselines are open-loop. A closed-loop non-cooperative baseline is
   needed to attribute the gain to *cooperation* specifically rather than to
   having any feedback at all.
@@ -133,21 +137,37 @@ the table above, not the 15.8 m an earlier revision of this file quoted.
    detector range (`--clueDecay`), the error scales ≈ 0.2–0.25× the decay
    length: **6.6 m** @ 30 m, ~16 m @ 60 m, **21.2 m** @ 120 m. It is *not*
    limited by sensor density (14 / 16 / 11 m at 15 / 20 / 30 m spacing).
-2. **The aiming rule is not where the gain comes from — measured, and it is a
-   negative result.** `--aimArgmax` (deliver to the single strongest reporter)
-   vs the evidence²-weighted centroid, paired over the same seeds:
+2. **How the pipeline degrades as the sensing side stops being idealized.**
+   The published configuration has a noise-free detector, exact GPS, and the
+   victim sitting exactly on a sensor — so the strongest reporter *is* the
+   answer. `tools/campaign_noise.py` walks away from that, scoring the fix the
+   BS decoded, with both estimators paired at every point (8×8, N = 20):
 
-   | grid | centroid med / p90 | argmax med / p90 | centroid closer | Cliff δ |
-   |---|---:|---:|---:|---:|
-   | 8×8 | 19.7 / 27.9 m | 21.7 / 31.2 m | 10/19 | +0.17 (small) |
-   | 16×16 | 18.2 / 25.3 m | 20.0 / 30.2 m | 8/20 | −0.03 (negligible) |
+   | detector σ | GPS σ | victim | centroid med / p90 | argmax med / p90 | Cliff δ | victim served |
+   |---:|---:|---|---:|---:|---:|---:|
+   | 0.00 | 0 m | on node | **16.4** / 25.5 m | 20.0 / 28.3 m | −0.28 | 95 % |
+   | 0.00 | 0 m | continuous | 19.9 / 31.6 m | 17.8 / 34.1 m | +0.01 | 85 % |
+   | 0.05 | 2 m | continuous | 19.0 / 30.3 m | 16.5 / 34.0 m | +0.14 | 95 % |
+   | 0.10 | 5 m | continuous | 21.8 / 33.3 m | 18.0 / 37.8 m | −0.01 | 95 % |
+   | 0.20 | 10 m | continuous | 39.8 / **59.1** m | **25.3** / 84.9 m | +0.16 | 70 % |
 
-   The two rules are **statistically indistinguishable**. That is consistent
-   with (1): in a noise-free clue field with exact GPS and a victim co-located
-   with a node, both estimators are limited by the same sensing resolution.
-   **No claim is made for the centroid estimator.** The contribution under test
-   is the cooperative pipeline that produces *any* fix at all, not the
-   arithmetic that turns reports into a coordinate.
+   Two things to read here, one of them unflattering:
+
+   - **Removing the victim-on-a-node coincidence alone costs 16.4 → 19.9 m**, with
+     no noise added at all. That much of the published accuracy was a property
+     of the deployment, not of the scheme.
+   - **The estimator hypothesis is refuted on the median.** Averaging several
+     noisy reports was supposed to beat trusting the loudest one, and the gap
+     was supposed to *grow* with noise. It does not: at the harshest setting
+     argmax's median is better (25.3 vs 39.8 m). What the centroid does buy is
+     the **tail** — its p90 is lower at *every* operating point, by 3–26 m. So
+     the centroid is a **robustness** choice, not an accuracy one, and this
+     study claims nothing more for it.
+
+   This is also what makes W2 (an ML/NLS estimator with a CRLB) the right next
+   step rather than a formality: two reasonable heuristics disagree about which
+   is better and neither dominates, which is the signature of both sitting well
+   away from the bound.
 3. **The distributed election is a tail-risk fix, not a median improvement —
    and it costs packets.** `--electSuppress=0` restores the pre-fix behaviour
    (the stand-down was a one-hop SUMMON that could not reach a leader 63–156 m

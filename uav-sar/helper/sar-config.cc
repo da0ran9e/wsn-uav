@@ -256,6 +256,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetAimArgmax(cfg.aimArgmax);          // audit W1 ablation
         app->SetElectSuppress(cfg.electSuppress);  // audit B2 ablation
         app->SetGpsBias(gpsBias[id].first, gpsBias[id].second);  // audit M9/W3
+        app->SetAdaptiveWindow(cfg.adaptiveWindow);             // audit A10
         app->SetMinObserve(cfg.minObserveS);
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);

@@ -60,7 +60,10 @@ public:
     // audit M9/W3: this node's frozen GPS offset, in metres. Set by the
     // orchestrator from a per-run RNG so it is reproducible from the seed.
     void SetGpsBias(double dx, double dy) { m_gpsBiasX = dx; m_gpsBiasY = dy; }
-    void SetMinObserve(double s) { m_minObserveS = s; } // hold first summon until s
+    void SetMinObserve(double s) { m_minObserveS = s; } // floor on the first summon
+    // audit A10: adaptive observation window (default). Off = the old fixed
+    // wall-clock --minObserve, kept as the ablation arm.
+    void SetAdaptiveWindow(bool v) { m_adaptiveWindow = v; }
     void SetProfile(const std::vector<Fragment>& frags);
     void SetClueQuality(double q) { m_clueQuality = q; }
     void SetCoopThreshold(double coop) { m_coop = coop; }
@@ -143,6 +146,10 @@ private:
     void RptRepeatTick();
 
     // distributed region-leader election
+    bool m_adaptiveWindow = true;
+    double m_lastGrowthS = 0;    // last meaningful cell-evidence increase
+    double m_alertAtS = -1;      // when this cell first crossed ALERT
+    double m_electFireAtS = 0;   // currently scheduled firing time
     bool m_electScheduled = false;
     bool m_regionFormed = false;                // I fired, or heard, a SUMMON
     ns3::EventId m_electEvent;

@@ -104,8 +104,32 @@ inline constexpr double kFwdStaggerMaxS  = 0.03;    // [Design] random per-hop f
 inline constexpr double kClaimBackoffS    = 0.15;   // [Design] UAV role claim: broadcast a
                                                     // CLAIM after U(0,this); first wins, the
                                                     // rest yield (replaces shared-mem token).
-// (observation window before summoning is the runtime knob --minObserve; a bigger
-//  window trades latency for multi-candidate delivery coverage, see RESULTS-honest.md)
+// ---- when to stop observing and summon (audit A10) -------------------------
+// A wall-clock observation window (--minObserve) is the WRONG parameterization
+// and it fails hard: it must be long enough for the cue sweep to have sampled
+// the evidence field, but shorter than the sweep itself, because once the FAST
+// UAVs finish and fly home there is nobody airborne to relay the SUMMON. That
+// upper bound scales with area, so one constant cannot serve two grid sizes --
+// measured, 45 s is optimal at 16x16 and produces ZERO localizations at 8x8.
+//
+// The adaptive rule is local and needs no knowledge of the sweep: a leader
+// fires once its own cell evidence has STOPPED GROWING, which is exactly the
+// condition the wall-clock window was a proxy for. Every significant growth
+// pushes the decision later; a quiet interval releases it. Cells whose evidence
+// saturates at different times therefore also desynchronize naturally, which
+// addresses the A11 race that a hard window edge created.
+inline constexpr double kEvidenceStableS = 8.0;     // [Design] quiet interval that
+                                                    // means "the field is sampled"
+inline constexpr double kEvidenceGrowEps = 0.02;    // [Design] growth below this is
+                                                    // not a reason to keep waiting
+// audit A10: a FAST UAV that has finished sweeping is the only relay a SUMMON
+// has. It holds station this long before flying home — bounded, so it cannot
+// regress to the old hover-forever trap, but long enough that the region can
+// still form after a short sweep finishes.
+inline constexpr double kRelayGraceS     = 30.0;    // [Design] post-sweep relay hold
+inline constexpr double kElectDeadlineS  = 90.0;    // [Design] hard ceiling after
+                                                    // ALERT, so a cell whose evidence
+                                                    // never settles cannot starve
 inline constexpr double kElectBackoffS   = 0.6;     // [Design] distributed region-leader
                                                     // election: a cell that crosses ALERT
                                                     // waits kElectBackoffS·(1−evidence)

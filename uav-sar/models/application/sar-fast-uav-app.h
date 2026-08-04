@@ -53,7 +53,7 @@ private:
     void DisseminateTick();
     void TrajTick();
 
-    enum class State { IDLE, CLIMB, CRUISE, RETURN_BS, DONE };
+    enum class State { IDLE, CLIMB, CRUISE, RELAY_HOLD, RETURN_BS, DONE };
 
     uint32_t m_nodeId = 0;
     ns3::Ptr<ns3::NetDevice> m_dev;
@@ -66,6 +66,7 @@ private:
     uint16_t m_cueSeq = 0;    // chunk seq within the current cue fragment
     uint32_t m_cueTxCount = 0;  // for decimated viz markers
     bool m_summonSeen = false;  // once a summon is relayed, stop spreading cues
+    double m_relayUntilS = 0;   // audit A10: bounded post-sweep relay hold
     bool m_hasFix = false;      // audit B3: victim fix to carry home in the REPORT
     double m_fixX = 0, m_fixY = 0;
     double m_alt = 20.0, m_speed = 25.0, m_radius = 50.0;

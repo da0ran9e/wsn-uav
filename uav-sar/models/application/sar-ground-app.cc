@@ -108,8 +108,14 @@ void SarGroundApp::SendRpt(uint16_t orig, uint8_t evQ8, int16_t x, int16_t y,
 // ---- Cell Leader: aggregate, share, elect ----------------------------------
 
 void SarGroundApp::LeaderIngest(uint16_t orig, double ev, double x, double y) {
+    const double aggBefore = CellAggregate();
     NodeEv& ne = m_cellEvidence[orig];
     if (ev > ne.ev) { ne.ev = ev; ne.x = x; ne.y = y; }
+    // audit A10: the adaptive window fires on a quiet interval, so "quiet" has to
+    // be defined here. Only a MEANINGFUL increase counts — otherwise the long
+    // tail of tiny refinements would keep deferring the decision forever.
+    if (CellAggregate() - aggBefore > params::kEvidenceGrowEps)
+        m_lastGrowthS = Simulator::Now().GetSeconds();
     // A member's report that actually reached the CL over the radio is one real
     // intra-cell cooperative delivery (our own sensing is not a "share").
     if (orig != (uint16_t)m_nodeId && m_metrics) {
@@ -184,24 +190,46 @@ void SarGroundApp::RptRepeatTick() {
 
 void SarGroundApp::MaybeElect() {
     if (!m_cooperative || !m_isCellLeader) return;
-    if (m_regionFormed || m_electScheduled) return;
+    if (m_regionFormed) return;
     double agg = CellAggregate();
     if (agg < params::kAlertThreshold) return;
+    double now = Simulator::Now().GetSeconds();
+    if (m_alertAtS < 0) m_alertAtS = now;
+
     // Distributed election: stronger cells wait less, so the strongest fires its
     // SUMMON first; every other leader suppresses on hearing it (merge). No
     // central brain, no global view — only what reached us over the radio.
-    m_electScheduled = true;
-    double now = Simulator::Now().GetSeconds();
+    // audit M4/S5: apply the window first, then the evidence-ordered backoff on
+    // top of it, so co-alerted cells do not fire at the identical instant.
     double backoff = params::kElectBackoffS * (1.0 - agg) +
                      m_rng->GetValue(0.0, params::kFwdStaggerMaxS);
-    // Hold the first summon until the sweep has had time to cover the area, so a
-    // late-swept but stronger (victim) cell can still win the election.
-    // audit M4/S5: clamping the SUM discarded both the evidence weighting and
-    // the desync jitter, so co-alerted cells fired at the identical instant and
-    // timeToLocalize simply reported the knob. Apply the window first, then the
-    // evidence-ordered backoff on top of it.
-    double fireAt = std::max(now, m_minObserveS) + backoff;
-    m_electEvent = Simulator::Schedule(Seconds(fireAt - now), &SarGroundApp::Elect, this);
+
+    if (!m_adaptiveWindow) {
+        if (m_electScheduled) return;               // fixed window: schedule once
+        m_electScheduled = true;
+        double fireAt = std::max(now, m_minObserveS) + backoff;
+        m_electEvent = Simulator::Schedule(Seconds(fireAt - now), &SarGroundApp::Elect, this);
+        return;
+    }
+
+    // audit A10: adaptive window. Fire once this cell's OWN evidence has stopped
+    // growing — the condition the wall-clock window was only a proxy for — with
+    // --minObserve kept as a floor and kElectDeadlineS as a ceiling so a cell
+    // whose evidence never settles cannot starve. Rescheduling on every growth
+    // is what makes it adapt: a big grid keeps feeding the leader for longer and
+    // so defers the decision for longer, with no knowledge of the grid at all.
+    double quietUntil = m_lastGrowthS + params::kEvidenceStableS;
+    double deadline = m_alertAtS + params::kElectDeadlineS;
+    double fireAt = std::min(deadline, std::max(quietUntil, m_minObserveS)) + backoff;
+    if (m_electScheduled && m_electEvent.IsPending()) {
+        // already waiting; only push it out if new evidence justifies that
+        if (fireAt <= m_electFireAtS + 1e-9) return;
+        Simulator::Cancel(m_electEvent);
+    }
+    m_electScheduled = true;
+    m_electFireAtS = fireAt;
+    m_electEvent = Simulator::Schedule(Seconds(std::max(0.0, fireAt - now)),
+                                       &SarGroundApp::Elect, this);
 }
 
 void SarGroundApp::Elect() {

@@ -130,19 +130,37 @@ void SarFastUavApp::ControlTick() {
         if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
             m_ti++;
             if (m_ti >= m_targets.size()) {
-                // A UAV with no task left flies home. Previously it hovered in
-                // place forever waiting for a CONFIRM it often could not hear
-                // (single-hop broadcast, 300x300 m field), so at 16x16 the
-                // mission never closed in 52% of runs and the fleet burned
-                // energy until the simulation horizon. Returning on task
-                // completion is the bounded, symmetric behaviour; the CONFIRM
-                // handler remains as the early-return optimisation.
-                if (m_allHome) { m_state = State::RETURN_BS; }
-                else { m_fc.Hover(); }
+                // audit A10: a FAST UAV is the ONLY thing that can relay a
+                // SUMMON to the loitering DATA team. Flying home the instant the
+                // sweep ends means that on a small grid — where the sweep
+                // finishes long before the ground has finished reporting — the
+                // region forms with nobody airborne to hear it, and the mission
+                // silently delivers nothing. Measured: at 8x8 this capped
+                // mission completion at 63%, and made any observation window
+                // >= 45 s fail outright.
+                //
+                // So: hold station as a relay for a BOUNDED grace period, then
+                // go home. The bound is what keeps this from regressing to the
+                // old hover-forever trap (which burned 620 kJ at 16x16); the
+                // grace is what keeps a relay alive across the decision. Both
+                // ends are local — no UAV consults the ground truth or a global
+                // view to decide.
+                if (!m_allHome) { m_fc.Hover(); }
+                else if (m_summonSeen) { m_state = State::RETURN_BS; }
+                else {
+                    m_fc.Hover();
+                    m_state = State::RELAY_HOLD;
+                    m_relayUntilS = Simulator::Now().GetSeconds() + params::kRelayGraceS;
+                }
             }
             else { Vector n = m_targets[m_ti];
                 m_fc.Turn(std::atan2(n.y - p.y, n.x - p.x) * 180 / M_PI); m_fc.Forward(m_speed); }
         }
+    } else if (m_state == State::RELAY_HOLD) {
+        // Hold as an airborne relay until either the region forms (we relayed a
+        // SUMMON, so the DATA team has its task) or the grace period runs out.
+        if (m_summonSeen || Simulator::Now().GetSeconds() >= m_relayUntilS)
+            m_state = State::RETURN_BS;
     } else return;
     m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarFastUavApp::ControlTick, this);
 }

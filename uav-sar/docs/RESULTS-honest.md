@@ -39,33 +39,36 @@ about sensing realism touches the cost comparison. It touches reliability only.*
 
 ## Head-to-head — 8×8, 64 sensors, 140×140 m
 
-N = 20 seeds, medians with bootstrap 95 % CI.
-`tools/campaign_stats.py OUT 20 --grid=8 --senseSigma=0.10 --gpsSigma=5 --victimOnNode=0`
+**N = 120 seeds**, one build, adaptive window, realistic sensing, cost metrics
+intention-to-treat. Medians with bootstrap 95 % CI.
+`tools/campaign_stats.py OUT 120 --grid=8 --senseSigma=0.10 --gpsSigma=5 --victimOnNode=0`
 
 | scheme | mission | victim | t_report | energy | packets | **fix at BS** |
 |---|---:|---:|---:|---:|---:|---:|
-| **proposed** × 4 | 100 % | 90 % | **63.4 s** [59.3, 64.6] | **40.5 kJ** | **1 981** | **18.0 m @ 46.5 s** |
-| tsp-mc × 4 (coded, R=1.2) | 100 % | 100 % | 81.2 s | 53.1 kJ | 6 134 | — none — |
-| tsp-mc × 1 | 100 % | 100 % | 146.2 s | **25.1 kJ** | 4 585 | — none — |
-| nocoop × 4 | 100 % | 100 % | 111.8 s | 73.5 kJ | 12 246 | — none — |
-| pure-uav | 100 % | 100 % | 309.3 s | 52.7 kJ | 12 225 | — none — |
+| **proposed** × 4 | 95.0 % | 87.5 % | **76.0 s** [74.8, 77.3] | **48.4 kJ** | **2 107** | **13.6 m @ 50.8 s** |
+| tsp-mc × 4 (coded, R=1.2) | 100 % | 99.2 % | 81.2 s | 53.1 kJ | 6 134 | — none — |
+| tsp-mc × 1 | 100 % | 93.3 % | 146.2 s | **25.1 kJ** | 4 585 | — none — |
+| nocoop × 4 | 100 % | 99.2 % | 111.8 s | 73.5 kJ | 12 246 | — none — |
+| pure-uav | 100 % | 98.3 % | 309.3 s | 52.7 kJ | 12 225 | — none — |
 
-*Idealized upper bound, same seeds:* proposed 63.0 s / 40.7 kJ / 2 019 pkts /
-**15.4 m** fix, victim served 95 %.
+**At 64 sensors the cost advantage is marginal and must be reported as such.**
+Against `tsp-mc × 4`: 1.07× on time and 1.10× on energy, and the paired tests
+say the same — 84/114 wins, Cliff's δ = −0.474 (*medium*, not large) on time;
+100/120 and δ = −0.667 on energy. Only the packet count is decisive (2.91×,
+120/120, δ = −1.00). An earlier revision reported 1.29× with 19/19 wins and
+δ = −1.00 at N = 20; **that was sample size, not effect.**
 
-The **fix at BS** column is the point of the scheme and is measured, not
-asserted: it is the error of the coordinates the base station decoded out of a
-REPORT packet that physically arrived. Note it lands at **46.5 s — 16.5 s
-before** the mission formally completes, because the fix rides home with the
-first returning UAV while the rest of the fleet is still inbound. No baseline
-ever produces this column, at any parameter setting, because blind coverage has
-no position to carry.
+The **fix at BS** column is what the scheme is for, and is measured rather than
+asserted: the error of the coordinates the base station decoded out of a REPORT
+packet that physically arrived. It lands at **50.8 s — 25 s before** the mission
+formally completes, because the fix rides home with the first returning UAV
+while the rest of the fleet is still inbound. No baseline produces this column
+at any parameter setting.
 
-**The one loss, stated plainly: `tsp-mc × 1` wins on energy**, 25.1 kJ vs 40.5,
-in 18/18 paired seeds (δ = +1.00). One UAV flying one tour is the minimum-energy
-way to blanket a field. The proposed scheme's energy advantage is over *equal
-fleets*, not over minimum hardware — and it buys 2.3× faster completion and a
-position for that extra energy.
+**Two losses, stated plainly.** `tsp-mc × 1` wins on energy, 25.1 kJ vs 48.4, in
+120/120 paired seeds (δ = +1.00) — one UAV on one tour is the minimum-energy way
+to blanket a field. And every baseline beats us on victim-served (99.2 % vs
+87.5 %).
 
 ## Head-to-head — 16×16, 256 sensors, 300×300 m
 

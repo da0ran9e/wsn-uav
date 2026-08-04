@@ -232,6 +232,7 @@ belongs in the paper.
 
 | id | fix | evidence it worked |
 |---|---|---|
+| A1 | every head-to-head re-run at N = 120 on one build | claim changed: effect now *emerges* with scale (see below) |
 | A2 | cost metrics reported intention-to-treat; paired tests use the same rule | bias was 0.4–2.8 %, all favourable; now zero |
 | A3 | docs say "victim off-lattice", never "random deployment" | — |
 | A4 | SHARE carries each cell's peak reporter + its evidence, so aiming crosses cells | victim served 82.5 → **90.0 %** at 16×16, N=120 |
@@ -242,9 +243,19 @@ belongs in the paper.
 | A11 | B2's claim scoped to `minObserve = 20` | — |
 | meta | build stamp in `config.txt`; `assert_one_build()` **raises** | a mixed-binary campaign now cannot be aggregated |
 
-**A1 (N ≥ 120) is in progress** — the definitive head-to-head is running at both
-grids on a single build. Every ratio in `RESULTS-honest.md` must be restated
-from it before submission.
+**A1 closed.** The definitive head-to-head ran at N = 120 on a single build at
+both grids, and it changed the paper's central claim:
+
+| metric | 64 sensors | 256 sensors | was (N = 20) |
+|---|---:|---:|---|
+| mission time | 1.07× (δ = −0.474, *medium*) | **1.63×** (δ = −1.00) | 1.29× → 2.09×, δ = −1.00 throughout |
+| UAV energy | 1.10× (δ = −0.667) | **1.66×** (δ = −0.95) | 1.30× → 2.17× |
+| packets | 2.91× (δ = −1.00) | **5.98×** (δ = −1.00) | 3.04× → 7.29× |
+
+The effect now **emerges** with scale instead of being present everywhere, which
+is a stronger scaling claim, not a weaker one — it has a regime where the effect
+is absent. Also revealed at N = 120 and invisible at N = 20: mission completion
+is 95.0 % / 97.5 %, not 100 %.
 
 **Still open, and deliberately not attempted in an audit round:**
 

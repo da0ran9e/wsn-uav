@@ -65,7 +65,6 @@ public:
     void SetClueQuality(double q) { m_clueQuality = q; }
     void SetCoopThreshold(double coop) { m_coop = coop; }
     void SetIsTarget(bool t) { m_isTarget = t; }
-    void SetStopOnComplete(bool s) { m_stopOnComplete = s; }
     // Intra-cell tree: next hop up toward the Cell Leader (-1 if I am the CL),
     // whether I am the CL, my cell id and centre.
     void SetTreeParent(int32_t p) { m_treeParent = p; }
@@ -88,9 +87,11 @@ private:
     void SendRpt(uint16_t orig, uint8_t evQ8, int16_t x, int16_t y, int32_t nextHop, uint8_t ttl);
     void LeaderIngest(uint16_t orig, double ev, double x, double y);  // CL aggregation
     void FloodShare();
-    void SendShare(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy, uint8_t ttl);
+    void SendShare(int32_t cell, uint8_t evQ8, uint8_t peakQ8,
+                   int16_t cx, int16_t cy, uint8_t ttl);
     // audit B2: multi-hop election suppression on the SHARE plane.
-    void SendRclaim(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy, uint8_t ttl);
+    void SendRclaim(int32_t cell, uint8_t evQ8, uint8_t peakQ8,
+                    int16_t cx, int16_t cy, uint8_t ttl);
     void MaybeElect();                         // schedule a summon if I lead
     void Elect();                              // fire the summon (winner)
     double PossessedConfidence() const;
@@ -127,8 +128,11 @@ private:
     std::map<uint16_t, uint8_t> m_shareSeen;    // SHARE flood dedup by origCell
     std::set<uint16_t> m_rclaimSeen;            // RCLAIM flood dedup by origCell
     std::set<int32_t> m_regionNeighbors;        // corroborating cells heard via SHARE
-    struct NbInfo { double ev = 0, x = 0, y = 0; };
-    std::map<int32_t, NbInfo> m_neighborEv;     // cellId -> {shared evidence, cell centre}
+    // audit A4: ev is the neighbour's CELL AGGREGATE (noisy-OR, used to compare
+    // cell strengths in the election); peak is its single strongest reporter's
+    // evidence, at (x,y). Only peak is comparable with one of our own members.
+    struct NbInfo { double ev = 0, peak = 0, x = 0, y = 0; };
+    std::map<int32_t, NbInfo> m_neighborEv;     // cellId -> {aggregate, peak, peak pos}
     double m_lastFloodEv = 0;                   // re-flood SHARE as evidence grows
     uint32_t m_deferCount = 0;                  // times we yielded to a stronger cell
 
@@ -146,7 +150,6 @@ private:
     // region-leader beaconing + closure
     bool m_isLeader = false;
     bool m_isTarget = false;
-    bool m_stopOnComplete = false;
     bool m_confirmed = false;
     bool m_heardCue = false;    // viz: first-cue marker emitted
     uint16_t m_regionId = 1;

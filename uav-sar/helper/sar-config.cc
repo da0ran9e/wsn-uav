@@ -273,7 +273,6 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         // totals, from information no node has. Under the symmetric rule no
         // scheme stops on it; every arm ends at the same milestone (all UAVs
         // home + reported). The victim's completion time is still recorded.
-        app->SetStopOnComplete(cfg.allHome ? false : (!proposed && !tspMc));
         s.sensors.Get(i)->AddApplication(app);
         app->SetStartTime(Seconds(0));
         app->SetStopTime(Seconds(cfg.simTime));

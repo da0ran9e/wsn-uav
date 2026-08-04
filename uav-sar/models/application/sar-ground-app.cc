@@ -128,18 +128,29 @@ void SarGroundApp::FloodShare() {
     m_sharedFlooded = true;
     m_lastFloodEv = CellAggregate();
     uint8_t evQ8 = (uint8_t)std::min(255.0, CellAggregate() * 255.0);
-    SendShare(m_cellId, evQ8, (int16_t)(m_cellCx * 10), (int16_t)(m_cellCy * 10),
-              (uint8_t)params::kShareTtl);
+    // audit A5: share the cell's STRONGEST REPORTER position, not the cell
+    // centre. Two reasons. (1) The centre is true survey geometry, so a
+    // neighbour mixing it with GPS-biased member positions was estimating from
+    // partly noise-free data — the centroid ablation was being flattered.
+    // (2) audit A4: a neighbour could previously learn only "cell 7 is hot",
+    // never "the hot thing in cell 7 is at (x,y)", which capped any aiming rule
+    // at one cell's resolution. Fall back to the centre only when this leader
+    // has heard from nobody.
+    double sx = m_cellCx, sy = m_cellCy, best = 0;
+    for (const auto& [n, ne] : m_cellEvidence)
+        if (ne.ev > best) { best = ne.ev; sx = ne.x; sy = ne.y; }
+    SendShare(m_cellId, evQ8, (uint8_t)std::min(255.0, best * 255.0),
+              (int16_t)(sx * 10), (int16_t)(sy * 10), (uint8_t)params::kShareTtl);
 }
 
-void SarGroundApp::SendRclaim(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy,
-                              uint8_t ttl) {
+void SarGroundApp::SendRclaim(int32_t cell, uint8_t evQ8, uint8_t peakQ8,
+                              int16_t cx, int16_t cy, uint8_t ttl) {
     if (!m_dev) return;
     std::vector<uint8_t> b(kRclaimLen);
     uint8_t* q = b.data();
     *q++ = (uint8_t)Msg::RCLAIM;
     uint16_t c = (uint16_t)cell; std::memcpy(q, &c, 2); q += 2;
-    *q++ = evQ8;
+    *q++ = evQ8; *q++ = peakQ8;
     std::memcpy(q, &cx, 2); q += 2;
     std::memcpy(q, &cy, 2); q += 2;
     *q++ = ttl;
@@ -147,13 +158,14 @@ void SarGroundApp::SendRclaim(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy
     if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
 }
 
-void SarGroundApp::SendShare(int32_t cell, uint8_t evQ8, int16_t cx, int16_t cy, uint8_t ttl) {
+void SarGroundApp::SendShare(int32_t cell, uint8_t evQ8, uint8_t peakQ8,
+                             int16_t cx, int16_t cy, uint8_t ttl) {
     if (!m_dev) return;
     std::vector<uint8_t> b(kShareLen);
     uint8_t* q = b.data();
     *q++ = (uint8_t)Msg::SHARE;
     uint16_t c = (uint16_t)cell; std::memcpy(q, &c, 2); q += 2;
-    *q++ = evQ8;
+    *q++ = evQ8; *q++ = peakQ8;
     std::memcpy(q, &cx, 2); q += 2;
     std::memcpy(q, &cy, 2); q += 2;
     *q++ = ttl;
@@ -214,10 +226,18 @@ void SarGroundApp::Elect() {
     // neighbour terms pull the estimate toward the true peak when the victim sits
     // near a cell boundary (the diagnosed ~1-cell-hop error mode).
     if (m_aimArgmax) {
-        // audit W1 ablation: aim at the single strongest reporter.
+        // Aim at the single strongest reporter anywhere in the region.
+        // audit A4: the search used to cover only this leader's OWN cell
+        // members, because a neighbour's SHARE carried nothing but the cell
+        // centre. The fix was therefore structurally capped at "best node
+        // inside one 80 m cell" no matter how good the estimator was. SHARE now
+        // carries each cell's peak reporter and its evidence, so a leader whose
+        // neighbour saw something stronger aims THERE instead.
         double bestEv = -1, ax = m_cellCx, ay = m_cellCy;
         for (auto& [n, ne] : m_cellEvidence)
             if (ne.ev > bestEv) { bestEv = ne.ev; ax = ne.x; ay = ne.y; }
+        for (auto& [c, nb] : m_neighborEv)
+            if (nb.peak > bestEv) { bestEv = nb.peak; ax = nb.x; ay = nb.y; }
         if (m_metrics) {
             m_metrics->MarkLocalize(Simulator::Now().GetSeconds());
             m_metrics->SetRegionCells((uint32_t)(1 + m_regionNeighbors.size()));
@@ -255,7 +275,7 @@ void SarGroundApp::StartSummon(double cx, double cy) {
     // packet count and split the fleet across duplicate regions.
     if (m_electSuppress) {
         m_rclaimSeen.insert((uint16_t)m_cellId);
-        SendRclaim(m_cellId, (uint8_t)std::min(255.0, CellAggregate() * 255.0),
+        SendRclaim(m_cellId, (uint8_t)std::min(255.0, CellAggregate() * 255.0), 0,
                    (int16_t)(cx * 10), (int16_t)(cy * 10), (uint8_t)params::kShareTtl);
     }
     if (m_metrics) {
@@ -327,9 +347,9 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // First claim wins: the backoff is evidence-ordered, so the strongest
         // alerting cell is the one that gets to fire first.
         uint16_t origCell; std::memcpy(&origCell, &b[1], 2);
-        uint8_t evQ8 = b[3];
-        int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
-        uint8_t ttl = b[8];
+        uint8_t evQ8 = b[3], peakQ8 = b[4];
+        int16_t cx, cy; std::memcpy(&cx, &b[5], 2); std::memcpy(&cy, &b[7], 2);
+        uint8_t ttl = b[9];
         if (!m_rclaimSeen.insert(origCell).second) return true;   // already flooded
         if (m_metrics) { m_metrics->AddRecv(); m_metrics->AddRecvBytes(sz); }
         if ((int32_t)origCell != m_cellId && !m_regionFormed) {
@@ -346,7 +366,7 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         if (ttl > 0)
             Simulator::Schedule(Seconds(m_rng->GetValue(0.0, params::kFwdStaggerMaxS)),
                                 &SarGroundApp::SendRclaim, this, (int32_t)origCell,
-                                evQ8, cx, cy, (uint8_t)(ttl - 1));
+                                evQ8, peakQ8, cx, cy, (uint8_t)(ttl - 1));
         return true;
     }
     if (type == (uint8_t)Msg::RPT && sz >= kRptLen) {
@@ -372,9 +392,9 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
     }
     if (type == (uint8_t)Msg::SHARE && sz >= kShareLen) {
         uint16_t origCell; std::memcpy(&origCell, &b[1], 2);
-        uint8_t evQ8 = b[3];
-        int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
-        uint8_t ttl = b[8];
+        uint8_t evQ8 = b[3], peakQ8 = b[4];
+        int16_t cx, cy; std::memcpy(&cx, &b[5], 2); std::memcpy(&cy, &b[7], 2);
+        uint8_t ttl = b[9];
         if (m_metrics) { m_metrics->AddRecv(); m_metrics->AddRecvBytes(sz); }
         auto sit = m_shareSeen.find(origCell);
         if (sit != m_shareSeen.end() && sit->second >= evQ8) return true;  // dup/stale
@@ -385,7 +405,8 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         if (m_isCellLeader && (int32_t)origCell != m_cellId && (evQ8 / 255.0) >= m_coop) {
             double nev = evQ8 / 255.0;
             NbInfo& nb = m_neighborEv[(int32_t)origCell];
-            if (nev > nb.ev) { nb.ev = nev; nb.x = cx / 10.0; nb.y = cy / 10.0; }
+            if (nev > nb.ev) { nb.ev = nev; nb.peak = peakQ8 / 255.0;
+                               nb.x = cx / 10.0; nb.y = cy / 10.0; }
             if (m_regionNeighbors.insert((int32_t)origCell).second && m_metrics) {
                 m_metrics->AddInterShare();
                 Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
@@ -396,7 +417,7 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         if (ttl > 0)
             Simulator::Schedule(Seconds(m_rng->GetValue(0.0, params::kFwdStaggerMaxS)),
                                 &SarGroundApp::SendShare, this, (int32_t)origCell, evQ8,
-                                cx, cy, (uint8_t)(ttl - 1));
+                                peakQ8, cx, cy, (uint8_t)(ttl - 1));
         return true;
     }
     if ((type == (uint8_t)Msg::CUE || type == (uint8_t)Msg::FULL) && sz >= kChunkHdr) {
@@ -434,10 +455,19 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                 }
             }
 
-            // Loop closure on holding the ENTIRE dataset. Proposed: any node that
+            // Loop closure on holding the ENTIRE dataset: any node that
             // reconstructs the full reference confirms the identity (it is under
-            // the delivery, so its CONFIRM link is short/reliable). Baseline: the
-            // victim node closes on its own (ground-truth stop criterion).
+            // the delivery, so its CONFIRM link is short/reliable).
+            //
+            // audit A6: what used to live here as well was a ground-truth stop
+            // -- the simulation ended the moment the VICTIM node completed,
+            // which is an oracle no deployed system has, and it set the
+            // baselines' energy and packet totals. Audit B1 disabled it via
+            // --allHome; it is now deleted outright. An oracle one flag away
+            // from live is how the original bypass got published, and no
+            // ablation needs this one: --allHome=0 still shortens the mission
+            // by changing the COMPLETION RULE, which is a declared policy, not
+            // a peek at the answer.
             if (!m_confirmed && HasEntireDataset()) {
                 m_confirmed = true;
                 Simulator::Cancel(m_beaconEvent);
@@ -457,7 +487,6 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                     m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
                                      "node", "gt_done", "", p.x, p.y, p.z);
                 }
-                if (m_stopOnComplete && m_isTarget) Simulator::Stop(Seconds(0.5));
             }
         }
     }

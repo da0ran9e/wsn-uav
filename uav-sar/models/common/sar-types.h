@@ -51,7 +51,15 @@ inline constexpr uint8_t  kFlagHasFix = 0x01;
 inline constexpr uint32_t kReportLen  = 1 + 1 + 2 + 1 + 2 + 2;      // 9
 inline constexpr uint32_t kHandoffLen = 1 + 1 + 2 + 2 + 2;          // 8
 inline constexpr uint32_t kRptLen     = 1 + 2 + 2 + 1 + 1 + 2 + 2;  // 11 (+self GPS)
-inline constexpr uint32_t kShareLen   = 1 + 2 + 1 + 2 + 2 + 1;      // 9
+// audit A4/A5: SHARE carries the cell aggregate (evQ8, used by the election to
+// compare CELL strengths) AND the cell's strongest single reporter — its
+// evidence (peakQ8) and its GPS-reported position. The two cannot share one
+// byte: the aggregate is a noisy-OR union and is therefore always >= any
+// member, so an aiming rule that compared it against a single node's evidence
+// would pick a neighbouring cell every time. Carrying the peak is what lets a
+// leader aim outside its own cell at all.
+// [type][origCell:u16][evQ8:u8][peakQ8:u8][x:i16][y:i16][ttl:u8]
+inline constexpr uint32_t kShareLen   = 1 + 2 + 1 + 1 + 2 + 2 + 1;  // 10
 inline constexpr uint32_t kRclaimLen  = kShareLen;                  // same body
 inline constexpr uint32_t kClaimLen   = 1 + 2 + 1 + 2;              // 6 [region][role][id]
 

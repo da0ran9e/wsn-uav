@@ -129,6 +129,41 @@ honest effect statement.** The flip side is a genuine baseline virtue: a
 **predictable makespan bound**, which the proposed scheme does not offer
 (t_report IQR 24.1 s at 16×16).
 
+## Closing the reliability gap — `--deliverDwell`, and what it costs
+
+The victim-served gap (88–90 % against the baselines' ~99 %) was the scheme's
+worst weakness. It is **not** an aiming problem. Of 12 failures at 16×16, nine
+had a delivery that landed 19.7–43.6 m from the victim and three never got a
+SUMMON to the DATA team at all — so the aim was right and the *delivery was too
+short at range*. The mechanism: CONFIRM is broadcast by **any** node that
+reconstructs the dataset, so a bystander sitting under the drop point closes the
+loop while the victim, further out on a worse link, never finishes.
+
+Re-aiming at the next candidate does not fix it — measured, no change (and at an
+eager 26 s trigger it actively *hurt*, degrading the fix from 14.6 m to 22.8 m).
+Delivering for longer does:
+
+| | 8×8 dwell 20 | **8×8 dwell 40** | 16×16 dwell 20 | **16×16 dwell 40** |
+|---|---:|---:|---:|---:|
+| victim served | 87.5 % | **93.3 %** | 90.0 % | **96.7 %** |
+| mission time | 76.0 s | 94.1 s | 113.3 s | 125.2 s |
+| energy | 48.4 kJ | 57.7 kJ | 72.6 kJ | 78.5 kJ |
+| packets | 2 107 | 3 180 | 3 583 | 4 667 |
+| fix error | 13.6 m | 13.6 m | 14.6 m | 14.6 m |
+| **vs tsp-mc × 4, time** | 1.07× | **0.86×** | 1.63× | **1.48×** |
+| **vs tsp-mc × 4, energy** | 1.10× | **0.92×** | 1.66× | **1.54×** |
+
+**The right setting depends on density, and at 64 sensors it inverts the
+comparison.** At 256 sensors, dwell 40 buys near-parity reliability (96.7 % vs
+the baseline's 97.5 %) while staying 1.48× faster and 1.54× cheaper — that is
+the configuration to lead with. At 64 sensors the same setting makes the scheme
+**slower and more expensive than blind coverage** (0.86×, 0.92×), so at that
+density the honest recommendation is the short dwell and the localization
+output, not a cost claim.
+
+The default stays at 20 s so published numbers do not shift silently; 40 s is
+`--deliverDwell=40`.
+
 ## The cost, reported alongside the benefit
 
 Three costs, all real:
@@ -141,12 +176,11 @@ Three costs, all real:
    | tsp-mc × 4 | 99.2 % | 97.5 % |
    | nocoop × 4 | 99.2 % | — |
 
-   Directed delivery misses where a carpet cannot: a 7.5–11.7 pp gap that does
-   **not** close with scale. This is the scheme's central weakness and it is not
-   solved. The obvious remedy — on a delivery that draws no CONFIRM, re-elect
-   the next-strongest region and re-deliver — is unimplemented and unevaluated.
-   Mission completion is also below 100 % (95.0 % / 97.5 %), which the N = 20
-   campaigns missed entirely.
+   Directed delivery misses where a carpet cannot. **`--deliverDwell=40` closes
+   most of this** — 93.3 % / 96.7 %, against the baselines' 99.2 % / 97.5 % — at
+   the cost documented above, which is affordable at 256 sensors and is not at
+   64. Mission completion is also below 100 % (95.0 % / 97.5 %), which the
+   N = 20 campaigns missed entirely.
 2. **Energy against minimum hardware.** `tsp-mc × 1` uses 25.1 kJ to our 48.4,
    in 120/120 paired seeds (δ = +1.00).
 3. **Makespan predictability.** The baselines' *completion time* has exactly
@@ -165,11 +199,15 @@ should not use this scheme as it currently stands.
 
 ## Still open — do not cite these as settled
 
-- **Delivery reliability under realistic sensing (75 % at 16×16)** is the
-  largest open problem, and it is a *design* gap rather than a measurement one:
-  there is no fallback when the elected region is wrong. The obvious remedy —
-  on a delivery that draws no CONFIRM, re-elect from the next-strongest region
-  and re-deliver — is unimplemented and unevaluated.
+- **The CONFIRM closure criterion is still wrong in principle**, even though
+  `--deliverDwell` papers over its effect. Any node that reconstructs the
+  dataset may CONFIRM, so the loop can close on a bystander rather than on the
+  node the summon actually aimed at. Making CONFIRM carry the confirming node's
+  evidence — and requiring closure to come from the aim target or its equal —
+  is the principled fix and is not implemented.
+- **Three of twelve failures never got a SUMMON to the DATA team at all**
+  (no divert, no delivery). That is a coordination failure distinct from the
+  range failure the dwell addresses, and it is unfixed.
 - **The noise model is a first cut.** Additive Gaussian on the clue quality with
   a per-node frozen GPS offset is defensible but not derived from a real
   detector; a measured ROC from an actual person-detector on forest imagery

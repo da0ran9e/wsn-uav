@@ -47,6 +47,12 @@ struct SarScenarioConfig {
     bool   aimArgmax = false;    // audit W1: aim at strongest reporter (ablation)
     bool   electSuppress = true; // audit B2: flood the stand-down (off = ablation:
                                  // every alerting cell summons independently)
+    // audit M9/W3/W7: realism knobs for the sensing side. All default to the
+    // idealized values the earlier results were measured under, so the noise-free
+    // case stays reproducible and becomes the ABLATION rather than the claim.
+    double senseSigma = 0.0;     // detector noise, additive sigma on clueQuality
+    double gpsSigmaM = 0.0;      // per-node frozen GPS offset, sigma in metres
+    bool   victimOnNode = true;  // false = victim at a continuous position (W7)
     std::string scheme = "proposed";
     std::string outputDir = "data/results/uav-sar/run-1";
 };

@@ -63,15 +63,45 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     m_plan = BuildCellGrid(nodePos, cg);
     m_routing = BuildInterCellRouting(m_plan);
 
-    // 3) victim node (deterministic from seed) + clue field
+    // 3) victim position (deterministic from seed) + clue field
     std::mt19937 trng(cfg.seed);
     uint32_t tIdx = trng() % s.sensors.GetN();
     uint32_t targetId = s.sensors.Get(tIdx)->GetId();
+    double victimX = 0, victimY = 0;
+    {
+        Vector vp = s.sensors.Get(tIdx)->GetObject<MobilityModel>()->GetPosition();
+        victimX = vp.x; victimY = vp.y;
+    }
+    if (!cfg.victimOnNode) {
+        // audit W7: displace the victim off the lattice by up to half a cell in
+        // each axis, then re-designate the NEAREST node as the one whose
+        // dataset completion is scored. Without this the victim is always
+        // exactly a sensor, so the strongest reporter is trivially the answer.
+        std::uniform_real_distribution<double> off(-0.5 * cfg.gridSpacing,
+                                                   0.5 * cfg.gridSpacing);
+        victimX += off(trng);
+        victimY += off(trng);
+        double best = 1e18;
+        for (uint32_t i = 0; i < s.sensors.GetN(); ++i) {
+            Vector p = s.sensors.Get(i)->GetObject<MobilityModel>()->GetPosition();
+            double d = std::hypot(p.x - victimX, p.y - victimY);
+            if (d < best) { best = d; tIdx = i; targetId = s.sensors.Get(i)->GetId(); }
+        }
+    }
     ClueFieldConfig cc;
     cc.targetNodeId = targetId;
     cc.seed = cfg.seed;
+    cc.victimX = victimX;
+    cc.victimY = victimY;
     cc.decay = cfg.clueDecayM;          // sensing range knob (localization-resolution study)
+    cc.senseSigma = cfg.senseSigma;     // audit M9/W3: detector noise
     auto field = BuildClueField(cluePos, cc);
+    // audit M9/W3: frozen per-node GPS offsets, drawn from the same run seed.
+    std::normal_distribution<double> gpsN(0.0, std::max(0.0, cfg.gpsSigmaM));
+    std::map<uint32_t, std::pair<double, double>> gpsBias;
+    for (const auto& n : cluePos)
+        gpsBias[n.id] = cfg.gpsSigmaM > 0 ? std::make_pair(gpsN(trng), gpsN(trng))
+                                          : std::make_pair(0.0, 0.0);
 
     // 4) target profile
     TargetProfile tp = TargetProfile::Generate();
@@ -82,10 +112,9 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     m_metrics.SetMeta(cfg.seed, cfg.gridSize, numUav, cfg.scheme, targetId);
     // audit S9/W8: emit the victim's true position + spacing instead of forcing
     // every analysis script to reconstruct them from the node-ID convention.
-    {
-        Vector vp = s.sensors.Get(tIdx)->GetObject<MobilityModel>()->GetPosition();
-        m_metrics.SetGroundTruth(vp.x, vp.y, cfg.gridSpacing);
-    }
+    // W7: ground truth is the victim's real position, which is no longer
+    // necessarily a node position.
+    m_metrics.SetGroundTruth(victimX, victimY, cfg.gridSpacing);
 
     // 5) Control plane is now FULLY DISTRIBUTED in the ground apps: each Cell
     // Leader aggregates its cell from RPTs, floods SHARE across boundaries, and
@@ -226,6 +255,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetCodedRecovery(tspMc && cfg.codedMulticast);
         app->SetAimArgmax(cfg.aimArgmax);          // audit W1 ablation
         app->SetElectSuppress(cfg.electSuppress);  // audit B2 ablation
+        app->SetGpsBias(gpsBias[id].first, gpsBias[id].second);  // audit M9/W3
         app->SetMinObserve(cfg.minObserveS);
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);

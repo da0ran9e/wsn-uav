@@ -57,6 +57,9 @@ public:
     // UAV. Turning it off is how the election's value is measured rather than
     // asserted.
     void SetElectSuppress(bool v) { m_electSuppress = v; }
+    // audit M9/W3: this node's frozen GPS offset, in metres. Set by the
+    // orchestrator from a per-run RNG so it is reproducible from the seed.
+    void SetGpsBias(double dx, double dy) { m_gpsBiasX = dx; m_gpsBiasY = dy; }
     void SetMinObserve(double s) { m_minObserveS = s; } // hold first summon until s
     void SetProfile(const std::vector<Fragment>& frags);
     void SetClueQuality(double q) { m_clueQuality = q; }
@@ -101,6 +104,7 @@ private:
     bool m_codedRecovery = false;
     bool m_aimArgmax = false;
     bool m_electSuppress = true;
+    double m_gpsBiasX = 0, m_gpsBiasY = 0;
     uint32_t m_chunksRx = 0;      // total chunks received (duplicates count: coded)
     double m_minObserveS = 20.0;
 

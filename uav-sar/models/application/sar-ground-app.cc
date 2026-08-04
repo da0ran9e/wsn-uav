@@ -75,12 +75,17 @@ double SarGroundApp::CellAggregate() const {
 
 void SarGroundApp::DeliverEvidence(double ev) {
     Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+    // audit M9/W3: a node reports the position its GPS believes it is at. The
+    // offset is drawn ONCE per node (a receiver's bias is a property of where it
+    // sits under the canopy, not of when it happens to transmit) -- redrawing it
+    // per report would let the leader average the error away for free.
+    double rx = p.x + m_gpsBiasX, ry = p.y + m_gpsBiasY;
     if (m_isCellLeader) {
-        LeaderIngest((uint16_t)m_nodeId, ev, p.x, p.y);   // local sensing
+        LeaderIngest((uint16_t)m_nodeId, ev, rx, ry);   // local sensing
         return;
     }
     uint8_t evQ8 = (uint8_t)std::min(255.0, ev * 255.0);
-    SendRpt((uint16_t)m_nodeId, evQ8, (int16_t)(p.x * 10), (int16_t)(p.y * 10),
+    SendRpt((uint16_t)m_nodeId, evQ8, (int16_t)(rx * 10), (int16_t)(ry * 10),
             m_treeParent, (uint8_t)params::kRptTtl);
 }
 

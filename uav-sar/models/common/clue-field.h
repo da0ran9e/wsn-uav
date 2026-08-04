@@ -21,14 +21,24 @@ namespace ns3::uavsar {
 struct CluePos { uint32_t id; double x, y; };
 
 struct ClueFieldConfig {
-    uint32_t targetNodeId = 0;      // the victim's nearest node (ground truth)
+    uint32_t targetNodeId = 0;      // the node nearest the victim (metrics only)
     uint32_t seed = 1;
+    // audit W7: the victim is a CONTINUOUS position, not a node. When the victim
+    // is co-located with a sensor, the strongest reporter IS the victim and any
+    // estimator looks good for free; that coincidence is removed here.
+    double victimX = 0, victimY = 0;
     double strongRadius = 40.0;     // m
     double weakRadius = 120.0;      // m
     double decay = 60.0;            // m, exponential falloff scale
     double maxQuality = 0.95;
     double bgFalsePositiveRate = 0.03;
     double maxNoiseQuality = 0.18;
+    // audit M9/W3: a detector does not read the field, it reads a NOISY
+    // observation of it. sigma is additive Gaussian on the quality, drawn ONCE
+    // per node per run (it is one observation of that node's own footage, not a
+    // per-packet event) and clipped to [0,1]. sigma = 0 reproduces the
+    // idealized field exactly, so it is the ablation, not the default reality.
+    double senseSigma = 0.0;
 };
 
 struct ClueInfo {

@@ -18,7 +18,7 @@ the proposed scheme or more generous to the baseline**:
 | baseline replayed identical chunk indices (uncoded), needing R=3 | **rateless recovery** per Zeng'18; the baseline meets its own goal (98.8 % of GTs, 100 % of victims) at **R=1.2**, halving every hover |
 | `nocoop`/`pure-uav` could never complete the mission (0 % by construction) | they fly home and report too — **all arms reach 100 %** |
 | `timeToLocalize` reported the `--minObserve` knob | window applied first, evidence-ordered backoff on top |
-| the election's stand-down was a one-hop SUMMON that could not reach another leader; 30–40 % of runs formed two competing regions | **RCLAIM floods the stand-down** — 0/20 duplicate regions, at +4–8 % packets (B2, ablated below) |
+| the election's stand-down was a one-hop SUMMON that could not reach another leader; 30–40 % of runs formed two competing regions | **RCLAIM floods the stand-down** — 0/20 duplicate regions **at `minObserve = 20`**, at +4–8 % packets (B2; audit A11 shows this does *not* hold at a hard 45 s window edge, where two summons fired 0.1 s apart — faster than a multi-hop flood can suppress) |
 | the victim fix existed only in simulator state | **carried to the BS in the REPORT packet** and reported as `reportErr_m` (B3) |
 
 ## Operating points
@@ -171,11 +171,81 @@ should not use this scheme as it currently stands.
 - **W4** All baselines are open-loop. A closed-loop non-cooperative baseline is
   needed to attribute the gain to *cooperation* specifically rather than to
   having any feedback at all.
-- **W7** Lattice deployment with the victim on a node. Random (PPP) deployment
-  and a continuous victim position would remove a favourable coincidence.
+- **W7 is only HALF addressed — this is not random deployment.** `--victimOnNode=0`
+  displaces the victim uniformly in [−s/2, +s/2]², which *is* the Voronoi cell of
+  the lattice point. Consequences, both verified (audit A3): the nearest node is
+  therefore **always** the original node (`targetNodeId` differs in 0/20 seeds),
+  and the victim is **always within s/√2 = 14.1 m of a sensor** by construction
+  (measured median 9.2 m, max 11.9 m). The estimator's free lunch is gone, but
+  the deployment is still a perfect lattice with no density variation and no
+  coverage holes. Say "victim off-lattice"; **never** say "random deployment".
+  A PPP deployment where the victim can fall in a gap would attack the
+  victim-served rate far harder than this does.
 - **Repro gap** The HTML replay viewers in `docs/visualize/` were generated ad
   hoc and have no committed generator; they are illustrations, not evidence.
   Every number in this file comes from a committed script in `tools/`.
+
+## When to summon — the mechanism that actually sets the accuracy
+
+Decomposing the fix error across the realism knobs (16×16, N = 60,
+`tools/campaign_error_budget.py`) produced the most useful negative result in
+this study:
+
+| detector σ | GPS σ | victim | median | p90 |
+|---:|---:|---|---:|---:|
+| 0.00 | 0 m | on node (fully ideal) | 20.0 m | 28.3 m |
+| 0.00 | 0 m | continuous | 18.1 m | 30.3 m |
+| 0.00 | 5 m | continuous | 19.3 m | 32.4 m |
+| 0.10 | 0 m | continuous | 18.9 m | 36.1 m |
+| 0.10 | 5 m | continuous (realistic) | 20.7 m | 38.7 m |
+
+**The median is ~18–21 m everywhere, including the perfect configuration.**
+Measurement quality moves the p90 and essentially nothing else. So the floor is
+not a sensing problem, and it is not an estimator problem (centroid vs argmax is
+a wash — see below) and it is not the one-cell aiming scope either (fixing that
+moved the median 0.8 m, though it did buy +7.5 pp reliability).
+
+It is **decision time**. A leader aims at the strongest reporter *it has heard
+from*, and a node reports only once the FAST sweep has delivered it enough cues
+to cross the cooperation threshold. Summon early and you aim from a sparse,
+biased sample of the evidence field.
+
+**But the observation window is not a free knob** (audit A10). It must be long
+enough for the field to be sampled and *shorter than the sweep*, because once
+the FAST UAVs finish and fly home there is nobody airborne to relay the SUMMON
+to the DATA team. That upper bound scales with area — a fixed 45 s was optimal
+at 16×16 and produced **zero localizations in 60/60 seeds at 8×8**. A wall-clock
+constant is therefore a hidden function of grid size.
+
+Two changes remove that trap, both local and both bounded:
+
+- **Adaptive window** (`--adaptiveWindow`, default): summon once this cell's own
+  evidence has stopped growing for `kEvidenceStableS`, with `--minObserve` as a
+  floor and `kElectDeadlineS` as a ceiling. Big grids keep feeding the leader
+  longer and so defer the decision longer, with no knowledge of the grid at all.
+- **Bounded relay hold** (`kRelayGraceS = 30 s`): a FAST UAV that has finished
+  sweeping holds station as a relay until it relays a SUMMON or the grace
+  expires. Adaptive timing *alone* made 8×8 worse (63 % mission completion),
+  which is what showed the window was the symptom and the departing relay the
+  cause.
+
+Result at the realistic operating point (N = 60), versus the fixed window:
+
+| | 8×8 fixed | **8×8 adaptive** | 16×16 fixed | **16×16 adaptive** |
+|---|---:|---:|---:|---:|
+| fix error (median) | 19.2 m | **15.6 m** | 20.2 m | **14.7 m** |
+| fix error (p90) | 36.2 m | **30.6 m** | 38.7 m | **27.3 m** |
+| victim served | 88 % | **90 %** | 85 % | **92 %** |
+| mission time | 64 s | 75 s | 94 s | 114 s |
+| energy | 41 kJ | 48 kJ | 59 kJ | 73 kJ |
+
+**This is a real trade, not a free win.** Roughly 25–30 % better localization and
+better reliability, for roughly 20 % more time and energy — which drops the cost
+ratio against `tsp-mc × 4` from 1.28× to ~1.08× at 8×8 and from 2.05× to ~1.63×
+at 16×16. Both operating points still dominate the baseline on every axis while
+producing a position it cannot produce at all, so **the paper should publish the
+curve and let the deployment pick its point**, rather than quote whichever end
+flatters the scheme.
 
 ## What limits the localization accuracy (mechanism)
 
@@ -184,7 +254,16 @@ re-levelling (which changed cruise speed and completion rules) does not move
 them; the absolute delivery error, however, is now the re-measured 18–20 m of
 the table above, not the 15.8 m an earlier revision of this file quoted.
 
-1. **Accuracy is sensing-limited, not estimator-limited.** Sweeping the on-node
+> **Retracted.** Item 1 below said the accuracy is *sensing-limited*. It is not.
+> Decomposing the error budget (audit A9, `tools/campaign_error_budget.py`,
+> 16×16, N = 60) gives a ~18–21 m median in **every** configuration including a
+> noise-free detector with exact GPS and the victim on a node. The `clueDecay`
+> sweep below is real, but it varies the *field's* spatial scale, not the
+> measurement quality, so it does not support the sensing-limited reading. The
+> actual limit is **decision time** — see "When to summon" below.
+
+1. **Accuracy is sensing-limited, not estimator-limited.** *(retracted, above.)*
+   Sweeping the on-node
    detector range (`--clueDecay`), the error scales ≈ 0.2–0.25× the decay
    length: **6.6 m** @ 30 m, ~16 m @ 60 m, **21.2 m** @ 120 m. It is *not*
    limited by sensor density (14 / 16 / 11 m at 15 / 20 / 30 m spacing).

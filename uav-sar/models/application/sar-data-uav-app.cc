@@ -279,6 +279,28 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     if (sz < 2) return true;
     std::vector<uint8_t> b(sz); pkt->CopyData(b.data(), sz);
     uint8_t type = b[0];
+    if (type == (uint8_t)Msg::SUMMON && sz >= kSummonLen && m_claimed && !m_confirmed &&
+        (m_state == State::DELIVER || m_state == State::DIVERT)) {
+        // Delivery fallback: while delivering, this UAV is hovering directly
+        // over the region, so the leader's ground SUMMON is a short A2G hop and
+        // reaches it without a FAST relay (the relays have usually gone home by
+        // now). A summon carrying DIFFERENT coordinates is the leader telling us
+        // its first candidate was wrong — re-aim rather than keep transmitting
+        // at a place the victim demonstrably cannot decode.
+        int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
+        double nx = cx / 10.0, ny = cy / 10.0;
+        if (std::hypot(nx - m_divert.x, ny - m_divert.y) > 5.0) {
+            m_divert = Vector(nx, ny, m_alt);
+            m_hasFix = true; m_fixX = nx; m_fixY = ny;   // B3: report the CORRECTED fix
+            m_state = State::DIVERT;
+            if (m_metrics) {
+                Vector p = m_fc.GetPosition();
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                 "retarget_divert", "leader re-aimed", p.x, p.y, p.z);
+            }
+        }
+        return true;
+    }
     if (type == (uint8_t)Msg::A2A && sz >= kA2ALen) {
         int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
         // Radio mutual exclusion: schedule a CLAIM after a short backoff; if a

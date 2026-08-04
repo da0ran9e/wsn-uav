@@ -80,6 +80,9 @@ public:
 
 private:
     struct NodeEv { double ev = 0, x = 0, y = 0; };
+    // Ranked delivery candidates, strongest first: own members + neighbour peaks.
+    // Holding the ranking is what makes a wrong first guess recoverable.
+    struct Cand { double ev, x, y; };
 
     void StartApplication() override;
     void StopApplication() override;
@@ -96,6 +99,7 @@ private:
     void SendRclaim(int32_t cell, uint8_t evQ8, uint8_t peakQ8,
                     int16_t cx, int16_t cy, uint8_t ttl);
     void MaybeElect();                         // schedule a summon if I lead
+    void MaybeRetarget();                      // no CONFIRM -> aim at the next candidate
     void Elect();                              // fire the summon (winner)
     double PossessedConfidence() const;
     bool HasEntireDataset() const;
@@ -157,9 +161,13 @@ private:
     // region-leader beaconing + closure
     bool m_isLeader = false;
     bool m_isTarget = false;
-    bool m_confirmed = false;
+    bool m_confirmed = false;    // I hold the entire dataset
+    bool m_confirmHeard = false; // somebody's CONFIRM reached me -> delivery closed
     bool m_heardCue = false;    // viz: first-cue marker emitted
     uint16_t m_regionId = 1;
+    std::vector<Cand> m_candidates;
+    size_t m_candIdx = 0;
+    uint32_t m_retargets = 0;
     double m_cx = 0, m_cy = 0;  // beacon coords = strongest node position
     uint32_t m_beacons = 0;
     uint32_t m_confirmsSent = 0;

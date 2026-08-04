@@ -127,6 +127,15 @@ inline constexpr double kEvidenceGrowEps = 0.02;    // [Design] growth below thi
 // regress to the old hover-forever trap, but long enough that the region can
 // still form after a short sweep finishes.
 inline constexpr double kRelayGraceS     = 30.0;    // [Design] post-sweep relay hold
+
+// Delivery fallback: the scheme's central weakness was that a wrong region was
+// unrecoverable — blind coverage serves the victim ~99% of the time, directed
+// delivery ~88%, and the gap did not close with scale. If no CONFIRM arrives
+// within this long after the summon, the elected leader re-aims at the NEXT
+// strongest candidate it has heard from and keeps beaconing. Bounded, because
+// an unbounded retarget loop would just be a slow blind sweep.
+inline constexpr double kRetargetAfterS  = 26.0;    // [Design] > kMinDeliverDwellS
+inline constexpr uint32_t kMaxRetargets  = 2;       // [Design]
 inline constexpr double kElectDeadlineS  = 90.0;    // [Design] hard ceiling after
                                                     // ALERT, so a cell whose evidence
                                                     // never settles cannot starve

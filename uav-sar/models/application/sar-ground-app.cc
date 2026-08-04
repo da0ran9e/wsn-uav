@@ -253,6 +253,19 @@ void SarGroundApp::Elect() {
     // Weighting by evidence^2 concentrates on the high-evidence cluster; the
     // neighbour terms pull the estimate toward the true peak when the victim sits
     // near a cell boundary (the diagnosed ~1-cell-hop error mode).
+    // Rank every candidate this leader has heard of, strongest first: its own
+    // members (evidence + GPS-reported position) and each neighbouring cell's
+    // peak reporter. The ranking is what makes a failed delivery recoverable —
+    // without it, a wrong first guess was terminal (see kRetargetAfterS).
+    m_candidates.clear();
+    for (const auto& [n, ne] : m_cellEvidence)
+        m_candidates.push_back({ne.ev, ne.x, ne.y});
+    for (const auto& [c, nb] : m_neighborEv)
+        if (nb.peak > 0) m_candidates.push_back({nb.peak, nb.x, nb.y});
+    std::sort(m_candidates.begin(), m_candidates.end(),
+              [](const Cand& a, const Cand& b) { return a.ev > b.ev; });
+    m_candIdx = 0;
+
     if (m_aimArgmax) {
         // Aim at the single strongest reporter anywhere in the region.
         // audit A4: the search used to cover only this leader's OWN cell
@@ -314,10 +327,34 @@ void SarGroundApp::StartSummon(double cx, double cy) {
                          "summon_start", det, p.x, p.y, p.z);
     }
     BeaconTick();
+    Simulator::Schedule(Seconds(params::kRetargetAfterS), &SarGroundApp::MaybeRetarget, this);
+}
+
+void SarGroundApp::MaybeRetarget() {
+    // No CONFIRM within kRetargetAfterS of the summon means the delivery landed
+    // somewhere the victim could not decode it. The leader still holds a ranked
+    // candidate list, so it re-aims at the next one and keeps beaconing; the
+    // DATA UAV overhead picks the new coordinates off the SUMMON. Bounded by
+    // kMaxRetargets, otherwise this degenerates into a slow blind sweep.
+    if (m_confirmed || m_confirmHeard || m_retargets >= params::kMaxRetargets) return;
+    if (m_candIdx + 1 >= m_candidates.size()) return;     // nothing left to try
+    m_candIdx++;
+    m_retargets++;
+    m_cx = m_candidates[m_candIdx].x;
+    m_cy = m_candidates[m_candIdx].y;
+    if (m_metrics) {
+        Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+        char det[80];
+        std::snprintf(det, sizeof det, "no confirm; candidate %u -> %.1f;%.1f",
+                      (unsigned)m_candIdx, m_cx, m_cy);
+        m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "CL",
+                         "retarget", det, p.x, p.y, p.z);
+    }
+    Simulator::Schedule(Seconds(params::kRetargetAfterS), &SarGroundApp::MaybeRetarget, this);
 }
 
 void SarGroundApp::BeaconTick() {
-    if (m_confirmed || m_beacons >= params::kBeaconQuota) return;
+    if (m_confirmed || m_confirmHeard || m_beacons >= params::kBeaconQuota) return;
     if (m_dev) {
         std::vector<uint8_t> b(kSummonLen);
         uint8_t* q = b.data();
@@ -360,7 +397,11 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
     uint8_t type = b[0];
 
     if (type == (uint8_t)Msg::CONFIRM) {
-        Simulator::Cancel(m_beaconEvent);          // a delivery closed -> go quiet
+        // A delivery closed. Go quiet AND stop the retarget chain -- m_confirmed
+        // only means "I personally hold the dataset", so without this flag a
+        // leader kept re-aiming after a delivery that had already succeeded.
+        m_confirmHeard = true;
+        Simulator::Cancel(m_beaconEvent);
         return true;
     }
     if (type == (uint8_t)Msg::SUMMON && sz >= kSummonLen) {

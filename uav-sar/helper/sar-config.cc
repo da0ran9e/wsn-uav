@@ -25,6 +25,14 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     // dataset to EVERY ground terminal (no edge cooperation, no localization),
     // then (our mission definition) returns to the BS and reports.
     const bool tspMc = (cfg.scheme == "tsp-mc");
+    // audit W4: closed-loop NON-cooperative baseline. Same fleet, same cue
+    // sweep, same delivery and the same completion rule as `proposed` -- the ONE
+    // difference is that the ground has no cooperative substrate. Nodes answer
+    // whatever UAV is overhead with a direct single-hop ECHO; there is no cell
+    // tree, no cross-cell SHARE and no election. It exists so the proposed
+    // scheme's gain can be attributed to COOPERATION rather than to the mere
+    // presence of feedback, which every other baseline lacks entirely.
+    const bool closedLoop = (cfg.scheme == "closed-loop");
     uint32_t numUav = cfg.numUav;
     if (cfg.scheme == "pure-uav") numUav = 1;   // single UAV, no WSN cooperation
     // tsp-mc flies cfg.numUav UAVs: the GT set is banded like nocoop and each
@@ -162,12 +170,16 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     // audit F1: one cruise speed for all schemes unless explicitly overridden.
     const double fastSpd = cfg.fastSpeedMps > 0 ? cfg.fastSpeedMps : params::kFastSpeedMps;
     const double dataSpd = cfg.dataSpeedMps > 0 ? cfg.dataSpeedMps : params::kDataSpeedMps;
-    uint32_t fastCount = proposed ? std::max<uint32_t>(1, (uint32_t)(numUav * cfg.fastRatio)) : 0;
+    // audit W4: closed-loop uses the IDENTICAL fleet split as proposed, so the
+    // comparison isolates the ground substrate and nothing about the airframes.
+    uint32_t fastCount = (proposed || closedLoop)
+                             ? std::max<uint32_t>(1, (uint32_t)(numUav * cfg.fastRatio))
+                             : 0;
     // UAV role coordination (who diverts, who couriers) is now a radio CLAIM with
     // suppression — no shared-memory tokens.
     for (uint32_t u = 0; u < numUav; u++) {
-        if (!proposed) {
-            // baseline: every UAV sweeps ITS band and dwell-dumps the dataset.
+        if (!proposed && !closedLoop) {
+            // blind baseline: every UAV sweeps ITS band and dwell-dumps the dataset.
             Ptr<SarDataUavApp> app = CreateObject<SarDataUavApp>();
             app->SetNodeId(s.uavs.Get(u)->GetId());
             app->SetDevice(s.uavDevs.Get(u));
@@ -218,6 +230,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetCruise(params::kCruiseAltitudeM, fastSpd);
             app->SetBs(bsPos, bsAddr);
             app->SetAllHome(cfg.allHome);
+            app->SetEchoRelay(closedLoop);       // audit W4
             s.uavs.Get(u)->AddApplication(app);
             app->SetStartTime(Seconds(0));
             app->SetStopTime(Seconds(cfg.simTime));
@@ -255,6 +268,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetDevice(s.sensorDevs.Get(i));
         app->SetMetrics(&m_metrics);
         app->SetCooperative(proposed);
+        app->SetEchoMode(closedLoop);            // audit W4
         // audit F4: rateless recovery for the coded-multicast baseline only.
         app->SetCodedRecovery(tspMc && cfg.codedMulticast);
         app->SetAimArgmax(cfg.aimArgmax);          // audit W1 ablation

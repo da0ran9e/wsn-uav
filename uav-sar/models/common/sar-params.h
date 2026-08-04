@@ -104,6 +104,12 @@ inline constexpr double kFwdStaggerMaxS  = 0.03;    // [Design] random per-hop f
 inline constexpr double kClaimBackoffS    = 0.15;   // [Design] UAV role claim: broadcast a
                                                     // CLAIM after U(0,this); first wins, the
                                                     // rest yield (replaces shared-mem token).
+// audit W4: closed-loop non-cooperative baseline. A node that crosses the coop
+// threshold answers the sky directly, repeating at a low rate while a UAV might
+// still be in range. Bounded so the arm cannot win on sheer chatter.
+inline constexpr double kEchoRepeatS     = 2.0;     // [Design]
+inline constexpr uint32_t kEchoRepeatMax = 8;       // [Design]
+
 // ---- when to stop observing and summon (audit A10) -------------------------
 // A wall-clock observation window (--minObserve) is the WRONG parameterization
 // and it fails hard: it must be long enough for the cue sweep to have sampled

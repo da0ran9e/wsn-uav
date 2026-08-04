@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 
 using namespace ns3;
@@ -165,6 +166,32 @@ void SarFastUavApp::ControlTick() {
     m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarFastUavApp::ControlTick, this);
 }
 
+void SarFastUavApp::RelayBestEcho() {
+    // Dispatch the DATA team to the best DIRECT echo. Byte-for-byte the same
+    // A2A the cooperative arm sends, so the two arms differ in HOW the aim point
+    // was formed and in nothing else downstream.
+    if (m_summonSeen || m_bestEchoEv <= 0 || !m_dev) return;
+    m_summonSeen = true;
+    m_hasFix = true; m_fixX = m_bestEchoX; m_fixY = m_bestEchoY;
+    std::vector<uint8_t> r(kA2ALen, 0);
+    uint8_t* q = r.data();
+    *q++ = (uint8_t)Msg::A2A; *q++ = kBroadcast;
+    uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2;
+    int16_t cx = (int16_t)(m_bestEchoX * 10), cy = (int16_t)(m_bestEchoY * 10);
+    std::memcpy(q, &cx, 2); q += 2; std::memcpy(q, &cy, 2);
+    m_dev->Send(Create<Packet>(r.data(), r.size()), Mac16Address("ff:ff"), 0);
+    if (m_metrics) {
+        m_metrics->AddSent(); m_metrics->AddSentBytes(r.size()); m_metrics->AddCustody();
+        Vector p = m_fc.GetPosition();
+        char det[64];
+        std::snprintf(det, sizeof det, "echo ev=%.2f -> %.1f;%.1f",
+                      m_bestEchoEv, m_bestEchoX, m_bestEchoY);
+        m_metrics->MarkLocalize(Simulator::Now().GetSeconds());
+        m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "FAST",
+                         "echo_relay", det, p.x, p.y, p.z);
+    }
+}
+
 void SarFastUavApp::DisseminateTick() {
     // Byte-honest cue dissemination: cue fragments are chunked exactly like
     // full-data fragments (same header), cycling (frag, seq). Stops once a
@@ -253,6 +280,33 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         if (role == 1 && id != (uint16_t)m_nodeId && !m_courier) {
             m_yieldedCourier = true;               // another FAST is the courier
             Simulator::Cancel(m_courierEvent);
+        }
+        return true;
+    }
+    if (b[0] == (uint8_t)Msg::A2A && sz >= kA2ALen) {
+        // A peer already dispatched the DATA team, so the region is found and
+        // cues are moot. In the cooperative arm the ground SUMMON reaches every
+        // FAST at once; the closed-loop arm has no such shared plane, so the
+        // fleet message is what stops the others cueing.
+        m_summonSeen = true;
+        Simulator::Cancel(m_echoSettle);
+        return true;
+    }
+    if (b[0] == (uint8_t)Msg::ECHO && sz >= kEchoLen && m_echoRelay && !m_summonSeen) {
+        // audit W4: closed-loop NON-cooperative arm. There is no ground leader
+        // and no region, so this UAV aims at the strongest thing it personally
+        // overheard. Track the running argmax; the relay is scheduled once the
+        // evidence stops improving (same "aim when it settles" rule the
+        // cooperative arm uses, so the two differ ONLY in whether the ground
+        // aggregates for them).
+        uint8_t evQ8 = b[3];
+        int16_t x, y; std::memcpy(&x, &b[4], 2); std::memcpy(&y, &b[6], 2);
+        double ev = evQ8 / 255.0;
+        if (ev > m_bestEchoEv) {
+            m_bestEchoEv = ev; m_bestEchoX = x / 10.0; m_bestEchoY = y / 10.0;
+            Simulator::Cancel(m_echoSettle);
+            m_echoSettle = Simulator::Schedule(Seconds(params::kEvidenceStableS),
+                                               &SarFastUavApp::RelayBestEcho, this);
         }
         return true;
     }

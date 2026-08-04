@@ -37,6 +37,9 @@ random.seed(12345)  # bootstrap determinism
 # scheme -> extra CLI args + sim-time budget (generous: must not truncate a run)
 SCHEMES = {
     "proposed":   (["--numUav=4"], 300),
+    # audit W4: closed-loop NON-cooperative -- same fleet, same cue sweep, same
+    # delivery, single-hop ECHO feedback instead of the WSN substrate.
+    "closed-loop": (["--numUav=4"], 300),
     "nocoop":     (["--numUav=4"], 400),
     "pure-uav":   ([], 700),
     "tsp-mc-x4":  (["--scheme=tsp-mc", "--numUav=4"], 600),

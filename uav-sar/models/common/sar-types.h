@@ -33,6 +33,13 @@ enum class Msg : uint8_t {
                     //   while the ground radio reaches ~37 m, so the suppression
                     //   half of the election could never physically arrive and
                     //   every alerting cell summoned independently.
+    ECHO     = 12,  // audit W4: node -> whatever UAV is overhead, DIRECT and
+                    //   single-hop: "my evidence is X, I am at (x,y)". This is
+                    //   the closed-loop NON-cooperative baseline's entire
+                    //   feedback path -- no cell tree, no cross-cell SHARE, no
+                    //   election. It exists so the proposed scheme's gain can be
+                    //   attributed to COOPERATION rather than merely to having
+                    //   feedback at all. [origNode:u16][evQ8:u8][x:i16][y:i16]
 };
 
 inline constexpr uint8_t kBroadcast = 0xFF;
@@ -61,6 +68,7 @@ inline constexpr uint32_t kRptLen     = 1 + 2 + 2 + 1 + 1 + 2 + 2;  // 11 (+self
 // [type][origCell:u16][evQ8:u8][peakQ8:u8][x:i16][y:i16][ttl:u8]
 inline constexpr uint32_t kShareLen   = 1 + 2 + 1 + 1 + 2 + 2 + 1;  // 10
 inline constexpr uint32_t kRclaimLen  = kShareLen;                  // same body
+inline constexpr uint32_t kEchoLen    = 1 + 2 + 1 + 2 + 2;          // 8 (audit W4)
 inline constexpr uint32_t kClaimLen   = 1 + 2 + 1 + 2;              // 6 [region][role][id]
 
 inline constexpr uint32_t kMaxPayload = 100;                    // safe app payload

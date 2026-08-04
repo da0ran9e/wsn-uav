@@ -39,6 +39,7 @@ void SarGroundApp::StopApplication() {
     Simulator::Cancel(m_confirmEvent);
     Simulator::Cancel(m_electEvent);
     Simulator::Cancel(m_rptRepeatEvent);
+    Simulator::Cancel(m_echoEvent);
 }
 
 double SarGroundApp::PossessedConfidence() const {
@@ -103,6 +104,31 @@ void SarGroundApp::SendRpt(uint16_t orig, uint8_t evQ8, int16_t x, int16_t y,
     std::memcpy(q, &y, 2); q += 2;
     m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
     if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+}
+
+void SarGroundApp::SendEcho() {
+    // audit W4: the closed-loop non-cooperative arm's ENTIRE feedback path. One
+    // hop, straight up to whichever UAV happens to be in range -- no tree, no
+    // flood, no leader, no election. A node whose evidence rises while no UAV is
+    // overhead is simply never heard, which is precisely the failure the
+    // cooperative substrate exists to prevent, so this arm isolates the value of
+    // that substrate rather than the value of feedback in general.
+    if (!m_dev || m_echoesSent >= params::kEchoRepeatMax) return;
+    Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+    double rx = p.x + m_gpsBiasX, ry = p.y + m_gpsBiasY;   // same GPS error as RPT
+    double eff = PossessedConfidence() * m_clueQuality;
+    std::vector<uint8_t> b(kEchoLen);
+    uint8_t* q = b.data();
+    *q++ = (uint8_t)Msg::ECHO;
+    uint16_t orig = (uint16_t)m_nodeId; std::memcpy(q, &orig, 2); q += 2;
+    *q++ = (uint8_t)std::min(255.0, eff * 255.0);
+    int16_t x = (int16_t)(rx * 10), y = (int16_t)(ry * 10);
+    std::memcpy(q, &x, 2); q += 2; std::memcpy(q, &y, 2);
+    m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+    if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+    m_echoesSent++;
+    m_echoEvent = Simulator::Schedule(Seconds(params::kEchoRepeatS),
+                                      &SarGroundApp::SendEcho, this);
 }
 
 // ---- Cell Leader: aggregate, share, elect ----------------------------------
@@ -519,6 +545,13 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
             // over the real radio (RPT up the cell tree). Proposed only. Keep
             // re-sending at a low rate while relevant: a single-shot report dies
             // on deep trees / large areas (standard sensor-report retry).
+            if (m_echoMode) {
+                // audit W4: reply directly to the sky, once, and keep repeating
+                // at a low rate while a UAV might still be listening.
+                double eff = PossessedConfidence() * m_clueQuality;
+                if (eff >= m_coop && !m_echoEvent.IsPending() && m_echoesSent == 0)
+                    SendEcho();
+            }
             if (m_cooperative) {
                 double eff = PossessedConfidence() * m_clueQuality;
                 if (eff >= m_coop) {
@@ -549,7 +582,14 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                 Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
                 if (m_isTarget && m_metrics)
                     m_metrics->MarkCompleteData(Simulator::Now().GetSeconds());
-                if (m_cooperative) {
+                // audit W4: the closed-loop arm confirms too. Its whole premise
+                // is single-hop feedback to the UAV overhead, and CONFIRM is
+                // exactly that -- without it the DATA UAV waits for a closure
+                // signal that can never arrive and delivers until the horizon
+                // (measured: 58k packets and a mission that never completes).
+                // The BLIND baselines still do not confirm: they dwell a fixed
+                // budget and have no feedback path at all, which is the point.
+                if (m_cooperative || m_echoMode) {
                     if (m_metrics)
                         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
                                          m_isTarget ? "target" : "node", "confirm",

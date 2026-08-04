@@ -43,6 +43,12 @@ public:
     void SetDevice(ns3::Ptr<ns3::NetDevice> d) { m_dev = d; }
     void SetMetrics(SarMetrics* m) { m_metrics = m; }
     void SetCooperative(bool v) { m_cooperative = v; }  // proposed = true
+    // audit W4: closed-loop NON-cooperative mode. The node answers whatever UAV
+    // is overhead with a DIRECT single-hop ECHO and does nothing else -- no
+    // report up a cell tree, no cross-cell SHARE, no election. It is the
+    // ablation that isolates COOPERATION from feedback: this arm has closed-loop
+    // feedback and homing, and none of the WSN substrate.
+    void SetEchoMode(bool v) { m_echoMode = v; }
     // audit F4: Zeng'18 multicasts RATELESS/network-coded symbols — a terminal
     // recovers after ~1.05x file-worth of ANY symbols. Replaying identical chunk
     // indices (uncoded repetition) instead forces a GT to see all 382 distinct
@@ -91,6 +97,7 @@ private:
     void SendConfirm();                        // retried kConfirmRetries times
     void DeliverEvidence(double ev);           // my own evidence -> CL (local or RPT)
     void SendRpt(uint16_t orig, uint8_t evQ8, int16_t x, int16_t y, int32_t nextHop, uint8_t ttl);
+    void SendEcho();                           // audit W4: direct reply to the sky
     void LeaderIngest(uint16_t orig, double ev, double x, double y);  // CL aggregation
     void FloodShare();
     void SendShare(int32_t cell, uint8_t evQ8, uint8_t peakQ8,
@@ -112,6 +119,9 @@ private:
     bool m_codedRecovery = false;
     bool m_aimArgmax = true;
     bool m_electSuppress = true;
+    bool m_echoMode = false;      // audit W4
+    uint32_t m_echoesSent = 0;
+    ns3::EventId m_echoEvent;
     double m_gpsBiasX = 0, m_gpsBiasY = 0;
     uint32_t m_chunksRx = 0;      // total chunks received (duplicates count: coded)
     double m_minObserveS = 20.0;

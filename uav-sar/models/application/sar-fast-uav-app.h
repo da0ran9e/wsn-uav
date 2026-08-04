@@ -40,6 +40,8 @@ public:
     // audit F2: symmetric completion — every UAV flies home and reports, so the
     // mission clock is not stopped by a single courier while peers stay airborne.
     void SetAllHome(bool v) { m_allHome = v; }
+    // audit W4: home on the strongest DIRECT echo instead of a ground SUMMON.
+    void SetEchoRelay(bool v) { m_echoRelay = v; }
 
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
@@ -67,6 +69,11 @@ private:
     uint32_t m_cueTxCount = 0;  // for decimated viz markers
     bool m_summonSeen = false;  // once a summon is relayed, stop spreading cues
     double m_relayUntilS = 0;   // audit A10: bounded post-sweep relay hold
+    // audit W4: closed-loop baseline -- the best DIRECT echo this UAV heard.
+    bool m_echoRelay = false;
+    double m_bestEchoEv = 0, m_bestEchoX = 0, m_bestEchoY = 0;
+    void RelayBestEcho();
+    ns3::EventId m_echoSettle;
     bool m_hasFix = false;      // audit B3: victim fix to carry home in the REPORT
     double m_fixX = 0, m_fixY = 0;
     double m_alt = 20.0, m_speed = 25.0, m_radius = 50.0;

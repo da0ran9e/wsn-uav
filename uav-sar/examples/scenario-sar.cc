@@ -33,14 +33,14 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("senseSigma", "detector noise sigma on clue quality (0 = ideal)", cfg.senseSigma);
     cmd.AddValue("gpsSigma", "per-node GPS error sigma in m (0 = exact)", cfg.gpsSigmaM);
     cmd.AddValue("victimOnNode", "victim sits exactly on a sensor (0 = continuous)", cfg.victimOnNode);
-    cmd.AddValue("scheme", "proposed | nocoop | pure-uav | tsp-mc", cfg.scheme);
+    cmd.AddValue("scheme", "proposed | closed-loop | nocoop | pure-uav | tsp-mc", cfg.scheme);
     cmd.AddValue("outputDir", "results dir", outputDir);
     cmd.Parse(argc, argv);
 
     if (cfg.scheme != "proposed" && cfg.scheme != "nocoop" && cfg.scheme != "pure-uav" &&
-        cfg.scheme != "tsp-mc") {
+        cfg.scheme != "tsp-mc" && cfg.scheme != "closed-loop") {
         std::cerr << "unknown --scheme=" << cfg.scheme
-                  << " (expected proposed | nocoop | pure-uav | tsp-mc)\n";
+                  << " (expected proposed | closed-loop | nocoop | pure-uav | tsp-mc)\n";
         return 1;
     }
 

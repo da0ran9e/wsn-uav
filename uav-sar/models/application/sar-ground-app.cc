@@ -309,6 +309,12 @@ void SarGroundApp::StartSummon(double cx, double cy) {
     m_isLeader = true;
     m_regionFormed = true;
     m_cx = cx; m_cy = cy;
+    // The region id identifies the ELECTED LEADER, not a constant. It used to be
+    // hardcoded to 1 for every leader, so a delivering UAV could not tell its own
+    // leader's re-aim from an unrelated cell's summon -- and was dragged around
+    // by foreign summons (37 re-diverts against 9 real retargets, which is what
+    // degraded the fix). Binding to one leader is what makes the fallback safe.
+    m_regionId = (uint16_t)(m_cellId & 0xFFFF);
     // audit B2: announce the win on the flood plane, which is the only plane that
     // physically reaches the other cell leaders. Without this the election's
     // suppression half never arrived and every alerting cell summoned its own

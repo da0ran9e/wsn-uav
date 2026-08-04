@@ -196,6 +196,8 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetCruise(params::kCruiseAltitudeM, dataSpd);
             app->SetBs(bsPos, bsAddr);
             app->SetAllHome(cfg.allHome);
+        app->SetDeliverDwell(cfg.deliverDwellS > 0 ? cfg.deliverDwellS
+                                                  : params::kMinDeliverDwellS);
             s.uavs.Get(u)->AddApplication(app);
             app->SetStartTime(Seconds(0));
             app->SetStopTime(Seconds(cfg.simTime));
@@ -233,6 +235,8 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetLoiter(Vector(cx, cy, params::kCruiseAltitudeM));
             app->SetBs(bsPos, bsAddr);
             app->SetAllHome(cfg.allHome);
+        app->SetDeliverDwell(cfg.deliverDwellS > 0 ? cfg.deliverDwellS
+                                                  : params::kMinDeliverDwellS);
             s.uavs.Get(u)->AddApplication(app);
             app->SetStartTime(Seconds(0));
             app->SetStopTime(Seconds(cfg.simTime));

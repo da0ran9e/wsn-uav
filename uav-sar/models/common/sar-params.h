@@ -134,7 +134,14 @@ inline constexpr double kRelayGraceS     = 30.0;    // [Design] post-sweep relay
 // within this long after the summon, the elected leader re-aims at the NEXT
 // strongest candidate it has heard from and keeps beaconing. Bounded, because
 // an unbounded retarget loop would just be a slow blind sweep.
-inline constexpr double kRetargetAfterS  = 26.0;    // [Design] > kMinDeliverDwellS
+// The trigger is set from the MEASURED summon->confirm distribution, not from
+// the delivery dwell. Over 107 successful deliveries at 16x16 that interval is
+// median 25.8 s, p90 53.8 s, p95 61.6 s, max 68.9 s -- so the first attempt at
+// 26 s fired before 49% of SUCCESSFUL deliveries had finished, retargeted 41% of
+// runs when only 11% ever fail, and degraded the fix from 14.6 m to 22.8 m by
+// replacing a good first guess with a worse second one. A fallback must not be
+// eager: it has to sit past the tail of normal completion.
+inline constexpr double kRetargetAfterS  = 60.0;    // [Measured] ~p95 of summon->confirm
 inline constexpr uint32_t kMaxRetargets  = 2;       // [Design]
 inline constexpr double kElectDeadlineS  = 90.0;    // [Design] hard ceiling after
                                                     // ALERT, so a cell whose evidence
@@ -162,7 +169,16 @@ inline constexpr double kMcRedundancy    = 3.0;     // [Design<-Lit] overhead fa
 // Proposed coverage dwell: after the first CONFIRM the DATA UAV keeps delivering
 // for at least this long so the whole localized footprint — not just the node
 // nearest the drop — reconstructs the data (raises victim-served rate).
-inline constexpr double kMinDeliverDwellS = 20.0;    // [Design]
+// [Measured] 20 s was the reliability bottleneck, and the diagnosis matters:
+// CONFIRM is broadcast by ANY node that reconstructs the dataset, so a bystander
+// sitting under the drop point closes the loop while the actual victim -- 20-44 m
+// out, where the per-packet success is lower -- never finishes. Of 12 failures at
+// 16x16, nine were exactly this (delivery happened, closest drop 19.7-43.6 m from
+// the victim); the other three never got a SUMMON to the DATA team at all.
+// Re-aiming does NOT fix this (measured: no change), because the aim was not
+// wrong -- the delivery was too short at range. 40 s takes victim-served from
+// 90.0% to 96.7% at N=120, for +10% mission time, +8% energy, +30% packets.
+inline constexpr double kMinDeliverDwellS = 20.0;    // [Measured] default; --deliverDwell
 
 // ---- Timing (sim mechanics) ------------------------------------------------
 inline constexpr double kControlTickS    = 0.1;     // flight state machine

@@ -60,6 +60,10 @@ struct SarScenarioConfig {
     // audit A10: adaptive observation window is the default; --adaptiveWindow=0
     // restores the fixed wall-clock --minObserve as the ablation arm.
     bool   adaptiveWindow = true;
+    // Reliability/cost knob. 20 s keeps the cost advantage at every density;
+    // 40 s buys ~+6 pp victim-served but costs the 8x8 advantage outright.
+    // Measured at N=120, both scales -- see RESULTS-honest.md.
+    double deliverDwellS = 0.0;  // 0 = kMinDeliverDwellS
     double senseSigma = 0.0;     // detector noise, additive sigma on clueQuality
     double gpsSigmaM = 0.0;      // per-node frozen GPS offset, sigma in metres
     bool   victimOnNode = true;  // false = victim at a continuous position (W7)

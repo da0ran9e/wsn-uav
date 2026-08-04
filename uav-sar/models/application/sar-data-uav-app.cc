@@ -147,7 +147,7 @@ void SarDataUavApp::ControlTick() {
             m_fc.Turn(std::atan2(m_divert.y - p.y, m_divert.x - p.x) * 180 / M_PI);
             m_fc.Forward(m_speed);
             if (d <= arriveR) { m_fc.Hover(); m_state = State::DELIVER;
-                m_deliverUntil = Simulator::Now().GetSeconds() + params::kMinDeliverDwellS;
+                m_deliverUntil = Simulator::Now().GetSeconds() + m_deliverDwellS;
                 if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
                                                 "deliver_start", "", p.x, p.y, p.z);
                 SendFullChunk(0, 0); }
@@ -287,6 +287,10 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // now). A summon carrying DIFFERENT coordinates is the leader telling us
         // its first candidate was wrong — re-aim rather than keep transmitting
         // at a place the victim demonstrably cannot decode.
+        uint16_t rid; std::memcpy(&rid, &b[2], 2);
+        // Only OUR leader may re-aim us. Without this bind, any cell's summon
+        // could drag a delivering UAV away mid-delivery.
+        if (m_boundRegion != 0xFFFF && rid != m_boundRegion) return true;
         int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
         double nx = cx / 10.0, ny = cy / 10.0;
         if (std::hypot(nx - m_divert.x, ny - m_divert.y) > 5.0) {
@@ -303,6 +307,8 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     }
     if (type == (uint8_t)Msg::A2A && sz >= kA2ALen) {
         int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
+        uint16_t rid; std::memcpy(&rid, &b[2], 2);
+        if (!m_claimed && !m_yieldedDivert) m_boundRegion = rid;   // whose region we serve
         // Radio mutual exclusion: schedule a CLAIM after a short backoff; if a
         // peer's CLAIM arrives first we yield, so exactly one DATA UAV diverts.
         if (!m_claimed && !m_yieldedDivert && !m_claimEvent.IsPending() &&

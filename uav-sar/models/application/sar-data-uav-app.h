@@ -9,6 +9,7 @@
 
 #include "flight-controller.h"
 #include "../common/target-profile.h"
+#include "../common/sar-params.h"
 
 #include "ns3/application.h"
 #include "ns3/net-device.h"
@@ -54,6 +55,10 @@ public:
     void SetMcDwell(bool v) { m_mcDwell = v; }
     void SetMcRedundancy(double r) { m_mcRedundancy = r; }
     void SetAllHome(bool v) { m_allHome = v; }        // audit F2
+    // Reliability/cost knob: how long to keep delivering after arriving. CONFIRM
+    // can come from a bystander under the drop point, so a short dwell strands a
+    // victim that sits further out.
+    void SetDeliverDwell(double s) { m_deliverDwellS = s; }
 
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
@@ -98,8 +103,10 @@ private:
     ns3::EventId m_claimEvent;
     bool m_pendingDivert = false;   // claimed before airborne; divert after climb
     bool m_confirmed = false;
+    uint16_t m_boundRegion = 0xFFFF;  // leader whose re-aims we accept
     bool m_hasFix = false;          // audit B3: carry the victim fix home
     double m_fixX = 0, m_fixY = 0;
+    double m_deliverDwellS = params::kMinDeliverDwellS;
     double m_divertStartDist = 0;
     double m_dwellUntil = 0;        // SWEEP_DUMP: cycle chunks until this time
     uint32_t m_reportsSent = 0;     // REPORT retransmissions (bounded)

@@ -202,7 +202,9 @@ th{color:var(--text2);font-weight:600;font-size:10.5px;text-transform:uppercase}
         <div class="it"><span class="sw ring"></span>victim (true)</div>
         <div class="it"><span class="sw" style="background:var(--warn)"></span>fix @ BS</div>
         <div class="it"><span class="sw" style="background:var(--node)"></span>sensor</div>
-        <div class="it"><span class="sw" style="background:var(--hot)"></span>node reporting evidence</div>
+        <div class="it"><span class="sw" style="background:var(--accent);opacity:.35"></span>heard a cue</div>
+        <div class="it"><span class="sw" style="background:var(--hot)"></span>reported evidence</div>
+        <div class="it"><span class="sw ring" style="border-color:var(--hot)"></span>aim point broadcast</div>
         <div class="it"><span class="sw" style="background:var(--good)"></span>node holds full data</div>
       </div>
     </div>
@@ -246,14 +248,34 @@ function proj(x,y){
 
 // ---- per-run derived state -------------------------------------------------
 function nodeStates(r, tnow){
-  // node id -> 'hot' (reported evidence) | 'done' (holds full dataset)
+  // Three states, deliberately distinct: a node that merely HEARD a cue is not
+  // evidence. Colouring those the same as a reporting node turned the whole
+  // field orange and hid the thing the replay exists to show.
+  //   'cued' -> received cue chunks
+  //   'hot'  -> its evidence crossed the threshold and it REPORTED
+  //   'done' -> it holds the entire dataset
   const st = new Map();
+  const rank = {cued:0, hot:1, done:2};
+  const set = (id,v)=>{ const c=st.get(id); if(c===undefined||rank[v]>rank[c]) st.set(id,v); };
   for(const e of r.events){
     if(e[0]>tnow) break;
-    if(e[3]==='clue_report'||e[3]==='cue_rx') { if(!st.has(e[1])) st.set(e[1],'hot'); }
-    if(e[3]==='gt_done'||e[3]==='confirm') st.set(e[1],'done');
+    if(e[3]==='cue_rx') set(e[1],'cued');
+    if(e[3]==='clue_report') set(e[1],'hot');
+    if(e[3]==='gt_done'||e[3]==='confirm') set(e[1],'done');
   }
   return st;
+}
+// The elected leader's aim point, once it has been broadcast.
+function aimAt(r, tnow){
+  let aim=null;
+  for(const e of r.events){
+    if(e[0]>tnow) break;
+    if(e[3]==='summon_start'||e[3]==='retarget'||e[3]==='echo_relay'){
+      const m=/(-?\d+(?:\.\d+)?)[;](-?\d+(?:\.\d+)?)/.exec(e[4]);
+      if(m) aim={x:parseFloat(m[1]), y:parseFloat(m[2]), t:e[0], kind:e[3]};
+    }
+  }
+  return aim;
 }
 function uavAt(r, tnow){
   const by = new Map();
@@ -278,7 +300,7 @@ function draw(){
 
   // sensor lattice
   const st=nodeStates(r,t);
-  const nodeC=css('--node'), hotC=css('--hot'), goodC=css('--good');
+  const nodeC=css('--node'), hotC=css('--hot'), goodC=css('--good'), cueC=css('--accent');
   const rad=Math.max(1.1, r.spacing*s*0.17);
   // node ids run BS=0, UAVs=1..numUav, sensors after that, row-major
   for(let i=0;i<r.grid*r.grid;i++){
@@ -286,9 +308,9 @@ function draw(){
     const id=i+1+r.numUav;
     const [px,py]=proj(gx,gy);
     const s2=st.get(id);
-    ctx.fillStyle = s2==='done'?goodC : s2==='hot'?hotC : nodeC;
-    ctx.globalAlpha = s2? 0.95 : 0.5;
-    ctx.beginPath(); ctx.arc(px,py,rad,0,6.284); ctx.fill();
+    ctx.fillStyle = s2==='done'?goodC : s2==='hot'?hotC : s2==='cued'?cueC : nodeC;
+    ctx.globalAlpha = s2==='cued'?0.30 : s2? 0.95 : 0.28;
+    ctx.beginPath(); ctx.arc(px,py,s2==='hot'||s2==='done'?rad*1.7:rad,0,6.284); ctx.fill();
   }
   ctx.globalAlpha=1;
 
@@ -320,6 +342,18 @@ function draw(){
     ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(vx,vy); ctx.stroke(); ctx.globalAlpha=1;
   }
 
+  // aim point the leader (or the echo relay) actually broadcast
+  const aim=aimAt(r,t);
+  if(aim){
+    const [ax,ay]=proj(aim.x,aim.y);
+    ctx.strokeStyle=css('--hot'); ctx.lineWidth=2; ctx.globalAlpha=0.9;
+    ctx.beginPath(); ctx.arc(ax,ay,14,0,6.284); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ax-19,ay); ctx.lineTo(ax-8,ay);
+    ctx.moveTo(ax+8,ay); ctx.lineTo(ax+19,ay);
+    ctx.moveTo(ax,ay-19); ctx.lineTo(ax,ay-8);
+    ctx.moveTo(ax,ay+8); ctx.lineTo(ax,ay+19); ctx.stroke(); ctx.globalAlpha=1;
+  }
+
   // UAVs
   for(const [id,p] of uavAt(r,t)){
     const [px,py]=proj(p[3],p[4]);
@@ -343,10 +377,21 @@ function renderLog(){
   for(const e of r.events){
     if(e[0]>t) break;
     const lbl=EVLBL[e[3]]; if(!lbl) continue;
-    out.push(`<div><b>${e[0].toFixed(1)}s</b> <span class="hi">${lbl}</span>`+
-             (e[4]?` — ${e[4]}`:'')+`</div>`);
+    out.push([e[0], lbl, e[4]]);
   }
-  document.getElementById('log').innerHTML = out.slice(-160).reverse().join('') ||
+  // Collapse runs of the same event type -- 35 identical "leader yields" lines
+  // at the same instant is noise, and it buried the one line that matters.
+  const rows=[];
+  for(const [tt,lbl,det] of out){
+    const p=rows[rows.length-1];
+    if(p && p.lbl===lbl && Math.abs(p.t0-tt)<2.0){ p.n++; p.t1=tt; continue; }
+    rows.push({t0:tt,t1:tt,lbl,det,n:1});
+  }
+  const html=rows.map(r=>
+    `<div><b>${r.t0.toFixed(1)}s</b> <span class="hi">${r.lbl}</span>`+
+    (r.n>1?` <span style="color:var(--muted)">×${r.n}</span>`:'')+
+    (r.n===1&&r.det?` — ${r.det}`:'')+`</div>`);
+  document.getElementById('log').innerHTML = html.slice(-120).reverse().join('') ||
     '<div style="color:var(--muted)">nothing yet</div>';
 }
 

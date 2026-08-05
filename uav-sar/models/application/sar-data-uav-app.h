@@ -104,6 +104,7 @@ private:
     bool m_pendingDivert = false;   // claimed before airborne; divert after climb
     bool m_confirmed = false;
     uint16_t m_boundRegion = 0xFFFF;  // leader whose re-aims we accept
+    double m_lastCueHeardS = -1;      // last time a FAST UAV was heard cueing
     bool m_hasFix = false;          // audit B3: carry the victim fix home
     double m_fixX = 0, m_fixY = 0;
     double m_deliverDwellS = params::kMinDeliverDwellS;

@@ -141,7 +141,20 @@ void SarDataUavApp::ControlTick() {
                 m_fc.Hover(); m_state = State::LOITER; }
             break;
         case State::LOITER:
-            break;  // wait for A2A relay
+            // Wait for an A2A relay -- but not forever. If the sky has gone
+            // quiet (no FAST UAV cueing for kSkyQuietS) the sweep is over and
+            // no summon is coming, so under the all-home rule there is nothing
+            // left to wait for. The trigger is an OBSERVED radio silence, not a
+            // clock, so it scales with the field instead of against it.
+            if (m_allHome && !m_claimed && m_lastCueHeardS > 0 &&
+                Simulator::Now().GetSeconds() - m_lastCueHeardS > params::kSkyQuietS) {
+                m_state = State::RETURN;
+                if (m_metrics) {
+                    m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                     "quiet_return", "no cues, no summon", p.x, p.y, p.z);
+                }
+            }
+            break;
         case State::DIVERT: {
             double d = std::hypot(m_divert.x - p.x, m_divert.y - p.y);
             m_fc.Turn(std::atan2(m_divert.y - p.y, m_divert.x - p.x) * 180 / M_PI);
@@ -279,6 +292,10 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     if (sz < 2) return true;
     std::vector<uint8_t> b(sz); pkt->CopyData(b.data(), sz);
     uint8_t type = b[0];
+    if (type == (uint8_t)Msg::CUE) {
+        m_lastCueHeardS = Simulator::Now().GetSeconds();   // the sky is still busy
+        return true;
+    }
     if (type == (uint8_t)Msg::SUMMON && sz >= kSummonLen && m_claimed && !m_confirmed &&
         (m_state == State::DELIVER || m_state == State::DIVERT)) {
         // Delivery fallback: while delivering, this UAV is hovering directly

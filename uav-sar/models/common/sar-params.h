@@ -133,6 +133,13 @@ inline constexpr double kEvidenceGrowEps = 0.02;    // [Design] growth below thi
 // regress to the old hover-forever trap, but long enough that the region can
 // still form after a short sweep finishes.
 inline constexpr double kRelayGraceS     = 30.0;    // [Design] post-sweep relay hold
+// A DATA UAV that is never dispatched used to loiter until the simulation
+// horizon: at 40x40 the SUMMON never reached the sky and the fleet burned
+// 1355 kJ with the mission incomplete. The local signal that the sweep is over
+// is that the sky has gone QUIET -- no FAST UAV is broadcasting cues any more.
+// Waiting on a wall-clock constant instead would repeat the audit A10 mistake.
+inline constexpr double kSkyQuietS       = 45.0;    // [Design] no cue heard for this
+                                                    // long => sweep finished, go home
 
 // Delivery fallback: the scheme's central weakness was that a wrong region was
 // unrecoverable — blind coverage serves the victim ~99% of the time, directed

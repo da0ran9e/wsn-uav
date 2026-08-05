@@ -386,7 +386,7 @@ void SarGroundApp::MaybeRetarget() {
 }
 
 void SarGroundApp::BeaconTick() {
-    if (m_confirmed || m_confirmHeard || m_beacons >= params::kBeaconQuota) return;
+    if (m_confirmed || m_confirmHeard) return;
     if (m_dev) {
         std::vector<uint8_t> b(kSummonLen);
         uint8_t* q = b.data();
@@ -532,6 +532,21 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
             Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
             m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "node",
                              "cue_rx", "", p.x, p.y, p.z);
+        }
+
+        // audit: the summon has to reach the SKY, and a leader beaconing on a
+        // fixed 60 s quota is beaconing into an empty sky most of the time. At
+        // 40x40 the aim was computed correctly at 66 s and the first UAV did not
+        // pass within earshot until ~250 s, so the delivery never happened at
+        // all. A CUE chunk is direct proof that a UAV is within one hop RIGHT
+        // NOW, so an elected leader re-announces on hearing one. Rate-limited to
+        // one per beacon interval, and it stops the moment a CONFIRM arrives.
+        if (type == (uint8_t)Msg::CUE && m_isLeader && !m_confirmHeard) {
+            double now = Simulator::Now().GetSeconds();
+            if (now - m_lastCueSummonS >= params::kBeaconIntervalS) {
+                m_lastCueSummonS = now;
+                if (!m_beaconEvent.IsPending()) BeaconTick();
+            }
         }
 
         m_chunksRx++;                     // coded recovery counts duplicates

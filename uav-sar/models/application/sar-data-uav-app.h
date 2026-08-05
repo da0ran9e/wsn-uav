@@ -55,6 +55,15 @@ public:
     void SetMcDwell(bool v) { m_mcDwell = v; }
     void SetMcRedundancy(double r) { m_mcRedundancy = r; }
     void SetAllHome(bool v) { m_allHome = v; }        // audit F2
+    // While waiting to be summoned, a DATA UAV used to park at the field centre
+    // and hover. That wasted it twice: it spread nothing, and -- because SUMMON
+    // is a ONE-HOP ground broadcast -- a stationary UAV at the centre is almost
+    // never within radio range of the leader that fires it. At 40x40 that was
+    // fatal: a correct 9 m aim was computed and never reached the sky. Patrol
+    // instead: fly a coverage sweep over this UAV's own band, spreading CUES
+    // exactly as the FAST team does, and stay divertible throughout.
+    void SetPatrol(bool v) { m_patrol = v; }
+    void SetCues(const std::vector<Fragment>& c) { m_cues = c; }
     // Reliability/cost knob: how long to keep delivering after arriving. CONFIRM
     // can come from a bystander under the drop point, so a short dwell strands a
     // victim that sits further out.
@@ -70,18 +79,25 @@ private:
     void ControlTick();
     void TrajTick();
     void SendFullChunk(size_t fi, uint16_t seq);
+    void PatrolCueTick();               // spread cues while patrolling
     void SendReport();
     void ClaimDivert();                 // won the radio CLAIM -> divert+deliver
     void SendClaim(uint8_t role);       // broadcast a role claim (mutual exclusion)
     void TryClaimDivert(double x, double y);
 
-    enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, DIVERT, DELIVER, SWEEP, RETURN, DONE };
+    enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, PATROL, DIVERT, DELIVER, SWEEP, RETURN, DONE };
 
     uint32_t m_nodeId = 0;
     ns3::Ptr<ns3::NetDevice> m_dev;
     SarMetrics* m_metrics = nullptr;
     Mode m_mode = Mode::SUMMONED;
     std::vector<Fragment> m_full;
+    std::vector<Fragment> m_cues;       // cue fragments spread while patrolling
+    bool m_patrol = true;
+    size_t m_cueIdx = 0;
+    uint16_t m_cueSeq = 0;
+    uint32_t m_cueTxCount = 0;
+    ns3::EventId m_cueEvent;
     std::vector<ns3::Vector> m_sensors;   // for SWEEP_DUMP GMC
     std::vector<ns3::Vector> m_tourOverride;  // tsp-mc: pre-planned VBS tour
     bool m_reportAtEnd = false;               // tsp-mc: tour -> BS -> REPORT

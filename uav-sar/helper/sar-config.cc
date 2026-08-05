@@ -225,7 +225,10 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetNodeId(s.uavs.Get(u)->GetId());
             app->SetDevice(s.uavDevs.Get(u));
             app->SetMetrics(&m_metrics);
-            app->SetSensorPositions(partition(u, fastCount));
+            // With the DATA team patrolling too, the cue sweep is divided among
+            // ALL numUav airframes rather than the fastCount FAST ones -- the
+            // field is covered once by four UAVs instead of twice by two.
+            app->SetSensorPositions(partition(u, (proposed || closedLoop) ? numUav : fastCount));
             app->SetCues(cues);
             app->SetCruise(params::kCruiseAltitudeM, fastSpd);
             app->SetBs(bsPos, bsAddr);
@@ -244,6 +247,13 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetDevice(s.uavDevs.Get(u));
             app->SetMetrics(&m_metrics);
             app->SetFullDataset(full);
+            // Patrol its own band spreading cues while it waits to be summoned,
+            // instead of parking at the field centre. A parked UAV spreads
+            // nothing and, because SUMMON is one-hop, is usually out of range of
+            // the leader that fires it.
+            app->SetPatrol(true);
+            app->SetCues(cues);
+            app->SetSensorPositions(partition(u, numUav));
             app->SetCruise(params::kCruiseAltitudeM, dataSpd);
             app->SetLoiter(Vector(cx, cy, params::kCruiseAltitudeM));
             app->SetBs(bsPos, bsAddr);

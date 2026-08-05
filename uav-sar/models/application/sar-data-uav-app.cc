@@ -34,6 +34,7 @@ void SarDataUavApp::StartApplication() {
 }
 void SarDataUavApp::StopApplication() {
     Simulator::Cancel(m_ctrl); Simulator::Cancel(m_traj); Simulator::Cancel(m_claimEvent);
+    Simulator::Cancel(m_cueEvent);
     m_fc.Hover(); m_fc.SetClimb(0);
 }
 
@@ -84,7 +85,8 @@ void SarDataUavApp::TryClaimDivert(double x, double y) {
     // If already cruising (loiter/en-route), divert now; if still on the ground
     // or climbing, remember it and divert once we reach cruise altitude — else a
     // late TakeOff would clobber the DIVERT state.
-    if (m_state == State::LOITER || m_state == State::GOTO_CENTER)
+    if (m_state == State::LOITER || m_state == State::GOTO_CENTER ||
+        m_state == State::PATROL)
         m_state = State::DIVERT;
     else
         m_pendingDivert = true;
@@ -109,6 +111,12 @@ void SarDataUavApp::ControlTick() {
                 } else if (m_pendingDivert) {   // claimed before takeoff -> region
                     m_pendingDivert = false;
                     m_state = State::DIVERT;
+                } else if (m_patrol && !m_targets.empty()) {
+                    m_state = State::PATROL;
+                    Vector t = m_targets[m_ti];
+                    m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI);
+                    m_fc.Forward(m_speed);
+                    PatrolCueTick();
                 } else {
                     m_state = State::GOTO_CENTER;
                     m_fc.Turn(std::atan2(m_loiter.y - p.y, m_loiter.x - p.x) * 180 / M_PI);
@@ -140,6 +148,25 @@ void SarDataUavApp::ControlTick() {
             if (std::hypot(m_loiter.x - p.x, m_loiter.y - p.y) <= arriveR) {
                 m_fc.Hover(); m_state = State::LOITER; }
             break;
+        case State::PATROL: {
+            // Fly the coverage plan while remaining divertible. When the plan is
+            // exhausted the UAV keeps station where it is: it is still the only
+            // thing that can accept a summon, and the sky-quiet rule below (via
+            // LOITER) bounds how long that lasts.
+            Vector t = m_targets[m_ti];
+            if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
+                m_ti++;
+                if (m_ti >= m_targets.size()) {
+                    m_fc.Hover();
+                    m_state = State::LOITER;   // plan done; sky-quiet rule takes over
+                } else {
+                    Vector n = m_targets[m_ti];
+                    m_fc.Turn(std::atan2(n.y - p.y, n.x - p.x) * 180 / M_PI);
+                    m_fc.Forward(m_speed);
+                }
+            }
+            break;
+        }
         case State::LOITER:
             // Wait for an A2A relay -- but not forever. If the sky has gone
             // quiet (no FAST UAV cueing for kSkyQuietS) the sweep is over and
@@ -239,6 +266,37 @@ void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
     uint16_t ns = seq + 1; size_t nf = fi;
     if (ns >= total) { ns = 0; nf = fi + 1; }
     Simulator::Schedule(Seconds(params::kDeliverStaggerS), &SarDataUavApp::SendFullChunk, this, nf, ns);
+}
+
+void SarDataUavApp::PatrolCueTick() {
+    // Byte-identical to the FAST team's cue dissemination, so a cue costs the
+    // same wherever it came from. Stops the moment this UAV has a delivery task.
+    if (m_state == State::PATROL && !m_cues.empty() && m_dev) {
+        const Fragment& f = m_cues[m_cueIdx % m_cues.size()];
+        uint16_t total = (uint16_t)std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
+        uint32_t payloadLen = std::min(kChunkBytes, f.sizeBytes - m_cueSeq * kChunkBytes);
+        std::vector<uint8_t> b(kChunkHdr + payloadLen, 0);
+        uint8_t* q = b.data();
+        *q++ = (uint8_t)Msg::CUE; *q++ = kBroadcast;
+        uint16_t id = (uint16_t)f.id; std::memcpy(q, &id, 2); q += 2;
+        std::memcpy(q, &m_cueSeq, 2); q += 2;
+        std::memcpy(q, &total, 2); q += 2;
+        *q++ = (uint8_t)f.layer;
+        m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+        if (m_metrics) {
+            m_metrics->AddSent(); m_metrics->AddSentBytes(b.size());
+            if (++m_cueTxCount % 25 == 1) {
+                Vector p = m_fc.GetPosition();
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                 "cue_tx", "patrol", p.x, p.y, p.z);
+            }
+        }
+        m_cueSeq++;
+        if (m_cueSeq >= total) { m_cueSeq = 0; m_cueIdx = (m_cueIdx + 1) % m_cues.size(); }
+    }
+    if (m_state == State::PATROL)
+        m_cueEvent = Simulator::Schedule(Seconds(params::kDisseminateStaggerS),
+                                         &SarDataUavApp::PatrolCueTick, this);
 }
 
 void SarDataUavApp::SendReport() {
@@ -347,7 +405,8 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             // peer's CLAIM is itself radio-delivered local information, so
             // acting on it needs no oracle.
             if (m_allHome && (m_state == State::LOITER || m_state == State::GOTO_CENTER ||
-                              m_state == State::CLIMB || m_state == State::IDLE)) {
+                              m_state == State::PATROL || m_state == State::CLIMB ||
+                              m_state == State::IDLE)) {
                 m_state = State::RETURN;
                 if (m_metrics) {
                     Vector p = m_fc.GetPosition();
@@ -375,7 +434,8 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // audit F2: a DATA UAV that never won the divert is still loitering; the
         // mission is over for it too, so it flies home and reports like the rest.
         if (m_allHome && !m_claimed &&
-            (m_state == State::LOITER || m_state == State::GOTO_CENTER)) {
+            (m_state == State::LOITER || m_state == State::GOTO_CENTER ||
+             m_state == State::PATROL)) {
             m_state = State::RETURN;
             return true;
         }

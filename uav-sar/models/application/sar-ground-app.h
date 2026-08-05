@@ -180,6 +180,7 @@ private:
     uint32_t m_retargets = 0;
     double m_cx = 0, m_cy = 0;  // beacon coords = strongest node position
     uint32_t m_beacons = 0;
+    double m_lastCueSummonS = -1e9;  // rate-limit cue-triggered re-announce
     uint32_t m_confirmsSent = 0;
     ns3::EventId m_beaconEvent;
     ns3::EventId m_confirmEvent;

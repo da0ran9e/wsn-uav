@@ -225,10 +225,15 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetNodeId(s.uavs.Get(u)->GetId());
             app->SetDevice(s.uavDevs.Get(u));
             app->SetMetrics(&m_metrics);
-            // With the DATA team patrolling too, the cue sweep is divided among
-            // ALL numUav airframes rather than the fastCount FAST ones -- the
-            // field is covered once by four UAVs instead of twice by two.
-            app->SetSensorPositions(partition(u, (proposed || closedLoop) ? numUav : fastCount));
+            // The FAST team alone still covers the WHOLE field. Splitting
+            // coverage with the DATA team looked cheaper but was a regression:
+            // a DATA UAV diverts, yields or goes home mid-patrol, so any band it
+            // owned is left half-cued, and if the victim sits there its
+            // neighbourhood never crosses the evidence threshold. Measured at
+            // N=120: victim served fell 90.0% -> 42.5% and localization fired in
+            // only 70% of runs, with clue_report exactly 0 in the failures.
+            // DATA patrol is now purely ADDITIVE redundancy on top of this.
+            app->SetSensorPositions(partition(u, fastCount));
             app->SetCues(cues);
             app->SetCruise(params::kCruiseAltitudeM, fastSpd);
             app->SetBs(bsPos, bsAddr);
@@ -251,9 +256,13 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // instead of parking at the field centre. A parked UAV spreads
             // nothing and, because SUMMON is one-hop, is usually out of range of
             // the leader that fires it.
-            app->SetPatrol(true);
+            app->SetPatrol(cfg.dataPatrol);
             app->SetCues(cues);
-            app->SetSensorPositions(partition(u, numUav));
+            // Its own band among the DATA UAVs, so the DATA team ALSO sweeps the
+            // whole field -- redundant with FAST by design, which is what makes
+            // losing one to a divert cost nothing in coverage.
+            app->SetSensorPositions(partition(u - fastCount,
+                                              std::max(1u, numUav - fastCount)));
             app->SetCruise(params::kCruiseAltitudeM, dataSpd);
             app->SetLoiter(Vector(cx, cy, params::kCruiseAltitudeM));
             app->SetBs(bsPos, bsAddr);

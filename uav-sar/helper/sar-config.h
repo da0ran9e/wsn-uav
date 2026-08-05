@@ -60,6 +60,11 @@ struct SarScenarioConfig {
     // audit A10: adaptive observation window is the default; --adaptiveWindow=0
     // restores the fixed wall-clock --minObserve as the ablation arm.
     bool   adaptiveWindow = true;
+    // DATA UAVs patrol their band spreading cues while waiting to be summoned,
+    // instead of parking at the field centre. Redundant with the FAST sweep, so
+    // it costs airtime; it pays only where the field is large enough that a
+    // parked UAV is out of reach of the summon. Measured: net negative at 16x16.
+    bool   dataPatrol = false;
     // Reliability/cost knob. 20 s keeps the cost advantage at every density;
     // 40 s buys ~+6 pp victim-served but costs the 8x8 advantage outright.
     // Measured at N=120, both scales -- see RESULTS-honest.md.

@@ -48,6 +48,13 @@ void SarDataUavApp::TakeOff() {
                         ? BuildGmc(m_sensors, m_radius, m_fc.GetPosition(), m_alt, m_speed)
                         : m_tourOverride;   // tsp-mc: pre-planned VBS/TSP tour
         m_ti = 0;
+    } else if (m_patrol && !m_sensors.empty()) {
+        // Waiting productively: the same greedy coverage plan the FAST team
+        // flies, over this UAV's own band. Being IN MOTION over the field is
+        // what makes it reachable by a one-hop SUMMON at all.
+        m_radius = params::kUavBroadcastRadiusM;
+        m_targets = BuildGmc(m_sensors, m_radius, m_fc.GetPosition(), m_alt, m_speed);
+        m_ti = 0;
     }
     m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);
     m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarDataUavApp::ControlTick, this);

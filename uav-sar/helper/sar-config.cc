@@ -109,7 +109,13 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     auto field = BuildClueField(cluePos, cc);
     // Scored against the delivered fix so that "went to the wrong person" is a
     // separate outcome in metrics.csv, not an outlier in the error tail.
-    m_metrics.SetClutter(BuildClutter(cluePos, cc));
+    auto clutterSrc = BuildClutter(cluePos, cc);
+    m_metrics.SetClutter(clutterSrc);
+    // Also logged as t=0 world events so a replay can DRAW them. Without that a
+    // viewer shows a UAV flying to an empty patch of map for no visible reason.
+    for (const auto& c : clutterSrc)
+        m_metrics.Event(0.0, 0, "world", "clutter", std::to_string(c.similarity),
+                        c.x, c.y, 0.0);
     // audit M9/W3: frozen per-node GPS offsets, drawn from the same run seed.
     std::normal_distribution<double> gpsN(0.0, std::max(0.0, cfg.gpsSigmaM));
     std::map<uint32_t, std::pair<double, double>> gpsBias;

@@ -57,8 +57,15 @@ def load_run(label, d):
         raise SystemExit(f"{d}: no metrics.csv")
     m = m[0]
     cfg = read_cfg(os.path.join(d, "config.txt"))
-    ev, traj = [], []
+    ev, traj, clutter = [], [], []
     for e in read_csv(os.path.join(d, "events.csv")):
+        # Confusable objects are world setup, not timeline events: they are
+        # pulled out here rather than kept in ev, so they can be drawn from t=0
+        # without cluttering the event feed.
+        if e["event"] == "clutter":
+            clutter.append([round(float(e["x"]), 1), round(float(e["y"]), 1),
+                            float(e["detail"] or 0)])
+            continue
         if e["event"] not in KEEP:
             continue
         ev.append([round(float(e["t"]), 2), int(e["nodeId"]), e["role"], e["event"],
@@ -82,6 +89,10 @@ def load_run(label, d):
         "spacing": sp,
         "numUav": int(m["numUav"]),
         "victim": [num("victimX"), num("victimY")],
+        # confusable objects: things in the field that genuinely match the
+        # reference data. Drawn, because a UAV heading for one of these looks
+        # like a bug unless you can see what it is heading for.
+        "clutter": clutter,
         "fix": [num("reportedX"), num("reportedY")],
         "build": cfg.get("build", "?"),
         "metrics": {
@@ -106,18 +117,18 @@ HTML = r"""<!doctype html>
 <title>UAV-SAR replay — __TITLE__</title>
 <style>
 :root{--surface:#fcfcfb;--panel:#f4f4f2;--border:#e2e1dd;--text:#0b0b0b;
---text2:#52514e;--muted:#8a8983;--fast:#2a78d6;--data:#1baf7a;--victim:#e34948;
+--text2:#52514e;--muted:#8a8983;--fast:#2a78d6;--data:#1baf7a;--victim:#e34948;--clutter:#b06ad6;
 --bs:#0b0b0b;--good:#008300;--accent:#2a78d6;--warn:#c47b00;--node:#c9c8c2;
 --hot:#e87b34;}
 @media (prefers-color-scheme:dark){:root{--surface:#1a1a19;--panel:#222220;
 --border:#3a3936;--text:#fff;--text2:#c3c2b7;--muted:#8a8983;--fast:#3987e5;
---data:#199e70;--victim:#e66767;--bs:#e8e7e0;--good:#35c07e;--accent:#3987e5;
+--data:#199e70;--victim:#e66767;--clutter:#b06ad6;--bs:#e8e7e0;--good:#35c07e;--accent:#3987e5;
 --warn:#e0a030;--node:#4a4945;--hot:#ef8f4d;}}
 :root[data-theme=dark]{--surface:#1a1a19;--panel:#222220;--border:#3a3936;
---text:#fff;--text2:#c3c2b7;--fast:#3987e5;--data:#199e70;--victim:#e66767;
+--text:#fff;--text2:#c3c2b7;--fast:#3987e5;--data:#199e70;--victim:#e66767;--clutter:#b06ad6;
 --bs:#e8e7e0;--good:#35c07e;--accent:#3987e5;--warn:#e0a030;--node:#4a4945;--hot:#ef8f4d;}
 :root[data-theme=light]{--surface:#fcfcfb;--panel:#f4f4f2;--border:#e2e1dd;
---text:#0b0b0b;--text2:#52514e;--fast:#2a78d6;--data:#1baf7a;--victim:#e34948;
+--text:#0b0b0b;--text2:#52514e;--fast:#2a78d6;--data:#1baf7a;--victim:#e34948;--clutter:#b06ad6;
 --bs:#0b0b0b;--good:#008300;--accent:#2a78d6;--warn:#c47b00;--node:#c9c8c2;--hot:#e87b34;}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--surface);color:var(--text);
@@ -200,6 +211,7 @@ th{color:var(--text2);font-weight:600;font-size:10.5px;text-transform:uppercase}
         <div class="it"><span class="sw" style="background:var(--data)"></span>DATA UAV</div>
         <div class="it"><span class="sw" style="background:var(--bs)"></span>Base station</div>
         <div class="it"><span class="sw ring"></span>victim (true)</div>
+        <div class="it"><span class="sw ring" style="border-color:var(--clutter);border-style:dashed"></span>confusable object</div>
         <div class="it"><span class="sw" style="background:var(--warn)"></span>fix @ BS</div>
         <div class="it"><span class="sw" style="background:var(--node)"></span>sensor</div>
         <div class="it"><span class="sw" style="background:var(--accent);opacity:.35"></span>heard a cue</div>
@@ -323,6 +335,17 @@ function draw(){
     ctx.stroke();
   }
   ctx.globalAlpha=1;
+
+  // confusable objects (same signature as the victim, lower amplitude)
+  (r.clutter||[]).forEach(c=>{
+    const [cx,cy]=proj(c[0],c[1]);
+    ctx.strokeStyle=css('--clutter'); ctx.lineWidth=2.5; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.arc(cx,cy,11,0,6.284); ctx.stroke();
+    ctx.globalAlpha=0.35; ctx.beginPath(); ctx.arc(cx,cy,20,0,6.284); ctx.stroke();
+    ctx.globalAlpha=1; ctx.setLineDash([]);
+    ctx.fillStyle=css('--clutter'); ctx.font='11px ui-monospace,monospace';
+    ctx.fillText('s='+c[2].toFixed(2), cx+14, cy-13);
+  });
 
   // victim (true) + BS
   const [vx,vy]=proj(r.victim[0],r.victim[1]);

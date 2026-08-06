@@ -61,10 +61,21 @@ struct SarScenarioConfig {
     // restores the fixed wall-clock --minObserve as the ablation arm.
     bool   adaptiveWindow = true;
     // DATA UAVs patrol their band spreading cues while waiting to be summoned,
-    // instead of parking at the field centre. Redundant with the FAST sweep, so
-    // it costs airtime; it pays only where the field is large enough that a
-    // parked UAV is out of reach of the summon. Measured: net negative at 16x16.
-    bool   dataPatrol = false;
+    // instead of parking at the field centre.
+    //
+    // Measured net-negative at 16x16 (+14% packets, -2.5 pp reliability) and
+    // switched off -- but that was measured under the UNIQUENESS assumption,
+    // where spreading data early buys nothing except coverage. It is no longer
+    // the same experiment: with confusable objects present, cue coverage is what
+    // lets the evidence field self-correct before a delivery is ever aimed, so
+    // the arm has to be re-measured rather than inherited. Default back ON; the
+    // old measurement is the ablation.
+    //
+    // The payload stays CUES, not the full dataset. Cues are 2400 B against
+    // 18400 B for the full reference (7.7x), and a UAV blanketing the field with
+    // the full dataset is the nocoop blind-coverage baseline -- which is the arm
+    // this scheme exists to beat, not to become.
+    bool   dataPatrol = true;
     // Distinct from dataPatrol: cue on the legs already being flown (climb,
     // transit, loiter) instead of only while patrolling. Costs no extra flight,
     // so unlike dataPatrol it has no airtime price -- only radio.

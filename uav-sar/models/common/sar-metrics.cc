@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <filesystem>
+#include <sys/stat.h>
 #include <fstream>
 #include <iomanip>
 
@@ -99,6 +100,18 @@ void SarMetrics::Finalize(const std::string& outDir) {
         // run lets the analysis scripts REFUSE to aggregate across builds
         // instead of relying on someone remembering.
         f << "build=" << __DATE__ << " " << __TIME__ << "\n";
+        // STATUS.md open problem 5: the line above is compiled into THIS
+        // translation unit, so it only moves when this file recompiles -- a
+        // rebuild that changed any other source leaves it identical and the
+        // guard passes on a genuinely mixed campaign. That is not hypothetical:
+        // flipping a default in sar-config.h changes behaviour and leaves this
+        // stamp untouched. Stat the running executable instead, which moves on
+        // every relink.
+        {
+            struct stat st;
+            if (::stat("/proc/self/exe", &st) == 0)
+                f << "binary=" << (long long)st.st_mtime << "," << (long long)st.st_size << "\n";
+        }
         // The ambiguity regime, for the same reason as build=: clutterCount = 0
         // is the uniqueness assumption the baseline comparisons are measured
         // under, and pooling it with clutterCount > 0 runs is meaningless but

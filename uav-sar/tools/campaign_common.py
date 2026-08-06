@@ -82,6 +82,22 @@ def victim_pos(m, fallback_spacing=None):
     return (k % grid) * sp, (k // grid) * sp
 
 
+def binary_id(run_dir):
+    """Identity of the executable that produced a run: mtime+size of the binary.
+
+    Preferred over build_id: build= is a __DATE__/__TIME__ baked into one
+    translation unit and does not move when a rebuild touched only other files,
+    so it silently passes on a mixed campaign. Absent in runs predating this.
+    """
+    try:
+        for line in open(os.path.join(run_dir, "config.txt")):
+            if line.startswith("binary="):
+                return line.split("=", 1)[1].strip()
+    except Exception:
+        pass
+    return None
+
+
 def build_id(run_dir):
     """The binary's build stamp for one run, from config.txt (or None)."""
     try:
@@ -103,7 +119,9 @@ def assert_one_build(run_dirs, label=""):
     """
     seen = {}
     for d in run_dirs:
-        b = build_id(d)
+        # Prefer the executable's own identity; fall back to the compiled-in
+        # stamp for runs made before that existed.
+        b = binary_id(d) or build_id(d)
         if b is not None:
             seen.setdefault(b, []).append(d)
     if len(seen) > 1:

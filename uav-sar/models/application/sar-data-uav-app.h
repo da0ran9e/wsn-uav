@@ -68,6 +68,9 @@ public:
     // while patrolling. The flight is happening anyway, so the radio time is
     // free; this is NOT --dataPatrol, which pays for an extra tour.
     void SetCueEnroute(bool v) { m_cueEnroute = v; }
+    // Fly the coverage plan from the far end, so DATA and FAST are separated
+    // in time over the same ground rather than arriving together.
+    void SetPatrolReverse(bool v) { m_patrolReverse = v; }
     // Reliability/cost knob: how long to keep delivering after arriving. CONFIRM
     // can come from a bystander under the drop point, so a short dwell strands a
     // victim that sits further out.
@@ -99,6 +102,7 @@ private:
     std::vector<Fragment> m_cues;       // cue fragments spread while patrolling
     bool m_patrol = true;
     bool m_cueEnroute = true;
+    bool m_patrolReverse = false;
     size_t m_cueIdx = 0;
     uint16_t m_cueSeq = 0;
     uint32_t m_cueTxCount = 0;

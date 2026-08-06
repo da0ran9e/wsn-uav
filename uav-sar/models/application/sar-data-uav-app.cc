@@ -54,6 +54,7 @@ void SarDataUavApp::TakeOff() {
         // what makes it reachable by a one-hop SUMMON at all.
         m_radius = params::kUavBroadcastRadiusM;
         m_targets = BuildGmc(m_sensors, m_radius, m_fc.GetPosition(), m_alt, m_speed);
+        if (m_patrolReverse) std::reverse(m_targets.begin(), m_targets.end());
         m_ti = 0;
     }
     m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);

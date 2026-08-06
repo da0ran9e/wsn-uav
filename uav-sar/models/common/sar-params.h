@@ -64,8 +64,24 @@ inline constexpr double kCruiseAltitudeM = 20.0;    // [Design] single mode
 // scheme and 15 m/s by the other. Two-tier speeds remain reachable via
 // --fastSpeed/--dataSpeed so they can be studied as a declared variable.
 inline constexpr double kCruiseSpeedMps  = 20.0;    // [Design] all schemes
-inline constexpr double kFastSpeedMps    = kCruiseSpeedMps;   // override: --fastSpeed
-inline constexpr double kDataSpeedMps    = kCruiseSpeedMps;   // override: --dataSpeed
+// AIRFRAME, not preference (supersedes the equal-speed rule above for the DATA
+// role). The two roles cannot be the same aircraft: sweeping and couriering want
+// something that never stops, and a 20-40 s delivery dwell wants something that
+// can hold position. Fixed-wing for FAST, rotary-wing for everything that hovers.
+// A rotary-wing does not cruise at a fixed-wing's speed, so the DATA speed drops
+// to a multirotor cruise.
+//
+// This does NOT reintroduce the audit F1 problem. F1 was about an UNMODELLED
+// advantage: the proposed scheme's critical path flew 1.67x faster than every
+// baseline UAV with nothing in the model implementing it. Here the slower speed
+// is a PENALTY on the hovering role, it is grounded in the airframe, and it
+// applies to EVERY hovering airframe -- proposed's DATA team and all four
+// baselines alike, since they all dwell to dump. Self-penalising and uniform.
+//
+// Consequence to state plainly: every previously published head-to-head number
+// was measured at 20 m/s for all roles and must be re-run.
+inline constexpr double kFastSpeedMps    = kCruiseSpeedMps;   // fixed-wing; --fastSpeed
+inline constexpr double kDataSpeedMps    = 15.0;              // rotary-wing; --dataSpeed
 inline constexpr double kClimbRateMps    = 5.0;     // [Design]
 
 // ---- UAV energy (Zeng-Zhang 2019 rotary-wing) -----------------------------

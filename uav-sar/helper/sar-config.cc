@@ -169,9 +169,15 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     // Partition the sensor set into k contiguous x-bands so sweeping UAVs
     // divide the area instead of flying identical GMC paths in convoy
     // (review finding F5). Band i of k gets a contiguous slice sorted by x.
-    auto partition = [&](uint32_t i, uint32_t k) {
+    // ...but F5 was only applied WITHIN a team. Measured at 40x40: a FAST UAV and
+    // a DATA UAV flew a median 2.0 m apart, i.e. in formation, so the DATA patrol
+    // contributed no new coverage at all and could only ever be a cost. byY gives
+    // the DATA team bands ORTHOGONAL to the FAST team's, so the two sweeps cross
+    // instead of coincide.
+    auto partition = [&](uint32_t i, uint32_t k, bool byY = false) {
         std::vector<Vector> sorted = s.sensorPositions;
-        std::sort(sorted.begin(), sorted.end(), [](const Vector& a, const Vector& b) {
+        std::sort(sorted.begin(), sorted.end(), [byY](const Vector& a, const Vector& b) {
+            if (byY) return a.y != b.y ? a.y < b.y : a.x < b.x;
             return a.x != b.x ? a.x < b.x : a.y < b.y;
         });
         size_t n = sorted.size();
@@ -276,7 +282,12 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // whole field -- redundant with FAST by design, which is what makes
             // losing one to a divert cost nothing in coverage.
             app->SetSensorPositions(partition(u - fastCount,
-                                              std::max(1u, numUav - fastCount)));
+                                              std::max(1u, numUav - fastCount),
+                                              /*byY=*/true));
+            // Traverse the band from the far end as well, so the two teams are
+            // separated in TIME as well as in space: a point FAST reaches late is
+            // a point DATA reaches early.
+            app->SetPatrolReverse(true);
             app->SetCruise(params::kCruiseAltitudeM, dataSpd);
             app->SetLoiter(Vector(cx, cy, params::kCruiseAltitudeM));
             app->SetBs(bsPos, bsAddr);

@@ -115,7 +115,8 @@ cả hai đầu (dễ quá thì không cần, bất khả thì không thể).
 
 ## 4. Chỉ số hiện tại **vỡ** dưới nhập nhằng — đây là rủi ro phản biện lớn nhất
 
-Sai số định vị trở thành **hỗn hợp hai chế độ**, đo được:
+Sai số định vị trở thành **hỗn hợp hai chế độ**. Đo ở mức trường manh mối
+(khoảng cách từ đỉnh cụm được chọn tới nạn nhân, $N=120$, mọi $M$ và $s$):
 
 | | chọn đúng người | chọn nhầm người |
 |---|---:|---:|

@@ -148,6 +148,11 @@ These cost real time. Do not relearn them.
   project were asserted from a plausible story and all three were wrong
   ("accuracy is sensing-limited", "the centroid wins the tail", "the aiming
   scope causes the error floor").
+- **Every published number assumes uniqueness.** Nothing else in the search area
+  matches the reference dataset. `--clutterCount` now lets that be violated; when
+  it is, `reportErr_m` is a mixture of "right object, ~10 m" and "wrong object,
+  ~200 m", and its p90 jumps discontinuously rather than degrading. Quote
+  `fixOnVictim` and the conditional error, never the pooled quantiles.
 - **Cost metrics are intention-to-treat.** Gating them on victim-served is
   survivorship bias worth 0.4–2.8 %, always in our favour.
 
@@ -193,6 +198,7 @@ recorded in `sar-params.h` or `sar-config.h` comments.
 | `AUDIT-2026-08-round2.md` | audit round 2, eleven findings A1–A11 |
 | `AUDIT-2026-08.md` | earliest correctness audit |
 | `PROBLEM-FORMULATION-vi.md` | Vietnamese: the eight optimization problems stated separately (P1–P8), each with who solves it and whether it is open |
+| `FALSE-POSITIVE-RIGOR-vi.md` | Vietnamese: the uniqueness assumption every result rests on, why identity ambiguity is not sensor noise, the identifiability ceiling, and the fact that `reportErr_m` becomes a two-mode mixture once it is violated |
 | `PROBLEM-MULTI-CANDIDATE-vi.md` | Vietnamese: what happens once detector false positives create K > 1 request points — routing/scheduling/partitioning problems P9–P14, the measurement showing the current field never reaches that regime, and the testable hypothesis that this is where cooperation would finally pay |
 | `PROBLEM-FORMULATION.md` | the optimization problem this system solves, the tractable restriction each scheme solves, and the rendezvous constraint (R) that the experiments found to be binding |
 | `DESIGN.md` | round-1 design note — **predates everything above**, does not describe the baselines or any current mechanism |

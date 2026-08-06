@@ -65,6 +65,10 @@ struct SarScenarioConfig {
     // it costs airtime; it pays only where the field is large enough that a
     // parked UAV is out of reach of the summon. Measured: net negative at 16x16.
     bool   dataPatrol = false;
+    // Distinct from dataPatrol: cue on the legs already being flown (climb,
+    // transit, loiter) instead of only while patrolling. Costs no extra flight,
+    // so unlike dataPatrol it has no airtime price -- only radio.
+    bool   dataCueEnroute = true;
     // Reliability/cost knob. 20 s keeps the cost advantage at every density;
     // 40 s buys ~+6 pp victim-served but costs the 8x8 advantage outright.
     // Measured at N=120, both scales -- see RESULTS-honest.md.
@@ -81,6 +85,12 @@ struct SarScenarioConfig {
     uint32_t clutterCount = 0;
     double clutterSimMin = 0.60;
     double clutterSimMax = 1.00;
+    // How much of a confusable object's similarity the COMPLETE dataset removes.
+    // 1.0 (default) says delivering the full reference settles the identity,
+    // which is the scheme's actual premise: a node judging on cue fragments can
+    // false-alarm, a node holding everything cannot. 0 restores the pessimistic
+    // case where ambiguity survives delivery.
+    double clutterResolve = 1.0;
     std::string scheme = "proposed";
     std::string outputDir = "data/results/uav-sar/run-1";
 };

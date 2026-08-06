@@ -62,13 +62,28 @@ struct ClueFieldConfig {
     double clutterSimMax = 1.00;      // outfit, indistinguishable by this sensor
     double clutterMinSepM = 150.0;    // keep sources from merging into one cluster
     double areaW = 0, areaH = 0;      // placement box; 0 = bounding box of nodes
+    // How much of a confusable object's similarity the COMPLETE reference
+    // dataset removes. This is the physical heart of the scheme: a node judging
+    // on the FAST team's small cue fragments has little to go on, so a jacket of
+    // the same colour matches; once the DATA UAV has delivered the whole
+    // reference, the node can tell. 1.0 = full data settles it outright, 0 = the
+    // ambiguity survives delivery (the pessimistic case measured earlier).
+    // Ambiguity is therefore not fixed: it is a function of what has been
+    // delivered, which makes DELIVERING an act of disambiguation.
+    double clutterResolve = 1.0;
 };
 
 struct ClueInfo {
     uint32_t id = 0;
     double x = 0, y = 0;
     double distToTarget = 0;
-    double clueQuality = 0;         // [0,1]
+    double clueQuality = 0;         // [0,1] measured with only cue fragments
+    // What the SAME detector, with the SAME noise realisation, measures once it
+    // holds the complete reference dataset. Equal to clueQuality when there is
+    // no confusable object nearby; far lower next to one, because the extra
+    // reference data is what separates them. The application interpolates
+    // between the two by how much of the dataset it actually holds.
+    double clueQualityFull = 0;
     bool isTarget = false;
     bool isFalsePositive = false;
     // Which object drove this node's evidence: -1 victim, >= 0 clutter index,

@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("electSuppress", "flood the election stand-down (0 = ablation)", cfg.electSuppress);
     cmd.AddValue("adaptiveWindow", "summon when evidence settles (0 = fixed --minObserve)", cfg.adaptiveWindow);
     cmd.AddValue("dataPatrol", "DATA UAVs patrol+cue while waiting (0 = park)", cfg.dataPatrol);
+    cmd.AddValue("dataCueEnroute", "DATA UAVs cue on legs already flown (1 = default)", cfg.dataCueEnroute);
     cmd.AddValue("deliverDwell", "min delivery dwell s (0 = design default)", cfg.deliverDwellS);
     cmd.AddValue("senseSigma", "detector noise sigma on clue quality (0 = ideal)", cfg.senseSigma);
     cmd.AddValue("gpsSigma", "per-node GPS error sigma in m (0 = exact)", cfg.gpsSigmaM);
@@ -37,6 +38,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("clutterCount", "confusable objects matching the reference data (0 = uniqueness)", cfg.clutterCount);
     cmd.AddValue("clutterSimMin", "min similarity of a confusable object", cfg.clutterSimMin);
     cmd.AddValue("clutterSimMax", "max similarity (1.0 = indistinguishable)", cfg.clutterSimMax);
+    cmd.AddValue("clutterResolve", "how much the FULL dataset resolves a confusable object", cfg.clutterResolve);
     cmd.AddValue("scheme", "proposed | closed-loop | nocoop | pure-uav | tsp-mc", cfg.scheme);
     cmd.AddValue("outputDir", "results dir", outputDir);
     cmd.Parse(argc, argv);

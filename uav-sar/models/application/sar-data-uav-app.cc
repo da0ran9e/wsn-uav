@@ -57,6 +57,9 @@ void SarDataUavApp::TakeOff() {
         m_ti = 0;
     }
     m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);
+    // Start cueing from the climb: a DATA UAV that has not been summoned yet is
+    // still a data source in motion over the field.
+    if (m_mode == Mode::SUMMONED && m_cueEnroute && !m_cues.empty()) PatrolCueTick();
     m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarDataUavApp::ControlTick, this);
     TrajTick();
 }
@@ -123,7 +126,7 @@ void SarDataUavApp::ControlTick() {
                     Vector t = m_targets[m_ti];
                     m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI);
                     m_fc.Forward(m_speed);
-                    PatrolCueTick();
+                    if (!m_cueEvent.IsPending()) PatrolCueTick();
                 } else {
                     m_state = State::GOTO_CENTER;
                     m_fc.Turn(std::atan2(m_loiter.y - p.y, m_loiter.x - p.x) * 180 / M_PI);
@@ -278,7 +281,19 @@ void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
 void SarDataUavApp::PatrolCueTick() {
     // Byte-identical to the FAST team's cue dissemination, so a cue costs the
     // same wherever it came from. Stops the moment this UAV has a delivery task.
-    if (m_state == State::PATROL && !m_cues.empty() && m_dev) {
+    //
+    // A DATA UAV is airborne from takeoff, and radio time spent flying to a
+    // staging point is radio time that costs NOTHING extra: the flight is
+    // happening either way. It therefore cues on every leg before it has a
+    // delivery -- climbing, transiting, loitering, patrolling -- not only while
+    // patrolling. That is different from --dataPatrol, which buys coverage by
+    // flying an EXTRA tour and was measured net-negative; this buys coverage
+    // along a path already being flown.
+    const bool cueing = m_cueEnroute
+        ? (m_state == State::CLIMB || m_state == State::GOTO_CENTER ||
+           m_state == State::LOITER || m_state == State::PATROL)
+        : (m_state == State::PATROL);
+    if (cueing && !m_cues.empty() && m_dev) {
         const Fragment& f = m_cues[m_cueIdx % m_cues.size()];
         uint16_t total = (uint16_t)std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
         uint32_t payloadLen = std::min(kChunkBytes, f.sizeBytes - m_cueSeq * kChunkBytes);
@@ -295,13 +310,14 @@ void SarDataUavApp::PatrolCueTick() {
             if (++m_cueTxCount % 25 == 1) {
                 Vector p = m_fc.GetPosition();
                 m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
-                                 "cue_tx", "patrol", p.x, p.y, p.z);
+                                 "cue_tx", m_state == State::PATROL ? "patrol" : "enroute",
+                                 p.x, p.y, p.z);
             }
         }
         m_cueSeq++;
         if (m_cueSeq >= total) { m_cueSeq = 0; m_cueIdx = (m_cueIdx + 1) % m_cues.size(); }
     }
-    if (m_state == State::PATROL)
+    if (cueing)
         m_cueEvent = Simulator::Schedule(Seconds(params::kDisseminateStaggerS),
                                          &SarDataUavApp::PatrolCueTick, this);
 }

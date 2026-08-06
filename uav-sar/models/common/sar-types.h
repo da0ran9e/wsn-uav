@@ -40,6 +40,15 @@ enum class Msg : uint8_t {
                     //   election. It exists so the proposed scheme's gain can be
                     //   attributed to COOPERATION rather than merely to having
                     //   feedback at all. [origNode:u16][evQ8:u8][x:i16][y:i16]
+    REJECT   = 13,  // ground -> sky + leader: I now hold the COMPLETE reference
+                    //   dataset and I do NOT match it. Only a node with the whole
+                    //   dataset can say this, which is exactly why delivering is
+                    //   an act of disambiguation rather than only of service: the
+                    //   cue fragments a false positive matched on are not enough
+                    //   to rule it out, the full reference is. Same body as
+                    //   CONFIRM. It is the negative half of loop closure, and it
+                    //   is what lets a DATA UAV leave a wrong region on evidence
+                    //   instead of on a timeout. [regionId:u16][nodeId:u8]
 };
 
 inline constexpr uint8_t kBroadcast = 0xFF;
@@ -50,6 +59,7 @@ inline constexpr uint32_t kChunkHdr   = 1 + 1 + 2 + 2 + 2 + 1;      // 9, payloa
 inline constexpr uint32_t kSummonLen  = 1 + 1 + 2 + 2 + 2;          // 8
 inline constexpr uint32_t kA2ALen     = 1 + 1 + 2 + 2 + 2;          // 8 (same body)
 inline constexpr uint32_t kConfirmLen = 1 + 1 + 2 + 1;              // 5
+inline constexpr uint32_t kRejectLen  = kConfirmLen;                // same body
 // audit B3: REPORT and HANDOFF carry the victim fix (decimetres, i16) so the
 // estimate physically travels to the BS over the radio instead of being read out
 // of simulator state. flags bit0 = "a fix follows"; a UAV that never learned one

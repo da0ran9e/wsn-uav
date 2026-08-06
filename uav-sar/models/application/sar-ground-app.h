@@ -72,6 +72,11 @@ public:
     void SetAdaptiveWindow(bool v) { m_adaptiveWindow = v; }
     void SetProfile(const std::vector<Fragment>& frags);
     void SetClueQuality(double q) { m_clueQuality = q; }
+    // What the same detector reads once this node holds the COMPLETE reference.
+    // Equal to the cue-only reading when nothing confusable is nearby; much
+    // lower next to a confusable object, because the extra reference data is
+    // what separates them.
+    void SetClueQualityFull(double q) { m_clueQualityFull = q; }
     void SetCoopThreshold(double coop) { m_coop = coop; }
     void SetIsTarget(bool t) { m_isTarget = t; }
     // Intra-cell tree: next hop up toward the Cell Leader (-1 if I am the CL),
@@ -131,6 +136,15 @@ private:
     std::map<uint16_t, uint16_t> m_totals;               // fragId -> total chunks
     std::set<uint16_t> m_have;                           // complete fragment ids
     double m_clueQuality = 0.0;
+    double m_clueQualityFull = -1.0;   // < 0 = unset, falls back to m_clueQuality
+    // Interpolated by how much of the dataset this node actually holds: judging
+    // on cue fragments alone is what makes a false positive possible in the
+    // first place, so the reading has to improve as the dataset arrives.
+    double ClueNow() const;
+    void SendReject();
+    uint32_t m_rejectsSent = 0;
+    ns3::EventId m_rejectEvent;
+    bool m_rejectHeard = false;   // a node under the drop resolved it as a miss
     double m_coop = 0.30;
 
     // intra-cell tree + CL aggregation

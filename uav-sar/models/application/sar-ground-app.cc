@@ -106,6 +106,17 @@ void SarGroundApp::SendRpt(uint16_t orig, uint8_t evQ8, int16_t x, int16_t y,
     if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
 }
 
+double SarGroundApp::ClueNow() const {
+    // The node judges its own footage against whatever reference it holds. With
+    // only cue fragments that is a weak test and a similar-looking object passes
+    // it; with the complete dataset the test is sharp. Linear in possession, so
+    // there is no hidden threshold effect -- the node never knows which regime
+    // it is in, it just reads a better number as more data arrives.
+    if (m_clueQualityFull < 0.0) return m_clueQuality;
+    double c = PossessedConfidence();
+    return m_clueQuality + c * (m_clueQualityFull - m_clueQuality);
+}
+
 void SarGroundApp::SendEcho() {
     // audit W4: the closed-loop non-cooperative arm's ENTIRE feedback path. One
     // hop, straight up to whichever UAV happens to be in range -- no tree, no
@@ -116,7 +127,7 @@ void SarGroundApp::SendEcho() {
     if (!m_dev || m_echoesSent >= params::kEchoRepeatMax) return;
     Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
     double rx = p.x + m_gpsBiasX, ry = p.y + m_gpsBiasY;   // same GPS error as RPT
-    double eff = PossessedConfidence() * m_clueQuality;
+    double eff = PossessedConfidence() * ClueNow();
     std::vector<uint8_t> b(kEchoLen);
     uint8_t* q = b.data();
     *q++ = (uint8_t)Msg::ECHO;
@@ -382,6 +393,9 @@ void SarGroundApp::MaybeRetarget() {
         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "CL",
                          "retarget", det, p.x, p.y, p.z);
     }
+    // A re-aim is useless if nothing is announcing it. The beacon may have been
+    // cancelled or run down by the time a REJECT arrives, so restart it here.
+    if (!m_beaconEvent.IsPending()) BeaconTick();
     Simulator::Schedule(Seconds(params::kRetargetAfterS), &SarGroundApp::MaybeRetarget, this);
 }
 
@@ -421,6 +435,30 @@ void SarGroundApp::SendConfirm() {
                                          &SarGroundApp::SendConfirm, this);
 }
 
+void SarGroundApp::SendReject() {
+    // The negative half of loop closure. Only a node holding the COMPLETE
+    // reference can send this, which is the whole point: the cue fragments a
+    // false positive matched on cannot rule it out, the full dataset can. It
+    // lets the fleet leave a wrong region on evidence rather than on a timeout,
+    // and it is also the honest fix for the closure bug in STATUS.md open
+    // problem 2 -- a bystander under the drop point no longer closes the loop
+    // just by holding the data, it has to hold the data AND match it.
+    if (m_rejectsSent >= params::kConfirmRetries) return;
+    if (m_dev) {
+        std::vector<uint8_t> c(kRejectLen);
+        uint8_t* q = c.data();
+        *q++ = (uint8_t)Msg::REJECT;
+        *q++ = kBroadcast;
+        std::memcpy(q, &m_regionId, 2); q += 2;
+        *q++ = (uint8_t)(m_nodeId & 0xFF);
+        m_dev->Send(Create<Packet>(c.data(), c.size()), Mac16Address("ff:ff"), 0);
+        if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(c.size()); }
+    }
+    m_rejectsSent++;
+    m_rejectEvent = Simulator::Schedule(Seconds(params::kConfirmRetryS),
+                                        &SarGroundApp::SendReject, this);
+}
+
 bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const Address&) {
     uint32_t sz = pkt->GetSize();
     if (sz < 2) return true;
@@ -434,6 +472,18 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // leader kept re-aiming after a delivery that had already succeeded.
         m_confirmHeard = true;
         Simulator::Cancel(m_beaconEvent);
+        return true;
+    }
+    if (type == (uint8_t)Msg::REJECT) {
+        // Somebody under the drop point now holds the whole reference and does
+        // NOT match it. That is a stronger signal than the retarget timeout it
+        // replaces: the timeout could only ever guess that the aim was wrong
+        // after waiting past the tail of normal completion, whereas this is the
+        // field telling us. Re-aim immediately, unless a CONFIRM already closed
+        // the loop (a region can contain both a match and a bystander, and the
+        // match wins).
+        m_rejectHeard = true;
+        if (m_isLeader && !m_confirmHeard && !m_confirmed) MaybeRetarget();
         return true;
     }
     if (type == (uint8_t)Msg::SUMMON && sz >= kSummonLen) {
@@ -563,12 +613,12 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
             if (m_echoMode) {
                 // audit W4: reply directly to the sky, once, and keep repeating
                 // at a low rate while a UAV might still be listening.
-                double eff = PossessedConfidence() * m_clueQuality;
+                double eff = PossessedConfidence() * ClueNow();
                 if (eff >= m_coop && !m_echoEvent.IsPending() && m_echoesSent == 0)
                     SendEcho();
             }
             if (m_cooperative) {
-                double eff = PossessedConfidence() * m_clueQuality;
+                double eff = PossessedConfidence() * ClueNow();
                 if (eff >= m_coop) {
                     m_lastEff = eff;
                     DeliverEvidence(eff);
@@ -605,11 +655,19 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                 // The BLIND baselines still do not confirm: they dwell a fixed
                 // budget and have no feedback path at all, which is the point.
                 if (m_cooperative || m_echoMode) {
+                    // Holding the dataset is no longer sufficient to confirm --
+                    // the node must still MATCH it. A node that matched on cue
+                    // fragments and fails on the complete reference has just
+                    // discovered it is a false positive, and says so.
+                    bool matches = ClueNow() >= m_coop;
                     if (m_metrics)
                         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
-                                         m_isTarget ? "target" : "node", "confirm",
-                                         "entire dataset received", p.x, p.y, p.z);
-                    SendConfirm();
+                                         m_isTarget ? "target" : "node",
+                                         matches ? "confirm" : "reject",
+                                         matches ? "entire dataset received"
+                                                 : "full data does not match",
+                                         p.x, p.y, p.z);
+                    if (matches) SendConfirm(); else SendReject();
                 } else if (m_metrics) {
                     // multicast baselines: log every GT's completion so the
                     // fairness analysis can check the ACTUAL multicast goal

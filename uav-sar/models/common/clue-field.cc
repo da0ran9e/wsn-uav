@@ -79,12 +79,23 @@ std::map<uint32_t, ClueInfo> BuildClueField(const std::vector<CluePos>& nodes,
 
         // The detector reports the BEST match it can find, whichever object
         // produced it. It has no way to know which one that was.
-        double qTrue = Kernel(c.distToTarget, cfg);
+        //
+        // Two versions of that number are produced from the SAME geometry: what
+        // the node measures on cue fragments alone, and what it would measure
+        // holding the complete reference. They differ only in how much of a
+        // confusable object's similarity survives (clutterResolve). The node
+        // itself never sees both -- the application interpolates by how much of
+        // the dataset it actually holds -- so this is not an oracle, it is the
+        // detector getting better as it is given more to compare against.
+        const double victimQ = Kernel(c.distToTarget, cfg);
+        double qTrue = victimQ, qFull = victimQ;
         if (qTrue > 0) c.sourceId = -1;
+        const double keep = 1.0 - std::min(1.0, std::max(0.0, cfg.clutterResolve));
         for (size_t m = 0; m < clutter.size(); ++m) {
-            double q = clutter[m].similarity *
-                       Kernel(std::hypot(n.x - clutter[m].x, n.y - clutter[m].y), cfg);
+            double k = Kernel(std::hypot(n.x - clutter[m].x, n.y - clutter[m].y), cfg);
+            double q = clutter[m].similarity * k;
             if (q > qTrue) { qTrue = q; c.sourceId = (int32_t)m; }
+            qFull = std::max(qFull, clutter[m].similarity * keep * k);
         }
 
         if (qTrue <= 0.0) {
@@ -95,6 +106,9 @@ std::map<uint32_t, ClueInfo> BuildClueField(const std::vector<CluePos>& nodes,
             } else {
                 qTrue = 0.0;
             }
+            // Background clutter is spurious, not a real object, so the complete
+            // reference resolves it away on exactly the same terms.
+            qFull = qTrue * keep;
         }
 
         // audit M9/W3: the node reports what its detector measured, not the
@@ -102,11 +116,16 @@ std::map<uint32_t, ClueInfo> BuildClueField(const std::vector<CluePos>& nodes,
         // possible near the victim and a miss possible on it -- i.e. it is the
         // detector's ROC, emergent from the noise rather than hand-set.
         if (cfg.senseSigma > 0.0) {
-            double qMeas = qTrue + cfg.senseSigma * gauss(rng);
-            c.clueQuality = std::min(1.0, std::max(0.0, qMeas));
+            // ONE draw, applied to both readings: it is one detector, one piece
+            // of footage. Drawing twice would let the full-data reading average
+            // the noise away for free and overstate what delivery buys.
+            double eps = cfg.senseSigma * gauss(rng);
+            c.clueQuality = std::min(1.0, std::max(0.0, qTrue + eps));
+            c.clueQualityFull = std::min(1.0, std::max(0.0, qFull + eps));
             if (qTrue <= 0.0 && c.clueQuality > 0.0) c.isFalsePositive = true;
         } else {
             c.clueQuality = qTrue;
+            c.clueQualityFull = qFull;
         }
         out.emplace(n.id, c);
     }

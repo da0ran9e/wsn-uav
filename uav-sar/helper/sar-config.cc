@@ -106,6 +106,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     cc.clutterCount = cfg.clutterCount; // confusable objects (world ambiguity)
     cc.clutterSimMin = cfg.clutterSimMin;
     cc.clutterSimMax = cfg.clutterSimMax;
+    cc.clutterResolve = cfg.clutterResolve;
     auto field = BuildClueField(cluePos, cc);
     // Scored against the delivered fix so that "went to the wrong person" is a
     // separate outcome in metrics.csv, not an outlier in the error tail.
@@ -269,6 +270,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // nothing and, because SUMMON is one-hop, is usually out of range of
             // the leader that fires it.
             app->SetPatrol(cfg.dataPatrol);
+            app->SetCueEnroute(cfg.dataCueEnroute);
             app->SetCues(cues);
             // Its own band among the DATA UAVs, so the DATA team ALSO sweeps the
             // whole field -- redundant with FAST by design, which is what makes
@@ -309,6 +311,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetMinObserve(cfg.minObserveS);
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);
+        app->SetClueQualityFull(field.at(id).clueQualityFull);
         app->SetCoopThreshold(params::kCoopThreshold);
         // Intra-cell tree so clue reports (RPT) climb to the CL over real radio;
         // cell id + center so a CL can flood its SHARE across the boundary.

@@ -64,6 +64,10 @@ public:
     // exactly as the FAST team does, and stay divertible throughout.
     void SetPatrol(bool v) { m_patrol = v; }
     void SetCues(const std::vector<Fragment>& c) { m_cues = c; }
+    // Spread cues on every leg flown before a delivery task exists, not only
+    // while patrolling. The flight is happening anyway, so the radio time is
+    // free; this is NOT --dataPatrol, which pays for an extra tour.
+    void SetCueEnroute(bool v) { m_cueEnroute = v; }
     // Reliability/cost knob: how long to keep delivering after arriving. CONFIRM
     // can come from a bystander under the drop point, so a short dwell strands a
     // victim that sits further out.
@@ -94,6 +98,7 @@ private:
     std::vector<Fragment> m_full;
     std::vector<Fragment> m_cues;       // cue fragments spread while patrolling
     bool m_patrol = true;
+    bool m_cueEnroute = true;
     size_t m_cueIdx = 0;
     uint16_t m_cueSeq = 0;
     uint32_t m_cueTxCount = 0;

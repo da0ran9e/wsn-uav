@@ -183,6 +183,7 @@ recorded in `sar-params.h` or `sar-config.h` comments.
 | `AUDIT-SYNTHESIS.md` | audit round 1 (four reviewers), all Tier-0 closed |
 | `AUDIT-2026-08-round2.md` | audit round 2, eleven findings A1–A11 |
 | `AUDIT-2026-08.md` | earliest correctness audit |
+| `PROBLEM-FORMULATION-vi.md` | Vietnamese: the eight optimization problems stated separately (P1–P8), each with who solves it and whether it is open |
 | `PROBLEM-FORMULATION.md` | the optimization problem this system solves, the tractable restriction each scheme solves, and the rendezvous constraint (R) that the experiments found to be binding |
 | `DESIGN.md` | round-1 design note — **predates everything above**, does not describe the baselines or any current mechanism |
 | `RESULTS.md` | **VOID**, kept only as a record |

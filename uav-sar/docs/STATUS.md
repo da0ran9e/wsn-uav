@@ -98,23 +98,30 @@ Known-bad, do not retry without a new idea:
    genuinely pays (the p90 tail is the live lead) and build the paper on that, or
    reduce the cooperative plane's packet cost. 0/120 paired wins on packets is
    the number to attack.
-2. **CONFIRM closure is wrong in principle.** *Any* node holding the dataset may
-   confirm, so the loop can close on a bystander under the drop point while the
-   victim, further out, never finishes. `--deliverDwell` masks the symptom.
-   Proper fix: CONFIRM carries the confirming node's evidence; closure requires
-   the aim target or its equal.
+2. ~~**CONFIRM closure is wrong in principle.**~~ **CLOSED.** Holding the dataset
+   no longer confirms: the node must hold it AND still match it on the complete
+   reference, otherwise it sends REJECT. Victim-served at M = 0 moved 92.5 % ->
+   95.8 % (N = 120), the direction the fix predicts -- though bundled with
+   en-route cueing, so not individually attributed.
 3. **W7 is half done — never call it random deployment.** `--victimOnNode=0`
    displaces the victim inside the Voronoi cell, so the nearest node never
    changes and the victim is always ≤ 14.1 m from a sensor. A PPP deployment with
    coverage holes would attack the reliability numbers much harder.
 4. **W2 — no ML/NLS estimator, no CRLB.** Two crude heuristics (argmax vs
    centroid) tie, which is the signature of both sitting far from the bound.
-5. **The build-provenance guard is weaker than advertised.** `config.txt`'s
-   `build=` uses `__DATE__/__TIME__` compiled into `sar-metrics.cc`, which only
-   updates when *that file* recompiles — so it will **not** catch a mixed-binary
-   campaign where only another translation unit changed. Fix: stamp
-   `/proc/self/exe` mtime+size at runtime.
-6. **The clue field cannot produce more than one candidate request point.**
+5. ~~**The build-provenance guard is weaker than advertised.**~~ **CLOSED.**
+   `config.txt` now also carries `binary=<mtime>,<size>` of `/proc/self/exe`,
+   which moves on every relink, and `assert_one_build` prefers it. The
+   `dataPatrol` default flip was the live case it catches: behaviour changed
+   without `sar-metrics.cc` recompiling, so the old stamp stayed identical.
+6. ~~**The clue field cannot produce more than one candidate request point.**~~
+   **CLOSED** by `--clutterCount`, and the conclusion drawn from it was WRONG and
+   is retracted: see `RESULTS-ambiguity-vi.md`. Ambiguity is not fixed, it is a
+   function of how much reference data a node holds, so the 1/(M+1) ceiling binds
+   only the FIRST AIM, not the mission. With `--clutterResolve=1`, M = 2 at
+   similarity 0.9 gives **0/120 wrong-object closures** and costs 5.8 pp of
+   reliability against no clutter at all. Original text kept below for the record:
+   **The clue field cannot produce more than one candidate request point.**
    Measured with `tools/candidate_stats.cc`: at the operating point (σ = 0.10)
    K = 1 in 94.2 % of runs at 16×16 and 98.3 % at 40×40, with **zero** distant
    decoys ever. It is structural — `maxNoiseQuality = 0.18` sits far below
@@ -201,6 +208,7 @@ recorded in `sar-params.h` or `sar-config.h` comments.
 | `AUDIT-2026-08-round2.md` | audit round 2, eleven findings A1–A11 |
 | `AUDIT-2026-08.md` | earliest correctness audit |
 | `PROBLEM-FORMULATION-vi.md` | Vietnamese: the eight optimization problems stated separately (P1–P8), each with who solves it and whether it is open |
+| `RESULTS-ambiguity-vi.md` | Vietnamese: N=120 results once ambiguity is resolvable — 0/120 wrong-object closures, ambiguity nearly free, resolution also SAVES packets, and the +1 DATA UAV trade |
 | `FIXED-WING-FAST-vi.md` | Vietnamese: what changes if the FAST team becomes fixed-wing — Dubins re-routing is fine, but the 30 s relay hold breaks at 20 m/s, the energy curve is the wrong one, and the HANDOFF retry window is shorter than an orbit period |
 | `RELATED-WORK-ambiguity.md` | Vietnamese: who has already studied identity ambiguity — classical search-among-false-contacts theory, visually-identical-target association, clothes-changing re-ID — and what still has to be checked before claiming a gap |
 | `FALSE-POSITIVE-RIGOR-vi.md` | Vietnamese: the uniqueness assumption every result rests on, why identity ambiguity is not sensor noise, the identifiability ceiling, and the fact that `reportErr_m` becomes a two-mode mixture once it is violated |

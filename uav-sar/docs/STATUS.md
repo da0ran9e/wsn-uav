@@ -48,6 +48,13 @@ delivered position, at a stated cost.* Anything stronger is not supported.
 
 ## 2. Trust level of every number
 
+> **ALL head-to-head numbers below are STALE as of the airframe change.** Every
+> published comparison was measured with all roles at 20 m/s; the DATA/hovering
+> role is now 15 m/s (rotary-wing) against the FAST role's 20 m/s (fixed-wing),
+> which moves every scheme including all four baselines. They also predate the
+> false-positive work (resolution on complete data, REJECT closure, en-route
+> cueing). Re-run before quoting anything in this table.
+
 | source | status |
 |---|---|
 | `RESULTS-honest.md` §W4 (closed-loop) | **current** |

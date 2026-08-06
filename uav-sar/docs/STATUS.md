@@ -114,7 +114,16 @@ Known-bad, do not retry without a new idea:
    updates when *that file* recompiles — so it will **not** catch a mixed-binary
    campaign where only another translation unit changed. Fix: stamp
    `/proc/self/exe` mtime+size at runtime.
-6. **A7** seed couples victim position to channel realisation; **A8** the
+6. **The clue field cannot produce more than one candidate request point.**
+   Measured with `tools/candidate_stats.cc`: at the operating point (σ = 0.10)
+   K = 1 in 94.2 % of runs at 16×16 and 98.3 % at 40×40, with **zero** distant
+   decoys ever. It is structural — `maxNoiseQuality = 0.18` sits far below
+   `kAlertThreshold = 0.75`, so a background false positive can never become a
+   request point — and `--electSuppress` then collapses whatever remains to one
+   summon. This matters beyond realism: **K = 1 is exactly the regime in which
+   cooperation cannot pay off on cost**, which is open problem 1. See
+   `PROBLEM-MULTI-CANDIDATE-vi.md`.
+7. **A7** seed couples victim position to channel realisation; **A8** the
    2 FAST + 2 DATA split gives `proposed` half the delivering airframes of
    `tsp-mc × 4` (conservative, but must be stated in the paper).
 
@@ -184,6 +193,7 @@ recorded in `sar-params.h` or `sar-config.h` comments.
 | `AUDIT-2026-08-round2.md` | audit round 2, eleven findings A1–A11 |
 | `AUDIT-2026-08.md` | earliest correctness audit |
 | `PROBLEM-FORMULATION-vi.md` | Vietnamese: the eight optimization problems stated separately (P1–P8), each with who solves it and whether it is open |
+| `PROBLEM-MULTI-CANDIDATE-vi.md` | Vietnamese: what happens once detector false positives create K > 1 request points — routing/scheduling/partitioning problems P9–P14, the measurement showing the current field never reaches that regime, and the testable hypothesis that this is where cooperation would finally pay |
 | `PROBLEM-FORMULATION.md` | the optimization problem this system solves, the tractable restriction each scheme solves, and the rendezvous constraint (R) that the experiments found to be binding |
 | `DESIGN.md` | round-1 design note — **predates everything above**, does not describe the baselines or any current mechanism |
 | `RESULTS.md` | **VOID**, kept only as a record |

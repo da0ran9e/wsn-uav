@@ -144,7 +144,61 @@ Nghĩa là hệ thống **hoạt động đúng**: nó định vị chính xác 
 dữ liệu tham chiếu, cách 37 m. Nó chỉ khớp nhầm vật. Schema cũ ghi lại chuyện đó
 thành "sai số 172 m" — trộn lẫn hai sự kiện có ý nghĩa hoàn toàn khác nhau.
 
-**Đã sửa:** `metrics.csv` thêm `clutterCount, fixOnVictim, fixToNearestClutter_m`.
+**Đã sửa:** `metrics.csv` thêm `clutterCount, fixOnVictim, fixToNearestClutter_m`;
+`config.txt` thêm dòng `clutter=M,simMin,simMax` và `campaign_common.assert_one_clutter`
+**từ chối** tổng hợp các run khác chế độ nhập nhằng (cùng lý do với
+`assert_one_build`: trộn vào vài run là đủ kéo lệch đuôi mà nhìn không ra).
+
+### 4.1. Số liệu hệ thống — $M=2$, 16×16, $N=120$ mỗi mức
+
+Chạy thật qua ns-3 (`proposed`, `senseSigma=0.10`, `gpsSigma=5`, `victimOnNode=0`):
+
+| $s$ | nạn nhân được phục vụ | `fixOnVictim` | **trần** $1/(M{+}1)$ | sai số median (gộp) | p90 (gộp) | sai số median **có điều kiện đúng** | p90 có điều kiện | thời gian | năng lượng |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| — ($M=0$) | 92.5 % | — | — | 14.6 m | 29.9 m | 14.6 m | 29.9 m | 103.9 s | 68.3 kJ |
+| 0.70 | 55.8 % | 61.7 % | — | 25.2 m | **253.9 m** | 14.5 m | 33.3 m | 103.6 s | 64.4 kJ |
+| 0.85 | 40.0 % | 44.5 % | — | **162.4 m** | **257.9 m** | 13.9 m | 31.6 m | 103.6 s | 64.4 kJ |
+| 1.00 | **34.2 %** | 39.2 % | **33.3 %** | 165.0 m | 259.2 m | 14.2 m | 24.8 m | 103.6 s | 64.4 kJ |
+
+Năm điều đọc được, tất cả đều quan trọng:
+
+1. **Tại $s=1.00$ hệ thống nằm ĐÚNG TRÊN TRẦN**: 34.2 % so với $1/3$. Không có gì
+   để sửa ở đó — đó là giới hạn thông tin, không phải khuyết điểm kỹ thuật.
+2. **Sai số có điều kiện chọn đúng KHÔNG đổi** (13.9–14.5 m, y hệt 14.6 m của
+   $M=0$) ở mọi mức $s$. Bộ ước lượng hoàn toàn không suy giảm — **chỉ khâu chọn
+   ứng viên hỏng**. Đây là bằng chứng trực tiếp cho luận điểm hai chế độ ở §4.
+3. **Phân vị gộp vô nghĩa đúng như dự đoán.** p90 nhảy lên ~254 m ngay ở $s=0.70$
+   (vì 38 % chọn sai > 10 %), và **median lật** giữa 0.70 và 0.85 khi tỉ lệ chọn
+   đúng đi qua 50 % (25.2 m → 162.4 m). Không phải suy giảm trơn — là điểm gián
+   đoạn của một hàm phân vị trên hỗn hợp.
+4. **Thời gian và năng lượng KHÔNG đổi** (103.6 s / 64.4 kJ ở cả ba mức). Đây là
+   chữ ký của kiến trúc "cam kết một ứng viên": hệ thống không trả thêm chi phí
+   nào và cũng không thu được gì — nó **chỉ đơn giản là thất bại trong im lặng**.
+   Một hệ thống có xử lý nhập nhằng sẽ phải thấy chi phí tăng theo $M$ (đi thăm
+   nhiều ứng viên) và độ tin cậy được mua lại bằng chi phí đó.
+5. **`fix%` xấp xỉ 100 % ở mọi mức.** Hệ thống **luôn** báo về một vị trí, với
+   cùng mức tự tin, kể cả khi nó sai 2/3 số lần. Đây là bài toán hiệu chuẩn ở dạng
+   trần trụi nhất: **hệ chưa bao giờ nói "tôi không chắc"**.
+
+### 4.2. Một khoảng cách chưa giải thích được — và một confound tôi tự tạo ra
+
+Ở $s=0.70$, quy tắc đỉnh trên trường manh mối chọn đúng **98.3 %** (§3), nhưng hệ
+thống chỉ đạt **61.7 %**. Chênh lệch ~37 pp này **không** phải giới hạn thông tin
+— nó là kiến trúc. Giả thuyết: `--electSuppress` chọn cụm **bầu xong trước**, chứ
+không phải cụm **mạnh nhất toàn cục**, vì SHARE chỉ lan `kShareTtl = 4` hop.
+
+Nhưng **tôi không được kết luận điều đó từ thí nghiệm này**, vì tôi đã tự tạo ra
+một confound: `clutterMinSepM = 150 m` mặc định, trong khi tầm lan của SHARE là
+$4 \times R_g \approx 4 \times 37 = 148$ m. Hai cụm nằm **đúng ngay biên** của bán
+kính gộp bằng chứng. Vì thế số liệu trên **không tách được** hai giả thuyết:
+
+- (a) bầu cử quyết định theo *thời điểm* chứ không theo *cường độ*, hay
+- (b) hai cụm đơn giản là nằm ngoài tầm so sánh của nhau.
+
+**Thí nghiệm để tách:** quét `clutterMinSepM` qua ngưỡng 148 m (ví dụ 80 / 120 /
+150 / 250 m). Nếu là (b), tỉ lệ chọn đúng phải **nhảy** khi khoảng cách xuống dưới
+tầm SHARE. Nếu là (a), nó phẳng. Chưa chạy — ghi lại làm việc kế tiếp, và **không
+được trích khoảng cách 37 pp như một kết luận về bầu cử** cho tới khi chạy xong.
 
 **Bộ chỉ số nên dùng khi $M>0$:**
 
@@ -263,8 +317,21 @@ liệu luôn tốt hơn là bị hỏi.
 | `helper/sar-config.{h,cc}`, `examples/scenario-sar.cc` | cờ `--clutterCount/--clutterSimMin/--clutterSimMax` |
 | `tools/candidate_stats.cc` | trần khả phân biệt + tách hai chế độ sai số |
 
+**Cách dùng như một tham số** (đúng mục đích: giữ so sánh baseline ở chế độ cũ,
+và bật lên khi cần kiểm chứng độ thực tế):
+
+```bash
+--clutterCount=0                         # mặc định: giả định duy nhất, K=1.
+                                         # Tái lập y hệt mọi kết quả cũ.
+--clutterCount=2 --clutterSimMin=0.85 --clutterSimMax=0.85   # quét độ thực tế
+```
+
+Hàng rào: `config.txt` ghi `clutter=M,min,max`, và `assert_one_clutter` khiến mọi
+script tổng hợp **báo lỗi thay vì âm thầm trộn** hai chế độ.
+
 **Còn lại, theo thứ tự giá trị:**
 
+0. Quét `clutterMinSepM` để gỡ confound ở §4.2 — rẻ, và đang chặn một kết luận.
 1. Vật gây nhầm **di chuyển** (§7.2) — dấu hiệu phân biệt thật, và không đắt.
 2. Cho ứng dụng xuất **$\pi_k$ có hiệu chuẩn**, đo ECE (§4).
 3. Ngưỡng suy từ tỉ số mất mát (§6), thay hằng số 0.75.

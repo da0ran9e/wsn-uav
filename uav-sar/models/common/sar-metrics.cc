@@ -99,6 +99,17 @@ void SarMetrics::Finalize(const std::string& outDir) {
         // run lets the analysis scripts REFUSE to aggregate across builds
         // instead of relying on someone remembering.
         f << "build=" << __DATE__ << " " << __TIME__ << "\n";
+        // The ambiguity regime, for the same reason as build=: clutterCount = 0
+        // is the uniqueness assumption the baseline comparisons are measured
+        // under, and pooling it with clutterCount > 0 runs is meaningless but
+        // invisible. campaign_common.assert_one_clutter refuses to aggregate
+        // across regimes on the strength of this line.
+        double sMin = 0, sMax = 0;
+        for (size_t i = 0; i < m_clutter.size(); ++i) {
+            if (i == 0 || m_clutter[i].similarity < sMin) sMin = m_clutter[i].similarity;
+            if (i == 0 || m_clutter[i].similarity > sMax) sMax = m_clutter[i].similarity;
+        }
+        f << "clutter=" << m_clutter.size() << "," << sMin << "," << sMax << "\n";
     }
 }
 

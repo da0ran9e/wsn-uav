@@ -29,7 +29,7 @@ Usage:  campaign_stats.py <outdir> <N seeds> [--quick] [--grid=N]
 """
 import csv, math, os, random, subprocess, sys, statistics as st
 
-from campaign_common import victim_pos, p90, iqr, assert_one_build
+from campaign_common import victim_pos, p90, iqr, assert_one_build, assert_one_clutter
 
 BIN = "build/src/uav-sar/examples/ns3.46-scenario-sar-optimized"
 random.seed(12345)  # bootstrap determinism
@@ -325,8 +325,11 @@ def main():
     for tag in tags:
         data[tag] = run_scheme(tag, outdir, n)
         # Refuse to aggregate a campaign that spans binaries (audit meta-finding).
-        assert_one_build([os.path.join(outdir, f"{tag}-{s_}")
-                          for s_ in range(1, n + 1)], label=f"scheme '{tag}'")
+        _dirs = [os.path.join(outdir, f"{tag}-{s_}") for s_ in range(1, n + 1)]
+        assert_one_build(_dirs, label=f"scheme '{tag}'")
+        # Same refusal for the ambiguity regime: clutterCount = 0 (uniqueness)
+        # and clutterCount > 0 are different experiments, not different seeds.
+        assert_one_clutter(_dirs, label=f"scheme '{tag}'")
         print(f"  [{tag}] {len(data[tag])} runs collected", file=sys.stderr)
 
     print(f"\n### Campaign with 95% confidence intervals (N={n} seeds/scheme) ###")

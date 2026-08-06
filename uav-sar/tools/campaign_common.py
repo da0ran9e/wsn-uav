@@ -117,6 +117,46 @@ def assert_one_build(run_dirs, label=""):
     return next(iter(seen), None)
 
 
+def clutter_id(run_dir):
+    """The ambiguity regime a run was produced under, from config.txt."""
+    try:
+        for line in open(os.path.join(run_dir, "config.txt")):
+            if line.startswith("clutter="):
+                return line.split("=", 1)[1].strip()
+    except Exception:
+        pass
+    return None
+
+
+def assert_one_clutter(run_dirs, label=""):
+    """Refuse to aggregate runs from different ambiguity regimes.
+
+    clutterCount = 0 is the uniqueness assumption every baseline comparison is
+    measured under; clutterCount > 0 deliberately violates it. Pooling the two
+    is meaningless, and worse, it is invisible: reportErr_m is a two-mode
+    mixture under ambiguity, so a few mixed-in runs move the tail quantiles a
+    long way without looking anomalous. Same reasoning as assert_one_build --
+    it raises rather than warns.
+
+    Runs predating the clutter model report None and are treated as one regime,
+    since they could only have been produced with no clutter.
+    """
+    seen = {}
+    for d in run_dirs:
+        c = clutter_id(d)
+        if c is not None:
+            seen.setdefault(c, []).append(d)
+    if len(seen) > 1:
+        lines = "\n".join(f"    clutter={c}: {len(v)} runs (e.g. {v[0]})"
+                          for c, v in sorted(seen.items()))
+        raise SystemExit(
+            f"REFUSING to aggregate {label or 'these runs'}: they span "
+            f"{len(seen)} different ambiguity regimes.\n{lines}\n"
+            "  Compare within one regime, or sweep the regime as a declared variable."
+        )
+    return next(iter(seen), None)
+
+
 def nearest_rank(xs, q):
     """Nearest-rank quantile: the smallest value at or above fraction q.
 

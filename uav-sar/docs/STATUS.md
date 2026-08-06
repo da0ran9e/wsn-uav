@@ -149,10 +149,13 @@ These cost real time. Do not relearn them.
   ("accuracy is sensing-limited", "the centroid wins the tail", "the aiming
   scope causes the error floor").
 - **Every published number assumes uniqueness.** Nothing else in the search area
-  matches the reference dataset. `--clutterCount` now lets that be violated; when
-  it is, `reportErr_m` is a mixture of "right object, ~10 m" and "wrong object,
-  ~200 m", and its p90 jumps discontinuously rather than degrading. Quote
+  matches the reference dataset. `--clutterCount` now lets that be violated
+  (default 0 = the old regime, byte-identical); when it is, `reportErr_m` is a
+  mixture of "right object, ~14 m" and "wrong object, ~250 m". Measured at
+  M = 2, N = 120: the pooled median *flips* between similarity 0.70 and 0.85
+  (25 m → 162 m) while the conditional error never moves (14.5 → 13.9 m). Quote
   `fixOnVictim` and the conditional error, never the pooled quantiles.
+  `assert_one_clutter` refuses to aggregate across regimes.
 - **Cost metrics are intention-to-treat.** Gating them on victim-served is
   survivorship bias worth 0.4–2.8 %, always in our favour.
 

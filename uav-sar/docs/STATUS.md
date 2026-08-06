@@ -201,6 +201,7 @@ recorded in `sar-params.h` or `sar-config.h` comments.
 | `AUDIT-2026-08-round2.md` | audit round 2, eleven findings A1–A11 |
 | `AUDIT-2026-08.md` | earliest correctness audit |
 | `PROBLEM-FORMULATION-vi.md` | Vietnamese: the eight optimization problems stated separately (P1–P8), each with who solves it and whether it is open |
+| `FIXED-WING-FAST-vi.md` | Vietnamese: what changes if the FAST team becomes fixed-wing — Dubins re-routing is fine, but the 30 s relay hold breaks at 20 m/s, the energy curve is the wrong one, and the HANDOFF retry window is shorter than an orbit period |
 | `RELATED-WORK-ambiguity.md` | Vietnamese: who has already studied identity ambiguity — classical search-among-false-contacts theory, visually-identical-target association, clothes-changing re-ID — and what still has to be checked before claiming a gap |
 | `FALSE-POSITIVE-RIGOR-vi.md` | Vietnamese: the uniqueness assumption every result rests on, why identity ambiguity is not sensor noise, the identifiability ceiling, and the fact that `reportErr_m` becomes a two-mode mixture once it is violated |
 | `PROBLEM-MULTI-CANDIDATE-vi.md` | Vietnamese: what happens once detector false positives create K > 1 request points — routing/scheduling/partitioning problems P9–P14, the measurement showing the current field never reaches that regime, and the testable hypothesis that this is where cooperation would finally pay |

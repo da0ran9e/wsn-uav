@@ -93,6 +93,36 @@ nếu chưa chạy ablation tách. Điều duy nhất kết luận được là 
 dự đoán của bản sửa đóng vòng: người ngoài cuộc dưới điểm thả không còn kết thúc
 nhiệm vụ thay cho nạn nhân được nữa.
 
+## 5b. UAV DATA tuần tra: ở 16×16 nó **tốn năng lượng và không mua được gì**
+
+So cặp trên cùng 120 hạt giống, cùng một binary, cùng chế độ nhập nhằng
+(`--dataPatrol=0` vs `=1`, M = 2, s = 0.9):
+
+| chỉ số | tắt | bật | kiểm định theo cặp |
+|---|---:|---:|---|
+| phục vụ nạn nhân | 90.0 % | 90.0 % | McNemar b=8 c=8, **p = 1.000** |
+| thời gian nhiệm vụ | 104.4 s | 103.7 s | Wilcoxon p = 0.45 (thắng 53/117) |
+| gói tin | 4 096 | 4 067 | p = 0.48 (thắng 67/120) |
+| **năng lượng** | **68.6 kJ** | **70.7 kJ** | **p = 4.6e-4**, chỉ thắng 38/120 |
+| sai số med / p90 | 14.9 / 34.3 m | 14.6 / 33.1 m | — |
+| đúng người | 100 % | 100 % | — |
+
+Kết luận trung thực: **ở 16×16, tuần tra tốn thêm ~3 % năng lượng và không mua
+được gì đo được.** Không có cải thiện về độ tin cậy, thời gian, gói tin hay sai
+số. Nhẹ hơn phép đo cũ (trước đây là +14 % gói tin và −2.5 pp độ tin cậy) nhưng
+vẫn không có mặt lợi.
+
+Điều đó **không** có nghĩa là ý tưởng sai. Cơ chế mà tuần tra phục vụ — giữ một
+UAV DATA **luôn di chuyển trên vùng** để nó nằm trong tầm một-hop của lệnh SUMMON
+— chỉ có ý nghĩa khi vùng đủ lớn để chỗ đỗ ở giữa bản đồ nằm ngoài tầm với. Ở
+16×16 (vùng 300×300 m) chỗ đỗ ở tâm gần như luôn với tới được; ở 40×40 (780×780 m)
+thì không, và đó chính là lý do 40×40 từng thất bại 0/5 trước khi có bản sửa phát
+lại SUMMON theo CUE.
+
+**Vì vậy con số quyết định là ở 40×40, chưa phải ở đây.** Mặc định hiện đang BẬT
+theo yêu cầu; nếu 40×40 cũng không cho lợi ích thì nên tắt lại, vì 3 % năng lượng
+không đổi lấy được gì là một khoản lỗ thuần.
+
 ## 6. Hai vấn đề mở đã đóng
 
 - **Vấn đề mở số 2** (tiêu chí CONFIRM sai về nguyên tắc): đã sửa. Giữ dữ liệu

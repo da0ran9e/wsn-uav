@@ -63,11 +63,11 @@ Ba quyết định thiết kế, đều có lý do:
 
 Cờ dòng lệnh: `--clutterCount=M --clutterSimMin=a --clutterSimMax=b`.
 
-## 3. Trần khả phân biệt — đo được, và nó chặn **mọi** thuật toán
+## 3. Trần khả phân biệt
 
-Với cùng nhân $g$, cách tốt nhất mà **bất kỳ** bộ ước lượng nào đọc trường vô
-hướng này có thể làm là chọn cụm có đỉnh cao nhất. Đo tỉ lệ chọn đúng
-(`tools/candidate_stats.cc`, 16×16, $\sigma=0.10$, $N=120$):
+Đo tỉ lệ chọn đúng của **quy tắc đỉnh** — tin nút mạnh nhất, đúng thứ
+`--aimArgmax` đang làm (`tools/candidate_stats.cc`, 16×16, $\sigma=0.10$,
+$N=120$):
 
 | tương đồng $s$ | $M=1$ | $M=2$ | $M=4$ | lý thuyết tại $s=1$ |
 |---:|---:|---:|---:|---:|
@@ -76,14 +76,42 @@ hướng này có thể làm là chọn cụm có đỉnh cao nhất. Đo tỉ l
 | **1.00** | **41.7 %** | **33.3 %** | **20.8 %** | $1/(M+1)$ = 50 / 33.3 / 20 % |
 
 Tại $s=1$ số đo khớp $1/(M+1)$ (điểm $M=1$ thấp hơn kỳ vọng $\approx1.8\sigma$,
-trong khoảng tin cậy). Đọc bảng này cho đúng:
+trong khoảng tin cậy). Cần đọc bảng này cho thật đúng, vì có **hai** phát biểu ở
+đây và chỉ một trong hai là cận:
 
-> Ở $s=1$, **41.7 % không phải là điểm kém của bộ điều khiển — đó là trần**. Một
-> hệ thống đạt 41.7 % ở đó là **tối ưu**. Báo cáo con số tuyệt đối mà không kèm
-> trần là làm người đọc hiểu sai theo cả hai hướng.
+- **Tại $s=1$, $1/(M+1)$ là cận thông tin thật sự.** Hàm hợp lý đối xứng hoàn
+  toàn giữa các vật thể, nên **không** bộ ước lượng nào — dù thông minh đến đâu,
+  dù gộp bao nhiêu nút — vượt qua được. Ở đó **41.7 % không phải là điểm kém của
+  bộ điều khiển; một hệ thống đạt 41.7 % là tối ưu.**
+- **Tại $s<1$ các con số trên KHÔNG phải cận.** Chúng là hiệu năng của một quy
+  tắc cụ thể (quy tắc đỉnh). Vật thể thật có biên độ cao hơn, nên một bộ ước
+  lượng **gộp bằng chứng trong cụm** sẽ giảm phương sai biên độ và làm tốt hơn.
+  Khoảng cách đó chính là chỗ tầng hợp tác có giá trị.
 
-Hệ quả cho cách trình bày: khi giả định A bị vi phạm, đại lượng đúng để công bố
-là **hiệu năng so với trần**, không phải hiệu năng tuyệt đối.
+Thử ngay quy tắc thứ hai — chọn cụm có **tổng** bằng chứng lớn nhất (so sánh theo
+cặp trên cùng bộ hạt giống, kiểm định McNemar chính xác):
+
+| | $s=0.70$ | $s=0.85$ | $s=1.00$ |
+|---|---|---|---|
+| $M=1$ | +0.8 pp (p=0.25) | +3.4 pp (p=0.42) | +0.8 pp (p=1.00) |
+| $M=2$ | +0.9 pp (p=0.25) | +0.8 pp (p=1.00) | −4.2 pp (p=0.51) |
+| $M=4$ | +2.6 pp (p=0.25) | **+9.2 pp (p=0.061)** | −2.5 pp (p=0.69) |
+
+Kết luận trung thực: **không ô nào đạt ý nghĩa thống kê ở mức 0.05.** Hai điều
+đọc được:
+
+1. **Tại $s=1.00$ chênh lệch bằng 0 trong sai số lấy mẫu** (cặp bất đồng
+   $b\approx c$: 16/17, 21/16, 14/11) — **đúng như lý thuyết bắt buộc**. Đây là
+   một phép kiểm tra tính nhất quán đã vượt qua, không phải kết quả rỗng.
+2. **Điểm $M=4,\ s=0.85$ là manh mối duy nhất** (+9.2 pp, $p=0.061$). Nó nằm đúng
+   chỗ lý thuyết dự đoán: vùng nhập nhằng **trung gian**, nơi vẫn còn thứ để phân
+   biệt nhưng một nút đơn lẻ thì không đủ. Chưa đủ để phát biểu; đủ để theo đuổi
+   bằng $N$ lớn hơn và lưới $s$ mịn hơn.
+
+Cần nói rõ vì sao điều này quan trọng: nếu manh mối trên đứng vững, nó là **cơ chế
+cụ thể trả lời vấn đề mở số 1 trong `STATUS.md`** (hợp tác trả giá ở đâu?). Câu
+trả lời sẽ là *ở vùng nhập nhằng trung gian*, và nó có dạng chữ U ngược — bằng 0 ở
+cả hai đầu (dễ quá thì không cần, bất khả thì không thể).
 
 ## 4. Chỉ số hiện tại **vỡ** dưới nhập nhằng — đây là rủi ro phản biện lớn nhất
 

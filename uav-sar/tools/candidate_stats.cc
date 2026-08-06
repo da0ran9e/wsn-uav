@@ -37,7 +37,7 @@
 
 using namespace ns3::uavsar;
 
-struct Comp { double px, py, peakQ; int n; double distVictim; };
+struct Comp { double px, py, peakQ, sumQ; int n; double distVictim; };
 
 int main(int argc, char** argv) {
     uint32_t grid   = (argc > 1) ? std::stoul(argv[1]) : 16;
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 
     std::vector<int> kAlertNodes, kComps, kCoopNodes, kAlertCells, kDecoyComps;
     std::vector<double> nearestDecoyD, peakErr, farthestCompD;
-    std::vector<int> topIsVictim;
+    std::vector<int> topIsVictim, sumIsVictim;
     std::vector<double> errRight, errWrong;
     int seedsNoAlert = 0;
 
@@ -135,10 +135,11 @@ int main(int argc, char** argv) {
         kComps.push_back(nc);
         if (nc == 0) { seedsNoAlert++; continue; }
 
-        std::vector<Comp> comps(nc, {0, 0, -1, 0, 0});
+        std::vector<Comp> comps(nc, {0, 0, -1, 0, 0, 0});
         for (size_t i = 0; i < hot.size(); ++i) {
             Comp& c = comps[lab[i]];
             c.n++;
+            c.sumQ += hot[i].clueQuality;
             if (hot[i].clueQuality > c.peakQ) {
                 c.peakQ = hot[i].clueQuality;
                 c.px = hot[i].x;
@@ -158,13 +159,27 @@ int main(int argc, char** argv) {
         // quyết định TỐT NHẤT mà bất kỳ bộ ước lượng nào đọc trường vô hướng này
         // có thể đưa ra, nên nó chặn trên mọi thuật toán.
         if (!clutter.empty()) {
+            auto isVictimCluster = [&](const Comp& c) {
+                double dv = std::hypot(c.px - vx, c.py - vy), dc = 1e18;
+                for (auto& s : clutter) dc = std::min(dc, std::hypot(c.px - s.x, c.py - s.y));
+                return dv <= dc;
+            };
+            // Quy tắc 1 (ĐỈNH): tin nút mạnh nhất. Đây là thứ `--aimArgmax` đang
+            // làm. Tại similarity = 1 nó đạt đúng cận thông tin 1/(M+1); tại
+            // similarity < 1 nó KHÔNG phải cận — chỉ là một điểm khả đạt.
             const Comp* top = &comps[0];
             for (auto& c : comps) if (c.peakQ > top->peakQ) top = &c;
-            double dv = std::hypot(top->px - vx, top->py - vy), dc = 1e18;
-            for (auto& s : clutter) dc = std::min(dc, std::hypot(top->px - s.x, top->py - s.y));
-            topIsVictim.push_back(dv <= dc ? 1 : 0);
-            // sai số nếu ta tin cụm mạnh nhất: hai chế độ hoàn toàn khác nhau
-            (dv <= dc ? errRight : errWrong).push_back(dv);
+            topIsVictim.push_back(isVictimCluster(*top) ? 1 : 0);
+            (isVictimCluster(*top) ? errRight : errWrong).push_back(
+                std::hypot(top->px - vx, top->py - vy));
+
+            // Quy tắc 2 (GỘP): tin cụm có TỔNG bằng chứng lớn nhất. Gộp trong cụm
+            // làm giảm phương sai của biên độ ước lượng, nên khoảng cách giữa hai
+            // quy tắc chính là phần mà tầng hợp tác có thể mua được — và tại
+            // similarity = 1 khoảng cách đó phải bằng 0, vì ở đó không gì mua được.
+            const Comp* tops = &comps[0];
+            for (auto& c : comps) if (c.sumQ > tops->sumQ) tops = &c;
+            sumIsVictim.push_back(isVictimCluster(*tops) ? 1 : 0);
         }
         kDecoyComps.push_back(decoys);
         if (decoys) nearestDecoyD.push_back(nd);
@@ -195,7 +210,15 @@ int main(int argc, char** argv) {
         double hit = 100.0 * mean(topIsVictim);
         printf("  --- vat the gay nham lan: M=%s sim=[%s,%s] ---\n",
                argv[6], argc > 7 ? argv[7] : "0.60", argc > 8 ? argv[8] : "1.00");
-        printf("  TRAN kha phan biet   : chon dung nan nhan %.1f%% (n=%zu)\n", hit, topIsVictim.size());
+        printf("  quy tac DINH (argmax): chon dung %.1f%% (n=%zu)\n", hit, topIsVictim.size());
+        int nb = 0, ncd = 0;   // cap bat dong: b = DINH dung/GOP sai, c = nguoc lai
+        for (size_t i = 0; i < topIsVictim.size() && i < sumIsVictim.size(); ++i) {
+            if (topIsVictim[i] && !sumIsVictim[i]) nb++;
+            if (!topIsVictim[i] && sumIsVictim[i]) ncd++;
+        }
+        printf("  quy tac GOP  (tong)  : chon dung %.1f%%   <- chenh %+.1f pp\n",
+               100.0 * mean(sumIsVictim), 100.0 * (mean(sumIsVictim) - mean(topIsVictim)));
+        printf("  cap bat dong (McNemar): b=%d (chi DINH dung)  c=%d (chi GOP dung)\n", nb, ncd);
         printf("  sai so | chon DUNG   : median %.1f m (n=%zu)\n", med(errRight), errRight.size());
         printf("  sai so | chon SAI    : median %.1f m (n=%zu)  <- luong thu hai\n",
                med(errWrong), errWrong.size());

@@ -43,11 +43,25 @@ void SarMetrics::Finalize(const std::string& outDir) {
              // audit B3: the fix as DECODED AT THE BS (-1 / empty = the BS never
              // learned a position, which is the honest outcome for every
              // blind-coverage baseline).
-             "timeToFixAtBS_s,reportedX,reportedY,reportErr_m";
+             "timeToFixAtBS_s,reportedX,reportedY,reportErr_m,"
+             // World-level ambiguity. fixOnVictim = the delivered position is
+             // closer to the victim than to any confusable object; -1 = no fix.
+             // Without this split, "closed the loop on the wrong person" and
+             // "estimated the right person imprecisely" are the same number.
+             "clutterCount,fixOnVictim,fixToNearestClutter_m";
         for (auto& [k, v] : m_extra) f << "," << k;
         f << "\n";
         const double fixErr =
             m_hasFix ? std::hypot(m_fixX - m_vx, m_fixY - m_vy) : -1.0;
+        double clutterD = -1.0;
+        int fixOnVictim = -1;
+        if (m_hasFix) {
+            for (const auto& c : m_clutter) {
+                double d = std::hypot(m_fixX - c.x, m_fixY - c.y);
+                if (clutterD < 0 || d < clutterD) clutterD = d;
+            }
+            fixOnVictim = (clutterD < 0 || fixErr <= clutterD) ? 1 : 0;
+        }
         f << std::fixed << std::setprecision(4)
           << m_seed << "," << m_grid << "," << m_spacing << "," << m_numUav << ","
           << m_scheme << "," << m_target << "," << m_vx << "," << m_vy << "," << m_tReport << "," << m_tLocalize << "," << m_tComplete << ","
@@ -56,7 +70,8 @@ void SarMetrics::Finalize(const std::string& outDir) {
           << m_sentBytes << "," << m_recvBytes << ","
           << m_energyJ << "," << m_devM << ","
           << m_tFix << "," << (m_hasFix ? m_fixX : -1.0) << ","
-          << (m_hasFix ? m_fixY : -1.0) << "," << fixErr;
+          << (m_hasFix ? m_fixY : -1.0) << "," << fixErr << ","
+          << m_clutter.size() << "," << fixOnVictim << "," << clutterD;
         for (auto& [k, v] : m_extra) f << "," << v;
         f << "\n";
     }

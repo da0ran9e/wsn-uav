@@ -72,6 +72,15 @@ struct SarScenarioConfig {
     double senseSigma = 0.0;     // detector noise, additive sigma on clueQuality
     double gpsSigmaM = 0.0;      // per-node frozen GPS offset, sigma in metres
     bool   victimOnNode = true;  // false = victim at a continuous position (W7)
+    // World-level ambiguity: M objects in the area that genuinely match the
+    // reference dataset (another hiker in the same jacket, the search party).
+    // 0 = the uniqueness assumption every earlier result was measured under.
+    // similarity 1.0 means indistinguishable by this sensing modality, which
+    // caps ANY algorithm at 1/(M+1) for picking the victim -- so the sweep is
+    // over an identifiability floor, not over a controller's competence.
+    uint32_t clutterCount = 0;
+    double clutterSimMin = 0.60;
+    double clutterSimMax = 1.00;
     std::string scheme = "proposed";
     std::string outputDir = "data/results/uav-sar/run-1";
 };

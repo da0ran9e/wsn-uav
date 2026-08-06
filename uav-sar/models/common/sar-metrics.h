@@ -5,6 +5,8 @@
 // Primary metric: timeToReportAtBS_s (start -> small report reaches BS).
 // Writes metrics.csv (1 row), events.csv, trajectories.csv, config.txt.
 
+#include "clue-field.h"
+
 #include <cstdint>
 #include <map>
 #include <string>
@@ -38,6 +40,12 @@ public:
     void MarkVictimFix(double t, double x, double y) {
         if (m_tFix < 0) { m_tFix = t; m_fixX = x; m_fixY = y; m_hasFix = true; }
     }
+
+    // The confusable objects present in this run. With them, "reportErr_m" alone
+    // is a BIMODAL quantity -- a 200 m error means the loop closed on the wrong
+    // person, not that the estimator was imprecise -- so the two are separated
+    // into fixOnVictim / fixToNearestClutter_m rather than averaged together.
+    void SetClutter(const std::vector<ClutterSource>& c) { m_clutter = c; }
 
     void MarkLocalize(double t)     { if (m_tLocalize < 0) m_tLocalize = t; }
     void MarkCompleteData(double t) { if (m_tComplete < 0) m_tComplete = t; }
@@ -73,6 +81,7 @@ private:
     uint64_t m_sentBytes=0, m_recvBytes=0;
     double m_energyJ=0, m_devM=0;
     std::map<std::string, uint64_t> m_extra;
+    std::vector<ClutterSource> m_clutter;
     std::vector<MEvent> m_events;
     std::vector<MTraj> m_traj;
 };

@@ -103,7 +103,13 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     cc.victimY = victimY;
     cc.decay = cfg.clueDecayM;          // sensing range knob (localization-resolution study)
     cc.senseSigma = cfg.senseSigma;     // audit M9/W3: detector noise
+    cc.clutterCount = cfg.clutterCount; // confusable objects (world ambiguity)
+    cc.clutterSimMin = cfg.clutterSimMin;
+    cc.clutterSimMax = cfg.clutterSimMax;
     auto field = BuildClueField(cluePos, cc);
+    // Scored against the delivered fix so that "went to the wrong person" is a
+    // separate outcome in metrics.csv, not an outlier in the error tail.
+    m_metrics.SetClutter(BuildClutter(cluePos, cc));
     // audit M9/W3: frozen per-node GPS offsets, drawn from the same run seed.
     std::normal_distribution<double> gpsN(0.0, std::max(0.0, cfg.gpsSigmaM));
     std::map<uint32_t, std::pair<double, double>> gpsBias;

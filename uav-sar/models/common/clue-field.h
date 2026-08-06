@@ -20,6 +20,20 @@ namespace ns3::uavsar {
 
 struct CluePos { uint32_t id; double x, y; };
 
+// A CONFUSABLE OBJECT: something in the search area that genuinely resembles the
+// reference dataset (another hiker in the same jacket, the search party itself,
+// a discarded garment). This is NOT detector noise. A node reporting high
+// evidence next to one of these is reporting CORRECTLY -- the world is ambiguous,
+// not the sensor. The distinction matters because sensor noise is reducible by
+// observing longer or averaging, and this is not reducible at all by the same
+// modality: with similarity 1.0 no algorithm reading this scalar can beat
+// 1/(M+1) at picking the victim. Modelling ambiguity as large senseSigma would
+// therefore overstate what better sensing can fix.
+struct ClutterSource {
+    double x = 0, y = 0;
+    double similarity = 1.0;   // peak evidence relative to the victim's, in [0,1]
+};
+
 struct ClueFieldConfig {
     uint32_t targetNodeId = 0;      // the node nearest the victim (metrics only)
     uint32_t seed = 1;
@@ -39,6 +53,15 @@ struct ClueFieldConfig {
     // per-packet event) and clipped to [0,1]. sigma = 0 reproduces the
     // idealized field exactly, so it is the ablation, not the default reality.
     double senseSigma = 0.0;
+    // --- world-level ambiguity (confusable objects) -------------------------
+    // Placed from a SEPARATE rng stream so that clutterCount = 0 reproduces every
+    // previously measured result byte-for-byte; adding draws to the main stream
+    // would silently shift every background false-positive decision.
+    uint32_t clutterCount = 0;        // M
+    double clutterSimMin = 0.60;      // similarity drawn U[min,max]; 1.0 = identical
+    double clutterSimMax = 1.00;      // outfit, indistinguishable by this sensor
+    double clutterMinSepM = 150.0;    // keep sources from merging into one cluster
+    double areaW = 0, areaH = 0;      // placement box; 0 = bounding box of nodes
 };
 
 struct ClueInfo {
@@ -48,10 +71,21 @@ struct ClueInfo {
     double clueQuality = 0;         // [0,1]
     bool isTarget = false;
     bool isFalsePositive = false;
+    // Which object drove this node's evidence: -1 victim, >= 0 clutter index,
+    // -2 background. Analysis only -- no application may read it (it is an
+    // oracle; audit B1 removed the last one of those).
+    int32_t sourceId = -2;
 };
 
 std::map<uint32_t, ClueInfo> BuildClueField(const std::vector<CluePos>& nodes,
                                             const ClueFieldConfig& cfg);
+
+// The confusable objects the config asks for, placed deterministically from the
+// seed. Exposed so metrics can score a delivery against them: without this, a
+// dataset delivered to the wrong person is indistinguishable in metrics.csv from
+// a large estimation error, and the two mean completely different things.
+std::vector<ClutterSource> BuildClutter(const std::vector<CluePos>& nodes,
+                                        const ClueFieldConfig& cfg);
 
 }  // namespace ns3::uavsar
 

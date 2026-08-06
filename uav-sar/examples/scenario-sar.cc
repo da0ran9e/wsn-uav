@@ -34,6 +34,9 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("senseSigma", "detector noise sigma on clue quality (0 = ideal)", cfg.senseSigma);
     cmd.AddValue("gpsSigma", "per-node GPS error sigma in m (0 = exact)", cfg.gpsSigmaM);
     cmd.AddValue("victimOnNode", "victim sits exactly on a sensor (0 = continuous)", cfg.victimOnNode);
+    cmd.AddValue("clutterCount", "confusable objects matching the reference data (0 = uniqueness)", cfg.clutterCount);
+    cmd.AddValue("clutterSimMin", "min similarity of a confusable object", cfg.clutterSimMin);
+    cmd.AddValue("clutterSimMax", "max similarity (1.0 = indistinguishable)", cfg.clutterSimMax);
     cmd.AddValue("scheme", "proposed | closed-loop | nocoop | pure-uav | tsp-mc", cfg.scheme);
     cmd.AddValue("outputDir", "results dir", outputDir);
     cmd.Parse(argc, argv);

@@ -10,6 +10,13 @@
 //       models/common/clue-field.cc models/common/cell-grid.cc
 // Run:
 //   ./candidate_stats <grid> <senseSigma> <seeds> [maxNoiseQuality] [bgFpRate]
+//                     [clutterCount] [simMin] [simMax]
+//
+// Với clutterCount > 0, công cụ còn in **trần khả phân biệt** (identifiability
+// ceiling): xác suất cụm MẠNH NHẤT đúng là cụm của nạn nhân. Với similarity = 1
+// hai vật thể không phân biệt được bằng phương thức cảm biến này, nên trần đó
+// tiến về 1/(M+1) và KHÔNG thuật toán nào vượt qua được — con số này là mốc để
+// đọc kết quả hệ thống, không phải là điểm trừ của bộ điều khiển.
 //
 // "Ứng viên" = một thành phần liên thông (single-linkage ở tầm liên kết mặt đất
 // ~37 m) của các nút vượt ngưỡng ALERT. Đó chính là mức mà một lãnh đạo ô có thể
@@ -58,6 +65,8 @@ int main(int argc, char** argv) {
 
     std::vector<int> kAlertNodes, kComps, kCoopNodes, kAlertCells, kDecoyComps;
     std::vector<double> nearestDecoyD, peakErr, farthestCompD;
+    std::vector<int> topIsVictim;
+    std::vector<double> errRight, errWrong;
     int seedsNoAlert = 0;
 
     for (uint32_t s = 1; s <= nSeeds; ++s) {
@@ -83,7 +92,11 @@ int main(int argc, char** argv) {
         cc.senseSigma = sigma;
         if (argc > 4) cc.maxNoiseQuality = std::stod(argv[4]);
         if (argc > 5) cc.bgFalsePositiveRate = std::stod(argv[5]);
+        if (argc > 6) cc.clutterCount = std::stoul(argv[6]);
+        if (argc > 7) cc.clutterSimMin = std::stod(argv[7]);
+        if (argc > 8) cc.clutterSimMax = std::stod(argv[8]);
         auto field = BuildClueField(nodes, cc);
+        auto clutter = BuildClutter(nodes, cc);
 
         std::vector<ClueInfo> hot;
         int nCoop = 0;
@@ -140,6 +153,19 @@ int main(int argc, char** argv) {
             if (c.distVictim > decoyRadius) { decoys++; nd = std::min(nd, c.distVictim); }
             else truePeakErr = std::min(truePeakErr, c.distVictim);
         }
+
+        // Trần khả phân biệt: cụm mạnh nhất có phải cụm nạn nhân không? Đây là
+        // quyết định TỐT NHẤT mà bất kỳ bộ ước lượng nào đọc trường vô hướng này
+        // có thể đưa ra, nên nó chặn trên mọi thuật toán.
+        if (!clutter.empty()) {
+            const Comp* top = &comps[0];
+            for (auto& c : comps) if (c.peakQ > top->peakQ) top = &c;
+            double dv = std::hypot(top->px - vx, top->py - vy), dc = 1e18;
+            for (auto& s : clutter) dc = std::min(dc, std::hypot(top->px - s.x, top->py - s.y));
+            topIsVictim.push_back(dv <= dc ? 1 : 0);
+            // sai số nếu ta tin cụm mạnh nhất: hai chế độ hoàn toàn khác nhau
+            (dv <= dc ? errRight : errWrong).push_back(dv);
+        }
         kDecoyComps.push_back(decoys);
         if (decoys) nearestDecoyD.push_back(nd);
         if (truePeakErr < 1e17) peakErr.push_back(truePeakErr);
@@ -165,5 +191,14 @@ int main(int argc, char** argv) {
     printf("  k/c moi nhu gan nhat : median %.1f m (n=%zu)\n", med(nearestDecoyD), nearestDecoyD.size());
     printf("  k/c ung vien xa nhat : median %.1f m\n", med(farthestCompD));
     printf("  sai so dinh cum that : median %.1f m (n=%zu)\n", med(peakErr), peakErr.size());
+    if (!topIsVictim.empty()) {
+        double hit = 100.0 * mean(topIsVictim);
+        printf("  --- vat the gay nham lan: M=%s sim=[%s,%s] ---\n",
+               argv[6], argc > 7 ? argv[7] : "0.60", argc > 8 ? argv[8] : "1.00");
+        printf("  TRAN kha phan biet   : chon dung nan nhan %.1f%% (n=%zu)\n", hit, topIsVictim.size());
+        printf("  sai so | chon DUNG   : median %.1f m (n=%zu)\n", med(errRight), errRight.size());
+        printf("  sai so | chon SAI    : median %.1f m (n=%zu)  <- luong thu hai\n",
+               med(errWrong), errWrong.size());
+    }
     return 0;
 }

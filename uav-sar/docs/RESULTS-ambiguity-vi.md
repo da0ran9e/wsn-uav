@@ -138,9 +138,44 @@ Cơ chế hiển nhiên — nhiều cue hơn ⇒ nhiều va chạm hơn ⇒ giao
 kiểm và KHÔNG đúng**: va chạm A2G *giảm* khi bật patrol ở cả ba lưới. **Không
 tuyên bố cơ chế nào.**
 
-**Mặc định đã trả về TẮT.** Mối lo ban đầu vẫn được giải quyết: một UAV DATA đỗ
-tại chỗ **không còn im lặng**, vì `dataCueEnroute` cho nó rải cue ngay từ điểm
-loiter, và cái đó **không tốn giờ bay**. Bật lại chỉ cần `--dataPatrol=1`.
+### 5c. RÚT LẠI cả hai kết luận trên — tôi đã đo một cấu hình thoái hoá
+
+Cả hai bảng ở §5b đo **sai đối tượng**. Kiểm tra quỹ đạo ở 40×40: **FAST 2 và
+DATA 4 bay cách nhau trung vị 2.0 m**, FAST 1 / DATA 3 nằm trong vòng 60 m suốt
+78 % thời gian. Nguyên nhân trong mã: hàm `partition` chia dải theo trục **x**, và
+được gọi **cùng kiểu** cho cả hai đội — nên đội DATA nhận **đúng hai dải** mà đội
+FAST đang bay. Bản sửa F5 ngày trước chỉ chia dải *trong nội bộ một đội*.
+
+Vậy UAV DATA tuần tra thêm **0 vùng phủ mới**; nó chỉ có thể là chi phí thuần. Kết
+luận "tuần tra không đáng tiền" chỉ đúng cho **tuần tra trùng lặp**.
+
+Đã sửa ba thứ: dải DATA chia theo **y** (trực giao với dải x của FAST), duyệt dải
+**ngược chiều** (tách nhau cả về thời gian), và **DATA 15 m/s** (rotary-wing) so
+với FAST 20 m/s (fixed-wing). Kiểm chứng: khoảng cách trung vị FAST–DATA
+**2.0 m → 224–310 m**, thời gian trong vòng 60 m **78 % → 6–14 %**.
+
+Đo lại, 16×16, N = 120, so cặp, một binary:
+
+| chỉ số | tắt | bật | kiểm định |
+|---|---:|---:|---|
+| phục vụ nạn nhân | 94.2 % | **95.8 %** | McNemar b=5 c=7, p = 0.774 |
+| **năng lượng** | 70.8 kJ | 71.8 kJ | **p = 0.958 — hình phạt BIẾN MẤT** (trước là 4.6e-4) |
+| gói tin | 4 170 | 4 168 | p = 0.771 |
+| thời gian nhiệm vụ | 115.3 s | 119.5 s | p = 0.059 — chi phí duy nhất, chưa đạt ý nghĩa |
+| sai số median | 14.1 m | **13.2 m** | — |
+| đúng người | 118/118 | **120/120** | — |
+
+Gộp 24/32/40 sau khi sửa: **b = 10, c = 10, p = 1.000** (trước khi sửa: b=19, c=8,
+p=0.052 và năng lượng cao hơn ở mọi lưới).
+
+**Mặc định đã bật lại.** Lý do duy nhất để tắt — thiệt hại đo được — hoá ra là
+sản phẩm của dải trùng lặp. Chi phí còn lại là ~3.6 % thời gian nhiệm vụ, chưa đạt
+ý nghĩa thống kê.
+
+**Bài học phương pháp:** hai lần tôi kết luận "cơ chế X không đáng tiền" trong khi
+thứ đang đo là một **cấu hình hỏng** của X. Trước khi tuyên bố một cơ chế vô dụng,
+phải kiểm rằng nó thực sự đang làm việc mà tên gọi của nó hứa hẹn — ở đây chỉ cần
+nhìn khoảng cách giữa hai quỹ đạo.
 
 ## 6. Hai vấn đề mở đã đóng
 

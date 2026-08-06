@@ -112,16 +112,35 @@ Kết luận trung thực: **ở 16×16, tuần tra tốn thêm ~3 % năng lư�
 số. Nhẹ hơn phép đo cũ (trước đây là +14 % gói tin và −2.5 pp độ tin cậy) nhưng
 vẫn không có mặt lợi.
 
-Điều đó **không** có nghĩa là ý tưởng sai. Cơ chế mà tuần tra phục vụ — giữ một
-UAV DATA **luôn di chuyển trên vùng** để nó nằm trong tầm một-hop của lệnh SUMMON
-— chỉ có ý nghĩa khi vùng đủ lớn để chỗ đỗ ở giữa bản đồ nằm ngoài tầm với. Ở
-16×16 (vùng 300×300 m) chỗ đỗ ở tâm gần như luôn với tới được; ở 40×40 (780×780 m)
-thì không, và đó chính là lý do 40×40 từng thất bại 0/5 trước khi có bản sửa phát
-lại SUMMON theo CUE.
+### Quét quy mô: tuần tra KHÔNG đáng tiền ở bất kỳ quy mô nào đã đo
 
-**Vì vậy con số quyết định là ở 40×40, chưa phải ở đây.** Mặc định hiện đang BẬT
-theo yêu cầu; nếu 40×40 cũng không cho lợi ích thì nên tắt lại, vì 3 % năng lượng
-không đổi lấy được gì là một khoản lỗ thuần.
+Giả thuyết "phụ thuộc mật độ" ở trên **đã bị bác bỏ**. Quét 24 / 32 / 40, so cặp,
+một binary duy nhất:
+
+| lưới | N | phục vụ, patrol TẮT | phục vụ, patrol BẬT | McNemar | năng lượng tắt→bật |
+|---:|---:|---:|---:|---|---:|
+| 16 | 120 | 90.0 % | 90.0 % | b=8 c=8, p=1.000 | 68.6 → 70.7 kJ (p=4.6e-4) |
+| 24 | 30 | **56.7 %** | 40.0 % | b=8 c=3, p=0.227 | 99.1 → 107.2 kJ |
+| 32 | 30 | **43.3 %** | 33.3 % | b=7 c=4, p=0.549 | 151.6 → 153.3 kJ |
+| 40 | 10 | **60.0 %** | 30.0 % | b=4 c=1, p=0.375 | 209.5 → 231.4 kJ |
+
+Gộp ba lưới lớn: **b = 19, c = 8, p = 0.052** — tức là **hướng luôn nghiêng về
+phía TẮT**, chưa lần nào nghiêng về phía bật, và năng lượng thì cao hơn ở mọi
+quy mô.
+
+**Tôi suýt viết ngược.** Một seed duy nhất ở 40×40 nói điều ngược lại rất to: đỗ
+tại chỗ thì nạn nhân **không bao giờ** được phục vụ và sai số 439 m vào nhầm vật;
+tuần tra thì phục vụ ở 215.7 s, sai số 35.9 m. Ở N = 10 thì nhánh đỗ tại chỗ phục
+vụ 60 % còn nhánh tuần tra 30 %. **Đây là lần thứ ba một seed đơn lẻ nói dối trong
+dự án này**, và lần này tôi đã kịp bắt trước khi nó vào bài.
+
+Cơ chế hiển nhiên — nhiều cue hơn ⇒ nhiều va chạm hơn ⇒ giao hàng kém hơn — **đã
+kiểm và KHÔNG đúng**: va chạm A2G *giảm* khi bật patrol ở cả ba lưới. **Không
+tuyên bố cơ chế nào.**
+
+**Mặc định đã trả về TẮT.** Mối lo ban đầu vẫn được giải quyết: một UAV DATA đỗ
+tại chỗ **không còn im lặng**, vì `dataCueEnroute` cho nó rải cue ngay từ điểm
+loiter, và cái đó **không tốn giờ bay**. Bật lại chỉ cần `--dataPatrol=1`.
 
 ## 6. Hai vấn đề mở đã đóng
 

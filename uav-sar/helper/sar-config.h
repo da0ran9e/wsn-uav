@@ -63,19 +63,32 @@ struct SarScenarioConfig {
     // DATA UAVs patrol their band spreading cues while waiting to be summoned,
     // instead of parking at the field centre.
     //
-    // Measured net-negative at 16x16 (+14% packets, -2.5 pp reliability) and
-    // switched off -- but that was measured under the UNIQUENESS assumption,
-    // where spreading data early buys nothing except coverage. It is no longer
-    // the same experiment: with confusable objects present, cue coverage is what
-    // lets the evidence field self-correct before a delivery is ever aimed, so
-    // the arm has to be re-measured rather than inherited. Default back ON; the
-    // old measurement is the ablation.
+    // Re-measured under ambiguity, paired, one binary, and it does NOT pay at any
+    // scale tested. Victim served, patrol off -> on: 90.0 -> 90.0 % at 16x16
+    // (N=120, McNemar p=1.000), 56.7 -> 40.0 % at 24x24, 43.3 -> 33.3 % at 32x32,
+    // 60.0 -> 30.0 % at 40x40 (N=30/30/10). Pooled over the three larger grids
+    // b=19 c=8, p=0.052 -- directionally WORSE, never better -- while energy is
+    // consistently higher (68.6 -> 70.7 kJ at 16x16, p=4.6e-4).
+    //
+    // One 40x40 seed said the opposite so loudly (parked: victim never served,
+    // fix 439 m onto a confusable object; patrol: served at 215.7 s, 35.9 m) that
+    // it was nearly written up as density-dependence. At N=10 the parked arm
+    // serves 60% and the patrolling arm 30%. Third time a single seed has lied in
+    // this project.
+    //
+    // The obvious mechanism -- more cue traffic, more contention -- was checked
+    // and does NOT hold: A2G collisions fall with patrol at all three grids. No
+    // mechanism is claimed.
+    //
+    // Default OFF. The concern that motivated it is still answered: a parked DATA
+    // UAV is no longer silent, because dataCueEnroute makes it cue from the
+    // loiter point, and that costs no airtime.
     //
     // The payload stays CUES, not the full dataset. Cues are 2400 B against
     // 18400 B for the full reference (7.7x), and a UAV blanketing the field with
     // the full dataset is the nocoop blind-coverage baseline -- which is the arm
     // this scheme exists to beat, not to become.
-    bool   dataPatrol = true;
+    bool   dataPatrol = false;
     // Distinct from dataPatrol: cue on the legs already being flown (climb,
     // transit, loiter) instead of only while patrolling. Costs no extra flight,
     // so unlike dataPatrol it has no airtime price -- only radio.

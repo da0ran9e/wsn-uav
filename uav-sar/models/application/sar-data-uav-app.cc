@@ -96,7 +96,14 @@ void SarDataUavApp::TryClaimDivert(double x, double y) {
     // audit B3: the SUMMON coordinates ARE the localization output. Hold them so
     // they can be flown home in the REPORT (or handed to a courier) — until this
     // the BS learned only *that* a delivery happened, never *where*.
-    m_hasFix = true; m_fixX = x; m_fixY = y;
+    // Hold the coordinates for the delivery, but do NOT yet call them a fix.
+    // Reporting an UNCONFIRMED aim is worse than reporting nothing once several
+    // regions are being served at once: whichever UAV reaches the BS first wins,
+    // and it may be the one that delivered to a confusable object. Measured at
+    // 24x24: victim served 52.5% while the reported position had a 90 m median
+    // error -- the victim was reached and the rescue team was sent elsewhere.
+    m_fixX = x; m_fixY = y;
+    if (!m_fixOnConfirm) m_hasFix = true;
     m_divert = Vector(x, y, m_alt);
     m_divertStartDist = std::hypot(x - p.x, y - p.y);
     // If already cruising (loiter/en-route), divert now; if still on the ground
@@ -400,7 +407,8 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         double nx = cx / 10.0, ny = cy / 10.0;
         if (std::hypot(nx - m_divert.x, ny - m_divert.y) > 5.0) {
             m_divert = Vector(nx, ny, m_alt);
-            m_hasFix = true; m_fixX = nx; m_fixY = ny;   // B3: report the CORRECTED fix
+            m_fixX = nx; m_fixY = ny;                   // B3: report the CORRECTED fix
+            if (!m_fixOnConfirm) m_hasFix = true;
             m_state = State::DIVERT;
             if (m_metrics) {
                 Vector p = m_fc.GetPosition();
@@ -408,6 +416,12 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
                                  "retarget_divert", "leader re-aimed", p.x, p.y, p.z);
             }
         }
+        return true;
+    }
+    if (type == (uint8_t)Msg::REJECT && !m_confirmed) {
+        // The ground has told us this place is not the victim. Drop the fix so a
+        // known-wrong position cannot beat a correct one home to the BS.
+        if (m_fixOnConfirm) m_hasFix = false;
         return true;
     }
     if (type == (uint8_t)Msg::A2A && sz >= kA2ALen) {
@@ -497,6 +511,9 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // deduplicates, first REPORT wins.
         if (m_claimed && !m_confirmed && (m_state == State::DELIVER || m_state == State::DIVERT)) {
             m_confirmed = true;
+            // A node under the drop holds the whole reference and still matches
+            // it, so this aim is worth reporting. Only now.
+            m_hasFix = true;
             // Keep delivering until the coverage dwell elapses so the whole
             // localized footprint (incl. a slightly-off victim) reconstructs the
             // data — then head home and hand the report to the FAST courier.

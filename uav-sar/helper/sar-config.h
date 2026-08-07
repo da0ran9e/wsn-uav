@@ -64,6 +64,10 @@ struct SarScenarioConfig {
     // regions instead of flying home. Only matters when more than one region
     // summons, which the aim bound makes common.
     bool stayAvailable = true;
+    // Only a CONFIRMED delivery may report a position. Without this a UAV that
+    // delivered to a confusable object still reports that object's coordinates,
+    // and with several regions served at once it can win the race to the BS.
+    bool fixOnConfirm = true;
     bool   electSuppress = true; // audit B2: flood the stand-down (off = ablation:
                                  // every alerting cell summons independently)
     // audit M9/W3/W7: realism knobs for the sensing side. All default to the

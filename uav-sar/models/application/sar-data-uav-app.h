@@ -74,6 +74,9 @@ public:
     // A UAV that loses a CLAIM stays available for other regions instead of
     // flying home. 0 restores the old go-home behaviour (the ablation).
     void SetStayAvailable(bool v) { m_stayAvailable = v; }
+    // Report a position only for a CONFIRMED delivery. 0 restores reporting the
+    // aim as soon as it is claimed (the ablation).
+    void SetFixOnConfirm(bool v) { m_fixOnConfirm = v; }
     // Reliability/cost knob: how long to keep delivering after arriving. CONFIRM
     // can come from a bystander under the drop point, so a short dwell strands a
     // victim that sits further out.
@@ -107,6 +110,7 @@ private:
     bool m_cueEnroute = true;
     bool m_patrolReverse = false;
     bool m_stayAvailable = true;
+    bool m_fixOnConfirm = true;
     size_t m_cueIdx = 0;
     uint16_t m_cueSeq = 0;
     uint32_t m_cueTxCount = 0;

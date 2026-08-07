@@ -289,6 +289,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // a point DATA reaches early.
             app->SetPatrolReverse(true);
             app->SetStayAvailable(cfg.stayAvailable);
+            app->SetFixOnConfirm(cfg.fixOnConfirm);
             app->SetCruise(params::kCruiseAltitudeM, dataSpd);
             app->SetLoiter(Vector(cx, cy, params::kCruiseAltitudeM));
             app->SetBs(bsPos, bsAddr);

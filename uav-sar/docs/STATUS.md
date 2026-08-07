@@ -6,7 +6,7 @@ true right now, what is stale, and what to do next. Everything else in
 tells you how far to trust.
 
 - Branch: `claude/document-review-xslwgg`
-- Last commit at time of writing: `f17c081`
+- Last commit at time of writing: see `git log`; this file was last revised after the airframe + false-positive work
 - Build: `cd /home/user/ns3-dev && /usr/bin/cmake --build cmake-cache -j 3`
 - Binary: `build/src/uav-sar/examples/ns3.46-scenario-sar-optimized`
 
@@ -57,34 +57,67 @@ delivered position, at a stated cost.* Anything stronger is not supported.
 
 | source | status |
 |---|---|
-| `RESULTS-honest.md` §W4 (closed-loop) | **current** |
-| `RESULTS-honest.md` 16×16 head-to-head | **current** — re-verified after the re-announce change; 104.1 s vs 103.9 s, unchanged |
-| `RESULTS-honest.md` 8×8 head-to-head | **STALE** — not re-run since `b4ac588`. Re-run before quoting. |
-| all baseline arms (`tsp-mc`, `nocoop`, `pure-uav`) | **current** — they never touch the cooperative plane, so recent edits cannot move them (verified byte-identical across the realism knobs) |
+| `RESULTS-ambiguity-vi.md` §1–5 | **current** — measured on the false-positive build, N=120 |
+| `RESULTS-ambiguity-vi.md` §5b | **RETRACTED in §5c** — degenerate configuration |
+| `RESULTS-honest.md` §W4 (closed-loop) | **STALE** — airframe change |
+| `RESULTS-honest.md` 16×16 head-to-head | **STALE** — airframe change + false-positive work |
+| `RESULTS-honest.md` 8×8 head-to-head | **STALE** — not re-run since `b4ac588` either |
+| all baseline arms (`tsp-mc`, `nocoop`, `pure-uav`) | **STALE** — they never touch the cooperative plane, but they all fly the hovering airframe, so 20 → 15 m/s moves every one of them |
 | anything measured at N = 20 | **VOID** — see §5 |
 | `RESULTS.md` | **VOID**, banner at top |
-| `docs/visualize/replay-40x40.html` | current, one build, seed 1 |
+| `docs/visualize/replay-40x40.html` | pre-false-positive build, keep as a "before" |
+| `docs/visualize/replay-40x40-ambiguity.html` | pre-false-positive build, both arms |
+| `docs/visualize/replay-40x40-patrol.html` | patrol vs parked, duplicate-band build |
+| `docs/visualize/replay-40x40-current.html` | **current build**, proposed vs closed-loop |
 
 ---
 
 ## 3. Where the scheme stands mechanically
 
-Recent design changes, all measured:
+### 3.1 The false-positive work (newest, and it changed the premise)
 
-- **Cue-triggered SUMMON re-announce** (`b4ac588`) — *this is the one that
-  mattered.* An elected leader re-announces whenever it hears a CUE chunk,
-  because that chunk proves a UAV is within one hop right now. Fixed 40×40
-  outright: victim served 0/5 → 5/5.
+A node judging on the FAST team's cue fragments can match a similar-looking
+object; a node holding the COMPLETE reference cannot. Ambiguity is therefore a
+function of how much has been delivered, and **delivering is an act of
+disambiguation**, not only of service.
+
+- **`--clutterCount / --clutterSimMin / --clutterSimMax`** — M confusable objects
+  producing evidence through the *same* spatial kernel as the victim. Default 0 =
+  the uniqueness assumption, byte-identical to every earlier result.
+- **`--clutterResolve`** (default 1.0) — how much the complete dataset removes.
+  `ClueField` emits two readings from one noise draw; the app interpolates by
+  possession, so no node knows which regime it is in.
+- **REJECT** — holding the dataset no longer confirms; the node must hold it AND
+  still match. A leader hearing REJECT with no CONFIRM re-aims immediately.
+- Measured, 16×16, N=120, M=2 at similarity 0.9: **0/120 wrong-object closures**
+  (46.7 % with resolution off), victim served 90.0 % vs 44.2 %, and resolution
+  **saves** 41 % of packets. Full detail in `RESULTS-ambiguity-vi.md`.
+
+### 3.2 Fleet and coverage
+
+- **FAST = fixed-wing at 20 m/s, DATA = rotary-wing at 15 m/s.** The roles cannot
+  be the same aircraft: sweeping and couriering want something that never stops,
+  a 20–40 s delivery dwell wants something that can hold position. Not audit F1
+  in reverse — it is a *penalty* on the hovering role, applied uniformly to every
+  hovering airframe including all four baselines. See `FIXED-WING-FAST-vi.md` for
+  what else this implies (the 30 s relay hold breaks; the energy curve is wrong).
+- **`--dataPatrol` — default ON.** It was off twice on measurements that were
+  taken on a **degenerate configuration**: both teams were banded on the same
+  axis, so a FAST and a DATA UAV flew a median **2.0 m** apart and the patrol
+  added no coverage at all. Fixed by banding DATA on **y** (orthogonal) and
+  traversing **reversed**. Separation 2.0 m → 224–310 m. Re-measured at N=120:
+  energy penalty gone (p=0.958, was 4.6e-4), everything else neutral.
+- **`--dataCueEnroute` — default ON.** Cue on legs already being flown. Energy
+  unchanged (68.0 vs 68.3 kJ), packets +16 %. Costs radio, not airtime.
+- **Cue-triggered SUMMON re-announce** (`b4ac588`) — an elected leader
+  re-announces whenever it hears a CUE chunk, because that chunk proves a UAV is
+  within one hop right now. Fixed 40×40 outright: victim served 0/5 → 5/5.
 - **Adaptive observation window + bounded relay hold** (A10) — summon when the
   leader's own evidence stops growing; a FAST UAV holds station 30 s after its
-  sweep so a relay stays airborne.
-- **`--deliverDwell`** — reliability/cost knob. 40 s takes 16×16 victim-served
-  90.0 → 96.7 % for +10 % time; at 8×8 the same setting *inverts* the comparison
-  (0.86× time). Density-dependent, default 20 s.
-- **`--dataPatrol`** — DATA UAVs patrol and cue while waiting. **Default off:**
-  measured net-negative at 16×16 (+14 % packets, −2.5 pp reliability) and
-  marginal at 40×40. The parked-UAV problem it was meant to solve was actually
-  solved by the re-announce.
+  sweep so a relay stays airborne. *(The relay hold is the mechanism the
+  fixed-wing decision threatens — see §4.)*
+- **`--deliverDwell`** — reliability/cost knob, density-dependent, default 20 s.
+  **Numbers stale**, measured before the airframe change.
 
 Known-bad, do not retry without a new idea:
 
@@ -95,13 +128,23 @@ Known-bad, do not retry without a new idea:
   change made 40×40 much faster (224 s vs 396 s). That tension is unresolved and
   is a real design question, not a bug.
 - **Retarget-on-no-CONFIRM as a reliability fix**: neutral at best. The failures
-  are delivery-at-range, not wrong aim.
+  are delivery-at-range, not wrong aim. *(REJECT-driven retargeting is a
+  different thing and does work — it fires on evidence, not on a timeout.)*
+
+**Method rule earned twice in one day:** before declaring a mechanism not worth
+its cost, check it is doing what its name promises. "DATA patrol does not pay"
+was measured twice on a patrol that flew in formation with the sweep it was
+supposed to complement; one line of trajectory arithmetic would have caught it.
 
 ---
 
 ## 4. Open problems, ranked
 
-1. **Closed-loop still beats `proposed` on cost.** Either find where cooperation
+0. **Nothing is currently measured on the shipping build.** The airframe speed
+   split and the false-positive work moved every scheme. The whole head-to-head
+   (5 schemes x N=120, both grids, with and without clutter) has to be re-run
+   before anything goes in a draft. This is the only thing blocking the paper.
+1. **Closed-loop still beats `proposed` on cost** *(pre-airframe-change result)*. Either find where cooperation
    genuinely pays (the p90 tail is the live lead) and build the paper on that, or
    reduce the cooperative plane's packet cost. 0/120 paired wins on packets is
    the number to attack.

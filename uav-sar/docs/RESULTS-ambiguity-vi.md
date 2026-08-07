@@ -93,7 +93,11 @@ nếu chưa chạy ablation tách. Điều duy nhất kết luận được là 
 dự đoán của bản sửa đóng vòng: người ngoài cuộc dưới điểm thả không còn kết thúc
 nhiệm vụ thay cho nạn nhân được nữa.
 
-## 5b. UAV DATA tuần tra: ở 16×16 nó **tốn năng lượng và không mua được gì**
+## 5b. UAV DATA tuần tra — ⚠️ **HAI BẢNG DƯỚI ĐÂY ĐÃ BỊ RÚT LẠI, xem §5c**
+
+*Giữ lại nguyên văn làm hồ sơ, vì cách chúng sai mới là bài học. Đừng trích.*
+
+### (đã rút) Ở 16×16 nó tốn năng lượng và không mua được gì
 
 So cặp trên cùng 120 hạt giống, cùng một binary, cùng chế độ nhập nhằng
 (`--dataPatrol=0` vs `=1`, M = 2, s = 0.9):

@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("codedMulticast", "tsp-mc: rateless recovery (Zeng'18 semantics)", cfg.codedMulticast);
     cmd.AddValue("aimArgmax", "aim at strongest reporter (default; 0 = centroid ablation)", cfg.aimArgmax);
     cmd.AddValue("electSuppress", "flood the election stand-down (0 = ablation)", cfg.electSuppress);
+    cmd.AddValue("electScope", "stand down only for claims within this many m (0 = field-wide)", cfg.electScopeM);
     cmd.AddValue("adaptiveWindow", "summon when evidence settles (0 = fixed --minObserve)", cfg.adaptiveWindow);
     cmd.AddValue("dataPatrol", "DATA UAVs patrol+cue while waiting (0 = park)", cfg.dataPatrol);
     cmd.AddValue("dataCueEnroute", "DATA UAVs cue on legs already flown (1 = default)", cfg.dataCueEnroute);

@@ -16,6 +16,7 @@
 //   - Any node that reconstructs the ENTIRE dataset broadcasts CONFIRM.
 
 #include "../common/target-profile.h"
+#include "../common/sar-params.h"
 
 #include "ns3/application.h"
 #include "ns3/net-device.h"
@@ -63,6 +64,9 @@ public:
     // UAV. Turning it off is how the election's value is measured rather than
     // asserted.
     void SetElectSuppress(bool v) { m_electSuppress = v; }
+    // Radius within which another cell's claim counts as the SAME region.
+    // 0 restores the unscoped, field-wide stand-down (the ablation).
+    void SetElectScope(double m) { m_electScope = m; }
     // audit M9/W3: this node's frozen GPS offset, in metres. Set by the
     // orchestrator from a per-run RNG so it is reproducible from the seed.
     void SetGpsBias(double dx, double dy) { m_gpsBiasX = dx; m_gpsBiasY = dy; }
@@ -124,6 +128,7 @@ private:
     bool m_codedRecovery = false;
     bool m_aimArgmax = true;
     bool m_electSuppress = true;
+    double m_electScope = params::kRegionRadiusM;
     bool m_echoMode = false;      // audit W4
     uint32_t m_echoesSent = 0;
     ns3::EventId m_echoEvent;

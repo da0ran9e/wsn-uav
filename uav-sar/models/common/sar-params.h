@@ -175,6 +175,14 @@ inline constexpr uint32_t kMaxRetargets  = 2;       // [Design]
 inline constexpr double kElectDeadlineS  = 90.0;    // [Design] hard ceiling after
                                                     // ALERT, so a cell whose evidence
                                                     // never settles cannot starve
+// A stand-down must be scoped to a PLACE, not to the whole field. RCLAIM already
+// carries the claiming cell's aim point, so a leader can check whether the claim
+// is about the same thing it is about. Measured at 40x40: one cell summoned and
+// 37 stood down, the furthest 609 m away, and the winner aimed 7 m from a
+// confusable object while the victim's own cell -- 513 m away, with independent
+// evidence -- never summoned. Suppression is right for duplicate reports of ONE
+// place and wrong for two genuinely different places.
+inline constexpr double kRegionRadiusM   = 150.0;  // [Design] same-place radius
 inline constexpr double kElectBackoffS   = 0.6;     // [Design] distributed region-leader
                                                     // election: a cell that crosses ALERT
                                                     // waits kElectBackoffS·(1−evidence)

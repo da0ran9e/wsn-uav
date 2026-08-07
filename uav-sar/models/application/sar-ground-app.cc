@@ -503,7 +503,18 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         uint8_t ttl = b[9];
         if (!m_rclaimSeen.insert(origCell).second) return true;   // already flooded
         if (m_metrics) { m_metrics->AddRecv(); m_metrics->AddRecvBytes(sz); }
-        if ((int32_t)origCell != m_cellId && !m_regionFormed) {
+        // Yield only if the claim is about the SAME PLACE. Without this the
+        // stand-down is unscoped: whichever cell fires first silences every
+        // other alerting cell in the field, including cells whose evidence comes
+        // from a completely different object hundreds of metres away.
+        bool samePlace = true;
+        if (m_electScope > 0) {
+            double ax = cx / 10.0, ay = cy / 10.0;
+            double mx = m_cellCx, my = m_cellCy;
+            if (!m_candidates.empty()) { mx = m_candidates[0].x; my = m_candidates[0].y; }
+            samePlace = std::hypot(ax - mx, ay - my) <= m_electScope;
+        }
+        if ((int32_t)origCell != m_cellId && !m_regionFormed && samePlace) {
             m_regionFormed = true;
             Simulator::Cancel(m_electEvent);
             if (m_isCellLeader && m_metrics) {

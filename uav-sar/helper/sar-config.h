@@ -52,6 +52,10 @@ struct SarScenarioConfig {
     // centroid with SQUARED weight. --aimArgmax=0 selects the centroid as the
     // ablation arm.
     bool   aimArgmax = true;
+    // A cell stands down only for a claim about the SAME place, within this
+    // radius. 0 = the old field-wide stand-down, which collapses every
+    // candidate region to one summon however far apart they are.
+    double electScopeM = params::kRegionRadiusM;
     bool   electSuppress = true; // audit B2: flood the stand-down (off = ablation:
                                  // every alerting cell summons independently)
     // audit M9/W3/W7: realism knobs for the sensing side. All default to the

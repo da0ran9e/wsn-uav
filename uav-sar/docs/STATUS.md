@@ -121,12 +121,16 @@ the world contains several candidates, and three of the four fail silently.*
 
 ### 3.2 Fleet and coverage
 
-- **FAST = fixed-wing at 20 m/s, DATA = rotary-wing at 15 m/s.** The roles cannot
+- **FAST = fixed-wing at 25 m/s (90 km/h), DATA = rotary-wing at 15 m/s (54 km/h).** The roles cannot
   be the same aircraft: sweeping and couriering want something that never stops,
   a 20–40 s delivery dwell wants something that can hold position. Not audit F1
   in reverse — it is a *penalty* on the hovering role, applied uniformly to every
-  hovering airframe including all four baselines. See `FIXED-WING-FAST-vi.md` for
-  what else this implies (the 30 s relay hold breaks; the energy curve is wrong).
+  hovering airframe including all four baselines. Published cruise bands are
+  80–110+ km/h fixed-wing and 40–60 km/h multirotor, so the old common 20 m/s
+  (72 km/h) was wrong for both. It **does** advantage the proposed scheme, which
+  alone flies a scout that never stops, so the paper owes an all-rotary ablation
+  (`--fastSpeed=15`). See `FIXED-WING-FAST-vi.md` for what else this implies
+  (the 30 s relay hold breaks; the energy curve is still the rotary one).
 - **`--dataPatrol` — default ON.** It was off twice on measurements that were
   taken on a **degenerate configuration**: both teams were banded on the same
   axis, so a FAST and a DATA UAV flew a median **2.0 m** apart and the patrol

@@ -145,6 +145,7 @@ private:
     // Interpolated by how much of the dataset this node actually holds: judging
     // on cue fragments alone is what makes a false positive possible in the
     // first place, so the reading has to improve as the dataset arrives.
+    bool BestAim(double& bx, double& by) const;
     double ClueNow() const;
     void SendReject();
     uint32_t m_rejectsSent = 0;

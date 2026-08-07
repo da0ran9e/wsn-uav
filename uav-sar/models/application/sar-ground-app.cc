@@ -106,6 +106,25 @@ void SarGroundApp::SendRpt(uint16_t orig, uint8_t evQ8, int16_t x, int16_t y,
     if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
 }
 
+bool SarGroundApp::BestAim(double& bx, double& by) const {
+    // The point this leader would summon to if it elected right now, from the
+    // same two sources the elect path uses: its own members' RPTs and each
+    // neighbouring cell's peak reporter carried by SHARE.
+    //
+    // It has to be computable OUTSIDE the elect path, because the stand-down
+    // check needs it: a leader deciding whether another cell's claim is "about
+    // the same place" must compare aims, not positions. Comparing against its
+    // own CELL CENTRE was the bug -- SHARE carries neighbour peaks, so a cell
+    // 250 m away can legitimately aim at the same peak, and a centre-based test
+    // calls that a different place every time.
+    double best = -1;
+    for (const auto& [n, ne] : m_cellEvidence)
+        if (ne.ev > best) { best = ne.ev; bx = ne.x; by = ne.y; }
+    for (const auto& [c, nb] : m_neighborEv)
+        if (nb.peak > best) { best = nb.peak; bx = nb.x; by = nb.y; }
+    return best > 0;
+}
+
 double SarGroundApp::ClueNow() const {
     // The node judges its own footage against whatever reference it holds. With
     // only cue fragments that is a weak test and a similar-looking object passes
@@ -509,10 +528,10 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // from a completely different object hundreds of metres away.
         bool samePlace = true;
         if (m_electScope > 0) {
-            double ax = cx / 10.0, ay = cy / 10.0;
-            double mx = m_cellCx, my = m_cellCy;
-            if (!m_candidates.empty()) { mx = m_candidates[0].x; my = m_candidates[0].y; }
-            samePlace = std::hypot(ax - mx, ay - my) <= m_electScope;
+            double ax = cx / 10.0, ay = cy / 10.0, mx = 0, my = 0;
+            // No aim of my own yet -> nothing to contest with, so stand down.
+            samePlace = BestAim(mx, my) ? std::hypot(ax - mx, ay - my) <= m_electScope
+                                        : true;
         }
         if ((int32_t)origCell != m_cellId && !m_regionFormed && samePlace) {
             m_regionFormed = true;

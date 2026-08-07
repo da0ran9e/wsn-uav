@@ -172,7 +172,10 @@ void SarFastUavApp::RelayBestEcho() {
     // was formed and in nothing else downstream.
     if (m_summonSeen || m_bestEchoEv <= 0 || !m_dev) return;
     m_summonSeen = true;
-    m_hasFix = true; m_fixX = m_bestEchoX; m_fixY = m_bestEchoY;
+    // Same rule as the cooperative arm's relay path, so the two arms still differ
+    // only in HOW the aim was formed.
+    m_pendFixX = m_bestEchoX; m_pendFixY = m_bestEchoY; m_hasPend = true;
+    if (!m_fixOnConfirm) { m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY; }
     std::vector<uint8_t> r(kA2ALen, 0);
     uint8_t* q = r.data();
     *q++ = (uint8_t)Msg::A2A; *q++ = kBroadcast;
@@ -268,6 +271,17 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
                 &SarFastUavApp::ClaimCourier, this);
         return true;
     }
+    if (b[0] == (uint8_t)Msg::REJECT && m_fixOnConfirm && !m_hasFix) {
+        m_hasPend = false;          // the ground contradicted that aim
+        return true;
+    }
+    if (b[0] == (uint8_t)Msg::CONFIRM) {
+        // A node under the drop held the whole reference and still matched it.
+        // Only now is the relayed aim worth carrying home.
+        if (m_fixOnConfirm && m_hasPend && !m_hasFix) {
+            m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY;
+        }
+    }
     if (b[0] == (uint8_t)Msg::CONFIRM && m_allHome && m_state == State::CRUISE) {
         // audit F2: the delivery is done -> this UAV's task is over; fly home and
         // report like every baseline UAV must.  (Symmetric completion rule.)
@@ -317,7 +331,13 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // carry them home — the fix is not the courier's private property.
         {
             int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
-            m_hasFix = true; m_fixX = cx / 10.0; m_fixY = cy / 10.0;
+            // Relaying a summon is not evidence that the summon was RIGHT. With
+            // several regions summoning, a relay hears several aims and would
+            // carry the last one home whether or not anyone confirmed it -- and
+            // that report can beat a correct one to the BS. Hold it pending; a
+            // CONFIRM promotes it, a REJECT drops it.
+            m_pendFixX = cx / 10.0; m_pendFixY = cy / 10.0; m_hasPend = true;
+            if (!m_fixOnConfirm) { m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY; }
         }
         std::vector<uint8_t> r(b.begin(), b.begin() + kSummonLen);
         r[0] = (uint8_t)Msg::A2A;

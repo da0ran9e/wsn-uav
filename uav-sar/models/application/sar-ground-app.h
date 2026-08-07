@@ -83,6 +83,7 @@ public:
     // lower next to a confusable object, because the extra reference data is
     // what separates them.
     void SetClueQualityFull(double q) { m_clueQualityFull = q; }
+    void SetConfirmThreshold(double t) { m_confirmThr = t; }
     void SetCoopThreshold(double coop) { m_coop = coop; }
     void SetIsTarget(bool t) { m_isTarget = t; }
     // Intra-cell tree: next hop up toward the Cell Leader (-1 if I am the CL),
@@ -156,6 +157,7 @@ private:
     ns3::EventId m_rejectEvent;
     bool m_rejectHeard = false;   // a node under the drop resolved it as a miss
     double m_coop = 0.30;
+    double m_confirmThr = params::kConfirmThreshold;
 
     // intra-cell tree + CL aggregation
     int32_t m_treeParent = -1;

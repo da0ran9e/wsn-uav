@@ -39,6 +39,7 @@ public:
     void SetBs(ns3::Vector pos, ns3::Address addr) { m_bsPos = pos; m_bsAddr = addr; }
     // audit F2: symmetric completion — every UAV flies home and reports, so the
     // mission clock is not stopped by a single courier while peers stay airborne.
+    void SetFixOnConfirm(bool v) { m_fixOnConfirm = v; }
     void SetAllHome(bool v) { m_allHome = v; }
     // audit W4: home on the strongest DIRECT echo instead of a ground SUMMON.
     void SetEchoRelay(bool v) { m_echoRelay = v; }
@@ -74,7 +75,10 @@ private:
     double m_bestEchoEv = 0, m_bestEchoX = 0, m_bestEchoY = 0;
     void RelayBestEcho();
     ns3::EventId m_echoSettle;
-    bool m_hasFix = false;      // audit B3: victim fix to carry home in the REPORT
+    bool m_hasFix = false;
+    // A relayed aim is only a CANDIDATE until the ground confirms it.
+    bool m_hasPend = false, m_fixOnConfirm = true;
+    double m_pendFixX = 0, m_pendFixY = 0;      // audit B3: victim fix to carry home in the REPORT
     double m_fixX = 0, m_fixY = 0;
     double m_alt = 20.0, m_speed = 25.0, m_radius = 50.0;
     State m_state = State::IDLE;

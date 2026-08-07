@@ -113,6 +113,23 @@ inline constexpr double kEnergyA         = 0.503;   // [Lit?] rotor disc area
 // ---- SAR application (mostly design) --------------------------------------
 inline constexpr double kAlertThreshold  = 0.75;    // [Design] detect (region seed)
 inline constexpr double kCoopThreshold   = 0.30;    // [Design] report / region join
+// CONFIRMING an identity is a different claim from REPORTING that you might be
+// relevant, and it needs a different bar. Closure used kCoopThreshold, which at
+// senseSigma = 0.20 lets a node with NO true signal pass on noise alone with
+// probability Q(0.30/0.20) = 6.7% -- tens of spurious confirmations per run once
+// a delivery footprint covers a few dozen nodes. That is where a 90 m median
+// reported error came from while the victim was being served: a bystander at a
+// confusable object confirmed first and its coordinates won the race to the BS.
+//
+// The arithmetic that sets it: the node nearest the victim sits at most 14.1 m
+// away on a 20 m lattice, so its true reading is 0.95*exp(-14.1/60) = 0.75 at
+// worst. A threshold t must sit far enough below that for the true node to pass
+// through the noise, and far enough above 0 that a blank node does not.
+//   t = 0.30 -> true node passes ~99%, blank node passes 6.7e-2
+//   t = 0.55 -> true node passes ~84%, blank node passes 2.7e-3
+//   t = 0.75 -> true node passes ~50%, blank node passes 8.8e-5
+// Swept, not guessed -- see the campaign.
+inline constexpr double kConfirmThreshold = 0.55;   // [Measured] identity claim
 inline constexpr double kRegionWindowS   = 1.0;     // [Design] cross-cell merge wait
 inline constexpr uint32_t kBeaconQuota   = 60;      // [Design] persistent low-rate
 inline constexpr double kBeaconIntervalS = 1.0;     // [Design]

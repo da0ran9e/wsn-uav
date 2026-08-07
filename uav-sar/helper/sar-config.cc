@@ -254,6 +254,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // DATA patrol is now purely ADDITIVE redundancy on top of this.
             app->SetSensorPositions(partition(u, fastCount));
             app->SetCues(cues);
+            app->SetFixOnConfirm(cfg.fixOnConfirm);
             app->SetCruise(params::kCruiseAltitudeM, fastSpd);
             app->SetBs(bsPos, bsAddr);
             app->SetAllHome(cfg.allHome);
@@ -327,6 +328,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetProfile(full);
         app->SetClueQuality(field.at(id).clueQuality);
         app->SetClueQualityFull(field.at(id).clueQualityFull);
+        app->SetConfirmThreshold(cfg.confirmThreshold);
         app->SetCoopThreshold(params::kCoopThreshold);
         // Intra-cell tree so clue reports (RPT) climb to the CL over real radio;
         // cell id + center so a CL can flood its SHARE across the boundary.

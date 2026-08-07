@@ -698,7 +698,9 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                     // the node must still MATCH it. A node that matched on cue
                     // fragments and fails on the complete reference has just
                     // discovered it is a false positive, and says so.
-                    bool matches = ClueNow() >= m_coop;
+                    // Identity claim, not a relevance claim: a strictly higher
+                    // bar than the reporting threshold (see kConfirmThreshold).
+                    bool matches = ClueNow() >= m_confirmThr;
                     if (m_metrics)
                         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
                                          m_isTarget ? "target" : "node",

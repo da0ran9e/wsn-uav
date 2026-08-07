@@ -68,6 +68,8 @@ struct SarScenarioConfig {
     // delivered to a confusable object still reports that object's coordinates,
     // and with several regions served at once it can win the race to the BS.
     bool fixOnConfirm = true;
+    // Bar for CONFIRMING an identity, as opposed to reporting relevance.
+    double confirmThreshold = params::kConfirmThreshold;
     bool   electSuppress = true; // audit B2: flood the stand-down (off = ablation:
                                  // every alerting cell summons independently)
     // audit M9/W3/W7: realism knobs for the sensing side. All default to the

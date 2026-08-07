@@ -362,6 +362,45 @@ phục vụ ở 83.6 s khi còn 4 lần rao dư thừa, và **không** được 
 tiêu chúng — sự dư thừa đang vô tình giúp, vì càng nhiều lãnh đạo phát beacon thì
 UAV DATA càng dễ nghe được. Cần campaign so cặp trước khi giữ hay bỏ.
 
+## 10c. Giới hạn tầm nhắm: MỞ được chế độ đa ứng viên, và làm hỏng hiệu năng
+
+Lãnh đạo chỉ được nhắm trong `kAimScopeM = 2 × bán kính ô = 160 m`. So cặp,
+**cùng một binary**, 40 hạt giống, 24×24, 4 vật gây nhầm:
+
+| | `aimScope=0` | `aimScope=160` |
+|---|---:|---:|
+| **nạn nhân được phục vụ** | **55.0 %** | **37.5 %** |
+| | | McNemar **b=7, c=0, p=0.0156** |
+| run có ≥2 điểm khác nhau | 2/40 | **16/40** |
+| sai số median | 34.7 m | 65.5 m |
+| đúng người | 33/40 | 23/40 |
+| thời gian nhiệm vụ | 152.0 s | 167.7 s |
+| lãnh đạo→điểm nhắm, max | 353 m | **128 m** ✓ |
+
+**Bảy hạt giống mất, không hạt nào được** — hồi quy thật, không phải nhiễu.
+
+Nhưng đọc cho đúng thì đây **không** phải bằng chứng rằng giới hạn sai. Nó là bằng
+chứng cho hai điều khác:
+
+1. **55 % cũ được mua bằng một cơ chế phi vật lý.** Một lãnh đạo nhắm vào điểm
+   cách 353 m là đang tuyên bố về mảnh đất nó không có bằng chứng trực tiếp nào —
+   bằng chứng đó tới qua flood nhiều chặng. Đó là **vấn đề tính hợp lệ của bài
+   báo**, không phải sở thích thiết kế. Một phản biện nhìn thấy chi tiết này sẽ
+   không chấp nhận.
+2. **Chế độ đa ứng viên bị lộ ra là chưa được hỗ trợ.** Trong 16 run đa điểm, chỉ
+   **1** phục vụ được nạn nhân. Khi nhiều vùng cùng triệu tập, đội UAV **không có
+   cơ chế phân bổ nào**: các summon tranh UAV bằng CLAIM theo kiểu *ai nhanh tay*,
+   không theo *ứng viên nào đáng đi trước*. Bốn UAV DATA bị xé ra nhiều hướng và
+   không chỗ nào hoàn tất.
+
+Điểm 2 chính là bài toán **P13** trong tài liệu này, và giờ nó có bằng chứng thực
+nghiệm: hệ thống **chưa từng có** cơ chế đó. Ba hạng mục ở §12 (SUMMON mang danh
+sách xếp hạng, hàng đợi ứng viên trong UAV DATA, đấu giá theo chi phí biên thay
+CLAIM ai-nhanh-tay) không còn là đề xuất lý thuyết — chúng là thứ đang chặn.
+
+**Chưa chốt mặc định.** Đây là đánh đổi giữa hiệu năng đo được và tính hợp lệ vật
+lý, và cả hai đều chính đáng; xem quyết định trong phiên làm việc.
+
 ## 11. Vì sao chế độ đa ứng viên có thể **cứu luận điểm của bài báo**
 
 Đây là hệ quả quan trọng nhất, và nó nối thẳng vào vấn đề mở số 1 trong

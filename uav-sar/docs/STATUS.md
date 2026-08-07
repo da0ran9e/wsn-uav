@@ -93,6 +93,32 @@ disambiguation**, not only of service.
   (46.7 % with resolution off), victim served 90.0 % vs 44.2 %, and resolution
   **saves** 41 % of packets. Full detail in `RESULTS-ambiguity-vi.md`.
 
+### 3.1b The multi-candidate chain — four independent single-target assumptions
+
+The system was built around "there is one place to go", in four separate layers,
+and three of them failed **silently**. Each fault was only visible once the
+previous one was fixed, and none is observable while a single region is served.
+
+| # | change | what it exposed |
+|---|---|---|
+| 1 | `--aimScope=160` — a leader may only aim within 2 cells of its own centre | multi-place runs 5 % → 40 %, but victim served 55 % → 37.5 % (McNemar b=7 c=0, p=0.0156) |
+| 2 | — | one CLAIM sent the **whole** DATA team home: `SendClaim` hardcoded `rid = 1`, the handler ignored the region, and yielding meant "no task left". Only 1 of 16 multi-place runs served the victim |
+| 3 | per-region CLAIM + `--stayAvailable` | 37.5 % → **52.5 %** (b=0 c=6, p=0.0312) — but the reported error got *worse*, 47.8 → 90.0 m |
+| 4 | `--fixOnConfirm` | measured as an exact no-op. The gate worked; CONFIRM itself was firing at decoys |
+| 5 | `kConfirmThreshold` split from `kCoopThreshold` | being swept (0.30/0.45/0.55/0.70) |
+
+**Why 4 happened:** closure used `kCoopThreshold = 0.30`, the bar for "I might be
+relevant". At σ = 0.20 a node with no signal clears it on noise alone with
+probability Q(1.5) = 6.7 %, so a delivery footprint of a few dozen nodes produces
+spurious confirmations every run. `kAlertThreshold` is not available as the fix
+either: the node nearest the victim is ≤ 14.1 m away on a 20 m lattice, so its
+true reading is at worst 0.75 — exactly that bar, which its own node would then
+fail half the time.
+
+**The paper claim this supports** (stronger than a bug list): *a cooperative
+search system optimised for a unique target fails in four independent ways when
+the world contains several candidates, and three of the four fail silently.*
+
 ### 3.2 Fleet and coverage
 
 - **FAST = fixed-wing at 20 m/s, DATA = rotary-wing at 15 m/s.** The roles cannot

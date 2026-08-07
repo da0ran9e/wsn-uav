@@ -106,6 +106,14 @@ void SarGroundApp::SendRpt(uint16_t orig, uint8_t evQ8, int16_t x, int16_t y,
     if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
 }
 
+bool SarGroundApp::InAimScope(double x, double y) const {
+    // Ground this leader plausibly knows about: within kAimScopeM of its own
+    // cell centre. 0 disables the bound (the pre-fix behaviour, kept as the
+    // ablation).
+    if (m_aimScope <= 0) return true;
+    return std::hypot(x - m_cellCx, y - m_cellCy) <= m_aimScope;
+}
+
 bool SarGroundApp::BestAim(double& bx, double& by) const {
     // The point this leader would summon to if it elected right now, from the
     // same two sources the elect path uses: its own members' RPTs and each
@@ -119,9 +127,9 @@ bool SarGroundApp::BestAim(double& bx, double& by) const {
     // calls that a different place every time.
     double best = -1;
     for (const auto& [n, ne] : m_cellEvidence)
-        if (ne.ev > best) { best = ne.ev; bx = ne.x; by = ne.y; }
+        if (ne.ev > best && InAimScope(ne.x, ne.y)) { best = ne.ev; bx = ne.x; by = ne.y; }
     for (const auto& [c, nb] : m_neighborEv)
-        if (nb.peak > best) { best = nb.peak; bx = nb.x; by = nb.y; }
+        if (nb.peak > best && InAimScope(nb.x, nb.y)) { best = nb.peak; bx = nb.x; by = nb.y; }
     return best > 0;
 }
 
@@ -315,9 +323,10 @@ void SarGroundApp::Elect() {
     // without it, a wrong first guess was terminal (see kRetargetAfterS).
     m_candidates.clear();
     for (const auto& [n, ne] : m_cellEvidence)
-        m_candidates.push_back({ne.ev, ne.x, ne.y});
+        if (InAimScope(ne.x, ne.y)) m_candidates.push_back({ne.ev, ne.x, ne.y});
     for (const auto& [c, nb] : m_neighborEv)
-        if (nb.peak > 0) m_candidates.push_back({nb.peak, nb.x, nb.y});
+        if (nb.peak > 0 && InAimScope(nb.x, nb.y))
+            m_candidates.push_back({nb.peak, nb.x, nb.y});
     std::sort(m_candidates.begin(), m_candidates.end(),
               [](const Cand& a, const Cand& b) { return a.ev > b.ev; });
     m_candIdx = 0;
@@ -332,9 +341,9 @@ void SarGroundApp::Elect() {
         // neighbour saw something stronger aims THERE instead.
         double bestEv = -1, ax = m_cellCx, ay = m_cellCy;
         for (auto& [n, ne] : m_cellEvidence)
-            if (ne.ev > bestEv) { bestEv = ne.ev; ax = ne.x; ay = ne.y; }
+            if (ne.ev > bestEv && InAimScope(ne.x, ne.y)) { bestEv = ne.ev; ax = ne.x; ay = ne.y; }
         for (auto& [c, nb] : m_neighborEv)
-            if (nb.peak > bestEv) { bestEv = nb.peak; ax = nb.x; ay = nb.y; }
+            if (nb.peak > bestEv && InAimScope(nb.x, nb.y)) { bestEv = nb.peak; ax = nb.x; ay = nb.y; }
         if (m_metrics) {
             m_metrics->MarkLocalize(Simulator::Now().GetSeconds());
             m_metrics->SetRegionCells((uint32_t)(1 + m_regionNeighbors.size()));

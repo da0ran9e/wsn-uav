@@ -56,6 +56,10 @@ struct SarScenarioConfig {
     // radius. 0 = the old field-wide stand-down, which collapses every
     // candidate region to one summon however far apart they are.
     double electScopeM = params::kRegionRadiusM;
+    // A leader may only aim within this radius of its own cell centre -- own
+    // cell plus the adjacent ring. 0 = unbounded (the old behaviour, in which
+    // every leader adopted the global evidence peak).
+    double aimScopeM = params::kAimScopeM;
     bool   electSuppress = true; // audit B2: flood the stand-down (off = ablation:
                                  // every alerting cell summons independently)
     // audit M9/W3/W7: realism knobs for the sensing side. All default to the

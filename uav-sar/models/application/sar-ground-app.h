@@ -67,6 +67,8 @@ public:
     // Radius within which another cell's claim counts as the SAME region.
     // 0 restores the unscoped, field-wide stand-down (the ablation).
     void SetElectScope(double m) { m_electScope = m; }
+    // How far from its own cell centre a leader may aim. 0 = unbounded.
+    void SetAimScope(double m) { m_aimScope = m; }
     // audit M9/W3: this node's frozen GPS offset, in metres. Set by the
     // orchestrator from a per-run RNG so it is reproducible from the seed.
     void SetGpsBias(double dx, double dy) { m_gpsBiasX = dx; m_gpsBiasY = dy; }
@@ -129,6 +131,7 @@ private:
     bool m_aimArgmax = true;
     bool m_electSuppress = true;
     double m_electScope = params::kRegionRadiusM;
+    double m_aimScope = params::kAimScopeM;
     bool m_echoMode = false;      // audit W4
     uint32_t m_echoesSent = 0;
     ns3::EventId m_echoEvent;
@@ -145,6 +148,7 @@ private:
     // Interpolated by how much of the dataset this node actually holds: judging
     // on cue fragments alone is what makes a false positive possible in the
     // first place, so the reading has to improve as the dataset arrives.
+    bool InAimScope(double x, double y) const;
     bool BestAim(double& bx, double& by) const;
     double ClueNow() const;
     void SendReject();

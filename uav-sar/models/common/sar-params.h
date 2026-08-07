@@ -199,6 +199,22 @@ inline constexpr double kElectDeadlineS  = 90.0;    // [Design] hard ceiling aft
 // evidence -- never summoned. Suppression is right for duplicate reports of ONE
 // place and wrong for two genuinely different places.
 inline constexpr double kRegionRadiusM   = 150.0;  // [Design] same-place radius
+// A Cell Leader may only aim at ground it plausibly knows about: its own cell and
+// its immediate neighbours. Beyond that the evidence reached it through a
+// multi-hop SHARE flood about terrain it has no stake in, and the cell that
+// actually owns that ground is the one that should summon.
+//
+// Measured before this bound existed: a leader at (440,360) summoned to (317,83),
+// 303 m and four cell-rings away; in another run four leaders spread over 260 m
+// all summoned to the SAME point. SHARE propagates the global evidence peak, so
+// every leader independently converged on it and the substrate behaved as a
+// consensus machine -- exactly what makes a multi-candidate regime impossible.
+// Bounding the aim is therefore both the physical constraint AND the mechanism
+// that lets separate regions raise separate summons.
+//
+// 2 x cell radius: own cell plus the adjacent ring (hex centres sit ~139 m apart
+// at an 80 m circumradius, so 160 m reaches the first ring and no further).
+inline constexpr double kAimScopeM       = 2.0 * kHexCellRadiusM;   // 160 m
 inline constexpr double kElectBackoffS   = 0.6;     // [Design] distributed region-leader
                                                     // election: a cell that crosses ALERT
                                                     // waits kElectBackoffS·(1−evidence)

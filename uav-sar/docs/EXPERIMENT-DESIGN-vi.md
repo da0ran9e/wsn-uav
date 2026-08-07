@@ -178,7 +178,44 @@ chi phí đã tính đủ.
 4. **Hợp tác payload nội ô** — bitmap + tiếp sức chunk còn thiếu. *(lớn, và là
    thứ đáng giá nhất)*
 
-### 1.9 Câu hỏi mở còn lại
+### 1.9 Quét ngưỡng xác nhận — đầy đủ, và nó XÁC NHẬN chẩn đoán ở §1.7
+
+24×24, 4 vật gây nhầm (s = 0.85–0.95), 6 UAV, N = 40 mỗi mức, một binary:
+
+| ngưỡng | cứu được | có báo fix | **báo ĐÚNG** | sai số\|đúng | confirm/run | reject/run |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0.30 | 52.5 % | 100 % | 55.0 % | 25.9 m | 10.6 | 20.4 |
+| 0.45 | 52.5 % | 92.5 % | 57.5 % | 25.7 m | 6.4 | 32.4 |
+| 0.55 | 52.5 % | 75.0 % | 62.5 % | 25.3 m | 4.7 | 47.3 |
+| 0.70 | 52.5 % | 65.0 % | **62.5 %** | 25.7 m | 2.4 | 56.6 |
+
+Bốn điều đọc được, và cả bốn đều nói ngưỡng **không phải** chỗ sửa:
+
+1. **Tỉ lệ cứu được tuyệt đối không đổi: 52.5 % ở cả bốn mức.** Ngưỡng xác nhận
+   không hề ảnh hưởng tới việc dữ liệu có tới được nạn nhân hay không — đúng như
+   phải thế, vì nó chỉ chi phối *lời tuyên bố*, không chi phối *việc giao hàng*.
+2. **Sai số khi báo đúng cũng không đổi (25.3–25.9 m).** Nên phần cải thiện hoàn
+   toàn đến từ việc **bỏ bớt báo cáo sai**, không phải ước lượng tốt hơn.
+3. **"Báo đúng" bão hoà ở 62.5 %** từ 0.55 trở lên, trong khi **"có báo fix" tiếp
+   tục rơi** 75 % → 65 %. Tức là từ mức đó trở đi, nâng ngưỡng chỉ còn **giết
+   những báo cáo ĐÚNG**. Đây là điểm gãy của đường cong.
+4. **Confirm/run rơi 10.6 → 2.4 còn reject/run tăng 20.4 → 56.6.** Ở 0.70 hệ
+   thống chủ yếu đang **từ chối chính nó**.
+
+Trần 62.5 % là chỗ đáng chú ý nhất: cứu được 52.5 % nhưng báo đúng 62.5 % — hai
+con số này **không thể** cùng đúng nếu "báo đúng" đòi hỏi đã phục vụ nạn nhân.
+Nghĩa là có những run báo đúng vị trí **mà nạn nhân chưa hoàn tất dữ liệu**: một
+nút *lân cận* nạn nhân xác nhận thay. Điều đó hợp lý và thậm chí là tốt về mặt
+vận hành (đội cứu hộ vẫn được chỉ đúng chỗ), nhưng nó nói rằng **D4 "tìm thấy nạn
+nhân" cần định nghĩa lại**: là *nút của nạn nhân hoàn tất*, hay *một nút đủ gần
+xác nhận đúng chỗ*? Hai định nghĩa cho hai con số khác nhau.
+
+**Kết luận cho D3:** ngưỡng mua được 7.5 điểm phần trăm độ đúng rồi bão hoà, trong
+khi tiếp tục cắt cả báo cáo đúng. Đó là dấu hiệu của việc **bù ngọn**. Sửa mô hình
+nhiễu để nút trắng ở lại gần 0 là cách xử lý gốc, và khi đó ngưỡng có thể quay về
+thấp mà không mất gì.
+
+### 1.10 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

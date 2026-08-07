@@ -60,7 +60,61 @@ Cách trình bày đúng, theo thứ tự ưu tiên:
 2. $\Pr[T\le T_d]$ tại một **hạn chót khai báo** $T_d$ (kiểu "giờ vàng").
 3. Trung bình có kiểm duyệt, với chân trời ghi rõ — chỉ khi cần một con số.
 
-### 1.4 Câu hỏi mở — cần bạn trả lời
+### 1.4 PHẢN BIỆN CỦA BẠN (đã chấp nhận phần lớn) — chỉ có MỘT kết cục
+
+> Chỉ có một kết cục: **tìm thấy nạn nhân và có ít nhất 1 UAV bay về báo cáo**
+> (sớm nhất, không cần tất cả). Vì hai đội bay liên tục nên dù cue của đội
+> fixed-wing không đủ để kích hoạt summon, đội DATA bay chậm hơn chắc chắn sẽ
+> phát đủ dữ liệu (không xét giới hạn thời gian/năng lượng). Và nút tạo ra FP
+> **không thể** báo cáo nạn nhân, nên không có trường hợp phục vụ sai.
+
+**Chấp nhận, và nó giải quyết được vấn đề ở §1.3:** nếu nhiệm vụ kết thúc ở bản
+báo cáo **đầu tiên**, thì (c) không còn là quy ước riêng nữa mà nhập vào (a)+(b);
+và "không kết thúc" trở thành **thất bại thật** chứ không phải dữ liệu bị kiểm
+duyệt. Ba đường cong ở §1.1 gộp thành một.
+
+Nhưng **ba chỗ mã nguồn hiện tại không khớp với mô hình này**, hai chỗ đã đo:
+
+**(i) Đội DATA khi tuần tra chỉ phát CUE, không phát tập dữ liệu đầy đủ.**
+`SetCues(cues)` với `cues = L0 + L1` = 8×150 + 2×600 = **2 400 B**; tập đầy đủ
+là 18 400 B (thêm L2 = 4×4000). Chỉ UAV **đã được triệu tập** mới rải dữ liệu
+đầy đủ. Nên mệnh đề "đội DATA chắc chắn sẽ phát đủ dữ liệu" **hiện chưa đúng** —
+nó phát đúng thứ mà đội FAST đã phát. Muốn mệnh đề đó đúng thì phải cho tuần tra
+rải cả L2, và khi đó phải trả lời: nó khác baseline phủ mù `nocoop` ở chỗ nào?
+
+**(ii) "Nút FP không thể báo cáo" chỉ đúng nếu ngưỡng xác nhận nằm trên sàn
+nhiễu.** Với `clutterResolve = 1`, một nút cạnh vật gây nhầm khi giữ đủ dữ liệu
+đọc ra ≈ 0 và phát REJECT — đúng như bạn nói. Nhưng ngưỡng xác nhận đang là
+`kCoopThreshold = 0.30`, và ở `senseSigma = 0.20` một nút **không có tín hiệu
+gì** vẫn vượt ngưỡng do nhiễu với xác suất $Q(0.30/0.20) = 6.7\%$. Đo được:
+seed 7 có 2 CONFIRM thật, một cái từ nút 118 tại (300,80) — ngay cạnh vật gây
+nhầm. Vậy mệnh đề của bạn đúng **về nguyên tắc** và sai **theo tham số hiện tại**;
+sửa bằng ngưỡng, không bằng cơ chế.
+
+**(iii) "Báo cáo đầu tiên kết thúc nhiệm vụ" không được phép dừng đồng hồ năng
+lượng.** Đó chính là audit F2: trước đây đề xuất dừng đồng hồ ở courier đầu tiên
+trong khi ba UAV còn trên trời, đối đầu với yêu cầu 4/4 của `tsp-mc`. Quy tắc
+của bạn hợp lý cho **thời gian**, nhưng năng lượng và gói tin phải tính cho
+**toàn đội cho tới khi hạ cánh**, nếu không đề xuất giấu được chi phí của đội bay
+còn lại.
+
+**(iv) "Không xét giới hạn thời gian và năng lượng"** — cần tách hai nghĩa. Bỏ
+chúng như **ràng buộc cứng** (không có ngưỡng pin cắt ngang) thì hợp lý. Bỏ chúng
+như **chỉ số** thì không so sánh được gì nữa, vì khi đó mọi lược đồ đều thành công
+nếu chờ đủ lâu — và toàn bộ bài báo là về *nhanh đến đâu, tốn bao nhiêu*.
+
+### 1.5 Kết cục thống nhất (đề xuất chốt)
+
+$$T \;=\; \min\{t : 	ext{BS nhận được báo cáo mang toạ độ ĐÃ ĐƯỢC XÁC NHẬN}\}$$
+
+- **Thành công** nếu $T < \infty$ **và** toạ độ đó ứng với nạn nhân (`fixOnVictim = 1`).
+- **Thất bại** nếu không có báo cáo nào, hoặc báo cáo mang toạ độ sai người.
+- **Chi phí** đo trên **toàn đội đến khi hạ cánh**, không dừng ở $T$.
+
+Chỉ số chính công bố: $\Pr[T \le t]$ theo $t$ (một đường cong), kèm tỉ lệ thất bại
+theo hai loại tách riêng.
+
+### 1.6 Câu hỏi mở — cần bạn trả lời
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

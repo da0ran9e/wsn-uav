@@ -325,6 +325,43 @@ không chỉ median/p90**.
 
 ---
 
+## 10b. ĐO ĐƯỢC: tầng hợp tác là một **cỗ máy đồng thuận**, và chính nó loại trừ đa ứng viên
+
+Sau khi cài `--electScope` (một ô chỉ đứng xuống trước claim **cùng chỗ**, trong
+bán kính 150 m) và sửa lỗi so sánh **vị trí** thay vì **điểm nhắm**, quét 40 hạt
+giống ở 24×24 với **4 vật gây nhầm** (s = 0.85–0.95), 6 UAV, một binary:
+
+| | |
+|---|---:|
+| nạn nhân được phục vụ | 22/40 = **55 %** |
+| run có **≥ 2 điểm nhắm THẬT SỰ khác nhau** | **2/40 = 5 %** |
+| trong số đó, phục vụ được nạn nhân | **0/2** |
+| tổng summon 43 → số chỗ khác nhau 42 | chỉ **2 %** là rao lại một chỗ đã có |
+
+Tức là **95 % số run chỉ có đúng một điểm triệu tập**, ngay cả khi trong vùng có
+bốn vật thể gần-như-giống nạn nhân.
+
+**Cơ chế, đã kiểm bằng toạ độ chứ không suy diễn:** trong seed 22, bốn lãnh đạo ở
+(60,120), (20,20), (280,240), (200,120) **đều nhắm vào (97, 221)** — chiếc xa
+nhất cách điểm nhắm của chính nó **260 m**. Trong seed 25, một lãnh đạo ở
+(440,360) nhắm vào (317, 83), cách **303 m**.
+
+Nghĩa là: **SHARE lan đỉnh bằng chứng toàn cục ra khắp vùng, nên mọi lãnh đạo độc
+lập hội tụ về cùng một điểm nhắm.** Thứ loại trừ đa ứng viên **không phải** cơ chế
+triệt tiêu bầu cử — mà là **chính việc gộp bằng chứng**. Tầng hợp tác được thiết
+kế để đạt đồng thuận về MỘT chỗ, và nó làm đúng như vậy.
+
+**Hệ quả cho §12:** không thể tạo ra chế độ đa ứng viên bằng cách chọn hạt giống
+hay chỉnh ngưỡng. Nó đòi hỏi đúng các hạng mục 3–5: lãnh đạo phát **danh sách xếp
+hạng** thay vì một điểm, SUMMON mang được danh sách, và UAV DATA có **hàng đợi ứng
+viên**. Trước khi có ba thứ đó, mọi phát biểu về "phân vùng hợp tác giữa nhiều
+điểm" (P13) là nói về một chế độ mà hệ thống chưa bao giờ vào.
+
+**Cảnh báo:** `--electScope` **chưa được chứng minh là cải tiến**. Seed 22 được
+phục vụ ở 83.6 s khi còn 4 lần rao dư thừa, và **không** được phục vụ khi triệt
+tiêu chúng — sự dư thừa đang vô tình giúp, vì càng nhiều lãnh đạo phát beacon thì
+UAV DATA càng dễ nghe được. Cần campaign so cặp trước khi giữ hay bỏ.
+
 ## 11. Vì sao chế độ đa ứng viên có thể **cứu luận điểm của bài báo**
 
 Đây là hệ quả quan trọng nhất, và nó nối thẳng vào vấn đề mở số 1 trong

@@ -114,7 +114,71 @@ $$T \;=\; \min\{t : 	ext{BS nhận được báo cáo mang toạ độ ĐÃ ĐƯ
 Chỉ số chính công bố: $\Pr[T \le t]$ theo $t$ (một đường cong), kèm tỉ lệ thất bại
 theo hai loại tách riêng.
 
-### 1.6 Câu hỏi mở — cần bạn trả lời
+### 1.6 QUYẾT ĐỊNH ĐÃ CHỐT (thảo luận 2026-08-07)
+
+| # | quyết định | trạng thái mã nguồn |
+|---|---|---|
+| D1 | Đội DATA khi tuần tra rải **dữ liệu đầy đủ**, cue vẫn ưu tiên cao hơn | **chưa có** — hiện chỉ rải cue |
+| D2 | Node được **hợp tác nội ô bằng data packet** — đây là chỗ khác `nocoop` | **chưa có** — mặt phẳng hợp tác hiện chỉ chia sẻ BẰNG CHỨNG, chưa bao giờ chia sẻ PAYLOAD |
+| D3 | FP do **nạn nhân giả** đánh lừa cue; đủ dữ liệu thì nút tự nhận ra | **đã có** = `ClutterSource` + `clutterResolve=1` |
+| D4 | **Thời gian nhiệm vụ** = UAV **đầu tiên** về báo cáo | **chưa có** — `timeToReportAtBS_s` hiện là lúc **mọi** UAV đã báo |
+| D5 | **Năng lượng/gói tin** tính tới khi **toàn đội** hạ cánh | đã có (`--allHome`) |
+| D6 | Thời gian & năng lượng là **chỉ số**, không phải ràng buộc cứng | đã có |
+
+Kiểm chứng cho D2 và D4 (đọc mã, không suy đoán):
+
+- `sar-ground-app.cc`: nút chỉ **nhận** chunk CUE/FULL (dòng 613); mọi lệnh
+  `m_dev->Send` của nút đều là ECHO/RPT/SHARE/RCLAIM/CONFIRM/REJECT — **không
+  nút nào từng phát lại một chunk dữ liệu**.
+- `sar-bs-app.cc`: `MarkReportAtBS` chỉ được gọi khi
+  `m_reporters.size() >= m_expected`, tức **toàn đội**, chứ không phải chiếc đầu.
+
+### 1.7 Nhận xét của tôi về từng quyết định
+
+**D1 + D2 — đồng ý, và D2 là chỗ mạnh nhất trong toàn bộ thiết kế.**
+Hiện tại mặt phẳng hợp tác chỉ chia sẻ *bằng chứng*; nó không hề giảm được lượng
+airtime cần để giao *payload*. Cho phép chia sẻ payload nội ô tạo ra một lợi thế
+chi phí **có cấu trúc** so với `nocoop`: một UAV bay qua chỉ cần phủ tới **vài
+nút**, các nút đó tiếp sức cho cả ô qua G2G, nên UAV cần ít lượt bay hơn hẳn cho
+cùng số nút hoàn tất. Đó là lập luận "vì sao hợp tác rẻ hơn" mạnh hơn nhiều so
+với mọi lập luận đã có trong bài.
+
+**Ba rủi ro phải đo, không được giả định:**
+
+1. **Tập đầy đủ = 18 400 B ≈ 184 chunk 100 B.** Tiếp sức từng ấy chunk qua LR-WPAN
+   250 kbps có tranh chấp, tầm 37 m, có thể **chậm hơn** là chờ UAV bay qua lần
+   nữa. Hợp tác payload chưa chắc đã lãi.
+2. **Phát lại mù sẽ nổ mạng.** Cần quy tắc: nút chỉ tiếp sức chunk mà hàng xóm
+   còn thiếu (bitmap "tôi có gì" + yêu cầu), hoặc phát lại ở tốc độ thấp trong ô.
+   Đây thực chất là bài toán **gossip / mã rateless**, không phải một dòng lệnh.
+3. **Rải full data khi tuần tra sẽ nhân chi phí gói tin lên nhiều lần** (7.7× so
+   với cue). Ở 24×24 hiện đã 12–15k gói; cần kiểm nó không nuốt mất chính lợi thế
+   mà D2 tạo ra.
+
+**D3 — đồng ý hoàn toàn, và nó chính là mô hình đã cài.** Nhưng câu hỏi ngưỡng
+vẫn còn, và tôi cho rằng **mô hình nhiễu mới là chỗ sai, không phải ngưỡng**:
+cộng $N(0,\sigma)$ vào một chất lượng trong $[0,1]$ rồi cắt biên khiến một nút
+**không có tín hiệu gì** vẫn đọc ra $\ge 0.30$ với xác suất 6.7 %. Bộ phát hiện
+thật không hành xử như vậy — điểm khớp của một quan sát hoàn toàn không khớp thì
+tập trung gần 0 với đuôi phải mỏng, không đối xứng quanh 0. **Đề xuất: nhiễu phụ
+thuộc tín hiệu** (hoặc nhiễu trong không gian logit) để nút trắng ở lại gần 0.
+Khi đó mệnh đề "FP không thể báo cáo" của bạn đúng **theo cấu trúc**, không cần
+đẩy ngưỡng lên cao và không phải trả giá bằng 40 % nhiệm vụ không kết thúc.
+
+**D4 — đồng ý, và nó cần một cột mới** chứ không sửa cột cũ: giữ
+`timeToReportAtBS_s` (toàn đội, để đối chiếu lịch sử) và thêm
+`timeToFirstReport_s`. Bài báo dùng cột mới cho thời gian, cột cũ chỉ để kiểm tra
+chi phí đã tính đủ.
+
+### 1.8 Việc phải làm (từ Phần 1)
+
+1. `timeToFirstReport_s` — cột mới, thời gian nhiệm vụ theo D4. *(nhỏ)*
+2. Mô hình nhiễu phụ thuộc tín hiệu trong `clue-field`. *(nhỏ, thay đổi mọi kết quả)*
+3. Tuần tra rải full data với ưu tiên cue. *(vừa)*
+4. **Hợp tác payload nội ô** — bitmap + tiếp sức chunk còn thiếu. *(lớn, và là
+   thứ đáng giá nhất)*
+
+### 1.9 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

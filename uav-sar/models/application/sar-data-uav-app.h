@@ -71,6 +71,9 @@ public:
     // Fly the coverage plan from the far end, so DATA and FAST are separated
     // in time over the same ground rather than arriving together.
     void SetPatrolReverse(bool v) { m_patrolReverse = v; }
+    // A UAV that loses a CLAIM stays available for other regions instead of
+    // flying home. 0 restores the old go-home behaviour (the ablation).
+    void SetStayAvailable(bool v) { m_stayAvailable = v; }
     // Reliability/cost knob: how long to keep delivering after arriving. CONFIRM
     // can come from a bystander under the drop point, so a short dwell strands a
     // victim that sits further out.
@@ -103,6 +106,7 @@ private:
     bool m_patrol = true;
     bool m_cueEnroute = true;
     bool m_patrolReverse = false;
+    bool m_stayAvailable = true;
     size_t m_cueIdx = 0;
     uint16_t m_cueSeq = 0;
     uint32_t m_cueTxCount = 0;

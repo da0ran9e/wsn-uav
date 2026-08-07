@@ -60,6 +60,10 @@ struct SarScenarioConfig {
     // cell plus the adjacent ring. 0 = unbounded (the old behaviour, in which
     // every leader adopted the global evidence peak).
     double aimScopeM = params::kAimScopeM;
+    // A DATA UAV that loses a CLAIM stays available for other candidate
+    // regions instead of flying home. Only matters when more than one region
+    // summons, which the aim bound makes common.
+    bool stayAvailable = true;
     bool   electSuppress = true; // audit B2: flood the stand-down (off = ablation:
                                  // every alerting cell summons independently)
     // audit M9/W3/W7: realism knobs for the sensing side. All default to the

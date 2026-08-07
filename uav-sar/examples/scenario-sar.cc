@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("electSuppress", "flood the election stand-down (0 = ablation)", cfg.electSuppress);
     cmd.AddValue("electScope", "stand down only for claims within this many m (0 = field-wide)", cfg.electScopeM);
     cmd.AddValue("aimScope", "leader may aim only this far from its own cell (0 = unbounded)", cfg.aimScopeM);
+    cmd.AddValue("stayAvailable", "a DATA UAV that loses a CLAIM waits for another region", cfg.stayAvailable);
     cmd.AddValue("adaptiveWindow", "summon when evidence settles (0 = fixed --minObserve)", cfg.adaptiveWindow);
     cmd.AddValue("dataPatrol", "DATA UAVs patrol+cue while waiting (0 = park)", cfg.dataPatrol);
     cmd.AddValue("dataCueEnroute", "DATA UAVs cue on legs already flown (1 = default)", cfg.dataCueEnroute);

@@ -70,7 +70,13 @@ void SarDataUavApp::SendClaim(uint8_t role) {
     std::vector<uint8_t> b(kClaimLen);
     uint8_t* q = b.data();
     *q++ = (uint8_t)Msg::CLAIM;
-    uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2;
+    // The region this UAV is claiming. It used to be hardcoded to 1, which made
+    // per-region mutual exclusion impossible: every DATA UAV yielded to every
+    // claim regardless of which region it was for, so one summon consumed the
+    // whole team. Measured at 24x24 with two candidate places: one UAV diverted
+    // and the other three yielded within the same millisecond, leaving the
+    // second place with nobody.
+    uint16_t rid = m_boundRegion; std::memcpy(q, &rid, 2); q += 2;
     *q++ = role;
     uint16_t id = (uint16_t)m_nodeId; std::memcpy(q, &id, 2);
     m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
@@ -418,7 +424,14 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         }
     } else if (type == (uint8_t)Msg::CLAIM && sz >= kClaimLen) {
         uint8_t role = b[3]; uint16_t id; std::memcpy(&id, &b[4], 2);
-        if (role == 0 && id != (uint16_t)m_nodeId && !m_claimed) {
+        uint16_t crid; std::memcpy(&crid, &b[1], 2);
+        // Mutual exclusion is PER REGION. A peer claiming a different region has
+        // taken a different job, and this UAV is still needed -- with several
+        // candidate places, yielding globally is how a whole team ends up
+        // serving one of them.
+        const bool sameRegion = (m_boundRegion == 0xFFFF || crid == 0xFFFF ||
+                                 crid == m_boundRegion);
+        if (role == 0 && id != (uint16_t)m_nodeId && !m_claimed && sameRegion) {
             m_yieldedDivert = true;                 // another DATA UAV took it
             Simulator::Cancel(m_claimEvent);
             // Yielding means this UAV has no task left. Waiting for a CONFIRM
@@ -428,7 +441,23 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             // never came home, which is where the 620 kJ p90 came from. The
             // peer's CLAIM is itself radio-delivered local information, so
             // acting on it needs no oracle.
-            if (m_allHome && (m_state == State::LOITER || m_state == State::GOTO_CENTER ||
+            // ...but losing THIS region does not mean the mission is over for
+            // this UAV: another region may still be summoning. Release the
+            // binding and stay available instead of flying home. The
+            // hover-forever trap the old code was avoiding is still avoided,
+            // because the sky-quiet rule sends a UAV home once no cue has been
+            // heard for kSkyQuietS -- that bound is what makes staying safe.
+            m_boundRegion = 0xFFFF;
+            m_yieldedDivert = false;   // eligible for the NEXT region's summon
+            if (m_stayAvailable && (m_state == State::LOITER || m_state == State::PATROL ||
+                                    m_state == State::GOTO_CENTER || m_state == State::CLIMB)) {
+                if (m_metrics) {
+                    Vector p = m_fc.GetPosition();
+                    m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                     "yield_stay", "peer took that region; staying available",
+                                     p.x, p.y, p.z);
+                }
+            } else if (m_allHome && (m_state == State::LOITER || m_state == State::GOTO_CENTER ||
                               m_state == State::PATROL || m_state == State::CLIMB ||
                               m_state == State::IDLE)) {
                 m_state = State::RETURN;

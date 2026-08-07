@@ -288,6 +288,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // separated in TIME as well as in space: a point FAST reaches late is
             // a point DATA reaches early.
             app->SetPatrolReverse(true);
+            app->SetStayAvailable(cfg.stayAvailable);
             app->SetCruise(params::kCruiseAltitudeM, dataSpd);
             app->SetLoiter(Vector(cx, cy, params::kCruiseAltitudeM));
             app->SetBs(bsPos, bsAddr);

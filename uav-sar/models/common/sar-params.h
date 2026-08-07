@@ -80,8 +80,24 @@ inline constexpr double kCruiseSpeedMps  = 20.0;    // [Design] all schemes
 //
 // Consequence to state plainly: every previously published head-to-head number
 // was measured at 20 m/s for all roles and must be re-run.
-inline constexpr double kFastSpeedMps    = kCruiseSpeedMps;   // fixed-wing; --fastSpeed
-inline constexpr double kDataSpeedMps    = 15.0;              // rotary-wing; --dataSpeed
+// Published cruise bands: fixed-wing 80-110+ km/h (22-31 m/s), multirotor
+// 40-60 km/h (11-17 m/s). 25 m/s = 90 km/h sits mid-band for fixed-wing; 15 m/s
+// = 54 km/h sits mid-band for a multirotor. The old common 20 m/s (72 km/h) was
+// above the multirotor band and below the fixed-wing one, i.e. wrong for both.
+//
+// This DOES advantage the proposed scheme and must be declared, not buried: it
+// alone flies a scout that never has to stop. A blind-coverage baseline cannot
+// use a fixed-wing at all, because every one of its UAVs must dwell to dump. So
+// the gain is a property of the ARCHITECTURE (a heterogeneous fleet), not a free
+// parameter, and the paper owes an all-rotary ablation (--fastSpeed=15) that
+// separates "two airframes" from "edge cooperation".
+//
+// Partly self-correcting on cost: EnergyPowerW is still the ROTARY curve, whose
+// parasite term goes as v^3, so flying FAST at 25 m/s in this model costs ~1.95x
+// the parasite power of 20 m/s -- while a real fixed-wing would be cheaper, not
+// dearer. Time improves, energy is overstated. See FIXED-WING-FAST-vi.md.
+inline constexpr double kFastSpeedMps    = 25.0;   // 90 km/h, fixed-wing; --fastSpeed
+inline constexpr double kDataSpeedMps    = 15.0;   // 54 km/h, rotary-wing; --dataSpeed
 inline constexpr double kClimbRateMps    = 5.0;     // [Design]
 
 // ---- UAV energy (Zeng-Zhang 2019 rotary-wing) -----------------------------

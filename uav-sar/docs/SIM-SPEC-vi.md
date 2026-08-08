@@ -136,6 +136,11 @@ Bitmap **vừa đúng** trần MTU, đây là lý do kỹ thuật khiến phươ
 HAVE: [type][cellId:u16][nodeId:u8][epoch:u8][bitmap:48B] = 53 B  ≤ 100 B ✓
 ```
 
+**Bẫy phải chặn bằng `static_assert`:** 382 là hệ quả của `TargetProfileConfig`
+mặc định và `kChunkBytes = 91`. Đổi `l2Bytes`/`l3Bytes` là bitmap phình ra và
+HAVE **âm thầm vượt 100 B** → `Send()` FAIL, mặt phẳng B chết mà log không kêu.
+Phải khẳng định `5 + ceil(numChunks/8) <= kMaxPayload` lúc biên dịch.
+
 Quy tắc (tối thiểu, không thêm gì ngoài đây):
 
 1. **HAVE** — nút phát quảng bá bitmap của mình theo chu kỳ $T_{\text{have}}$, có

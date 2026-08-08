@@ -1047,3 +1047,163 @@ tự động mang nhãn thăm dò — không cấm, chỉ là không được tr
 - **Q1.5** Có tính "báo cáo sai" (fix về BS nhưng sai người) như một **thất bại
   riêng** không? Tôi nghiêng về **có**, vì nó tệ hơn "không báo gì" — nó điều
   động đội cứu hộ đi sai chỗ.
+
+---
+
+## Phần 5 — Bố cục bài báo: cái gì vào bài, cái gì vào phụ lục
+
+Giả định tôi đang dùng (nói rõ để bạn bác nếu sai): **tạp chí IEEE hai cột,
+~12–14 trang**, không phải hội nghị 6 trang. Toàn bộ ngân sách hình/bảng dưới đây
+dựa trên giả định đó. Nếu là hội nghị thì §5.4 phải cắt một nửa và §5.6 chỉ còn
+**một** bài toán.
+
+### 5.1 Một câu tuyên bố — và một câu bị CẤM
+
+Bài báo trả lời đúng một câu:
+
+> Khi cảm biến mặt đất **có thể nhầm** và mục tiêu **không duy nhất**, việc đóng
+> vòng phản hồi và tiếp sức dữ liệu ở biên rút ngắn **thời gian tới toạ độ đã
+> xác nhận đúng người**, ở mức chi phí bay/gói tin nêu rõ.
+
+Câu **bị cấm**, vì `STATUS.md` §1 đã đo ngược lại: *"hợp tác ở biên làm SAR nhanh
+hơn và rẻ hơn"*. `closed-loop` (không hợp tác, có phản hồi) **thắng** `proposed`
+về thời gian, năng lượng và gói tin (0/120 về gói tin). Nếu bài báo mở đầu bằng
+câu bị cấm thì phần kết quả của chính nó sẽ phản bác nó.
+
+Cách phát biểu hợp lệ, tách làm hai đóng góp **khác nhau**:
+
+| | mua được gì | trả bằng gì |
+|---|---|---|
+| **đóng vòng** (A) | phần lớn lợi thế chi phí so với phủ mù | gần như không |
+| **hợp tác biên** (B) | đuôi sai số vị trí (−29 % p90), và — *dự đoán, chưa đo* — thời gian dưới nhiễu | +12 % năng lượng, +115 % gói tin |
+
+Đóng góp B là thứ **chưa được đo trong điều kiện mà nó có lý do tồn tại**: mọi số
+liệu trên đo ở M=0 và σ=0, tức là ở đúng chế độ mà hợp tác **không có việc gì để
+làm**. Đó là lý do tồn tại của campaign 3×3 ở Phần 2 — không phải để trang trí.
+
+### 5.2 Khung bài đề xuất
+
+| § | nội dung | trang | ghi chú |
+|---|---|---:|---|
+| I | Mở đầu | 1.5 | kịch bản rừng, vì sao ảnh/đa phương thức mà vẫn nhầm |
+| II | Liên quan | 1.0 | ba nhóm: phủ UAV, WSN hợp tác, SAR đa ứng viên (`RELATED-WORK-ambiguity.md`) |
+| III | Mô hình hệ thống | 2.0 | thế giới, cảm biến **hai tầng**, hai khung máy bay, kênh A2G |
+| IV | **Phát biểu bài toán** | 2.0 | P0 → rồi **hai** bài toán NP-hard (§5.6) |
+| V | Giải pháp heuristic phân tán | 2.5 | giao thức CUE/SUMMON/CLAIM/CONFIRM/REJECT |
+| VI | Thiết lập thực nghiệm | 1.0 | ma trận 3×3 + `tsp-mc`, N, chân trời, C1–C5 |
+| VII | Kết quả | 3.0 | §5.4 |
+| VIII | Kết luận & hạn chế | 0.5 | nêu thẳng cái A vs B ở §5.1 |
+
+§IV+V = 4.5 trang là **trọng tâm**. Nếu phải cắt, cắt §II và §VII, không cắt §IV.
+
+### 5.3 Bảng truy vết: tuyên bố → bằng chứng
+
+Quy tắc tự áp: **mỗi câu khẳng định trong §I và §VIII phải có một dòng ở đây.**
+Không có dòng thì không được viết câu đó.
+
+| # | tuyên bố | bằng chứng | trạng thái |
+|---|---|---|---|
+| K1 | Đóng vòng mua được lợi thế chi phí so với phủ mù | `A2B0` vs `nocoop`/`tsp-mc` | **đã đo ở bản cũ, phải chạy lại** |
+| K2 | Hợp tác biên mua đuôi sai số vị trí | p90 fix error, A2B1 vs A2B0 | đã đo (−29 %), **stale** |
+| K3 | Dưới mơ hồ danh tính, giải quyết bằng dữ liệu đầy đủ chặn đóng nhầm | 0/120 vs 46.7 % đóng sai đối tượng | **hiện hành** (`RESULTS-ambiguity-vi.md`) |
+| K4 | Giải quyết mơ hồ **tiết kiệm** gói tin | −41 % gói | **hiện hành** |
+| K5 | Ràng buộc tầm nhắm mở được chế độ đa ứng viên | b=7 c=0, p=0.016 | **hiện hành**, nhưng đắt 17 pp |
+| K6 | Tiếp sức payload rút ngắn thời gian | C2, C3 | **chưa có mã** (D2/D11) |
+| K7 | Một CONFIRM là đủ để dừng giao hàng | D8+D9 | **chưa có mã**, và §2.3 nghi ngờ |
+| K8 | Hiệu ứng là **tương tác** A×B, không cộng | C3 | **chưa đo** — đây là rủi ro lớn nhất của bài |
+
+Năm trong tám dòng chưa có. Đó là trạng thái thật của bài báo hôm nay.
+
+### 5.4 Ngân sách hình/bảng cho §VII
+
+Chỉ **4 hình + 2 bảng** vào bài. Mọi thứ khác xuống phụ lục.
+
+| | nội dung | vì sao vào bài |
+|---|---|---|
+| **F1** | Kaplan–Meier: 3 nhánh A (gộp B) + `tsp-mc`, có kiểm duyệt | chỉ số chính, và nó **hiển thị** kiểm duyệt thay vì giấu |
+| **F2** | KM: 3 nhánh B trong A2 | tách đóng góp B khỏi A |
+| **F3** | Pareto: thời gian trung vị (hoặc $\Pr[T\le T_d]$) × năng lượng, 10 điểm | trả lời "có đáng không" bằng một hình |
+| **F4** | Sai số định vị: hộp + p90, theo mức mơ hồ M | chỗ duy nhất B thắng chắc chắn |
+| **T1** | Bảng chính: 10 nhánh × 4 chỉ số, kèm KTC | số để trích dẫn |
+| **T2** | C1–C5: cỡ hiệu ứng, p thô, p sau Holm | tính minh bạch thống kê |
+
+**Không** vào bài: replay HTML, quét ngưỡng, quét spacing, ablation từng knob,
+biểu đồ PHY. Chúng là phụ lục hoặc repo.
+
+### 5.5 Phụ lục
+
+| | nội dung | nguồn có sẵn |
+|---|---|---|
+| A | Chứng minh NP-hard đầy đủ (§5.6) | phải viết |
+| B | Bảng tham số đầy đủ + hằng số kênh | `PARAMETERS.md` |
+| C | Định dạng gói tin (mỗi loại vài byte) | mã nguồn |
+| D | Quét độ nhạy: ngưỡng xác nhận, dwell, spacing | `RESULTS-*.md` |
+| E | Ablation: `aimScope`, `stayAvailable`, `dataPatrol`, `electSuppress` | đã đo |
+| F | Kiểm chứng baseline `tsp-mc` đạt mục tiêu riêng của nó (98.8 % GT ở R=1.2) | audit F4 |
+| G | Pre-registration (D21) — chụp lại nguyên văn | phải viết |
+
+Phụ lục F quan trọng hơn vẻ ngoài của nó: nó chặn phản biện *"anh làm yếu
+baseline"*, mà với `mcRedundancy` mặc định cũ 3.0 thì **đúng là ta đã làm yếu
+thật** cho tới khi audit F4 sửa.
+
+### 5.6 §IV nên có **hai** bài toán, không phải mười bốn
+
+Hiện có P0–P14 rải trong hai tài liệu. Đưa hết vào bài là tự sát: người phản biện
+đọc 14 phát biểu không chứng minh và kết luận là không phát biểu nào nghiêm túc.
+
+Đề xuất — **P0 làm khung, rồi đúng hai bài toán được chứng minh**:
+
+1. **P0** (nửa trang): điều khiển tối ưu ngẫu nhiên với thông tin **nội sinh** —
+   hành động sinh ra quan sát. Nêu để nói rõ *vì sao* không giải trực tiếp
+   (không gian tin tưởng liên tục, POMDP), rồi bỏ.
+2. **P10 — lập lịch phục vụ đa ứng viên có trọng số tin cậy.** Đây là bài toán
+   *độ trễ nhỏ nhất có trọng số* (weighted minimum latency / traveling repairman).
+   Rút gọn: trọng số bằng nhau → bài toán thợ sửa chữa lưu động → **NP-hard**, và
+   **APX-hard** trên metric tổng quát. Cái này an toàn, tài liệu đã có sẵn.
+3. **P13 — phân vùng hợp tác, phần thưởng KHÔNG cộng dồn.** Hai UAV cùng phục vụ
+   một ứng viên không nhân đôi giá trị. Rút gọn về **max-coverage** → NP-hard.
+
+**Cảnh báo tự đặt cho chính mình:** đừng viết "hàm mục tiêu là submodular nên
+tham lam đạt $1-1/e$" nếu chưa **chứng minh** submodular cho đúng hàm phần thưởng
+đang dùng (nó có ràng buộc thời gian và tương tác qua thứ tự phục vụ — rất dễ
+**không** submodular). Hoặc chứng minh, hoặc đừng nhắc tới $1-1/e$. Đây đúng là
+kiểu câu mà người phản biện sẽ kiểm tra đầu tiên.
+
+Đưa P3 (dừng tối ưu) vào §V như **động lực của `adaptiveWindow`**, không phát
+biểu thành bài toán riêng. P9, P11, P12, P14 → phụ lục A hoặc bỏ hẳn. P4 (cận
+Cramér–Rao) **phải bỏ**: dưới mơ hồ danh tính, giới hạn là **lỗi Bayes**
+$1/(M+1)$ chứ không phải CRLB, và viết CRLB ở đây là một lỗi kỹ thuật thật.
+
+### 5.7 Ba mũi phản biện chắc chắn sẽ tới
+
+| phản biện | trả lời phải chuẩn bị TRƯỚC | có sẵn chưa |
+|---|---|---|
+| "Baseline bị làm yếu" | phụ lục F + `tsp-mc` chạy đúng ngữ nghĩa rateless | **có** |
+| "Hợp tác chỉ là overhead" | đây là phản biện **đúng một phần** — §5.1 phải tự nói ra trước, và chỉ ra ô A2B2 dưới nhiễu | **chưa**, phụ thuộc campaign |
+| "Kết quả chọn lọc sau khi nhìn số" | pre-registration (D21) + nhãn thăm dò | **chưa viết** |
+
+Mũi thứ hai là mũi nguy hiểm. Cách duy nhất sống sót là **tự nêu ra trong §I**,
+kèm số liệu, rồi định vị lại đóng góp — chứ không phải giấu `closed-loop` đi. Nếu
+giấu, người phản biện tự chạy được và bài chết.
+
+### 5.8 Việc phát sinh từ Phần 5
+
+| # | việc |
+|---|---|
+| D22 | Viết §IV chỉ với P0 + P10 + P13; chứng minh rút gọn đầy đủ vào phụ lục A |
+| D23 | **Không** tuyên bố $1-1/e$ nếu chưa chứng minh submodular |
+| D24 | Bỏ P4/CRLB khỏi mọi bản thảo; thay bằng cận Bayes $1/(M+1)$ |
+| D25 | Bảng truy vết K1–K8 giữ trong repo, cập nhật khi có số |
+| D26 | Viết phụ lục F (baseline đạt mục tiêu riêng) trước khi chạy campaign |
+
+### 5.9 Câu hỏi cho bạn
+
+- **Q5.1** Tạp chí (~12–14 trang) hay hội nghị (6–8)? Toàn bộ §5.2/§5.4 phụ thuộc
+  câu này.
+- **Q5.2** Đồng ý §IV chỉ giữ **P10 + P13** không? Nếu bạn muốn giữ thêm bài nào
+  thì nói bây giờ, vì mỗi bài thêm là ~0.5 trang và một chứng minh phải viết.
+- **Q5.3** Đồng ý **tự nêu** kết quả `closed-loop` trong §I (mũi phản biện 2)
+  không? Tôi nghiêng mạnh về **có**.
+- **Q5.4** Bốn hình có đủ không, hay bạn muốn thêm một hình minh hoạ giao thức
+  (sơ đồ trình tự CUE→SUMMON→CLAIM→CONFIRM)? Tôi nghĩ hình đó nên nằm ở §V và
+  **không** tính vào ngân sách §VII.

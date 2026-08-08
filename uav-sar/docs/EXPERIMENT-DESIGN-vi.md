@@ -215,7 +215,85 @@ khi tiếp tục cắt cả báo cáo đúng. Đó là dấu hiệu của việc
 nhiễu để nút trắng ở lại gần 0 là cách xử lý gốc, và khi đó ngưỡng có thể quay về
 thấp mà không mất gì.
 
-### 1.10 Câu hỏi mở còn lại
+### 1.10 "Cứu được" nghĩa là gì, và vì sao nó KHÔNG phải 100 %
+
+**Định nghĩa hiện tại, chính xác theo mã:** `MarkCompleteData` chỉ được gọi khi
+`m_isTarget && HasEntireDataset()` — tức **đúng cái nút được chỉ định là gần nạn
+nhân nhất** đã tái tạo **đủ mọi mảnh** của tập tham chiếu.
+
+Bạn hỏi rất đúng: nếu cứ chờ đủ lâu thì sao vẫn có tỉ lệ? Ba lý do, và **không lý
+do nào là "thiếu thời gian"**:
+
+**(1) UAV tuần tra CHỈ phát cue, không bao giờ phát tập đầy đủ.**
+`SendFullChunk` mở đầu bằng `if (m_state != State::DELIVER ...) return;` — chỉ
+UAV **đã được triệu tập và đang ở trạng thái giao hàng** mới rải L2. Tuần tra gọi
+`PatrolCueTick`, phát `m_cues` (L0+L1). Nên **tuần tra chạy vô hạn cũng không bao
+giờ hoàn tất dữ liệu cho nạn nhân.** Đây chính là D1: mệnh đề "đội DATA chắc chắn
+sẽ phát đủ dữ liệu" hiện **sai theo cấu trúc**, không phải sai vì hết giờ.
+
+**(2) Mô phỏng dừng, không chạy vô hạn.** `Simulator::Stop` kích hoạt khi BS đủ
+báo cáo; UAV về nhà theo `kSkyQuietS` (45 s không nghe cue). Nên "chờ đủ lâu"
+không xảy ra trong thiết kế hiện tại.
+
+**(3) Giao hàng ở cự ly, có mất gói.** Ngay cả khi có UAV được triệu tập tới đúng
+vùng, nạn nhân thường cách điểm thả 20–44 m và xác suất nhận từng gói giảm theo
+cự ly. Đã đo trước đây: 9 trong 12 lần thất bại ở 16×16 đúng là kiểu này — giao
+hàng CÓ xảy ra, điểm thả gần nhất cách 19.7–43.6 m.
+
+**Kết luận:** tỉ lệ 52.5 % không phản ánh "chưa đủ thời gian" mà phản ánh (1) và
+(3). Và **D1 + D2 chính là thứ làm trực giác của bạn trở thành đúng** — khi tuần
+tra rải cả L2 và nút tiếp sức payload trong ô, thì "chờ đủ lâu ⇒ chắc chắn xong"
+mới thành mệnh đề thật.
+
+### 1.11 D3 nói rõ hơn: sai ở MÔ HÌNH NHIỄU, không ở ngưỡng
+
+**Mô hình hiện tại** (`clue-field.cc`):
+
+$$\hat q_i \;=\; \mathrm{clip}_{[0,1]}\big(q_i + \sigma\,\varepsilon_i\big),
+\qquad \varepsilon_i\sim\mathcal N(0,1)$$
+
+Nhiễu **cộng** và **không phụ thuộc tín hiệu**. Hệ quả cho một nút có
+$q_i = 0$ (không có vật thể nào gần):
+
+$$\Pr[\hat q_i \ge 0.30] \;=\; Q(0.30/\sigma) \;=\; Q(1.5) \;=\; 6.7\,\%
+\quad (\sigma = 0.20)$$
+
+Nói bằng lời: **cứ 15 nút nhìn vào rừng trống thì có 1 nút chấm điểm khớp ≥ 0.30**
+so với tập dữ liệu tham chiếu. Bộ phát hiện thật không hành xử như vậy — điểm khớp
+của một quan sát *hoàn toàn không khớp* tập trung sát 0 với đuôi phải mỏng, chứ
+không phải một Gauss đối xứng quanh 0 rồi bị cắt biên.
+
+Trong hệ thống, hậu quả là những nút đó **giữ đủ dữ liệu và vẫn CONFIRM** — chúng
+tự nhận là nạn nhân **từ nhiễu thuần tuý**. Đó là nguồn của các CONFIRM cạnh vật
+gây nhầm, và cũng là lý do nâng ngưỡng "có vẻ hiệu quả": ngưỡng đang **bù** cho
+một mô hình nhiễu lẽ ra không được đặt khối lượng xác suất ở đó.
+
+**Đề xuất — nhiễu phụ thuộc tín hiệu:**
+
+$$\hat q_i \;=\; \mathrm{clip}_{[0,1]}\Big(q_i + \sigma\,(q_i + q_0)\,\varepsilon_i\Big),
+\qquad q_0 \approx 0.05$$
+
+| $q_i$ | độ lệch chuẩn hiệu dụng ($\sigma=0.20$) | $\Pr[\hat q \ge 0.30]$ |
+|---:|---:|---:|
+| 0.00 (rừng trống) | 0.010 | $\approx 0$ |
+| 0.30 (halo xa) | 0.070 | 50 % |
+| 0.80 (sát nạn nhân) | 0.170 | ~100 % |
+
+Nút trắng **ở lại trắng**; nút có tín hiệu **vẫn nhiễu đúng như trước**. Đây là
+dạng chuẩn cho điểm khớp / bộ phát hiện giới hạn bởi SNR: sai số **tương đối**
+chứ không phải tuyệt đối.
+
+**Được gì:** mệnh đề của bạn — *nút FP không thể báo cáo nạn nhân* — trở thành
+**đúng theo cấu trúc**. FP khi đó **chỉ** đến từ vật gây nhầm thật (`ClutterSource`)
+đánh lừa ở tầng cue, đúng như mô hình bạn mô tả. Và ngưỡng xác nhận có thể quay
+về mức thấp, **không phải trả giá 40 % nhiệm vụ không kết thúc**.
+
+**Cảnh báo bắt buộc:** thay đổi này làm hệ thống **đẹp lên trên mọi chỉ số nhập
+nhằng**. Vì vậy nó phải được biện minh bằng **lý do vật lý** và khai báo rõ trong
+bài như một thay đổi mô hình — không được lặng lẽ áp dụng rồi khoe số. Và **mọi
+kết quả có `senseSigma > 0` đều phải chạy lại.**
+
+### 1.12 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

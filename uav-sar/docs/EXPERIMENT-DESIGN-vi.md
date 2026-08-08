@@ -554,7 +554,114 @@ Chi phí: 5 B → 10 B, thừa sức trong trần 100 B.
 | D10 | Bỏ `pure-uav` khỏi bộ nhánh | nhỏ |
 | D11 | Cài B1 (tiếp sức trong ô) và B2 (thêm xuyên ô) | lớn |
 
-### 2.5 Câu hỏi mở còn lại
+### 2.5 DANH SÁCH QUYẾT ĐỊNH TÍCH LUỸ (D1–D11)
+
+| # | quyết định | trạng thái | quy mô |
+|---|---|---|---|
+| D1 | Tuần tra DATA rải **full data**, cue ưu tiên cao hơn | chưa cài | vừa |
+| D2 | Hợp tác **payload nội ô** | chưa cài | lớn |
+| D3 | FP do nạn nhân giả; **nhiễu phụ thuộc tín hiệu** | mô hình clutter đã có; nhiễu **chưa** | nhỏ |
+| D4 | Thời gian nhiệm vụ = **UAV đầu tiên** về báo cáo | chưa cài | nhỏ |
+| D5 | Chi phí tính tới khi **toàn đội** hạ cánh | đã có | — |
+| D6 | Thời gian/năng lượng là **chỉ số**, không phải ràng buộc | đã có | — |
+| D7 | FAST hỗ trợ rải dữ liệu sau khi quét xong | **để sau** | vừa |
+| D8 | CONFIRM mang `evQ8` + vị trí; fix = vị trí nút xác nhận mạnh nhất | chưa cài | nhỏ, giá trị cao |
+| D9 | UAV **dừng giao hàng sớm** khi nghe CONFIRM đủ mạnh | chưa cài | nhỏ, mở khoá lợi ích của B |
+| D10 | Bỏ `pure-uav`; `tsp-mc` giữ nguyên, không relay | chưa cài | nhỏ |
+| D11 | Cài B1 (trong ô) và B2 (trong + ngoài ô) | chưa cài | lớn |
+
+---
+
+## Phần 3 — Điểm vận hành và tham số quét
+
+### 3.1 Vấn đề: tích Descartes đầy đủ là bất khả thi
+
+Các trục có thể quét: quy mô (4 mức) × nhập nhằng (3 mức) × nhiễu (3 mức) ×
+**9 nhánh** × N=120 = **~39 000 run**. Không chạy nổi.
+
+Nên phải chọn: **một điểm vận hành chính** chạy đủ ma trận, cộng các **quét
+một-yếu-tố** xuất phát từ điểm đó.
+
+### 3.2 Đề xuất: đổi tham số sang ĐƠN VỊ CÓ NGHĨA VẬN HÀNH
+
+Đây là điểm tôi cho là quan trọng nhất của Phần 3. Hiện ta quét **hằng số nội
+bộ**; nên quét **đại lượng mà người phản biện hiểu được**:
+
+| đang quét | nên quét | vì sao |
+|---|---|---|
+| `senseSigma` | $\Pr[\text{nút của nạn nhân vượt ngưỡng báo động}]$ | "chất lượng bộ phát hiện", đọc được ngay |
+| `gridSize` | **diện tích vùng** (m²) và **mật độ nút** (nút/ha) | quy mô thật, so được với tài liệu SAR |
+| `clutterCount` | **mật độ vật gây nhầm** (số/km²) | so được với kịch bản thật |
+| `numUav` | **số UAV trên km²** | so được giữa các quy mô |
+
+Trục nhập nhằng thứ hai — **độ tương đồng $s$** — giữ nguyên vì nó vốn đã là một
+tỉ số không thứ nguyên và đọc được: $s=1$ nghĩa là *không phân biệt được*.
+
+### 3.3 CẢNH BÁO: D3 làm `senseSigma` cũ **mất ý nghĩa**
+
+Nhiễu mới là $\sigma(q+q_0)$, nên độ lệch hiệu dụng tại nút nạn nhân
+($q \approx 0.8$) là $0.85\sigma$, còn tại nút trắng là $0.05\sigma$. Cùng một
+con số `senseSigma` **không còn mô tả cùng một bộ phát hiện**.
+
+Hệ quả bắt buộc: **phải hiệu chuẩn lại** — chọn $\sigma$ sao cho một đại lượng
+vận hành giữ nguyên (ví dụ: xác suất nút gần nạn nhân nhất vượt ngưỡng báo động
+bằng đúng giá trị nó có ở mô hình cũ). Nếu không thì mọi so sánh trước/sau D3 là
+so hai bộ phát hiện khác nhau, không phải so hai mô hình nhiễu.
+
+### 3.4 Điểm vận hành chính — đề xuất
+
+| tham số | giá trị | lý do |
+|---|---|---|
+| lưới | **24×24** (460×460 m) | 16×16 quá nhỏ (đa ứng viên hiếm, chỗ đỗ giữa map luôn với tới được); 40×40 quá chậm để chạy N=120 × 9 nhánh |
+| đội bay | **6 UAV** (2 FAST + 4 DATA) | đã dùng suốt phần thảo luận; ~28 UAV/km² |
+| nhập nhằng | **M = 4**, $s \in [0.85, 0.95]$ | ~19 vật/km² |
+| nhiễu | hiệu chuẩn lại theo §3.3 | |
+| chân trời | **1200 s** | **cần biện minh — xem §3.5** |
+
+### 3.5 Chân trời $T_{\max}$: hiện chưa có cơ sở
+
+Tỉ lệ thất bại **hoàn toàn** do $T_{\max}$ quyết định, vì theo mô hình mới mọi
+lược đồ đều thành công nếu chờ đủ lâu. Nên $T_{\max}$ **không được là một con số
+tuỳ tiện**.
+
+Kiểm tra: pin **không** phải ràng buộc trong mô hình hiện tại — các run tốn
+70–200 kJ = 19–56 Wh cho cả đội, trong khi một pin multirotor cỡ 300 Wh cho
+~1.7 h bay. Vậy 1200 s **không** đến từ giới hạn pin.
+
+Cách xử lý sạch nhất: **công bố $\Pr[T\le t]$ dưới dạng đường cong**, khi đó
+$T_{\max}$ chỉ còn là *một điểm đọc trên đường cong*, không phải tham số ẩn quyết
+định kết luận. Bảng tóm tắt vẫn cần một $T_d$ để trích số, và **$T_d$ đó phải lấy
+từ tài liệu SAR chứ không phải từ số liệu của ta** — lấy từ số liệu của ta là chọn
+ngưỡng sau khi nhìn kết quả.
+
+### 3.6 Ngân sách chạy
+
+| thí nghiệm | nhánh | N | run | ghi chú |
+|---|---:|---:|---:|---|
+| ma trận chính 3×3 @ 24×24 | 9 | 120 | 1 080 | + `tsp-mc` = 1 200 |
+| quét quy mô (16/24/32/40) | 3 rút gọn | 120 | 1 440 | A0B0, A2B0, A2B1 |
+| quét nhập nhằng ($M$, $s$) | 3 rút gọn | 120 | ~1 080 | |
+| quét chất lượng phát hiện | 3 rút gọn | 120 | ~1 080 | |
+| **tổng** | | | **~4 800** | |
+
+Ở 24×24 mỗi run ~30–60 s, chạy 3 luồng → **~15–25 giờ máy**. Khả thi nhưng phải
+chạy một mạch trên **một binary** — nghĩa là **cài xong toàn bộ D1–D11 rồi mới
+chạy**, không vừa chạy vừa sửa.
+
+### 3.7 Câu hỏi cho bạn
+
+- **Q3.1** Đồng ý đổi tham số sang đơn vị vận hành (§3.2) không? Nó làm bảng biểu
+  dễ bảo vệ hơn nhưng phải viết lại script phân tích.
+- **Q3.2** Điểm vận hành chính 24×24 / 6 UAV / M=4 có hợp lý không, hay bạn muốn
+  lấy 40×40 làm chính (đắt hơn nhiều)?
+- **Q3.3** $T_d$ để trích số trong bảng tóm tắt lấy từ đâu? Có tài liệu SAR nào
+  bạn muốn dựa vào không?
+- **Q3.4** Mật độ vật gây nhầm nên là bao nhiêu cho "thực tế"? Hiện M=4 trên
+  0.21 km² ≈ 19/km², tôi không có cơ sở nào cho con số này.
+- **Q3.5** Có cần quét **số UAV** như một trục riêng không, hay cố định 6 và để
+  phần "thêm UAV" vào phụ lục?
+
+### 3.8 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

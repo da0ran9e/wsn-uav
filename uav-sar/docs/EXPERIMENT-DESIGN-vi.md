@@ -661,7 +661,89 @@ chạy**, không vừa chạy vừa sửa.
 - **Q3.5** Có cần quét **số UAV** như một trục riêng không, hay cố định 6 và để
   phần "thêm UAV" vào phụ lục?
 
-### 3.8 Câu hỏi mở còn lại
+### 3.9 QUYẾT ĐỊNH PHẦN 3 (2026-08-07)
+
+| # | quyết định |
+|---|---|
+| D12 | Quét theo **đơn vị vận hành** (§3.2), không theo hằng số nội bộ |
+| D13 | Điểm vận hành: **20×20, 24×24, 40×40** — ba quy mô, **4 UAV**, **M = 0** |
+| D14 | **M = 0 cho mọi so sánh.** Vật gây nhầm là **luận điểm bổ sung** về khả năng vận hành, không phải trục so sánh |
+| D15 | $T_{\max}$ chưa chốt — chạy thử vài lần để lấy giá trị hợp lý |
+| D16 | **Số UAV** được cân nhắc làm một trục quét |
+
+### 3.10 Nhận xét: D14 làm ĐƠN GIẢN HOÁ bài báo rất nhiều — và đúng hướng
+
+Với **M = 0** và nhiễu phụ thuộc tín hiệu (D3), nút không có tín hiệu **không thể**
+xác nhận, còn nút gần nạn nhân thì xác nhận đúng. Hệ quả: `fixOnVictim` sẽ
+**≈ 100 %** và **ngừng phân biệt được các lược đồ**.
+
+Đó là **điều tốt**, và nó làm cấu trúc bài rõ hẳn:
+
+| phần | trục so sánh | vì sao |
+|---|---|---|
+| **kết quả chính** ($M=0$) | **thời gian và chi phí** | mọi lược đồ đều tìm ra nạn nhân; khác nhau ở *nhanh đến đâu, tốn bao nhiêu* |
+| **phần khả năng vận hành** ($M>0$) | tỉ lệ **báo đúng người** | chỉ ở đây mới có chuyện nhầm người, và chỉ ở đây vòng kín mới thể hiện được ưu thế nhận dạng |
+
+Nói cách khác: **kết quả chính là bài toán truyền thông; phần nhập nhằng là bài
+toán nhận dạng.** Trước đây tôi trộn hai thứ vào một bảng và đó là lý do các con
+số cứ đá nhau.
+
+Lưu ý: D8 (CONFIRM mang evidence + vị trí) **vẫn cần ở M = 0**, vì (i) D9 cần biết
+CONFIRM có đủ mạnh để dừng sớm, và (ii) báo vị trí **nút xác nhận** vẫn chính xác
+hơn báo điểm ước lượng.
+
+### 3.11 $T_{\max}$: pin KHÔNG phải ràng buộc — đã tính
+
+| | công suất (đường cong rotary hiện dùng) |
+|---|---:|
+| DATA 15 m/s | 138.5 W |
+| FAST 25 m/s | 249.0 W |
+| hover | 168.5 W |
+
+| pin | thời gian bay ở 138 W |
+|---:|---:|
+| 100 Wh | **43.5 phút** = 2 609 s |
+| 300 Wh | 130 phút |
+
+Ngay cả pin nhỏ 100 Wh cũng cho **43 phút**, gấp đôi chân trời 1200 s. Vậy
+**$T_{\max}$ không thể biện minh bằng pin.**
+
+Và cũng **không có hạn chót SAR nào ở thang này**: tài liệu SAR nói về xác suất
+sống sót theo **giờ và ngày**, còn $T$ của ta là **100–400 giây** — đây là đại
+lượng cấp **một lượt bay**, không phải cấp chiến dịch cứu nạn. Nên đi tìm $T_d$
+trong tài liệu SAR sẽ không ra.
+
+**Đề xuất thay thế, không lấy ngưỡng từ số liệu của chính mình:**
+
+1. **Công bố $\Pr[T\le t]$ dạng đường cong** — khi đó $T_{\max}$ chỉ là *phạm vi
+   vẽ*, không phải tham số quyết định kết luận. Đây là cách sạch nhất.
+2. Nếu cần một con số cho bảng: lấy $T_d$ = **thời gian một lượt quét mù phủ hết
+   vùng**, suy ra từ **hình học** (diện tích ÷ bán kính phủ ÷ tốc độ), không phải
+   từ kết quả. Nó có nghĩa vận hành rõ: *"nhanh hơn hay chậm hơn việc rải đều
+   khắp nơi"*.
+3. $T_{\max}$ của mô phỏng đặt **rộng rãi** (ví dụ 3× giá trị ở mục 2) để đuôi
+   phân phối không bị cắt cụt — chân trời chỉ để mô phỏng dừng, không để định
+   nghĩa thất bại.
+
+D15 "chạy thử vài lần lấy giá trị hợp lý" **hợp lý cho mục 3** (đặt chân trời mô
+phỏng), nhưng **không dùng được cho mục 2** (ngưỡng trích số), vì chọn ngưỡng sau
+khi nhìn kết quả là đúng loại lỗi mà `STATUS.md` §5 cảnh báo.
+
+### 3.12 Hệ quả của 4 UAV ở 40×40 — cần lường trước
+
+4 UAV = 2 FAST + 2 DATA. Ở 40×40 vùng là 780×780 m, mỗi UAV DATA phủ một dải
+780×390 m. Với bán kính phủ 50 m, số điểm dừng ≈ $\frac{780\times390}{\pi\cdot50^2}\approx 39$
+điểm/dải, đường bay ≈ 3.5 km ở 15 m/s ≈ **234 s chỉ để bay**.
+
+Cộng D1: mỗi điểm phải rải **full data** = 184 chunk ≈ 0.94 s airtime tối thiểu,
+thực tế 3–5 s → **+120–200 s**. Tổng một lượt quét ≈ **350–430 s**.
+
+Nghĩa là ở 40×40 với 4 UAV, **một lượt quét đầy đủ đã chiếm phần lớn chân trời
+1200 s**. Đó không phải lỗi — nhưng nó nói rằng ở quy mô này, **kết quả sẽ bị chi
+phối bởi tốc độ phủ chứ không phải bởi chất lượng vòng phản hồi**, và đó là điều
+cần nói rõ khi trình bày chứ không để người đọc tự đoán.
+
+### 3.13 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

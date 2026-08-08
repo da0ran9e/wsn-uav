@@ -293,7 +293,97 @@ nhằng**. Vì vậy nó phải được biện minh bằng **lý do vật lý**
 bài như một thay đổi mô hình — không được lặng lẽ áp dụng rồi khoe số. Và **mọi
 kết quả có `senseSigma > 0` đều phải chạy lại.**
 
-### 1.12 Câu hỏi mở còn lại
+### 1.12 MÔ HÌNH MỚI — phát biểu lại toàn bộ
+
+Tổng hợp mọi thứ đã chốt. Đây là mô hình cần cài, không phải mô hình đang chạy.
+
+#### A. Thế giới
+
+- Vùng $\mathcal A$, lưới $N$ cảm biến, BS tại gốc.
+- **Một** nạn nhân thật tại vị trí liên tục $v$.
+- **$M$ nạn nhân giả** tại $c_1..c_M$, mỗi cái có độ tương đồng $s_m\in[0,1]$.
+  Chúng là vật thể **thật sự giống** tập tham chiếu đủ để đánh lừa **tầng cue**.
+
+#### B. Cảm biến — hai tầng, đây là trục chính của bài
+
+Chất lượng khớp **thật** của nút $i$ phụ thuộc **lượng dữ liệu tham chiếu nó
+đang giữ**, ký hiệu $C_i\in[0,1]$:
+
+$$q_i(C_i)=\max\Big(g(\|p_i-v\|),\ \max_m s_m\,(1-C_i)\,g(\|p_i-c_m\|)\Big)$$
+
+- $C_i \to 0$ (chỉ có mảnh cue): nạn nhân giả **trông y như** nạn nhân thật → FP.
+- $C_i \to 1$ (đủ tập tham chiếu): số hạng giả **tắt** → nút **tự biết** mình là FP.
+
+Số **đo được** dùng nhiễu **phụ thuộc tín hiệu** (thay cho nhiễu cộng cũ):
+
+$$\hat q_i=\mathrm{clip}_{[0,1]}\Big(q_i+\sigma\,(q_i+q_0)\,\varepsilon_i\Big),
+\qquad \varepsilon_i\sim\mathcal N(0,1),\ q_0\approx0.05$$
+
+Hệ quả then chốt: nút **không có vật thể nào gần** thì $\hat q_i\approx0$ và
+**không thể xác nhận** — nên *FP không bao giờ báo cáo nạn nhân*, **theo cấu
+trúc**, không nhờ chỉnh ngưỡng.
+
+#### C. Đội bay — hai khung máy bay, có cơ sở vật lý
+
+| | FAST | DATA |
+|---|---|---|
+| khung | **fixed-wing** | **rotary-wing** |
+| tốc độ | 25 m/s (90 km/h) | 15 m/s (54 km/h) |
+| giữ vị trí | **không** (phải bay vòng) | **có** |
+| việc | quét, rải cue, tiếp sức, đưa báo cáo về BS | tuần tra **rải full data**, giao hàng khi được triệu tập |
+
+Phân công này là **hệ quả vật lý**: quét và đưa tin cần khung không bao giờ dừng;
+dwell giao hàng 20–40 s cần khung giữ được vị trí.
+
+#### D. Hợp tác mặt đất — HAI mặt phẳng
+
+1. **Mặt phẳng bằng chứng** *(đã có)*: RPT lên cây trong ô, SHARE xuyên ô, bầu
+   cử, SUMMON, CONFIRM/REJECT. Chia sẻ *ai thấy gì*.
+2. **Mặt phẳng payload** *(mới, D2)*: nút **tiếp sức chunk dữ liệu** cho nút cùng
+   ô. Chia sẻ *chính dữ liệu*.
+
+Mặt phẳng 2 là **chỗ khác biệt so với `nocoop`**, và là lập luận chi phí mạnh
+nhất mà bài báo có: một lượt UAV bay qua chỉ cần chạm tới **vài nút**, phần còn
+lại của ô nhận qua G2G — nên cần **ít lượt bay hơn hẳn** cho cùng số nút hoàn tất.
+
+#### E. Nhiệm vụ — MỘT kết cục
+
+$$T=\min\{t:\ \text{BS nhận báo cáo mang toạ độ ĐÃ XÁC NHẬN}\}$$
+
+- **Thành công**: $T<\infty$ **và** toạ độ ứng với nạn nhân thật.
+- **Thất bại**: không có báo cáo, **hoặc** báo cáo mang toạ độ của nạn nhân giả.
+- **Thời gian nhiệm vụ**: tính tại $T$ (UAV **đầu tiên** về báo cáo).
+- **Chi phí**: năng lượng + gói tin của **toàn đội tới khi hạ cánh**, không dừng
+  ở $T$.
+- Thời gian/năng lượng là **chỉ số**, không phải ràng buộc cứng.
+
+#### F. Hệ quả lớn nhất của mô hình mới — và nó đổi cả thiết kế thực nghiệm
+
+Với D1 (tuần tra rải full data) + D2 (tiếp sức payload), mệnh đề của bạn trở
+thành **đúng**: chờ đủ lâu thì nạn nhân **chắc chắn** nhận đủ dữ liệu. Nhưng khi
+đó — và điều này áp dụng cho **cả các baseline**, vì `nocoop`/`tsp-mc` cũng phủ
+toàn vùng — **mọi lược đồ đều thành công nếu chân trời đủ dài**.
+
+Nghĩa là **tỉ lệ cứu được thôi không còn là chỉ số phân biệt.** Bài báo chuyển
+trục sang:
+
+$$\text{công bố } \Pr[T\le t] \text{ theo } t,\ \text{và chi phí để đạt được nó}$$
+
+Đây thực ra là **thiết kế sạch hơn** và trùng với cách đánh giá của dòng multicast
+(Zeng'18 đo *completion time*). Tỉ lệ thất bại chỉ còn ý nghĩa **tại một chân trời
+hữu hạn khai báo trước** (pin thật), và khi đó nó là một điểm trên đường cong chứ
+không phải một con số rời.
+
+#### G. Còn phải quyết
+
+- **G1** Quy tắc tiếp sức payload: bitmap "tôi có gì" + chỉ gửi chunk hàng xóm
+  thiếu? Hay phát lại tốc độ thấp trong ô? (Bài toán gossip/rateless.)
+- **G2** Ưu tiên cue khi tuần tra: tỉ lệ chu kỳ cue:full là bao nhiêu?
+- **G3** "Đúng chỗ" định nghĩa thế nào — hiện là *gần nạn nhân hơn gần mọi vật
+  gây nhầm*. Có cần thêm bán kính tuyệt đối (ví dụ ≤ 50 m) không?
+- **G4** Chân trời khai báo $T_{\max}$ để báo tỉ lệ thất bại: lấy từ đâu?
+
+### 1.13 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

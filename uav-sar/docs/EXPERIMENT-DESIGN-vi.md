@@ -743,7 +743,95 @@ Nghĩa là ở 40×40 với 4 UAV, **một lượt quét đầy đủ đã chi�
 phối bởi tốc độ phủ chứ không phải bởi chất lượng vòng phản hồi**, và đó là điều
 cần nói rõ khi trình bày chứ không để người đọc tự đoán.
 
-### 3.13 Câu hỏi mở còn lại
+### 3.14 Ý TƯỞNG ĐỂ CÂN NHẮC SAU (D17) — NHIỀU mục tiêu thật + NHIỀU mục tiêu giả
+
+> **Ý tưởng (2026-08-07):** vùng tìm kiếm có thể chứa **$V$ nạn nhân thật** và
+> **$M$ mục tiêu giả**, thay vì đúng một nạn nhân.
+
+**Chưa cài. Đây là thay đổi LỚN NHẤT trong mọi ý đã ghi** — nó đổi *hàm mục tiêu*,
+không chỉ đổi tham số.
+
+#### Vì sao nó không phải là "M lớn hơn"
+
+Với $V=1$, mục tiêu là **tìm THE nạn nhân**; xong là xong. Với $V>1$:
+
+| | $V=1$ | $V>1$ |
+|---|---|---|
+| mục tiêu | tìm **một** | tìm **càng nhiều càng tốt trước thời điểm $t$** |
+| dừng | dừng sau CONFIRM đúng | **không có điểm dừng tự nhiên** — luôn có thể còn người nữa |
+| chỉ số | $\Pr[T\le t]$ | $\mathbb{E}[\#\text{tìm được}(t)]$, hoặc thời gian tìm hết |
+| bài toán định tuyến | min-latency có trọng số | **phủ tập mục tiêu** — orienteering/TSP đa xe thực thụ |
+| triệt tiêu bầu cử | đúng (một vùng) | **sai hoàn toàn** — mỗi nạn nhân là một vùng hợp lệ |
+
+Điểm cuối là quan trọng nhất về mặt mã nguồn: **toàn bộ cơ chế `electSuppress`
+được xây trên giả định có MỘT chỗ để đi.** Với $V>1$ nó không chỉ dở mà **sai về
+ngữ nghĩa** — nó sẽ chủ động bịt miệng những vùng đang có nạn nhân thật.
+
+#### Điểm hay nhất: nó làm bài toán P13 có nội dung THẬT
+
+Suốt các tài liệu trước, "phân vùng hợp tác" (P13) là bài toán tôi phát biểu cho
+một chế độ mà hệ thống chưa bao giờ vào. Với $V>1$ thì **thật sự có nhiều chỗ
+phải phục vụ cùng lúc**, nên phân bổ đội bay trở thành bài toán trung tâm chứ
+không phải phụ. Đây là con đường tự nhiên nhất để P13 vào được bài báo.
+
+#### Tương tác với mục tiêu giả — và một chỉ số mới
+
+Khi có cả $V$ thật lẫn $M$ giả, hệ thống **không phân biệt được cho tới khi giao
+đủ dữ liệu**. Nên nó phải phục vụ **cả $V+M$ ứng viên**, và:
+
+$$\text{hiệu suất phục vụ} = \frac{V}{V+M}$$
+
+Đây là một chỉ số mới, đọc được ngay, và nó **đo đúng cái mà vòng kín mua được**:
+một hệ mở vòng phải phủ đều toàn vùng bất kể $V$ và $M$; hệ vòng kín chỉ phải
+phục vụ $V+M$ điểm, và mỗi lần REJECT là một điểm bị loại khỏi danh sách.
+
+#### Kịch bản thật tương ứng
+
+Không phải trường hợp hiếm: **tai nạn hàng loạt** (MCI), **lở tuyết**, **lật
+tàu**, **động đất** — đều là nhiều nạn nhân trong một vùng. Trường hợp $V=1$
+(người đi lạc một mình) mới là trường hợp riêng.
+
+#### Tài liệu: có nhiều, và nó **không** ủng hộ ta tuyên bố mới ở phần này
+
+Khảo sát nhanh (8/2026):
+
+- **Lý thuyết tìm kiếm** đã có nhánh đa mục tiêu từ lâu: sau
+  [*Theory of Optimal Search*](https://www.semanticscholar.org/paper/Theory-of-Optimal-Search-Stone/20ed63a585d7712b1823e78558f238f30d3547d0)
+  (Stone 1975, chủ yếu mục tiêu tĩnh đơn), các phương pháp tính **kế hoạch tìm
+  kiếm tối ưu cho nhiều mục tiêu và nhiều người tìm** có ràng buộc di chuyển thực
+  tế đã được phát triển — xem
+  [*Optimal Search for Moving Targets*](https://www.springer.com/gp/book/9783319268972)
+  (Stone–Royset–Washburn).
+- **Bầy UAV tìm kiếm đa mục tiêu** là một dòng đông đúc: [land-coverage aware
+  path planning cho bầy UAV SAR](https://arxiv.org/html/2505.08060v1),
+  [tìm kiếm mục tiêu hợp tác trong môi trường động chưa biết](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11644799/),
+  [khung RL benchmark cho SAR bằng bầy UAV](https://www.mdpi.com/2504-446X/10/2/79),
+  [bầy UAV cảm biến nhiệt + tối ưu phối hợp](https://www.nature.com/articles/s41598-025-33223-z),
+  [chuỗi nhiệm vụ cho bầy UAV tìm người bị thương ngoài trời](https://doi.org/10.3390/drones6060138).
+- **Chỉ số đa mục tiêu** đã chuẩn hoá ở mảng theo vết: recall/precision,
+  **false alarms per frame**, **MODA** — xem
+  [khảo sát MOT](https://www.sciencedirect.com/science/article/pii/S0004370220301958).
+
+**Kết luận trung thực:** "tìm nhiều mục tiêu bằng nhiều UAV" **không** phải khoảng
+trống — nó rất đông. Nếu chuyển sang $V>1$ thì đóng góp của bài **không** thể là
+"chúng tôi tìm nhiều mục tiêu"; nó vẫn phải là **cơ chế nhận dạng dựa trên việc
+giao dữ liệu tham chiếu** (mặt phẳng payload + REJECT), tức thứ mà các công trình
+trên **không** có: chúng giả định bộ phát hiện trên UAV, còn ở đây **nút mặt đất
+tự nhận dạng sau khi được cấp dữ liệu**.
+
+Nói cách khác: $V>1$ làm **bối cảnh** giàu hơn và làm P13 có nội dung, nhưng
+**không** tự nó tạo ra đóng góp. Cần cẩn thận đúng chỗ này khi viết.
+
+#### Việc phải làm nếu triển khai
+
+1. `ClueFieldConfig` nhận **danh sách nạn nhân**, không phải một `victimX/Y`.
+2. Metrics đổi từ "nạn nhân được phục vụ" sang **số nạn nhân tìm được theo thời
+   gian**, và **hiệu suất phục vụ** $V/(V+M)$.
+3. **Gỡ bỏ hoặc viết lại `electSuppress`** — với $V>1$ nó chống lại mục tiêu.
+4. Tiêu chí kết thúc: không còn "một CONFIRM là xong". Cần luật dừng mới (tìm hết?
+   hết thời gian? không còn ứng viên chưa phục vụ?).
+
+### 3.15 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

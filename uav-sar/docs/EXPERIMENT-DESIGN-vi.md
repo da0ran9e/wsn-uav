@@ -831,7 +831,98 @@ Nói cách khác: $V>1$ làm **bối cảnh** giàu hơn và làm P13 có nội 
 4. Tiêu chí kết thúc: không còn "một CONFIRM là xong". Cần luật dừng mới (tìm hết?
    hết thời gian? không còn ứng viên chưa phục vụ?).
 
-### 3.15 Câu hỏi mở còn lại
+### 3.16 KÉO DÃN KHOẢNG CÁCH NÚT — đề xuất tốt, và nó mở ra một TRỤC MỚI
+
+> **Ý (2026-08-07):** nếu lo UAV phủ quá nhanh, có thể kéo dãn khoảng cách giữa
+> các nút mặt đất.
+
+Đúng, và nó giải quyết nhiều hơn cái nó nhắm tới.
+
+#### Trần cứng: 37.2 m, và trần mềm ở 26.3 m
+
+Tầm G2G suy từ link budget: $d = 10^{(P_{tx}-S-L_0)/(10n)} = 10^{54.95/35} = 37.2$ m.
+
+| khoảng cách nút | lân cận nối được | hệ quả |
+|---:|---|---|
+| ≤ 26.3 m | **8 lân cận** (cả đường chéo, $s\sqrt2 \le 37.2$) | đồ thị dày, tiếp sức payload khoẻ |
+| 26.3–37.2 m | **4 lân cận** (chỉ trực giao) | đồ thị mỏng đi rõ rệt |
+| > 37.2 m | **RỜI RẠC** | **toàn bộ mặt phẳng hợp tác biến mất** |
+
+Đây là ràng buộc quan trọng nhất: qua 37.2 m thì **đóng góp của bài báo thôi tồn
+tại**. Nhưng chính điều đó lại là một thí nghiệm đáng giá — xem §3.18.
+
+#### Điều quan trọng hơn: nó tách được hai thứ đang bị GỘP
+
+`gridSize` hiện đổi **cả diện tích lẫn số nút cùng lúc** ở mật độ cố định. Nên
+"quét quy mô" hiện tại không tách được:
+
+| trục | ý nghĩa vật lý | ai chịu tải |
+|---|---|---|
+| **diện tích** | vùng phải phủ rộng bao nhiêu | **công việc của UAV** |
+| **mật độ nút** | mạng mặt đất dày bao nhiêu | **năng lực của WSN** |
+
+Kéo dãn khoảng cách với **số nút cố định** cho ta trục **mật độ**, trực giao với
+trục **diện tích**. Đó là thiết kế đúng, và nó là thứ đang thiếu.
+
+| lưới | spacing | cạnh | diện tích | mật độ | lân cận |
+|---|---:|---:|---:|---:|---:|
+| 20×20 | 20 m | 380 m | 0.144 km² | 27.7 nút/ha | 8 |
+| 20×20 | 25 m | 475 m | 0.226 km² | 17.7 | 8 |
+| 20×20 | 30 m | 570 m | 0.325 km² | 12.3 | 4 |
+| 20×20 | **35 m** | **665 m** | **0.442 km²** | 9.1 | 4 |
+| 40×40 | 20 m | 780 m | 0.608 km² | 26.3 | 8 |
+
+#### Lợi ích thực dụng lớn: RẺ HƠN NHIỀU về chi phí mô phỏng
+
+**20×20 ở spacing 35 m cho diện tích 0.44 km² — xấp xỉ 3/4 của 40×40 — nhưng chỉ
+400 nút thay vì 1600.** Chi phí mô phỏng chủ yếu đi theo **số nút và số gói**,
+không theo diện tích. Nên đây là cách lấy được hành vi ở **vùng rộng** với khoảng
+**1/4 chi phí máy**.
+
+Với ngân sách ~4 800 run ở §3.6 (15–25 giờ máy), đổi trục quy mô sang
+*spacing thay vì gridSize* có thể cắt xuống còn **4–7 giờ**. Đó là khác biệt giữa
+"chạy được một lần" và "chạy lại được khi phát hiện lỗi" — mà hôm nay tôi đã phải
+chạy lại **bốn lần**.
+
+#### Cảnh báo: đừng để nó thành một trục BỊ NHIỄU
+
+Kéo dãn spacing đổi **bốn thứ cùng lúc**: diện tích ↑, mật độ ↓, bậc liên thông
+8→4, số nút mỗi ô ↓ (ô lục giác bán kính 80 m: ~41 nút ở 20 m → ~13 nút ở 35 m).
+
+Nên **không được** quét spacing rồi gọi kết quả là "hiệu ứng của diện tích". Phải
+hoặc (a) khai báo rõ đây là trục hỗn hợp "vùng rộng + mạng thưa", hoặc (b) quét
+hai trục tách bạch: `gridSize` ở spacing cố định (diện tích + nút, mật độ giữ
+nguyên) và `spacing` ở `gridSize` cố định (mật độ, số nút giữ nguyên).
+
+Tôi nghiêng về (b) — tốn hơn nhưng đọc được, còn (a) thì mọi kết luận đều phải kèm
+"nhưng cũng có thể do mật độ".
+
+### 3.17 Hai lo lắng khác nhau ở hai quy mô — cả hai đều thật
+
+Tôi cần nói rõ vì §3.12 dễ bị đọc ngược:
+
+- **Ở 20×20 (380 m, 4 UAV): phủ QUÁ NHANH.** Vòng quét xong sớm, phản hồi gần như
+  không kịp có tác dụng, nên các lược đồ trông giống nhau — **đúng lo lắng của
+  bạn**, và kéo dãn spacing là cách sửa sạch.
+- **Ở 40×40 (780 m, 4 UAV): phủ QUÁ CHẬM.** Một lượt quét ≈ 350–430 s trong chân
+  trời 1200 s, nên kết quả bị chi phối bởi tốc độ phủ chứ không phải chất lượng
+  phản hồi.
+
+Vùng có ý nghĩa nằm ở giữa, và **spacing là cách chỉnh chính xác vào đó** mà không
+phải đổi số nút (tức không phải trả thêm chi phí mô phỏng).
+
+### 3.18 Thí nghiệm phái sinh: ĐIỂM MẤT LIÊN THÔNG
+
+Quét spacing qua 26.3 m rồi 37.2 m cho một kết quả có dạng **đường bao vận hành**:
+
+> Mặt phẳng hợp tác — và do đó toàn bộ lợi thế của đề xuất — **tồn tại tới mật độ
+> nào**? Dưới 37.2 m khoảng cách nút thì nó hoạt động; trên đó mạng rời rạc và
+> lược đồ suy biến về phủ mù.
+
+Đây là loại kết quả mà phản biện thích, vì nó nói rõ **khi nào thì đừng dùng
+phương pháp này** — và ta có sẵn con số từ link budget chứ không phải đoán.
+
+### 3.19 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

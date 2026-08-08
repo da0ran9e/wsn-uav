@@ -450,7 +450,111 @@ trong `kRelayGraceS`. Cả hai đều là thông tin cục bộ — không vi ph
    **rotary** nên số hạng ký sinh $\propto v^3$ **thổi phồng** chi phí này.
 4. Có làm hỏng vai chuyển tiếp không — đo qua tỉ lệ SUMMON tới được đội DATA.
 
-### 1.15 Câu hỏi mở còn lại
+---
+
+## Phần 2 — Các nhánh so sánh
+
+### 2.1 Ma trận hai chiều (đã chốt 2026-08-07)
+
+D1 làm UAV DATA tuần tra rải full data trên toàn dải — **đúng việc `nocoop` đang
+làm**. Nên `proposed` giờ **chứa `nocoop` bên trong**, và câu hỏi "baseline nào
+công bằng" phải trả lời lại. Cách trung thực hơn: phủ mù là **nền**, và mỗi tầng
+hợp tác thêm vào mua được gì.
+
+**Chiều A — vòng phản hồi** (mặt đất có bảo bầu trời đi đâu không?)
+
+| mức | cơ chế |
+|---|---|
+| A0 | không có — phủ mù |
+| A1 | có, **không hợp tác** — ECHO một hop (`closed-loop`) |
+| A2 | có, **hợp tác** — cây trong ô + SHARE + bầu cử (`proposed`) |
+
+**Chiều B — mặt phẳng PAYLOAD** (nút có tiếp sức **chunk dữ liệu** cho nhau
+không?) — *lưu ý: đây là payload, không phải bằng chứng; bằng chứng thuộc chiều A*
+
+| mức | cơ chế |
+|---|---|
+| B0 | không hợp tác |
+| B1 | **hợp tác trong ô** |
+| B2 | **hợp tác trong và ngoài ô** — thêm mức này để xem **overhead có đáng đổi lấy thời gian không** |
+
+→ **3 × 3 = 9 nhánh.** `tsp-mc` đứng riêng làm **baseline tài liệu** (Zeng'18),
+**không** được cấp relay — giữ đúng như đã công bố, nếu không thì đang so với một
+thứ chưa ai từng đề xuất. `pure-uav` **bỏ** — bài này so sánh đa UAV.
+
+### 2.2 Dự đoán: đây là hiệu ứng TƯƠNG TÁC, không phải hai hiệu ứng cộng
+
+B một mình nhiều khả năng **không** tiết kiệm gì: tiếp sức trong ô chỉ giảm chi
+phí **nếu UAV biết dừng sớm**, mà một UAV phủ mù cứ rải hết ngân sách dwell bất
+kể mặt đất đã tự lo xong. Muốn tiết kiệm airtime thật thì UAV phải **nghe được
+rằng đủ rồi** — tức là chiều A.
+
+Nếu đúng: `A0B1 ≈ A0B0` về chi phí, còn `A2B1` mới rẻ. Đó là lập luận mạnh nhất
+bài báo có thể có về vì sao cần hợp tác — **không phải vì hợp tác tự nó rẻ, mà vì
+hợp tác là thứ cho phép dừng sớm.** Nếu sai, `A0B1` thành baseline mạnh mà
+`proposed` phải vượt. Ma trận đo trực tiếp được điều này.
+
+B2 so B1 trả lời câu riêng của bạn: chunk đi xuyên ô thì một lượt bay phủ được xa
+hơn, nhưng G2G chỉ ~37 m và flood đi theo link may mắn — **overhead có thể nuốt
+hết phần thời gian tiết kiệm được.** Chưa có dự đoán; đo.
+
+### 2.3 CÂU HỎI QUAN TRỌNG NHẤT: một CONFIRM có đủ không?
+
+> *"có nhưng cần xác nhận lại là chỉ có 1 confirm từ nạn nhân thôi sao lại là đủ"*
+
+Tách làm ba mệnh đề, và **chỉ mệnh đề đầu đúng**:
+
+**(1) Một CONFIRM *từ nạn nhân* là đủ về mặt logic.** Nếu nút của nạn nhân giữ đủ
+tập tham chiếu **và vẫn khớp**, thì mục tiêu nhận dạng đã đạt. Không cần nút thứ
+hai xác nhận hộ.
+
+**(2) Nhưng UAV KHÔNG BIẾT CONFIRM đó đến từ nạn nhân.** Gói CONFIRM hiện tại:
+
+```
+kConfirmLen = 5 B:  [type][dst][regionId:u16][nodeId:u8]
+```
+
+**Không mang bằng chứng, không mang vị trí.** `nodeId` còn bị cắt xuống 8 bit. Nên
+"dừng khi có CONFIRM đầu tiên" thực chất là **"dừng khi có ai đó bất kỳ xác nhận"**
+— hai chuyện khác nhau. Đây là lỗ hổng mà câu hỏi của bạn chỉ ra, và tôi chưa thấy.
+
+**(3) Vị trí báo về đang là ĐIỂM NHẮM, không phải vị trí nút xác nhận.** Tức là ta
+đang báo về *chỗ lãnh đạo đoán*, trong khi có sẵn một nút **chắc chắn khớp** và
+**biết chính xác mình ở đâu**.
+
+#### Đề xuất: CONFIRM mang bằng chứng + vị trí
+
+```
+kConfirmLen = 10 B: [type][dst][regionId:u16][nodeId:u8][evQ8:u8][x:i16][y:i16]
+```
+
+Ba thứ được cùng lúc:
+
+1. **Dừng sớm có căn cứ** — UAV chỉ dừng khi nghe CONFIRM có `evQ8 ≥` ngưỡng nhận
+   dạng, thay vì dừng khi có bất kỳ ai lên tiếng.
+2. **Vị trí báo về tốt hơn** — báo **vị trí của nút xác nhận mạnh nhất**, một nút
+   *đã cầm đủ dữ liệu và vẫn khớp*, thay vì báo điểm ước lượng từ bằng chứng mức
+   cue. Đây là argmax trên tập nút **đã được kiểm chứng**, mạnh hơn hẳn argmax
+   hiện tại.
+3. **Mệnh đề của bạn thành đúng theo cấu trúc** — cộng với nhiễu phụ thuộc tín
+   hiệu (D3), một nút không có tín hiệu **không thể** sinh CONFIRM có evidence
+   cao. Nên **một** CONFIRM evidence-cao thật sự là đủ.
+
+Chi phí: 5 B → 10 B, thừa sức trong trần 100 B.
+
+**Chuỗi logic gọn lại:** D3 làm một CONFIRM **đáng tin**; mang evidence làm nó
+**kiểm chứng được**; mang vị trí làm nó **chính xác hơn**.
+
+### 2.4 Việc phát sinh từ Phần 2
+
+| # | việc | quy mô |
+|---|---|---|
+| D8 | CONFIRM mang `evQ8` + vị trí; fix báo về = vị trí nút xác nhận mạnh nhất | nhỏ, giá trị cao |
+| D9 | UAV dừng giao hàng sớm khi nghe CONFIRM đủ mạnh | nhỏ, **mở khoá lợi ích của B** |
+| D10 | Bỏ `pure-uav` khỏi bộ nhánh | nhỏ |
+| D11 | Cài B1 (tiếp sức trong ô) và B2 (thêm xuyên ô) | lớn |
+
+### 2.5 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

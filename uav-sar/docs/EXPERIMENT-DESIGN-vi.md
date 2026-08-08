@@ -383,7 +383,74 @@ không phải một con số rời.
   gây nhầm*. Có cần thêm bán kính tuyệt đối (ví dụ ≤ 50 m) không?
 - **G4** Chân trời khai báo $T_{\max}$ để báo tỉ lệ thất bại: lấy từ đâu?
 
-### 1.13 Câu hỏi mở còn lại
+### 1.14 Ý TƯỞNG ĐỂ CÂN NHẮC SAU (D7) — đội FAST hỗ trợ rải dữ liệu
+
+> **Ý tưởng (2026-08-07):** nếu đội FAST đã rải hết cue mà **chưa tìm thấy mục
+> tiêu**, nó có thể chuyển sang **hỗ trợ đội DATA rải dữ liệu ở tốc độ cao**.
+
+**Chưa cài. Ghi lại để cân nhắc.** Dưới đây là phân tích để lần sau khỏi phải làm
+lại từ đầu.
+
+#### Vì sao hấp dẫn: nó **cộng hưởng** với D2
+
+Một mình thì gần như vô dụng; đi cùng mặt phẳng payload thì rất mạnh. Lý do nằm
+ở cửa sổ tiếp xúc.
+
+| | tốc độ | bán kính ngang (cao độ 20 m, tầm A2G 50 m) | **cửa sổ tiếp xúc một lượt bay qua** |
+|---|---:|---:|---:|
+| FAST fixed-wing | 25 m/s | 45.8 m | **3.7 s** |
+| DATA rotary | 15 m/s | 45.8 m | 6.1 s (và **hover được** → vô hạn) |
+
+Chi phí phát tập đầy đủ: 18 400 B = **184 chunk** × 100 B. Một khung
+100 B payload + 13 B MAC + 2 B FCS + 6 B PHY = 968 bit ở 250 kbps = 3.87 ms,
+cộng backoff CSMA trung bình + CCA ≈ **5.1 ms/khung**.
+
+$$\text{airtime tối thiểu} = 184 \times 5.1\,\text{ms} = \mathbf{0.94\ s}$$
+
+**Kết luận định lượng:** một lượt FAST bay qua cho **3.7 s** tiếp xúc so với
+**0.94 s** airtime tối thiểu — dư khoảng 4×, nhưng đó là trường hợp **bay ngay
+trên đầu, kênh sạch, không tranh chấp, không mất gói**. Nút lệch sang bên có cửa
+sổ ngắn hơn nhiều, và nhiều nút cùng tranh một cửa sổ.
+
+Nên phát biểu đúng là: **một lượt FAST bay qua đủ để nạp đầy khoảng MỘT nút nằm
+gần đúng dưới đường bay.**
+
+- **Không có D2:** gần như vô dụng — nạp một nút lẻ không giúp gì.
+- **Có D2:** rất mạnh — FAST chỉ cần **gieo một nút mỗi ô**, phần còn lại của ô
+  tự lấp qua G2G. Đội fixed-wing biến thành **máy gieo hạt** cho mặt phẳng
+  payload, và đó đúng là việc mà một khung không dừng được nên làm.
+
+#### Xung đột phải giải: FAST đang có việc khác sau khi quét xong
+
+`kRelayGraceS = 30 s` — sau khi quét xong, FAST **giữ vị trí làm trạm chuyển
+tiếp** để lệnh SUMMON còn đường lên trời. Cơ chế này **đang gánh kết quả**
+(audit A10). Nếu FAST bỏ đi rải dữ liệu thì trạm chuyển tiếp biến mất.
+
+Hai vai xung đột trực tiếp. Với **2 chiếc FAST** thì cách tự nhiên là **chia
+vai**: một chiếc giữ vai chuyển tiếp, một chiếc chuyển sang hỗ trợ rải dữ liệu.
+Cần đo, vì mất một nửa năng lực chuyển tiếp có thể đắt hơn phần dữ liệu thu được.
+
+Lưu ý thêm: theo `FIXED-WING-FAST-vi.md`, ở 25 m/s với góc nghiêng 30° thì bán
+kính lượn là 70.6 m và cự ly xiên 73.4 m — **ngoài tầm A2G 50 m**. Nghĩa là vai
+"giữ vị trí làm trạm chuyển tiếp" **vốn đã có vấn đề** với khung fixed-wing. Nếu
+vai đó không đứng vững thì xung đột tự biến mất, và D7 trở thành lựa chọn hiển
+nhiên cho FAST sau khi quét xong.
+
+#### Điều kiện kích hoạt (cục bộ, không cần oracle)
+
+FAST tự biết: (1) đã bay hết kế hoạch phủ của mình, và (2) chưa nghe SUMMON nào
+trong `kRelayGraceS`. Cả hai đều là thông tin cục bộ — không vi phạm nguyên tắc
+"không dùng oracle".
+
+#### Phải đo gì khi triển khai
+
+1. Số nút hoàn tất dữ liệu **nhờ FAST gieo** so với nhờ DATA giao — có tách được không.
+2. Ảnh hưởng lên $T$ (thời gian tới fix đúng), so cặp, có/không D7.
+3. Giá năng lượng: FAST bay thêm ở 25 m/s, mà đường cong công suất đang dùng là
+   **rotary** nên số hạng ký sinh $\propto v^3$ **thổi phồng** chi phí này.
+4. Có làm hỏng vai chuyển tiếp không — đo qua tỉ lệ SUMMON tới được đội DATA.
+
+### 1.15 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

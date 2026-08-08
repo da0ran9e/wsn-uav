@@ -7,6 +7,12 @@ câu hỏi — không suy diễn thành kết luận.
 Lộ trình: (1) mục tiêu & chỉ số → (2) nhánh so sánh → (3) điểm vận hành →
 (4) thiết kế thống kê → (5) bố cục bài báo.
 
+> **Đã thống nhất thành đặc tả: `SIM-SPEC-vi.md`.** Đây (tài liệu này) là **nhật
+> ký thảo luận** — có cả ý đã bị bác. Cần biết *cài gì, chạy gì* thì đọc đặc tả;
+> mâu thuẫn thì **đặc tả thắng**. Riêng con số "18 400 B ≈ 184 chunk, 7.7×" ở
+> §1.7/§1.14 đã được **sửa** trong đặc tả §4: đúng là **34 400 B = 382 chunk,
+> 12.7× về gói tin**.
+
 ---
 
 ## Phần 1 — Mục tiêu và chỉ số

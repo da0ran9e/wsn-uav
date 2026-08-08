@@ -283,6 +283,8 @@ recorded in `sar-params.h` or `sar-config.h` comments.
 | file | what it is |
 |---|---|
 | `STATUS.md` | this file — current truth, start here |
+| `SIM-SPEC-vi.md` | Vietnamese: **the agreed simulation spec** — world, two-tier sensing, fleet, the two cooperation planes, the 3x3 arm matrix, operating points, statistics, and the staged implementation order with a verification gate per stage. Decisions only; open questions listed in one place. **This file wins over the discussion log.** |
+| `EXPERIMENT-DESIGN-vi.md` | Vietnamese: the discussion log behind the spec — includes rejected ideas and the reasoning. Read for *why*, not for *what to build* |
 | `RESULTS-honest.md` | measured results; see §2 for what is stale |
 | `AUDIT-SYNTHESIS.md` | audit round 1 (four reviewers), all Tier-0 closed |
 | `AUDIT-2026-08-round2.md` | audit round 2, eleven findings A1–A11 |

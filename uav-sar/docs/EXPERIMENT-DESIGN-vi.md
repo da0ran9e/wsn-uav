@@ -922,7 +922,119 @@ Quét spacing qua 26.3 m rồi 37.2 m cho một kết quả có dạng **đườ
 Đây là loại kết quả mà phản biện thích, vì nó nói rõ **khi nào thì đừng dùng
 phương pháp này** — và ta có sẵn con số từ link budget chứ không phải đoán.
 
-### 3.19 Câu hỏi mở còn lại
+---
+
+## Phần 4 — Thiết kế thống kê
+
+### 4.1 Cái gì đổi: chỉ số chính giờ là THỜI GIAN-TỚI-SỰ-KIỆN có kiểm duyệt
+
+Phần 1 chốt $T = \min\{t:\text{BS nhận toạ độ đã xác nhận}\}$, và các run không
+đạt trước chân trời là **kiểm duyệt loại I** (cùng một chân trời cho mọi run).
+
+Bộ công cụ hiện tại (`campaign_stats.py`: Wilcoxon, Cliff δ, Wilson, McNemar,
+p90 nearest-rank) **không xử lý kiểm duyệt**. Cần bổ sung:
+
+| việc | công cụ đúng |
+|---|---|
+| mô tả một nhánh | **Kaplan–Meier** $\hat S(t)$, hoặc trực tiếp $\Pr[T\le t]$ |
+| so hai nhánh (có bắt cặp) | **log-rank phân tầng** theo hạt giống |
+| chênh lệch tại một $t$ khai báo | hiệu hai tỉ lệ, KTC bắt cặp |
+| chi phí (năng lượng, gói tin) | giữ Wilcoxon + Cliff δ — **không** bị kiểm duyệt |
+
+### 4.2 CÁI BẪY quan trọng nhất: đừng so thời gian CHỈ trên các run thành công
+
+Cám dỗ tự nhiên: "so median thời gian giữa hai nhánh, trên những hạt giống mà
+**cả hai** đều thành công". Đó là **điều kiện hoá trên kết cục** — chính là
+survivorship bias mà `STATUS.md` §5 đã ghi là quy tắc, và tôi đã dùng đúng cách
+sai này suốt hôm nay khi báo "median mission time" trong lúc 40 % run không kết
+thúc.
+
+Cách đúng: **luôn giữ mọi hạt giống trong mọi phân tích**, run thất bại vào phân
+tích như **quan sát bị kiểm duyệt tại chân trời**, không phải bị loại.
+
+### 4.3 Bội số so sánh — con số đáng sợ
+
+| | |
+|---|---|
+| số nhánh (3×3 + `tsp-mc`) | 10 |
+| số cặp so sánh | **45** |
+| × 4 chỉ số (thời gian, năng lượng, gói tin, sai số) | **180 phép kiểm định** |
+| **kỳ vọng số "có ý nghĩa" do NGẪU NHIÊN ở $\alpha=0.05$** | **9** |
+
+Nếu chạy hết 180 phép rồi báo cái nào $p<0.05$ thì **kỳ vọng 9 kết quả giả**. Đó
+không phải rủi ro lý thuyết — hôm nay tôi đã chạy hàng chục phép kiểm định và
+coi mỗi $p<0.05$ là một kết quả.
+
+**Đề xuất: khai báo TRƯỚC một họ nhỏ các so sánh chính**, hiệu chỉnh Holm trong
+họ đó, mọi thứ còn lại gắn nhãn **thăm dò**:
+
+| # | so sánh chính | trả lời câu gì |
+|---|---|---|
+| C1 | hiệu ứng chính của **A** (phản hồi), gộp trên B | phản hồi mua được gì |
+| C2 | hiệu ứng chính của **B** (payload), gộp trên A | tiếp sức mua được gì |
+| C3 | **tương tác A×B** | có phải "hợp tác là thứ cho phép dừng sớm" không |
+| C4 | `A2B1` vs `tsp-mc` | so với tài liệu |
+| C5 | B1 vs B2 | overhead xuyên ô có đáng không |
+
+**Năm** phép, không phải 180. Hiệu chỉnh Holm trên 5 là nhẹ; trên 180 thì không
+phép nào sống sót.
+
+### 4.4 Công suất thống kê: N = 120 đủ cho hiệu ứng nào
+
+Xấp xỉ thô cho McNemar (nhị phân bắt cặp):
+
+| hiệu ứng cần phát hiện | số hạt giống cần |
+|---:|---:|
+| 20 pp | ~50 |
+| 15 pp | ~87 |
+| **10 pp** | **~196** |
+| 5 pp | ~784 |
+
+Khớp với thực tế hôm nay: N=120 bắt được b=7/c=0 ($p=0.016$) và b=0/c=6
+($p=0.031$), nhưng **hoà** ở những chỗ chênh lệch nhỏ.
+
+**Kết luận:** N=120 phát hiện được hiệu ứng **≥ ~15 pp**. Muốn nói về 5–10 pp thì
+cần **N ≈ 200–800**, hoặc phải chấp nhận chỉ báo cáo **cỡ hiệu ứng + KTC** mà
+không tuyên bố ý nghĩa.
+
+Với M=0 (D14) tỉ lệ thành công có thể ≈ 100 % ở mọi nhánh → **so sánh nhị phân
+mất hết nội dung**, và toàn bộ trọng số dồn sang **so sánh thời gian và chi phí**.
+Đó là tin tốt: phân phối liên tục có công suất cao hơn nhiều so với tỉ lệ.
+
+### 4.5 Đề xuất: khai báo trước (pre-registration) trong repo
+
+Hôm nay có **ba lần rút lại kết luận**, cả ba đều do phân tích sau khi nhìn số
+liệu. Cách rẻ nhất để chặn: **ghi vào repo TRƯỚC khi chạy campaign** —
+
+1. chỉ số chính, và định nghĩa thành công/thất bại
+2. năm so sánh chính C1–C5, và cách hiệu chỉnh
+3. $N$, chân trời, điểm vận hành
+4. quy tắc quyết định: cái gì được gọi là "kết quả", cái gì là "thăm dò"
+
+Rồi commit **trước khi có dữ liệu**. Sau đó mọi phân tích ngoài danh sách này đều
+tự động mang nhãn thăm dò — không cấm, chỉ là không được trình bày như kết luận.
+
+### 4.6 Việc phát sinh từ Phần 4
+
+| # | việc |
+|---|---|
+| D18 | Thêm Kaplan–Meier + log-rank phân tầng vào `campaign_stats.py` |
+| D19 | Mọi phân tích giữ **toàn bộ** hạt giống; thất bại = kiểm duyệt, không loại |
+| D20 | Khai báo trước C1–C5 + Holm; phần còn lại gắn nhãn thăm dò |
+| D21 | Ghi tài liệu pre-registration và commit **trước** khi chạy |
+
+### 4.7 Câu hỏi cho bạn
+
+- **Q4.1** Đồng ý giới hạn còn **5 so sánh chính** không? Nếu muốn thêm thì thêm
+  bây giờ, không phải sau khi nhìn kết quả.
+- **Q4.2** N = 120 hay nâng lên 200? Với spacing thay cho gridSize (§3.16) chi phí
+  máy đã giảm ~4 lần, nên N=200 giờ khả thi.
+- **Q4.3** Đồng ý làm pre-registration không? Nó ràng buộc chính chúng ta, và đó
+  là mục đích.
+- **Q4.4** Có muốn công bố **cả** đường cong KM lẫn bảng số tại một $t$ khai báo,
+  hay chỉ đường cong?
+
+### 4.8 Câu hỏi mở còn lại
 
 - **Q1.1** Kết cục chính của bài báo là (a), (b), hay một tổ hợp? Nếu (b) thì
   `victim served` xuống vai trò chỉ số phụ / cơ chế.

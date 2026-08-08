@@ -123,6 +123,43 @@ Thời gian và năng lượng là **chỉ số**, không phải ràng buộc c�
 → **9 nhánh** + `tsp-mc` (baseline tài liệu Zeng'18, **không** được cấp relay) =
 **10 nhánh**. `pure-uav` **bỏ** (D10).
 
+### 7.1 Giao thức tiếp sức payload — D27 (chốt 2026-08-08)
+
+**Quyết định: bitmap "tôi có gì" + chỉ gửi chunk hàng xóm thiếu.** Không phát lại
+mù (lãng phí airtime, khó chứng minh không nuốt mất lợi thế của B), không rateless
+(đúng về lý thuyết nhưng là phần cài đặt lớn nhất, để lại như hướng mở rộng).
+
+Bitmap **vừa đúng** trần MTU, đây là lý do kỹ thuật khiến phương án này khả thi:
+
+```
+382 chunk → 382 bit = 48 B bitmap
+HAVE: [type][cellId:u16][nodeId:u8][epoch:u8][bitmap:48B] = 53 B  ≤ 100 B ✓
+```
+
+Quy tắc (tối thiểu, không thêm gì ngoài đây):
+
+1. **HAVE** — nút phát quảng bá bitmap của mình theo chu kỳ $T_{\text{have}}$, có
+   jitter ngẫu nhiên, **chỉ khi** bitmap đổi kể từ lần phát trước. Nút chưa có
+   chunk nào vẫn phát (bitmap rỗng) để hàng xóm biết mà tiếp sức.
+2. **Tiếp sức** — nghe HAVE của $j$: tính $\text{need}=\text{have}_i \wedge \neg\,\text{have}_j$;
+   nếu khác rỗng thì lên lịch gửi **tối đa $R$ chunk mỗi vòng**, backoff ngẫu
+   nhiên, khoảng cách giữa hai `Send()` **≥ 200 ms** (luật hàng đợi MAC).
+3. **Dập trùng** — nghe thấy nút khác đã gửi đúng chunk đó thì **huỷ** lịch gửi
+   của mình. Không có bước này thì mọi hàng xóm cùng tiếp sức một chunk.
+4. **Dừng** — nút ngừng tiếp sức khi mọi hàng xóm nghe được đều đã đủ, hoặc khi
+   nghe CONFIRM đóng vùng.
+
+**B1 vs B2:** cùng một giao thức; B1 giới hạn tập hàng xóm trong **cùng ô**, B2
+cho phép qua biên ô với **TTL = 1**. Đây là khác biệt duy nhất giữa hai mức — nếu
+cần thêm cơ chế cho B2 thì phải ghi lại ở đây trước khi cài.
+
+**Cột đo mới bắt buộc:** `relayPackets` tách riêng khỏi tổng gói tin. Không tách
+thì không quy được chi phí của B cho B, và C2/C5 mất nội dung.
+
+**Tham số phải chốt khi cài** ($T_{\text{have}}$, $R$, cửa sổ backoff) — chọn
+bằng một lần hiệu chuẩn nhỏ ở §8.1, ghi vào pre-registration, **không** chỉnh
+giữa campaign.
+
 **Dự đoán đăng ký trước:** hiệu ứng là **tương tác**, không cộng —
 `A0B1 ≈ A0B0` về chi phí, chỉ `A2B1` mới rẻ, vì tiếp sức chỉ tiết kiệm airtime
 **nếu UAV biết dừng sớm**, mà biết dừng cần chiều A.
@@ -189,23 +226,49 @@ vận hành**.
 | C4 | A2B1 vs `tsp-mc` | so với tài liệu |
 | C5 | B1 vs B2 | overhead xuyên ô có đáng |
 
-- **N = 120** phát hiện được hiệu ứng ≥ ~15 pp. Muốn nói 5–10 pp cần N ≈ 200–800.
-  **[MỞ]** N=120 hay 200.
-- **Pre-registration** (D21): ghi chỉ số chính, C1–C5, N, chân trời, điểm vận hành
-  và quy tắc quyết định vào repo **trước khi có dữ liệu**.
+- **N = 200** (D28, chốt 2026-08-08) — phát hiện được hiệu ứng ~10–12 pp. N=120 cũ
+  chỉ với tới ~15 pp. Khả thi nhờ trục spacing cắt chi phí máy ~4 lần.
+- **Pre-registration: CÓ** (D21, chốt 2026-08-08). Ghi chỉ số chính, C1–C5, N,
+  chân trời, điểm vận hành, tham số giao thức tiếp sức và quy tắc quyết định vào
+  repo **trước khi có dữ liệu**. Vào phụ lục G của bài báo.
+
+### 9.1 Ngân sách chạy ở N = 200
+
+| thí nghiệm | nhánh | run |
+|---|---:|---:|
+| ma trận chính 3×3 + `tsp-mc` @ điểm chính | 10 | 2 000 |
+| quét **diện tích** (`gridSize` 20/24/40 @ 20 m) | 3 rút gọn | 1 200 |
+| quét **mật độ** (`gridSpacing` 20/25/30/35 @ 20×20) | 3 rút gọn | 1 800 |
+| quét **chất lượng phát hiện** (3 mức) | 3 rút gọn | 1 200 |
+| **tổng** | | **~6 200** |
+
+Ba nhánh rút gọn = **A0B0, A2B0, A2B1** (nền, phản hồi, phản hồi + tiếp sức).
+Ở 20×20 mỗi run ~15–30 s, 3 luồng → **~10–20 giờ máy**, chạy **một mạch trên một
+binary**.
 
 ## 10. Còn MỞ — không được tự quyết
+
+**Đã đóng 2026-08-08:**
+
+| # | câu hỏi | quyết định |
+|---|---|---|
+| ~~O2~~ | N | **N = 200** (D28) |
+| ~~O3~~ | quy tắc tiếp sức | **bitmap + chunk thiếu** (D27, §7.1) |
+| ~~O6~~ | đích nhắm | **tạp chí IEEE 12–14 trang** (D29) → giữ P0 + P10 + P13, 4 hình + 2 bảng, phụ lục A–G |
+| ~~O7~~ | pre-registration | **có**, commit trước khi chạy (D21) |
+
+**Còn mở:**
 
 | # | câu hỏi | chặn cái gì |
 |---|---|---|
 | O1 | $T_{\max}$ lấy từ đâu (phải từ tài liệu SAR, không từ số liệu của ta) | tỉ lệ thất bại, bảng tóm tắt |
-| O2 | N = 120 hay 200 | ngân sách máy |
-| O3 | Quy tắc tiếp sức payload: bitmap "tôi có gì" + gửi chunk còn thiếu, hay phát lại tốc độ thấp trong ô | D11, phần lớn nhất |
 | O4 | Tỉ lệ chu kỳ cue:full khi DATA tuần tra | D1 |
 | O5 | Điểm vận hành chính cụ thể (sau khi hiệu chuẩn §8.1) | toàn bộ campaign |
-| O6 | Tạp chí (12–14 tr.) hay hội nghị (6–8 tr.) | bố cục, số hình |
-| O7 | Có làm pre-registration không | D21 |
 | O8 | "Đúng chỗ" có cần bán kính tuyệt đối (≤ 50 m) ngoài "gần nạn nhân hơn mọi vật gây nhầm" | định nghĩa thành công |
+
+O1 và O5 **được phép giải bằng hiệu chuẩn** (§8.1, G6) miễn là ghi rõ trong
+pre-registration rằng đó là hiệu chuẩn, chạy ở $N$ nhỏ, và **không** đụng tới dữ
+liệu campaign. O4 và O8 phải chốt trước G2 và trước khi viết pre-registration.
 
 ## 11. Thứ tự cài đặt — và cổng kiểm chứng cho từng bước
 
@@ -222,12 +285,12 @@ trên mọi run của một campaign.
 | **G1d** | D8: CONFIRM 5 B → 10 B (`evQ8` + vị trí); fix = vị trí nút xác nhận mạnh nhất | `Send()` không FAIL; sai số fix giảm hoặc bằng |
 | **G1e** | D9: UAV dừng giao hàng khi nghe CONFIRM đủ mạnh | airtime giao hàng giảm; `fixOnVictim` **không** giảm |
 | **G2** | D1: tuần tra rải full data, cue ưu tiên cao hơn | **đo gói tin** — nếu tăng > 5× thì dừng lại xem xét lại (§4) |
-| **G3a** | D11-B1: tiếp sức **trong ô** (quy tắc từ O3) | số nút hoàn tất tăng với cùng số lượt bay |
-| **G3b** | D11-B2: thêm xuyên ô | so B1: thời gian giảm? overhead? |
+| **G3a** | D11-B1 + D27: HAVE bitmap 48 B, tiếp sức **trong ô**, có dập trùng; cột `relayPackets` | số nút hoàn tất tăng với cùng số lượt bay; `relayPackets` không vượt tổng gói của A2B0 |
+| **G3b** | D11-B2: cùng giao thức, qua biên ô, TTL = 1 | so B1: thời gian giảm? overhead nuốt mất bao nhiêu? |
 | **G4** | D12/D18/D19: đơn vị vận hành, KM + log-rank, giữ mọi hạt giống | chạy lại được phân tích cũ, số khớp |
-| **G5** | D21: viết pre-registration, **commit trước khi có dữ liệu** | commit hash có trước run đầu tiên |
-| **G6** | Hiệu chuẩn §8.1 → chốt điểm vận hành + $T_{\max}$ | ghi vào pre-registration |
-| **G7** | Chạy campaign | `assert_one_build` + `assert_one_clutter` xanh |
+| **G5** | Hiệu chuẩn §8.1 ở $N$ nhỏ → chốt điểm vận hành, $T_{\max}$, $T_{\text{have}}$, $R$ | ghi rõ đây là hiệu chuẩn, không phải kết quả |
+| **G6** | D21: viết pre-registration (kèm số từ G5), **commit trước khi có dữ liệu** | commit hash có trước run đầu tiên của campaign |
+| **G7** | Chạy campaign, N = 200, một binary | `assert_one_build` + `assert_one_clutter` xanh |
 
 **Để sau, không nằm trong campaign này:** D7 (FAST hỗ trợ rải dữ liệu sau khi
 quét xong), D17 (nhiều mục tiêu thật + nhiều mục tiêu giả).

@@ -147,7 +147,7 @@ void SarFastUavApp::ControlTick() {
                 // ends are local — no UAV consults the ground truth or a global
                 // view to decide.
                 if (!m_allHome) { m_fc.Hover(); }
-                else if (m_summonSeen) { m_state = State::RETURN_BS; }
+                else if (AllRelayedClosed()) { m_state = State::RETURN_BS; }
                 else {
                     m_fc.Hover();
                     m_state = State::RELAY_HOLD;
@@ -160,10 +160,19 @@ void SarFastUavApp::ControlTick() {
     } else if (m_state == State::RELAY_HOLD) {
         // Hold as an airborne relay until either the region forms (we relayed a
         // SUMMON, so the DATA team has its task) or the grace period runs out.
-        if (m_summonSeen || Simulator::Now().GetSeconds() >= m_relayUntilS)
+        if (AllRelayedClosed() || Simulator::Now().GetSeconds() >= m_relayUntilS)
             m_state = State::RETURN_BS;
     } else return;
     m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarFastUavApp::ControlTick, this);
+}
+
+bool SarFastUavApp::AllRelayedClosed() const {
+    // Nothing dispatched yet -> nothing to wait for (the RELAY_HOLD grace period
+    // is what covers the "region has not formed yet" case, and it is bounded).
+    if (m_relayedRegions.empty()) return false;
+    for (uint16_t r : m_relayedRegions)
+        if (!m_closedRegions.count(r)) return false;
+    return true;
 }
 
 void SarFastUavApp::RelayBestEcho() {
@@ -197,9 +206,16 @@ void SarFastUavApp::RelayBestEcho() {
 
 void SarFastUavApp::DisseminateTick() {
     // Byte-honest cue dissemination: cue fragments are chunked exactly like
-    // full-data fragments (same header), cycling (frag, seq). Stops once a
-    // summon has been relayed — the region is found, cues are moot.
-    if (m_state == State::CRUISE && !m_summonSeen && !m_cues.empty() && m_dev) {
+    // full-data fragments (same header), cycling (frag, seq).
+    //
+    // D30: this used to stop at the FIRST summon anywhere in the field, on the
+    // reasoning that "the region is found, cues are moot". That reasoning holds
+    // only if there is exactly one place worth finding. With confusable objects
+    // the first summon is frequently a decoy, and switching cueing off meant the
+    // unswept remainder of the field -- where the victim may well be -- never
+    // received a cue, so a second candidate could not physically form. Cueing
+    // now runs for as long as this UAV is flying its band.
+    if (m_state == State::CRUISE && !m_cues.empty() && m_dev) {
         const Fragment& f = m_cues[m_cueIdx % m_cues.size()];
         uint16_t total = (uint16_t)std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
         uint32_t payloadLen = std::min(kChunkBytes, f.sizeBytes - m_cueSeq * kChunkBytes);
@@ -271,24 +287,26 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
                 &SarFastUavApp::ClaimCourier, this);
         return true;
     }
-    if (b[0] == (uint8_t)Msg::REJECT && m_fixOnConfirm && !m_hasFix) {
-        m_hasPend = false;          // the ground contradicted that aim
+    if (b[0] == (uint8_t)Msg::REJECT) {
+        if (sz >= kRejectLen) { uint16_t rid; std::memcpy(&rid, &b[2], 2);
+                                m_closedRegions.insert(rid); }
+        if (m_fixOnConfirm && !m_hasFix) m_hasPend = false;  // ground contradicted the aim
         return true;
     }
     if (b[0] == (uint8_t)Msg::CONFIRM) {
+        if (sz >= kConfirmLen) { uint16_t rid; std::memcpy(&rid, &b[2], 2);
+                                 m_closedRegions.insert(rid); }
         // A node under the drop held the whole reference and still matched it.
         // Only now is the relayed aim worth carrying home.
         if (m_fixOnConfirm && m_hasPend && !m_hasFix) {
             m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY;
         }
     }
-    if (b[0] == (uint8_t)Msg::CONFIRM && m_allHome && m_state == State::CRUISE) {
-        // audit F2: the delivery is done -> this UAV's task is over; fly home and
-        // report like every baseline UAV must.  (Symmetric completion rule.)
-        m_summonSeen = true;                 // stop spreading cues
-        m_state = State::RETURN_BS;
-        return true;
-    }
+    // D30: a CONFIRM used to abort the sweep outright and send this UAV home,
+    // whichever region it was about. That is the single-candidate assumption in
+    // its purest form: one place closing ended the search everywhere. A FAST UAV
+    // now finishes its band; the end-of-sweep branch decides whether anything is
+    // still open before it leaves.
     if (b[0] == (uint8_t)Msg::CLAIM && sz >= kClaimLen) {
         uint8_t role = b[3]; uint16_t id; std::memcpy(&id, &b[4], 2);
         if (role == 1 && id != (uint16_t)m_nodeId && !m_courier) {
@@ -303,6 +321,7 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // FAST at once; the closed-loop arm has no such shared plane, so the
         // fleet message is what stops the others cueing.
         m_summonSeen = true;
+        { uint16_t rid; std::memcpy(&rid, &b[2], 2); m_relayedRegions.insert(rid); }
         Simulator::Cancel(m_echoSettle);
         return true;
     }
@@ -339,6 +358,7 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             m_pendFixX = cx / 10.0; m_pendFixY = cy / 10.0; m_hasPend = true;
             if (!m_fixOnConfirm) { m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY; }
         }
+        { uint16_t rid; std::memcpy(&rid, &b[2], 2); m_relayedRegions.insert(rid); }
         std::vector<uint8_t> r(b.begin(), b.begin() + kSummonLen);
         r[0] = (uint8_t)Msg::A2A;
         m_dev->Send(Create<Packet>(r.data(), r.size()), Mac16Address("ff:ff"), 0);

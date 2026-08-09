@@ -151,6 +151,10 @@ private:
     // first place, so the reading has to improve as the dataset arrives.
     bool InAimScope(double x, double y) const;
     bool BestAim(double& bx, double& by) const;
+    // D30: has some other cell already claimed a region around this point?
+    // Replaces the boolean stand-down latch, which was decided by whoever
+    // flooded first rather than by whether the two cells meant the same place.
+    bool ClaimedNearby(double x, double y) const;
     double ClueNow() const;
     void SendReject();
     uint32_t m_rejectsSent = 0;
@@ -191,7 +195,11 @@ private:
     double m_alertAtS = -1;      // when this cell first crossed ALERT
     double m_electFireAtS = 0;   // currently scheduled firing time
     bool m_electScheduled = false;
-    bool m_regionFormed = false;                // I fired, or heard, a SUMMON
+    bool m_regionFormed = false;                // I fired a SUMMON, or stood down
+    // D30: every aim another cell has claimed, so the stand-down can be decided
+    // at ELECTION time (when this cell finally has an aim of its own) instead of
+    // at ARRIVAL time (when it usually has none and therefore yielded blindly).
+    std::vector<std::pair<double, double>> m_claimedAims;
     ns3::EventId m_electEvent;
 
     // region-leader beaconing + closure
@@ -201,6 +209,13 @@ private:
     bool m_confirmHeard = false; // somebody's CONFIRM reached me -> delivery closed
     bool m_heardCue = false;    // viz: first-cue marker emitted
     uint16_t m_regionId = 1;
+    // D30: the region a NON-leader belongs to, learned from the SUMMON it heard.
+    // Without it every ordinary node stamped regionId=1 on its CONFIRM/REJECT,
+    // so closure could not be attributed to a region and one confirm anywhere
+    // silenced the whole field.
+    uint16_t m_heardRegionId = 0xFFFF;
+    double m_heardAimX = 0, m_heardAimY = 0;
+    double m_heardAimD = 1e18;   // distance to the nearest summon aim heard
     std::vector<Cand> m_candidates;
     size_t m_candIdx = 0;
     uint32_t m_retargets = 0;

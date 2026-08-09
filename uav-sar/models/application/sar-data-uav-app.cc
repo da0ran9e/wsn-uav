@@ -500,9 +500,14 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     } else if (type == (uint8_t)Msg::CONFIRM && sz >= kConfirmLen) {
         // audit F2: a DATA UAV that never won the divert is still loitering; the
         // mission is over for it too, so it flies home and reports like the rest.
+        // D30: PATROL is deliberately NOT in this list any more. A UAV still
+        // flying its band has coverage work left, and another candidate place
+        // may still need serving; going home because someone else's region
+        // closed is the single-candidate assumption again. LOITER/GOTO_CENTER
+        // mean the plan is finished, so there the mission really is over for
+        // this UAV. The sky-quiet rule still bounds how long a patrol can last.
         if (m_allHome && !m_claimed &&
-            (m_state == State::LOITER || m_state == State::GOTO_CENTER ||
-             m_state == State::PATROL)) {
+            (m_state == State::LOITER || m_state == State::GOTO_CENTER)) {
             m_state = State::RETURN;
             return true;
         }

@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace ns3::uavsar {
@@ -68,7 +69,13 @@ private:
     size_t m_cueIdx = 0;      // fragment index in m_cues
     uint16_t m_cueSeq = 0;    // chunk seq within the current cue fragment
     uint32_t m_cueTxCount = 0;  // for decimated viz markers
-    bool m_summonSeen = false;  // once a summon is relayed, stop spreading cues
+    bool m_summonSeen = false;  // closed-loop: an aim has already been dispatched
+    // D30: a UAV goes home when the places it dispatched the DATA team to have
+    // all been resolved, not when the FIRST one closed. Both sets are filled
+    // purely from radio traffic this UAV heard -- no global view.
+    std::set<uint16_t> m_relayedRegions;   // regions this UAV relayed a summon for
+    std::set<uint16_t> m_closedRegions;    // regions a CONFIRM or REJECT closed
+    bool AllRelayedClosed() const;
     double m_relayUntilS = 0;   // audit A10: bounded post-sweep relay hold
     // audit W4: closed-loop baseline -- the best DIRECT echo this UAV heard.
     bool m_echoRelay = false;

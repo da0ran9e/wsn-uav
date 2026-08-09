@@ -114,6 +114,13 @@ bool SarGroundApp::InAimScope(double x, double y) const {
     return std::hypot(x - m_cellCx, y - m_cellCy) <= m_aimScope;
 }
 
+bool SarGroundApp::ClaimedNearby(double x, double y) const {
+    if (m_electScope <= 0) return !m_claimedAims.empty();   // unscoped ablation
+    for (const auto& [ax, ay] : m_claimedAims)
+        if (std::hypot(ax - x, ay - y) <= m_electScope) return true;
+    return false;
+}
+
 bool SarGroundApp::BestAim(double& bx, double& by) const {
     // The point this leader would summon to if it elected right now, from the
     // same two sources the elect path uses: its own members' RPTs and each
@@ -344,6 +351,19 @@ void SarGroundApp::Elect() {
             if (ne.ev > bestEv && InAimScope(ne.x, ne.y)) { bestEv = ne.ev; ax = ne.x; ay = ne.y; }
         for (auto& [c, nb] : m_neighborEv)
             if (nb.peak > bestEv && InAimScope(nb.x, nb.y)) { bestEv = nb.peak; ax = nb.x; ay = nb.y; }
+        // D30: the stand-down decision belongs HERE, where an aim finally exists
+        // to compare against, not at the moment a claim arrived.
+        if (m_electSuppress && ClaimedNearby(ax, ay)) {
+            m_regionFormed = true;
+            if (m_metrics) {
+                Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+                char det[64];
+                std::snprintf(det, sizeof det, "c%d yields at elect", m_cellId);
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "CL",
+                                 "elect_yield", det, p.x, p.y, 0);
+            }
+            return;
+        }
         if (m_metrics) {
             m_metrics->MarkLocalize(Simulator::Now().GetSeconds());
             m_metrics->SetRegionCells((uint32_t)(1 + m_regionNeighbors.size()));
@@ -361,6 +381,7 @@ void SarGroundApp::Elect() {
         wx += w * nb.x; wy += w * nb.y; ws += w;
     }
     double vx = ws > 0 ? wx / ws : m_cellCx, vy = ws > 0 ? wy / ws : m_cellCy;
+    if (m_electSuppress && ClaimedNearby(vx, vy)) { m_regionFormed = true; return; }
     if (m_metrics) {
         m_metrics->MarkLocalize(Simulator::Now().GetSeconds());
         m_metrics->SetRegionCells((uint32_t)(1 + m_regionNeighbors.size()));
@@ -453,7 +474,10 @@ void SarGroundApp::SendConfirm() {
         uint8_t* q = c.data();
         *q++ = (uint8_t)Msg::CONFIRM;
         *q++ = kBroadcast;
-        std::memcpy(q, &m_regionId, 2); q += 2;
+        // D30: a non-leader stamps the region it heard summoned, not the
+        // default 1, so closure is attributable to a place.
+        uint16_t rid = m_isLeader ? m_regionId : m_heardRegionId;
+        std::memcpy(q, &rid, 2); q += 2;
         *q++ = (uint8_t)(m_nodeId & 0xFF);
         m_dev->Send(Create<Packet>(c.data(), c.size()), Mac16Address("ff:ff"), 0);
         if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(c.size()); }
@@ -477,7 +501,10 @@ void SarGroundApp::SendReject() {
         uint8_t* q = c.data();
         *q++ = (uint8_t)Msg::REJECT;
         *q++ = kBroadcast;
-        std::memcpy(q, &m_regionId, 2); q += 2;
+        // D30: a non-leader stamps the region it heard summoned, not the
+        // default 1, so closure is attributable to a place.
+        uint16_t rid = m_isLeader ? m_regionId : m_heardRegionId;
+        std::memcpy(q, &rid, 2); q += 2;
         *q++ = (uint8_t)(m_nodeId & 0xFF);
         m_dev->Send(Create<Packet>(c.data(), c.size()), Mac16Address("ff:ff"), 0);
         if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(c.size()); }
@@ -498,8 +525,20 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // A delivery closed. Go quiet AND stop the retarget chain -- m_confirmed
         // only means "I personally hold the dataset", so without this flag a
         // leader kept re-aiming after a delivery that had already succeeded.
-        m_confirmHeard = true;
-        Simulator::Cancel(m_beaconEvent);
+        //
+        // D30: but only for THIS region. The handler used to ignore the regionId
+        // it is handed, so any confirm anywhere permanently silenced every
+        // leader's beacon, election, retarget and cue-triggered re-announce --
+        // the same unscoped stand-down that electScope fixed for RCLAIM and
+        // never fixed here. With several candidate places that meant the first
+        // one to close ended the search for all the others.
+        uint16_t rid = 0xFFFF;
+        if (sz >= kConfirmLen) std::memcpy(&rid, &b[2], 2);
+        const uint16_t mine = m_isLeader ? m_regionId : m_heardRegionId;
+        if (rid == 0xFFFF || mine == 0xFFFF || rid == mine) {
+            m_confirmHeard = true;
+            Simulator::Cancel(m_beaconEvent);
+        }
         return true;
     }
     if (type == (uint8_t)Msg::REJECT) {
@@ -515,9 +554,27 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         return true;
     }
     if (type == (uint8_t)Msg::SUMMON && sz >= kSummonLen) {
-        // Suppression: hearing another leader's SUMMON means the region is being
-        // formed by a stronger/earlier leader — stand down our own election.
-        if (!m_regionFormed) { m_regionFormed = true; Simulator::Cancel(m_electEvent); }
+        uint16_t rid; std::memcpy(&rid, &b[2], 2);
+        int16_t sx, sy; std::memcpy(&sx, &b[4], 2); std::memcpy(&sy, &b[6], 2);
+        double ax = sx / 10.0, ay = sy / 10.0;
+        // D30: an ordinary node adopts the NEAREST region it has heard summoned,
+        // so its CONFIRM/REJECT can say WHICH place was resolved. Before this
+        // every non-leader stamped the default regionId=1 and closure could not
+        // be attributed at all.
+        Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+        double d = std::hypot(ax - p.x, ay - p.y);
+        if (d < m_heardAimD) {
+            m_heardAimD = d; m_heardRegionId = rid; m_heardAimX = ax; m_heardAimY = ay;
+        }
+        // Suppression, now scoped the same way RCLAIM is: hearing a summon about
+        // a DIFFERENT place is not a reason to abandon this cell's own region.
+        if (!m_regionFormed) {
+            m_claimedAims.push_back({ax, ay});
+            double mx = 0, my = 0;
+            bool samePlace = m_electScope <= 0 ||
+                             (BestAim(mx, my) && std::hypot(ax - mx, ay - my) <= m_electScope);
+            if (samePlace) { m_regionFormed = true; Simulator::Cancel(m_electEvent); }
+        }
         return true;
     }
     if (type == (uint8_t)Msg::RCLAIM && sz >= kRclaimLen) {
@@ -535,13 +592,20 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // stand-down is unscoped: whichever cell fires first silences every
         // other alerting cell in the field, including cells whose evidence comes
         // from a completely different object hundreds of metres away.
-        bool samePlace = true;
-        if (m_electScope > 0) {
-            double ax = cx / 10.0, ay = cy / 10.0, mx = 0, my = 0;
-            // No aim of my own yet -> nothing to contest with, so stand down.
-            samePlace = BestAim(mx, my) ? std::hypot(ax - mx, ay - my) <= m_electScope
-                                        : true;
-        }
+        // D30: remember the claimed AIM instead of latching a boolean. The old
+        // code stood down unconditionally when this cell had no aim of its own
+        // -- which is the usual case, because the first RCLAIM floods the field
+        // within milliseconds of the first cell alerting, long before the others
+        // have any evidence. Measured at 16x16 with four confusable objects: TEN
+        // cells spanning the whole 300 m field yielded to c9 inside 30 ms, and
+        // `m_regionFormed` never resets, so exactly one region could ever form
+        // however many candidate places existed. Deciding at ELECTION time, when
+        // this cell finally has an aim to compare, is what makes electScope
+        // actually scope anything.
+        double ax = cx / 10.0, ay = cy / 10.0, mx = 0, my = 0;
+        if ((int32_t)origCell != m_cellId) m_claimedAims.push_back({ax, ay});
+        bool samePlace = m_electScope <= 0 ||
+                         (BestAim(mx, my) && std::hypot(ax - mx, ay - my) <= m_electScope);
         if ((int32_t)origCell != m_cellId && !m_regionFormed && samePlace) {
             m_regionFormed = true;
             Simulator::Cancel(m_electEvent);

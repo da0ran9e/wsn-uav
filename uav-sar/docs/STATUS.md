@@ -284,6 +284,7 @@ recorded in `sar-params.h` or `sar-config.h` comments.
 |---|---|
 | `STATUS.md` | this file — current truth, start here |
 | `SIM-SPEC-vi.md` | Vietnamese: **the agreed simulation spec** — world, two-tier sensing, fleet, the two cooperation planes, the 3x3 arm matrix, operating points, statistics, and the staged implementation order with a verification gate per stage. Decisions only; open questions listed in one place. **This file wins over the discussion log.** |
+| `FLOW-vi.md` | Vietnamese: the simulation **as it actually runs** — file structure, boot sequence, message chain, per-actor state machines, where the five arms differ, and (§8) a full audit of the 15 places where the search collapses to a single candidate point, baselines included. Supersedes `ARCHITECTURE.md`, which still says "design, not yet coded" |
 | `EXPERIMENT-DESIGN-vi.md` | Vietnamese: the discussion log behind the spec — includes rejected ideas and the reasoning. Read for *why*, not for *what to build* |
 | `RESULTS-honest.md` | measured results; see §2 for what is stale |
 | `AUDIT-SYNTHESIS.md` | audit round 1 (four reviewers), all Tier-0 closed |

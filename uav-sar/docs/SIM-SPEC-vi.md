@@ -102,6 +102,53 @@ $$T=\min\{t:\ \text{BS nhận báo cáo mang toạ độ ĐÃ XÁC NHẬN}\}$$
 
 Thời gian và năng lượng là **chỉ số**, không phải ràng buộc cứng (D6).
 
+### 6.1 D30 — phải quét HẾT mọi điểm nghi vấn, không dừng ở điểm đầu (chốt 2026-08-08)
+
+**Định nghĩa.** Một *điểm nghi vấn* (ứng viên) = một vùng đã vượt `kAlertThreshold`
+và đã phát SUMMON. Nó **đã giải quyết** khi có CONFIRM hoặc REJECT từ một nút
+trong vùng đó **đang giữ đủ tập tham chiếu** — tức chỉ dữ liệu đầy đủ mới đóng
+được một điểm, đúng tinh thần D3.
+
+**Luật mới.** Đội bay chỉ về khi **mọi ứng viên đã giải quyết** *và* dải quét của
+mình đã xong, hoặc hết chân trời. Một CONFIRM ở vùng A **không** kết thúc nhiệm vụ
+của UAV đang phục vụ vùng B, và **không** tắt việc rải cue ở phần vùng chưa quét.
+
+**Hiện trạng: sai ở 15 chỗ**, liệt kê đầy đủ trong `FLOW-vi.md` §8. Tóm tắt gốc rễ:
+
+| cụm | gốc rễ |
+|---|---|
+| A (3 chỗ) | rải cue **tắt** khi có SUMMON đầu tiên → ứng viên thứ hai **không thể hình thành**; 45 s sau luật *sky-quiet* đưa nốt đội DATA về |
+| B (4 chỗ) | CONFIRM **không xét vùng, không xét khoảng cách** → đóng cả đội. Đúng cái lỗi đã sửa cho RCLAIM bằng `electScope` và chưa sửa cho CONFIRM |
+| C (4 chỗ) | chỉ **một** fix mang về được: một ô `m_pendFix`, `MarkVictimFix` chỉ ghi cái đầu, REPORT chỉ có một cặp `(x,y)` |
+| D (4 chỗ) | `closed-loop` **theo cấu trúc** chỉ ra được một aim; `nocoop`/`tsp-mc` thì ngược lại, phủ hết |
+| E (1 chỗ) | `MaybeRetarget` là cơ chế *sửa sai một aim*, không phải cơ chế *quét tập ứng viên*: tuần tự, chặn ở 3 aim, giãn 60 s, và bị mọi CONFIRM giết |
+
+**Baseline cũng phải sửa, và sửa theo hướng làm chúng MẠNH LÊN:**
+
+- `nocoop`, `tsp-mc`: **không đổi**. Chúng phủ mù nên đã quét hết mọi chỗ sẵn.
+- `closed-loop`: **phải** được phép nhiều aim (bỏ chặn `m_summonSeen` trong
+  `RelayBestEcho`, thêm bán kính dập trùng, và mang **region id thật** thay cho
+  `rid = 1` cứng — hiện `rid=1` làm loại trừ CLAIM theo vùng sập thành toàn cục).
+  Không sửa thì nó bị chấp vì một lý do **không liên quan gì tới hợp tác**, mà đây
+  lại đúng là nhánh đang **thắng** `proposed`.
+
+**Hệ quả phải nói thẳng — và nó bất lợi cho ta:**
+
+So sánh hiện tại đang thiên **có lợi** cho nhánh đề xuất về **chi phí**: nó dừng ở
+điểm đầu rồi về, còn baseline mù quét sạch vùng. Sau D30, `proposed` và
+`closed-loop` sẽ tiếp tục bay và tiếp tục rải cue → **năng lượng và gói tin tăng**,
+còn baseline mù **không đổi**. Nghĩa là **một phần lợi thế chi phí đang có sẽ mất**.
+Đó là hướng đúng: phần lợi thế ấy là **hiện vật của việc dừng sớm**, không phải của
+thiết kế.
+
+Chiều ngược lại: vì cue không còn tắt sớm, ở $M>0$ nhiều khả năng **thời gian tới
+nạn nhân giảm** — hiện một SUMMON vào vật gây nhầm sẽ tắt luôn việc thăm dò phần
+vùng còn lại, nơi nạn nhân thật có thể đang nằm.
+
+**Chỉ số mới bắt buộc:** `candidatesFound`, `candidatesResolved`,
+`unresolvedAtEnd`, `timeToClearAll_s`. Chỉ số chính $T$ (D4) **giữ nguyên** — D30
+đổi phần chi phí và phần độ phủ, không đổi định nghĩa thời gian.
+
 ## 7. Ma trận nhánh — 3×3 + 1
 
 **Chiều A — vòng phản hồi**
@@ -270,6 +317,8 @@ binary**.
 | O4 | Tỉ lệ chu kỳ cue:full khi DATA tuần tra | D1 |
 | O5 | Điểm vận hành chính cụ thể (sau khi hiệu chuẩn §8.1) | toàn bộ campaign |
 | O8 | "Đúng chỗ" có cần bán kính tuyệt đối (≤ 50 m) ngoài "gần nạn nhân hơn mọi vật gây nhầm" | định nghĩa thành công |
+| O9 | Ứng viên mà **không UAV nào tới kịp** thì đóng bằng gì — timeout, hay để nguyên là `unresolvedAtEnd`? | D30, luật kết thúc |
+| O10 | Quét hết ứng viên có tính vào **thành công** không, hay chỉ là chỉ số phụ bên cạnh $T$? | định nghĩa thành công |
 
 O1 và O5 **được phép giải bằng hiệu chuẩn** (§8.1, G6) miễn là ghi rõ trong
 pre-registration rằng đó là hiệu chuẩn, chạy ở $N$ nhỏ, và **không** đụng tới dữ
@@ -289,6 +338,7 @@ trên mọi run của một campaign.
 | **G1c** | D3: nhiễu phụ thuộc tín hiệu + **bảng hiệu chuẩn** | ở $\sigma$ đã hiệu chuẩn: xác suất một nút **không có tín hiệu** vượt `kAlertThreshold` phải ≈ 0 (mô hình cũ: 6.7 %), và xác suất nút nạn nhân báo động phải **khớp** mô hình cũ |
 | **G1d** | D8: CONFIRM 5 B → 10 B (`evQ8` + vị trí); fix = vị trí nút xác nhận mạnh nhất | `Send()` không FAIL; sai số fix giảm hoặc bằng |
 | **G1e** | D9: UAV dừng giao hàng khi nghe CONFIRM đủ mạnh | airtime giao hàng giảm; `fixOnVictim` **không** giảm |
+| **G1f** | **D30**: quét hết ứng viên — sửa 15 chỗ ở `FLOW-vi.md` §8, cả `closed-loop` | ở $M=4$: `candidatesResolved == candidatesFound` trên ≥ 95 % run; `closed-loop` sinh **> 1** aim ở ít nhất một run |
 | **G2** | D1: tuần tra rải full data, cue ưu tiên cao hơn | **đo gói tin** — nếu tăng > 5× thì dừng lại xem xét lại (§4) |
 | **G3a** | D11-B1 + D27: HAVE bitmap 48 B, tiếp sức **trong ô**, có dập trùng; cột `relayPackets` | số nút hoàn tất tăng với cùng số lượt bay; `relayPackets` không vượt tổng gói của A2B0 |
 | **G3b** | D11-B2: cùng giao thức, qua biên ô, TTL = 1 | so B1: thời gian giảm? overhead nuốt mất bao nhiêu? |

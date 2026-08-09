@@ -169,6 +169,7 @@ Sắp xếp theo giai đoạn G1→G3 của đặc tả §11.
 | **D27/D11** | **file mới** + `sar-ground-app.{h,cc}` + `sar-types.h` | mặt phẳng **payload**: HAVE bitmap 48 B, tiếp sức chunk thiếu, dập trùng | nút lần đầu **phát lại dữ liệu** — hiện `m_dev->Send` của nút chỉ toàn gói điều khiển |
 | **D11-B2** | như trên | cùng giao thức, TTL=1 qua biên ô | |
 | — | `sar-config.h/.cc`, `scenario-sar.cc` | cờ mới `--relay=0\|1\|2` | 3 scheme × 3 mức relay = 9 nhánh |
+| **D30** | cả 4 app + `sar-metrics` + `sar-params` | **quét hết ứng viên** — 15 chỗ ở §8, gồm cả `closed-loop` | mất một phần lợi thế chi phí đang có (xem `SIM-SPEC-vi.md` §6.1) |
 | **D18/D19** | `tools/campaign_stats.py` | Kaplan–Meier + log-rank phân tầng, giữ mọi hạt giống | Wilcoxon/McNemar giữ cho chi phí |
 
 ### Thay đổi kiến trúc lớn nhất
@@ -183,8 +184,70 @@ D2/D11/D27 thêm đường thứ hai: nút giữ `m_chunks` (đã có sẵn) s�
 hoạch, và cũng là lập luận chi phí mạnh nhất mà bài báo có thể có: một lượt UAV
 bay qua chỉ cần chạm tới vài nút, phần còn lại của ô nhận qua G2G.
 
-### Cái KHÔNG đổi
+### Cái KHÔNG đổi (trước khi có D30 — xem §8)
 
 Tầng mạng/kênh, `cell-grid`, `inter-cell-routing`, `target-profile`, mô hình năng
 lượng, `flight-controller`, và toàn bộ mặt phẳng bằng chứng (RPT/SHARE/RCLAIM/bầu
 cử). Chiều A đã xong; mọi việc còn lại nằm ở chiều B và ở đo đạc.
+
+---
+
+## 8. KIỂM TOÁN: mọi chỗ làm việc tìm kiếm sập về MỘT điểm
+
+Rà toàn bộ mã, cả nhánh đề xuất lẫn baseline. **15 điểm**, chia năm cụm. Đây không
+phải một lỗi mà là một **mẫu thiết kế xuyên suốt**: hệ thống được viết với giả
+định ngầm "có đúng một chỗ đáng đến".
+
+### A. Thăm dò TẮT ngay khi có ứng viên đầu tiên
+
+| # | vị trí | vấn đề |
+|---|---|---|
+| A1 | `sar-fast-uav-app.cc:202` | `DisseminateTick` chặn bởi `!m_summonSeen`: **rải cue dừng hẳn** khi có SUMMON đầu tiên ở BẤT KỲ đâu. Phần còn lại của vùng không bao giờ nhận cue → **ứng viên thứ hai không thể hình thành**. Đây là gốc rễ. |
+| A2 | `sar-fast-uav-app.cc:305` | nghe A2A của đồng đội → `m_summonSeen = true`: lan cái tắt đó ra **toàn đội FAST** |
+| A3 | `sar-data-uav-app.cc:200` | luật *sky-quiet*: không nghe cue trong `kSkyQuietS = 45 s` → bay về. Vì A1 đã tắt cue, bầu trời im **theo cấu trúc** → 45 s sau **đội DATA cũng về** |
+
+A1→A2→A3 là một **dây chuyền**: một SUMMON → cue tắt → 45 s → cả hai đội về nhà.
+Đúng nghĩa đen "tìm 1 điểm rồi quay về".
+
+### B. MỘT confirm đóng cả đội
+
+| # | vị trí | vấn đề |
+|---|---|---|
+| B1 | `sar-fast-uav-app.cc:285` | CONFIRM ở trạng thái CRUISE → `RETURN_BS`, **không xét vùng, không xét khoảng cách** |
+| B2 | `sar-data-uav-app.cc:502` | CONFIRM + chưa có nhiệm vụ → `RETURN`. **Mâu thuẫn trực tiếp** với `stayAvailable` cách đó ~50 dòng, vốn tồn tại để giữ UAV lại cho vùng khác |
+| B3 | `sar-ground-app.cc:497` | handler CONFIRM **không đọc `regionId`** dù gói có mang. Đặt `m_confirmHeard` cho mọi confirm ở mọi nơi → khoá vĩnh viễn beacon (`:431`), bầu cử, `MaybeRetarget` (`:410`) và tái-triệu-tập theo cue (`:633`) |
+| B4 | `sar-ground-app.cc:520` | đứng xuống khi nghe SUMMON **cũng không xét cùng-chỗ**, trong khi RCLAIM ở `:545` **có** kiểm tra `electScope`. Hai đường làm cùng một việc mà một đường có bảo vệ, một đường không |
+
+B3 chính là **đúng cái lỗi** đã sửa cho RCLAIM bằng `electScope` và chưa bao giờ
+sửa cho CONFIRM.
+
+### C. Chỉ MỘT điểm mang về được
+
+| # | vị trí | vấn đề |
+|---|---|---|
+| C1 | `sar-fast-uav-app.cc:339` | một ô `m_pendFix` duy nhất: nghe nhiều aim thì **giữ cái cuối** — chú thích trong mã đã tự thừa nhận |
+| C2 | `sar-metrics.h` `MarkVictimFix` | `if (m_tFix < 0)` — chỉ ghi **fix đầu tiên**, các fix sau bị bỏ |
+| C3 | `sar-types.h` REPORT/HANDOFF | định dạng chỉ có **một** cặp `(x,y)`; không có chỗ cho nhiều điểm |
+| C4 | `sar-fast-uav-app.cc:245` | `rid = 1` cứng trong REPORT |
+
+### D. Baseline — và ở đây lệch về HAI phía khác nhau
+
+| # | nhánh | vấn đề |
+|---|---|---|
+| D1 | `closed-loop` | `RelayBestEcho` bị chặn bởi `m_summonSeen` + chỉ giữ argmax đang chạy → **đúng một aim mỗi lần chạy, theo cấu trúc**. Đây là nhánh phạm lỗi nặng nhất: nó *chỉ có thể* tìm một điểm rồi về |
+| D2 | `closed-loop` | `RelayBestEcho:182` đặt `rid = 1` cứng → loại trừ CLAIM **theo vùng** sập thành loại trừ **toàn cục**, cả đội DATA chỉ phục vụ được một điểm |
+| D3 | `nocoop`, `tsp-mc` | ngược lại: handler CONFIRM **không** liệt kê trạng thái `SWEEP`, nên chúng **không bao giờ dừng sớm** và phủ hết mọi chỗ |
+| D4 | `tsp-mc` | tour VBS tính trước từ toàn bộ vị trí nút — không có khái niệm ứng viên. Đúng với Zeng'18, nhưng nghĩa là C4 đang so **"phục vụ một điểm"** với **"phục vụ tất cả"** |
+
+Hệ quả công bằng, phải nói thẳng: **baseline mù hiện đang quét sạch mọi điểm trong
+khi nhánh đề xuất dừng ở điểm đầu tiên.** So sánh vì thế đang thiên **có lợi** cho
+đề xuất về chi phí và **bất lợi** về độ phủ. Sửa D30 làm `closed-loop` **mạnh lên**,
+không yếu đi — và `closed-loop` đang là nhánh thắng `proposed`.
+
+### E. Cơ chế đa ứng viên duy nhất đang có — và nó quá yếu
+
+`MaybeRetarget` + `m_candidates` là thứ duy nhất trong hệ thống biết tới nhiều ứng
+viên. Nó **tuần tự** (mỗi lúc một điểm), **chặn ở `kMaxRetargets = 2`** (tối đa 3
+aim), **giãn `kRetargetAfterS = 60 s`**, và bị **bất kỳ CONFIRM nào ở bất kỳ đâu
+giết** (B3). Nó là cơ chế *sửa sai một aim*, không phải cơ chế *quét một tập ứng
+viên*.

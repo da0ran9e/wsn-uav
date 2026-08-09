@@ -145,6 +145,39 @@ Chiều ngược lại: vì cue không còn tắt sớm, ở $M>0$ nhiều khả
 nạn nhân giảm** — hiện một SUMMON vào vật gây nhầm sẽ tắt luôn việc thăm dò phần
 vùng còn lại, nơi nạn nhân thật có thể đang nằm.
 
+### 6.2 D31 — cảm biến HAI TẦNG hiện KHÔNG phải hai tầng (phát hiện 2026-08-08)
+
+Đặc tả §2 nói $C_i$ là **lượng dữ liệu tham chiếu nút đang giữ**. Mã nguồn dùng
+`TargetProfile::Confidence` = xác suất hợp $1-\prod(1-p_i)$ trên các mảnh đang
+giữ. Hai thứ này **không phải một**, và chênh lệch là rất lớn:
+
+| nút đang giữ | phần byte | `Confidence` mã đang dùng |
+|---|---:|---:|
+| chỉ cue (L0+L1) | 2 400 / 34 400 = **7 %** | **0.926** |
+| toàn bộ (L0..L3) | 100 % | 0.9999 |
+
+`ClueNow()` nội suy `clue + C·(full − clue)`, nên **92.6 % công việc phân biệt đã
+xong ngay khi nút chỉ có mảnh cue**. Tiền đề của cả bài — *"nút phán đoán trên
+mảnh cue thì có thể báo động giả; nút cầm đủ dữ liệu thì không"* — vì thế **rỗng
+theo cấu trúc**.
+
+**Bằng chứng đo được** (16×16, 4 UAV, 12 hạt giống bắt cặp):
+
+- $M=0$ và $M=4$ cho kết quả **giống hệt nhau đến từng byte ở 11/12 hạt giống**;
+  hạt giống còn lại lệch ~1 %. Thêm bốn vật gây nhầm **không đổi gì cả**.
+- Với `--clutterResolve=0` (mơ hồ sống sót qua giao hàng) thì đúng seed đó sinh
+  **4 vùng triệu tập tại đúng 4 vị trí vật gây nhầm**.
+
+Nghĩa là trục nhập nhằng hiện **vô hiệu ở giá trị mặc định**, và mọi kết luận về
+"mơ hồ gần như miễn phí" đã đo trên một cơ chế **chưa từng kích hoạt**.
+
+**Sửa:** `ClueNow()` phải nội suy theo **tỉ lệ dữ liệu đã nhận** (chunk hoặc byte),
+đúng như đặc tả §2, chứ không theo xác suất hợp của utility nhận dạng. Giữ
+`Confidence` cho việc nó vốn dùng (ngưỡng báo cáo), không dùng nó làm $C_i$.
+
+**Xếp vào G1c cùng D3** — cùng chạm mô hình cảm biến, cùng bắt buộc hiệu chuẩn
+lại, và cùng làm **vô hiệu mọi số đã đo với `clutterCount > 0`**.
+
 **Chỉ số mới bắt buộc:** `candidatesFound`, `candidatesResolved`,
 `unresolvedAtEnd`, `timeToClearAll_s`. Chỉ số chính $T$ (D4) **giữ nguyên** — D30
 đổi phần chi phí và phần độ phủ, không đổi định nghĩa thời gian.
@@ -335,7 +368,7 @@ trên mọi run của một campaign.
 | **G0** | Gắn thẻ commit hiện tại làm mốc "trước" | `git tag` + ghi binary id |
 | **G1a** | D4: cột `timeToFirstReport_s` (giữ nguyên cột cũ) | cột mới ≤ cột cũ trên mọi run |
 | **G1b** | D10: bỏ `pure-uav` | build sạch, không còn nhánh trong tool |
-| **G1c** | D3: nhiễu phụ thuộc tín hiệu + **bảng hiệu chuẩn** | ở $\sigma$ đã hiệu chuẩn: xác suất một nút **không có tín hiệu** vượt `kAlertThreshold` phải ≈ 0 (mô hình cũ: 6.7 %), và xác suất nút nạn nhân báo động phải **khớp** mô hình cũ |
+| **G1c** | D3 (nhiễu phụ thuộc tín hiệu) + **D31** ($C_i$ = tỉ lệ dữ liệu, không phải union confidence) + **bảng hiệu chuẩn** | ở $\sigma$ đã hiệu chuẩn: xác suất một nút **không có tín hiệu** vượt `kAlertThreshold` phải ≈ 0 (mô hình cũ: 6.7 %), và xác suất nút nạn nhân báo động phải **khớp** mô hình cũ |
 | **G1d** | D8: CONFIRM 5 B → 10 B (`evQ8` + vị trí); fix = vị trí nút xác nhận mạnh nhất | `Send()` không FAIL; sai số fix giảm hoặc bằng |
 | **G1e** | D9: UAV dừng giao hàng khi nghe CONFIRM đủ mạnh | airtime giao hàng giảm; `fixOnVictim` **không** giảm |
 | **G1f** | **D30**: quét hết ứng viên — sửa 15 chỗ ở `FLOW-vi.md` §8, cả `closed-loop` | ở $M=4$: `candidatesResolved == candidatesFound` trên ≥ 95 % run; `closed-loop` sinh **> 1** aim ở ít nhất một run |

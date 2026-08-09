@@ -194,6 +194,9 @@ cử). Chiều A đã xong; mọi việc còn lại nằm ở chiều B và ở 
 
 ## 8. KIỂM TOÁN: mọi chỗ làm việc tìm kiếm sập về MỘT điểm
 
+> **Trạng thái 2026-08-08 (commit `321e3a3`):** cụm A và B **đã sửa cho nhánh
+> `proposed`**; cụm C, D, E **chưa**. Xem §9 để biết đo được gì.
+
 Rà toàn bộ mã, cả nhánh đề xuất lẫn baseline. **15 điểm**, chia năm cụm. Đây không
 phải một lỗi mà là một **mẫu thiết kế xuyên suốt**: hệ thống được viết với giả
 định ngầm "có đúng một chỗ đáng đến".
@@ -251,3 +254,65 @@ viên. Nó **tuần tự** (mỗi lúc một điểm), **chặn ở `kMaxRetarge
 aim), **giãn `kRetargetAfterS = 60 s`**, và bị **bất kỳ CONFIRM nào ở bất kỳ đâu
 giết** (B3). Nó là cơ chế *sửa sai một aim*, không phải cơ chế *quét một tập ứng
 viên*.
+
+
+---
+
+## 9. D30 giai đoạn 1 — đã sửa gì, đo được gì
+
+### 9.1 Đã sửa (nhánh `proposed`)
+
+| chỗ | trước | sau |
+|---|---|---|
+| A1/A2 | rải cue tắt ở SUMMON đầu tiên | cue chạy tới khi UAV bay hết dải của mình |
+| A3 | *sky-quiet* kéo theo | không còn bị kích hoạt giả, vì cue không tắt nữa |
+| B1 | CONFIRM cắt ngang chuyến quét | FAST bay hết dải; về nhà khi **mọi vùng nó đã điều phối** đã đóng |
+| B2 | UAV DATA đang tuần tra về nhà | chỉ về khi hết kế hoạch tuần tra |
+| B3 | CONFIRM khoá mọi lãnh đạo, không đọc `regionId` | chỉ khoá lãnh đạo **cùng vùng**; nút thường đóng dấu vùng nó nghe triệu tập |
+| B4 | đứng xuống theo SUMMON không xét chỗ | cùng phép kiểm `electScope` như RCLAIM |
+| **B5 (mới, tìm được lúc đo)** | `m_regionFormed` **chốt cứng** khi RCLAIM tới lúc ô chưa có aim → yield vô điều kiện, vĩnh viễn | quyết định đứng xuống dời sang **lúc bầu cử**, so với tập aim đã bị chiếm |
+
+B5 là chỗ nặng nhất và chỉ lộ ra khi nhìn `events.csv`: **10 ô trải khắp 300 m
+yield cho c9 trong 30 ms** ở t=46.5 s, trước khi hầu hết chúng có bằng chứng gì.
+`electScope` — thứ đã đo được b=7 c=0 — trên thực tế **không scope gì** trong
+trường hợp thường gặp, vì cuộc đua kết thúc trước khi có ai kịp có aim.
+
+### 9.2 Kiểm chứng
+
+16×16, 4 UAV, seed 7, `clutterCount=4`, `clutterResolve=0`:
+
+| | trước | sau |
+|---|---:|---:|
+| số vùng triệu tập | **1** | **4** |
+| vị trí nhắm | 1 chỗ | đúng 4 vị trí vật gây nhầm |
+| ô yield khi chưa có aim | 10 | 3 |
+
+12 hạt giống bắt cặp, `gridSize=16`, mặc định (`clutterResolve=1`):
+
+| chỉ số | trước | sau | sau tốt hơn |
+|---|---:|---:|---:|
+| yield mù | 10–11 | **2–6** | — |
+| `timeToFixAtBS_s` (med) | 83.1 | **95.1** | 2/11 |
+| all-home (med) | 110.9 | 114.1 | 4/11 |
+| năng lượng (med) | 82.7 kJ | 83.2 kJ | 4/12 |
+| gói tin (med) | 4 611 | **4 931** | 3/12 |
+| `fixOnVictim` | 11/12 | 11/12 | — |
+
+**Chi phí đã tăng đúng như dự báo ở `SIM-SPEC-vi.md` §6.1** (+14 % thời gian tới
+fix, +7 % gói tin), và **lợi ích chưa thể hiện** — vì ở giá trị mặc định trục
+nhập nhằng đang vô hiệu (D31). N=12 chỉ đủ để nói **hướng**, không đủ để tuyên bố;
+quy tắc N ≥ 120 vẫn nguyên.
+
+Phần thời gian tăng nhiều khả năng là **tranh chấp MAC**: cue không còn tắt nên nó
+va vào chính các chunk FULL đang giao. Nếu sau này muốn giảm, cách sạch là **giảm
+nhịp cue** khi đã có vùng đang được phục vụ, chứ không phải tắt hẳn.
+
+### 9.3 Chưa làm
+
+| còn lại | vì sao chưa |
+|---|---|
+| cụm C (4 chỗ) | REPORT chỉ mang một fix; cần quyết định có mang nhiều điểm về hay không |
+| cụm D (4 chỗ) | `closed-loop` — user yêu cầu làm `proposed` trước |
+| cụm E | `kMaxRetargets` — xem lại sau khi D31 xong |
+| `candidatesFound/Resolved` | chỉ số mới, làm cùng lúc với cụm C |
+| **cổng G1f** | **không kiểm được** cho tới khi D31 xong: ở mặc định, M=4 cho kết quả **giống hệt M=0** ở 11/12 hạt giống |

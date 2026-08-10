@@ -20,6 +20,7 @@
 #include "ns3/random-variable-stream.h"
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -97,6 +98,19 @@ private:
     void ClaimDivert();                 // won the radio CLAIM -> divert+deliver
     void SendClaim(uint8_t role);       // broadcast a role claim (mutual exclusion)
     void TryClaimDivert(double x, double y);
+    // D32: cooperative task division over A2A. Every DATA UAV keeps the same
+    // candidate table, built purely from radio traffic (A2A carries a region and
+    // its aim, a peer's CLAIM says who took it, CONFIRM/REJECT says it is done),
+    // and picks the NEAREST region nobody has taken. The claim backoff is
+    // proportional to that distance, so the nearest UAV speaks first and the
+    // others see the claim and move on to their own region.
+    void ConsiderTasks();
+    // D32: this region is settled (CONFIRM or REJECT). Release it and take the
+    // next unserved candidate; fly home only when there is nothing left. Without
+    // this a UAV served exactly ONE point per mission however many candidates
+    // existed, which is the behaviour the whole multi-candidate design exists to
+    // remove.
+    void ReleaseAndContinue();
 
     enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, PATROL, DIVERT, DELIVER, SWEEP, RETURN, DONE };
 
@@ -137,6 +151,14 @@ private:
     bool m_pendingDivert = false;   // claimed before airborne; divert after climb
     bool m_confirmed = false;
     uint16_t m_boundRegion = 0xFFFF;  // leader whose re-aims we accept
+    // D32: shared picture of the work, kept per UAV from what it heard.
+    // served = how many delivery dwells this place has already had. Selection is
+    // BREADTH-FIRST: every candidate gets one delivery before any gets a second.
+    // closed = settled outright by a CONFIRM or a REJECT.
+    struct Task { double x = 0, y = 0; uint16_t takenBy = 0xFFFF;
+                  bool closed = false; uint8_t served = 0; };
+    std::map<uint16_t, Task> m_tasks;
+    uint16_t m_myTask = 0xFFFF;       // region I intend to claim, or am serving
     double m_lastCueHeardS = -1;      // last time a FAST UAV was heard cueing
     bool m_hasFix = false;          // audit B3: carry the victim fix home
     double m_fixX = 0, m_fixY = 0;

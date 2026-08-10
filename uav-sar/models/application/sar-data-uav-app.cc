@@ -83,8 +83,72 @@ void SarDataUavApp::SendClaim(uint8_t role) {
     if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
 }
 
+void SarDataUavApp::ConsiderTasks() {
+    // Choose the nearest region that is not closed and that no peer has claimed.
+    // Backoff before claiming is proportional to that distance, so among the UAVs
+    // that want the same region the NEAREST one speaks first and the rest hear
+    // the claim and re-run this, landing on a different region. That is the whole
+    // coordination protocol: one message type (CLAIM) and one rule.
+    if (m_claimed || m_yieldedDivert) return;
+    if (m_state == State::DELIVER || m_state == State::RETURN || m_state == State::DONE)
+        return;
+    Vector p = m_fc.GetPosition();
+    uint16_t best = 0xFFFF;
+    double bestD = 0;
+    uint8_t bestServed = 255;
+    for (const auto& [rid, t] : m_tasks) {
+        if (t.closed) continue;
+        if (t.takenBy != 0xFFFF && t.takenBy != (uint16_t)m_nodeId) continue;
+        // Two leaders in adjacent cells can elect before either hears the
+        // other's RCLAIM and summon the SAME PLACE under different region ids.
+        // Measured at 24x24 with eight UAVs: two DATA UAVs delivered to points
+        // 3 m apart. Region identity is not enough -- a job is taken if a peer
+        // has taken any job about the same place.
+        bool nearTaken = false;
+        for (const auto& [rid2, t2] : m_tasks) {
+            if (rid2 == rid) continue;
+            if (t2.closed || (t2.takenBy != 0xFFFF && t2.takenBy != (uint16_t)m_nodeId))
+                if (std::hypot(t2.x - t.x, t2.y - t.y) <= params::kRegionRadiusM)
+                    nearTaken = true;
+        }
+        if (nearTaken) continue;
+        double d = std::hypot(t.x - p.x, t.y - p.y);
+        if (best == 0xFFFF || t.served < bestServed ||
+            (t.served == bestServed && d < bestD)) {
+            best = rid; bestD = d; bestServed = t.served;
+        }
+    }
+    if (best == 0xFFFF) {              // nothing left that is ours to do
+        Simulator::Cancel(m_claimEvent);
+        m_myTask = 0xFFFF;
+        return;
+    }
+    if (best == m_myTask && m_claimEvent.IsPending()) return;   // already going for it
+    m_myTask = best;
+    m_pendX = m_tasks[best].x;
+    m_pendY = m_tasks[best].y;
+    Simulator::Cancel(m_claimEvent);
+    // Distance-proportional backoff, normalised by a field-scale constant so the
+    // ordering is by distance and the absolute wait stays inside the claim
+    // window. Jitter breaks exact ties between equidistant UAVs.
+    const double scale = std::min(1.0, bestD / 800.0);
+    m_claimEvent = Simulator::Schedule(
+        Seconds(params::kClaimBackoffS * scale + m_rng->GetValue(0.0, params::kFwdStaggerMaxS)),
+        &SarDataUavApp::ClaimDivert, this);
+}
+
 void SarDataUavApp::ClaimDivert() {
     if (m_yieldedDivert || m_claimed) return;   // someone else already claimed
+    if (m_myTask == 0xFFFF) return;
+    auto it = m_tasks.find(m_myTask);
+    // It may have been taken or settled while we were backing off.
+    if (it == m_tasks.end() || it->second.closed ||
+        (it->second.takenBy != 0xFFFF && it->second.takenBy != (uint16_t)m_nodeId)) {
+        ConsiderTasks();
+        return;
+    }
+    m_boundRegion = m_myTask;                   // bind BEFORE announcing
+    it->second.takenBy = (uint16_t)m_nodeId;
     SendClaim(0);                               // announce on the radio, then act
     TryClaimDivert(m_pendX, m_pendY);
 }
@@ -102,7 +166,11 @@ void SarDataUavApp::TryClaimDivert(double x, double y) {
     // and it may be the one that delivered to a confusable object. Measured at
     // 24x24: victim served 52.5% while the reported position had a 90 m median
     // error -- the victim was reached and the rescue team was sent elsewhere.
-    m_fixX = x; m_fixY = y;
+    // D32: never overwrite a CONFIRMED fix with the next job's unconfirmed aim.
+    // A UAV that confirmed victim 2 and then took a third candidate carried the
+    // third candidate's coordinates home -- measured: both victims received the
+    // full dataset, yet victimsLocated stayed 1/2.
+    if (!m_hasFix) { m_fixX = x; m_fixY = y; }
     if (!m_fixOnConfirm) m_hasFix = true;
     m_divert = Vector(x, y, m_alt);
     m_divertStartDist = std::hypot(x - p.x, y - p.y);
@@ -260,8 +328,18 @@ void SarDataUavApp::SendFullChunk(size_t fi, uint16_t seq) {
             // ControlTick is still looping (from DELIVER); it will service SWEEP.
             return;
         }
-        // SUMMONED: cycle until the leader's CONFIRM stops us — the cooperation
-        // feedback is exactly what lets us retransmit lost chunks and stop.
+        // SUMMONED: cycle so lost chunks get retransmitted -- but only until the
+        // delivery dwell expires.
+        //
+        // D32: this used to cycle FOREVER, ending only on a CONFIRM for this
+        // region. At a confusable object no CONFIRM ever comes, so the UAV
+        // delivered to a decoy until the horizon and served exactly ONE place
+        // per mission however many candidates existed. This is the single line
+        // behind "the DATA team only ever serves one point".
+        if (Simulator::Now().GetSeconds() >= m_deliverUntil) {
+            ReleaseAndContinue();
+            return;
+        }
         SendFullChunk(0, 0);
         return;
     }
@@ -402,7 +480,10 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         uint16_t rid; std::memcpy(&rid, &b[2], 2);
         // Only OUR leader may re-aim us. Without this bind, any cell's summon
         // could drag a delivering UAV away mid-delivery.
-        if (m_boundRegion != 0xFFFF && rid != m_boundRegion) return true;
+        // D32: STRICT. The old test let a UAV whose binding was 0xFFFF accept a
+        // re-aim from any leader, which is one of the paths by which the whole
+        // team converged on a single decoy.
+        if (rid != m_boundRegion) return true;
         int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
         double nx = cx / 10.0, ny = cy / 10.0;
         if (std::hypot(nx - m_divert.x, ny - m_divert.y) > 5.0) {
@@ -418,24 +499,38 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         }
         return true;
     }
+    if (type == (uint8_t)Msg::REJECT || type == (uint8_t)Msg::CONFIRM) {
+        // D32: closure retires a job for EVERY UAV that heard it, so nobody
+        // flies to a place that has already been settled.
+        if (sz >= kConfirmLen) {
+            uint16_t rid; std::memcpy(&rid, &b[2], 2);
+            if (rid != 0xFFFF) { m_tasks[rid].closed = true; }
+        }
+        if (!m_claimed) ConsiderTasks();
+    }
     if (type == (uint8_t)Msg::REJECT && !m_confirmed) {
         // The ground has told us this place is not the victim. Drop the fix so a
         // known-wrong position cannot beat a correct one home to the BS.
         if (m_fixOnConfirm) m_hasFix = false;
+        // NOT a reason to leave: a region can hold both a match and a bystander,
+        // and the match wins. Leaving on the first REJECT abandons places where
+        // the victim is still reachable. The dwell bound below is what ends a
+        // fruitless delivery, on time rather than on the first dissenting voice.
         return true;
     }
     if (type == (uint8_t)Msg::A2A && sz >= kA2ALen) {
         int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
         uint16_t rid; std::memcpy(&rid, &b[2], 2);
-        if (!m_claimed && !m_yieldedDivert) m_boundRegion = rid;   // whose region we serve
-        // Radio mutual exclusion: schedule a CLAIM after a short backoff; if a
-        // peer's CLAIM arrives first we yield, so exactly one DATA UAV diverts.
-        if (!m_claimed && !m_yieldedDivert && !m_claimEvent.IsPending() &&
-            m_state != State::DELIVER && m_state != State::RETURN) {
-            m_pendX = cx / 10.0; m_pendY = cy / 10.0;
-            m_claimEvent = Simulator::Schedule(Seconds(m_rng->GetValue(0.0, params::kClaimBackoffS)),
-                                               &SarDataUavApp::ClaimDivert, this);
-        }
+        // D32: an A2A is a JOB ADVERT, not an order. It used to latch straight
+        // into m_pendX/m_pendY, so every free DATA UAV adopted whichever aim was
+        // relayed most recently -- and since a leader re-announces on hearing a
+        // cue, the busiest relay won. Measured at 40x40 with two victims and
+        // four decoys: all FOUR DATA UAVs ended up delivering to the same decoy
+        // at (281,280), in lockstep, re-aiming together on the same summons.
+        // Record it as one job among several and choose deliberately.
+        Task& t = m_tasks[rid];
+        t.x = cx / 10.0; t.y = cy / 10.0;
+        ConsiderTasks();
     } else if (type == (uint8_t)Msg::CLAIM && sz >= kClaimLen) {
         uint8_t role = b[3]; uint16_t id; std::memcpy(&id, &b[4], 2);
         uint16_t crid; std::memcpy(&crid, &b[1], 2);
@@ -443,8 +538,40 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // taken a different job, and this UAV is still needed -- with several
         // candidate places, yielding globally is how a whole team ends up
         // serving one of them.
-        const bool sameRegion = (m_boundRegion == 0xFFFF || crid == 0xFFFF ||
-                                 crid == m_boundRegion);
+        // D32: a peer's claim is now a fact about the WORK, recorded first.
+        if (role == 0 && id != (uint16_t)m_nodeId && crid != 0xFFFF)
+            m_tasks[crid].takenBy = id;
+        if (role == 2 && crid != 0xFFFF) {
+            Task& t = m_tasks[crid];
+            t.served++;
+            if (t.takenBy == id) t.takenBy = 0xFFFF;
+            if (!m_claimed) ConsiderTasks();
+        }
+        // Two UAVs can claim the same place within the same millisecond -- the
+        // backoff orders them by distance, but equidistant peers still collide
+        // (measured: two DATA UAVs delivering 3 m apart at 24x24). Break the tie
+        // deterministically by node id, and only while still en route: a UAV
+        // that has begun delivering keeps its region.
+        if (role == 0 && id != (uint16_t)m_nodeId && m_claimed && crid != 0xFFFF &&
+            m_state == State::DIVERT && id < (uint16_t)m_nodeId) {
+            auto mine = m_tasks.find(m_boundRegion);
+            auto theirs = m_tasks.find(crid);
+            if (mine != m_tasks.end() && theirs != m_tasks.end() &&
+                std::hypot(mine->second.x - theirs->second.x,
+                           mine->second.y - theirs->second.y) <= params::kRegionRadiusM) {
+                if (m_metrics) {
+                    Vector p = m_fc.GetPosition();
+                    m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                     "yield_stay", "lower id claimed the same place",
+                                     p.x, p.y, p.z);
+                }
+                m_claimed = false; m_myTask = 0xFFFF; m_boundRegion = 0xFFFF;
+                m_state = State::PATROL;
+                ConsiderTasks();
+                return true;
+            }
+        }
+        const bool sameRegion = (crid != 0xFFFF && crid == m_myTask);
         if (role == 0 && id != (uint16_t)m_nodeId && !m_claimed && sameRegion) {
             m_yieldedDivert = true;                 // another DATA UAV took it
             Simulator::Cancel(m_claimEvent);
@@ -462,7 +589,12 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             // because the sky-quiet rule sends a UAV home once no cue has been
             // heard for kSkyQuietS -- that bound is what makes staying safe.
             m_boundRegion = 0xFFFF;
+            m_myTask = 0xFFFF;
             m_yieldedDivert = false;   // eligible for the NEXT region's summon
+            // D32: losing this job does not end the mission -- pick the next
+            // nearest region nobody has taken, which is the whole point of
+            // dividing the work rather than racing for it.
+            ConsiderTasks();
             if (m_stayAvailable && (m_state == State::LOITER || m_state == State::PATROL ||
                                     m_state == State::GOTO_CENTER || m_state == State::CLIMB)) {
                 if (m_metrics) {
@@ -522,11 +654,42 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             // Keep delivering until the coverage dwell elapses so the whole
             // localized footprint (incl. a slightly-off victim) reconstructs the
             // data — then head home and hand the report to the FAST courier.
+            SendHandoff();   // the FAST courier carries the fix home at 25 m/s
             double wait = std::max(0.0, m_deliverUntil - Simulator::Now().GetSeconds());
-            Simulator::Schedule(Seconds(wait), &SarDataUavApp::BeginReturn, this);
+            Simulator::Schedule(Seconds(wait), &SarDataUavApp::ReleaseAndContinue, this);
         }
     }
     return true;
+}
+
+void SarDataUavApp::ReleaseAndContinue() {
+    if (m_boundRegion != 0xFFFF) {
+        // Tell the fleet. Without this a peer's table keeps the region marked
+        // taken forever, so once every candidate had been claimed ONCE no UAV
+        // could take another one and the whole "serve them all" behaviour never
+        // fired -- measured as next_task = 0 in every run.
+        SendClaim(2);                       // role 2 = released / dwell served
+        Task& t = m_tasks[m_boundRegion];
+        t.served++;
+        t.takenBy = 0xFFFF;
+    }
+    m_claimed = false;
+    m_yieldedDivert = false;
+    m_myTask = 0xFFFF;
+    m_boundRegion = 0xFFFF;
+    m_confirmed = false;               // free to serve and confirm another place
+    m_state = State::PATROL;           // divertible again
+    ConsiderTasks();
+    if (m_myTask == 0xFFFF) {          // nothing left that is ours -> go home
+        BeginReturn();
+        return;
+    }
+    if (m_metrics) {
+        Vector p = m_fc.GetPosition();
+        m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                         "next_task", "region settled; taking the next candidate",
+                         p.x, p.y, p.z);
+    }
 }
 
 void SarDataUavApp::BeginReturn() {

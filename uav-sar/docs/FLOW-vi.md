@@ -544,3 +544,63 @@ Hai lỗ đã bịt ở v2: `m_tasks[crid]` tạo mục **(0,0)** khi nghe CLAIM
 chưa biết vị trí (phép kiểm cùng-chỗ so với gốc toạ độ, và mục ma còn được chọn
 làm việc); và không có kiểm tra **lúc tới nơi** — đồng đội có thể chiếm chỗ trong
 lúc mình bay tới, mất hàng chục giây.
+
+---
+
+## 13. D33 — đường bay fixed-wing thật, và giá của nó
+
+### 13.1 Đường bay cũ KHÔNG bay được
+
+Đo từ chính quỹ đạo đã bay (`trajectories.csv`), 6 hạt giống, 4 UAV:
+
+| | |
+|---|---|
+| bán kính lượn cần ($v=25$ m/s, nghiêng 30°) | $R = v^2/(g\tan\varphi)$ = **110 m** |
+| bán kính nhỏ nhất **đã bay** | **1–8 m** |
+| mẫu đòi khúc gấp quá khả năng | **305/1500 = 20.3 %** |
+
+Nguyên nhân là **hai** thứ, và sửa một cái thôi thì không đủ:
+
+1. **Quy hoạch**: `BuildGmc` chọn tham lam waypoint "lời" nhất kế tiếp → đường bay
+   bẻ ngược liên tục. Thay bằng **quét luống xen kẽ**: luống dọc cạnh dài, thứ tự
+   `0, k, 2k, …` rồi `1, 1+k, …` với $k=\lceil 2R/\text{giãn luống}\rceil$, để mỗi
+   lần quay đầu có đủ **một đường kính lượn**.
+2. **Mô hình bay**: `FlightController::Turn()` đặt hướng **tức thì** — không có
+   giới hạn nào. Thêm $\omega_{\max}=g\tan\varphi/v$ (≈13°/s), `Turn()` chỉ ra
+   lệnh, `Step(dt)` xoay dần. **Chỉ áp cho FAST**; DATA là rotary-wing.
+
+### 13.2 Sửa mô hình bay làm HỎNG nhiệm vụ, và vì sao
+
+Bản chỉ có giới hạn lượn: **0 lượt giao, 0 nạn nhân, cả 6 hạt giống**, và cả 6 có
+tổng góc đổi hướng **giống hệt 70°**. Hướng chỉ được ra lệnh **lúc tới waypoint**
+— đúng khi `Turn()` là tức thì, sai hẳn khi có giới hạn: cung lượn ban đầu đẩy máy
+bay lệch, rồi nó bay thẳng mãi mà không bao giờ nhắm lại.
+
+Sửa: dẫn đường **mỗi control tick**, và chấp nhận waypoint khi **bay ngang qua** —
+máy bay bán kính 110 m không phải lúc nào cũng lọt vào vòng chấp nhận 37 m, nó sẽ
+bay vòng vô hạn.
+
+### 13.3 Kết quả — 6 hạt giống, mỗi bản một binary
+
+| bản | khúc gấp quá khả năng | ứng viên phục vụ | `victimsLocated` | E trung vị | tFix trung vị |
+|---|---:|---:|---:|---:|---:|
+| trước D32 | 20.3 % | 7/24 = 29 % | 5/12 | 117 kJ | 106.3 s (5/6) |
+| D32 (chia việc) | 20.3 % | 16/20 = 80 % | **9/12** | 150 kJ | 106.3 s (6/6) |
+| + quét luống | 10.8 % | 19/21 = **90 %** | 7/12 | 352 kJ | 107.0 s |
+| **+ giới hạn lượn (D33)** | **0.2 %** | 17/20 = 85 % | 7/12 | **355 kJ** | 118.4 s |
+
+### 13.4 Giá phải trả — nói thẳng
+
+**Làm đội FAST đúng vật lý là ĐẮT.** Năng lượng trung vị 117 → 355 kJ (**3×**),
+thời gian tới fix +11 %, và `victimsLocated` **không** tốt hơn bản chia-việc
+(7/12 so với 9/12). Lý do: $R=110$ m so với luống 50 m, nên máy bay dành phần lớn
+thời gian để quay đầu, và bước xen kẽ $k=5$ kéo dài mỗi chặng chuyển luống.
+
+Hệ quả cho việc so sánh, giống hệt bài học đã ghi ở `STATUS.md` §2 khi đổi khung
+máy bay: **mọi số đo trước D33 không so được với số sau D33.** So sánh hợp lệ chỉ
+là giữa các lược đồ **dưới cùng một mô hình bay**.
+
+Hai chỗ chưa sạch, ghi lại chứ không giấu: hạt giống 6 còn **1 mẫu** khúc gấp
+(7 m) — nhiều khả năng ở chặng về BS hoặc lúc chuyển `RELAY_HOLD`, chưa áp dẫn
+đường liên tục; và chồng lấn quay lại **3 cặp / 33 giây** (bản trước đó là 0), vì
+FAST chậm hơn làm đổi toàn bộ mốc thời gian. Một `wrongFix` cũng xuất hiện.

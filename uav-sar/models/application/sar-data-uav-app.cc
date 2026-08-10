@@ -83,6 +83,18 @@ void SarDataUavApp::SendClaim(uint8_t role) {
     if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
 }
 
+bool SarDataUavApp::PeerServingNear(double x, double y, uint16_t* who) const {
+    for (const auto& [rid, t] : m_tasks) {
+        if (!t.known) continue;
+        if (t.takenBy == 0xFFFF || t.takenBy == (uint16_t)m_nodeId) continue;
+        if (std::hypot(t.x - x, t.y - y) <= params::kRegionRadiusM) {
+            if (who) *who = t.takenBy;
+            return true;
+        }
+    }
+    return false;
+}
+
 void SarDataUavApp::ConsiderTasks() {
     // Choose the nearest region that is not closed and that no peer has claimed.
     // Backoff before claiming is proportional to that distance, so among the UAVs
@@ -97,6 +109,7 @@ void SarDataUavApp::ConsiderTasks() {
     double bestD = 0;
     uint8_t bestServed = 255;
     for (const auto& [rid, t] : m_tasks) {
+        if (!t.known) continue;          // heard OF it, do not know WHERE
         if (t.closed) continue;
         if (t.takenBy != 0xFFFF && t.takenBy != (uint16_t)m_nodeId) continue;
         // Two leaders in adjacent cells can elect before either hears the
@@ -104,14 +117,7 @@ void SarDataUavApp::ConsiderTasks() {
         // Measured at 24x24 with eight UAVs: two DATA UAVs delivered to points
         // 3 m apart. Region identity is not enough -- a job is taken if a peer
         // has taken any job about the same place.
-        bool nearTaken = false;
-        for (const auto& [rid2, t2] : m_tasks) {
-            if (rid2 == rid) continue;
-            if (t2.closed || (t2.takenBy != 0xFFFF && t2.takenBy != (uint16_t)m_nodeId))
-                if (std::hypot(t2.x - t.x, t2.y - t.y) <= params::kRegionRadiusM)
-                    nearTaken = true;
-        }
-        if (nearTaken) continue;
+        if (PeerServingNear(t.x, t.y)) continue;
         double d = std::hypot(t.x - p.x, t.y - p.y);
         if (best == 0xFFFF || t.served < bestServed ||
             (t.served == bestServed && d < bestD)) {
@@ -278,7 +284,32 @@ void SarDataUavApp::ControlTick() {
             double d = std::hypot(m_divert.x - p.x, m_divert.y - p.y);
             m_fc.Turn(std::atan2(m_divert.y - p.y, m_divert.x - p.x) * 180 / M_PI);
             m_fc.Forward(m_speed);
-            if (d <= arriveR) { m_fc.Hover(); m_state = State::DELIVER;
+            if (d <= arriveR) {
+                // D32: last check before committing. Claims race and travel
+                // takes tens of seconds, so a peer can take this place while we
+                // are still flying to it. Measured: two DATA UAVs delivering 1 m
+                // apart, twice in one run. Lower id keeps the place; the other
+                // turns around rather than doubling up.
+                uint16_t who = 0xFFFF;
+                if (PeerServingNear(m_divert.x, m_divert.y, &who) &&
+                    who < (uint16_t)m_nodeId) {
+                    if (m_metrics)
+                        m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                                         "yield_stay", "peer already serving this place",
+                                         p.x, p.y, p.z);
+                    // Just step aside: we never delivered here, so this must
+                    // NOT count as a served dwell (that would push the place
+                    // down the breadth-first order while a peer is still on it).
+                    m_claimed = false;
+                    m_yieldedDivert = false;
+                    m_myTask = 0xFFFF;
+                    m_boundRegion = 0xFFFF;
+                    m_state = State::PATROL;
+                    ConsiderTasks();
+                    if (m_myTask == 0xFFFF) BeginReturn();
+                    break;
+                }
+                m_fc.Hover(); m_state = State::DELIVER;
                 m_deliverUntil = Simulator::Now().GetSeconds() + m_deliverDwellS;
                 if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
                                                 "deliver_start", "", p.x, p.y, p.z);
@@ -529,7 +560,7 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // at (281,280), in lockstep, re-aiming together on the same summons.
         // Record it as one job among several and choose deliberately.
         Task& t = m_tasks[rid];
-        t.x = cx / 10.0; t.y = cy / 10.0;
+        t.x = cx / 10.0; t.y = cy / 10.0; t.known = true;
         ConsiderTasks();
     } else if (type == (uint8_t)Msg::CLAIM && sz >= kClaimLen) {
         uint8_t role = b[3]; uint16_t id; std::memcpy(&id, &b[4], 2);

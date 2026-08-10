@@ -111,6 +111,8 @@ private:
     // existed, which is the behaviour the whole multi-candidate design exists to
     // remove.
     void ReleaseAndContinue();
+    // True if a peer has claimed a place within kRegionRadiusM of (x,y).
+    bool PeerServingNear(double x, double y, uint16_t* who = nullptr) const;
 
     enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, PATROL, DIVERT, DELIVER, SWEEP, RETURN, DONE };
 
@@ -156,7 +158,13 @@ private:
     // BREADTH-FIRST: every candidate gets one delivery before any gets a second.
     // closed = settled outright by a CONFIRM or a REJECT.
     struct Task { double x = 0, y = 0; uint16_t takenBy = 0xFFFF;
-                  bool closed = false; uint8_t served = 0; };
+                  bool closed = false; uint8_t served = 0;
+                  // known = we have heard this region's AIM (from an A2A). A
+                  // CLAIM tells us a region is taken but not where it is, and
+                  // std::map::operator[] happily created an entry at (0,0) for
+                  // it -- which then both defeated the same-place check and
+                  // became a selectable job at the origin.
+                  bool known = false; };
     std::map<uint16_t, Task> m_tasks;
     uint16_t m_myTask = 0xFFFF;       // region I intend to claim, or am serving
     double m_lastCueHeardS = -1;      // last time a FAST UAV was heard cueing

@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ns3::uavsar {
@@ -39,7 +40,13 @@ public:
     // the one the paper may quote as the scheme's localization output.
     void MarkVictimFix(double t, double x, double y) {
         if (m_tFix < 0) { m_tFix = t; m_fixX = x; m_fixY = y; m_hasFix = true; }
+        // D30/C2: keep EVERY fix, not only the first. With more than one real
+        // victim the first fix is one answer out of several, and recording only
+        // it made a two-victim run indistinguishable from a one-victim run.
+        m_fixes.push_back({t, x, y});
     }
+    // D17: the real victims in this run. One entry reproduces the old behaviour.
+    void SetVictims(const std::vector<std::pair<double, double>>& v) { m_victims = v; }
 
     // The confusable objects present in this run. With them, "reportErr_m" alone
     // is a BIMODAL quantity -- a 200 m error means the loop closed on the wrong
@@ -76,6 +83,9 @@ private:
     double m_tLocalize=-1, m_tComplete=-1, m_tReport=-1;
     bool m_hasFix=false;
     double m_tFix=-1, m_fixX=0, m_fixY=0;
+    struct Fix { double t, x, y; };
+    std::vector<Fix> m_fixes;
+    std::vector<std::pair<double, double>> m_victims;
     uint32_t m_intraShares=0, m_interShares=0, m_regionCells=0, m_beacons=0, m_custody=0;
     uint32_t m_sent=0, m_recv=0;
     uint64_t m_sentBytes=0, m_recvBytes=0;

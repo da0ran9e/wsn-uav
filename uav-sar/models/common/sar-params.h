@@ -215,6 +215,11 @@ inline constexpr double kElectDeadlineS  = 90.0;    // [Design] hard ceiling aft
 // confusable object while the victim's own cell -- 513 m away, with independent
 // evidence -- never summoned. Suppression is right for duplicate reports of ONE
 // place and wrong for two genuinely different places.
+// D17/O8: a fix counts as resolving a victim only if it is this close in
+// ABSOLUTE terms as well as closer to that victim than to any confusable object.
+// Without the absolute bound, "closer to a victim than to any decoy" is trivially
+// true whenever there are no decoys, so the column measured nothing at M = 0.
+inline constexpr double kFixRadiusM      = 50.0;   // [Design] delivery accepted
 inline constexpr double kRegionRadiusM   = 150.0;  // [Design] same-place radius
 // A Cell Leader may only aim at ground it plausibly knows about: its own cell and
 // its immediate neighbours. Beyond that the evidence reached it through a

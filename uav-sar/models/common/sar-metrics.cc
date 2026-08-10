@@ -1,4 +1,5 @@
 #include "sar-metrics.h"
+#include "sar-params.h"
 
 #include <cmath>
 #include <filesystem>
@@ -49,11 +50,24 @@ void SarMetrics::Finalize(const std::string& outDir) {
              // closer to the victim than to any confusable object; -1 = no fix.
              // Without this split, "closed the loop on the wrong person" and
              // "estimated the right person imprecisely" are the same number.
-             "clutterCount,fixOnVictim,fixToNearestClutter_m";
+             "clutterCount,fixOnVictim,fixToNearestClutter_m,"
+             // D17: more than one real victim. victimsLocated counts DISTINCT
+             // victims that some fix received at the BS actually resolves --
+             // within kFixRadiusM and closer to that victim than to any
+             // confusable object. wrongFixes counts fixes that point at a decoy.
+             "victimCount,fixesAtBS,victimsLocated,wrongFixes,timeToAllVictims_s";
         for (auto& [k, v] : m_extra) f << "," << k;
         f << "\n";
-        const double fixErr =
-            m_hasFix ? std::hypot(m_fixX - m_vx, m_fixY - m_vy) : -1.0;
+        // Error of the FIRST fix against the NEAREST real victim (one victim
+        // reproduces the old number exactly).
+        double fixErr = -1.0;
+        if (m_hasFix) {
+            fixErr = std::hypot(m_fixX - m_vx, m_fixY - m_vy);
+            for (const auto& v : m_victims) {
+                double d = std::hypot(m_fixX - v.first, m_fixY - v.second);
+                if (d < fixErr) fixErr = d;
+            }
+        }
         double clutterD = -1.0;
         int fixOnVictim = -1;
         if (m_hasFix) {
@@ -63,6 +77,37 @@ void SarMetrics::Finalize(const std::string& outDir) {
             }
             fixOnVictim = (clutterD < 0 || fixErr <= clutterD) ? 1 : 0;
         }
+        // D17 accounting over every fix the BS received.
+        std::vector<std::pair<double, double>> vs = m_victims;
+        if (vs.empty()) vs.push_back({m_vx, m_vy});
+        std::vector<bool> located(vs.size(), false);
+        double tAll = -1.0;
+        int wrongFixes = 0;
+        for (const auto& fx : m_fixes) {
+            double bestV = -1; size_t vi = 0;
+            for (size_t i = 0; i < vs.size(); ++i) {
+                double d = std::hypot(fx.x - vs[i].first, fx.y - vs[i].second);
+                if (bestV < 0 || d < bestV) { bestV = d; vi = i; }
+            }
+            double bestC = -1;
+            for (const auto& c : m_clutter) {
+                double d = std::hypot(fx.x - c.x, fx.y - c.y);
+                if (bestC < 0 || d < bestC) bestC = d;
+            }
+            const bool onVictim = bestV <= params::kFixRadiusM &&
+                                  (bestC < 0 || bestV <= bestC);
+            if (onVictim) {
+                located[vi] = true;
+                bool all = true;
+                for (bool b : located) all = all && b;
+                if (all && tAll < 0) tAll = fx.t;
+            } else {
+                wrongFixes++;
+            }
+        }
+        int nLocated = 0;
+        for (bool b : located) nLocated += b ? 1 : 0;
+
         f << std::fixed << std::setprecision(4)
           << m_seed << "," << m_grid << "," << m_spacing << "," << m_numUav << ","
           << m_scheme << "," << m_target << "," << m_vx << "," << m_vy << "," << m_tReport << "," << m_tLocalize << "," << m_tComplete << ","
@@ -72,7 +117,9 @@ void SarMetrics::Finalize(const std::string& outDir) {
           << m_energyJ << "," << m_devM << ","
           << m_tFix << "," << (m_hasFix ? m_fixX : -1.0) << ","
           << (m_hasFix ? m_fixY : -1.0) << "," << fixErr << ","
-          << m_clutter.size() << "," << fixOnVictim << "," << clutterD;
+          << m_clutter.size() << "," << fixOnVictim << "," << clutterD << ","
+          << vs.size() << "," << m_fixes.size() << "," << nLocated << ","
+          << wrongFixes << "," << tAll;
         for (auto& [k, v] : m_extra) f << "," << v;
         f << "\n";
     }

@@ -121,6 +121,12 @@ struct SarScenarioConfig {
     double senseSigma = 0.0;     // detector noise, additive sigma on clueQuality
     double gpsSigmaM = 0.0;      // per-node frozen GPS offset, sigma in metres
     bool   victimOnNode = true;  // false = victim at a continuous position (W7)
+    // D17: how many REAL victims. 1 reproduces every earlier result. Real
+    // victims differ from confusable objects in exactly one way that matters:
+    // the complete reference dataset does not resolve them away, so each one
+    // has to be served, not ruled out.
+    uint32_t victimCount = 1;
+    double victimMinSepM = 150.0;   // keep victims from merging into one region
     // World-level ambiguity: M objects in the area that genuinely match the
     // reference dataset (another hiker in the same jacket, the search party).
     // 0 = the uniqueness assumption every earlier result was measured under.

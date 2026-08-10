@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <random>
+#include <utility>
 #include <vector>
 
 using namespace ns3;
@@ -96,8 +97,28 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             if (d < best) { best = d; tIdx = i; targetId = s.sensors.Get(i)->GetId(); }
         }
     }
+    // D17: additional REAL victims, placed on distinct nodes with the same
+    // minimum separation the clutter uses, from the SAME rng as the first victim
+    // so victimCount = 1 reproduces every earlier run byte-for-byte.
+    std::vector<std::pair<double, double>> victims{{victimX, victimY}};
+    std::vector<uint32_t> victimIds{targetId};
+    for (uint32_t v = 1; v < std::max(1u, cfg.victimCount); ++v) {
+        for (int attempt = 0; attempt < 400; ++attempt) {
+            uint32_t i = trng() % s.sensors.GetN();
+            Vector p = s.sensors.Get(i)->GetObject<MobilityModel>()->GetPosition();
+            bool ok = true;
+            for (const auto& [px, py] : victims)
+                if (std::hypot(p.x - px, p.y - py) < cfg.victimMinSepM) ok = false;
+            if (!ok) continue;
+            victims.push_back({p.x, p.y});
+            victimIds.push_back(s.sensors.Get(i)->GetId());
+            break;
+        }
+    }
+
     ClueFieldConfig cc;
     cc.targetNodeId = targetId;
+    cc.victims = victims;
     cc.seed = cfg.seed;
     cc.victimX = victimX;
     cc.victimY = victimY;
@@ -136,6 +157,13 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     // W7: ground truth is the victim's real position, which is no longer
     // necessarily a node position.
     m_metrics.SetGroundTruth(victimX, victimY, cfg.gridSpacing);
+    m_metrics.SetVictims(victims);
+    // Drawn as world events so a replay shows every real victim, not just the
+    // first -- a viewer that draws one victim while the fleet serves two is
+    // actively misleading.
+    for (size_t v = 0; v < victims.size(); ++v)
+        m_metrics.Event(0.0, 0, "world", "victim", "real",
+                        victims[v].first, victims[v].second, 0.0);
 
     // 5) Control plane is now FULLY DISTRIBUTED in the ground apps: each Cell
     // Leader aggregates its cell from RPTs, floods SHARE across boundaries, and
@@ -337,7 +365,8 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         int32_t cid = m_plan.nodes.at(id).cellId;
         app->SetCellId(cid);
         app->SetCellCenter(m_plan.cells.at(cid).centerX, m_plan.cells.at(cid).centerY);
-        app->SetIsTarget(id == targetId);
+        app->SetIsTarget(std::find(victimIds.begin(), victimIds.end(), id) !=
+                         victimIds.end());
         // audit B1: the ground-truth victim stop is an ORACLE — it set the
         // baselines' simulated lifetime, and therefore their energy and packet
         // totals, from information no node has. Under the symmetric rule no

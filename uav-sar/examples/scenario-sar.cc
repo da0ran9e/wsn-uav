@@ -40,6 +40,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("senseSigma", "detector noise sigma on clue quality (0 = ideal)", cfg.senseSigma);
     cmd.AddValue("gpsSigma", "per-node GPS error sigma in m (0 = exact)", cfg.gpsSigmaM);
     cmd.AddValue("victimOnNode", "victim sits exactly on a sensor (0 = continuous)", cfg.victimOnNode);
+    cmd.AddValue("victimCount", "number of REAL victims (1 = the classic setting)", cfg.victimCount);
+    cmd.AddValue("victimMinSep", "minimum separation between real victims (m)", cfg.victimMinSepM);
     cmd.AddValue("clutterCount", "confusable objects matching the reference data (0 = uniqueness)", cfg.clutterCount);
     cmd.AddValue("clutterSimMin", "min similarity of a confusable object", cfg.clutterSimMin);
     cmd.AddValue("clutterSimMax", "max similarity (1.0 = indistinguishable)", cfg.clutterSimMax);

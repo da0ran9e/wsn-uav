@@ -41,6 +41,13 @@ struct ClueFieldConfig {
     // is co-located with a sensor, the strongest reporter IS the victim and any
     // estimator looks good for free; that coincidence is removed here.
     double victimX = 0, victimY = 0;
+    // D17: MORE THAN ONE REAL VICTIM. Empty = the single (victimX, victimY)
+    // above, which is what every earlier result was measured under. With several
+    // real victims the detector still reports the best match it can find and
+    // still cannot say which object produced it -- the difference from clutter is
+    // that the complete reference does NOT resolve a real victim away, so a
+    // second victim survives delivery while a decoy does not.
+    std::vector<std::pair<double, double>> victims;
     double strongRadius = 40.0;     // m
     double weakRadius = 120.0;      // m
     double decay = 60.0;            // m, exponential falloff scale

@@ -62,6 +62,8 @@ std::map<uint32_t, ClueInfo> BuildClueField(const std::vector<CluePos>& nodes,
 
     // audit W7: distances are to the victim's CONTINUOUS position, not to the
     // node that happens to be nearest it.
+    std::vector<std::pair<double, double>> victims = cfg.victims;
+    if (victims.empty()) victims.push_back({cfg.victimX, cfg.victimY});
     const double tx = cfg.victimX, ty = cfg.victimY;
     const auto clutter = BuildClutter(nodes, cfg);
 
@@ -87,7 +89,12 @@ std::map<uint32_t, ClueInfo> BuildClueField(const std::vector<CluePos>& nodes,
         // itself never sees both -- the application interpolates by how much of
         // the dataset it actually holds -- so this is not an oracle, it is the
         // detector getting better as it is given more to compare against.
-        const double victimQ = Kernel(c.distToTarget, cfg);
+        // The best match over ALL real victims. Both readings get it: extra
+        // reference data sharpens the test, it does not make a real victim stop
+        // matching.
+        double victimQ = 0;
+        for (const auto& [vx, vy] : victims)
+            victimQ = std::max(victimQ, Kernel(std::hypot(n.x - vx, n.y - vy), cfg));
         double qTrue = victimQ, qFull = victimQ;
         if (qTrue > 0) c.sourceId = -1;
         const double keep = 1.0 - std::min(1.0, std::max(0.0, cfg.clutterResolve));

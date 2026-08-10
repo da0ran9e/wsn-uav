@@ -37,7 +37,9 @@ bool SarBsApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const 
         // audit B3: decode the victim fix, if this UAV carried one. The BS knows
         // a position ONLY because these bytes arrived; a blind-coverage baseline
         // reports mission-done with the flag clear and no position is recorded.
-        if (m_metrics && pkt->GetSize() >= kReportLen) {
+        // One fix per UAV: SendReport retries, and the decode used to run on
+        // every copy, so fixesAtBS counted retransmissions rather than answers.
+        if (m_metrics && firstFromThisUav && pkt->GetSize() >= kReportLen) {
             std::vector<uint8_t> b(kReportLen);
             pkt->CopyData(b.data(), kReportLen);
             if (b[1] & kFlagHasFix) {

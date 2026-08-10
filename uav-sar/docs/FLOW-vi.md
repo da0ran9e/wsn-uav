@@ -454,6 +454,15 @@ A2A trước đây bị coi là **mệnh lệnh**; giờ nó là **tin tuyển v
 
 ### 12.3 Kết quả — 6 hạt giống BẮT CẶP, mỗi nhánh MỘT binary
 
+> **Sửa lỗi phương pháp của chính tôi.** Bảng dưới đây chạy ở **8 UAV**, trong khi
+> D13 chốt điểm vận hành là **4 UAV (2 FAST + 2 DATA)**. Tôi đổi điểm vận hành mà
+> không nêu — đó là lỗi. Số liệu ở §12.6 là bản chạy **đúng đặc tả**; giữ bảng
+> 8 UAV lại chỉ để đối chiếu, **không** dùng làm kết quả.
+>
+> Và chỉ số **"số điểm khác nhau được phục vụ" là SAI THƯỚC ĐO**: ba UAV chồng lên
+> một chỗ với một UAV đi ba chỗ đều cho "3 điểm". Nó che đúng cái phải đo. Thước
+> đo đúng ở §12.6.
+
 24×24, 8 UAV, 2 nạn nhân thật + 4 vật gây nhầm, chân trời 500 s. Dấu `binary=`
 xác nhận mỗi nhánh đúng một bản dựng, và hai bản khác nhau.
 
@@ -491,3 +500,47 @@ Ba điều phải nói cho đúng:
 
 Hạt giống 5, trước/sau. Trước: 0/2 nạn nhân, 696 kJ, 103 405 gói — đội bay đứng
 phát vô hạn. Sau: **2/2 nạn nhân**, 296 kJ, 26 544 gói.
+
+
+### 12.6 ĐO ĐÚNG — 4 UAV theo D13, và thước đo chồng lấn thật
+
+Thước đo: hai **lượt giao hàng** của hai UAV khác nhau, cách nhau ≤ 150 m và
+**trùng nhau về thời gian**. Đây là thứ mắt nhìn thấy trong replay.
+
+24×24, **4 UAV (2 FAST + 2 DATA)**, 2 nạn nhân thật + 4 vật gây nhầm, 500 s,
+6 hạt giống bắt cặp, mỗi nhánh một binary (dấu `binary=` đã kiểm, hai bản khác nhau).
+
+| chỉ số | trước | sau |
+|---|---:|---:|
+| **giây giao hàng TRÙNG** | **431 s** | **32 s** |
+| cặp chồng lấn | 3 | 2 (4/6 hạt giống về **0**) |
+| lượt giao hàng | 11 | **30** |
+| điểm được phục vụ | 7 | **16** |
+| điểm nằm trên nạn nhân | 5 | **10** |
+| **`victimsLocated`** | **5/12** | **9/12** |
+| chuyển việc (`next_task`) | 0 | **14** |
+| fix sai người | 0 | 0 |
+| năng lượng (trung vị) | 117 kJ | 150 kJ (sau tốt hơn **2/6**) |
+| gói tin (trung vị) | 17 930 | 19 810 (sau tốt hơn 3/6) |
+| `timeToFix` (trung vị) | 106.3 s (5/6 run có) | 106.3 s (**6/6** run có) |
+
+**Chi phí tăng và tôi không giấu:** năng lượng trung vị +28 %, và chỉ 2/6 hạt
+giống rẻ hơn. Lý do đúng như thiết kế: đội bay giờ **thật sự đi phục vụ nhiều
+chỗ** thay vì đỗ một chỗ. Hạt giống 1 vừa rẻ hơn vừa tốt hơn (357 → 148 kJ,
+0/2 → 1/2); hạt giống 6 đắt hơn hẳn (109 → 283 kJ) mà không thêm nạn nhân nào.
+
+**N = 6 vẫn chỉ đủ nói hướng.** Quy tắc N ≥ 120 không đổi.
+
+### 12.7 Chuỗi ba lần đo — chồng lấn giảm dần
+
+| bản | cấu hình | giây trùng |
+|---|---|---:|
+| trước D32 | 8 UAV | 4 454 |
+| D32 v1 | 8 UAV | 243 |
+| D32 v1 | 4 UAV | 431 |
+| **D32 v2** (mục ma + kiểm lúc tới nơi) | **4 UAV** | **32** |
+
+Hai lỗ đã bịt ở v2: `m_tasks[crid]` tạo mục **(0,0)** khi nghe CLAIM của một vùng
+chưa biết vị trí (phép kiểm cùng-chỗ so với gốc toạ độ, và mục ma còn được chọn
+làm việc); và không có kiểm tra **lúc tới nơi** — đồng đội có thể chiếm chỗ trong
+lúc mình bay tới, mất hàng chục giây.

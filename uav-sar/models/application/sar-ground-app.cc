@@ -66,6 +66,19 @@ bool SarGroundApp::HasEntireDataset() const {
     return m_have.size() >= m_byId.size();
 }
 
+double SarGroundApp::PossessedFraction() const {
+    if (m_byId.empty()) return 0.0;
+    double have = 0, total = 0;
+    for (const auto& [id, f] : m_byId) {
+        total += f.sizeBytes;
+        auto it = m_chunks.find(id);
+        if (it == m_chunks.end()) continue;
+        uint32_t tot = std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
+        have += std::min(1.0, (double)it->second.size() / tot) * f.sizeBytes;
+    }
+    return total > 0 ? have / total : 0.0;
+}
+
 double SarGroundApp::CellAggregate() const {
     double u = 0.0;
     for (auto& [n, ne] : m_cellEvidence) u = 1.0 - (1.0 - u) * (1.0 - ne.ev);
@@ -147,7 +160,13 @@ double SarGroundApp::ClueNow() const {
     // there is no hidden threshold effect -- the node never knows which regime
     // it is in, it just reads a better number as more data arrives.
     if (m_clueQualityFull < 0.0) return m_clueQuality;
-    double c = PossessedConfidence();
+    // D31: weight by how much of the REFERENCE this node holds, not by the union
+    // recognition confidence. The cue fragments are 7% of the dataset; scoring
+    // them at 0.926 meant a node was treated as almost fully informed before any
+    // full-data chunk arrived, so a confusable object was resolved away at the
+    // cue stage and the ambiguity axis measured as a no-op (M=0 and M=4 gave
+    // byte-identical runs on 11 of 12 seeds).
+    double c = PossessedFraction();
     return m_clueQuality + c * (m_clueQualityFull - m_clueQuality);
 }
 

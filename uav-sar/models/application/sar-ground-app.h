@@ -121,6 +121,14 @@ private:
     void MaybeRetarget();                      // no CONFIRM -> aim at the next candidate
     void Elect();                              // fire the summon (winner)
     double PossessedConfidence() const;
+    // D31: the FRACTION of the reference dataset this node actually holds, by
+    // bytes. Distinct from PossessedConfidence(), which is the union recognition
+    // probability 1-prod(1-p_i) and is already 0.926 on the cue fragments alone
+    // -- 7% of the bytes. Using that as the two-tier mixing weight made a node
+    // holding only cues behave as if it were 92.6% informed, which silently
+    // disabled the entire false-positive premise. Confidence stays where it
+    // belongs (the reporting threshold); the mixing weight is this.
+    double PossessedFraction() const;
     bool HasEntireDataset() const;
     double CellAggregate() const;
 

@@ -8,6 +8,7 @@
 // Tags in comments: [Lit] literature, [Lit?] needs PDF confirm, [Design] our
 // choice, [Assume] assumption to validate.
 
+#include <cmath>
 #include <cstdint>
 
 namespace ns3::uavsar::params {
@@ -96,6 +97,16 @@ inline constexpr double kCruiseSpeedMps  = 20.0;    // [Design] all schemes
 // parasite term goes as v^3, so flying FAST at 25 m/s in this model costs ~1.95x
 // the parasite power of 20 m/s -- while a real fixed-wing would be cheaper, not
 // dearer. Time improves, energy is overstated. See FIXED-WING-FAST-vi.md.
+// Fixed-wing turn geometry. A coordinated level turn at bank angle phi has
+// radius R = v^2 / (g tan phi); at 25 m/s and 30 deg that is ~110 m, which is
+// larger than the 50 m coverage radius. A greedy waypoint hop therefore asks a
+// fixed-wing aircraft for turns it physically cannot fly, and the flown path is
+// not the planned one. 30 deg is a standard cruise bank for a survey aircraft.
+inline constexpr double kBankAngleDeg    = 30.0;   // [Lit/Design] survey cruise bank
+inline constexpr double kGravityMps2     = 9.81;
+inline double TurnRadiusM(double v) {
+    return v * v / (kGravityMps2 * std::tan(kBankAngleDeg * M_PI / 180.0));
+}
 inline constexpr double kFastSpeedMps    = 25.0;   // 90 km/h, fixed-wing; --fastSpeed
 inline constexpr double kDataSpeedMps    = 15.0;   // 54 km/h, rotary-wing; --dataSpeed
 inline constexpr double kClimbRateMps    = 5.0;     // [Design]
@@ -187,6 +198,10 @@ inline constexpr double kRelayGraceS     = 30.0;    // [Design] post-sweep relay
 // 1355 kJ with the mission incomplete. The local signal that the sweep is over
 // is that the sky has gone QUIET -- no FAST UAV is broadcasting cues any more.
 // Waiting on a wall-clock constant instead would repeat the audit A10 mistake.
+// D32b: a peer's CLAIM reserves a candidate for this long. A UAV that goes home
+// without announcing a release would otherwise reserve it forever, and the
+// candidate never gets served. Sized as travel + dwell + slack.
+inline constexpr double kClaimLeaseS     = 150.0;  // [Design] claim lease
 inline constexpr double kSkyQuietS       = 45.0;    // [Design] no cue heard for this
                                                     // long => sweep finished, go home
 

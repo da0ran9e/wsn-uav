@@ -87,6 +87,9 @@ bool SarDataUavApp::PeerServingNear(double x, double y, uint16_t* who) const {
     for (const auto& [rid, t] : m_tasks) {
         if (!t.known) continue;
         if (t.takenBy == 0xFFFF || t.takenBy == (uint16_t)m_nodeId) continue;
+        // A claim is a LEASE. A peer that went home, or whose release we never
+        // heard, must not reserve a candidate for the rest of the mission.
+        if (Simulator::Now().GetSeconds() - t.takenAt > params::kClaimLeaseS) continue;
         if (std::hypot(t.x - x, t.y - y) <= params::kRegionRadiusM) {
             if (who) *who = t.takenBy;
             return true;
@@ -111,7 +114,8 @@ void SarDataUavApp::ConsiderTasks() {
     for (const auto& [rid, t] : m_tasks) {
         if (!t.known) continue;          // heard OF it, do not know WHERE
         if (t.closed) continue;
-        if (t.takenBy != 0xFFFF && t.takenBy != (uint16_t)m_nodeId) continue;
+        if (t.takenBy != 0xFFFF && t.takenBy != (uint16_t)m_nodeId &&
+            Simulator::Now().GetSeconds() - t.takenAt <= params::kClaimLeaseS) continue;
         // Two leaders in adjacent cells can elect before either hears the
         // other's RCLAIM and summon the SAME PLACE under different region ids.
         // Measured at 24x24 with eight UAVs: two DATA UAVs delivered to points
@@ -155,6 +159,7 @@ void SarDataUavApp::ClaimDivert() {
     }
     m_boundRegion = m_myTask;                   // bind BEFORE announcing
     it->second.takenBy = (uint16_t)m_nodeId;
+    it->second.takenAt = Simulator::Now().GetSeconds();
     SendClaim(0);                               // announce on the radio, then act
     TryClaimDivert(m_pendX, m_pendY);
 }
@@ -305,8 +310,7 @@ void SarDataUavApp::ControlTick() {
                     m_myTask = 0xFFFF;
                     m_boundRegion = 0xFFFF;
                     m_state = State::PATROL;
-                    ConsiderTasks();
-                    if (m_myTask == 0xFFFF) BeginReturn();
+                    ConsiderTasks();   // stay available if nothing right now
                     break;
                 }
                 m_fc.Hover(); m_state = State::DELIVER;
@@ -571,7 +575,8 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // serving one of them.
         // D32: a peer's claim is now a fact about the WORK, recorded first.
         if (role == 0 && id != (uint16_t)m_nodeId && crid != 0xFFFF)
-            m_tasks[crid].takenBy = id;
+            { m_tasks[crid].takenBy = id;
+             m_tasks[crid].takenAt = Simulator::Now().GetSeconds(); }
         if (role == 2 && crid != 0xFFFF) {
             Task& t = m_tasks[crid];
             t.served++;
@@ -711,8 +716,19 @@ void SarDataUavApp::ReleaseAndContinue() {
     m_confirmed = false;               // free to serve and confirm another place
     m_state = State::PATROL;           // divertible again
     ConsiderTasks();
-    if (m_myTask == 0xFFFF) {          // nothing left that is ours -> go home
-        BeginReturn();
+    if (m_myTask == 0xFFFF) {
+        // D32b: STAY AVAILABLE. Going home here was the reason candidates went
+        // unserved: a UAV that finished or lost a job at t=66 s flew home, and
+        // the two regions summoned at t=71 s and t=94 s had nobody left to serve
+        // them -- with 400 s of horizon still unspent. "No job at this instant"
+        // is not "no job". The sky-quiet rule is the bound that sends a UAV home,
+        // and it is a bound on the SKY going silent, which is the right one.
+        if (m_metrics) {
+            Vector p = m_fc.GetPosition();
+            m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                             "yield_stay", "no candidate right now; staying available",
+                             p.x, p.y, p.z);
+        }
         return;
     }
     if (m_metrics) {

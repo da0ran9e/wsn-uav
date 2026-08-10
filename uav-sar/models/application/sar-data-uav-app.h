@@ -164,7 +164,8 @@ private:
                   // std::map::operator[] happily created an entry at (0,0) for
                   // it -- which then both defeated the same-place check and
                   // became a selectable job at the origin.
-                  bool known = false; };
+                  bool known = false;
+                  double takenAt = -1e9; };   // claim = lease, see kClaimLeaseS
     std::map<uint16_t, Task> m_tasks;
     uint16_t m_myTask = 0xFFFF;       // region I intend to claim, or am serving
     double m_lastCueHeardS = -1;      // last time a FAST UAV was heard cueing

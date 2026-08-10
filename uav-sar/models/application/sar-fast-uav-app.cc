@@ -66,33 +66,57 @@ void SarFastUavApp::StopApplication() {
 }
 
 void SarFastUavApp::BuildMission() {
+    // FIXED-WING coverage. The greedy maximum-coverage planner this used to call
+    // picks whichever uncovered waypoint scores best next, which produces a path
+    // that doubles back on itself constantly. A multirotor can fly that; a
+    // fixed-wing cannot. At 25 m/s and a 30 deg bank the turn radius is ~110 m,
+    // while consecutive greedy picks are typically one grid step apart -- so the
+    // planned path demanded turns roughly an order of magnitude tighter than the
+    // airframe can hold, and the flown trajectory was never the planned one.
+    //
+    // Replaced with a boustrophedon sweep whose lanes are visited in an
+    // INTERLEAVED order: lane 0, lane k, lane 2k, ... then lane 1, lane 1+k, ...
+    // with the stride k chosen so every turn-around spans at least one turn
+    // diameter. The only turns left are the 180 deg reversals at the ends of
+    // lanes, and each of those now has room to be flown at the design bank.
     m_targets.clear(); m_ti = 0;
     const size_t N = m_sensors.size();
     if (N == 0 || m_radius <= 0) return;
-    const double r2 = m_radius * m_radius;
-    std::vector<std::vector<uint32_t>> cov(N);
-    for (size_t i = 0; i < N; i++)
-        for (size_t j = 0; j < N; j++) {
-            double dx = m_sensors[i].x - m_sensors[j].x, dy = m_sensors[i].y - m_sensors[j].y;
-            if (dx * dx + dy * dy <= r2) cov[i].push_back(j);
+
+    double x0 = m_sensors[0].x, x1 = x0, y0 = m_sensors[0].y, y1 = y0;
+    for (const auto& s : m_sensors) {
+        x0 = std::min(x0, s.x); x1 = std::max(x1, s.x);
+        y0 = std::min(y0, s.y); y1 = std::max(y1, s.y);
+    }
+    // Fly lanes along the LONGER axis: fewer turn-arounds for the same area.
+    const bool lanesAlongX = (x1 - x0) >= (y1 - y0);
+    const double across0 = lanesAlongX ? y0 : x0;
+    const double across1 = lanesAlongX ? y1 : x1;
+    const double along0  = lanesAlongX ? x0 : y0;
+    const double along1  = lanesAlongX ? x1 : y1;
+
+    const double spacing = std::max(1.0, m_radius);          // full-overlap lanes
+    const int lanes = std::max(1, (int)std::ceil((across1 - across0) / spacing) + 1);
+    const double R = params::TurnRadiusM(m_speed);
+    const int stride = std::max(1, (int)std::ceil(2.0 * R / spacing));
+
+    std::vector<int> order;
+    for (int off = 0; off < stride; ++off)
+        for (int l = off; l < lanes; l += stride) order.push_back(l);
+
+    bool forward = true;
+    for (int l : order) {
+        const double a = across0 + l * spacing;
+        const double s0 = forward ? along0 : along1;
+        const double s1 = forward ? along1 : along0;
+        if (lanesAlongX) {
+            m_targets.push_back(Vector(s0, a, m_alt));
+            m_targets.push_back(Vector(s1, a, m_alt));
+        } else {
+            m_targets.push_back(Vector(a, s0, m_alt));
+            m_targets.push_back(Vector(a, s1, m_alt));
         }
-    std::vector<bool> covered(N, false), used(N, false);
-    size_t cc = 0; Vector last = m_fc.GetPosition();
-    while (cc < N) {
-        double bs = -1; int bi = -1;
-        for (size_t i = 0; i < N; i++) {
-            if (used[i]) continue;
-            uint32_t g = 0; for (uint32_t s : cov[i]) if (!covered[s]) g++;
-            if (!g) continue;
-            double d = std::hypot(m_sensors[i].x - last.x, m_sensors[i].y - last.y);
-            double sc = g / (1.0 + d / m_speed);
-            if (sc > bs) { bs = sc; bi = (int)i; }
-        }
-        if (bi < 0) break;
-        Vector wp(m_sensors[bi].x, m_sensors[bi].y, m_alt);
-        m_targets.push_back(wp); used[bi] = true;
-        for (uint32_t s : cov[bi]) if (!covered[s]) { covered[s] = true; cc++; }
-        last = wp;
+        forward = !forward;
     }
 }
 

@@ -76,6 +76,7 @@ private:
     std::set<uint16_t> m_relayedRegions;   // regions this UAV relayed a summon for
     std::set<uint16_t> m_closedRegions;    // regions a CONFIRM or REJECT closed
     bool AllRelayedClosed() const;
+    double m_prevDist = 0;      // waypoint range last tick (abeam detection)
     double m_relayUntilS = 0;   // audit A10: bounded post-sweep relay hold
     // audit W4: closed-loop baseline -- the best DIRECT echo this UAV heard.
     bool m_echoRelay = false;

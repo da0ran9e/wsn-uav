@@ -157,7 +157,23 @@ void SarFastUavApp::ControlTick() {
         }
     } else if (m_state == State::CRUISE) {
         Vector t = m_targets[m_ti];
-        if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
+        const double dNow = std::hypot(t.x - p.x, t.y - p.y);
+        // CONTINUOUS guidance. The heading used to be commanded only on reaching
+        // a waypoint, which was fine when Turn() snapped instantly: the aim was
+        // exact and the leg was a straight line. Under a turn-rate limit the
+        // initial arc puts the aircraft off course and it then flies straight
+        // for ever, never re-aiming -- measured as a total of 70 deg of heading
+        // change per run, identical across seeds, and zero deliveries.
+        m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI);
+        m_fc.Forward(m_speed);
+        // Accept the waypoint on approach OR once we are abeam of it: a
+        // rate-limited aircraft with a 110 m turn radius cannot always close to
+        // within the acceptance radius, and would orbit for ever trying.
+        const double R = params::TurnRadiusM(m_speed);
+        const bool passedAbeam = (m_prevDist > 0 && dNow > m_prevDist && dNow < 2.0 * R);
+        m_prevDist = dNow;
+        if (dNow <= arriveR || passedAbeam) {
+            m_prevDist = 0;
             m_ti++;
             if (m_ti >= m_targets.size()) {
                 // audit A10: a FAST UAV is the ONLY thing that can relay a
@@ -183,8 +199,7 @@ void SarFastUavApp::ControlTick() {
                     m_relayUntilS = Simulator::Now().GetSeconds() + params::kRelayGraceS;
                 }
             }
-            else { Vector n = m_targets[m_ti];
-                m_fc.Turn(std::atan2(n.y - p.y, n.x - p.x) * 180 / M_PI); m_fc.Forward(m_speed); }
+            // next leg: guidance above re-aims on the following tick.
         }
     } else if (m_state == State::RELAY_HOLD) {
         // Hold as an airborne relay until either the region forms (we relayed a

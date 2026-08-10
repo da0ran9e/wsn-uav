@@ -419,3 +419,75 @@ Thêm UAV **không** nằm trong danh sách này — đã đo, nó chỉ nhân �
 Hai khung 4 UAV / 8 UAV. `make_viewer.py` đã sửa để vẽ **mọi** nạn nhân thật
 (nhãn V1, V2) — trước đó nó chỉ vẽ `victimX/victimY`, tức một chiếc, và một viewer
 vẽ một nạn nhân trong khi đội bay phục vụ hai là **gây hiểu sai**.
+
+---
+
+## 12. D32 — chia việc giữa các UAV DATA qua A2A
+
+### 12.1 Gốc rễ: MỘT dòng
+
+```cpp
+// SUMMONED: cycle until the leader's CONFIRM stops us
+SendFullChunk(0, 0);        // ← lặp VÔ HẠN
+```
+
+UAV DATA giao xong một lượt toàn bộ dataset thì **quay lại giao từ đầu, không có
+điểm dừng nào ngoài CONFIRM cho đúng vùng của nó**. Ở một vật gây nhầm CONFIRM
+**không bao giờ tới**, nên chiếc UAV đứng đó phát cho tới hết chân trời. Đây là
+toàn bộ lý do "đội DATA chỉ phục vụ một điểm", và cũng là nguồn của 456–869 kJ ở
+40×40: đội bay **đứng yên phát sóng**, không phải bay.
+
+### 12.2 Giao thức chia việc (chỉ dùng thứ nghe được trên radio)
+
+| thành phần | luật |
+|---|---|
+| **bảng công việc** | A2A = *có việc ở đâu*; CLAIM của đồng đội = *ai nhận*; CONFIRM/REJECT = *việc nào đã ngã ngũ* |
+| **chọn** | ứng viên **ít được phục vụ nhất**, rồi **gần nhất**, trong số chưa ai nhận |
+| **thứ tự nói** | backoff trước CLAIM **tỉ lệ khoảng cách** → chiếc gần nhất lên tiếng trước |
+| **chống trùng không gian** | một việc coi là đã nhận nếu đồng đội nhận **bất kỳ việc nào trong 150 m** |
+| **phá hoà** | cùng mili-giây thì **id nhỏ hơn thắng**, chỉ khi còn đang bay tới |
+| **giải phóng** | hết dwell → `CLAIM role=2` báo trả vùng, rồi nhận việc kế |
+
+A2A trước đây bị coi là **mệnh lệnh**; giờ nó là **tin tuyển việc**. Không có
+`role=2` thì bảng của đồng đội giữ vùng "đã nhận" vĩnh viễn — đo được `next_task`
+= 0 ở **mọi** run.
+
+### 12.3 Kết quả — 6 hạt giống BẮT CẶP, mỗi nhánh MỘT binary
+
+24×24, 8 UAV, 2 nạn nhân thật + 4 vật gây nhầm, chân trời 500 s. Dấu `binary=`
+xác nhận mỗi nhánh đúng một bản dựng, và hai bản khác nhau.
+
+| chỉ số | trước | sau |
+|---|---:|---:|
+| **ứng viên được phục vụ** | 10/26 = **38 %** | 22/27 = **81 %** |
+| chuyển việc (`next_task`) | 0 | **32** |
+| **fix SAI NGƯỜI** | **5** | **0** |
+| năng lượng (trung vị) | 496 kJ | **288 kJ** (4/6 tốt hơn) |
+| gói tin (trung vị) | 42 598 | **25 940** (4/6 tốt hơn) |
+| nạn nhân định vị được | 6/12 | 7/12 |
+| `timeToFix` (trung vị) | 99.3 s (5/6 run có) | 102.1 s (**6/6** run có) |
+
+Ba điều phải nói cho đúng:
+
+1. **N = 6 chỉ đủ nói HƯỚNG.** Quy tắc N ≥ 120 vẫn nguyên; đây là kiểm chứng cơ
+   chế, không phải kết quả để trích dẫn.
+2. **Thời gian trung vị "tăng" là ảo giác sống sót.** Bản trước chỉ 5/6 run có
+   fix, bản sau 6/6 — trung vị sau tính trên tập **khó hơn**. So trực tiếp hai
+   trung vị ở đây là đúng cái bẫy `STATUS.md` §5 đã ghi.
+3. **Hạt giống 3 xấu đi** (2/2 → 1/2 nạn nhân, năng lượng 208 → 311 kJ). Chia
+   việc rộng hơn không miễn phí: phục vụ nhiều chỗ hơn có thể lấy mất thời gian
+   của chỗ đúng.
+
+### 12.4 Hai lỗi phụ tìm được trong lúc đo
+
+- **Ràng buộc vùng không chặt:** `if (m_boundRegion != 0xFFFF && rid != m_boundRegion)`
+  — UAV chưa gắn vùng nào thì nhận **mọi** lệnh nhắm lại. Một trong các đường
+  khiến cả đội dồn về một vật gây nhầm.
+- **Fix đã xác nhận bị ghi đè:** UAV xác nhận nạn nhân 2 rồi nhận việc thứ ba,
+  mang toạ độ việc thứ ba về BS. Cả hai nạn nhân đã nhận đủ dữ liệu mà
+  `victimsLocated` vẫn 1/2.
+
+### 12.5 Replay: `docs/visualize/replay-task-division.html`
+
+Hạt giống 5, trước/sau. Trước: 0/2 nạn nhân, 696 kJ, 103 405 gói — đội bay đứng
+phát vô hạn. Sau: **2/2 nạn nhân**, 296 kJ, 26 544 gói.

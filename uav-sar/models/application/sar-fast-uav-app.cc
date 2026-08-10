@@ -125,6 +125,10 @@ void SarFastUavApp::TakeOff() {
     if (m_targets.empty()) return;
     if (m_metrics) { Vector p = m_fc.GetPosition();
         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "FAST", "takeoff", "", p.x, p.y, p.z); }
+    // Fixed-wing: heading rate g tan(phi) / v, i.e. one turn diameter per 180 deg.
+    m_fc.SetMaxTurnRateDegPerS(params::kGravityMps2 *
+                               std::tan(params::kBankAngleDeg * M_PI / 180.0) /
+                               std::max(1.0, m_speed) * 180.0 / M_PI);
     m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);
     m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarFastUavApp::ControlTick, this);
     m_dis = Simulator::Schedule(Seconds(params::kDisseminateStaggerS), &SarFastUavApp::DisseminateTick, this);
@@ -132,6 +136,7 @@ void SarFastUavApp::TakeOff() {
 }
 
 void SarFastUavApp::ControlTick() {
+    m_fc.Step(params::kControlTickS);   // fly the rate-limited turn
     Vector p = m_fc.GetPosition();
     double arriveR = std::max(1.0, m_speed * params::kControlTickS * 1.5);
     if (m_state == State::CLIMB) {

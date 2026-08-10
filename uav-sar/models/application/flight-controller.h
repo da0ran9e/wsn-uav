@@ -15,7 +15,14 @@ class FlightController {
 public:
     void AttachTo(ns3::Ptr<ns3::Node> node);
     void Forward(double speedMps);     // set horizontal speed along current heading
-    void Turn(double headingDeg);      // set heading (degrees, math convention)
+    void Turn(double headingDeg);      // command a heading (degrees, math convention)
+    // FIXED-WING: a coordinated turn at bank phi gives a turn RATE of
+    // g tan(phi) / v, so heading cannot change faster than that. Left at 0 the
+    // vehicle turns instantly, which is a fair model for a multirotor and a
+    // wrong one for an aeroplane. Turn() clamps toward the commanded heading by
+    // this rate per call; the caller passes the elapsed time.
+    void SetMaxTurnRateDegPerS(double r) { m_maxTurnRate = r; }
+    void Step(double dtS);             // advance the rate-limited heading by dt
     void Hover();                      // horizontal speed 0
     void SetClimb(double vzMps);       // vertical speed
     ns3::Vector GetPosition() const;
@@ -29,6 +36,8 @@ private:
     double m_speed = 0;
     double m_headingDeg = 0;
     double m_vz = 0;
+    double m_maxTurnRate = 0;          // deg/s; 0 = instant (rotary-wing)
+    double m_cmdHeadingDeg = 0;        // what the controller was ASKED for
 };
 
 }  // namespace ns3::uavsar

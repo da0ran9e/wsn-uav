@@ -14,7 +14,24 @@ void FlightController::AttachTo(Ptr<Node> node) {
 }
 
 void FlightController::Forward(double speedMps) { m_speed = speedMps; Apply(); }
-void FlightController::Turn(double headingDeg)  { m_headingDeg = headingDeg; Apply(); }
+void FlightController::Turn(double headingDeg) {
+    m_cmdHeadingDeg = headingDeg;
+    if (m_maxTurnRate <= 0) { m_headingDeg = headingDeg; Apply(); }
+    // Rate-limited: the heading itself moves in Step(), so a fixed-wing cannot
+    // snap onto a new course the way the old code let it.
+}
+
+void FlightController::Step(double dtS) {
+    if (m_maxTurnRate <= 0 || dtS <= 0) return;
+    double d = m_cmdHeadingDeg - m_headingDeg;
+    while (d > 180.0) d -= 360.0;
+    while (d < -180.0) d += 360.0;
+    const double lim = m_maxTurnRate * dtS;
+    if (d > lim) d = lim;
+    if (d < -lim) d = -lim;
+    m_headingDeg += d;
+    Apply();
+}
 void FlightController::Hover()                  { m_speed = 0; Apply(); }
 void FlightController::SetClimb(double vzMps)   { m_vz = vzMps; Apply(); }
 

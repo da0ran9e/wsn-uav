@@ -409,3 +409,37 @@ gói tin) trong bản đo hiện có.
 Đóng góp B **chưa từng được đo trong điều kiện nó có lý do tồn tại** — mọi số hiện
 có đo ở $M=0$, $\sigma=0$, tức đúng chế độ mà hợp tác không có việc gì để làm. Đó
 là lý do tồn tại của ma trận 3×3.
+
+---
+
+## 14. D17 đã CÀI (2026-08-08) — nhiều nạn nhân thật + nhiều mục tiêu giả
+
+Trước đây D17 nằm ở mục "để sau". Đã cài vì thảo luận yêu cầu cấu hình
+**5–6 mục tiêu (ví dụ 2 thật + 4 giả)**.
+
+**Khác biệt duy nhất có ý nghĩa giữa nạn nhân thật và vật gây nhầm:** dữ liệu
+tham chiếu đầy đủ **không** giải quyết được một nạn nhân thật. Nên
+`clueQualityFull` giữ nguyên số hạng nạn nhân và chỉ suy giảm số hạng vật gây
+nhầm. Hệ quả vận hành: **vật gây nhầm phải bị LOẠI, nạn nhân phải được PHỤC VỤ** —
+hai nghĩa vụ khác nhau, và đó là chỗ bài toán P13 (phân vùng hợp tác) có nội dung
+thật.
+
+| tham số | mặc định | ghi chú |
+|---|---|---|
+| `--victimCount` | 1 | 1 tái lập **nguyên văn** mọi kết quả cũ (đã kiểm: 29/29 cột trùng) |
+| `--victimMinSep` | 150 m | cùng luật tách như vật gây nhầm |
+
+**Cột mới:** `victimCount`, `fixesAtBS`, `victimsLocated`, `wrongFixes`,
+`timeToAllVictims_s`. Một fix chỉ tính là giải quyết được một nạn nhân khi nó
+**vừa** nằm trong `kFixRadiusM = 50 m` **vừa** gần nạn nhân đó hơn mọi vật gây
+nhầm — đây chính là câu trả lời cho **O8**: chỉ dùng điều kiện "gần nạn nhân hơn
+mọi vật gây nhầm" thì ở $M=0$ nó **luôn đúng** và cột đo được số không.
+
+**Sửa kèm một lỗi đếm:** BS giải mã fix từ **mọi** bản REPORT phát lại, nên
+`fixesAtBS` đếm số lần phát lại (30) thay vì số câu trả lời (3). Giờ chỉ giải mã
+bản đầu tiên của mỗi UAV.
+
+**Còn thiếu (cụm C của D30):** REPORT vẫn chỉ mang **một** cặp toạ độ, nên nhiều
+nạn nhân chỉ báo về được nhờ **nhiều UAV cùng báo**, mỗi chiếc một fix. Với đội
+bay nhỏ hơn số nạn nhân thì đây là ràng buộc thật, không phải giả tạo — nhưng
+phải ghi rõ là ràng buộc của **giao thức hiện tại**, không phải của bài toán.

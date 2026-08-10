@@ -316,3 +316,44 @@ nhịp cue** khi đã có vùng đang được phục vụ, chứ không phải 
 | cụm E | `kMaxRetargets` — xem lại sau khi D31 xong |
 | `candidatesFound/Resolved` | chỉ số mới, làm cùng lúc với cụm C |
 | **cổng G1f** | **không kiểm được** cho tới khi D31 xong: ở mặc định, M=4 cho kết quả **giống hệt M=0** ở 11/12 hạt giống |
+
+---
+
+## 10. D31 — kết quả sau khi sửa trọng số hai tầng
+
+`ClueNow()` giờ nội suy theo **tỉ lệ byte đã nhận** (`PossessedFraction`) thay vì
+`PossessedConfidence`. 16×16, 4 UAV, 12 hạt giống, cùng một binary trừ thay đổi này:
+
+| | M=0 trước | M=0 sau | M=4 trước | M=4 sau |
+|---|---:|---:|---:|---:|
+| summon / run | 1 | 1 | 1 | **1–4 (trung vị 3)** |
+| fix tới BS | 11/12 | 11/12 | 11/12 | **4/12** |
+| năng lượng (med) | 83.2 kJ | 83.2 kJ | 83.2 kJ | **278.8 kJ** |
+| gói tin (med) | 4 931 | 4 931 | 4 931 | **42 006** |
+| fix sai người | 0 | 0 | 0 | **0** |
+
+**M=0 không đổi một cột nào** — đúng như phải thế: không có vật gây nhầm thì
+`clueQualityFull == clueQuality`, trọng số trộn không thể có tác dụng. Chế độ so
+sánh chính (D14) **không bị động tới**.
+
+**M=4 đổi hoàn toàn.** Mơ hồ thôi không còn miễn phí; nó thành một chế độ mà đội
+bay hiện tại **không dọn nổi trong chân trời 400 s**: 4 UAV trải trên 3 vùng ứng
+viên, mỗi vùng 34 kB phải giao. 278.8 kJ ≈ đúng bằng bốn UAV bay hết 400 s, tức
+là chúng **không bao giờ xong**.
+
+Điều **không** đổi: `fixOnVictim` sai = **0** ở mọi run. Cơ chế phân giải vẫn
+đúng — nó chỉ tốn hơn nhiều so với những gì đã báo cáo trước đây.
+
+Hệ quả: con số 400 s là chân trời, nên 8/12 run là **kiểm duyệt**, không phải thất
+bại. Đây chính là O1 ($T_{\max}$ lấy từ đâu) trở thành câu hỏi cấp bách, và là lý
+do D14 (M=0 cho mọi so sánh) đúng.
+
+### Replay: `docs/visualize/replay-multicandidate.html`
+
+Ba khung cùng seed 4, cùng nạn nhân, cùng 4 vật gây nhầm:
+
+| khung | hành vi |
+|---|---|
+| 1 — trước | **1 summon**, cả đội về nhà sau confirm đầu tiên |
+| 2 — D30 | quét hết, nhưng mơ hồ vẫn vô hiệu nên vẫn 1 summon |
+| 3 — D30+D31 | **3 summon**; 32 REJECT loại các vật gây nhầm, 9 CONFIRM ở nạn nhân thật; fix về BS lúc 90.9 s, **sai số 0.0 m** |

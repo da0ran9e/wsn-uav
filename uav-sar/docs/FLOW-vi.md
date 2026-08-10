@@ -357,3 +357,65 @@ Ba khung cùng seed 4, cùng nạn nhân, cùng 4 vật gây nhầm:
 | 1 — trước | **1 summon**, cả đội về nhà sau confirm đầu tiên |
 | 2 — D30 | quét hết, nhưng mơ hồ vẫn vô hiệu nên vẫn 1 summon |
 | 3 — D30+D31 | **3 summon**; 32 REJECT loại các vật gây nhầm, 9 CONFIRM ở nạn nhân thật; fix về BS lúc 90.9 s, **sai số 0.0 m** |
+
+---
+
+## 11. 40×40, 2 nạn nhân thật + 4 vật gây nhầm — kết quả và chẩn đoán
+
+Cấu hình: `--gridSize=40 --gridSpacing=20` (780×780 m, 1600 nút),
+`--victimCount=2 --clutterCount=4`, chân trời 600 s, seed 1. Hai mức đội bay.
+
+| | 4 UAV | 8 UAV |
+|---|---:|---:|
+| vùng triệu tập | 5 | 4 |
+| CONFIRM | **0** | **0** |
+| REJECT | 68 | 81 |
+| divert | 2 | 4 |
+| `victimsLocated` | **0 / 2** | **0 / 2** |
+| `wrongFixes` | 0 | 0 |
+| năng lượng | 456 kJ | **869 kJ** |
+| gói tin | 80 252 | 131 915 |
+
+### Chẩn đoán: ĐỊNH VỊ ĐÃ XONG, LẬP LỊCH MỚI LÀ NÚT THẮT
+
+Nạn nhân thật ở **(100, 720)** và **(380, 460)**. Các điểm triệu tập:
+
+| t (s) | điểm nhắm | cách nạn nhân gần nhất | kết luận |
+|---:|---|---:|---|
+| 48.9–56.6 | (100.0, 720.0) | **0.0 m** | **nạn nhân** |
+| 71.1–71.7 | (380.0, 460.0) | **0.0 m** | **nạn nhân** |
+| 58.5 / 48.9 | (260–280, 280) | 206–216 m | vật gây nhầm |
+| 92.8 | (560, 320) | 228 m | vật gây nhầm |
+| 70–159 | (640, 540) | 272 m | vật gây nhầm |
+
+**Mặt phẳng hợp tác tìm ra CẢ HAI nạn nhân, sai số 0.0 m, trong vòng 72 giây.**
+Cái hỏng không phải định vị mà là **giao hàng**: 0 CONFIRM, 68–81 REJECT — nghĩa
+là các UAV đã giao xong dữ liệu ở **vật gây nhầm** (nên nút ở đó loại được chúng)
+và **chưa bao giờ hoàn tất giao hàng ở một nạn nhân thật** trong 600 s.
+
+**Gấp đôi đội bay không sửa được.** 8 UAV cho 4 divert thay vì 2, vẫn 0 CONFIRM,
+và **đốt gấp đôi năng lượng** (869 kJ). Nút thắt không phải số máy bay mà là
+**thời gian giao hàng trên mỗi ứng viên** (382 chunk qua LR-WPAN) nhân với **thứ
+tự phục vụ**: đội bay phục vụ ứng viên theo **thứ tự nghe thấy**, không theo thứ
+tự tối thiểu hoá thời gian kỳ vọng tới nạn nhân. Ở 8 UAV, ứng viên đầu tiên
+(t=48.9 s) là một vật gây nhầm và nó chiếm mất chiếc DATA rảnh đầu tiên.
+
+**Đây chính là bài toán P10** (độ trễ nhỏ nhất có trọng số / traveling repairman)
+có nội dung thật, đo được, chứ không phải phát biểu cho đẹp. Nó là lập luận mạnh
+nhất cho §IV của bài báo mà ta có cho tới giờ.
+
+### Ba hướng sửa, theo thứ tự giá trị
+
+| | cơ chế | vì sao hợp |
+|---|---|---|
+| **D9** | UAV dừng giao hàng ngay khi nghe CONFIRM/REJECT đủ mạnh, thay vì rải hết dwell | cắt thẳng thời gian trên mỗi ứng viên |
+| **D2/D11** | tiếp sức payload nội ô | một lượt bay chỉ cần chạm vài nút, phần còn lại của ô nhận qua G2G |
+| **lập lịch** | phục vụ theo **ưu tiên bằng chứng**, không theo thứ tự đến | đúng phần heuristic mà P10 dẫn tới |
+
+Thêm UAV **không** nằm trong danh sách này — đã đo, nó chỉ nhân đôi chi phí.
+
+### Replay: `docs/visualize/replay-40x40-multitarget.html`
+
+Hai khung 4 UAV / 8 UAV. `make_viewer.py` đã sửa để vẽ **mọi** nạn nhân thật
+(nhãn V1, V2) — trước đó nó chỉ vẽ `victimX/victimY`, tức một chiếc, và một viewer
+vẽ một nạn nhân trong khi đội bay phục vụ hai là **gây hiểu sai**.

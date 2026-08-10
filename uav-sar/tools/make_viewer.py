@@ -57,11 +57,16 @@ def load_run(label, d):
         raise SystemExit(f"{d}: no metrics.csv")
     m = m[0]
     cfg = read_cfg(os.path.join(d, "config.txt"))
-    ev, traj, clutter = [], [], []
+    ev, traj, clutter, victims = [], [], [], []
     for e in read_csv(os.path.join(d, "events.csv")):
         # Confusable objects are world setup, not timeline events: they are
         # pulled out here rather than kept in ev, so they can be drawn from t=0
         # without cluttering the event feed.
+        # D17: every REAL victim, so a run with two of them does not get drawn
+        # as if it had one. Same treatment as clutter: world setup, not timeline.
+        if e["event"] == "victim":
+            victims.append([round(float(e["x"]), 1), round(float(e["y"]), 1)])
+            continue
         if e["event"] == "clutter":
             clutter.append([round(float(e["x"]), 1), round(float(e["y"]), 1),
                             float(e["detail"] or 0)])
@@ -89,6 +94,9 @@ def load_run(label, d):
         "spacing": sp,
         "numUav": int(m["numUav"]),
         "victim": [num("victimX"), num("victimY")],
+        # All real victims. Falls back to the single one for runs made before
+        # --victimCount existed.
+        "victims": victims or [[num("victimX"), num("victimY")]],
         # confusable objects: things in the field that genuinely match the
         # reference data. Drawn, because a UAV heading for one of these looks
         # like a bug unless you can see what it is heading for.
@@ -347,11 +355,18 @@ function draw(){
     ctx.fillText('s='+c[2].toFixed(2), cx+14, cy-13);
   });
 
-  // victim (true) + BS
-  const [vx,vy]=proj(r.victim[0],r.victim[1]);
-  ctx.strokeStyle=css('--victim'); ctx.lineWidth=3;
-  ctx.beginPath(); ctx.arc(vx,vy,11,0,6.284); ctx.stroke();
-  ctx.beginPath(); ctx.arc(vx,vy,20,0,6.284); ctx.globalAlpha=0.35; ctx.stroke(); ctx.globalAlpha=1;
+  // victims (true) + BS -- every one of them, and numbered when there is more
+  // than one, so a two-victim run cannot be mistaken for a one-victim run.
+  const VS=r.victims||[r.victim];
+  VS.forEach((v,i)=>{
+    const [x,y]=proj(v[0],v[1]);
+    ctx.strokeStyle=css('--victim'); ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(x,y,11,0,6.284); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,y,20,0,6.284); ctx.globalAlpha=0.35; ctx.stroke(); ctx.globalAlpha=1;
+    if(VS.length>1){ ctx.fillStyle=css('--victim'); ctx.font='11px ui-monospace,monospace';
+                     ctx.fillText('V'+(i+1), x+24, y+4); }
+  });
+  const [vx,vy]=proj(r.victims?r.victims[0][0]:r.victim[0], r.victims?r.victims[0][1]:r.victim[1]);
   const [bx,by]=proj(0,0);
   ctx.fillStyle=css('--bs'); ctx.fillRect(bx-6,by-6,12,12);
 

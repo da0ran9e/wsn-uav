@@ -340,7 +340,17 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         }
         // Radio courier election: schedule a CLAIM after a short backoff; the
         // first FAST to claim on the radio wins, the rest yield.
-        if (!m_courier && !m_yieldedCourier && !m_courierEvent.IsPending())
+        //
+        // ...but ONLY a UAV that has finished sweeping may volunteer. Couriering
+        // ends the sweep, and with two FAST UAVs that costs half the cue
+        // coverage: measured at 24x24, the courier flew 2.1 km and landed at
+        // t=90 s while its peer flew 5.7 km to t=264 s, and FAST reached only
+        // 73 % of the nodes. The DATA UAV already flies home as the fallback
+        // carrier, so an unfinished sweep is worth more than a faster courier.
+        const bool sweepDone = (m_state == State::RELAY_HOLD ||
+                                m_state == State::RETURN_BS ||
+                                m_ti >= m_targets.size());
+        if (sweepDone && !m_courier && !m_yieldedCourier && !m_courierEvent.IsPending())
             m_courierEvent = Simulator::Schedule(
                 Seconds(m_rng->GetValue(0.0, params::kClaimBackoffS)),
                 &SarFastUavApp::ClaimCourier, this);

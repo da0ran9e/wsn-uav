@@ -102,7 +102,14 @@ inline constexpr double kCruiseSpeedMps  = 20.0;    // [Design] all schemes
 // larger than the 50 m coverage radius. A greedy waypoint hop therefore asks a
 // fixed-wing aircraft for turns it physically cannot fly, and the flown path is
 // not the planned one. 30 deg is a standard cruise bank for a survey aircraft.
-inline constexpr double kBankAngleDeg    = 30.0;   // [Lit/Design] survey cruise bank
+// 45 deg, not 30. Turn cost dominates a fixed-wing sweep of a small area: each
+// 180 deg reversal costs at least pi*R of arc, and at 30 deg (R = 110 m) that is
+// 345 m against 460 m of useful lane, so 52.7 % of all FAST distance was spent
+// turning outside the field -- and moving the turn waypoints barely touched it
+// (53.1 % -> 52.7 %), because the arc length is set by R alone. 45 deg halves R
+// to 64 m. It is a firm bank but well inside the envelope of a small fixed-wing
+// survey UAV, and it is the only lever that changes the arc.
+inline constexpr double kBankAngleDeg    = 45.0;   // [Lit/Design] survey turn bank
 inline constexpr double kGravityMps2     = 9.81;
 inline double TurnRadiusM(double v) {
     return v * v / (kGravityMps2 * std::tan(kBankAngleDeg * M_PI / 180.0));

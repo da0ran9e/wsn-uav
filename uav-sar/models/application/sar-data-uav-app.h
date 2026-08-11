@@ -9,6 +9,7 @@
 
 #include "flight-controller.h"
 #include "../common/target-profile.h"
+#include "../common/sar-types.h"
 #include "../common/sar-params.h"
 
 #include "ns3/application.h"
@@ -19,10 +20,12 @@
 #include "ns3/ptr.h"
 #include "ns3/random-variable-stream.h"
 
+#include <cmath>
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <set>
+#include <utility>
 #include <vector>
 
 namespace ns3::uavsar {
@@ -177,7 +180,14 @@ private:
     uint16_t m_myTask = 0xFFFF;       // region I intend to claim, or am serving
     std::set<uint16_t> m_sweepDone;   // FAST UAVs that announced their sweep done
     double m_lastCueHeardS = -1;      // last time a FAST UAV was heard cueing
-    bool m_hasFix = false;          // audit B3: carry the victim fix home
+    bool m_hasFix = false;
+    // D37: every CONFIRMED position this UAV is carrying, not just the first.
+    std::vector<std::pair<double, double>> m_fixes;
+    void AddFix(double x, double y) {
+        for (const auto& f : m_fixes)
+            if (std::hypot(f.first - x, f.second - y) <= 50.0) return;   // same place
+        if (m_fixes.size() < kMaxFixes) m_fixes.push_back({x, y});
+    }          // audit B3: carry the victim fix home
     double m_fixX = 0, m_fixY = 0;
     double m_deliverDwellS = params::kMinDeliverDwellS;
     double m_divertStartDist = 0;

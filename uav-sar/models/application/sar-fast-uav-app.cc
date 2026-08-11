@@ -324,13 +324,17 @@ void SarFastUavApp::TrajTick() {
 void SarFastUavApp::SendReport() {
     if (m_reportsSent >= params::kReportRetries) return;
     if (m_dev) {
+        if (m_hasFix) AddFix(m_fixX, m_fixY);
         std::vector<uint8_t> b(kReportLen, 0);
         uint8_t* q = b.data();
-        *q++ = (uint8_t)Msg::REPORT; *q++ = m_hasFix ? kFlagHasFix : 0x00;
-        uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2; *q++ = 255;
-        int16_t fx = (int16_t)std::lround(m_fixX * 10.0);
-        int16_t fy = (int16_t)std::lround(m_fixY * 10.0);
-        std::memcpy(q, &fx, 2); q += 2; std::memcpy(q, &fy, 2);
+        *q++ = (uint8_t)Msg::REPORT;
+        *q++ = m_fixes.empty() ? 0x00 : kFlagHasFix;
+        *q++ = (uint8_t)m_fixes.size();
+        for (const auto& f : m_fixes) {
+            int16_t fx = (int16_t)std::lround(f.first * 10.0);
+            int16_t fy = (int16_t)std::lround(f.second * 10.0);
+            std::memcpy(q, &fx, 2); q += 2; std::memcpy(q, &fy, 2); q += 2;
+        }
         m_dev->Send(Create<Packet>(b.data(), b.size()), m_bsAddr, 0);
         if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
     }
@@ -347,6 +351,7 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         if (b[1] & kFlagHasFix) {
             int16_t fx, fy; std::memcpy(&fx, &b[4], 2); std::memcpy(&fy, &b[6], 2);
             m_hasFix = true; m_fixX = fx / 10.0; m_fixY = fy / 10.0;
+            AddFix(m_fixX, m_fixY);
         }
         // Radio courier election: schedule a CLAIM after a short backoff; the
         // first FAST to claim on the radio wins, the rest yield.
@@ -379,6 +384,7 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // Only now is the relayed aim worth carrying home.
         if (m_fixOnConfirm && m_hasPend && !m_hasFix) {
             m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY;
+            AddFix(m_fixX, m_fixY);
         }
     }
     // D30: a CONFIRM used to abort the sweep outright and send this UAV home,

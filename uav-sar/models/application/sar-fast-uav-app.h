@@ -7,6 +7,7 @@
 
 #include "flight-controller.h"
 #include "../common/target-profile.h"
+#include "../common/sar-types.h"
 
 #include "ns3/application.h"
 #include "ns3/net-device.h"
@@ -16,9 +17,11 @@
 #include "ns3/address.h"
 #include "ns3/random-variable-stream.h"
 
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <set>
+#include <utility>
 #include <vector>
 
 namespace ns3::uavsar {
@@ -84,6 +87,13 @@ private:
     void RelayBestEcho();
     ns3::EventId m_echoSettle;
     bool m_hasFix = false;
+    // D37: every CONFIRMED position this UAV is carrying, not just the first.
+    std::vector<std::pair<double, double>> m_fixes;
+    void AddFix(double x, double y) {
+        for (const auto& f : m_fixes)
+            if (std::hypot(f.first - x, f.second - y) <= 50.0) return;   // same place
+        if (m_fixes.size() < kMaxFixes) m_fixes.push_back({x, y});
+    }
     // A relayed aim is only a CANDIDATE until the ground confirms it.
     bool m_hasPend = false, m_fixOnConfirm = true;
     double m_pendFixX = 0, m_pendFixY = 0;      // audit B3: victim fix to carry home in the REPORT

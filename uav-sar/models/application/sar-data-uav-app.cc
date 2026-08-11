@@ -463,13 +463,17 @@ void SarDataUavApp::PatrolCueTick() {
 void SarDataUavApp::SendReport() {
     if (m_reportsSent >= params::kReportRetries) return;
     if (m_dev) {
+        if (m_hasFix) AddFix(m_fixX, m_fixY);
         std::vector<uint8_t> b(kReportLen, 0);
         uint8_t* q = b.data();
-        *q++ = (uint8_t)Msg::REPORT; *q++ = m_hasFix ? kFlagHasFix : 0x00;
-        uint16_t rid = 1; std::memcpy(q, &rid, 2); q += 2; *q++ = 255;
-        int16_t fx = (int16_t)std::lround(m_fixX * 10.0);
-        int16_t fy = (int16_t)std::lround(m_fixY * 10.0);
-        std::memcpy(q, &fx, 2); q += 2; std::memcpy(q, &fy, 2);
+        *q++ = (uint8_t)Msg::REPORT;
+        *q++ = m_fixes.empty() ? 0x00 : kFlagHasFix;
+        *q++ = (uint8_t)m_fixes.size();
+        for (const auto& f : m_fixes) {
+            int16_t fx = (int16_t)std::lround(f.first * 10.0);
+            int16_t fy = (int16_t)std::lround(f.second * 10.0);
+            std::memcpy(q, &fx, 2); q += 2; std::memcpy(q, &fy, 2); q += 2;
+        }
         m_dev->Send(Create<Packet>(b.data(), b.size()), m_bsAddr, 0);
         if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
     }
@@ -742,6 +746,7 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             // A node under the drop holds the whole reference and still matches
             // it, so this aim is worth reporting. Only now.
             m_hasFix = true;
+            AddFix(m_fixX, m_fixY);      // D37: keep every confirmed position
             // Keep delivering until the coverage dwell elapses so the whole
             // localized footprint (incl. a slightly-off victim) reconstructs the
             // data — then head home and hand the report to the FAST courier.

@@ -5,6 +5,7 @@
 #include "ns3/core-module.h"
 #include "ns3/packet.h"
 
+#include <algorithm>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -43,12 +44,16 @@ bool SarBsApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const 
             std::vector<uint8_t> b(kReportLen);
             pkt->CopyData(b.data(), kReportLen);
             if (b[1] & kFlagHasFix) {
-                int16_t fx, fy;
-                std::memcpy(&fx, &b[5], 2);
-                std::memcpy(&fy, &b[7], 2);
-                m_metrics->MarkVictimFix(t, fx / 10.0, fy / 10.0);
-                m_metrics->Event(t, m_nodeId, "BS", "fix_rx", "victim fix decoded",
-                                 fx / 10.0, fy / 10.0, 0.0);
+                // D37: a report may carry several confirmed positions.
+                const uint32_t n = std::min<uint32_t>(b[2], kMaxFixes);
+                for (uint32_t i = 0; i < n; ++i) {
+                    int16_t fx, fy;
+                    std::memcpy(&fx, &b[kReportHdr + i * 4], 2);
+                    std::memcpy(&fy, &b[kReportHdr + i * 4 + 2], 2);
+                    m_metrics->MarkVictimFix(t, fx / 10.0, fy / 10.0);
+                    m_metrics->Event(t, m_nodeId, "BS", "fix_rx", "victim fix decoded",
+                                     fx / 10.0, fy / 10.0, 0.0);
+                }
             }
         }
         // mission complete only when every expected UAV has reported.

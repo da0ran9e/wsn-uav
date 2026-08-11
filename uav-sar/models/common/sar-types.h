@@ -65,7 +65,17 @@ inline constexpr uint32_t kRejectLen  = kConfirmLen;                // same body
 // of simulator state. flags bit0 = "a fix follows"; a UAV that never learned one
 // (every blind-coverage baseline) clears it and the BS records no position.
 inline constexpr uint8_t  kFlagHasFix = 0x01;
-inline constexpr uint32_t kReportLen  = 1 + 1 + 2 + 1 + 2 + 2;      // 9
+// D37: a REPORT carries UP TO kMaxFixes confirmed positions, not one.
+//
+// One slot was the binding constraint on the whole mission, not a detail. With
+// two DATA UAVs it capped a run at two fixes however many victims were found:
+// measured with the fleet kept airborne until the sweep completed, 12 of 16
+// victims had a UAV deliver to them and only 8 fixes ever reached the BS, and
+// every attempt to serve more candidates traded straight against reporting
+// them. [type][flags][count:u8] + count x [x:i16][y:i16].
+inline constexpr uint32_t kMaxFixes   = 4;
+inline constexpr uint32_t kReportHdr  = 1 + 1 + 1;                  // 3
+inline constexpr uint32_t kReportLen  = kReportHdr + kMaxFixes * 4; // 19
 inline constexpr uint32_t kHandoffLen = 1 + 1 + 2 + 2 + 2;          // 8
 inline constexpr uint32_t kRptLen     = 1 + 2 + 2 + 1 + 1 + 2 + 2;  // 11 (+self GPS)
 // audit A4/A5: SHARE carries the cell aggregate (evQ8, used by the election to

@@ -82,12 +82,32 @@ def victim_pos(m, fallback_spacing=None):
     return (k % grid) * sp, (k // grid) * sp
 
 
-def binary_id(run_dir):
-    """Identity of the executable that produced a run: mtime+size of the binary.
+def module_id(run_dir):
+    """Identity of the uav-sar MODULE LIBRARY that produced a run.
 
-    Preferred over build_id: build= is a __DATE__/__TIME__ baked into one
-    translation unit and does not move when a rebuild touched only other files,
-    so it silently passes on a mixed campaign. Absent in runs predating this.
+    This is the one that matters. Every app, model and helper lives in
+    libns3.46-uav-sar.so, not in the scenario executable, and the build system
+    does not relink an executable when only a library it links against changes.
+    So `binary=` can be byte-identical across two builds whose behaviour differs
+    completely -- demonstrated, not theorised: two campaigns that measured
+    2/3 versus 4/4 candidates served on the same seed carried the SAME `binary=`
+    stamp, and a controlled test (touch one model source, rebuild) reproduced it
+    on demand. Absent in runs predating this.
+    """
+    try:
+        for line in open(os.path.join(run_dir, "config.txt")):
+            if line.startswith("module="):
+                return line.split("=", 1)[1].strip()
+    except Exception:
+        pass
+    return None
+
+
+def binary_id(run_dir):
+    """Identity of the scenario EXECUTABLE: mtime+size.
+
+    Kept for runs predating module=, but see module_id: on its own this guard is
+    blind to a module-only rebuild, which is the common case in this project.
     """
     try:
         for line in open(os.path.join(run_dir, "config.txt")):
@@ -119,9 +139,9 @@ def assert_one_build(run_dirs, label=""):
     """
     seen = {}
     for d in run_dirs:
-        # Prefer the executable's own identity; fall back to the compiled-in
-        # stamp for runs made before that existed.
-        b = binary_id(d) or build_id(d)
+        # Prefer the MODULE's identity -- the executable's stamp does not move
+        # on a module-only rebuild. Fall back for older runs.
+        b = module_id(d) or binary_id(d) or build_id(d)
         if b is not None:
             seen.setdefault(b, []).append(d)
     if len(seen) > 1:

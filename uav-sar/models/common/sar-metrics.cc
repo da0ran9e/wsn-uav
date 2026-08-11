@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <filesystem>
+#include <dlfcn.h>
 #include <sys/stat.h>
 #include <fstream>
 #include <iomanip>
@@ -158,6 +159,19 @@ void SarMetrics::Finalize(const std::string& outDir) {
             struct stat st;
             if (::stat("/proc/self/exe", &st) == 0)
                 f << "binary=" << (long long)st.st_mtime << "," << (long long)st.st_size << "\n";
+            // ...and the guard above is NOT enough. Every app, model and helper
+            // in this project lives in the uav-sar MODULE LIBRARY, not in the
+            // executable, and ninja does not relink an executable when only a
+            // shared library it links against changes. So a rebuild that alters
+            // every behaviour in the simulation can leave `binary=` byte-for-byte
+            // identical. Caught in the act: two campaigns whose measured results
+            // differed (candidates served 2/3 vs 4/4 on the same seed) carried
+            // the SAME binary= stamp. Stamp the module the code actually lives
+            // in, resolved at runtime from a symbol inside it.
+            Dl_info info;
+            if (dladdr(reinterpret_cast<const void*>(&SarMetrics::Finalize), &info) && info.dli_fname &&
+                ::stat(info.dli_fname, &st) == 0)
+                f << "module=" << (long long)st.st_mtime << "," << (long long)st.st_size << "\n";
         }
         // The ambiguity regime, for the same reason as build=: clutterCount = 0
         // is the uniqueness assumption the baseline comparisons are measured

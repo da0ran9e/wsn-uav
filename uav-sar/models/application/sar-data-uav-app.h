@@ -78,6 +78,10 @@ public:
     // Report a position only for a CONFIRMED delivery. 0 restores reporting the
     // aim as soon as it is claimed (the ablation).
     void SetFixOnConfirm(bool v) { m_fixOnConfirm = v; }
+    // D36: carry a confirmed fix home immediately (1) or keep serving
+    // candidates first (0). See SarScenarioConfig::fixFirst for the measured
+    // trade -- the two settings are opposite corners, not better and worse.
+    void SetFixFirst(bool v) { m_fixFirst = v; }
     // Reliability/cost knob: how long to keep delivering after arriving. CONFIRM
     // can come from a bystander under the drop point, so a short dwell strands a
     // victim that sits further out.
@@ -127,6 +131,7 @@ private:
     bool m_patrolReverse = false;
     bool m_stayAvailable = true;
     bool m_fixOnConfirm = true;
+    bool m_fixFirst = true;
     size_t m_cueIdx = 0;
     uint16_t m_cueSeq = 0;
     uint32_t m_cueTxCount = 0;

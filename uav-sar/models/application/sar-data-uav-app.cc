@@ -745,7 +745,9 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             // time-to-fix went from 99 s to 352 s. The peer DATA UAV and the
             // cue sweep still cover the remaining candidates -- they stayed at
             // 100 % served.
-            Simulator::Schedule(Seconds(wait), &SarDataUavApp::BeginReturn, this);
+            Simulator::Schedule(Seconds(wait),
+                                m_fixFirst ? &SarDataUavApp::BeginReturn
+                                           : &SarDataUavApp::ReleaseAndContinue, this);
         }
     }
     return true;

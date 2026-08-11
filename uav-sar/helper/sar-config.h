@@ -125,6 +125,15 @@ struct SarScenarioConfig {
     // victims differ from confusable objects in exactly one way that matters:
     // the complete reference dataset does not resolve them away, so each one
     // has to be served, not ruled out.
+    // D36: with a small DATA team the two goals CONFLICT and the measurement
+    // says so. Measured at 24x24, 4 UAVs, 2 victims + 4 decoys, 8 seeds:
+    //   fixFirst=1  victims 14/16, time-to-fix 112 s, 218 kJ, candidates 66 %
+    //   fixFirst=0  victims  8/16, time-to-fix 352 s, 383 kJ, candidates 100 %
+    // A UAV holding a CONFIRMED fix either flies it home now, or keeps serving
+    // candidates and the fix waits on a 15 m/s airframe. This is problem P10
+    // (weighted minimum latency) showing up as a knob rather than as prose, so
+    // it is a declared arm, not a silent choice.
+    bool fixFirst = true;
     uint32_t victimCount = 1;
     double victimMinSepM = 150.0;   // keep victims from merging into one region
     // World-level ambiguity: M objects in the area that genuinely match the

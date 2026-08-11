@@ -319,6 +319,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetPatrolReverse(true);
             app->SetStayAvailable(cfg.stayAvailable);
             app->SetFixOnConfirm(cfg.fixOnConfirm);
+            app->SetFixFirst(cfg.fixFirst);
             app->SetCruise(params::kCruiseAltitudeM, dataSpd);
             app->SetLoiter(Vector(cx, cy, params::kCruiseAltitudeM));
             app->SetBs(bsPos, bsAddr);

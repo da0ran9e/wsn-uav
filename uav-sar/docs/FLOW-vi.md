@@ -721,3 +721,55 @@ nguyên tắc nhưng không phải nguyên nhân. Không được coi là đã s
 tới BS — trần cứng của cụm C (REPORT mang một cặp toạ độ, một UAV giữ một fix).
 
 **Hạt giống 7: 2 `wrongFix`, 0/2 nạn nhân.** Chưa truy.
+
+---
+
+## 16. D36 — độ phủ FAST, và một ĐÁNH ĐỔI không thể tránh
+
+### 16.1 Độ phủ: gốc rễ không nằm ở hình dạng đường bay
+
+| bản | độ phủ FAST | ứng viên phục vụ | tFix trung vị |
+|---|---:|---:|---:|
+| xen kẽ luống | 73.4 % | 96 % | 90.0 s |
+| quay đầu ngoài vùng | **67.9 %** | 96 % | 98.6 s |
+| + courier phải quét xong | **100.0 %** | **100 %** | **351.9 s** |
+| + fix về ngay | **100.0 %** | 66 % | **112.0 s** |
+
+Hai phát hiện, cả hai đều **không** phải chuyện hình học đường bay:
+
+1. **Xen kẽ luống không làm được việc nó được viết ra để làm.** Dải rộng 230 m,
+   đường kính lượn 220 m; thứ tự `[0,5,1,2,3,4]` giãn được hai lần quay đầu đầu
+   tiên (250 m, 200 m) rồi để ba lần cuối ở **50 m**. Không thứ tự nào cứu được —
+   phải quay đầu **ngoài vùng**, như máy bay khảo sát thật.
+2. **Một trong hai chiếc FAST bỏ dở giữa chừng để làm courier.** Đo được: chiếc
+   courier bay 2.1 km, hạ cánh lúc t=90 s; chiếc kia bay 5.7 km tới t=264 s. Với
+   đúng 2 chiếc theo D13, mất một chiếc là mất nửa độ phủ cue. Sửa: chỉ chiếc
+   **đã quét xong** mới được ứng cử → **độ phủ 100 % ở mọi hạt giống**.
+
+### 16.2 Đánh đổi: cứu người sớm ĐỐI LẬP quét sạch
+
+8 hạt giống bắt cặp, **một `module=`**, 24×24, 4 UAV, 2 nạn nhân + 4 vật gây nhầm:
+
+| chỉ số | `--fixFirst=1` | `--fixFirst=0` |
+|---|---:|---:|
+| độ phủ FAST | 100 % | 100 % |
+| **ứng viên được phục vụ** | 21/32 = **66 %** | 35/35 = **100 %** |
+| **`victimsLocated`** | **14/16** | 8/16 |
+| **`timeToFix`** (trung vị) | **112.0 s** | 351.9 s |
+| năng lượng (trung vị) | **218 kJ** | 383 kJ |
+| gói tin (trung vị) | **20 499** | 23 904 |
+| lượt giao / điểm | **1.00** | 1.11 |
+| chồng lấn | **0 s** | 22 s |
+| khúc gấp quá khả năng | 0.2 % | 0.2 % |
+
+Một UAV đang giữ **fix đã xác nhận** hoặc mang nó về ngay, hoặc đi phục vụ tiếp
+và để fix ngồi trên một khung 15 m/s. Với 2 UAV DATA thì **hai mục tiêu loại trừ
+nhau**, và biên độ không hề nhỏ: 3× thời gian, 1.75× năng lượng, đổi lấy 34 %
+điểm nghi vấn.
+
+Đây là **P10 (độ trễ nhỏ nhất có trọng số) hiện ra thành một cái núm đo được**,
+không còn là một phát biểu suông trong §IV. Vì thế nó là **một nhánh khai báo**
+chứ không phải một lựa chọn giấu trong bộ lập lịch — `--fixFirst`.
+
+**Chưa giải quyết:** `wrongFixes = 2` ở cả hai nhánh (đều ở hạt giống 7), và
+`victimsLocated` trần ở 14/16 ngay cả ở nhánh tốt nhất.

@@ -622,6 +622,15 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
                 m_tasks[crid].takenAt = Simulator::Now().GetSeconds();
             }
         }
+        if (role == 3) {
+            // A FAST UAV has finished its band. Until every sweep is done the
+            // field can still produce a new candidate, so a DATA UAV that has
+            // run out of work must WAIT, not land. Measured before this: DATA
+            // landed at t=75-215 s while cues were still going out at t=306 s,
+            // and 11 of 32 candidates were never served because nobody was
+            // airborne when they were summoned.
+            m_sweepDone.insert(id);
+        }
         if (role == 2 && crid != 0xFFFF) {
             Task& t = m_tasks[crid];
             t.served++;
@@ -815,6 +824,13 @@ void SarDataUavApp::ReleaseAndContinue() {
 
 void SarDataUavApp::BeginReturn() {
     if (m_state == State::RETURN || m_state == State::DONE) return;
+    // Gate: the sweep must be over. The sky-quiet rule remains the upper bound,
+    // so this cannot hang -- it only stops an early landing.
+    if (m_sweepDone.empty() && m_lastCueHeardS > 0 &&
+        Simulator::Now().GetSeconds() - m_lastCueHeardS <= params::kSkyQuietS) {
+        m_state = State::PATROL;          // stay up and available
+        return;
+    }
     m_state = State::RETURN;
     SendHandoff();
 }

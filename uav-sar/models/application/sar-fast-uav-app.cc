@@ -94,7 +94,13 @@ void SarFastUavApp::BuildMission() {
     const double along0  = lanesAlongX ? x0 : y0;
     const double along1  = lanesAlongX ? x1 : y1;
 
-    const double spacing = std::max(1.0, m_radius);
+    // Lane spacing at 1.6x the cue radius, not 1x. The swath is 2*radius wide,
+    // so 1x spacing double-covered every strip and doubled the number of
+    // turn-arounds for nothing. Measured cost of that: 65.4 % of all FAST
+    // distance was flown OUTSIDE the field (10.63 km out against 5.63 km in),
+    // because six lanes mean five reversals and each reversal leaves the area.
+    // 1.6x keeps a 20 % overlap margin and roughly halves the lane count.
+    const double spacing = std::max(1.0, 1.6 * m_radius);
     const int lanes = std::max(1, (int)std::ceil((across1 - across0) / spacing) + 1);
     const double R = params::TurnRadiusM(m_speed);
 
@@ -112,7 +118,10 @@ void SarFastUavApp::BuildMission() {
     // in order, and each turn-around is two explicit waypoints placed 2R BEYOND
     // the end of the lane, so the reversal happens off the field and costs
     // distance instead of coverage.
-    const double turnOut = 2.0 * R;
+    // Excursion beyond the lane end. 2R was a safe over-estimate; a reversal
+    // with a small lateral offset needs about 1.2R of run-out to be flown at the
+    // design bank, and the rest was pure waste outside the search area.
+    const double turnOut = 1.2 * R;
     auto wp = [&](double along, double across) {
         return lanesAlongX ? Vector(along, across, m_alt) : Vector(across, along, m_alt);
     };
@@ -206,6 +215,7 @@ void SarFastUavApp::ControlTick() {
                 // grace is what keeps a relay alive across the decision. Both
                 // ends are local — no UAV consults the ground truth or a global
                 // view to decide.
+                SendClaim(3);      // sweep complete: the DATA team may stand down
                 if (!m_allHome) { m_fc.Hover(); }
                 else if (AllRelayedClosed()) { m_state = State::RETURN_BS; }
                 else {

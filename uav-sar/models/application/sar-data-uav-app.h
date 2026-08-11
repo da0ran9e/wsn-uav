@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace ns3::uavsar {
@@ -174,6 +175,7 @@ private:
                   double takenAt = -1e9; };   // claim = lease, see kClaimLeaseS
     std::map<uint16_t, Task> m_tasks;
     uint16_t m_myTask = 0xFFFF;       // region I intend to claim, or am serving
+    std::set<uint16_t> m_sweepDone;   // FAST UAVs that announced their sweep done
     double m_lastCueHeardS = -1;      // last time a FAST UAV was heard cueing
     bool m_hasFix = false;          // audit B3: carry the victim fix home
     double m_fixX = 0, m_fixY = 0;

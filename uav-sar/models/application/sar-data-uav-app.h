@@ -151,6 +151,7 @@ private:
     double m_pendX = 0, m_pendY = 0;
     ns3::EventId m_claimEvent;
     bool m_pendingDivert = false;   // claimed before airborne; divert after climb
+    bool m_dwellStarted = false;    // dwell clock runs once per region, not per re-aim
     bool m_confirmed = false;
     uint16_t m_boundRegion = 0xFFFF;  // leader whose re-aims we accept
     // D32: shared picture of the work, kept per UAV from what it heard.

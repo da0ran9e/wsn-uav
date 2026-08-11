@@ -111,7 +111,6 @@ void SarDataUavApp::ConsiderTasks() {
     Vector p = m_fc.GetPosition();
     uint16_t best = 0xFFFF;
     double bestD = 0;
-    uint8_t bestServed = 255;
     for (const auto& [rid, t] : m_tasks) {
         if (!t.known) continue;          // heard OF it, do not know WHERE
         if (t.closed) continue;
@@ -124,10 +123,7 @@ void SarDataUavApp::ConsiderTasks() {
         // has taken any job about the same place.
         if (PeerServingNear(t.x, t.y)) continue;
         double d = std::hypot(t.x - p.x, t.y - p.y);
-        if (best == 0xFFFF || t.served < bestServed ||
-            (t.served == bestServed && d < bestD)) {
-            best = rid; bestD = d; bestServed = t.served;
-        }
+        if (best == 0xFFFF || d < bestD) { best = rid; bestD = d; }
     }
     if (best == 0xFFFF) {              // nothing left that is ours to do
         Simulator::Cancel(m_claimEvent);
@@ -159,6 +155,7 @@ void SarDataUavApp::ClaimDivert() {
         return;
     }
     m_boundRegion = m_myTask;                   // bind BEFORE announcing
+    m_dwellStarted = false;
     it->second.takenBy = (uint16_t)m_nodeId;
     it->second.takenAt = Simulator::Now().GetSeconds();
     SendClaim(0);                               // announce on the radio, then act
@@ -315,7 +312,14 @@ void SarDataUavApp::ControlTick() {
                     break;
                 }
                 m_fc.Hover(); m_state = State::DELIVER;
-                m_deliverUntil = Simulator::Now().GetSeconds() + m_deliverDwellS;
+                // Only the FIRST arrival in a region starts the dwell clock. A
+                // leader re-aim moves the hover point by a few tens of metres
+                // and used to restart the whole 382-chunk delivery, which is
+                // where 14 of the 35 repeat episodes came from.
+                if (!m_dwellStarted) {
+                    m_dwellStarted = true;
+                    m_deliverUntil = Simulator::Now().GetSeconds() + m_deliverDwellS;
+                }
                 if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
                                                 "deliver_start", "", p.x, p.y, p.z);
                 SendFullChunk(0, 0); }
@@ -600,6 +604,7 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         if (role == 2 && crid != 0xFFFF) {
             Task& t = m_tasks[crid];
             t.served++;
+            t.closed = true;                // a peer has delivered there: done
             if (t.takenBy == id) t.takenBy = 0xFFFF;
             if (!m_claimed) ConsiderTasks();
         }
@@ -728,12 +733,19 @@ void SarDataUavApp::ReleaseAndContinue() {
         Task& t = m_tasks[m_boundRegion];
         t.served++;
         t.takenBy = 0xFFFF;
+        // A place that has had a full delivery dwell is DONE. Leaving it merely
+        // "least served" let the fleet come back to it once every other
+        // candidate had been visited: measured 60 delivery episodes for 25
+        // distinct places, 58 % of the delivery effort spent re-serving ground
+        // that had already had the whole dataset dropped on it.
+        t.closed = true;
     }
     m_claimed = false;
     m_yieldedDivert = false;
     m_myTask = 0xFFFF;
     m_boundRegion = 0xFFFF;
-    m_confirmed = false;               // free to serve and confirm another place
+    m_confirmed = false;
+    m_dwellStarted = false;               // free to serve and confirm another place
     m_state = State::PATROL;           // divertible again
     ConsiderTasks();
     if (m_myTask == 0xFFFF) {

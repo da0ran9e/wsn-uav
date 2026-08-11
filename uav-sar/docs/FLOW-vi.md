@@ -668,3 +668,56 @@ sau:    binary=1786355023,82512   module=1786411527,829336
 Đã thêm `module=` (giải qua `dladdr` từ một symbol trong chính module) và cho
 `assert_one_build` ưu tiên nó. Đây mới là cái guard mà `STATUS.md` open problem 5
 định làm, ở đúng tầng.
+
+---
+
+## 15. D35 — chấm dứt phục vụ lặp
+
+### 15.1 Đo được trước khi sửa
+
+| | |
+|---|---:|
+| lượt giao / điểm | **2.40** (60 lượt cho 25 điểm) |
+| lượt lặp | **35 = 58 % công sức** |
+
+Tách nguyên nhân: **21 lượt** do UAV **khác** quay lại, **14 lượt** do **cùng** UAV.
+
+### 15.2 Bốn lỗi, bốn nguyên nhân khác nhau
+
+| # | lỗi | sửa |
+|---|---|---|
+| 1 | `served` chỉ là **thứ tự ưu tiên** — hết một vòng thì cả đội quay lại từ đầu | một chỗ đã có **trọn một dwell** là **đóng** cho toàn đội; `CLAIM role=2` báo cho đồng đội |
+| 2 | mỗi lần lãnh đạo nhắm lại, UAV **khởi động lại 382 chunk** và reset dwell | đồng hồ dwell chỉ chạy ở **lần tới đầu tiên** của vùng |
+| 3 | lần tiếp tục vẫn phát sự kiện `deliver_start` → phép đo **đếm nhầm** thành lượt phục vụ mới | tách `deliver_move` |
+| 4 | nút đóng dấu CONFIRM/REJECT bằng "vùng gần nhất tôi nghe thấy", kể cả cách hàng trăm mét → **đóng oan** một ứng viên chưa ai phục vụ | chỉ nhận vùng khi nút **thật sự ở trong** (≤ 100 m) |
+
+Lỗi 3 đáng nói riêng: **12 trong 13 lượt "lặp" còn lại sau khi sửa lỗi 1 là do nhãn
+sai của phép đo, không phải hành vi.** Đây là lần thứ ba trong phiên thước đo nói
+sai về hành vi (trước đó: "số điểm khác nhau", và "chồng lấn").
+
+### 15.3 Kết quả — 8 hạt giống, một `module=`
+
+| chỉ số | trước | sau |
+|---|---:|---:|
+| **lượt giao / điểm** | **2.40** | **1.08** |
+| lượt lặp | 35 (58 %) | **2 (7 %)** |
+| chồng lấn giao hàng | 1 cặp / 5 s | **0 / 0 s** |
+| ứng viên được phục vụ | 25/25 = 100 % | 26/27 = **96 %** |
+| khúc gấp quá khả năng fixed-wing | 0.2 % | 0.3 % |
+| `victimsLocated` | 8/16 | 8/16 |
+| `wrongFixes` | 2 | 2 |
+
+### 15.4 CÒN LẠI — chưa sửa được, ghi lại đúng hiện trạng
+
+**Một ứng viên trong một hạt giống (s3) vẫn không được phục vụ.** Chẩn đoán đọc
+`known=3 closed=2 taken=1` trên **cả hai** UAV cùng lúc — mỗi chiếc tưởng chiếc kia
+đang giữ ứng viên thứ ba. Tôi đã thử hai bản sửa (ràng buộc vùng cho nút; chỉ ghi
+nhận CLAIM của đồng đội khi nó thật sự thắng) và **cả hai đều không đổi một con số
+nào** trên toàn bộ 8 hạt giống, dù `module=` xác nhận binary có đổi. Nghĩa là
+đường đi thật của lỗi này **chưa được xác định**, và hai bản sửa kia là đúng về
+nguyên tắc nhưng không phải nguyên nhân. Không được coi là đã sửa.
+
+**`victimsLocated` vẫn 8/16.** 12 nạn nhân có UAV giao hàng tới nơi, chỉ 8 fix về
+tới BS — trần cứng của cụm C (REPORT mang một cặp toạ độ, một UAV giữ một fix).
+
+**Hạt giống 7: 2 `wrongFix`, 0/2 nạn nhân.** Chưa truy.

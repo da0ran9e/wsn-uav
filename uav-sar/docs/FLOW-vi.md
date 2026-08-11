@@ -604,3 +604,67 @@ Hai chỗ chưa sạch, ghi lại chứ không giấu: hạt giống 6 còn **1 
 (7 m) — nhiều khả năng ở chặng về BS hoặc lúc chuyển `RELAY_HOLD`, chưa áp dẫn
 đường liên tục; và chồng lấn quay lại **3 cặp / 33 giây** (bản trước đó là 0), vì
 FAST chậm hơn làm đổi toàn bộ mốc thời gian. Một `wrongFix` cũng xuất hiện.
+
+---
+
+## 14. D34 — RCLAIM làm tin tuyển việc, và 100 % ứng viên được phục vụ
+
+### 14.1 Gốc rễ: ứng viên không tới được bầu trời
+
+Không phải "không ai rảnh đi", mà là **không ai biết nó tồn tại**. SUMMON là
+quảng bá **một hop**; một vùng chỉ tới được đội DATA nếu tình cờ có FAST trong
+~50 m đúng lúc lãnh đạo phát. Sau D33 (luống cách nhau 250 m) chuyện đó thành
+hiếm. Đo ở 24×24 seed 1: **3 vùng triệu tập, bảng công việc của DATA chỉ có 2**,
+vùng thứ ba không ai phục vụ.
+
+**Sửa:** dùng chính **flood RCLAIM** làm tin tuyển việc. Nó vốn được phát để các ô
+khác đứng xuống, mang sẵn `cellId` + toạ độ nhắm, và **flood toàn vùng** — nên ở
+đâu có UAV thì ở đó có một nút đang chuyển tiếp nó. DATA nghe RCLAIM thì thêm vào
+bảng; FAST chuyển tiếp thành A2A cho DATA ngoài tầm mặt đất.
+
+Đây là mặt phẳng hợp tác mặt đất làm đúng việc nó sinh ra để làm: **bù cho một
+bầu trời không thể có mặt khắp nơi.** Trước đó nó chỉ dùng để dập bầu cử.
+
+### 14.2 Kiểm chứng — 8 hạt giống, MỘT `module=`
+
+24×24, 4 UAV (2 FAST + 2 DATA), 2 nạn nhân thật + 4 vật gây nhầm, 500 s.
+
+| chỉ số | giá trị |
+|---|---|
+| **ứng viên được phục vụ** | **25/25 = 100 %** (0 bỏ sót ở mọi hạt giống) |
+| chồng lấn giao hàng | 1 cặp / **5 giây** trên 8 run |
+| khúc gấp quá khả năng fixed-wing | 5/2217 = **0.2 %** |
+| `victimsLocated` | **8/16** |
+| `wrongFixes` | **2** (đều ở hạt giống 7) |
+| năng lượng trung vị | 355 kJ |
+| `timeToFix` trung vị | 88.9 s (**8/8** run có fix) |
+
+**Cái ĐẠT:** mọi điểm nghi vấn đều được một UAV mang dữ liệu đầy đủ tới. Đó là
+yêu cầu, và nó đã đúng ở mọi hạt giống.
+
+**Cái CHƯA đạt, phải nói rõ:** 12 nạn nhân (trên 16) có UAV giao hàng tới nơi,
+nhưng chỉ **8** fix về được tới BS. Bốn cái mất ở chặng cuối. Nguyên nhân đã biết
+và chưa sửa — **cụm C của D30**: REPORT chỉ mang **một** cặp toạ độ, và một UAV
+chỉ giữ được một fix, nên với 2 UAV DATA thì trần cứng là 2 fix mỗi run dù có
+phục vụ bao nhiêu chỗ. Hạt giống 7 còn tệ hơn: 2 `wrongFix` và 0/2 nạn nhân.
+
+### 14.3 LỖI PHƯƠNG PHÁP tìm được khi kiểm: guard chống nhầm build bị MÙ
+
+`binary=` chụp mtime+size của **file thực thi**, nhưng mọi app/model/helper nằm
+trong **thư viện module** `libns3.46-uav-sar.so`, và ninja **không relink** file
+thực thi khi chỉ thư viện đổi. Một bản build đổi hoàn toàn hành vi vẫn để lại dấu
+`binary=` **giống hệt từng byte**.
+
+Bắt được tại trận: hai batch cho kết quả khác hẳn (cùng seed 1: 2/3 so với 4/4
+ứng viên được phục vụ) mà mang **cùng** `binary=1786355023,82512`. Tái hiện có
+kiểm soát — sửa một file model, rebuild:
+
+```
+trước:  binary=1786355023,82512   module=1786411514,829304
+sau:    binary=1786355023,82512   module=1786411527,829336
+        ↑ KHÔNG đổi                ↑ đổi cả mtime lẫn size
+```
+
+Đã thêm `module=` (giải qua `dladdr` từ một symbol trong chính module) và cho
+`assert_one_build` ưu tiên nó. Đây mới là cái guard mà `STATUS.md` open problem 5
+định làm, ở đúng tầng.

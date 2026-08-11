@@ -773,3 +773,54 @@ chứ không phải một lựa chọn giấu trong bộ lập lịch — `--fix
 
 **Chưa giải quyết:** `wrongFixes = 2` ở cả hai nhánh (đều ở hạt giống 7), và
 `victimsLocated` trần ở 14/16 ngay cả ở nhánh tốt nhất.
+
+---
+
+## 17. D37/D38 — trạng thái hiện tại: phủ hết, phục vụ hết, và chi phí quay đầu
+
+### 17.1 Ba phát hiện, mỗi cái sửa một con số khác nhau
+
+**D37 — REPORT mang 4 toạ độ, không phải 1.** Một khe fix mỗi UAV là **trần cứng
+của cả nhiệm vụ**: 2 UAV DATA thì tối đa 2 toạ độ về được mỗi run dù tìm ra bao
+nhiêu nạn nhân, nên **mọi** thay đổi giữ đội bay ở lại phục vụ thêm đều đổi thẳng
+bằng số nạn nhân báo được. Đo: 12/16 nạn nhân có UAV tới nơi mà chỉ 8 fix về BS.
+Sửa xong: **8/16 → 13/16**, mọi chỉ số khác không đổi.
+
+**Cổng chờ FAST báo quét xong.** DATA không được hạ cánh khi FAST còn đang quét.
+Ứng viên được phục vụ 73 % → **94 %**. Giá: `tFix` = **đúng thời điểm quét xong**,
+giống hệt ở mọi hạt giống — vì không thể báo sớm hơn lúc được phép rời đi.
+
+**D38 — góc nghiêng 30° → 45°.** Chi phí quay đầu là **cung lượn**, không phải vị
+trí waypoint: một lần đảo chiều tốn tối thiểu $\pi R$, ở 30° là 345 m so với 460 m
+luống hữu ích, năm lần mỗi lượt quét. Dời waypoint từ 2R về 1.2R **gần như không
+ăn thua** (53.1 % → 52.7 %). $R=v^2/(g\tan\varphi)$ nên **bank là đòn bẩy duy
+nhất**; 45° cắt R còn 64 m và cung còn 200 m.
+
+### 17.2 Kết quả — 8 hạt giống, một `module=`
+
+| chỉ số | 30° | **45°** |
+|---|---:|---:|
+| độ phủ FAST | 98.1 % | **99.8 %** |
+| tổng quãng đường FAST | 110.5 km | **88.5 km** |
+| phần bay TRONG vùng | 33.4 % | **43.8 %** |
+| phần quay đầu | 52.7 % | **38.8 %** |
+| **ứng viên được phục vụ** | 31/33 = 94 % | **32/32 = 100 %** |
+| `victimsLocated` | 11/16 | **13/16** |
+| năng lượng (trung vị) | 376 kJ | 367 kJ |
+| `timeToFix` (trung vị) | 303.2 s | **248.2 s** |
+| khúc gấp quá khả năng | 0.4 % (theo tiêu chí 45°) | 0.4 % |
+
+Từng hạt giống: **ứng viên bỏ sót = 0 ở cả 8**, `fixesAtBS` 2–5.
+
+### 17.3 Còn lại
+
+- **`wrongFixes = 2`, vẫn chỉ ở hạt giống 7** — cùng một hạt giống suốt nhiều
+  vòng. Chưa truy.
+- **`victimsLocated` 13/16**, không phải 16/16. Ba nạn nhân được giao dữ liệu
+  nhưng không sinh CONFIRM đủ mạnh.
+- **Chồng lấn giao hàng quay lại 2 cặp / 31 s** (trước đó 0). Đổi mốc thời gian
+  làm lộ lại đường đua CLAIM.
+- **Bay ngoài vùng vẫn 38.8 %.** Đây là chi phí *nội tại* của cánh cố định trên
+  một vùng nhỏ: 460 m luống với bán kính lượn 64 m thì mỗi lần đảo chiều vẫn tốn
+  200 m. Muốn giảm nữa phải đổi hình học bài toán (vùng dài hơn, hoặc nhiều UAV
+  với dải hẹp hơn), không phải đổi thuật toán.

@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 
 using namespace ns3;
@@ -553,6 +554,25 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // fruitless delivery, on time rather than on the first dissenting voice.
         return true;
     }
+    if (type == (uint8_t)Msg::RCLAIM && sz >= kRclaimLen) {
+        // The election's stand-down FLOOD doubles as the job advert, and it is
+        // the only announcement that physically reaches a sparse sky. SUMMON is
+        // a ONE-HOP ground broadcast, so a candidate is only ever relayed if a
+        // FAST UAV happens to be within ~50 m while its leader is beaconing --
+        // and with fixed-wing lanes 250 m apart that is rare. Measured at 24x24
+        // seed 1: three regions summoned, only two ever reached the DATA team,
+        // and the third was never served by anyone. RCLAIM floods the whole
+        // field, so wherever the sky is, some forwarding node is under it.
+        //
+        // This is the cooperative ground plane doing the job it exists for:
+        // covering for a sky that cannot be everywhere.
+        uint16_t rid; std::memcpy(&rid, &b[1], 2);
+        int16_t cx, cy; std::memcpy(&cx, &b[5], 2); std::memcpy(&cy, &b[7], 2);
+        Task& t = m_tasks[rid];
+        if (!t.known) { t.x = cx / 10.0; t.y = cy / 10.0; t.known = true; }
+        ConsiderTasks();
+        return true;
+    }
     if (type == (uint8_t)Msg::A2A && sz >= kA2ALen) {
         int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
         uint16_t rid; std::memcpy(&rid, &b[2], 2);
@@ -724,10 +744,22 @@ void SarDataUavApp::ReleaseAndContinue() {
         // is not "no job". The sky-quiet rule is the bound that sends a UAV home,
         // and it is a bound on the SKY going silent, which is the right one.
         if (m_metrics) {
+            // Say WHY there is nothing to do, or this line is unfalsifiable.
+            int known=0, closed=0, taken=0, nearBlocked=0;
+            for (const auto& [rid, t] : m_tasks) {
+                if (!t.known) continue;
+                known++;
+                if (t.closed) { closed++; continue; }
+                if (t.takenBy != 0xFFFF && t.takenBy != (uint16_t)m_nodeId &&
+                    Simulator::Now().GetSeconds() - t.takenAt <= params::kClaimLeaseS) { taken++; continue; }
+                if (PeerServingNear(t.x, t.y)) nearBlocked++;
+            }
+            char det[96];
+            std::snprintf(det, sizeof det, "idle: known=%d closed=%d taken=%d nearBlocked=%d tbl=%d",
+                          known, closed, taken, nearBlocked, (int)m_tasks.size());
             Vector p = m_fc.GetPosition();
             m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
-                             "yield_stay", "no candidate right now; staying available",
-                             p.x, p.y, p.z);
+                             "yield_stay", det, p.x, p.y, p.z);
         }
         return;
     }

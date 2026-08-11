@@ -387,6 +387,30 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         }
         return true;
     }
+    if (b[0] == (uint8_t)Msg::RCLAIM && sz >= kRclaimLen && m_dev) {
+        // Same reasoning as in the DATA app: relay the flood as a job advert so
+        // a DATA UAV out of ground range still learns the candidate exists.
+        uint16_t rid; std::memcpy(&rid, &b[1], 2);
+        int16_t cx, cy; std::memcpy(&cx, &b[5], 2); std::memcpy(&cy, &b[7], 2);
+        if (!m_relayedRegions.count(rid)) {
+            m_relayedRegions.insert(rid);
+            std::vector<uint8_t> r(kA2ALen, 0);
+            uint8_t* q = r.data();
+            *q++ = (uint8_t)Msg::A2A; *q++ = kBroadcast;
+            std::memcpy(q, &rid, 2); q += 2;
+            std::memcpy(q, &cx, 2); q += 2; std::memcpy(q, &cy, 2);
+            m_dev->Send(Create<Packet>(r.data(), r.size()), Mac16Address("ff:ff"), 0);
+            if (m_metrics) {
+                m_metrics->AddSent(); m_metrics->AddSentBytes(r.size());
+                Vector p = m_fc.GetPosition();
+                char det[48];
+                std::snprintf(det, sizeof det, "rclaim aim=%.0f;%.0f", cx / 10.0, cy / 10.0);
+                m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "FAST",
+                                 "a2a_relay", det, p.x, p.y, p.z);
+            }
+        }
+        return true;
+    }
     if (b[0] == (uint8_t)Msg::SUMMON && sz >= kSummonLen && m_dev) {
         // relay to DATA team over A2A (same body, different type).
         m_summonSeen = true;   // region found -> stop spreading cues
@@ -403,6 +427,9 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             if (!m_fixOnConfirm) { m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY; }
         }
         { uint16_t rid; std::memcpy(&rid, &b[2], 2); m_relayedRegions.insert(rid); }
+        double b_aimX = 0, b_aimY = 0;
+        { int16_t ax, ay; std::memcpy(&ax, &b[4], 2); std::memcpy(&ay, &b[6], 2);
+          b_aimX = ax / 10.0; b_aimY = ay / 10.0; }
         std::vector<uint8_t> r(b.begin(), b.begin() + kSummonLen);
         r[0] = (uint8_t)Msg::A2A;
         m_dev->Send(Create<Packet>(r.data(), r.size()), Mac16Address("ff:ff"), 0);
@@ -412,8 +439,10 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             m_metrics->AddCustody();
             // viz: A2A relay marker at the relaying FAST UAV
             Vector p = m_fc.GetPosition();
+            char det[48];
+            std::snprintf(det, sizeof det, "aim=%.0f;%.0f", b_aimX, b_aimY);
             m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "FAST",
-                             "a2a_relay", "", p.x, p.y, p.z);
+                             "a2a_relay", det, p.x, p.y, p.z);
         }
     }
     return true;

@@ -84,37 +84,52 @@ void SarFastUavApp::BuildMission() {
     if (N == 0 || m_radius <= 0) return;
 
     double x0 = m_sensors[0].x, x1 = x0, y0 = m_sensors[0].y, y1 = y0;
-    for (const auto& s : m_sensors) {
-        x0 = std::min(x0, s.x); x1 = std::max(x1, s.x);
-        y0 = std::min(y0, s.y); y1 = std::max(y1, s.y);
+    for (const auto& sp : m_sensors) {
+        x0 = std::min(x0, sp.x); x1 = std::max(x1, sp.x);
+        y0 = std::min(y0, sp.y); y1 = std::max(y1, sp.y);
     }
-    // Fly lanes along the LONGER axis: fewer turn-arounds for the same area.
     const bool lanesAlongX = (x1 - x0) >= (y1 - y0);
     const double across0 = lanesAlongX ? y0 : x0;
     const double across1 = lanesAlongX ? y1 : x1;
     const double along0  = lanesAlongX ? x0 : y0;
     const double along1  = lanesAlongX ? x1 : y1;
 
-    const double spacing = std::max(1.0, m_radius);          // full-overlap lanes
+    const double spacing = std::max(1.0, m_radius);
     const int lanes = std::max(1, (int)std::ceil((across1 - across0) / spacing) + 1);
     const double R = params::TurnRadiusM(m_speed);
-    const int stride = std::max(1, (int)std::ceil(2.0 * R / spacing));
 
-    std::vector<int> order;
-    for (int off = 0; off < stride; ++off)
-        for (int l = off; l < lanes; l += stride) order.push_back(l);
+    // TURN OUTSIDE THE FIELD. The previous version tried to make each 180 deg
+    // reversal fit inside the band by visiting lanes in an interleaved order,
+    // with a stride sized to one turn diameter. That cannot work here and the
+    // arithmetic says so: the band is 230 m wide and the turn diameter is 220 m,
+    // so the interleave spaced only the FIRST two turn-arounds (250 m, 200 m)
+    // and left the last three at 50 m -- a quarter of what the airframe needs.
+    // The aircraft overshot, looped, and missed lanes: FAST covered 73.4 % of
+    // the nodes on average and 49.7 % in the worst seed, which is also what the
+    // folded-looking track was.
+    //
+    // A survey aircraft does not turn inside the survey area. Lanes are now flown
+    // in order, and each turn-around is two explicit waypoints placed 2R BEYOND
+    // the end of the lane, so the reversal happens off the field and costs
+    // distance instead of coverage.
+    const double turnOut = 2.0 * R;
+    auto wp = [&](double along, double across) {
+        return lanesAlongX ? Vector(along, across, m_alt) : Vector(across, along, m_alt);
+    };
 
     bool forward = true;
-    for (int l : order) {
-        const double a = across0 + l * spacing;
+    for (int l = 0; l < lanes; ++l) {
+        const double a = std::min(across0 + l * spacing, across1);
         const double s0 = forward ? along0 : along1;
         const double s1 = forward ? along1 : along0;
-        if (lanesAlongX) {
-            m_targets.push_back(Vector(s0, a, m_alt));
-            m_targets.push_back(Vector(s1, a, m_alt));
-        } else {
-            m_targets.push_back(Vector(a, s0, m_alt));
-            m_targets.push_back(Vector(a, s1, m_alt));
+        m_targets.push_back(wp(s0, a));
+        m_targets.push_back(wp(s1, a));
+        if (l + 1 < lanes) {
+            const double aNext = std::min(across0 + (l + 1) * spacing, across1);
+            const double dir = forward ? 1.0 : -1.0;
+            const double out = s1 + dir * turnOut;
+            m_targets.push_back(wp(out, a));       // run out past the end
+            m_targets.push_back(wp(out, aNext));   // cross over, outside the field
         }
         forward = !forward;
     }

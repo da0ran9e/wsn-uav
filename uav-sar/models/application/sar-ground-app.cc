@@ -582,7 +582,13 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         // be attributed at all.
         Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
         double d = std::hypot(ax - p.x, ay - p.y);
-        if (d < m_heardAimD) {
+        // A node may only claim membership of a region it is PLAUSIBLY IN.
+        // "Nearest summon I overheard" was not enough: a node hundreds of metres
+        // away adopted a freshly announced region and then stamped its
+        // CONFIRM/REJECT with it, which closed a candidate nobody had served.
+        // Measured: a region summoned at t=83.5 s was claimed by a UAV at
+        // t=84.4 s and reported settled at t=84.5 s, with no delivery at all.
+        if (d <= 2.0 * params::kFixRadiusM && d < m_heardAimD) {
             m_heardAimD = d; m_heardRegionId = rid; m_heardAimX = ax; m_heardAimY = ay;
         }
         // Suppression, now scoped the same way RCLAIM is: hearing a summon about

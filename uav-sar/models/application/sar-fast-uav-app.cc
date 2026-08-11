@@ -94,13 +94,13 @@ void SarFastUavApp::BuildMission() {
     const double along0  = lanesAlongX ? x0 : y0;
     const double along1  = lanesAlongX ? x1 : y1;
 
-    // Lane spacing at 1.6x the cue radius, not 1x. The swath is 2*radius wide,
-    // so 1x spacing double-covered every strip and doubled the number of
-    // turn-arounds for nothing. Measured cost of that: 65.4 % of all FAST
-    // distance was flown OUTSIDE the field (10.63 km out against 5.63 km in),
-    // because six lanes mean five reversals and each reversal leaves the area.
-    // 1.6x keeps a 20 % overlap margin and roughly halves the lane count.
-    const double spacing = std::max(1.0, 1.6 * m_radius);
+    // Lane spacing = the cue radius, NOT the full swath. Widening it to 1.6x
+    // looked free on paper -- the swath is two radii wide -- and cost 11 points
+    // of coverage in measurement: FAST fell from 100 % of nodes to 89.3 %,
+    // because the reception radius under fading and the link budget is smaller
+    // than the nominal 50 m, so 80 m lanes leave gaps between them. Reverted.
+    // The turn-excursion cut below is the part that was actually free.
+    const double spacing = std::max(1.0, m_radius);
     const int lanes = std::max(1, (int)std::ceil((across1 - across0) / spacing) + 1);
     const double R = params::TurnRadiusM(m_speed);
 

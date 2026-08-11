@@ -604,9 +604,24 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // candidate places, yielding globally is how a whole team ends up
         // serving one of them.
         // D32: a peer's claim is now a fact about the WORK, recorded first.
-        if (role == 0 && id != (uint16_t)m_nodeId && crid != 0xFFFF)
-            { m_tasks[crid].takenBy = id;
-             m_tasks[crid].takenAt = Simulator::Now().GetSeconds(); }
+        if (role == 0 && id != (uint16_t)m_nodeId && crid != 0xFFFF) {
+            // MUTUAL DEADLOCK, observed end to end: two UAVs claim the same
+            // region within a millisecond; the higher id yields under the
+            // tie-break, while the lower id overwrites its OWN ownership with
+            // the peer's claim. Both then read the region as "taken by the
+            // other" and nobody ever serves it -- diagnosed as known=3 closed=2
+            // taken=1 on both UAVs at once, with the candidate never delivered.
+            //
+            // Record a peer's claim only when it actually wins: either the
+            // region is not mine, or the peer's id is lower, which is exactly
+            // the condition under which I stand down.
+            const bool mine = (m_tasks.count(crid) &&
+                               m_tasks[crid].takenBy == (uint16_t)m_nodeId);
+            if (!mine || id < (uint16_t)m_nodeId) {
+                m_tasks[crid].takenBy = id;
+                m_tasks[crid].takenAt = Simulator::Now().GetSeconds();
+            }
+        }
         if (role == 2 && crid != 0xFFFF) {
             Task& t = m_tasks[crid];
             t.served++;

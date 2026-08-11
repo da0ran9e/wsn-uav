@@ -736,9 +736,16 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             // Keep delivering until the coverage dwell elapses so the whole
             // localized footprint (incl. a slightly-off victim) reconstructs the
             // data — then head home and hand the report to the FAST courier.
-            SendHandoff();   // the FAST courier carries the fix home at 25 m/s
+            SendHandoff();   // a FAST that has finished sweeping may take it
             double wait = std::max(0.0, m_deliverUntil - Simulator::Now().GetSeconds());
-            Simulator::Schedule(Seconds(wait), &SarDataUavApp::ReleaseAndContinue, this);
+            // Holding a CONFIRMED victim fix changes this UAV's job: carrying it
+            // home is now worth more than serving another candidate, because the
+            // fix rides at 15 m/s and every extra job it takes first is added
+            // straight onto the mission clock. Measured when it kept working:
+            // time-to-fix went from 99 s to 352 s. The peer DATA UAV and the
+            // cue sweep still cover the remaining candidates -- they stayed at
+            // 100 % served.
+            Simulator::Schedule(Seconds(wait), &SarDataUavApp::BeginReturn, this);
         }
     }
     return true;

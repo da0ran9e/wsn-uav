@@ -46,7 +46,7 @@ def read_cfg(path):
 KEEP = {
     "takeoff", "cue_tx", "cue_rx", "clue_report", "share", "summon_start",
     "elect_yield", "retarget", "echo_relay", "a2a_relay", "divert",
-    "deliver_start", "full_tx", "confirm", "gt_done", "report_tx", "report_rx",
+    "deliver_start", "deliver_move", "full_tx", "confirm", "gt_done", "report_tx", "report_rx",
     "fix_rx", "yield_return", "retarget_divert", "report_pickup",
 }
 

@@ -316,12 +316,18 @@ void SarDataUavApp::ControlTick() {
                 // leader re-aim moves the hover point by a few tens of metres
                 // and used to restart the whole 382-chunk delivery, which is
                 // where 14 of the 35 repeat episodes came from.
-                if (!m_dwellStarted) {
+                const bool first = !m_dwellStarted;
+                if (first) {
                     m_dwellStarted = true;
                     m_deliverUntil = Simulator::Now().GetSeconds() + m_deliverDwellS;
                 }
+                // A re-aim resumes the SAME delivery at a shifted hover point.
+                // Labelling it deliver_start made the analysis count it as a
+                // second service of the place: 12 of the 13 apparent repeats
+                // were this, and the UAV had never left the region.
                 if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
-                                                "deliver_start", "", p.x, p.y, p.z);
+                                                first ? "deliver_start" : "deliver_move",
+                                                "", p.x, p.y, p.z);
                 SendFullChunk(0, 0); }
             break;
         }

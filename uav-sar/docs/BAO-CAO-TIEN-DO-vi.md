@@ -356,6 +356,129 @@ xác của ước lượng*, còn ở đây vấn đề là *không phân biệt
 
 ---
 
+## Phần IV-B — Khảo sát tài liệu đã thực hiện
+
+Ghi lại vì phần này quyết định **đóng góp của bài được phát biểu thế nào**, và
+nó đã ba lần buộc phải hạ giọng một tuyên bố.
+
+> **Phạm vi:** vài lượt tìm kiếm có định hướng (8/2026), **không phải khảo sát hệ
+> thống**. Đủ để định vị bài toán và tìm tổ tiên lý thuyết, **không đủ** để viết
+> câu "chưa ai làm". Danh sách việc phải làm thêm ở §19d.
+
+### 19a. Tổ tiên lý thuyết: tìm kiếm giữa các tiếp xúc giả
+
+Phát hiện quan trọng nhất: **bài toán này là một bài toán kinh điển của lý thuyết
+tìm kiếm**, chỉ là được đặt vào một hệ có mạng.
+
+| công trình | liên quan |
+|---|---|
+| *Optimal Search Among False Contacts*, SIAM J. Appl. Math. ([doi:10.1137/0152099](https://doi.org/10.1137/0152099)) | mục tiêu nằm giữa các tiếp xúc giả phân phối Poisson; người tìm phải quyết định tại chỗ, và **chỉ phân biệt đúng với một xác suất cho trước** — **đúng cấu trúc** của `ClutterSource` |
+| Koopman, *The Theory of Search* I–III, Oper. Res. 1956–57 | nền móng |
+| Stone, Royset, Washburn, *Optimal Search for Moving Targets* | "tìm kiếm khi có mục tiêu giả" là **một chương chuẩn**, cùng optimal search-and-stop |
+
+**Hệ quả cho cách viết bài:** không được trình bày yếu tố mơ hồ như một ý tưởng
+mới. Cách vừa trung thực vừa mạnh hơn: *"đây là bài toán tìm kiếm giữa các tiếp
+xúc giả của Koopman–Stone, lần đầu được đặt vào một hệ có ràng buộc năng lượng
+bay và ràng buộc truyền thông mặt đất."*
+
+### 19b. Đúng kịch bản "nhiều vật giống hệt nhau"
+
+- **Identification and Association of Multiple Visually Identical Targets for
+  Air–Ground Cooperative Systems**, *Drones* 9(9):612, 2025. Đúng bài toán: UAV
+  nhìn xuống nhiều UGV **giống hệt nhau về ngoại hình**. Lời giải của họ **xác
+  nhận** lập luận của ta: họ **từ bỏ ngoại hình** và chuyển sang liên kết theo
+  hình học/topology (ma trận chiếu, quan hệ góc, hợp nhất Dempster–Shafer) — tức
+  là thêm **một kênh thông tin khác**. Họ có chỉ số *False Positive Exclusion
+  Rate* nhưng **không đưa ra cận khả phân biệt lý thuyết** — đó là chỗ ta khác họ
+  (§19 trong báo cáo này: cận Bayes $1/(M+1)$).
+- **Clothes-changing person Re-ID**: cả một dòng nghiên cứu lấy "người khác mặc
+  cùng bộ đồ" làm **hard negative kinh điển**, có bộ dữ liệu chuyên dùng người
+  mặc-một-bộ làm distractor. Dùng để **biện minh cho tiền đề** — giả định duy
+  nhất bị vi phạm thường xuyên là chuyện cộng đồng thị giác đã ghi nhận, không
+  phải ta bịa ra.
+- **Radar False Alarm Suppression Based on Target Spatial Temporal Stationarity**,
+  *Drones* 8(12):699, 2024: dùng khác biệt về **tính dừng không-thời gian** để
+  triệt báo động giả. Đây đúng là cơ chế "nạn nhân bị thương thì bất động, người
+  khoẻ mặc áo giống thì di chuyển" — **có tiền lệ trong radar**, và theo khảo sát
+  này chưa thấy ai dùng cho SAR dựa trên mạng cảm biến mặt đất.
+
+### 19c. Phía UAV-SAR / WSN: dương tính giả có, nhưng ở TẦNG KHÁC
+
+- SAR dùng UAV **có** mô hình hoá FP, nhưng gần như luôn ở mức **bộ phát hiện**
+  (tỉ lệ FP của bộ nhận dạng ảnh), không phải ở mức **thế giới có hai vật thật sự
+  giống nhau**.
+- Tìm kiếm Bayes cho WiSAR (SARBayes; *Multi-UAV SAR in Wilderness*; *SAREnv*)
+  mô hình hoá **bỏ sót và báo động giả của cảm biến** trên bản đồ xác suất —
+  nhưng mục tiêu vẫn **duy nhất**, không có vật thể thứ hai hợp lệ.
+- WSN + UAV thu thập dữ liệu (tổng quan path planning, ACM CSUR 2022) tập trung
+  năng lượng, vùng phủ, tuổi thọ mạng — **không xét nhập nhằng danh tính**.
+- Định tuyến: **k-traveling repairman / minimum latency** có nền lý thuyết vững,
+  nhưng chưa thấy bản kết hợp *trọng số xác suất hậu nghiệm + mục tiêu giả*.
+
+### 19d. Khoảng trống — phát biểu thận trọng, và việc còn phải tra
+
+Ba mảnh đều **đã tồn tại riêng lẻ**:
+
+| mảnh | đã có ở đâu |
+|---|---|
+| tìm kiếm giữa tiếp xúc giả | lý thuyết tìm kiếm hải quân, 1950–90 |
+| nhiều vật thể giống hệt | thị giác máy tính / air–ground, 2025 |
+| UAV + WSN + năng lượng | dày đặc, nhưng **giả định mục tiêu duy nhất** |
+
+**Chưa thấy** công trình ghép cả ba: mơ hồ danh tính **ở mức thế giới** trong hệ
+UAV + mạng cảm biến hợp tác, kèm **cận khả phân biệt** báo song song với hiệu năng
+hệ thống, và kèm **hệ quả lên chỉ số đo** (sai số thành hỗn hợp hai chế độ, phân
+vị gộp mất nghĩa).
+
+**Phải làm trước khi viết câu "chưa ai làm":**
+
+1. Tra Scholar/IEEE Xplore: *"search among false contacts"*, *"false targets" +
+   "search theory"*, *"data association ambiguity" + "search and rescue"*,
+   *"identity ambiguity" + "multi-target search"*.
+2. Lần ngược trích dẫn của mục SIAM — nhánh nào đã đưa nó sang robot/UAV?
+3. Kiểm riêng mảng **multi-target tracking** (JPDA, MHT, PMBM). Họ xử lý nhập
+   nhằng liên kết rất bài bản và phản biện **gần như chắc chắn** sẽ hỏi tại sao
+   không dùng khung đó. Câu trả lời chuẩn bị sẵn: ta **không theo vết**, ta **phân
+   bổ nỗ lực phục vụ**, và ràng buộc là năng lượng bay + truyền thông.
+4. Lấy đủ thông tin thư mục của mục SIAM (trang trả 403, chưa có tác giả/năm).
+
+### 19e. Nhiều mục tiêu THẬT: đây KHÔNG phải khoảng trống
+
+Khi cân nhắc $V>1$ (nhiều nạn nhân thật), khảo sát cho kết quả **ngược với mong
+muốn** và cần ghi lại đúng như vậy:
+
+- Lý thuyết tìm kiếm đã có nhánh đa mục tiêu từ lâu (Stone 1975 → Stone–Royset–
+  Washburn với ràng buộc di chuyển thực tế).
+- **Bầy UAV tìm kiếm đa mục tiêu là một dòng rất đông**: land-coverage aware path
+  planning cho bầy UAV SAR; tìm kiếm hợp tác trong môi trường động chưa biết;
+  khung RL benchmark cho SAR bằng bầy UAV; bầy UAV cảm biến nhiệt; chuỗi nhiệm vụ
+  tìm người bị thương ngoài trời.
+- Chỉ số đa mục tiêu đã chuẩn hoá ở mảng theo vết: recall/precision, **false
+  alarms per frame**, **MODA**.
+
+**Kết luận trung thực:** "tìm nhiều mục tiêu bằng nhiều UAV" **không** phải khoảng
+trống. Nếu dùng $V>1$ thì đóng góp **không** thể là "chúng tôi tìm nhiều mục
+tiêu"; nó vẫn phải là **cơ chế nhận dạng dựa trên việc GIAO dữ liệu tham chiếu**
+(mặt phẳng payload + REJECT) — thứ mà các công trình trên không có: chúng giả định
+bộ phát hiện đặt **trên UAV**, còn ở đây **nút mặt đất tự nhận dạng sau khi được
+cấp dữ liệu**. $V>1$ làm bối cảnh giàu hơn và làm P13 có nội dung, nhưng **không
+tự nó tạo ra đóng góp**.
+
+### 19f. Tham số lấy từ tài liệu
+
+| tham số | nguồn |
+|---|---|
+| suy hao A2G, xác suất LoS | Al-Hourani; 3GPP TR 36.777 ($n \approx 2.2$ LoS) |
+| suy hao tán lá | ITU-R P.833 |
+| mô hình năng lượng rotary-wing | Zeng, Xu, Zhang, IEEE TWC 18(4):2329–2345, 2019 |
+| baseline multicast VBS+TSP | Zeng, Xu, Zhang, TWC'18 |
+| dải tốc độ khung máy bay | 80–110+ km/h cánh cố định, 40–60 km/h multirotor |
+
+Chi tiết và mức tin cậy từng tham số (`[Lit✓]` / `[Lit dẫn xuất]` / `[Design]`)
+ở `PARAMETERS.md`. Ghi chép khảo sát đầy đủ ở `RELATED-WORK-ambiguity.md`.
+
+---
+
 ## Phần V — Phương pháp đo
 
 ### 20. Các chỉ số đã thêm

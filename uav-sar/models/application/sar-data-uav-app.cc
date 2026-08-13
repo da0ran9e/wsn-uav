@@ -269,6 +269,14 @@ void SarDataUavApp::ControlTick() {
                 break;
             }
             Vector t = m_targets[m_ti];
+            // CONTINUOUS guidance, the same fix the FAST app needed. The heading
+            // used to be commanded only on reaching a waypoint, so a UAV that
+            // entered PATROL from anywhere else -- ReleaseAndContinue, a yield --
+            // kept whatever heading it happened to hold and flew that way for
+            // ever. Diagnosed by logging the state on leaving the world:
+            // `state=PATROL spd=15.0 hdg=-90` at 3 km south, still "patrolling".
+            m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI);
+            m_fc.Forward(m_speed);
             if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
                 m_ti++;
                 if (m_ti >= m_targets.size()) {
@@ -283,6 +291,14 @@ void SarDataUavApp::ControlTick() {
             break;
         }
         case State::LOITER:
+            // LOITER means STOPPED. Saying so every tick, rather than trusting
+            // whoever set the state to have called Hover(), is what makes it
+            // true: the runaway that survived the out-of-bounds fix was a UAV
+            // dropped into LOITER by the yield path while the flight controller
+            // still held the last heading and speed, so it flew straight out of
+            // the world at cruise speed. Measured: seed 8, DATA uav4 left at
+            // t=67 s and was 6 km south by the horizon.
+            m_fc.Hover();
             // Wait for an A2A relay -- but not forever. If the sky has gone
             // quiet (no FAST UAV cueing for kSkyQuietS) the sweep is over and
             // no summon is coming, so under the all-home rule there is nothing
@@ -514,7 +530,29 @@ void SarDataUavApp::SendHandoff() {
     Simulator::Schedule(Seconds(params::kConfirmRetryS), &SarDataUavApp::SendHandoff, this);
 }
 
+static const char* StateName(int s) {
+    static const char* n[] = {"IDLE","CLIMB","GOTO_CENTER","LOITER","PATROL",
+                              "DIVERT","DELIVER","SWEEP","RETURN","DONE"};
+    return (s >= 0 && s < 10) ? n[s] : "?";
+}
+
 void SarDataUavApp::TrajTick() {
+    // Diagnostic: a UAV that leaves the world says so ONCE, with the state it is
+    // in. Three fixes in a row produced byte-identical results because each was
+    // aimed at a state the aircraft was not actually in; guessing a fourth time
+    // is not a method.
+    if (!m_lostLogged && m_metrics) {
+        Vector q = m_fc.GetPosition();
+        if (std::abs(q.x) > 3000 || std::abs(q.y) > 3000) {
+            m_lostLogged = true;
+            char det[64];
+            std::snprintf(det, sizeof det, "state=%s spd=%.1f hdg=%.0f",
+                          StateName((int)m_state), m_fc.Speed(), m_fc.Heading());
+            m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
+                             "lost", det, q.x, q.y, q.z);
+        }
+    }
+
     if (m_metrics) {
         Vector p = m_fc.GetPosition();
         m_metrics->Traj(Simulator::Now().GetSeconds(), m_nodeId, "DATA", p.x, p.y, p.z);

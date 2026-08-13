@@ -56,6 +56,23 @@ def load(label, d):
     cfg = read_cfg(os.path.join(d, "config.txt"))
 
     victims, clutter, ev = [], [], []
+    # Node data-accumulation state, the thing the flat viewer showed and the
+    # first 3D cut lost. Only the FIRST time a node reaches each level is kept,
+    # so this stays a few hundred entries instead of one per chunk.
+    #   1 = has cue fragments      2 = evidence crossed the bar, it REPORTED
+    #   3 = holds the whole dataset (confirmed or rejected on full data)
+    LEVEL = {"cue_rx": 1, "clue_report": 2, "gt_done": 3, "confirm": 3, "reject": 3}
+    best = {}
+    for e in read_csv(os.path.join(d, "events.csv")):
+        lv = LEVEL.get(e["event"])
+        if lv is None:
+            continue
+        key = (round(float(e["x"]), 1), round(float(e["y"]), 1))
+        cur = best.get(key)
+        if cur is None or lv > cur[1]:
+            best[key] = (round(float(e["t"]), 1), lv)
+    nodes = sorted([[t, k[0], k[1], lv] for k, (t, lv) in best.items()])
+
     for e in read_csv(os.path.join(d, "events.csv")):
         k = e["event"]
         if k == "victim":
@@ -101,6 +118,7 @@ def load(label, d):
         "module": cfg.get("module", "?"),
         "traj": traj,
         "ev": ev,
+        "nodes": nodes,
         "metrics": {
             "tFix": num("timeToFixAtBS_s"),
             "tReport": num("timeToReportAtBS_s"),
@@ -120,7 +138,7 @@ HTML = r"""<!doctype html>
 <style>
 :root{--bg:#0d1014;--pan:#161b22;--ln:#232b36;--tx:#e7ecf2;--tx2:#93a1b1;
       --fast:#4aa3ff;--data:#2ed3a0;--vic:#ff5f56;--clu:#c07ae8;--bs:#f0e9d8;
-      --warn:#ffb020;--ok:#35c07e}
+      --warn:#ffb020;--ok:#35c07e;--cue:#8a7b2e;--hot:#ffd63d;--done:#2ed3a0}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);
      font:13px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -179,12 +197,16 @@ label.sl input{flex:1}
       <div class=it><span class="sw dash"></span>vật gây nhầm</div>
       <div class=it><span class="sw" style="background:var(--bs)"></span>trạm gốc</div>
       <div class=it><span class="sw" style="background:var(--warn)"></span>giao hàng / xác nhận</div>
+      <div class=it><span class="sw" style="background:var(--cue)"></span>nút đã nhận mảnh cue</div>
+      <div class=it><span class="sw" style="background:var(--hot)"></span>nút đã BÁO bằng chứng</div>
+      <div class=it><span class="sw" style="background:var(--done)"></span>nút giữ ĐỦ bộ dữ liệu</div>
     </div>
     <div class=grp><h2>Hiển thị</h2>
       <label class=sl>cao độ ×<input id=zex type=range min=1 max=10 step=.5 value=4></label>
       <button id=btrail class=on>vệt bay</button>
       <button id=bdrop class=on>đường rọi</button>
       <button id=bgrid class=on>lưới nút</button>
+      <div id=ncount style="font-size:11px;color:var(--tx2);margin-top:4px"></div>
     </div>
     <div class=grp><h2>Kết quả</h2><div id=stats></div></div>
     <div class=grp><h2>Sự kiện gần đây</h2><div id=log style="font-size:11px;color:var(--tx2)"></div></div>
@@ -289,11 +311,17 @@ function draw(){
     line([g,0,0],[g,E,0],'#1c2430',1,0.9);
     line([0,g,0],[E,g,0],'#1c2430',1,0.9);
   }
-  // sensors
+  // sensors, coloured by how much of the reference dataset they hold
+  const nst = new Map();
+  for(const n of R.nodes){ if(n[0] > T) break; nst.set(n[1]+'|'+n[2], n[3]); }
   if(showGrid){
     for(let i=0;i<R.grid;i+=1) for(let j=0;j<R.grid;j+=1){
-      if((i+j)%2) continue;                       // decimate for legibility
-      dot(i*sp, j*sp, 0, 0.05, '#33404f', 0.85);
+      const x=i*sp, y=j*sp, lv=nst.get(x.toFixed(1)+'|'+y.toFixed(1));
+      if(lv===undefined){ if((i+j)%2) continue;   // decimate the inert ones only
+                          dot(x,y,0,0.05,'#33404f',0.8); continue; }
+      if(lv===1) dot(x,y,0,0.07,css('--cue'),0.85);
+      else if(lv===2) dot(x,y,0,0.10,css('--hot'),1);
+      else dot(x,y,0,0.12,css('--done'),1);
     }
   }
   // world objects
@@ -346,6 +374,10 @@ function draw(){
   }
   items.sort((a,b)=>b.d-a.d).forEach(i=>i.f());
 
+  let c1=0,c2=0,c3=0;
+  nst.forEach(v=>{ if(v===1)c1++; else if(v===2)c2++; else c3++; });
+  document.getElementById('ncount').textContent =
+    `cue ${c1} · báo ${c2} · đủ dữ liệu ${c3}`;
   document.getElementById('clock').textContent = T.toFixed(1)+' s';
   document.getElementById('scrub').value = Math.round(T/TMAX*1000);
   const L = R.ev.filter(e=>e[0]<=T).slice(-7).reverse()

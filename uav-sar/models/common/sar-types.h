@@ -58,7 +58,15 @@ inline constexpr uint8_t kBroadcast = 0xFF;
 inline constexpr uint32_t kChunkHdr   = 1 + 1 + 2 + 2 + 2 + 1;      // 9, payload follows
 inline constexpr uint32_t kSummonLen  = 1 + 1 + 2 + 2 + 2;          // 8
 inline constexpr uint32_t kA2ALen     = 1 + 1 + 2 + 2 + 2;          // 8 (same body)
-inline constexpr uint32_t kConfirmLen = 1 + 1 + 2 + 1;              // 5
+// D38: [type][dst][rid:u16][nodeId:u8][x:i16_dm][y:i16_dm] = 9.
+// The coordinates are the CONFIRMING NODE's own position, and they are the
+// reason they are here: the fleet used to carry the SUMMON aim home as the
+// answer, but the aim is the leader's guess at where the evidence points,
+// whereas a confirming node is one that holds the complete reference AND still
+// matches it, so it is within sensing range of the real thing. Measured at
+// 24x24: an aim 45 m from the victim, and closer to a decoy than to the victim,
+// was reported as the fix while the nodes that actually matched sat 20 m away.
+inline constexpr uint32_t kConfirmLen = 1 + 1 + 2 + 1 + 2 + 2;      // 9
 inline constexpr uint32_t kRejectLen  = kConfirmLen;                // same body
 // audit B3: REPORT and HANDOFF carry the victim fix (decimetres, i16) so the
 // estimate physically travels to the BS over the radio instead of being read out

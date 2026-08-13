@@ -304,6 +304,40 @@ chỉ 8 fix về tới BS.
 toạ độ, vẫn thừa sức trong trần 100 B của IEEE 802.15.4. Kết quả: **8/16 → 13/16**,
 mọi chỉ số khác không đổi.
 
+### 16a. Toạ độ báo về phải là **chỗ khớp**, không phải **chỗ nhắm**
+
+Ba quy tắc, cùng giải một câu hỏi: *trong tất cả các toạ độ bay lượn trên sóng,
+cái nào là câu trả lời?*
+
+**(a) Aim thuộc về một vùng, không thuộc về cả bầu trời.** Một UAV FAST chuyển
+tiếp `SUMMON` của **mọi** vùng nó bay qua. Nếu chỉ giữ **một** ô "aim đang chờ"
+thì bất kỳ `CONFIRM` nào cũng thăng ô đó thành câu trả lời — kể cả `CONFIRM` của
+một vùng hoàn toàn khác. Đo được: aim của một **vật gây nhầm** ở (380, 60) về tới
+BS như một toạ độ đã xác nhận, chỉ vì vùng của **nạn nhân 2** xác nhận sau đó 3 s.
+Aim nay giữ **theo vùng**; `CONFIRM`/`REJECT` của vùng $r$ chỉ động tới aim của
+$r$.
+
+**(b) Chỗ khớp tốt hơn chỗ nhắm.** Aim là **phỏng đoán của thủ lĩnh** từ bằng
+chứng gộp. Còn một nút gửi `CONFIRM` là nút **giữ đủ bộ tham chiếu và vẫn khớp**,
+nên nó chắc chắn nằm trong tầm cảm biến của vật thật. Vì thế `CONFIRM`/`REJECT`
+mang thêm **toạ độ của chính nút gửi** (5 → 9 B, cùng sai số GPS như `RPT`), và
+đó mới là thứ được báo về.
+
+**(c) Mỗi nút khớp là một mẫu.** Quanh một nạn nhân thường có vài nút cùng khớp.
+Lấy nút **đầu tiên nghe được** cho sai số trung vị 24.1 m trên lưới 20 m. Lấy
+**trọng tâm** của tất cả — chúng đã có sẵn trên sóng, không tốn thêm gói nào:
+
+$$\hat{p}_r=\frac{1}{|K_r|}\sum_{k\in K_r} p_k,\qquad
+K_r=\{\text{nút gửi CONFIRM cho vùng } r\}$$
+
+Kết quả cộng dồn, 8 hạt giống: **`wrongFixes` 7 → 0**, **nạn nhân định vị được
+11/16 → 15/16**, sai số trung vị 24.1 → **15.5 m**, p90 28.3 → **24.9 m**.
+
+Ở cấu hình trung thực `--victimOnNode=0` (nạn nhân **không** nằm đúng trên nút):
+**16/16**, `wrongFixes` **0**, sai số trung vị **12.4 m**, p90 **18.0 m**. Con số
+"0.0 m" của bản cũ là **hiện vật của lưới** — aim trùng đúng nút nạn nhân, tức hệ
+thống đọc lại chỉ số nút nó vừa được cho, chứ không định vị gì.
+
 ---
 
 ## Phần IV — Các bài toán tối ưu đứng sau
@@ -532,28 +566,33 @@ Cả ba lần, người dùng nhìn replay và thấy đúng còn số liệu th
 
 ## Phần VI — Trạng thái hiện tại và việc còn lại
 
-### 23. Đo được (8 hạt giống, một `module=`)
+### 23. Đo được (8 hạt giống, mỗi lô một `module=`)
 
 | chỉ số | giá trị |
 |---|---|
 | độ phủ FAST | **99.8 %** |
-| ứng viên được phục vụ | **32/32 = 100 %** (0 bỏ sót ở mọi hạt giống) |
+| **độ phủ DATA** | **99.8 %** (từ 45.7 % — xem §24, lỗi UAV bay lạc) |
+| độ phủ ANY | **100.0 %** |
+| **UAV bay lạc** | **0/8** hạt giống |
+| ứng viên được phục vụ | **67/70 = 95.7 %** |
 | lượt giao / điểm | **1.0–1.1** |
-| chồng lấn giao hàng | 2 cặp / 31 s |
 | khúc gấp quá khả năng cánh cố định | **0.4 %** |
 | quãng đường FAST | 88.5 km (từ 130 km) |
-| phần bay trong vùng | 43.8 % (từ 34.6 %) |
-| nạn nhân định vị được | **13/16** |
-| toạ độ sai người | 2 |
+| **nạn nhân định vị được** | **15/16** — và **16/16** với `--victimOnNode=0` |
+| **toạ độ sai người (`wrongFixes`)** | **0** (từ 7) |
+| **sai số định vị** | trung vị **12.4 m**, p90 **18.0 m** (`--victimOnNode=0`) |
 | thời gian tới toạ độ | 248 s |
-| năng lượng | 367 kJ |
+| **năng lượng** | **236 kJ** (từ 367 kJ) |
+
+> Cả bảng này là **N = 8**. Theo luật `N ≥ 120` của `STATUS.md` đây là **tín
+> hiệu**, chưa phải kết quả công bố được.
 
 ### 24. Chưa xong — không tuyên bố là đã sửa
 
-- **`wrongFixes = 2`, vẫn chỉ ở hạt giống 7** qua nhiều vòng liên tiếp. Chưa truy.
-- **13/16 chứ không phải 16/16** — ba nạn nhân được giao dữ liệu nhưng không sinh
-  CONFIRM đủ mạnh.
-- **Chồng lấn quay lại 31 s** sau khi đổi mốc thời gian; trước đó đã về 0.
+- **Ba ứng viên trên 70 vẫn không được phục vụ** (hạt giống 2 và 6). Chưa truy.
+- **15/16 chứ không phải 16/16** khi nạn nhân nằm đúng trên nút; ca thiếu là một
+  nạn nhân được giao dữ liệu nhưng không sinh CONFIRM đủ mạnh.
+- **Chồng lấn giao hàng** đo lần cuối ở 2 cặp / 31 s; chưa đo lại sau §16a.
 - **38.8 % vẫn bay ngoài vùng.** Đây là chi phí **nội tại** của cánh cố định trên
   vùng nhỏ: luống 460 m với $R = 64$ m thì mỗi lần đảo chiều vẫn tốn $\pi R = 200$ m.
   Giảm nữa phải đổi **hình học bài toán**, không phải đổi thuật toán — và bản thân

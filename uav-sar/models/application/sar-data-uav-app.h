@@ -20,6 +20,7 @@
 #include "ns3/ptr.h"
 #include "ns3/random-variable-stream.h"
 
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <map>
@@ -183,11 +184,22 @@ private:
     double m_lastCueHeardS = -1;      // last time a FAST UAV was heard cueing
     bool m_hasFix = false;
     // D37: every CONFIRMED position this UAV is carrying, not just the first.
+    // D38: and a second confirm for the SAME place refines it instead of being
+    // discarded. Every confirming node holds the complete reference and still
+    // matches it, so each one is an independent sample of where the thing is;
+    // their centroid beats whichever one happened to be heard first. Measured
+    // at 24x24: first-heard gave a 24.1 m median report error on a 20 m grid.
+    std::vector<std::array<double, 3>> m_fixAcc;      // sumX, sumY, n
     std::vector<std::pair<double, double>> m_fixes;
     void AddFix(double x, double y) {
-        for (const auto& f : m_fixes)
-            if (std::hypot(f.first - x, f.second - y) <= 50.0) return;   // same place
-        if (m_fixes.size() < kMaxFixes) m_fixes.push_back({x, y});
+        for (size_t i = 0; i < m_fixAcc.size(); ++i) {
+            if (std::hypot(m_fixes[i].first - x, m_fixes[i].second - y) > 50.0) continue;
+            m_fixAcc[i][0] += x; m_fixAcc[i][1] += y; m_fixAcc[i][2] += 1;
+            m_fixes[i] = {m_fixAcc[i][0] / m_fixAcc[i][2], m_fixAcc[i][1] / m_fixAcc[i][2]};
+            return;
+        }
+        if (m_fixes.size() < kMaxFixes) { m_fixes.push_back({x, y});
+                                          m_fixAcc.push_back({x, y, 1}); }
     }          // audit B3: carry the victim fix home
     double m_fixX = 0, m_fixY = 0;
     double m_deliverDwellS = params::kMinDeliverDwellS;

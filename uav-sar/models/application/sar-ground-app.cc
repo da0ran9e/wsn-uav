@@ -498,6 +498,12 @@ void SarGroundApp::SendConfirm() {
         uint16_t rid = m_isLeader ? m_regionId : m_heardRegionId;
         std::memcpy(q, &rid, 2); q += 2;
         *q++ = (uint8_t)(m_nodeId & 0xFF);
+        // D38: where the match actually IS. Same GPS error as RPT -- a node does
+        // not know its own position any better here than anywhere else.
+        Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+        int16_t sx = (int16_t)std::lround((p.x + m_gpsBiasX) * 10);
+        int16_t sy = (int16_t)std::lround((p.y + m_gpsBiasY) * 10);
+        std::memcpy(q, &sx, 2); q += 2; std::memcpy(q, &sy, 2);
         m_dev->Send(Create<Packet>(c.data(), c.size()), Mac16Address("ff:ff"), 0);
         if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(c.size()); }
     }
@@ -525,6 +531,11 @@ void SarGroundApp::SendReject() {
         uint16_t rid = m_isLeader ? m_regionId : m_heardRegionId;
         std::memcpy(q, &rid, 2); q += 2;
         *q++ = (uint8_t)(m_nodeId & 0xFF);
+        // D38: same body as CONFIRM, so the two stay byte-symmetric.
+        Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
+        int16_t sx = (int16_t)std::lround((p.x + m_gpsBiasX) * 10);
+        int16_t sy = (int16_t)std::lround((p.y + m_gpsBiasY) * 10);
+        std::memcpy(q, &sx, 2); q += 2; std::memcpy(q, &sy, 2);
         m_dev->Send(Create<Packet>(c.data(), c.size()), Mac16Address("ff:ff"), 0);
         if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(c.size()); }
     }

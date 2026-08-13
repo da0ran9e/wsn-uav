@@ -493,7 +493,9 @@ void SarDataUavApp::PatrolCueTick() {
 void SarDataUavApp::SendReport() {
     if (m_reportsSent >= params::kReportRetries) return;
     if (m_dev) {
-        if (m_hasFix) AddFix(m_fixX, m_fixY);
+        // Only as a fallback: the confirm path already accumulated this place,
+        // and re-adding it here would double-count one sample in the centroid.
+        if (m_hasFix && m_fixes.empty()) AddFix(m_fixX, m_fixY);
         std::vector<uint8_t> b(kReportLen, 0);
         uint8_t* q = b.data();
         *q++ = (uint8_t)Msg::REPORT;
@@ -613,7 +615,12 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
     if (type == (uint8_t)Msg::REJECT && !m_confirmed) {
         // The ground has told us this place is not the victim. Drop the fix so a
         // known-wrong position cannot beat a correct one home to the BS.
-        if (m_fixOnConfirm) m_hasFix = false;
+        // D38: only if it is OUR place. A REJECT from another region says
+        // nothing about the aim this UAV is holding.
+        uint16_t rrid = 0xFFFF;
+        if (sz >= kRejectLen) std::memcpy(&rrid, &b[2], 2);
+        if (m_fixOnConfirm && (m_boundRegion == 0xFFFF || rrid == m_boundRegion))
+            m_hasFix = false;
         // NOT a reason to leave: a region can hold both a match and a bystander,
         // and the match wins. Leaving on the first REJECT abandons places where
         // the victim is still reachable. The dwell bound below is what ends a
@@ -793,12 +800,26 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // our delivery confirmed -> hand the report to the FAST team (25 m/s
         // courier beats our 15 m/s) and still fly home as the fallback; the BS
         // deduplicates, first REPORT wins.
-        if (m_claimed && !m_confirmed && (m_state == State::DELIVER || m_state == State::DIVERT)) {
-            m_confirmed = true;
-            // A node under the drop holds the whole reference and still matches
-            // it, so this aim is worth reporting. Only now.
+        // D38: and it must be OUR region that confirmed. Two regions being
+        // served at once means a CONFIRM in the air is as likely to be the peer's
+        // as ours; taking it as ours stamps "confirmed" on an unexamined aim.
+        uint16_t crid; std::memcpy(&crid, &b[2], 2);
+        const bool oursConfirmed = (m_boundRegion == 0xFFFF || crid == m_boundRegion);
+        // D38: a confirm for our region is a POSITION SAMPLE whether or not it is
+        // the first one. Several nodes around the victim match, and each one is
+        // an independent sample; folding them all in is free (they are already
+        // on the air) and the accumulator averages them. Doing this only on the
+        // first confirm -- as the state transition below does, correctly -- left
+        // the report sitting on whichever node happened to be heard first.
+        int16_t sx, sy; std::memcpy(&sx, &b[5], 2); std::memcpy(&sy, &b[7], 2);
+        if (m_claimed && oursConfirmed) {
+            AddFix(sx / 10.0, sy / 10.0);
             m_hasFix = true;
-            AddFix(m_fixX, m_fixY);      // D37: keep every confirmed position
+            m_fixX = m_fixes[0].first; m_fixY = m_fixes[0].second;
+        }
+        if (m_claimed && oursConfirmed && !m_confirmed &&
+            (m_state == State::DELIVER || m_state == State::DIVERT)) {
+            m_confirmed = true;
             // Keep delivering until the coverage dwell elapses so the whole
             // localized footprint (incl. a slightly-off victim) reconstructs the
             // data — then head home and hand the report to the FAST courier.

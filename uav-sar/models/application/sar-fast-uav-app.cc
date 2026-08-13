@@ -252,8 +252,10 @@ void SarFastUavApp::RelayBestEcho() {
     m_summonSeen = true;
     // Same rule as the cooperative arm's relay path, so the two arms still differ
     // only in HOW the aim was formed.
-    m_pendFixX = m_bestEchoX; m_pendFixY = m_bestEchoY; m_hasPend = true;
-    if (!m_fixOnConfirm) { m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY; }
+    // The echo path has no leader and no region of its own; it aims at region 1,
+    // the same id it stamps on the A2A below, so a CONFIRM can find this aim.
+    m_pendAims[1] = {m_bestEchoX, m_bestEchoY};
+    if (!m_fixOnConfirm) { m_hasFix = true; m_fixX = m_bestEchoX; m_fixY = m_bestEchoY; }
     std::vector<uint8_t> r(kA2ALen, 0);
     uint8_t* q = r.data();
     *q++ = (uint8_t)Msg::A2A; *q++ = kBroadcast;
@@ -324,7 +326,9 @@ void SarFastUavApp::TrajTick() {
 void SarFastUavApp::SendReport() {
     if (m_reportsSent >= params::kReportRetries) return;
     if (m_dev) {
-        if (m_hasFix) AddFix(m_fixX, m_fixY);
+        // Only as a fallback: the confirm path already accumulated this place,
+        // and re-adding it here would double-count one sample in the centroid.
+        if (m_hasFix && m_fixes.empty()) AddFix(m_fixX, m_fixY);
         std::vector<uint8_t> b(kReportLen, 0);
         uint8_t* q = b.data();
         *q++ = (uint8_t)Msg::REPORT;
@@ -372,19 +376,33 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         return true;
     }
     if (b[0] == (uint8_t)Msg::REJECT) {
-        if (sz >= kRejectLen) { uint16_t rid; std::memcpy(&rid, &b[2], 2);
-                                m_closedRegions.insert(rid); }
-        if (m_fixOnConfirm && !m_hasFix) m_hasPend = false;  // ground contradicted the aim
+        if (sz >= kRejectLen) {
+            uint16_t rid; std::memcpy(&rid, &b[2], 2);
+            m_closedRegions.insert(rid);
+            // ground contradicted THAT region's aim, and only that one (D38).
+            if (m_fixOnConfirm) m_pendAims.erase(rid);
+        }
         return true;
     }
     if (b[0] == (uint8_t)Msg::CONFIRM) {
-        if (sz >= kConfirmLen) { uint16_t rid; std::memcpy(&rid, &b[2], 2);
-                                 m_closedRegions.insert(rid); }
-        // A node under the drop held the whole reference and still matched it.
-        // Only now is the relayed aim worth carrying home.
-        if (m_fixOnConfirm && m_hasPend && !m_hasFix) {
-            m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY;
-            AddFix(m_fixX, m_fixY);
+        if (sz >= kConfirmLen) {
+            uint16_t rid; std::memcpy(&rid, &b[2], 2);
+            m_closedRegions.insert(rid);
+            // A node under the drop held the whole reference and still matched
+            // it. Only now is THAT region's relayed aim worth carrying home --
+            // a confirm elsewhere says nothing about the aims still pending.
+            // A region stays eligible once confirmed, so the second and third
+            // node to match refine the position instead of being dropped.
+            const bool mine = m_pendAims.count(rid) || m_confirmedRegions.count(rid);
+            if (m_fixOnConfirm && mine) {
+                // D38: report where the MATCH is, not where we aimed.
+                int16_t sx, sy; std::memcpy(&sx, &b[5], 2); std::memcpy(&sy, &b[7], 2);
+                AddFix(sx / 10.0, sy / 10.0);
+                m_hasFix = true;
+                m_fixX = m_fixes[0].first; m_fixY = m_fixes[0].second;
+                m_confirmedRegions.insert(rid);
+                m_pendAims.erase(rid);
+            }
         }
     }
     // D30: a CONFIRM used to abort the sweep outright and send this UAV home,
@@ -459,13 +477,15 @@ bool SarFastUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
         // carry them home — the fix is not the courier's private property.
         {
             int16_t cx, cy; std::memcpy(&cx, &b[4], 2); std::memcpy(&cy, &b[6], 2);
+            uint16_t srid; std::memcpy(&srid, &b[2], 2);
             // Relaying a summon is not evidence that the summon was RIGHT. With
             // several regions summoning, a relay hears several aims and would
             // carry the last one home whether or not anyone confirmed it -- and
-            // that report can beat a correct one to the BS. Hold it pending; a
-            // CONFIRM promotes it, a REJECT drops it.
-            m_pendFixX = cx / 10.0; m_pendFixY = cy / 10.0; m_hasPend = true;
-            if (!m_fixOnConfirm) { m_hasFix = true; m_fixX = m_pendFixX; m_fixY = m_pendFixY; }
+            // that report can beat a correct one to the BS. Hold it pending
+            // UNDER ITS REGION (D38); that region's CONFIRM promotes it, that
+            // region's REJECT drops it, and nobody else's does either.
+            m_pendAims[srid] = {cx / 10.0, cy / 10.0};
+            if (!m_fixOnConfirm) { m_hasFix = true; m_fixX = cx / 10.0; m_fixY = cy / 10.0; }
         }
         { uint16_t rid; std::memcpy(&rid, &b[2], 2); m_relayedRegions.insert(rid); }
         double b_aimX = 0, b_aimY = 0;

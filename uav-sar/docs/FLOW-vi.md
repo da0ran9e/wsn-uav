@@ -884,3 +884,115 @@ dải của mình, nó trôi đi; và năng lượng giảm 38 % vì không còn
 chế hợp lý: DATA phủ đủ nghĩa là **nhiều cue hơn tới mọi nơi**, nên vật gây nhầm
 cũng tích được bằng chứng và sinh thêm vùng ứng viên. Chưa truy, **không được coi
 là đã xong**.
+
+---
+
+## 19. `wrongFixes` — truy ra hai lỗi, và một chỗ đo bị thổi phồng
+
+§18.5 để lại hồi quy `wrongFixes` 2 → 7 chưa truy. Đây là phần truy nó.
+Giả thuyết ghi ở §18.5 (**"DATA phủ đủ ⇒ nhiều cue hơn ⇒ vật gây nhầm cũng lên
+ứng viên"**) **sai**. Nguyên nhân nằm ở tầng báo cáo, không ở tầng cảm biến.
+
+### 19.1 Đọc thẳng vào một hạt giống
+
+Hạt giống 5, `wrong=3`. Toạ độ BS nhận được:
+
+```
+251.2  fix_rx  (220, 20)     <- nạn nhân 1, đúng
+251.2  fix_rx  (380, 60)     <- SAI
+269.2  fix_rx  (220, 20) + (380, 60)
+```
+
+Không có `confirm` nào gần (380, 60). Có gì ở đó? Một **thủ lĩnh vùng khác**
+(nút 50, ở (420,20)) bắt đầu triệu tập về phía đó lúc t ≈ 107. Và lúc
+t = 110.37 / 111.27 — **3 s sau** — vùng của **nạn nhân 2** gửi `CONFIRM`.
+
+### 19.2 Lỗi thứ nhất: một ô "aim đang chờ" dùng chung cho mọi vùng
+
+`SarFastUavApp` giữ **đúng một** cặp toạ độ chờ (`m_pendFixX/Y`). Mỗi lần chuyển
+tiếp một `SUMMON` nó ghi đè ô đó. Bất kỳ `CONFIRM` nào — **của vùng nào cũng
+được** — thăng ô đó thành "toạ độ đã xác nhận" và mang về BS.
+
+Đoạn ghi chú ngay tại chỗ đã lường trước đúng tình huống này ("một relay nghe
+nhiều aim và sẽ mang cái cuối cùng về"), nhưng cái chốt viết ra chỉ chặn
+"**chưa có** CONFIRM nào", không chặn "**không phải** CONFIRM của vùng này".
+
+Sửa (D38): aim được giữ **theo vùng**, `std::map<rid, (x,y)>`. `CONFIRM` của vùng
+`r` chỉ thăng aim của `r`; `REJECT` của `r` chỉ xoá aim của `r`. Cùng lỗi phạm vi
+đó cũng có ở `SarDataUavApp` (hai chỗ: nhận `CONFIRM` khi đang giao, và bỏ fix khi
+nghe `REJECT`) — cả hai nay so với `m_boundRegion`.
+
+Đo, 8 hạt giống: `wrong` **7 → 4**, victims **11 → 12**/16. Đúng hướng, chưa hết.
+
+### 19.3 Lỗi thứ hai: báo về **chỗ đã nhắm**, không phải **chỗ khớp**
+
+Bốn cái sai còn lại không phải lỗi phạm vi. Hạt giống 7: toạ độ báo về là
+(40, 20), nạn nhân ở (80, 0) — **cách 44.7 m**, và **gần một vật gây nhầm hơn là
+gần nạn nhân**, nên tính là sai. Trong khi đó các nút thực sự khớp nằm ở (60,0),
+(80,0), (60,20).
+
+Toạ độ được mang về là **aim của thủ lĩnh** — phỏng đoán từ bằng chứng. Nhưng một
+nút gửi `CONFIRM` là nút **giữ đủ bộ dữ liệu tham chiếu và vẫn khớp**, tức là nó
+nằm trong tầm cảm biến của vật thật. Vị trí của nó là ước lượng tốt hơn hẳn.
+
+Sửa (D38): `CONFIRM`/`REJECT` mang thêm **toạ độ của chính nút gửi** (cùng sai số
+GPS như `RPT`). Gói dài 5 → 9 B, vẫn xa trần 100 B. UAV báo về toạ độ đó.
+
+### 19.4 Lỗi thứ ba: chỉ lấy nút khớp **đầu tiên** nghe được
+
+Mỗi vùng có **vài** nút cùng khớp. Bản sửa 19.3 lấy nút đầu tiên nghe được —
+sai số trung vị 24.1 m trên lưới 20 m. Mỗi nút khớp là **một mẫu độc lập** của vị
+trí vật thật, và tất cả đã có sẵn trên sóng.
+
+Sửa: `AddFix` thành **bộ tích luỹ trọng tâm** — mẫu mới trong bán kính 50 m làm
+**mịn** cụm chứ không bị bỏ. Kèm theo phải bỏ chốt `!m_confirmed` ở đường nhận
+mẫu (giữ nguyên cho phần chuyển trạng thái), nếu không mẫu thứ hai không bao giờ
+tới: **lần đo đầu ra kết quả y hệt từng byte** vì lý do đó.
+
+$$\hat{p}_r=\frac{1}{|K_r|}\sum_{k\in K_r} p_k,\qquad
+K_r=\{\text{nút gửi CONFIRM cho vùng } r\}$$
+
+### 19.5 Kết quả — 8 hạt giống, mỗi lô một `module=`
+
+| chỉ số | v22 (§18) | +phạm vi | +chỗ khớp | +trọng tâm |
+|---|---:|---:|---:|---:|
+| **`wrongFixes`** | 7 | 4 | **0** | **0** |
+| **victims định vị** | 11/16 | 12/16 | **15/16** | **15/16** |
+| sai số báo, trung vị | 0.0 m | 0.0 m | 24.1 m | **15.5 m** |
+| sai số báo, p90 | 28.3 m | 28.3 m | 28.3 m | **24.9 m** |
+| ứng viên được phục vụ | 85.5 % | — | — | **95.7 %** |
+| năng lượng | 227 kJ | 238 | 236 | 236 kJ |
+
+### 19.6 "Sai số 0.0 m" cũ là một hiện vật, không phải kết quả
+
+Cột v22 có **trung vị 0.0 m** và trông như bản mới làm tệ đi. Không phải.
+
+`victimOnNode` mặc định **bật**: nạn nhân **nằm đúng trên một nút cảm biến**. Aim
+của thủ lĩnh là **vị trí nút bằng chứng cao nhất** — chính là nút đó. Nên "sai số
+0 m" thực chất là hệ thống đọc lại **chỉ số nút** mà nó vừa được cho, không phải
+nó định vị được cái gì. Bản mới trả về một **ước lượng đo được**, nên nó không
+tròn 0.
+
+Chạy lại với `--victimOnNode=0` (nạn nhân ở vị trí liên tục — phép thử trung thực):
+
+| chỉ số | giá trị |
+|---|---:|
+| victims định vị | **16/16** |
+| `wrongFixes` | **0** |
+| sai số báo trung vị | **12.4 m** |
+| sai số báo p90 | **18.0 m** |
+
+**Số nên trích dẫn là 12.4 m / p90 18.0 m**, đo ở cấu hình không cho hệ thống mượn
+lưới. Vẫn là N = 8 — theo luật N ≥ 120 của `STATUS.md`, đây là **tín hiệu, chưa
+phải kết quả công bố được**.
+
+### 19.7 Một thước đo nữa nói sai (lần thứ tư)
+
+"Ứng viên được phục vụ 94 %" ở §18.5 đếm bằng cách so vị trí giao hàng với **toạ
+độ của thủ lĩnh** trong `summon_start`. Nhưng trường đó là **chỗ thủ lĩnh đứng**;
+chỗ nó **nhắm tới** nằm trong `detail=target=x;y`, và có thể cách đó 140 m. Hai
+"ứng viên chưa phục vụ" trong hạt giống 6 và 8 hoá ra **đã được phục vụ**.
+
+Sửa cách đo (dùng `target=`, và tính mỗi lần `retarget` là một ứng viên riêng vì
+nó là một chỗ khác phải tới): **85.5 % → 95.7 %**. Ba chỗ còn thiếu trên 70, ở
+hạt giống 2 và 6 — **chưa truy**.

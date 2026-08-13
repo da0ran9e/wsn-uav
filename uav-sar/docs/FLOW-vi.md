@@ -824,3 +824,63 @@ Từng hạt giống: **ứng viên bỏ sót = 0 ở cả 8**, `fixesAtBS` 2–
   một vùng nhỏ: 460 m luống với bán kính lượn 64 m thì mỗi lần đảo chiều vẫn tốn
   200 m. Muốn giảm nữa phải đổi hình học bài toán (vùng dài hơn, hoặc nhiều UAV
   với dải hẹp hơn), không phải đổi thuật toán.
+
+---
+
+## 18. UAV bay lạc — bốn lần sửa, chỉ lần thứ tư đúng
+
+### 18.1 Hiện tượng
+
+Hạt giống 8: một UAV DATA giao hàng xong lúc t=47 s, rồi bay **thẳng nam với tốc
+độ không đổi** tới cuối lượt chạy — **6 177 m** ngoài bản đồ, ngoài tầm radio, và
+không phục vụ gì nữa. Nó cũng là một phần lý do ứng viên bị bỏ sót.
+
+### 18.2 Ba lần sửa ĐÚNG nhưng KHÔNG phải nguyên nhân
+
+Cả ba lần đều cho kết quả **giống hệt từng cột trên cả 8 hạt giống**, trong khi
+dấu `module=` xác nhận bản dựng có đổi. Ba lỗi đều thật và đều được giữ lại:
+
+| # | lỗi | vì sao không phải nguyên nhân |
+|---|---|---|
+| 1 | `m_targets[m_ti]` đọc **quá cuối mảng** khi vào `PATROL` lúc kế hoạch đã hết | có xảy ra, nhưng chiếc UAV này có `m_ti < size` |
+| 2 | `LOITER` dựa vào **người gọi** đã `Hover()` | nó không ở `LOITER` |
+| 3 | hai UAV **khoá chết** quyền sở hữu của nhau | không liên quan đường bay |
+
+### 18.3 Dừng đoán, đặt máy đo
+
+Đến lần thứ ba thì rõ là đoán không còn là phương pháp. Thêm một sự kiện `lost`
+ghi **trạng thái** của UAV ngay khi nó rời khỏi thế giới:
+
+```
+t=288.2  DATA4  lost  state=PATROL spd=15.0 hdg=-90   at (74, -3012)
+```
+
+`state=PATROL` — nó vẫn "đang tuần tra" ở 3 km về phía nam.
+
+### 18.4 Nguyên nhân thật
+
+Nhánh `PATROL` ra lệnh hướng **chỉ khi tới waypoint**. Chiếc nào vào `PATROL` từ
+trạng thái khác — `ReleaseAndContinue`, hai nhánh nhường việc — giữ nguyên hướng
+đang có và bay theo hướng đó mãi. **Đúng cùng một lỗi đã sửa cho đội FAST**, ở
+một chỗ thứ hai không ai nhìn tới. Sửa: dẫn đường liên tục mỗi chu kỳ.
+
+### 18.5 Kết quả — 8 hạt giống, một `module=`
+
+| chỉ số | trước | sau |
+|---|---:|---:|
+| **UAV bay lạc** | 1/8 hạt giống | **0/8** (xa nhất 430 m = vị trí BS, đúng thiết kế) |
+| **độ phủ DATA** | 45.7 % | **99.7 %** |
+| độ phủ ANY | 99.9 % | **100.0 %** |
+| **năng lượng** | 367 kJ | **228 kJ** |
+| ứng viên được phục vụ | 97 % | 94 % |
+| **`wrongFixes`** | **2** | **7** |
+| victims | 11/16 | 11/16 |
+
+**Độ phủ DATA nhảy từ 45.7 % lên 99.7 %** — đội DATA trước đây không hề bay hết
+dải của mình, nó trôi đi; và năng lượng giảm 38 % vì không còn ai bay ra vô tận.
+
+**`wrongFixes` tăng 2 → 7, và đây là hồi quy thật.** Từng hạt giống:
+`[0,0,0,0,0,0,2,0]` → `[0,0,0,0,3,1,3,0]` — hai hạt giống mới xuất hiện lỗi. Cơ
+chế hợp lý: DATA phủ đủ nghĩa là **nhiều cue hơn tới mọi nơi**, nên vật gây nhầm
+cũng tích được bằng chứng và sinh thêm vùng ứng viên. Chưa truy, **không được coi
+là đã xong**.

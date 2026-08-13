@@ -254,6 +254,20 @@ void SarDataUavApp::ControlTick() {
             // exhausted the UAV keeps station where it is: it is still the only
             // thing that can accept a summon, and the sky-quiet rule below (via
             // LOITER) bounds how long that lasts.
+            // OUT-OF-BOUNDS READ, and it produced a runaway aircraft.
+            // ReleaseAndContinue and the yield paths set PATROL unconditionally,
+            // but by then the patrol plan is often already exhausted, so
+            // m_targets[m_ti] indexed past the end. The UAV picked up whatever
+            // that memory held as a waypoint and flew toward it at constant
+            // heading for the rest of the run: measured at 24x24 seed 8, DATA
+            // uav4 left the field after its delivery at t=47 s and was still
+            // flying due south at t=500 s, 6 177 m off the map, deaf to
+            // everything and serving nothing.
+            if (m_ti >= m_targets.size()) {
+                m_fc.Hover();
+                m_state = State::LOITER;
+                break;
+            }
             Vector t = m_targets[m_ti];
             if (std::hypot(t.x - p.x, t.y - p.y) <= arriveR) {
                 m_ti++;
@@ -307,7 +321,7 @@ void SarDataUavApp::ControlTick() {
                     m_yieldedDivert = false;
                     m_myTask = 0xFFFF;
                     m_boundRegion = 0xFFFF;
-                    m_state = State::PATROL;
+                    m_state = (m_ti < m_targets.size()) ? State::PATROL : State::LOITER;
                     ConsiderTasks();   // stay available if nothing right now
                     break;
                 }
@@ -790,7 +804,8 @@ void SarDataUavApp::ReleaseAndContinue() {
     m_boundRegion = 0xFFFF;
     m_confirmed = false;
     m_dwellStarted = false;               // free to serve and confirm another place
-    m_state = State::PATROL;           // divertible again
+    // Divertible again -- but only PATROL if there is a plan left to fly.
+    m_state = (m_ti < m_targets.size()) ? State::PATROL : State::LOITER;
     ConsiderTasks();
     if (m_myTask == 0xFFFF) {
         // D32b: STAY AVAILABLE. Going home here was the reason candidates went
@@ -833,7 +848,7 @@ void SarDataUavApp::BeginReturn() {
     // so this cannot hang -- it only stops an early landing.
     if (m_sweepDone.empty() && m_lastCueHeardS > 0 &&
         Simulator::Now().GetSeconds() - m_lastCueHeardS <= params::kSkyQuietS) {
-        m_state = State::PATROL;          // stay up and available
+        m_state = (m_ti < m_targets.size()) ? State::PATROL : State::LOITER;
         return;
     }
     m_state = State::RETURN;

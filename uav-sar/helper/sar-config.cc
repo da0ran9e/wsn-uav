@@ -283,7 +283,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             app->SetSensorPositions(partition(u, fastCount));
             app->SetCues(cues);
             app->SetFixOnConfirm(cfg.fixOnConfirm);
-            app->SetCruise(params::kCruiseAltitudeM, fastSpd);
+            app->SetCruise(params::kFastAltitudeM, fastSpd);
             app->SetBs(bsPos, bsAddr);
             app->SetAllHome(cfg.allHome);
             app->SetEchoRelay(closedLoop);       // audit W4

@@ -56,7 +56,12 @@ inline constexpr double kHexCellRadiusM  = 80.0;    // [Lit?/Design] PECEE cell
 inline constexpr double kUavBroadcastRadiusM = 50.0;// [Lit dẫn xuất] link budget
 
 // ---- UAV flight ------------------------------------------------------------
-inline constexpr double kCruiseAltitudeM = 20.0;    // [Design] single mode
+inline constexpr double kCruiseAltitudeM = 20.0;    // [Design] DATA / delivery level
+// Flight-level deconfliction. The two teams share the same ground and cross each
+// other constantly, so they fly separated levels -- standard practice, and it
+// also makes the roles legible in a 3D replay. The fixed-wing scout takes the
+// upper level: it never stops, so it should not be the one dodging.
+inline constexpr double kFastAltitudeM   = 35.0;    // [Design] FAST scout level
 // FAIRNESS (audit F1): every scheme flies ONE cruise speed by default. The
 // former two-tier fleet (FAST 25 / DATA 15) gave the proposed scheme's
 // critical path a 1.67x speed advantage over every baseline UAV with nothing in

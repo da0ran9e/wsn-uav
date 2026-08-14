@@ -127,12 +127,9 @@ với $\mathrm{Dub}_R$ là khoảng cách Dubins bán kính $R = v^2/(g\tan\phi)
 nó **giải được CHÍNH XÁC** bằng Held–Karp — $2^{11}\times 22$ trạng thái — nên
 báo được **tối ưu thật**, không phải đầu ra của một heuristic.
 
-**Đã giải. Kết quả: tiết kiệm 2.6 % quãng đường.** Chi tiết ở §5.1. Nói thẳng:
-**thứ tự luống không phải đòn bẩy**, và tối thiểu hoá độ dài là **sai mục tiêu** —
-nó không quan tâm đường bay nằm ở đâu, nên lời giải tối ưu còn bay **ra ngoài
-vùng nhiều hơn**.
-
-Giữ lại trong bài **như một kết quả âm có kiểm chứng**, không phải như đóng góp.
+**Đã giải. Kết quả: rút 14.5 % quãng đường và 14.4 % thời gian một lượt quét**,
+ở cùng độ phủ 100 %. Chi tiết ở §5.1. Đây là **đòn bẩy thật, nhưng là đòn bẩy
+nhỏ hơn** so với P1-B, và hai cái **cộng được với nhau**.
 
 ### P1-B. Chọn tốc độ bay *(đòn bẩy thật)*
 
@@ -182,38 +179,55 @@ Hình học vận hành: vùng 460 × 460 m, $R_c=50$ m, khoảng cách luống 
 > ở từ LRL** (lệch 208 m) trong khi năm từ kia đúng tuyệt đối — một dạng đóng
 > Dubins chép sai dấu vẫn trả về số **trông hợp lý**. Sai số hiện tại: 5.6 × 10⁻¹³ m.
 
-### 5.1 P1-A — thứ tự luống: đòn bẩy nhỏ, và sai mục tiêu
+### 5.0 Cách chấm điểm — và hai lần chấm sai trước đó
 
-| kế hoạch | độ dài | phần bay trong vùng |
-|---|---:|---:|
-| tuần tự + quay đầu ngoài vùng (đang chạy) | 8.10 km | 73.7 % |
-| **Dubins tối ưu chính xác** (Held–Karp) | **7.89 km** | **64.6 %** |
+Hai bản trước của mục này chấm điểm bằng **mô hình hình học**, và **sai theo hai
+hướng ngược nhau**, cả hai đều cho ra số trông hợp lý:
 
-Tiết kiệm **2.6 %** quãng đường, và **phần bay trong vùng giảm 9 điểm**. Lời giải
-tối ưu chọn thứ tự nhảy luống (1, 4, 8, 5, 2, 0, …) để mỗi lần đảo chiều có đủ chỗ
-— nhưng đường nối giữa các luống xa nhau lại **dài và nằm ngoài vùng**.
+| cách chấm | sai ở đâu | kết luận sai nó tạo ra |
+|---|---|---|
+| quay đầu ≈ chạy thẳng ra + sang ngang + chạy vào | **bỏ qua độ cong** của cú đảo chiều | Dubins chỉ lợi 2.6 % |
+| Dubins qua waypoint quay đầu, **có áp hướng** | máy bay **không bị buộc** tới waypoint theo một hướng cho trước | Dubins lợi 47 % |
 
-**Kết luận: bỏ mục tiêu độ dài.** Với $2R/s = 2.55$, chi phí quay đầu là **nội
-tại**; không hoán vị nào chữa được.
+Cách chấm hiện tại: **bay cả hai kế hoạch qua đúng luật dẫn đường của mô phỏng**
+(`ControlTick` + `FlightController::Step`) — lái liên tục về waypoint, giới hạn
+tốc độ lượn $g\tan\phi/v$, nhận waypoint khi tới gần **hoặc** khi đã ngang qua.
+Hai kế hoạch vì thế **chỉ khác nhau ở danh sách waypoint**, đúng thứ đang so.
+
+Kèm hai khẳng định chặn: **mọi waypoint phải tới nơi**, và **độ phủ phải > 99 %**
+— một kế hoạch ngắn hơn mà bỏ sót nút thì **chưa sàng lọc** những nút đó.
+
+### 5.1 P1-A — thứ tự luống: lợi 14.5 %
+
+| kế hoạch (v = 25 m/s) | độ dài | một lượt | trong vùng | phủ |
+|---|---:|---:|---:|---:|
+| tuần tự + quay đầu ngoài vùng (đang chạy) | 8.85 km | 354 s | 47.4 % | 100 % |
+| **Dubins tối ưu chính xác** (Held–Karp) | **7.56 km** | **303 s** | **52.6 %** | 100 % |
+
+Lời giải tối ưu chọn thứ tự **nhảy luống** (1, 4, 8, 5, 2, 0, 3, 7, 10, 6, 9) để
+mỗi cú đảo chiều có sẵn chỗ, nên **không cần waypoint quay đầu ngoài vùng nào cả**
+— và vẫn phủ đủ 100 %.
 
 ### 5.2 P1-B — tốc độ: đòn bẩy thật
 
-| $v$ (m/s) | $R(v)$ | $2R/s$ | độ dài kế hoạch | chunk / lượt | số lượt | $T_{\text{screen}}$ |
-|---:|---:|---:|---:|---:|---:|---:|
-| 12.0 | 14.7 m | 0.59 | 6.33 km | 41.7 | 1 | 528 s |
-| 14.0 | 20.0 m | 0.80 | 6.52 km | 35.7 | 1 | 466 s |
-| **16.0** | **26.1 m** | **1.04** | **6.74 km** | **31.2** | **1** | **422 s** |
-| 18.0 | 33.0 m | 1.32 | 6.99 km | 27.8 | 2 | 777 s |
-| 20.0 | 40.8 m | 1.63 | 7.27 km | 25.0 | 2 | 727 s |
-| **25.0** *(đang chạy)* | 63.7 m | 2.55 | 8.10 km | 20.0 | 2 | **648 s** |
-| 32.0 | 104.4 m | 4.18 | 9.57 km | 15.6 | 2 | 598 s |
+| kế hoạch | $v$ | $R$ | độ dài | một lượt | trong vùng | lượt | $T_{\text{screen}}$ |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| boustrophedon *(đang chạy)* | 25 | 64 m | 8.85 km | 354 s | 47.4 % | 2 | **708 s** |
+| Dubins | 25 | 64 m | 7.56 km | 303 s | 52.6 % | 2 | 605 s |
+| boustrophedon | 16 | 26 m | 6.74 km | 422 s | 68.2 % | 1 | 422 s |
+| **Dubins** | **16** | **26 m** | **6.16 km** | **385 s** | **71.8 %** | **1** | **385 s** |
 
-**Sàng lọc nhanh nhất ở 16 m/s, không phải ở tốc độ tối đa** — nhanh hơn điểm
-đang chạy (25 m/s) **35 %**, dù bay **chậm hơn 36 %**.
+**Hai đòn bẩy cộng được với nhau: 708 s → 385 s, nhanh hơn 46 %** — trong đó thứ
+tự luống đóng góp ~15 % và tốc độ đóng góp phần còn lại.
 
-Cơ chế: ở 16 m/s, $R = 26$ m **nhỏ hơn khoảng cách luống 50 m**, nên quay đầu kiểu
-$\Pi$ trở nên khả thi và chi phí quay đầu sụp từ 3.04 km xuống 1.68 km; **đồng
+Cơ chế của phần tốc độ: ở 16 m/s, $R = 26$ m **nhỏ hơn khoảng cách luống 50 m**,
+nên đảo chiều nằm gọn trong vùng (phần bay trong vùng 47.4 % → 68.2 %); **đồng
 thời** nút xấu nhất nhận đủ 30 chunk trong **một** lượt thay vì hai.
+
+**Bay nhanh còn hỏng cả độ phủ.** Ở $v \ge 28$ m/s bán kính lượn vượt quá thứ hình
+học luống hấp thụ được, máy bay bắt đầu cắt góc và **bỏ sót nút**: boustrophedon
+phủ 99.1 % ở 28 m/s và **98.6 % ở 32 m/s**. Nên "bay nhanh để quét nhanh" thua ở
+**cả ba** mặt: chi phí quay đầu, phơi sáng, và độ phủ.
 
 ### 5.3 Kết quả có phụ thuộc giả định $C^*=1$ không?
 
@@ -242,8 +256,8 @@ hành của cả Phase 1.
 **Không được viết:**
 
 - *"Chúng tôi đề xuất quy hoạch đường bay Dubins cho UAV cánh cố định."* Đã có từ
-  Savla–Frazzoli–Bullo, Isaacs–Hespanha. Ở đây nó là **công cụ**, và kết quả của
-  nó **âm**.
+  Savla–Frazzoli–Bullo, Isaacs–Hespanha. Ở đây nó là **công cụ** cho 15 % — phần
+  còn lại, và phần mới, đến từ ràng buộc phơi sáng.
 - *"Chúng tôi tìm kiếm nhiều mục tiêu bằng nhiều UAV."* §19e của báo cáo tiến độ
   đã ghi: đây **không** phải khoảng trống.
 - *"Bay nhanh hơn thì quét nhanh hơn."* Số liệu nói ngược lại.
@@ -302,8 +316,16 @@ ablation), và giữ $v$ cố định mà đổi $\rho$.
 ## 9. Tái lập
 
 ```bash
-python3 uav-sar/tools/dubins_lanes.py
+python3 uav-sar/tools/dubins_lanes.py                              # Dubins + phơi sáng
+python3 uav-sar/tools/phase1_plans.py docs/visualize/phase1-plans.html   # bảng + hình
 ```
 
-Không phụ thuộc gì ngoài thư viện chuẩn. Tự kiểm chứng hình học Dubins trước khi
-in bất kỳ số nào; nếu dạng đóng sai, script **dừng** chứ không in số sai.
+| tệp | vai trò |
+|---|---|
+| `tools/dubins_lanes.py` | hình học Dubins + Held–Karp, **tự kiểm chứng bằng tích phân ngược** |
+| `tools/fly_sim.py` | luật dẫn đường của mô phỏng, dùng để **chấm điểm** mọi kế hoạch |
+| `tools/phase1_plans.py` | so sánh + sinh `docs/visualize/phase1-plans.html` |
+
+Không phụ thuộc gì ngoài thư viện chuẩn. Dạng đóng Dubins được kiểm trước khi in
+bất kỳ số nào; nếu sai, script **dừng** chứ không in số sai. Mọi kế hoạch bị chặn
+bởi hai khẳng định: tới đủ waypoint, và phủ > 99 %.

@@ -278,6 +278,52 @@ def solve_exact(lanes, R, start):
     return best, order
 
 
+def fly(waypoints, R, step=2.0):
+    """Fly a list of configurations in order, Dubins between consecutive ones.
+
+    Both plans go through THIS function, so their lengths and their in-field
+    fractions are produced by the same construction. They previously had one
+    sampler each, which made the in-field percentages incomparable -- the same
+    class of measurement error that has already mislabelled results twice in
+    this project (FLOW-vi.md 19.7).
+    """
+    total, pts = 0.0, []
+    for q0, q1 in zip(waypoints, waypoints[1:]):
+        L, word, seg = dubins(q0, q1, R)
+        total += L
+        k = max(1, int(L / step))
+        for s in range(k + 1):
+            pts.append(_advance(q0, word, seg, R, s / k))
+    return total, pts
+
+
+def sequential_waypoints(lanes, R, start, turn_out):
+    """The configuration sequence BuildMission() actually produces."""
+    cfg = [lane_configs(l) for l in lanes]
+    wps = [start]
+    for idx, lane in enumerate(lanes):
+        di = idx % 2
+        entry, exit_ = cfg[idx][di]
+        wps += [entry, exit_]
+        if idx + 1 < len(lanes):
+            y_next = lanes[idx + 1][2]
+            direction = 1.0 if di == 0 else -1.0
+            out_x = exit_[0] + direction * turn_out
+            head = exit_[2]                       # still along the lane
+            cross = math.pi / 2 if y_next > lane[2] else -math.pi / 2
+            wps += [(out_x, lane[2], head), (out_x, y_next, cross)]
+    return wps
+
+
+def optimal_waypoints(order, lanes, start):
+    cfg = [lane_configs(l) for l in lanes]
+    wps = [start]
+    for (i, di) in order:
+        entry, exit_ = cfg[i][di]
+        wps += [entry, exit_]
+    return wps
+
+
 def path_points(order, lanes, R, start, step=2.0):
     """Sample the flown path so the in-field fraction can be measured."""
     cfg = [lane_configs(l) for l in lanes]
@@ -387,13 +433,13 @@ def main():
           f"lane spacing={spacing:.0f} m | 2R/spacing={2*R/spacing:.2f}")
     print(f"lanes: {len(lanes)}\n")
 
-    seq_len, seq_pts = sequential_plan(lanes, R, start, 1.2 * R)
+    seq_len, seq_pts = fly(sequential_waypoints(lanes, R, start, 1.2 * R), R)
     seq_in = in_field_fraction(seq_pts, x0, x1, y0, y1)
     print(f"shipping plan (sequential + outside turn-arounds):")
     print(f"  length {seq_len/1000:6.2f} km   in-field {seq_in:5.1f} %")
 
-    opt_len, order = solve_exact(lanes, R, start)
-    opt_pts = path_points(order, lanes, R, start)
+    opt_cost, order = solve_exact(lanes, R, start)
+    opt_len, opt_pts = fly(optimal_waypoints(order, lanes, start), R)
     opt_in = in_field_fraction(opt_pts, x0, x1, y0, y1)
     print(f"exact Dubins lane ordering (Held-Karp, {len(lanes)} lanes x 2 dir):")
     print(f"  length {opt_len/1000:6.2f} km   in-field {opt_in:5.1f} %")
@@ -424,7 +470,7 @@ def speed_sweep(x0, x1, y0, y1, spacing, Rc, chunk_rate, n_chunks):
     for v in (12.0, 14.0, 16.0, 16.7, 18.0, 20.0, 22.0, 25.0, 28.0, 32.0):
         R = v * v / (9.81 * math.tan(math.radians(45.0)))
         start = (x0 - 200.0, y0 - 200.0, math.radians(45))
-        length, _ = sequential_plan(lanes, R, start, 1.2 * R)
+        length, _ = fly(sequential_waypoints(lanes, R, start, 1.2 * R), R)
         per_pass = (2.0 * Rc / v) * chunk_rate
         sweeps = math.ceil(n_chunks / per_pass)
         t_screen = sweeps * length / v
@@ -448,7 +494,7 @@ def speed_sweep(x0, x1, y0, y1, spacing, Rc, chunk_rate, n_chunks):
         for v in [10.0 + 0.5 * k for k in range(50)]:
             R = v * v / (9.81 * math.tan(math.radians(45.0)))
             start = (x0 - 200.0, y0 - 200.0, math.radians(45))
-            length, _ = sequential_plan(lanes, R, start, 1.2 * R)
+            length, _ = fly(sequential_waypoints(lanes, R, start, 1.2 * R), R)
             sweeps = math.ceil(need / ((2.0 * Rc / v) * chunk_rate))
             rows.append((sweeps * length / v, v))
         t_best, v_best = min(rows)

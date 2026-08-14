@@ -1,8 +1,9 @@
 # Phase 1 — Quét sàng lọc bằng đội cánh cố định
 
 > **Tình trạng tài liệu.** Đây là **thiết kế bài toán**, không phải kết quả đã đo
-> trong ns-3. Mọi con số dưới đây đến từ `tools/dubins_lanes.py` — một mô hình
-> **quy hoạch** (hình học Dubins + mô hình phơi sáng), chạy độc lập với mô phỏng.
+> trong ns-3. Mọi con số dưới đây đến từ mô hình **quy hoạch** (`tools/`), chạy
+> độc lập với mô phỏng — các kế hoạch bay được chấm bằng **đúng luật dẫn đường**
+> của mô phỏng (§5.0), nhưng **không** có vô tuyến, kênh truyền hay mặt đất.
 > Chúng nói *nên kỳ vọng gì*, chưa nói *hệ thật cho ra gì*. §7 liệt kê việc phải
 > làm để biến chúng thành kết quả.
 >
@@ -115,7 +116,7 @@ quả ở §5.
 
 ## 4. Bài toán tối ưu — ba phát biểu, xếp theo mức đáng làm
 
-### P1-A. Thứ tự luống như Dubins TSP *(đã giải chính xác — kết quả ÂM)*
+### P1-A. Thứ tự luống như Dubins TSP *(đã giải chính xác — lợi 15 %)*
 
 Phát biểu tự nhiên nhất, và là cái tôi nghĩ tới đầu tiên. Mỗi luống $\ell$ có hai
 cấu hình bay (đông→tây, tây→đông). Chọn hoán vị $\pi$ và hướng $d$:
@@ -169,7 +170,7 @@ chứ không chỉ là cách kể chuyện: Phase 1 tối ưu **có ràng buộc
 
 ---
 
-## 5. Kết quả từ mô hình quy hoạch
+## 5. Kết quả
 
 Hình học vận hành: vùng 460 × 460 m, $R_c=50$ m, khoảng cách luống 50 m
 (11 luống), $\phi=45°$, cue $N=30$ chunk @ $\rho=5$ chunk/s.

@@ -80,6 +80,7 @@ void SarFastUavApp::BuildMission() {
     // diameter. The only turns left are the 180 deg reversals at the ends of
     // lanes, and each of those now has room to be flown at the design bank.
     m_targets.clear(); m_ti = 0;
+    if (!m_mission.empty()) { m_targets = m_mission; return; }   // orchestrator plan
     const size_t N = m_sensors.size();
     if (N == 0 || m_radius <= 0) return;
 
@@ -176,6 +177,16 @@ void SarFastUavApp::ControlTick() {
             if (m_metrics) m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
                                             "FAST", "report_tx", "courier at BS",
                                             p.x, p.y, p.z);
+            // Announce the sweep AGAIN from the BS. The announcement made over
+            // the field does not reach a rotary team waiting ON THE GROUND at
+            // the BS -- measured: 0 of 2 claims heard, both DATA UAVs sat until
+            // the fail-open deadline and the mission delivered nothing. Landing
+            // back at the BS puts the scout metres from them, so the handoff
+            // that could not cross the field crosses trivially here.
+            SendClaim(3);
+            for (uint32_t k = 1; k < params::kConfirmRetries; ++k)
+                Simulator::Schedule(Seconds(k * params::kConfirmRetryS),
+                                    &SarFastUavApp::SendClaim, this, (uint8_t)3);
             SendReport();
             return;
         }
@@ -215,7 +226,16 @@ void SarFastUavApp::ControlTick() {
                 // grace is what keeps a relay alive across the decision. Both
                 // ends are local — no UAV consults the ground truth or a global
                 // view to decide.
-                SendClaim(3);      // sweep complete: the DATA team may stand down
+                // Sweep complete. Repeated, not announced once: this is the
+                // signal the rotary team's phase gate waits on, and a single
+                // broadcast on a lossy channel left DATA UAVs staging for the
+                // whole mission (measured: 1 seed in 5 opened no gate at all).
+                // The DATA side also has the sky-quiet fallback; this just makes
+                // the fast path reliable rather than lucky.
+                SendClaim(3);
+                for (uint32_t k = 1; k < params::kConfirmRetries; ++k)
+                    Simulator::Schedule(Seconds(k * params::kConfirmRetryS),
+                                        &SarFastUavApp::SendClaim, this, (uint8_t)3);
                 if (!m_allHome) { m_fc.Hover(); }
                 else if (AllRelayedClosed()) { m_state = State::RETURN_BS; }
                 else {

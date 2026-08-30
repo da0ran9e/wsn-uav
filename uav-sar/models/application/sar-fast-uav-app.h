@@ -40,6 +40,10 @@ public:
     void SetDevice(ns3::Ptr<ns3::NetDevice> d) { m_dev = d; }
     void SetMetrics(SarMetrics* m) { m_metrics = m; }
     void SetSensorPositions(const std::vector<ns3::Vector>& p) { m_sensors = p; }
+    // Phase 1: the orchestrator owns the lane split, because deciding which UAV
+    // sweeps which lane needs to see the whole fleet. A UAV given a plan flies
+    // it; one given none falls back to building its own over its sensor set.
+    void SetMissionOverride(const std::vector<ns3::Vector>& wps) { m_mission = wps; }
     void SetCues(const std::vector<Fragment>& c) { m_cues = c; }
     void SetCruise(double alt, double speed) { m_alt = alt; m_speed = speed; }
     void SetBs(ns3::Vector pos, ns3::Address addr) { m_bsPos = pos; m_bsAddr = addr; }
@@ -70,6 +74,7 @@ private:
     std::vector<ns3::Vector> m_sensors;
     std::vector<Fragment> m_cues;
     std::vector<ns3::Vector> m_targets;
+    std::vector<ns3::Vector> m_mission;   // lane plan from the orchestrator
     size_t m_ti = 0;
     size_t m_cueIdx = 0;      // fragment index in m_cues
     uint16_t m_cueSeq = 0;    // chunk seq within the current cue fragment

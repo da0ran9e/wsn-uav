@@ -330,3 +330,128 @@ python3 uav-sar/tools/phase1_plans.py docs/visualize/phase1-plans.html   # bản
 Không phụ thuộc gì ngoài thư viện chuẩn. Dạng đóng Dubins được kiểm trước khi in
 bất kỳ số nào; nếu sai, script **dừng** chứ không in số sai. Mọi kế hoạch bị chặn
 bởi hai khẳng định: tới đủ waypoint, và phủ > 99 %.
+
+---
+
+## 10. Đã cài vào ns-3 (2026-08-30) — chia luống, và cổng pha
+
+§5 là mô hình quy hoạch. Mục này là **kết quả ns-3 thật**, 8 hạt giống mỗi nhánh,
+`--gridSize=24 --numUav=4 --victimCount=2 --clutterCount=4`.
+
+### 10.1 Vấn đề đo được trước khi sửa
+
+Mỗi UAV FAST được cấp **một nửa danh sách nút**, rồi **tự dựng lưới luống** trên
+hộp bao của nửa đó. Không ai sở hữu luống nào, nên hai UAV đặt luống cách nhau
+dưới một bán kính quảng bá ở hai bên đường ranh:
+
+| | giá trị |
+|---|---:|
+| nút được **cả hai** UAV phủ | **143/576 = 24.8 %** |
+| lệch tải giữa hai UAV | 69.4 % ↔ 55.2 % (**lệch 14.2 điểm**) |
+
+Rải cue cho một nút đã giữ đúng những chunk đó **không mua được gì** — nó là
+airtime và giờ bay tiêu vào việc đã làm rồi.
+
+### 10.2 Sửa: một bộ luống cho cả vùng, mỗi luống một chủ
+
+`models/common/lane-plan.{h,cc}`. Ba phần:
+
+1. **Một bộ luống toàn vùng** (`BuildFieldLanes`) — giống hệt thứ `BuildMission()`
+   sinh ra cho cả vùng, nên hành vi phủ **của từng luống** không đổi.
+2. **Sở hữu độc quyền** (`LanesFor`) — khối luống **liền kề**, không xen kẽ. Xen kẽ
+   cho mỗi UAV khoảng cách luống rộng hơn (lượn rẻ hơn) nhưng đặt **mọi** luống
+   cạnh luống của bạn — đúng thứ trùng lặp đang muốn bỏ. Liền kề chỉ để lại **một**
+   đường ranh.
+3. **Thứ tự Dubins chính xác** (`OrderLanes`) — Held–Karp trên (luống × hướng).
+   Ở 5–6 luống mỗi UAV nó rẻ, nên là **tối ưu thật**, không phải heuristic.
+
+**Kiểm chứng cài đặt.** Hàm Dubins C++ được so với bản Python đã tự kiểm chứng ở
+§5 trên 400 cặp cấu hình ngẫu nhiên: lệch tối đa **1.0 × 10⁻⁷ m**. Và chạy với
+`--lanePlan=0 --phaseGate=0` tái lập lô cũ **trùng từng ô, 0/442 ô sai** — mã mới
+là no-op thật khi tắt.
+
+### 10.3 Kết quả — nhánh B
+
+| chỉ số | A (cũ) | **B (chia luống)** |
+|---|---:|---:|
+| nút phủ hai lần | 24.8 % | **17.0 %** |
+| lệch tải | 14.2 % | **3.8 %** |
+| quãng đường FAST | 11.1 km | **9.5 km (−14.4 %)** |
+| phủ nút (FAST) | 99.8 % | 99.3 % |
+| phủ nút (mọi UAV) | 100.0 % | 100.0 % |
+| nạn nhân định vị | 15/16 | **16/16** |
+| toạ độ sai người | 0 | 0 |
+| ứng viên được phục vụ | 67/70 | **73/73 = 100 %** |
+| thời gian tới toạ độ | 251 s | **211 s** |
+| năng lượng | 236 kJ | 237 kJ |
+
+**−14.4 % quãng đường FAST khớp gần như chính xác con số −14.5 % mà mô hình quy
+hoạch §5.1 dự đoán** — mô hình và ns-3 nói cùng một thứ, đo bằng hai đường độc lập.
+
+17 % còn lại là **nội tại**: khoảng cách luống bằng bán kính quảng bá, nên hai
+luống hai bên đường ranh **buộc** phải phủ chồng một dải rộng đúng một khoảng
+luống. Với chia liền kề thì một đường ranh là ít nhất có thể.
+
+### 10.4 Cổng pha — tách được, nhưng đắt
+
+`--phaseGate=1`: đội cánh quay **không nhận việc** cho tới khi nghe đủ thông báo
+"đã quét xong" từ mọi UAV FAST (CLAIM role 3), có **dự phòng bằng bầu trời im
+lặng** và một hạn chót fail-open.
+
+Ba lỗi phải sửa trước khi nó thật sự là một cổng:
+
+1. **Cổng đặt sai chỗ.** Chặn tuần tra và chặn rải cue **không** tách được pha: UAV
+   đang chờ vẫn nghe RCLAIM, vẫn nhận việc, vẫn bay đi giao. Đo được: giao hàng ở
+   t = 41–128 s trong khi cổng mở ở t = 189 s. **Nhận việc mới là "bắt đầu"**, nên
+   cổng phải nằm ở `ConsiderTasks()`.
+2. **Cổng fail-closed.** Chỉ dựa vào một quảng bá CLAIM(3) không lặp: 1 hạt giống
+   trong 5 **không mở cổng nào**, một hạt khác chỉ mở 1 trong 2. Sửa: FAST lặp lại
+   thông báo, và **bầu trời im lặng cũng mở cổng** — từ chỗ chờ, "trời im" chính
+   là âm thanh của "đội quét đã xong".
+3. **Guard `module=` không bắt được bản dựng cũ** khi `.so` bị thay **trong lúc**
+   tiến trình đang chạy: tiến trình cũ stat lại tệp mới và đóng dấu nhãn mới. Ba
+   run rác đã lọt qua đúng đường này. Đây là một lỗ mới của guard, chưa vá.
+
+| chỉ số | B | **C (+cổng pha)** |
+|---|---:|---:|
+| chỉ số FAST | — | **y hệt B** (cổng không đụng đội FAST) |
+| nạn nhân định vị | 16/16 | **14/16** |
+| năng lượng | 237 kJ | **321 kJ (+36 %)** |
+| thời gian tới toạ độ | 211 s | **285 s (+35 %)** |
+
+### 10.5 Chờ dưới đất — **hỏng hẳn**, và nó chỉ ra một ràng buộc thật
+
+Phương án hiển nhiên để bỏ +36 % năng lượng: chờ **dưới đất**, không tốn công
+treo. Đo được (`--phaseGateGround=1`), 4/4 hạt giống:
+
+> **0 lần giao hàng, 0/8 nạn nhân định vị được.**
+
+Hai nguyên nhân, cả hai đều là ràng buộc thật của kiến trúc hai pha:
+
+1. **Thông báo không tới nơi.** Từ mặt đất ở góc BS, đội DATA nghe được **0/2**
+   thông báo quét-xong phát trên vùng. Phải cho UAV FAST **phát lại khi hạ cánh về
+   BS** thì cổng mới mở — nghĩa là *phải bay về mới bàn giao được*.
+2. **Danh sách ứng viên hết hạn trước khi Phase 2 bắt đầu.** Ngay cả khi cổng mở
+   (t = 245 s), hoạt động cuối cùng của mặt đất đã là t = 191.7 s: các thủ lĩnh đã
+   dùng hết `kMaxRetargets` và **ngừng phát SUMMON**. Không còn lời mời nào để trả
+   lời.
+
+**Đây là kết quả có giá trị, không phải một thất bại cần giấu.** Nó phát biểu được
+thành một ràng buộc thiết kế: *tách pha nghiêm ngặt đòi hỏi danh sách ứng viên phải
+được **lưu giữ và quảng bá lại**, hoặc Phase 2 phải chồng lấn Phase 1.* Quảng bá
+của mặt đất có **tuổi thọ hữu hạn** ($\text{kMaxRetargets} \times
+\text{kRetargetAfterS}$), và tuổi thọ đó là thứ quyết định cổng pha có khả thi hay
+không.
+
+### 10.6 Mặc định để lại
+
+| cờ | mặc định | lý do |
+|---|---|---|
+| `--lanePlan` | **bật** | thắng ở mọi chỉ số, không đánh đổi |
+| `--phaseGate` | **tắt** | là **dụng cụ đo** để quy công cho Phase 1, không phải chế độ vận hành tốt hơn |
+| `--phaseGateGround` | tắt | hỏng hẳn cho tới khi ứng viên được lưu giữ |
+
+Cổng pha vẫn có giá trị: bật nó lên thì **tập ứng viên chứng minh được là do đội
+cánh cố định sinh ra một mình** (đội DATA không rải cue nào). Đó đúng là thứ cần
+cho việc quy đóng góp của Phase 1 — chỉ là nó phải được gọi tên là dụng cụ đo, kèm
+giá của nó.

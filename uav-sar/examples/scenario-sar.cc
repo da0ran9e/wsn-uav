@@ -39,6 +39,10 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("deliverDwell", "min delivery dwell s (0 = design default)", cfg.deliverDwellS);
     cmd.AddValue("senseSigma", "detector noise sigma on clue quality (0 = ideal)", cfg.senseSigma);
     cmd.AddValue("gpsSigma", "per-node GPS error sigma in m (0 = exact)", cfg.gpsSigmaM);
+    cmd.AddValue("lanePlan", "one field-wide lane set, each lane owned by one FAST UAV", cfg.lanePlan);
+    cmd.AddValue("phaseGate", "rotary team waits for the fixed-wing sweep to finish", cfg.phaseGate);
+    cmd.AddValue("phaseGateDeadline", "fail-open bound on the phase gate (s)", cfg.phaseGateDeadlineS);
+    cmd.AddValue("phaseGateGround", "rotary team waits on the ground, not airborne", cfg.phaseGateGround);
     cmd.AddValue("victimOnNode", "victim sits exactly on a sensor (0 = continuous)", cfg.victimOnNode);
     cmd.AddValue("fixFirst", "a UAV holding a confirmed fix flies it home before taking another candidate", cfg.fixFirst);
     cmd.AddValue("victimCount", "number of REAL victims (1 = the classic setting)", cfg.victimCount);

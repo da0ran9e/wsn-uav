@@ -1,4 +1,5 @@
 #include "sar-config.h"
+#include "../models/common/lane-plan.h"
 #include "../models/common/target-profile.h"
 #include "../models/common/clue-field.h"
 #include "../models/common/sar-params.h"
@@ -222,6 +223,11 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     uint32_t fastCount = (proposed || closedLoop)
                              ? std::max<uint32_t>(1, (uint32_t)(numUav * cfg.fastRatio))
                              : 0;
+    // One lane set for the whole field, sliced between the FAST UAVs below.
+    const std::vector<Lane> fieldLanes =
+        BuildFieldLanes(s.sensorPositions, params::kUavBroadcastRadiusM,
+                        params::kFastAltitudeM);
+
     // UAV role coordination (who diverts, who couriers) is now a radio CLAIM with
     // suppression — no shared-memory tokens.
     for (uint32_t u = 0; u < numUav; u++) {
@@ -281,6 +287,17 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // only 70% of runs, with clue_report exactly 0 in the failures.
             // DATA patrol is now purely ADDITIVE redundancy on top of this.
             app->SetSensorPositions(partition(u, fastCount));
+            // Phase 1 lane split. The partition above still feeds the fallback
+            // planner, but the plan actually flown comes from ONE field-wide
+            // lane set with each lane owned by exactly one UAV -- see
+            // lane-plan.h for what that fixes (24.8 % of nodes were being swept
+            // twice, and the split was 69/55 rather than even).
+            if (cfg.lanePlan) {
+                app->SetMissionOverride(OrderLanes(
+                    LanesFor(fieldLanes, u, fastCount),
+                    params::TurnRadiusM(fastSpd),
+                    Vector(bsPos.x, bsPos.y, params::kFastAltitudeM)));
+            }
             app->SetCues(cues);
             app->SetFixOnConfirm(cfg.fixOnConfirm);
             app->SetCruise(params::kFastAltitudeM, fastSpd);
@@ -306,6 +323,11 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // the leader that fires it.
             app->SetPatrol(cfg.dataPatrol);
             app->SetCueEnroute(cfg.dataCueEnroute);
+            // Phase 2 starts when Phase 1 reports finished. The deadline is the
+            // fail-open bound: the gate is fed by radio announcements, and a
+            // gate that never opens is a mission that delivers nothing.
+            app->SetPhaseGate(cfg.phaseGate, fastCount, cfg.phaseGateDeadlineS,
+                              cfg.phaseGateGround);
             app->SetCues(cues);
             // Its own band among the DATA UAVs, so the DATA team ALSO sweeps the
             // whole field -- redundant with FAST by design, which is what makes

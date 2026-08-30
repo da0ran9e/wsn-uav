@@ -68,6 +68,10 @@ public:
     // fatal: a correct 9 m aim was computed and never reached the sky. Patrol
     // instead: fly a coverage sweep over this UAV's own band, spreading CUES
     // exactly as the FAST team does, and stay divertible throughout.
+    void SetPhaseGate(bool on, uint32_t fastCount, double deadlineS, bool ground) {
+        m_phaseGate = on; m_expectFast = fastCount; m_gateDeadlineS = deadlineS;
+        m_gateGround = ground;
+    }
     void SetPatrol(bool v) { m_patrol = v; }
     void SetCues(const std::vector<Fragment>& c) { m_cues = c; }
     // Spread cues on every leg flown before a delivery task exists, not only
@@ -124,6 +128,33 @@ private:
     bool PeerServingNear(double x, double y, uint16_t* who = nullptr) const;
 
     enum class State { IDLE, CLIMB, GOTO_CENTER, LOITER, PATROL, DIVERT, DELIVER, SWEEP, RETURN, DONE };
+
+    // Phase gate. With --phaseGate the rotary team is Phase 2 proper: it stages
+    // near the BS and does not enter the field until the fixed-wing team has
+    // announced every band swept (CLAIM role 3, one per FAST UAV). That makes
+    // Phase 1 attributable -- the screening coverage and the candidate set are
+    // then produced by the FAST team ALONE, with no DATA cueing mixed in.
+    //
+    // The gate is radio-only, like every other coordination rule here, so it can
+    // fail closed: if the announcements are never heard the DATA team would
+    // never start, and the mission would silently deliver nothing. m_gateDeadline
+    // is the bound that stops that.
+    bool m_phaseGate = false;
+    uint32_t m_expectFast = 0;
+    double m_gateDeadlineS = 0;
+    bool m_gateOpen = false;
+    // Where the rotary team waits. Staging AIRBORNE over the field centre keeps
+    // it one hop from any leader, but a rotary wing pays full hover power to do
+    // nothing: measured, 190 s of staging cost +36 % mission energy. Waiting on
+    // the ground costs nothing and is what a real crew would do; the price is
+    // the transit from the BS once the gate opens, and a weaker radio position
+    // while waiting (which is why the deadline exists).
+    bool m_gateGround = false;
+    bool GateOpen() const {
+        if (!m_phaseGate || m_gateOpen) return true;
+        return m_sweepDone.size() >= m_expectFast;
+    }
+    void OpenGate();          // leave staging, begin the patrol plan
 
     uint32_t m_nodeId = 0;
     ns3::Ptr<ns3::NetDevice> m_dev;

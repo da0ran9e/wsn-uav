@@ -8,6 +8,7 @@ build_lib(
   SOURCE_FILES
     models/common/sar-info.cc
     models/common/cell-grid.cc
+    models/common/lane-plan.cc
     models/common/inter-cell-routing.cc
     models/network/air-ground-loss.cc
     models/network/pair-shadowing-loss.cc
@@ -29,6 +30,7 @@ build_lib(
     models/common/sar-info.h
     models/common/sar-params.h
     models/common/cell-grid.h
+    models/common/lane-plan.h
     models/common/inter-cell-routing.h
     models/network/air-ground-loss.h
     models/network/pair-shadowing-loss.h

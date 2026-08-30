@@ -40,6 +40,16 @@ void SarDataUavApp::StopApplication() {
 }
 
 void SarDataUavApp::TakeOff() {
+    // Ground hold: Phase 2 has not started, so there is nothing worth being
+    // airborne for. Re-arm and check again rather than climbing to burn hover
+    // power over an empty task list. The radio is already listening, so the
+    // sweep-done CLAIM still reaches us here; the deadline covers the case
+    // where it does not.
+    if (m_phaseGate && m_gateGround && !m_gateOpen && !GateOpen() &&
+        Simulator::Now().GetSeconds() < m_gateDeadlineS) {
+        Simulator::Schedule(Seconds(1.0), &SarDataUavApp::TakeOff, this);
+        return;
+    }
     if (m_metrics) { Vector p = m_fc.GetPosition();
         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA", "takeoff", "", p.x, p.y, p.z); }
     if (m_mode == Mode::SWEEP_DUMP) {
@@ -61,9 +71,41 @@ void SarDataUavApp::TakeOff() {
     m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);
     // Start cueing from the climb: a DATA UAV that has not been summoned yet is
     // still a data source in motion over the field.
-    if (m_mode == Mode::SUMMONED && m_cueEnroute && !m_cues.empty()) PatrolCueTick();
+    if (m_mode == Mode::SUMMONED && m_cueEnroute && !m_phaseGate && !m_cues.empty())
+        PatrolCueTick();
     m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarDataUavApp::ControlTick, this);
     TrajTick();
+}
+
+void SarDataUavApp::OpenGate() {
+    if (m_gateOpen) return;
+    m_gateOpen = true;
+    const double t = Simulator::Now().GetSeconds();
+    Vector p = m_fc.GetPosition();
+    if (m_metrics) {
+        char det[96];
+        const char* why = m_sweepDone.size() >= m_expectFast ? "claim"
+                          : (t >= m_gateDeadlineS ? "deadline" : "sky-quiet");
+        std::snprintf(det, sizeof det, "%s; %u/%u fast swept", why,
+                      (unsigned)m_sweepDone.size(), (unsigned)m_expectFast);
+        m_metrics->Event(t, m_nodeId, "DATA", "gate_open", det, p.x, p.y, p.z);
+    }
+    // Phase 2 begins. If this UAV already has a job it keeps it; otherwise it
+    // starts its patrol so it is IN MOTION over the field and reachable by a
+    // one-hop SUMMON -- a UAV parked at the staging point can only be summoned
+    // by a leader within one hop of the BS corner.
+    if (m_state == State::IDLE) return;   // ground hold: TakeOff() picks it up
+    if (m_claimed || m_state == State::DIVERT || m_state == State::DELIVER ||
+        m_state == State::RETURN || m_state == State::DONE)
+        return;
+    if (m_patrol && !m_targets.empty()) {
+        m_ti = 0;
+        m_state = State::PATROL;
+        Vector t0 = m_targets[m_ti];
+        m_fc.Turn(std::atan2(t0.y - p.y, t0.x - p.x) * 180 / M_PI);
+        m_fc.Forward(m_speed);
+    }
+    ConsiderTasks();          // candidates may already be waiting
 }
 
 void SarDataUavApp::SendClaim(uint8_t role) {
@@ -108,6 +150,14 @@ void SarDataUavApp::ConsiderTasks() {
     if (m_claimed || m_yieldedDivert) return;
     if (m_state == State::DELIVER || m_state == State::RETURN || m_state == State::DONE)
         return;
+    // The phase gate belongs HERE, not only on the patrol start. Gating the
+    // patrol and the cueing looked like it separated the phases and did not:
+    // a staging UAV still heard RCLAIM, still claimed, and still flew off to
+    // deliver. Measured with the gate nominally on: deliveries at t = 41-128 s
+    // against a gate that opened at t = 189 s -- every candidate was served
+    // during Phase 1. Taking a job is what "starting" means, so that is what
+    // the gate has to hold back.
+    if (!GateOpen()) return;
     Vector p = m_fc.GetPosition();
     uint16_t best = 0xFFFF;
     double bestD = 0;
@@ -212,7 +262,7 @@ void SarDataUavApp::ControlTick() {
                 } else if (m_pendingDivert) {   // claimed before takeoff -> region
                     m_pendingDivert = false;
                     m_state = State::DIVERT;
-                } else if (m_patrol && !m_targets.empty()) {
+                } else if (m_patrol && !m_targets.empty() && GateOpen()) {
                     m_state = State::PATROL;
                     Vector t = m_targets[m_ti];
                     m_fc.Turn(std::atan2(t.y - p.y, t.x - p.x) * 180 / M_PI);
@@ -248,6 +298,9 @@ void SarDataUavApp::ControlTick() {
         case State::GOTO_CENTER:
             if (std::hypot(m_loiter.x - p.x, m_loiter.y - p.y) <= arriveR) {
                 m_fc.Hover(); m_state = State::LOITER; }
+            if (m_phaseGate && !m_gateOpen &&
+                (GateOpen() || Simulator::Now().GetSeconds() >= m_gateDeadlineS))
+                OpenGate();
             break;
         case State::PATROL: {
             // Fly the coverage plan while remaining divertible. When the plan is
@@ -291,6 +344,11 @@ void SarDataUavApp::ControlTick() {
             break;
         }
         case State::LOITER:
+            if (m_phaseGate && !m_gateOpen &&
+                (GateOpen() || Simulator::Now().GetSeconds() >= m_gateDeadlineS)) {
+                OpenGate();
+                break;
+            }
             // LOITER means STOPPED. Saying so every tick, rather than trusting
             // whoever set the state to have called Hover(), is what makes it
             // true: the runaway that survived the out-of-bounds fix was a UAV
@@ -306,6 +364,18 @@ void SarDataUavApp::ControlTick() {
             // clock, so it scales with the field instead of against it.
             if (m_allHome && !m_claimed && m_lastCueHeardS > 0 &&
                 Simulator::Now().GetSeconds() - m_lastCueHeardS > params::kSkyQuietS) {
+                // Under the phase gate the SAME observation means the opposite
+                // thing. A quiet sky is exactly what "the fixed-wing team has
+                // stopped sweeping" sounds like from the staging point, so it is
+                // the signal to START, not to go home.
+                //
+                // This is also what makes the gate safe. Keying it solely on the
+                // sweep-done CLAIM made it fail closed on one lost broadcast:
+                // measured over 5 seeds, one seed opened NO gate at all and
+                // another opened only one of two, and those DATA UAVs sat at the
+                // staging point for the whole mission. A gate that depends on a
+                // single unacknowledged packet is not a gate.
+                if (m_phaseGate && !m_gateOpen) { OpenGate(); break; }
                 m_state = State::RETURN;
                 if (m_metrics) {
                     m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "DATA",
@@ -457,10 +527,17 @@ void SarDataUavApp::PatrolCueTick() {
     // patrolling. That is different from --dataPatrol, which buys coverage by
     // flying an EXTRA tour and was measured net-negative; this buys coverage
     // along a path already being flown.
-    const bool cueing = m_cueEnroute
-        ? (m_state == State::CLIMB || m_state == State::GOTO_CENTER ||
-           m_state == State::LOITER || m_state == State::PATROL)
-        : (m_state == State::PATROL);
+    // With --phaseGate the two phases are separated BY FUNCTION, not just in
+    // time: the fixed-wing team cues (screening) and the rotary team delivers
+    // (confirmation). Without that, DATA cueing lands in the middle of the very
+    // measurement Phase 1 is supposed to own, and the screening coverage can no
+    // longer be attributed to the FAST team.
+    const bool cueing = m_phaseGate
+        ? false
+        : (m_cueEnroute
+               ? (m_state == State::CLIMB || m_state == State::GOTO_CENTER ||
+                  m_state == State::LOITER || m_state == State::PATROL)
+               : (m_state == State::PATROL));
     if (cueing && !m_cues.empty() && m_dev) {
         const Fragment& f = m_cues[m_cueIdx % m_cues.size()];
         uint16_t total = (uint16_t)std::max(1u, (f.sizeBytes + kChunkBytes - 1) / kChunkBytes);
@@ -693,6 +770,7 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
             // and 11 of 32 candidates were never served because nobody was
             // airborne when they were summoned.
             m_sweepDone.insert(id);
+            if (m_phaseGate && !m_gateOpen && GateOpen()) OpenGate();
         }
         if (role == 2 && crid != 0xFFFF) {
             Task& t = m_tasks[crid];

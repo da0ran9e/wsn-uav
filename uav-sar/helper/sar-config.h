@@ -120,6 +120,11 @@ struct SarScenarioConfig {
     double deliverDwellS = 0.0;  // 0 = kMinDeliverDwellS
     double senseSigma = 0.0;     // detector noise, additive sigma on clueQuality
     double gpsSigmaM = 0.0;      // per-node frozen GPS offset, sigma in metres
+    // Phase 1 / Phase 2 separation (see docs/PHASE1-vi.md).
+    bool   lanePlan = true;          // one field lane set, one owner per lane
+    bool   phaseGate = false;        // rotary team waits for the fixed-wing sweep
+    double phaseGateDeadlineS = 400; // fail-open bound if the announcement is lost
+    bool   phaseGateGround = false;  // wait on the ground rather than airborne
     bool   victimOnNode = true;  // false = victim at a continuous position (W7)
     // D17: how many REAL victims. 1 reproduces every earlier result. Real
     // victims differ from confusable objects in exactly one way that matters:

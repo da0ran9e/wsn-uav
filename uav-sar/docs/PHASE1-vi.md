@@ -455,3 +455,114 @@ Cổng pha vẫn có giá trị: bật nó lên thì **tập ứng viên chứng
 cánh cố định sinh ra một mình** (đội DATA không rải cue nào). Đó đúng là thứ cần
 cho việc quy đóng góp của Phase 1 — chỉ là nó phải được gọi tên là dụng cụ đo, kèm
 giá của nó.
+
+---
+
+## 11. Quét theo NĂNG LỰC, không theo nút (2026-08-31)
+
+Cho tới đây "phủ" nghĩa là **mọi nút phải nằm trong bán kính quảng bá của đường
+bay**. Điều đó chỉ đúng nếu mọi nút như nhau. Chúng không như nhau, và khi chúng
+khác nhau thì "phủ vùng" và "phủ thứ đáng phủ" là **hai câu hỏi khác nhau**.
+
+### 11.1 Ba năng lực, ba cổng khác nhau
+
+`models/common/node-capability.{h,cc}`. Mỗi nút mang ba chỉ số **hỏng độc lập**,
+và mỗi cái chặn một **giai đoạn khác nhau** của dây chuyền sàng lọc:
+
+| năng lực | chặn cái gì | mô hình |
+|---|---|---|
+| **quan sát** | **BẰNG CHỨNG** | **tầm hiệu dụng**, không phải độ lợi |
+| **tính toán** | **DANH TÍNH** | dưới `kCpuConfirmMin` thì không chạy được bộ khớp |
+| **giao tiếp** | **TỐC ĐỘ GIEO** | **chu kỳ thức**, không phải bitrate |
+
+Cả ba lựa chọn mô hình đều là **kết quả của một lần đo sai trước đó**:
+
+**(a) Quan sát: tầm, không phải độ lợi.** Bản đầu nhân thẳng số đo với `obs`. Kết
+quả: **0/2 nạn nhân**, dù việc giao dữ liệu chạy hoàn hảo — vì phép nhân đẩy
+*đồng loạt* mọi nút xuống dưới ngưỡng xác nhận. Trường là
+$q = Q_{\max} e^{-d/L}$; cho `obs` co **tầm** $L$ rồi khử $d$:
+
+$$q' \;=\; Q_{\max}\left(\frac{q}{Q_{\max}}\right)^{1/\text{obs}}$$
+
+Không cần biết $d$, và `obs = 1` tái lập trường **đúng nguyên văn**. Một camera
+tốt ở xa và một camera kém ở gần nay đọc ra cùng một số — đó mới là vật lý.
+
+**(b) Giao tiếp: chu kỳ thức, không phải bitrate.** Cue chỉ chào ~4 kbps trong khi
+mọi radio 802.15.4 chạy 250 kbps, nên **bitrate không bao giờ là ràng buộc** — mô
+hình dựng trên nó chỉ là đồ trang trí. Thứ thật sự ràng buộc trong WSN là **nút rẻ
+thì ngủ**. Nút thức 40 % thời gian mất 60 % của một lượt bay ngang.
+
+**(c) Và nó chỉ chặn CUE.** Bản đầu chặn cả `FULL`, và cũng ra **0/2 nạn nhân**:
+nút của chính nạn nhân (duty 0.39) **không bao giờ nhận đủ bộ tham chiếu**, nên
+không bao giờ xác nhận được. Lý do đúng: radio ngủ thua một nguồn **không đoán
+trước và không xin phát lại được** — đúng là chiếc scout lướt qua ở 25 m/s. Nó
+**không** thua chiếc DATA đỗ trên đầu 20 giây, vì đồng bộ với nguồn bền là đúng
+việc chu kỳ thức sinh ra để làm. **Năng lực radio thuộc về Phase 1**, và đó cũng
+là chỗ người lập đường bay làm được gì đó với nó.
+
+### 11.2 Phủ theo ô: chọn luống theo năng lực biên trên mỗi mét
+
+`--cellCoverTarget`: chọn luống cho tới khi **mọi ô** đạt một tỉ lệ năng lực sàng
+lọc **của chính nó**, tham lam theo *năng lực biên trên mỗi mét bay*. Nút không có
+camera **không đáng bay qua** — và đó chính là câu mà cách phủ cũ không nói được.
+
+### 11.3 Chia việc cân cả NĂNG LỰC lẫn CÔNG BAY
+
+`BalancedSplit`: quy hoạch động **chính xác** trên các điểm cắt liền kề, tối thiểu
+hoá **khối tệ nhất** theo tổ hợp có trọng số của lệch công bay và lệch năng lực.
+Hai lần sửa, cả hai đều do đo mà ra:
+
+1. **Công bay phải là thứ BAY THẬT, không phải số mét luống.** Chấm bằng độ dài
+   luống để lại quãng đường thực **lệch 56 %** trong khi hàm mục tiêu tin là đều —
+   khối xa căn cứ ở góc phải trả một đoạn transit mà hàm mục tiêu không nhìn thấy.
+   Tính cả transit và chi phí quay đầu: nhánh đồng nhất từ **17.9 % → 1.7 %**.
+2. **`SubdivideLanes`.** Chọn theo ô chỉ để lại 4–5 luống (5 luống đã phủ kín vùng
+   ở bán kính danh nghĩa), mà một phép chia **không thể mịn hơn số mảnh nó được
+   cho**. Cắt dọc luống thành 3 mảnh mỗi UAV.
+
+### 11.4 Kết quả — 8 hạt giống mỗi dòng, **một bản dựng**
+
+| cấu hình | UAV | FAST | năng lực phủ | lệch năng lực | lệch công bay | km FAST | nạn nhân | kJ | t toạ độ |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| đồng nhất, phủ nút | 4 | 2 | 99.5 % | 3.4 % | 1.7 % | 9.5 | **13/16** | 239 | 228 s |
+| dị biệt, phủ nút | 4 | 2 | 99.4 % | 4.2 % | 5.8 % | 9.5 | 9/16 | 211 | 211 s |
+| dị biệt, **phủ ô** | 4 | 2 | 95.2 % | 5.7 % | 9.3 % | **7.0** | 9/16 | 195 | 168 s |
+| dị biệt, phủ nút | 6 | 3 | 100.0 % | 41.0 % | 19.2 % | 10.2 | 11/16 | 269 | 158 s |
+| **dị biệt, phủ ô** | **6** | **3** | 94.4 % | 27.9 % | 12.3 % | **7.7** | **13/16** | 294 | **123 s** |
+| dị biệt, phủ nút | 8 | 4 | 99.9 % | 35.9 % | 18.9 % | 14.2 | 10/16 | 367 | 156 s |
+| dị biệt, phủ ô | 8 | 4 | 98.3 % | 37.7 % | 20.7 % | 10.1 | 9/16 | 511 | 122 s |
+| dị biệt, phủ nút | 10 | 5 | 99.2 % | 51.1 % | 34.8 % | 15.0 | 10/16 | 706 | 127 s |
+| dị biệt, phủ ô | 10 | 5 | 97.6 % | 44.6 % | 30.6 % | 11.5 | 9/16 | 522 | 102 s |
+
+**Ba điều đọc được:**
+
+**(1) Phủ theo ô rẻ hơn và không mất nạn nhân.** Ở 2 UAV: **−26 % quãng đường**
+(9.5 → 7.0 km), **−20 % thời gian tới toạ độ** (211 → 168 s), −8 % năng lượng, đổi
+lấy **−4.2 điểm** năng lực được phủ — và **cùng 9/16 nạn nhân**. Không bay qua một
+nút không camera thì không mất gì cả, đúng như giả thiết.
+
+**(2) Dị biệt hoá đắt, và đó là kết quả chứ không phải lỗi.** Cùng đường bay, chỉ
+đổi phần cứng mặt đất: **13/16 → 9/16 nạn nhân (−31 %)**. Đây là con số nói rằng
+mọi kết quả trước đây đo trên một mặt đất **lý tưởng hoá**.
+
+**(3) Thêm UAV KHÔNG đơn điệu tốt lên.** Thời gian tới toạ độ giảm 168 → 123 s khi
+lên 3 UAV cánh cố định, rồi **đứng yên** (122, 102 s) trong khi năng lượng
+**tăng gấp 2.7 lần** (195 → 522 kJ). **Điểm vận hành tốt nhất đo được là 3 UAV
+cánh cố định với phủ theo ô**: 13/16 nạn nhân, 123 s, 294 kJ.
+
+### 11.5 Chưa xong — cân bằng vỡ khi đội bay lớn
+
+Lệch năng lực đi từ **5.7 % (2 UAV) lên 44.6 % (5 UAV)**; lệch công bay từ 9.3 %
+lên 30.6 %. Đây **không** phải hiện vật đo: quãng đường thực từng chiếc ở 5 UAV là
+2.74 / 2.75 / 2.94 / 3.05 / 3.62 km.
+
+Nguyên nhân đã khoanh được: `blockEffort` ước lượng transit bằng **2 × khoảng cách
+tới đầu luống GẦN nhất**. Với khối hẹp ở xa, ước lượng đó **hụt** — phải là
+$d(\text{BS}, \text{gần nhất}) + d(\text{BS}, \text{xa nhất})$. Chưa sửa: campaign
+đang chạy trên một bản dựng và luật §12 của `SIM-SPEC` cấm dựng lại giữa chừng.
+
+**Việc tiếp theo, theo thứ tự:** (1) sửa ước lượng transit và đo lại thang đội bay;
+(2) tách **năng lực đã lập kế hoạch** khỏi **năng lực đo được** (transit chung làm
+nhiễu phép quy công ở đội bay lớn); (3) `cellCoverTarget` bão hoà ở ≥ 0.5 vì 5
+luống đã phủ kín vùng — muốn đường cong đánh đổi thật thì phải quét **bán kính
+quảng bá hiệu dụng**, không phải quét chỉ tiêu.

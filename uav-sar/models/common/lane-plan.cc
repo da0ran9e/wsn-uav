@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <map>
 
 namespace ns3::uavsar {
 
@@ -205,6 +206,202 @@ std::vector<Vector> OrderLanes(const std::vector<Lane>& lanes,
     }
     std::reverse(order.begin(), order.end());
     emit(order);
+    return out;
+}
+
+
+// ---------------------------------------------------------------------------
+// Cell-based coverage and the capability/effort balanced split.
+// ---------------------------------------------------------------------------
+
+namespace {
+
+double PointToSegment(double px, double py,
+                      double ax, double ay, double bx, double by) {
+    const double vx = bx - ax, vy = by - ay;
+    const double L2 = vx * vx + vy * vy;
+    double t = L2 > 0 ? ((px - ax) * vx + (py - ay) * vy) / L2 : 0.0;
+    t = std::max(0.0, std::min(1.0, t));
+    return std::hypot(px - (ax + t * vx), py - (ay + t * vy));
+}
+
+}  // namespace
+
+std::vector<LaneScore> ScoreLanes(const std::vector<Lane>& lanes,
+                                  const std::vector<CapNode>& nodes, double radius) {
+    std::vector<LaneScore> out(lanes.size());
+    for (size_t i = 0; i < lanes.size(); ++i) {
+        const Lane& l = lanes[i];
+        out[i].effort = std::hypot(l.b.x - l.a.x, l.b.y - l.a.y);
+        for (const CapNode& n : nodes)
+            if (PointToSegment(n.x, n.y, l.a.x, l.a.y, l.b.x, l.b.y) <= radius)
+                out[i].capability += n.screening;
+    }
+    return out;
+}
+
+std::vector<Lane> SelectLanesForCells(const std::vector<Lane>& candidates,
+                                      const std::vector<CapNode>& nodes,
+                                      double radius, double cellTarget) {
+    // Total screening capability per cell -- the denominator each cell is
+    // measured against. Cells with no capability at all (no camera anywhere) are
+    // dropped from the requirement rather than made unsatisfiable: flying over
+    // them cannot buy evidence, which is the whole point of scoring by
+    // capability instead of by node count.
+    std::map<int32_t, double> total, got;
+    for (const CapNode& n : nodes)
+        if (n.cellId >= 0) total[n.cellId] += n.screening;
+
+    std::vector<char> taken(candidates.size(), 0);
+    std::vector<char> seeded(nodes.size(), 0);
+    std::vector<Lane> chosen;
+
+    auto satisfied = [&]() {
+        for (const auto& [cid, tot] : total) {
+            if (tot <= 1e-9) continue;
+            if (got[cid] < cellTarget * tot - 1e-9) return false;
+        }
+        return true;
+    };
+
+    while (!satisfied()) {
+        // Marginal capability per metre: what this lane would ADD toward the
+        // still-unmet cell targets, divided by what it costs to fly.
+        double bestGain = 0; size_t best = candidates.size();
+        std::vector<char> bestNew;
+        for (size_t i = 0; i < candidates.size(); ++i) {
+            if (taken[i]) continue;
+            const Lane& l = candidates[i];
+            const double len = std::hypot(l.b.x - l.a.x, l.b.y - l.a.y);
+            if (len <= 0) continue;
+            double add = 0;
+            std::vector<char> mark(nodes.size(), 0);
+            for (size_t k = 0; k < nodes.size(); ++k) {
+                if (seeded[k]) continue;
+                const CapNode& n = nodes[k];
+                if (n.cellId < 0) continue;
+                const double tot = total[n.cellId];
+                if (tot <= 1e-9 || got[n.cellId] >= cellTarget * tot) continue;
+                if (PointToSegment(n.x, n.y, l.a.x, l.a.y, l.b.x, l.b.y) > radius) continue;
+                add += n.screening;
+                mark[k] = 1;
+            }
+            const double gain = add / len;
+            if (gain > bestGain) { bestGain = gain; best = i; bestNew = mark; }
+        }
+        if (best == candidates.size()) break;      // nothing left that helps
+        taken[best] = 1;
+        chosen.push_back(candidates[best]);
+        for (size_t k = 0; k < nodes.size(); ++k)
+            if (bestNew[k]) { seeded[k] = 1; got[nodes[k].cellId] += nodes[k].screening; }
+    }
+
+    // Keep across-field order: the split below is contiguous, and contiguity is
+    // only meaningful if the lanes are sorted the way they lie on the ground.
+    std::sort(chosen.begin(), chosen.end(), [](const Lane& p, const Lane& q) {
+        return (p.a.x + p.b.x != q.a.x + q.b.x) ? (p.a.x + p.b.x < q.a.x + q.b.x)
+                                                : (p.a.y + p.b.y < q.a.y + q.b.y);
+    });
+    return chosen;
+}
+
+std::vector<Lane> SubdivideLanes(const std::vector<Lane>& lanes, uint32_t minPieces) {
+    if (lanes.empty() || lanes.size() >= minPieces) return lanes;
+    const uint32_t per = (uint32_t)std::ceil((double)minPieces / lanes.size());
+    std::vector<Lane> out;
+    for (const Lane& l : lanes) {
+        for (uint32_t k = 0; k < per; ++k) {
+            const double t0 = (double)k / per, t1 = (double)(k + 1) / per;
+            out.push_back(Lane{
+                Vector(l.a.x + t0 * (l.b.x - l.a.x), l.a.y + t0 * (l.b.y - l.a.y), l.a.z),
+                Vector(l.a.x + t1 * (l.b.x - l.a.x), l.a.y + t1 * (l.b.y - l.a.y), l.a.z)});
+        }
+    }
+    // Order by position along the sweep so contiguous blocks stay geometrically
+    // contiguous -- otherwise a "contiguous" block is scattered over the field
+    // and the whole point of contiguity (one seam) is lost.
+    std::sort(out.begin(), out.end(), [](const Lane& p, const Lane& q) {
+        const double pa = p.a.x + p.b.x, qa = q.a.x + q.b.x;
+        if (pa != qa) return pa < qa;
+        return p.a.y + p.b.y < q.a.y + q.b.y;
+    });
+    return out;
+}
+
+std::vector<std::vector<Lane>> BalancedSplit(const std::vector<Lane>& lanes,
+                                             const std::vector<CapNode>& nodes,
+                                             double radius, uint32_t count,
+                                             double alpha, Vector start,
+                                             double turnRadiusM) {
+    const uint32_t n = (uint32_t)lanes.size();
+    std::vector<std::vector<Lane>> out(count);
+    if (n == 0 || count == 0) return out;
+    if (count == 1) { out[0] = lanes; return out; }
+
+    const std::vector<LaneScore> sc = ScoreLanes(lanes, nodes, radius);
+    std::vector<double> pe(n + 1, 0.0), pk(n + 1, 0.0);
+    for (uint32_t i = 0; i < n; ++i) {
+        pe[i + 1] = pe[i] + sc[i].effort;
+        pk[i + 1] = pk[i] + sc[i].capability;
+    }
+    const double meanK = pk[n] / count;
+
+    // Cost of giving lanes [i, j) to one UAV: how far that block's effort and
+    // capability sit from an even share. Both are normalised, so alpha is a
+    // genuine trade-off dial and not a units conversion.
+    // Effort is what the UAV actually FLIES, not the metres of lane it is given.
+    // Scoring lane length alone was measured and it split the field badly: with
+    // the base at one corner, the block furthest from it pays a long transit
+    // that the objective could not see, and the flown distances came out 56 %
+    // apart while the objective believed they were even.
+    auto blockEffort = [&](uint32_t i, uint32_t j) {
+        double e = pe[j] - pe[i];                       // lane metres
+        if (j > i) {
+            e += (j - i - 1) * M_PI * turnRadiusM;      // one reversal per gap
+            // out to the nearest end of the block, and home from it again
+            double best = -1;
+            for (uint32_t k = i; k < j; ++k)
+                for (const Vector& p : {lanes[k].a, lanes[k].b}) {
+                    const double d = std::hypot(p.x - start.x, p.y - start.y);
+                    if (best < 0 || d < best) best = d;
+                }
+            e += 2.0 * std::max(0.0, best);
+        }
+        return e;
+    };
+    // Mean effort has to use the same estimator as the blocks, otherwise the
+    // normalisation is against a quantity nobody is being scored on.
+    const double meanEff = blockEffort(0, n) / count;
+
+    auto blockCost = [&](uint32_t i, uint32_t j) {
+        const double e = meanEff > 0
+                             ? std::fabs(blockEffort(i, j) - meanEff) / meanEff : 0.0;
+        const double k = meanK > 0 ? std::fabs(pk[j] - pk[i] - meanK) / meanK : 0.0;
+        return alpha * e + (1.0 - alpha) * k;
+    };
+
+    // Exact DP over split points, minimising the WORST block. Minimising the sum
+    // would let one UAV be handed a double share as long as another was light;
+    // the mission ends when the last UAV lands, so the max is the honest cost.
+    const double INF = std::numeric_limits<double>::infinity();
+    std::vector<std::vector<double>> dp(count + 1, std::vector<double>(n + 1, INF));
+    std::vector<std::vector<uint32_t>> cut(count + 1, std::vector<uint32_t>(n + 1, 0));
+    dp[0][0] = 0.0;
+    for (uint32_t u = 1; u <= count; ++u)
+        for (uint32_t j = u; j <= n; ++j)
+            for (uint32_t i = u - 1; i < j; ++i) {
+                if (dp[u - 1][i] == INF) continue;
+                const double c = std::max(dp[u - 1][i], blockCost(i, j));
+                if (c < dp[u][j] - 1e-12) { dp[u][j] = c; cut[u][j] = i; }
+            }
+
+    uint32_t j = n;
+    for (uint32_t u = count; u >= 1; --u) {
+        const uint32_t i = cut[u][j];
+        out[u - 1].assign(lanes.begin() + i, lanes.begin() + j);
+        j = i;
+        if (u == 1) break;
+    }
     return out;
 }
 

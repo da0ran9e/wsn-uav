@@ -1,5 +1,8 @@
 #include "sar-config.h"
+#include <fstream>
+#include <filesystem>
 #include "../models/common/lane-plan.h"
+#include "../models/common/node-capability.h"
 #include "../models/common/target-profile.h"
 #include "../models/common/clue-field.h"
 #include "../models/common/sar-params.h"
@@ -129,6 +132,16 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     cc.clutterSimMin = cfg.clutterSimMin;
     cc.clutterSimMax = cfg.clutterSimMax;
     cc.clutterResolve = cfg.clutterResolve;
+    // Heterogeneous hardware, drawn from its own stream so uniformNodes=1
+    // reproduces every earlier result exactly.
+    CapabilityConfig capCfg;
+    capCfg.seed = cfg.seed;
+    capCfg.uniform = cfg.uniformNodes;
+    capCfg.cameraFraction = cfg.cameraFraction;
+    std::vector<uint32_t> capIds;
+    for (const auto& n : nodePos) capIds.push_back(n.id);
+    m_caps = BuildCapabilities(capIds, capCfg);
+
     auto field = BuildClueField(cluePos, cc);
     // Scored against the delivered fix so that "went to the wrong person" is a
     // separate outcome in metrics.csv, not an outlier in the error tail.
@@ -223,10 +236,37 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     uint32_t fastCount = (proposed || closedLoop)
                              ? std::max<uint32_t>(1, (uint32_t)(numUav * cfg.fastRatio))
                              : 0;
+    // The planner's view of the ground: where the capability is, and which cell
+    // owns it. This is what turns "cover the field" into "seed every cell".
+    std::vector<CapNode> capNodes;
+    for (const auto& n : nodePos) {
+        CapNode cn;
+        cn.x = n.x; cn.y = n.y;
+        auto ci = m_caps.find(n.id);
+        cn.screening = (ci != m_caps.end()) ? ci->second.Screening() : 1.0;
+        auto pi = m_plan.nodes.find(n.id);
+        cn.cellId = (pi != m_plan.nodes.end()) ? pi->second.cellId : -1;
+        capNodes.push_back(cn);
+    }
+
     // One lane set for the whole field, sliced between the FAST UAVs below.
-    const std::vector<Lane> fieldLanes =
-        BuildFieldLanes(s.sensorPositions, params::kUavBroadcastRadiusM,
-                        params::kFastAltitudeM);
+    std::vector<Lane> fieldLanes;
+    std::vector<std::vector<Lane>> laneSplit;
+    if (cfg.cellCoverTarget > 0.0) {
+        // Cell mode: offer the selector a FINER candidate pitch than the cue
+        // radius and let it pick. At the node-coverage pitch there is nothing to
+        // choose -- every lane is needed -- so the freedom to fly less only
+        // exists if the candidate set is denser than the answer.
+        const std::vector<Lane> cand =
+            BuildFieldLanes(s.sensorPositions, cfg.laneCandidateSpacing,
+                            params::kFastAltitudeM);
+        fieldLanes = SelectLanesForCells(cand, capNodes,
+                                         params::kUavBroadcastRadiusM,
+                                         cfg.cellCoverTarget);
+    } else {
+        fieldLanes = BuildFieldLanes(s.sensorPositions, params::kUavBroadcastRadiusM,
+                                     params::kFastAltitudeM);
+    }
 
     // UAV role coordination (who diverts, who couriers) is now a radio CLAIM with
     // suppression — no shared-memory tokens.
@@ -293,8 +333,22 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // lane-plan.h for what that fixes (24.8 % of nodes were being swept
             // twice, and the split was 69/55 rather than even).
             if (cfg.lanePlan) {
+                if (laneSplit.empty()) {
+                    // Three pieces per UAV. Two was measured and was not
+                    // enough: cell selection leaves four or five lanes, so with
+                    // two UAVs no subdivision triggered at all and the split
+                    // stayed 50 % apart on capability.
+                    const std::vector<Lane> pieces =
+                        SubdivideLanes(fieldLanes, 3 * fastCount);
+                    laneSplit = BalancedSplit(pieces, capNodes,
+                                              params::kUavBroadcastRadiusM,
+                                              fastCount, cfg.balanceAlpha,
+                                              Vector(bsPos.x, bsPos.y,
+                                                     params::kFastAltitudeM),
+                                              params::TurnRadiusM(fastSpd));
+                }
                 app->SetMissionOverride(OrderLanes(
-                    LanesFor(fieldLanes, u, fastCount),
+                    laneSplit[u],
                     params::TurnRadiusM(fastSpd),
                     Vector(bsPos.x, bsPos.y, params::kFastAltitudeM)));
             }
@@ -377,6 +431,11 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         app->SetAdaptiveWindow(cfg.adaptiveWindow);             // audit A10
         app->SetMinObserve(cfg.minObserveS);
         app->SetProfile(full);
+        {
+            auto ci = m_caps.find(id);
+            if (ci != m_caps.end())
+                app->SetCapability(ci->second.obs, ci->second.cpu, ci->second.radioDuty);
+        }
         app->SetClueQuality(field.at(id).clueQuality);
         app->SetClueQualityFull(field.at(id).clueQualityFull);
         app->SetConfirmThreshold(cfg.confirmThreshold);
@@ -410,6 +469,24 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     Simulator::Run();
     Simulator::Destroy();
     m_metrics.SetExtra(m_phyStats.Counters());
+    // Dump what each node could contribute, so the analysis can ask whether the
+    // sweep flew over CAPABILITY rather than merely over ground. Without this
+    // the only available coverage metric is "nodes passed", which is exactly the
+    // metric cell-based planning is arguing against.
+    {
+        std::filesystem::create_directories(cfg.outputDir);
+        std::ofstream cf(cfg.outputDir + "/capabilities.csv");
+        cf << "nodeId,x,y,cellId,obs,cpu,radioDuty,screening\n";
+        for (const auto& n : nodePos) {
+            auto ci = m_caps.find(n.id);
+            if (ci == m_caps.end()) continue;
+            auto pi = m_plan.nodes.find(n.id);
+            const int32_t cid = (pi != m_plan.nodes.end()) ? pi->second.cellId : -1;
+            cf << n.id << "," << n.x << "," << n.y << "," << cid << ","
+               << ci->second.obs << "," << ci->second.cpu << ","
+               << ci->second.radioDuty << "," << ci->second.Screening() << "\n";
+        }
+    }
     m_metrics.Finalize(cfg.outputDir);
 }
 

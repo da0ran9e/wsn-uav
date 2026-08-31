@@ -134,6 +134,9 @@ inline constexpr double kEnergyS         = 0.05;    // [Lit?] rotor solidity
 inline constexpr double kEnergyA         = 0.503;   // [Lit?] rotor disc area
 
 // ---- SAR application (mostly design) --------------------------------------
+// Must track ClueFieldConfig::maxQuality; the observation-range model inverts
+// the field through it.
+inline constexpr double kMaxClueQuality  = 0.95;
 inline constexpr double kAlertThreshold  = 0.75;    // [Design] detect (region seed)
 inline constexpr double kCoopThreshold   = 0.30;    // [Design] report / region join
 // CONFIRMING an identity is a different claim from REPORTING that you might be

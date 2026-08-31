@@ -8,6 +8,7 @@
 #include "../models/network/sar-network.h"
 #include "../models/network/phy-stats.h"
 #include "../models/common/cell-grid.h"
+#include "../models/common/node-capability.h"
 #include "../models/common/inter-cell-routing.h"
 #include "../models/common/sar-metrics.h"
 #include "../models/application/region-coordinator.h"
@@ -122,6 +123,14 @@ struct SarScenarioConfig {
     double gpsSigmaM = 0.0;      // per-node frozen GPS offset, sigma in metres
     // Phase 1 / Phase 2 separation (see docs/PHASE1-vi.md).
     bool   lanePlan = true;          // one field lane set, one owner per lane
+    // Cell-based coverage: stop flying to reach every NODE and fly to seed every
+    // CELL to a capability target instead. 0 disables (node coverage).
+    double cellCoverTarget = 0.0;    // fraction of each cell's capability to seed
+    double laneCandidateSpacing = 25.0;  // candidate lane pitch offered to the selector
+    double balanceAlpha = 0.5;       // 1 = balance effort only, 0 = capability only
+    // Heterogeneous ground hardware.
+    bool   uniformNodes = true;      // true reproduces every earlier result
+    double cameraFraction = 0.65;
     bool   phaseGate = false;        // rotary team waits for the fixed-wing sweep
     double phaseGateDeadlineS = 400; // fail-open bound if the announcement is lost
     bool   phaseGateGround = false;  // wait on the ground rather than airborne
@@ -169,6 +178,7 @@ private:
     SarMetrics m_metrics;
     PhyStats m_phyStats;
     CellGridPlan m_plan;
+    std::map<uint32_t, NodeCapability> m_caps;
     InterCellRouting m_routing;
     RegionCoordinator m_coord;
     std::map<uint32_t, ns3::Ptr<SarGroundApp>> m_groundById;

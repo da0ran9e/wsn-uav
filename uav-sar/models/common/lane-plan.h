@@ -49,6 +49,61 @@ std::vector<Lane> BuildFieldLanes(const std::vector<ns3::Vector>& sensors,
 // next to a peer's, which is the double-coverage this is meant to remove.
 std::vector<Lane> LanesFor(const std::vector<Lane>& all, uint32_t idx, uint32_t count);
 
+// ---------------------------------------------------------------------------
+// Cell-based coverage, and a split that balances CAPABILITY as well as EFFORT.
+// ---------------------------------------------------------------------------
+//
+// Covering every NODE is the wrong target once the ground can relay and once
+// nodes differ. What the screening layer actually needs is that every CELL ends
+// up with a seed set that is (a) big enough to spread from and (b) capable
+// enough to produce evidence. A node with no camera is not worth flying over.
+//
+// So a lane is scored by the SCREENING CAPABILITY it seeds, not by the node
+// count it passes, and lanes are selected until every cell's capability target
+// is met rather than until every node is within range.
+
+struct LaneScore {
+    double effort = 0;      // metres of flight this lane costs
+    double capability = 0;  // sum of Screening() over nodes it would seed
+};
+
+struct CapNode {
+    double x = 0, y = 0;
+    double screening = 1.0;   // obs * cpu
+    int32_t cellId = -1;
+};
+
+// Score every candidate lane by the capability within `radius` of it.
+std::vector<LaneScore> ScoreLanes(const std::vector<Lane>& lanes,
+                                  const std::vector<CapNode>& nodes, double radius);
+
+// Choose the smallest set of lanes such that every cell reaches `cellTarget` of
+// its own total screening capability. Greedy on marginal capability per metre --
+// the natural heuristic for a coverage problem that is a weighted set cover, and
+// the one whose guarantee is understood.
+std::vector<Lane> SelectLanesForCells(const std::vector<Lane>& candidates,
+                                      const std::vector<CapNode>& nodes,
+                                      double radius, double cellTarget);
+
+// Cut lanes lengthwise until there are at least `minPieces` of them.
+//
+// Cell-based selection leaves very few lanes -- five cover the whole field at
+// the nominal cue radius -- and a balanced split cannot be finer than the pieces
+// it is given. With five lanes and four UAVs the best possible split is 2/1/1/1,
+// which is a 100 % effort imbalance no objective function can talk its way out
+// of. Cutting a lane in half costs one extra turn and buys the granularity.
+std::vector<Lane> SubdivideLanes(const std::vector<Lane>& lanes, uint32_t minPieces);
+
+// Split `lanes` (in across-field order) into `count` CONTIGUOUS blocks that
+// balance effort and capability at once, exactly, by dynamic programming over
+// the split points. alpha weights effort against capability; 0.5 treats a point
+// of effort imbalance as costing the same as a point of capability imbalance.
+std::vector<std::vector<Lane>> BalancedSplit(const std::vector<Lane>& lanes,
+                                             const std::vector<CapNode>& nodes,
+                                             double radius, uint32_t count,
+                                             double alpha, ns3::Vector start,
+                                             double turnRadiusM);
+
 // Exact Dubins ordering of `lanes` from `start`, returned as a waypoint list
 // (entry, exit, entry, exit, ...). Falls back to index order above
 // kExactLaneLimit lanes, where Held-Karp stops being cheap.

@@ -85,6 +85,11 @@ public:
     void SetClueQualityFull(double q) { m_clueQualityFull = q; }
     void SetConfirmThreshold(double t) { m_confirmThr = t; }
     void SetCoopThreshold(double coop) { m_coop = coop; }
+    // Heterogeneous hardware. Each of the three gates a different stage, so they
+    // are stored separately rather than collapsed into one "quality" scalar.
+    void SetCapability(double obs, double cpu, double radioDuty) {
+        m_obs = obs; m_cpu = cpu; m_radioDuty = radioDuty;
+    }
     void SetIsTarget(bool t) { m_isTarget = t; }
     // Intra-cell tree: next hop up toward the Cell Leader (-1 if I am the CL),
     // whether I am the CL, my cell id and centre.
@@ -169,6 +174,12 @@ private:
     ns3::EventId m_rejectEvent;
     bool m_rejectHeard = false;   // a node under the drop resolved it as a miss
     double m_coop = 0.30;
+    double m_obs = 1.0, m_cpu = 1.0, m_radioDuty = 1.0;
+    double ObsScale(double q) const;   // weaker camera == shorter effective range
+    // Chunks this node's radio could not take. A slow radio does not fail
+    // loudly; it just ends the overflight holding less of the cue, which is
+    // exactly the effect the sweep planner has to account for.
+    uint32_t m_chunkDrops = 0;
     double m_confirmThr = params::kConfirmThreshold;
 
     // intra-cell tree + CL aggregation

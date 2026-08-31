@@ -40,6 +40,11 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("senseSigma", "detector noise sigma on clue quality (0 = ideal)", cfg.senseSigma);
     cmd.AddValue("gpsSigma", "per-node GPS error sigma in m (0 = exact)", cfg.gpsSigmaM);
     cmd.AddValue("lanePlan", "one field-wide lane set, each lane owned by one FAST UAV", cfg.lanePlan);
+    cmd.AddValue("cellCoverTarget", "seed this fraction of each cell's capability (0 = cover nodes)", cfg.cellCoverTarget);
+    cmd.AddValue("laneCandidateSpacing", "candidate lane pitch for the cell selector (m)", cfg.laneCandidateSpacing);
+    cmd.AddValue("balanceAlpha", "1 = balance flight effort only, 0 = capability only", cfg.balanceAlpha);
+    cmd.AddValue("uniformNodes", "all nodes fully capable (1) or heterogeneous (0)", cfg.uniformNodes);
+    cmd.AddValue("cameraFraction", "share of nodes carrying a camera", cfg.cameraFraction);
     cmd.AddValue("phaseGate", "rotary team waits for the fixed-wing sweep to finish", cfg.phaseGate);
     cmd.AddValue("phaseGateDeadline", "fail-open bound on the phase gate (s)", cfg.phaseGateDeadlineS);
     cmd.AddValue("phaseGateGround", "rotary team waits on the ground, not airborne", cfg.phaseGateGround);

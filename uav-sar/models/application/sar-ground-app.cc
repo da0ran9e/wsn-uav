@@ -1,4 +1,5 @@
 #include "sar-ground-app.h"
+#include "../common/node-capability.h"
 #include "../common/sar-metrics.h"
 #include "../common/sar-types.h"
 #include "../common/sar-params.h"
@@ -159,7 +160,8 @@ double SarGroundApp::ClueNow() const {
     // it; with the complete dataset the test is sharp. Linear in possession, so
     // there is no hidden threshold effect -- the node never knows which regime
     // it is in, it just reads a better number as more data arrives.
-    if (m_clueQualityFull < 0.0) return m_clueQuality;
+    if (m_obs <= 0.0) return 0.0;      // no camera: nothing to measure, ever
+    if (m_clueQualityFull < 0.0) return ObsScale(m_clueQuality);
     // D31: weight by how much of the REFERENCE this node holds, not by the union
     // recognition confidence. The cue fragments are 7% of the dataset; scoring
     // them at 0.926 meant a node was treated as almost fully informed before any
@@ -167,7 +169,28 @@ double SarGroundApp::ClueNow() const {
     // cue stage and the ambiguity axis measured as a no-op (M=0 and M=4 gave
     // byte-identical runs on 11 of 12 seeds).
     double c = PossessedFraction();
-    return m_clueQuality + c * (m_clueQualityFull - m_clueQuality);
+    return ObsScale(m_clueQuality + c * (m_clueQualityFull - m_clueQuality));
+}
+
+double SarGroundApp::ObsScale(double q) const {
+    // A weaker camera has a SHORTER EFFECTIVE RANGE, not a uniformly dimmer
+    // reading. The first cut multiplied the quality by m_obs and that was wrong
+    // in a way worth recording: it moved every node's reading below the confirm
+    // threshold at once, and the mission found 0 of 2 victims on the smoke test
+    // even before cell-based coverage was switched on.
+    //
+    // The field is q = Qmax * exp(-d/L). Scaling the range L by obs and
+    // eliminating d gives a closed form that needs no distance:
+    //
+    //     q' = Qmax * (q / Qmax)^(1/obs)
+    //
+    // obs = 1 reproduces the field exactly; obs = 0.5 halves the range at which
+    // any given quality is reached. A good camera far away and a poor camera
+    // close by can now read the same number, which is the actual physics.
+    if (m_obs >= 1.0 || q <= 0.0) return q;
+    const double qmax = params::kMaxClueQuality;
+    const double r = std::min(1.0, q / qmax);
+    return qmax * std::pow(r, 1.0 / m_obs);
 }
 
 void SarGroundApp::SendEcho() {
@@ -716,6 +739,26 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
         std::memcpy(&seq, &b[4], 2);
         std::memcpy(&total, &b[6], 2);
         if (m_metrics) { m_metrics->AddRecv(); m_metrics->AddRecvBytes(sz); }
+        // Radio gate -- and it applies to CUE only, which is the whole point.
+        //
+        // A duty-cycled receiver loses to a source it cannot predict and cannot
+        // ask to repeat. That is exactly a scout crossing overhead at 25 m/s: a
+        // few seconds of contact, no rendezvous, so a node awake 40 % of the
+        // time ends the pass holding 40 % of what was sent. It is NOT the DATA
+        // UAV, which parks overhead for a 20 s dwell and cycles the dataset --
+        // any duty-cycled radio synchronises to a persistent source in that
+        // time, which is what duty cycling is designed to do.
+        //
+        // Applying the gate to FULL as well was measured and it was wrong: the
+        // victim's own node (duty 0.39) never completed the reference, so it
+        // could never confirm, and the run found 0 of 2 victims with delivery
+        // working perfectly. The radio capability belongs to Phase 1 seeding,
+        // which is also where the flight planner can do something about it.
+        if (type == (uint8_t)Msg::CUE && m_radioDuty < 1.0 &&
+            m_rng->GetValue(0.0, 1.0) > m_radioDuty) {
+            m_chunkDrops++;
+            return true;
+        }
         if (type == (uint8_t)Msg::CUE && !m_heardCue && m_metrics) {
             m_heardCue = true;
             Vector p = GetNode()->GetObject<MobilityModel>()->GetPosition();
@@ -800,6 +843,20 @@ bool SarGroundApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, co
                     // discovered it is a false positive, and says so.
                     // Identity claim, not a relevance claim: a strictly higher
                     // bar than the reporting threshold (see kConfirmThreshold).
+                    // Compute gate. Matching against the COMPLETE reference is
+                    // the expensive step; a node below the bar can raise a
+                    // candidate on cue fragments but cannot settle an identity,
+                    // so it stays silent rather than guessing. Staying silent is
+                    // the honest behaviour: a wrong REJECT would close a region
+                    // that still holds the victim.
+                    if (m_cpu < kCpuConfirmMin) {
+                        if (m_metrics)
+                            m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,
+                                             "node", "no_compute",
+                                             "holds the data, cannot run the matcher",
+                                             p.x, p.y, p.z);
+                        return true;
+                    }
                     bool matches = ClueNow() >= m_confirmThr;
                     if (m_metrics)
                         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId,

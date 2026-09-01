@@ -1,4 +1,5 @@
 #include "sar-config.h"
+#include <cmath>
 #include <fstream>
 #include <filesystem>
 #include "../models/common/lane-plan.h"
@@ -243,7 +244,10 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         CapNode cn;
         cn.x = n.x; cn.y = n.y;
         auto ci = m_caps.find(n.id);
-        cn.screening = (ci != m_caps.end()) ? ci->second.Screening() : 1.0;
+        const double raw = (ci != m_caps.end()) ? ci->second.Screening() : 1.0;
+        // A node that cannot see is worth nothing to the planner at ANY
+        // priority setting; the exponent only reorders the ones that can.
+        cn.screening = (raw <= 0.0) ? 0.0 : std::pow(raw, cfg.capPriorityExp);
         auto pi = m_plan.nodes.find(n.id);
         cn.cellId = (pi != m_plan.nodes.end()) ? pi->second.cellId : -1;
         capNodes.push_back(cn);

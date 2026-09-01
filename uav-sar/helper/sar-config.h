@@ -128,6 +128,12 @@ struct SarScenarioConfig {
     double cellCoverTarget = 0.0;    // fraction of each cell's capability to seed
     double laneCandidateSpacing = 25.0;  // candidate lane pitch offered to the selector
     double balanceAlpha = 0.5;       // 1 = balance effort only, 0 = capability only
+    // How hard the planner leans toward capable nodes when it scores a lane.
+    // 0 = capability-blind among nodes that CAN contribute (every camera counts
+    // the same), 1 = linear in screening capability, >1 = chase the best nodes
+    // and let the mediocre ones go. Nodes with no camera stay worth zero at
+    // every setting -- that is a fact about the hardware, not a preference.
+    double capPriorityExp = 1.0;
     // Heterogeneous ground hardware.
     bool   uniformNodes = true;      // true reproduces every earlier result
     double cameraFraction = 0.65;

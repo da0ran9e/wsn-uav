@@ -566,3 +566,84 @@ $d(\text{BS}, \text{gần nhất}) + d(\text{BS}, \text{xa nhất})$. Chưa sử
 nhiễu phép quy công ở đội bay lớn); (3) `cellCoverTarget` bão hoà ở ≥ 0.5 vì 5
 luống đã phủ kín vùng — muốn đường cong đánh đổi thật thì phải quét **bán kính
 quảng bá hiệu dụng**, không phải quét chỉ tiêu.
+
+---
+
+## 12. Đường bay thích nghi thế nào theo tham số (2026-09-01)
+
+Quét hai núm, 4 hạt giống mỗi cấu hình, **một bản dựng**
+(`module=1788261584,898456`), 3 UAV cánh cố định, phủ theo ô. Hình ở
+`docs/visualize/figures/`.
+
+### 12.1 Spacing: kế hoạch thích nghi mạnh
+
+| spacing | vùng | km FAST | năng lực phủ | lệch | kJ | t toạ độ | nạn nhân |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 20 m | 460 m | **7.7** | 94.0 % | 11.8 % | 244 | **129 s** | **7/8** |
+| 25 m | 575 m | 9.7 | 93.1 % | 23.9 % | 436 | 153 s | 4/8 |
+| 30 m | 690 m | 12.9 | 93.6 % | 16.5 % | 488 | 187 s | 5/8 |
+| 35 m | 805 m | **14.4** | 91.1 % | 15.4 % | 569 | **221 s** | **2/8** |
+
+Kế hoạch **giữ đúng lời hứa của nó** — năng lực được phủ đứng yên ở 91–94 % qua
+toàn dải — nhưng nhiệm vụ **sập**: quãng đường +87 %, thời gian +71 %, nạn nhân
+7/8 → 2/8. Vì đội bay không đổi trong khi diện tích tăng gấp 3.
+
+> **Cảnh báo (SIM-SPEC §8):** tăng `gridSpacing` ở cùng `gridSize` làm **diện tích
+> tăng VÀ mật độ giảm cùng lúc**. Không được quy hiệu ứng trên cho riêng mật độ.
+
+### 12.2 Trọng số ưu tiên nút: **trơ** ở vùng hiện tại — và lý do đáng ghi
+
+Thêm `--capPriorityExp`: người lập kế hoạch chấm một nút bằng
+$(\text{quan sát} \times \text{tính toán})^{E}$. $E=0$ coi mọi nút **có camera**
+như nhau; $E=3$ bám các nút mạnh nhất và bỏ vùng yếu. Nút không camera vẫn đáng
+**0** ở mọi mức — đó là sự thật về phần cứng, không phải sở thích.
+
+Ở vùng 460 m nó **không đổi được gì**: $E=0$ và $E=3$ cho quỹ đạo **trùng từng
+byte**, quãng đường từng chiếc y hệt (2.45 / 2.47 / 2.77 km).
+
+Đây **không phải lỗi cài đặt**. Kiểm bằng bộ chọn chạy độc lập, với **ô lục giác
+thật**, quét cả chỉ tiêu 0.2–0.9 và mũ 0–3: **luôn ra 5 luống / 2.3 km**. Số học
+nói tại sao:
+
+$$5 \text{ luống} \times 2R_c\,(100\ \text{m}) \;=\; 500\ \text{m} \;\ge\; 460\ \text{m}$$
+
+**Tập luống tối thiểu bị hình học ép cứng.** Khi mọi ô đều phải được gieo, và năm
+luống đã phủ kín vùng, thì **không còn tự do nào để ưu tiên**. Núm ưu tiên chỉ có
+chỗ hành động khi **vùng đủ lớn so với vệt quét**.
+
+### 12.3 Cùng núm đó, vùng 690 m: có tác dụng
+
+| mũ ưu tiên | km | năng lực phủ | lệch | kJ | nạn nhân |
+|---:|---:|---:|---:|---:|---:|
+| 0 | 13.2 | 93.4 % | 15.1 % | 498 | 2/8 |
+| 1 | 13.1 | 94.1 % | 14.3 % | 506 | 4/8 |
+| 3 | **12.9** | 93.4 % | **21.9 %** | **395** | **5/8** |
+
+Ở đây kế hoạch **đổi thật** (thấy rõ trên hình): mũ 3 bay ít hơn, tốn **ít năng
+lượng hơn 21 %**, và tìm được nhiều nạn nhân hơn — nhưng **cân bằng xấu đi**
+(15.1 % → 21.9 %), vì bám các nút mạnh nghĩa là phải tới những **chỗ cụ thể**
+chứ không quét đều.
+
+> **Đây là tín hiệu, chưa phải kết quả.** $n = 4$ hạt giống, và 2/8 → 5/8 nạn nhân
+> hoàn toàn có thể là nhiễu. Luật $N \ge 120$ của `STATUS.md` vẫn áp dụng.
+
+### 12.4 Kết luận vận hành
+
+1. **Ở cấu hình đang chạy (460 m), chỉ có spacing/diện tích là núm thật.** Ưu tiên
+   năng lực và cả `cellCoverTarget` đều **bão hoà** — vùng quá nhỏ so với bán kính
+   quảng bá 50 m.
+2. **Muốn nghiên cứu quy hoạch có ý nghĩa thì phải chạy ở vùng ≥ 690 m**, hoặc
+   giảm bán kính quảng bá hiệu dụng. Nếu không, mọi thuật toán quy hoạch đều cho
+   **cùng một câu trả lời** và bài báo không có gì để so.
+3. Ở vùng lớn, ưu tiên năng lực **đổi bay lấy cân bằng**: ít bay hơn, ít năng lượng
+   hơn, nhưng tải lệch hơn — một đánh đổi thật, cần $N \ge 120$ để chốt.
+
+### 12.5 Hình và replay
+
+| tệp | nội dung |
+|---|---|
+| `figures/adapt-spacing.png` | 4 vùng từ 460 → 805 m, đường bay thích nghi |
+| `figures/adapt-priority.png` | mũ 0–3 ở 460 m — **bốn hình giống hệt nhau**, đó là kết quả |
+| `figures/adapt-priority-bigfield.png` | cùng mũ đó ở 690 m — kế hoạch đổi thật |
+| `figures/adapt-curves.png` | đường cong km / năng lực phủ / thời gian theo cả hai núm |
+| `visualize/replay-3d-capability.html` | **replay 3D có chuyển động**, 3 cấu hình đội bay |

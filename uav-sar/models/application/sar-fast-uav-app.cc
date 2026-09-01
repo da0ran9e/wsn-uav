@@ -155,10 +155,8 @@ void SarFastUavApp::TakeOff() {
     m_fc.SetMaxTurnRateDegPerS(params::kGravityMps2 *
                                std::tan(params::kBankAngleDeg * M_PI / 180.0) /
                                std::max(1.0, m_speed) * 180.0 / M_PI);
-    // Stand off by TWO turn radii, not one. A rate-limited aircraft needs about
-    // a quarter circle to reverse an inbound heading, and one radius of warning
-    // was measured insufficient: it still ended up 55 m inside a 70 m zone.
-    m_fc.SetNoFlyZones(m_zones, 2.0 * params::TurnRadiusM(m_speed));
+    m_fc.SetNoFlyZones(m_zones, params::TurnRadiusM(m_speed), m_speed,
+                       params::kControlTickS);
     m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);
     m_ctrl = Simulator::Schedule(Seconds(params::kControlTickS), &SarFastUavApp::ControlTick, this);
     m_dis = Simulator::Schedule(Seconds(params::kDisseminateStaggerS), &SarFastUavApp::DisseminateTick, this);

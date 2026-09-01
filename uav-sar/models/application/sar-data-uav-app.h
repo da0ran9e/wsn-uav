@@ -10,6 +10,7 @@
 #include "flight-controller.h"
 #include "../common/target-profile.h"
 #include "../common/sar-types.h"
+#include "../common/lane-plan.h"
 #include "../common/sar-params.h"
 
 #include "ns3/application.h"
@@ -68,7 +69,7 @@ public:
     // fatal: a correct 9 m aim was computed and never reached the sky. Patrol
     // instead: fly a coverage sweep over this UAV's own band, spreading CUES
     // exactly as the FAST team does, and stay divertible throughout.
-    void SetNoFlyZones(const std::vector<std::array<double, 3>>& z) { m_zones = z; }
+    void SetNoFlyZones(const std::vector<NoFlyZone>& z) { m_zones = z; }
     void SetPhaseGate(bool on, uint32_t fastCount, double deadlineS, bool ground) {
         m_phaseGate = on; m_expectFast = fastCount; m_gateDeadlineS = deadlineS;
         m_gateGround = ground;
@@ -140,7 +141,7 @@ private:
     // fail closed: if the announcements are never heard the DATA team would
     // never start, and the mission would silently deliver nothing. m_gateDeadline
     // is the bound that stops that.
-    std::vector<std::array<double, 3>> m_zones;   // no-fly zones, x/y/r
+    std::vector<NoFlyZone> m_zones;
     bool m_phaseGate = false;
     uint32_t m_expectFast = 0;
     double m_gateDeadlineS = 0;

@@ -2,6 +2,7 @@
 
 #include "ns3/constant-velocity-mobility-model.h"
 
+#include <array>
 #include <cmath>
 
 namespace ns3::uavsar {
@@ -14,31 +15,99 @@ void FlightController::AttachTo(Ptr<Node> node) {
 }
 
 void FlightController::Forward(double speedMps) { m_speed = speedMps; Apply(); }
-double FlightController::AvoidHeading(double cmdDeg) const {
-    if (m_zones.empty() || !m_node) return cmdDeg;
-    const Vector p = GetPosition();
-    // Nearest breach first: with overlapping zones, obeying a farther one could
-    // steer straight into the near one.
-    const std::array<double, 3>* worst = nullptr;
-    double worstSlack = 0;
-    for (const auto& z : m_zones) {
-        const double d = std::hypot(p.x - z[0], p.y - z[1]);
-        const double slack = z[2] + m_fenceMargin - d;
-        if (slack > 0 && (!worst || slack > worstSlack)) { worst = &z; worstSlack = slack; }
+bool FlightController::EscapeExists(double px, double py, double headingDeg) const {
+    // Can the aircraft still peel away without entering anything?
+    //
+    // The first version asked whether a whole max-rate turn CIRCLE was clear.
+    // That is far too strict beside a large zone -- both circles clip a 160 m
+    // rectangle from over 100 m away -- so the filter declared danger almost
+    // everywhere near a zone, sat in its fallback, and fought the mission
+    // instead of flying it. Measured: 0.61 % of the track inside, worse than
+    // the crude rule it replaced.
+    //
+    // What actually matters is whether the ARC flown while turning away stays
+    // clear, so that is what is simulated: a hardest-possible turn, each way,
+    // until the aircraft has swung 180 degrees. If either arc gets round
+    // without touching a zone, the aircraft is not committed to entering one.
+    if (m_zones.empty()) return true;
+    const double rate = (m_maxTurnRate > 0) ? m_maxTurnRate : 360.0;
+    const double dt = (m_fenceDt > 0) ? m_fenceDt : 0.1;
+    const int steps = (int)std::ceil(180.0 / std::max(1e-6, rate * dt));
+    for (int side = -1; side <= 1; side += 2) {
+        double x = px, y = py, h = headingDeg;
+        bool clear = true;
+        for (int k = 0; k < steps && clear; ++k) {
+            h += side * rate * dt;
+            const double r = h * M_PI / 180.0;
+            x += m_fenceV * dt * std::cos(r);
+            y += m_fenceV * dt * std::sin(r);
+            for (const NoFlyZone& z : m_zones)
+                if (z.Contains(x, y)) { clear = false; break; }
+        }
+        if (clear) return true;
     }
-    if (!worst) return cmdDeg;
-    const double dx = p.x - (*worst)[0], dy = p.y - (*worst)[1];
-    const double d = std::hypot(dx, dy);
-    const double radial = (d > 1e-6) ? std::atan2(dy, dx) : 0.0;
-    // Already inside: the only right answer is straight back out.
-    if (d < (*worst)[2]) return radial * 180.0 / M_PI;
-    // Near the edge: fly the tangent, taking whichever way round is closer to
-    // where we wanted to go, so the detour costs as little progress as possible.
-    const double c = cmdDeg * M_PI / 180.0;
-    const double t1 = radial + M_PI / 2, t2 = radial - M_PI / 2;
-    const double e1 = std::fabs(std::atan2(std::sin(t1 - c), std::cos(t1 - c)));
-    const double e2 = std::fabs(std::atan2(std::sin(t2 - c), std::cos(t2 - c)));
-    return ((e1 < e2) ? t1 : t2) * 180.0 / M_PI;
+    return false;
+}
+
+double FlightController::AvoidHeading(double cmdDeg) const {
+    if (m_zones.empty() || !m_node || m_fenceR <= 0) return cmdDeg;
+    const Vector p = GetPosition();
+
+    // Already inside (should not happen, but a fence that gives up when the
+    // invariant breaks is worse than useless): leave by the shortest way out.
+    for (const NoFlyZone& z : m_zones) {
+        if (!z.Contains(p.x, p.y)) continue;
+        double ux, uy; z.Outward(p.x, p.y, ux, uy);
+        return std::atan2(uy, ux) * 180.0 / M_PI;
+    }
+
+    // VIABILITY FILTER. Steering away from a zone and hoping is not a
+    // guarantee: measured with a "turn tangential when close" rule, the
+    // fixed-wing still ended up 6.7 m inside, because by the time the rule
+    // fired the turn could no longer be completed. So the test is not "am I
+    // near a zone" but "after obeying this command for one tick, can I STILL
+    // turn away". If yes the command is safe to obey; if not, take the escape
+    // turn now, while one still exists.
+    auto step = [&](double cmd) {
+        double d = cmd - m_headingDeg;
+        while (d > 180.0) d -= 360.0;
+        while (d < -180.0) d += 360.0;
+        const double lim = (m_maxTurnRate > 0) ? m_maxTurnRate * m_fenceDt : 360.0;
+        const double h2 = m_headingDeg + std::max(-lim, std::min(lim, d));
+        const double r = h2 * M_PI / 180.0;
+        return std::array<double, 3>{p.x + m_fenceV * m_fenceDt * std::cos(r),
+                                     p.y + m_fenceV * m_fenceDt * std::sin(r), h2};
+    };
+
+    const auto n = step(cmdDeg);
+    bool entersNow = false;
+    for (const NoFlyZone& z : m_zones)
+        if (z.Contains(n[0], n[1])) { entersNow = true; break; }
+    if (!entersNow && EscapeExists(n[0], n[1], n[2])) return cmdDeg;
+
+    // The command is not safe. Search headings outward from it and take the
+    // nearest one that keeps an escape available, so avoidance costs as little
+    // progress as possible.
+    for (int k = 1; k <= 36; ++k)
+        for (int side = -1; side <= 1; side += 2) {
+            const double cand = cmdDeg + side * k * 5.0;
+            const auto m = step(cand);
+            bool bad = false;
+            for (const NoFlyZone& z : m_zones)
+                if (z.Contains(m[0], m[1])) { bad = true; break; }
+            if (!bad && EscapeExists(m[0], m[1], m[2])) return cand;
+        }
+    // Nothing keeps an escape open: run directly away from the nearest zone.
+    const NoFlyZone* near = nullptr; double best = 0;
+    for (const NoFlyZone& z : m_zones) {
+        const double d = z.Distance(p.x, p.y);
+        if (!near || d < best) { near = &z; best = d; }
+    }
+    if (near) {
+        double ux, uy; near->Outward(p.x, p.y, ux, uy);
+        return std::atan2(uy, ux) * 180.0 / M_PI;
+    }
+    return cmdDeg;
 }
 
 void FlightController::Turn(double headingDeg) {
@@ -51,6 +120,11 @@ void FlightController::Turn(double headingDeg) {
 
 void FlightController::Step(double dtS) {
     if (m_maxTurnRate <= 0 || dtS <= 0) return;
+    // Re-check the fence every tick, not only when the application happens to
+    // issue a new heading. A state that commands once and then coasts would
+    // otherwise fly on unchecked, and the fence has to be a property of the
+    // vehicle rather than of whoever remembered to call Turn().
+    m_cmdHeadingDeg = AvoidHeading(m_cmdHeadingDeg);
     double d = m_cmdHeadingDeg - m_headingDeg;
     while (d > 180.0) d -= 360.0;
     while (d < -180.0) d += 360.0;

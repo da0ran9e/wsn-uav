@@ -44,10 +44,15 @@ def load_geo(run):
 def panel(ax, g, title, sub):
     side = g["side"]
     ax.add_patch(plt.Rectangle((0, 0), side, side, fc="#eef2f7", ec="none", zorder=0))
-    for zx, zy, zr in g["z"]:
-        ax.add_patch(Circle((zx, zy), zr, fc="#f7d9cd", ec=BAD, lw=1.2,
-                            hatch="///", alpha=0.85, zorder=1))
-    inz = lambda x, y: any(math.hypot(x - a, y - b) < r for a, b, r in g["z"])
+    for zz in g["z"]:
+        if zz.rect:
+            ax.add_patch(plt.Rectangle((zz.x0, zz.y0), zz.x1 - zz.x0, zz.y1 - zz.y0,
+                                       fc="#f7d9cd", ec=BAD, lw=1.2, hatch="///",
+                                       alpha=0.85, zorder=1))
+        else:
+            ax.add_patch(Circle((zz.x, zz.y), zz.r, fc="#f7d9cd", ec=BAD, lw=1.2,
+                                hatch="///", alpha=0.85, zorder=1))
+    inz = lambda x, y: any(zz.contains(x, y) for zz in g["z"])
     xs, ys, ss = zip(*g["caps"]) if g["caps"] else ((), (), ())
     mx = max(ss) or 1.0
     for idx in range(len(xs)):
@@ -86,10 +91,16 @@ def panel(ax, g, title, sub):
 def main():
     root, outdir = sys.argv[1], sys.argv[2]
     os.makedirs(outdir, exist_ok=True)
-    arms = [("cell-nfz0", "Phủ ô — không vùng cấm"),
-            ("cell-nfz2", "Phủ ô — 2 vùng cấm"),
-            ("cell-nfz4", "Phủ ô — 4 vùng cấm"),
-            ("node-nfz2", "Phủ NÚT — 2 vùng cấm")]
+    arms = [(a, b) for a, b in [
+        ("none", "Không vùng cấm"),
+        ("rect2", "2 vùng cấm chữ nhật"),
+        ("rect4", "4 vùng cấm chữ nhật"),
+        ("mix", "2 chữ nhật + 2 tròn"),
+        ("cell-nfz0", "Phủ ô — không vùng cấm"),
+        ("cell-nfz2", "Phủ ô — 2 vùng cấm tròn"),
+        ("cell-nfz4", "Phủ ô — 4 vùng cấm tròn"),
+        ("node-nfz2", "Phủ NÚT — 2 vùng cấm tròn")]
+        if glob.glob(os.path.join(root, a, "s*"))]
     rows = []
     for tag, label in arms:
         runs = sorted(glob.glob(os.path.join(root, tag, "s*")))
@@ -105,19 +116,21 @@ def main():
         rows.append((label, load_geo(runs[0]), g, len(res)))
     if not rows:
         print("no runs"); return
+    rows = rows[:4]
     fig, axes = plt.subplots(1, len(rows), figsize=(3.35 * len(rows), 4.7), dpi=170)
     if len(rows) == 1: axes = [axes]
     for ax, (label, geo, g, n) in zip(axes, rows):
         panel(ax, geo, label,
               f'{g("km"):.1f} km · phủ năng lực {g("cap_cov"):.0f} % · '
-              f'ô đạt {g("cell_ok"):.0f} %\nvi phạm vùng cấm {g("incur"):.2f} % '
-              f'(sâu nhất {g("deepest"):.0f} m) · n={n}')
-    fig.suptitle("Vùng 780 × 780 m với vùng cấm bay", fontsize=12.5, color=INK, y=0.995)
+              f'che khuất {g("shadow"):.0f} %\n'
+              f'vi phạm vùng cấm {g("incur"):.3f} % · n={n}')
+    fig.suptitle("Vùng 780 × 780 m — vùng cấm bay chữ nhật và tròn",
+                 fontsize=12.5, color=INK, y=0.995)
     fig.text(0.5, 0.085,
-             "Luống bị CẮT tại vùng cấm nên kế hoạch không bao giờ NHẮM vào trong. "
-             "Đoạn track màu đỏ là lúc máy bay vẫn cắt góc khi lượn giữa hai mảnh — "
-             "đo, không giả định.", ha="center", va="center", fontsize=8.4, color=DIM,
-             wrap=True)
+             "Hàng rào nằm ở BỘ ĐIỀU KHIỂN BAY và là bộ lọc khả thi: một lệnh hướng "
+             "chỉ được chấp nhận nếu sau một chu kỳ máy bay VẪN còn một cú lượn thoát. "
+             "Đo được: 0.000 % số mẫu nằm trong vùng cấm, cả cánh cố định lẫn cánh quay.",
+             ha="center", va="center", fontsize=8.4, color=DIM, wrap=True)
     fig.legend(handles=[
         Line2D([], [], marker="o", ls="", mfc="#6b7787", mec="none", ms=7,
                label="nút có năng lực"),

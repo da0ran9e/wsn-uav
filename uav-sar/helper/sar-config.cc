@@ -262,9 +262,22 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         std::string tok;
         while (std::getline(ss, tok, ';')) {
             if (tok.empty()) continue;
+            // Three numbers is a circle, four is a rectangle. Counting fields
+            // rather than adding a tag keeps every existing --noFly string
+            // working unchanged.
             NoFlyZone z;
-            if (std::sscanf(tok.c_str(), "%lf,%lf,%lf", &z.x, &z.y, &z.r) == 3 && z.r > 0)
+            double a, b, c, d;
+            const int n = std::sscanf(tok.c_str(), "%lf,%lf,%lf,%lf", &a, &b, &c, &d);
+            if (n == 3 && c > 0) {
+                z.rect = false; z.x = a; z.y = b; z.r = c;
                 zones.push_back(z);
+            } else if (n == 4) {
+                z.rect = true;
+                z.x0 = std::min(a, c); z.x1 = std::max(a, c);
+                z.y0 = std::min(b, d); z.y1 = std::max(b, d);
+                z.x = 0.5 * (z.x0 + z.x1); z.y = 0.5 * (z.y0 + z.y1);
+                if (z.x1 > z.x0 && z.y1 > z.y0) zones.push_back(z);
+            }
         }
     }
 
@@ -380,9 +393,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
                     zones, params::TurnRadiusM(fastSpd)));
             }
             {
-                std::vector<std::array<double, 3>> zs;
-                for (const NoFlyZone& z : zones) zs.push_back({z.x, z.y, z.r});
-                app->SetNoFlyZones(zs);
+                app->SetNoFlyZones(zones);
             }
             app->SetCues(cues);
             app->SetFixOnConfirm(cfg.fixOnConfirm);
@@ -407,11 +418,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // instead of parking at the field centre. A parked UAV spreads
             // nothing and, because SUMMON is one-hop, is usually out of range of
             // the leader that fires it.
-            {
-                std::vector<std::array<double, 3>> zs;
-                for (const NoFlyZone& z : zones) zs.push_back({z.x, z.y, z.r});
-                app->SetNoFlyZones(zs);
-            }
+            app->SetNoFlyZones(zones);
             app->SetPatrol(cfg.dataPatrol);
             app->SetCueEnroute(cfg.dataCueEnroute);
             // Phase 2 starts when Phase 1 reports finished. The deadline is the
@@ -514,8 +521,10 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         std::filesystem::create_directories(cfg.outputDir);
         std::ofstream cf(cfg.outputDir + "/capabilities.csv");
         std::ofstream zf(cfg.outputDir + "/nofly.csv");
-        zf << "x,y,r\n";
-        for (const NoFlyZone& z : zones) zf << z.x << "," << z.y << "," << z.r << "\n";
+        zf << "shape,x,y,r,x0,y0,x1,y1\n";
+        for (const NoFlyZone& z : zones)
+            zf << (z.rect ? "rect" : "circle") << "," << z.x << "," << z.y << ","
+               << z.r << "," << z.x0 << "," << z.y0 << "," << z.x1 << "," << z.y1 << "\n";
         cf << "nodeId,x,y,cellId,obs,cpu,radioDuty,screening\n";
         for (const auto& n : nodePos) {
             auto ci = m_caps.find(n.id);

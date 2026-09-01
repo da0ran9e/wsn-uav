@@ -317,14 +317,34 @@ std::vector<Lane> ClipLanes(const std::vector<Lane>& lanes,
         // keep the gaps between them.
         std::vector<std::pair<double, double>> blocked;
         for (const NoFlyZone& z : zones) {
-            const double fx = l.a.x - z.x, fy = l.a.y - z.y;
-            const double A = dx * dx + dy * dy;
-            const double B = 2 * (fx * dx + fy * dy);
-            const double C = fx * fx + fy * fy - z.r * z.r;
-            const double disc = B * B - 4 * A * C;
-            if (disc <= 0) continue;                 // misses the circle
-            const double sq = std::sqrt(disc);
-            double t0 = (-B - sq) / (2 * A), t1 = (-B + sq) / (2 * A);
+            double t0, t1;
+            if (!z.rect) {
+                const double fx = l.a.x - z.x, fy = l.a.y - z.y;
+                const double A = dx * dx + dy * dy;
+                const double B = 2 * (fx * dx + fy * dy);
+                const double C = fx * fx + fy * fy - z.r * z.r;
+                const double disc = B * B - 4 * A * C;
+                if (disc <= 0) continue;             // misses the circle
+                const double sq = std::sqrt(disc);
+                t0 = (-B - sq) / (2 * A); t1 = (-B + sq) / (2 * A);
+            } else {
+                // Liang-Barsky slab clip against the axis-aligned box.
+                t0 = 0.0; t1 = 1.0;
+                const double p[4] = {-dx, dx, -dy, dy};
+                const double q[4] = {l.a.x - z.x0, z.x1 - l.a.x,
+                                     l.a.y - z.y0, z.y1 - l.a.y};
+                bool miss = false;
+                for (int k = 0; k < 4 && !miss; ++k) {
+                    if (std::fabs(p[k]) < 1e-12) {   // parallel to this slab
+                        if (q[k] < 0) miss = true;   // and outside it
+                    } else {
+                        const double t = q[k] / p[k];
+                        if (p[k] < 0) t0 = std::max(t0, t);
+                        else          t1 = std::min(t1, t);
+                    }
+                }
+                if (miss || t0 >= t1) continue;
+            }
             t0 = std::max(0.0, t0); t1 = std::min(1.0, t1);
             if (t1 > t0) blocked.push_back({t0, t1});
         }
@@ -352,16 +372,23 @@ std::vector<Vector> RouteAroundZones(const std::vector<Vector>& wps,
     if (zones.empty() || wps.size() < 2) return wps;
 
     // Deepest penetration of segment pq into zone z, and where it happens.
+    // Sample the leg and take the deepest point inside the zone. Sampling rather
+    // than a closed form because the zone may be a rectangle, and one code path
+    // for both shapes is worth more here than an exact circle solution.
     auto worstHit = [&](const Vector& p, const Vector& q, const NoFlyZone& z,
                         double& depth, Vector& at) {
-        const double vx = q.x - p.x, vy = q.y - p.y;
-        const double L2 = vx * vx + vy * vy;
-        double t = L2 > 0 ? ((z.x - p.x) * vx + (z.y - p.y) * vy) / L2 : 0.0;
-        t = std::max(0.0, std::min(1.0, t));
-        const double cx = p.x + t * vx, cy = p.y + t * vy;
-        const double d = std::hypot(cx - z.x, cy - z.y);
-        depth = z.r - d;
-        at = Vector(cx, cy, p.z);
+        depth = -1;
+        for (int k = 0; k <= 40; ++k) {
+            const double t = k / 40.0;
+            const double cx = p.x + t * (q.x - p.x), cy = p.y + t * (q.y - p.y);
+            if (!z.Contains(cx, cy)) continue;
+            double ux, uy; z.Outward(cx, cy, ux, uy);
+            // depth ~ how far from the boundary; approximated by how far the
+            // outward ray must run to leave, which is enough to rank legs.
+            double d = 0;
+            while (d < 2000 && z.Contains(cx + ux * d, cy + uy * d)) d += 5.0;
+            if (d > depth) { depth = d; at = Vector(cx, cy, p.z); }
+        }
         return depth > 0;
     };
 
@@ -385,15 +412,12 @@ std::vector<Vector> RouteAroundZones(const std::vector<Vector>& wps,
                 // Push the closest approach radially outside the zone. If the leg
                 // runs through the centre there is no radial direction to use, so
                 // fall back to the leg's normal -- either side is equally good.
-                double ux = at.x - worst->x, uy = at.y - worst->y;
-                double n = std::hypot(ux, uy);
-                if (n < 1e-6) {
-                    ux = -(q.y - p.y); uy = (q.x - p.x);
-                    n = std::hypot(ux, uy);
-                    if (n < 1e-6) { ux = 1; uy = 0; n = 1; }
-                }
-                const double k = (worst->r + marginM) / n;
-                next.push_back(Vector(worst->x + ux * k, worst->y + uy * k, p.z));
+                double ux, uy; worst->Outward(at.x, at.y, ux, uy);
+                // Walk outward until clear of the zone, then stand off further.
+                double d = 0;
+                while (d < 4000 && worst->Contains(at.x + ux * d, at.y + uy * d)) d += 5.0;
+                next.push_back(Vector(at.x + ux * (d + marginM),
+                                      at.y + uy * (d + marginM), p.z));
                 changed = true;
             }
             next.push_back(q);

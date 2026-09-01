@@ -68,9 +68,9 @@ void SarDataUavApp::TakeOff() {
         if (m_patrolReverse) std::reverse(m_targets.begin(), m_targets.end());
         m_ti = 0;
     }
-    // A rotary wing turns on the spot, so half a FAST turn radius of standoff is
-    // ample; it does not need the fixed-wing's run-up to change its mind.
-    m_fc.SetNoFlyZones(m_zones, 0.5 * params::TurnRadiusM(params::kFastSpeedMps));
+    // A rotary wing turns on the spot: its escape circle is a point, so a small
+    // nominal radius is all the filter needs from it.
+    m_fc.SetNoFlyZones(m_zones, 5.0, m_speed, params::kControlTickS);
     m_state = State::CLIMB; m_fc.Hover(); m_fc.SetClimb(params::kClimbRateMps);
     // Start cueing from the climb: a DATA UAV that has not been summoned yet is
     // still a data source in motion over the field.

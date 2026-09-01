@@ -7,6 +7,7 @@
 
 #include "ns3/ptr.h"
 #include "ns3/node.h"
+#include "../common/lane-plan.h"
 #include "ns3/vector.h"
 #include <vector>
 #include <array>
@@ -28,9 +29,24 @@ public:
     // commands a heading gets it, and no future state can forget to. Measured
     // with the fence in the FAST app only, the rotary team -- which had no fence
     // at all -- spent 5.7 % of its track inside a zone.
-    void SetNoFlyZones(const std::vector<std::array<double, 3>>& z, double marginM) {
-        m_zones = z; m_fenceMargin = marginM;
+    void SetNoFlyZones(const std::vector<NoFlyZone>& z, double turnRadiusM,
+                       double speedMps, double tickS) {
+        // The fence works against zones grown by a small buffer. The viability
+        // filter keeps the aircraft out of whatever it is given, but "out of"
+        // means touching the boundary is allowed, and measurement found exactly
+        // that: three grazes of 0.8-2.1 m. Buffering by a few metres turns
+        // "does not enter" into "does not enter the real zone either". This is a
+        // few metres of clearance, not a hand-tuned exclusion radius.
+        m_zones.clear();
+        for (NoFlyZone q : z) {
+            if (q.rect) { q.x0 -= kFenceBufferM; q.y0 -= kFenceBufferM;
+                          q.x1 += kFenceBufferM; q.y1 += kFenceBufferM; }
+            else        { q.r += kFenceBufferM; }
+            m_zones.push_back(q);
+        }
+        m_fenceR = turnRadiusM; m_fenceV = speedMps; m_fenceDt = tickS;
     }
+    static constexpr double kFenceBufferM = 8.0;
     void SetMaxTurnRateDegPerS(double r) { m_maxTurnRate = r; }
     void Step(double dtS);             // advance the rate-limited heading by dt
     void Hover();                      // horizontal speed 0
@@ -46,8 +62,9 @@ private:
     double m_speed = 0;
     double m_headingDeg = 0;
     double m_vz = 0;
-    std::vector<std::array<double, 3>> m_zones;
-    double m_fenceMargin = 0;
+    std::vector<NoFlyZone> m_zones;
+    double m_fenceR = 0, m_fenceV = 0, m_fenceDt = 0;
+    bool EscapeExists(double px, double py, double headingDeg) const;
     double m_maxTurnRate = 0;          // deg/s; 0 = instant (rotary-wing)
     double m_cmdHeadingDeg = 0;        // what the controller was ASKED for
 };

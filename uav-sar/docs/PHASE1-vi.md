@@ -735,3 +735,90 @@ cùng nhiệm vụ.
 |---|---|
 | `figures/nofly-zones.png` | vùng 780 m, 0/2/4 vùng cấm; track đỏ = lúc vi phạm |
 | `visualize/replay-3d-nofly.html` | **replay 3D có chuyển động**, ba mức vùng cấm |
+
+---
+
+## 14. Vùng cấm chữ nhật, và một BẢO ĐẢM thật (2026-09-01)
+
+§13 để lại 0.11 % vi phạm — nhỏ, nhưng "hầu như không bay vào" **không phải** một
+vùng cấm bay. Mục này làm hai việc: thêm **vùng cấm chữ nhật**, và biến hàng rào
+thành **bảo đảm**.
+
+### 14.1 Hai hình dạng, một đường mã
+
+`NoFlyZone` nay trả lời ba câu hỏi — `Contains`, `Distance`, `Outward` — nên **mọi
+thứ phía sau xử lý hai hình như một**: cắt luống, hàng rào, và cả phần phân tích.
+Cú pháp phân biệt bằng **số trường**, nên mọi chuỗi `--noFly` cũ vẫn chạy nguyên:
+
+```
+--noFly="150,150,380,330;250,620,70"     # 4 số = chữ nhật, 3 số = hình tròn
+```
+
+Cắt luống cho chữ nhật dùng Liang–Barsky; kiểm độc lập: **0 điểm** của luống đã
+cắt nằm trong bất kỳ vùng nào.
+
+### 14.2 Ba lần sửa để đi từ 0.6 % xuống 0.000 %
+
+**(a) Điều kiện thoát phải là CUNG, không phải ĐƯỜNG TRÒN.** Bản đầu hỏi "cả
+đường tròn lượn gấp nhất có sạch không". Cạnh một chữ nhật 160 m thì **cả hai**
+đường tròn đều chạm nó từ hơn 100 m — nên bộ lọc báo nguy hiểm gần như mọi nơi,
+ngồi luôn trong nhánh dự phòng và **chống lại nhiệm vụ** thay vì bay nó. Đo được:
+**0.61 %**, tệ hơn cả quy tắc thô nó thay thế.
+
+Sửa: mô phỏng **cung bay** khi lượn gấp nhất, mỗi bên, cho tới khi đảo 180°. Nếu
+một trong hai cung đi hết mà không chạm vùng nào thì máy bay **chưa bị buộc** phải
+vào. → 0.167 %.
+
+**(b) Hàng rào phải chạy MỖI CHU KỲ.** Nó nằm trong `Turn()`, mà `Turn()` chỉ được
+gọi khi ứng dụng ra lệnh hướng mới; một trạng thái ra lệnh một lần rồi trôi sẽ bay
+tiếp **không ai kiểm**. Chuyển vào `FlightController::Step()` — hàng rào là thuộc
+tính của **phương tiện**, không phải của ai nhớ gọi `Turn()`.
+
+**(c) Đệm an toàn 8 m.** Bộ lọc giữ máy bay ngoài thứ nó được cho, nhưng "ngoài"
+cho phép **chạm biên** — và đo được đúng thế: ba lần **lướt qua 0.8–2.1 m**. Hàng
+rào nay làm việc với vùng **nới thêm 8 m**, nên "không vào vùng của hàng rào" trở
+thành "không vào cả vùng thật". Đây là **vài mét hở**, không phải một bán kính
+hiệu chỉnh cho vừa.
+
+$$\text{lệnh hướng được chấp nhận} \iff
+\text{sau một chu kỳ, VẪN còn một cung lượn thoát sạch}$$
+
+### 14.3 Kết quả — 780 × 780 m, 4 hạt giống mỗi nhánh, **một bản dựng**
+
+| vùng cấm | **vi phạm** | che khuất | năng lực phủ | ô đạt | km | lệch | nạn nhân | kJ | t toạ độ |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| không | **0.000 %** | 0 % | 93.8 % | 97.3 % | **14.6** | 14.6 % | **7/8** | **504** | **210 s** |
+| 2 chữ nhật | **0.000 %** | 11.6 % | 88.9 % | 90.0 % | 17.8 | 25.8 % | 4/8 | 888 | 238 s |
+| 4 chữ nhật | **0.000 %** | 19.3 % | 88.7 % | 88.1 % | 21.8 | 17.1 % | 2/8 | 899 | 306 s |
+| 2 chữ nhật + 2 tròn | **0.000 %** | 17.1 % | 87.2 % | 84.9 % | 25.9 | **70.2 %** | 4/8 | 914 | 280 s |
+
+**16/16 run, 0.000 %, sâu nhất 0.0 m** — cả cánh cố định lẫn cánh quay. Có
+`assert_no_incursion()` trong `tools/an_nofly.py` để một hồi quy sẽ **gãy to**
+chứ không âm thầm.
+
+**Giá của bảo đảm là rẻ:** trên phép thử nhỏ, hàng rào cứng tốn **+6 %** quãng
+đường (9.4 → 10.0 km) và độ phủ **tăng** 93.4 → 94.4 %. Cái đắt là **bản thân vùng
+cấm**: quãng đường +22 % đến +77 %, năng lượng +76 %.
+
+### 14.4 Lỗi mới tìm ra — **bộ chia việc mù với vùng cấm**
+
+Nhánh trộn: **lệch tải 70.2 %** (so với 14.6 % khi không có vùng cấm). Một hạt
+giống: ba chiếc bay **7.2 / 6.0 / 20.0 km**.
+
+`blockEffort` chấm công bay bằng *độ dài luống + quay đầu + transit*. Nó **không
+biết vùng cấm tồn tại**, nên một khối rẻ trên giấy lại phải bay vòng rất xa trong
+không khí. Đây **đúng loại lỗi đã sửa ở §11.3** (công bay phải là thứ BAY THẬT),
+tái xuất hiện vì vùng cấm thêm một chi phí mà bộ ước lượng không thấy.
+
+**Chưa sửa** — campaign chạy trên một bản dựng. Cách sửa: cộng vào `blockEffort`
+phần đường vòng mà mỗi mảnh luống phải trả để tránh vùng cấm.
+
+> $n = 4$: cột nạn nhân (7/8 → 4/8 → 2/8 → 4/8) **quá nhiễu để kết luận**. Các cột
+> hình học (vi phạm, km, che khuất, phủ) ổn định.
+
+### 14.5 Hình và replay
+
+| tệp | nội dung |
+|---|---|
+| `figures/nofly-rect.png` | 780 m, 0 / 2 chữ nhật / 4 chữ nhật / trộn — **không còn đoạn đỏ nào** |
+| `visualize/replay-3d-nofly-rect.html` | **replay 3D có chuyển động** |

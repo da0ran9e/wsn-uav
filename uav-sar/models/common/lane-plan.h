@@ -28,6 +28,8 @@
 
 #include "ns3/vector.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
@@ -85,11 +87,49 @@ std::vector<Lane> SelectLanesForCells(const std::vector<Lane>& candidates,
                                       const std::vector<CapNode>& nodes,
                                       double radius, double cellTarget);
 
-// A circular no-fly zone: the aircraft may not enter, and nodes inside it can
-// never be seeded directly by an overflight. Circles rather than polygons on
-// purpose -- the clip below is then exact and closed-form, and a polygon buys
-// nothing the argument needs.
-struct NoFlyZone { double x = 0, y = 0, r = 0; };
+// A no-fly zone the aircraft may not enter. Two shapes, because real exclusions
+// come in both: a circle for a point hazard (a mast, a nest, a slope), an
+// axis-aligned rectangle for a mapped parcel (a village, a firebreak, a
+// corridor). Both answer the same three questions, so everything downstream --
+// clipping, the geofence, the analysis -- treats them identically.
+struct NoFlyZone {
+    bool rect = false;
+    double x = 0, y = 0, r = 0;          // circle: centre and radius
+    double x0 = 0, y0 = 0, x1 = 0, y1 = 0;   // rect: corners, x0<x1, y0<y1
+
+    bool Contains(double px, double py) const {
+        if (!rect) return std::hypot(px - x, py - y) < r;
+        return px > x0 && px < x1 && py > y0 && py < y1;
+    }
+    // Distance to the boundary from OUTSIDE; 0 when inside.
+    double Distance(double px, double py) const {
+        if (!rect) return std::max(0.0, std::hypot(px - x, py - y) - r);
+        const double dx = std::max({x0 - px, 0.0, px - x1});
+        const double dy = std::max({y0 - py, 0.0, py - y1});
+        return std::hypot(dx, dy);
+    }
+    // Outward unit direction: away from the centre for a circle, away from the
+    // nearest face for a rectangle. Used to escape and to stand off.
+    void Outward(double px, double py, double& ux, double& uy) const {
+        if (!rect) {
+            ux = px - x; uy = py - y;
+        } else {
+            const double cx = 0.5 * (x0 + x1), cy = 0.5 * (y0 + y1);
+            // Push along whichever axis we are least deep in: the shortest way out.
+            const double ex = 0.5 * (x1 - x0), ey = 0.5 * (y1 - y0);
+            const double px2 = px - cx, py2 = py - cy;
+            if (ex - std::fabs(px2) < ey - std::fabs(py2)) { ux = (px2 >= 0 ? 1 : -1); uy = 0; }
+            else { ux = 0; uy = (py2 >= 0 ? 1 : -1); }
+        }
+        const double n = std::hypot(ux, uy);
+        if (n < 1e-9) { ux = 1; uy = 0; } else { ux /= n; uy /= n; }
+    }
+    // Would a disc of radius cr centred at (cx,cy) touch this zone? This is how
+    // a max-rate turn circle is tested for safety.
+    bool TouchesDisc(double cx, double cy, double cr) const {
+        return Distance(cx, cy) < cr || Contains(cx, cy);
+    }
+};
 
 // Cut every lane at the zones it crosses, keeping only the pieces OUTSIDE them.
 // A lane that runs straight through a zone becomes two lanes; one buried

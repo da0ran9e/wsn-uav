@@ -1,5 +1,8 @@
 #include "sar-config.h"
+#include <cstdio>
+#include <sstream>
 #include <cmath>
+#include <array>
 #include <fstream>
 #include <filesystem>
 #include "../models/common/lane-plan.h"
@@ -253,6 +256,18 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         capNodes.push_back(cn);
     }
 
+    std::vector<NoFlyZone> zones;
+    {
+        std::stringstream ss(cfg.noFly);
+        std::string tok;
+        while (std::getline(ss, tok, ';')) {
+            if (tok.empty()) continue;
+            NoFlyZone z;
+            if (std::sscanf(tok.c_str(), "%lf,%lf,%lf", &z.x, &z.y, &z.r) == 3 && z.r > 0)
+                zones.push_back(z);
+        }
+    }
+
     // One lane set for the whole field, sliced between the FAST UAVs below.
     std::vector<Lane> fieldLanes;
     std::vector<std::vector<Lane>> laneSplit;
@@ -264,12 +279,17 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
         const std::vector<Lane> cand =
             BuildFieldLanes(s.sensorPositions, cfg.laneCandidateSpacing,
                             params::kFastAltitudeM);
-        fieldLanes = SelectLanesForCells(cand, capNodes,
+        // Clip the CANDIDATES, not the answer: the selector must choose among
+        // lanes it is actually allowed to fly, otherwise it satisfies a cell
+        // with a lane that is then cut out from under it.
+        fieldLanes = SelectLanesForCells(ClipLanes(cand, zones), capNodes,
                                          params::kUavBroadcastRadiusM,
                                          cfg.cellCoverTarget);
     } else {
-        fieldLanes = BuildFieldLanes(s.sensorPositions, params::kUavBroadcastRadiusM,
-                                     params::kFastAltitudeM);
+        fieldLanes = ClipLanes(
+            BuildFieldLanes(s.sensorPositions, params::kUavBroadcastRadiusM,
+                            params::kFastAltitudeM),
+            zones);
     }
 
     // UAV role coordination (who diverts, who couriers) is now a radio CLAIM with
@@ -351,10 +371,18 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
                                                      params::kFastAltitudeM),
                                               params::TurnRadiusM(fastSpd));
                 }
-                app->SetMissionOverride(OrderLanes(
-                    laneSplit[u],
-                    params::TurnRadiusM(fastSpd),
-                    Vector(bsPos.x, bsPos.y, params::kFastAltitudeM)));
+                // Route the ORDERED plan around the zones. Order first, then
+                // bypass: bypassing first would hand the Dubins solver waypoints
+                // it then reorders, undoing the avoidance.
+                app->SetMissionOverride(RouteAroundZones(
+                    OrderLanes(laneSplit[u], params::TurnRadiusM(fastSpd),
+                               Vector(bsPos.x, bsPos.y, params::kFastAltitudeM)),
+                    zones, params::TurnRadiusM(fastSpd)));
+            }
+            {
+                std::vector<std::array<double, 3>> zs;
+                for (const NoFlyZone& z : zones) zs.push_back({z.x, z.y, z.r});
+                app->SetNoFlyZones(zs);
             }
             app->SetCues(cues);
             app->SetFixOnConfirm(cfg.fixOnConfirm);
@@ -379,6 +407,11 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // instead of parking at the field centre. A parked UAV spreads
             // nothing and, because SUMMON is one-hop, is usually out of range of
             // the leader that fires it.
+            {
+                std::vector<std::array<double, 3>> zs;
+                for (const NoFlyZone& z : zones) zs.push_back({z.x, z.y, z.r});
+                app->SetNoFlyZones(zs);
+            }
             app->SetPatrol(cfg.dataPatrol);
             app->SetCueEnroute(cfg.dataCueEnroute);
             // Phase 2 starts when Phase 1 reports finished. The deadline is the
@@ -480,6 +513,9 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     {
         std::filesystem::create_directories(cfg.outputDir);
         std::ofstream cf(cfg.outputDir + "/capabilities.csv");
+        std::ofstream zf(cfg.outputDir + "/nofly.csv");
+        zf << "x,y,r\n";
+        for (const NoFlyZone& z : zones) zf << z.x << "," << z.y << "," << z.r << "\n";
         cf << "nodeId,x,y,cellId,obs,cpu,radioDuty,screening\n";
         for (const auto& n : nodePos) {
             auto ci = m_caps.find(n.id);

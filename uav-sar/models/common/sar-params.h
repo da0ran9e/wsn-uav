@@ -114,6 +114,9 @@ inline constexpr double kCruiseSpeedMps  = 20.0;    // [Design] all schemes
 // (53.1 % -> 52.7 %), because the arc length is set by R alone. 45 deg halves R
 // to 64 m. It is a firm bank but well inside the envelope of a small fixed-wing
 // survey UAV, and it is the only lever that changes the arc.
+// Standoff at which the geofence starts steering tangentially. One turn
+// radius: the distance the aircraft needs to change its mind.
+inline constexpr double kGeofenceMarginM = 64.0;
 inline constexpr double kBankAngleDeg    = 45.0;   // [Lit/Design] survey turn bank
 inline constexpr double kGravityMps2     = 9.81;
 inline double TurnRadiusM(double v) {

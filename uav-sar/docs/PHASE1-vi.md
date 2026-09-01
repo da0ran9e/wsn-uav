@@ -647,3 +647,91 @@ chứ không quét đều.
 | `figures/adapt-priority-bigfield.png` | cùng mũ đó ở 690 m — kế hoạch đổi thật |
 | `figures/adapt-curves.png` | đường cong km / năng lực phủ / thời gian theo cả hai núm |
 | `visualize/replay-3d-capability.html` | **replay 3D có chuyển động**, 3 cấu hình đội bay |
+
+---
+
+## 13. Vùng lớn hơn, và vùng cấm bay (2026-09-01)
+
+§12 kết luận: ở 460 m mọi núm quy hoạch đều **bão hoà**, phải chạy ở vùng lớn hơn
+thì bài toán mới có nội dung. Mục này làm đúng thế — `gridSize=40 @ 20 m` cho
+**780 × 780 m, 1600 nút** — và thêm **vùng cấm bay** hình tròn (`--noFly`).
+
+4 hạt giống mỗi nhánh, **một bản dựng** (`module=1788266804,918424`), 3 UAV cánh
+cố định.
+
+### 13.1 Ba tầng để giữ máy bay ngoài vùng cấm — hai tầng đầu KHÔNG đủ
+
+**Tầng 1 — cắt luống (`ClipLanes`).** Luống bị cắt tại vùng cấm, kiểm bằng phép
+thử độc lập: **0 điểm nằm trong vùng** trên mọi tập luống đã cắt. Kế hoạch không
+bao giờ **nhắm** vào trong.
+
+Nhưng đo đường bay thật: **4.6–7.1 % số mẫu nằm trong vùng, sâu tới 94 m.** Chân
+đế bị cắt không ngăn được máy bay **cắt góc** khi lượn giữa hai mảnh.
+
+Và vi phạm đó **âm thầm sửa đẹp số liệu**: nhánh phủ-nút báo **100 %** năng lực
+phủ trên các nút bị vùng cấm che — nó chỉ tới được vì **bay vào chỗ không được
+phép bay**. Nếu không đo vi phạm thì toàn bộ so sánh này vô nghĩa.
+
+**Tầng 2 — chèn waypoint vòng tránh (`RouteAroundZones`).** Gần như vô ích:
+7.45 % → 6.95 %, mà tốn thêm 3.5 km.
+
+**Thổi phồng vùng cấm khi quy hoạch cũng không phải lời giải** — nó giúp,
+nhưng **không đơn điệu**:
+
+| thổi phồng | vi phạm thật | sâu nhất |
+|---:|---:|---:|
+| 0 m | 4.24 % | 45.9 m |
+| 100 m | 0.63 % | 29.1 m |
+| **130 m** | **0.00 %** | **0.0 m** |
+| 160 m | 2.05 % | 69.0 m |
+| 200 m | 2.61 % | 86.4 m |
+
+Số 0 ở 130 m là **may, không phải bảo đảm**. Một biên "hiệu chỉnh cho vừa" không
+phải một ràng buộc.
+
+**Tầng 3 — hàng rào địa lý ở BỘ ĐIỀU KHIỂN BAY.** Đặt trong
+`FlightController::Turn()` chứ không trong từng app, nên **mọi trạng thái ra lệnh
+hướng đều có nó** và không trạng thái nào sau này quên được. Ở trong vùng → bay
+thẳng ra; gần biên → bay tiếp tuyến, chọn chiều gần hướng đang muốn đi nhất. Khoảng
+lùi: **2 bán kính lượn** cho cánh cố định (một bán kính đã đo là **không đủ** —
+vẫn lọt 55 m vào vùng bán kính 70 m), **0.5** cho cánh quay.
+
+| | trước | sau |
+|---|---:|---:|
+| FAST trong vùng cấm | 4.6 % (sâu 94 m) | **0.11 %** (sâu 6.7 m) |
+| DATA trong vùng cấm | **5.7 %** *(chưa có rào)* | **0.00 %** |
+
+Phần dư 6.7 m là **giới hạn vật lý của cánh cố định**, không phải lỗi logic: ở
+25 m/s với $R = 64$ m, máy bay cần khoảng một phần tư vòng để đảo hướng.
+
+### 13.2 Kết quả trên vùng 780 m
+
+| nhánh | vùng cấm | vi phạm | che khuất | năng lực phủ | ô đạt | km | lệch | nạn nhân | kJ | t toạ độ |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| phủ ô | 0 | 0.00 % | 0 % | 93.8 % | 97.3 % | **14.6** | 14.6 % | **7/8** | **504** | **210 s** |
+| phủ nút | 0 | 0.00 % | 0 % | **99.2 %** | 100 % | 20.9 | 13.2 % | 5/8 | 541 | 297 s |
+| phủ ô | 2 | 0.87 % | 9.5 % | 84.4 % | 83.6 % | **17.7** | 9.6 % | 3/8 | 887 | 240 s |
+| phủ nút | 2 | 0.62 % | 9.5 % | **94.2 %** | 95.9 % | 24.6 | 22.7 % | 5/8 | 910 | 344 s |
+| phủ ô | 4 | 0.62 % | 16.3 % | 85.6 % | 84.9 % | 20.0 | 19.2 % | 5/8 | 895 | 268 s |
+
+**(1) Đánh đổi phủ-ô ↔ phủ-nút giữ nguyên khi có vùng cấm.** Phủ ô bay ít hơn
+**28 %** (17.7 vs 24.6 km) và nhanh hơn **30 %** (240 vs 344 s), đổi lấy ~10 điểm
+năng lực phủ. Vùng cấm **không đảo** kết luận — nó chỉ làm cả hai đắt hơn.
+
+**(2) Sóng vô tuyến KHÔNG tuân theo vùng cấm — và đó là điều tốt.** 9.5 % năng lực
+nằm trong vùng cấm, nhưng phủ-nút vẫn đạt 94.2 %: một UAV bay **sát ngoài** biên
+vẫn gieo được cue cho nút **tới 50 m bên trong**. Chỉ những nút sâu hơn bán kính
+quảng bá mới thật sự mất. **Vùng cấm bay không phải vùng cấm phủ.**
+
+**(3) Vùng cấm đắt: ~+70 % năng lượng** (504 → 887 kJ) và +21 % quãng đường, cho
+cùng nhiệm vụ.
+
+> **Cảnh báo:** $n = 4$. Cột nạn nhân (7/8 → 3/8 → 5/8) **nhiễu quá lớn để kết
+> luận**; chỉ các cột hình học (km, phủ, vi phạm) là ổn định.
+
+### 13.3 Hình và replay
+
+| tệp | nội dung |
+|---|---|
+| `figures/nofly-zones.png` | vùng 780 m, 0/2/4 vùng cấm; track đỏ = lúc vi phạm |
+| `visualize/replay-3d-nofly.html` | **replay 3D có chuyển động**, ba mức vùng cấm |

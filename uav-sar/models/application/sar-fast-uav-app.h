@@ -44,6 +44,14 @@ public:
     // sweeps which lane needs to see the whole fleet. A UAV given a plan flies
     // it; one given none falls back to building its own over its sensor set.
     void SetMissionOverride(const std::vector<ns3::Vector>& wps) { m_mission = wps; }
+    // Geofence. Planning around a zone is not the same as staying out of one:
+    // a curvature-limited aircraft cuts the corner. Measured with clipped lanes
+    // and bypass waypoints alone, the track was still 4.2 % inside a zone and up
+    // to 46 m deep, and inflating the zones to compensate helped
+    // NON-MONOTONICALLY (0.00 % at 130 m, 2.05 % at 160 m) -- i.e. any margin
+    // that works is working by luck. This is the guarantee instead: the airframe
+    // refuses the heading.
+    void SetNoFlyZones(const std::vector<std::array<double, 3>>& z) { m_zones = z; }
     void SetCues(const std::vector<Fragment>& c) { m_cues = c; }
     void SetCruise(double alt, double speed) { m_alt = alt; m_speed = speed; }
     void SetBs(ns3::Vector pos, ns3::Address addr) { m_bsPos = pos; m_bsAddr = addr; }
@@ -75,6 +83,7 @@ private:
     std::vector<Fragment> m_cues;
     std::vector<ns3::Vector> m_targets;
     std::vector<ns3::Vector> m_mission;   // lane plan from the orchestrator
+    std::vector<std::array<double, 3>> m_zones;   // x, y, r
     size_t m_ti = 0;
     size_t m_cueIdx = 0;      // fragment index in m_cues
     uint16_t m_cueSeq = 0;    // chunk seq within the current cue fragment

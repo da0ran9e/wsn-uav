@@ -134,6 +134,10 @@ struct SarScenarioConfig {
     // and let the mediocre ones go. Nodes with no camera stay worth zero at
     // every setting -- that is a fact about the hardware, not a preference.
     double capPriorityExp = 1.0;
+    // No-fly zones as "cx,cy,r;cx,cy,r". Lanes are clipped at them so the plan
+    // never aims inside; whether the aircraft still clips a corner while turning
+    // between pieces is measured, not assumed.
+    std::string noFly;
     // Heterogeneous ground hardware.
     bool   uniformNodes = true;      // true reproduces every earlier result
     double cameraFraction = 0.65;

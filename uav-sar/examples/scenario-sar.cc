@@ -44,6 +44,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("laneCandidateSpacing", "candidate lane pitch for the cell selector (m)", cfg.laneCandidateSpacing);
     cmd.AddValue("balanceAlpha", "1 = balance flight effort only, 0 = capability only", cfg.balanceAlpha);
     cmd.AddValue("capPriorityExp", "planner's exponent on node capability (0 = blind, >1 = chase the best)", cfg.capPriorityExp);
+    cmd.AddValue("noFly", "no-fly zones as cx,cy,r;cx,cy,r", cfg.noFly);
     cmd.AddValue("uniformNodes", "all nodes fully capable (1) or heterogeneous (0)", cfg.uniformNodes);
     cmd.AddValue("cameraFraction", "share of nodes carrying a camera", cfg.cameraFraction);
     cmd.AddValue("phaseGate", "rotary team waits for the fixed-wing sweep to finish", cfg.phaseGate);

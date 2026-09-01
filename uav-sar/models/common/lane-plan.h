@@ -85,6 +85,37 @@ std::vector<Lane> SelectLanesForCells(const std::vector<Lane>& candidates,
                                       const std::vector<CapNode>& nodes,
                                       double radius, double cellTarget);
 
+// A circular no-fly zone: the aircraft may not enter, and nodes inside it can
+// never be seeded directly by an overflight. Circles rather than polygons on
+// purpose -- the clip below is then exact and closed-form, and a polygon buys
+// nothing the argument needs.
+struct NoFlyZone { double x = 0, y = 0, r = 0; };
+
+// Cut every lane at the zones it crosses, keeping only the pieces OUTSIDE them.
+// A lane that runs straight through a zone becomes two lanes; one buried
+// entirely inside disappears. This is what stops the plan from AIMING into a
+// zone -- it does not by itself stop the aircraft from cutting a corner while
+// turning between two pieces, which is measured separately.
+std::vector<Lane> ClipLanes(const std::vector<Lane>& lanes,
+                            const std::vector<NoFlyZone>& zones);
+
+// Insert bypass waypoints so no straight leg between consecutive waypoints
+// passes through a zone.
+//
+// Clipping the lanes is only half the job and the measurement says so: with
+// clipped lanes alone the aircraft still spent 4.6-7.1 % of its track inside a
+// zone, up to 94 m deep, because the leg BETWEEN two clipped pieces runs
+// straight across the hole between them. Worse, that violation quietly repaired
+// the coverage numbers -- node-based coverage scored 100 % on shadowed nodes it
+// was only reaching by flying somewhere it was not allowed to be.
+//
+// Each offending leg gets a waypoint pushed radially out past the zone edge, so
+// the guidance is steered around instead of through. Applied repeatedly up to a
+// bound, because pushing clear of one zone can push into another.
+std::vector<ns3::Vector> RouteAroundZones(const std::vector<ns3::Vector>& wps,
+                                          const std::vector<NoFlyZone>& zones,
+                                          double marginM);
+
 // Cut lanes lengthwise until there are at least `minPieces` of them.
 //
 // Cell-based selection leaves very few lanes -- five cover the whole field at
@@ -117,6 +148,8 @@ double DubinsLength(double x0, double y0, double h0,
                     double x1, double y1, double h1, double R);
 
 inline constexpr uint32_t kExactLaneLimit = 14;
+// A clipped sliver shorter than this is not worth a turn to reach.
+inline constexpr double kMinLanePieceM = 40.0;
 
 }  // namespace ns3::uavsar
 

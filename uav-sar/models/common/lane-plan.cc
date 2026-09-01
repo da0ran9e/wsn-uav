@@ -305,6 +305,105 @@ std::vector<Lane> SelectLanesForCells(const std::vector<Lane>& candidates,
     return chosen;
 }
 
+std::vector<Lane> ClipLanes(const std::vector<Lane>& lanes,
+                            const std::vector<NoFlyZone>& zones) {
+    if (zones.empty()) return lanes;
+    std::vector<Lane> out;
+    for (const Lane& l : lanes) {
+        const double dx = l.b.x - l.a.x, dy = l.b.y - l.a.y;
+        const double L = std::hypot(dx, dy);
+        if (L <= 1e-9) continue;
+        // Collect the parameter intervals the lane spends inside a zone, then
+        // keep the gaps between them.
+        std::vector<std::pair<double, double>> blocked;
+        for (const NoFlyZone& z : zones) {
+            const double fx = l.a.x - z.x, fy = l.a.y - z.y;
+            const double A = dx * dx + dy * dy;
+            const double B = 2 * (fx * dx + fy * dy);
+            const double C = fx * fx + fy * fy - z.r * z.r;
+            const double disc = B * B - 4 * A * C;
+            if (disc <= 0) continue;                 // misses the circle
+            const double sq = std::sqrt(disc);
+            double t0 = (-B - sq) / (2 * A), t1 = (-B + sq) / (2 * A);
+            t0 = std::max(0.0, t0); t1 = std::min(1.0, t1);
+            if (t1 > t0) blocked.push_back({t0, t1});
+        }
+        if (blocked.empty()) { out.push_back(l); continue; }
+        std::sort(blocked.begin(), blocked.end());
+        double cur = 0.0;
+        auto emit = [&](double a, double bb) {
+            if ((bb - a) * L < 2.0 * kMinLanePieceM) return;   // too short to fly
+            out.push_back(Lane{
+                Vector(l.a.x + a * dx, l.a.y + a * dy, l.a.z),
+                Vector(l.a.x + bb * dx, l.a.y + bb * dy, l.b.z)});
+        };
+        for (const auto& [t0, t1] : blocked) {
+            if (t0 > cur) emit(cur, t0);
+            cur = std::max(cur, t1);
+        }
+        if (cur < 1.0) emit(cur, 1.0);
+    }
+    return out;
+}
+
+std::vector<Vector> RouteAroundZones(const std::vector<Vector>& wps,
+                                     const std::vector<NoFlyZone>& zones,
+                                     double marginM) {
+    if (zones.empty() || wps.size() < 2) return wps;
+
+    // Deepest penetration of segment pq into zone z, and where it happens.
+    auto worstHit = [&](const Vector& p, const Vector& q, const NoFlyZone& z,
+                        double& depth, Vector& at) {
+        const double vx = q.x - p.x, vy = q.y - p.y;
+        const double L2 = vx * vx + vy * vy;
+        double t = L2 > 0 ? ((z.x - p.x) * vx + (z.y - p.y) * vy) / L2 : 0.0;
+        t = std::max(0.0, std::min(1.0, t));
+        const double cx = p.x + t * vx, cy = p.y + t * vy;
+        const double d = std::hypot(cx - z.x, cy - z.y);
+        depth = z.r - d;
+        at = Vector(cx, cy, p.z);
+        return depth > 0;
+    };
+
+    std::vector<Vector> cur = wps;
+    for (int pass = 0; pass < 6; ++pass) {
+        std::vector<Vector> next;
+        bool changed = false;
+        next.push_back(cur.front());
+        for (size_t i = 1; i < cur.size(); ++i) {
+            const Vector& p = cur[i - 1];
+            const Vector& q = cur[i];
+            const NoFlyZone* worst = nullptr;
+            double bestDepth = 0; Vector at;
+            for (const NoFlyZone& z : zones) {
+                double d; Vector a;
+                if (worstHit(p, q, z, d, a) && d > bestDepth) {
+                    bestDepth = d; worst = &z; at = a;
+                }
+            }
+            if (worst) {
+                // Push the closest approach radially outside the zone. If the leg
+                // runs through the centre there is no radial direction to use, so
+                // fall back to the leg's normal -- either side is equally good.
+                double ux = at.x - worst->x, uy = at.y - worst->y;
+                double n = std::hypot(ux, uy);
+                if (n < 1e-6) {
+                    ux = -(q.y - p.y); uy = (q.x - p.x);
+                    n = std::hypot(ux, uy);
+                    if (n < 1e-6) { ux = 1; uy = 0; n = 1; }
+                }
+                const double k = (worst->r + marginM) / n;
+                next.push_back(Vector(worst->x + ux * k, worst->y + uy * k, p.z));
+                changed = true;
+            }
+            next.push_back(q);
+        }
+        cur.swap(next);
+        if (!changed) break;
+    }
+    return cur;
+}
+
 std::vector<Lane> SubdivideLanes(const std::vector<Lane>& lanes, uint32_t minPieces) {
     if (lanes.empty() || lanes.size() >= minPieces) return lanes;
     const uint32_t per = (uint32_t)std::ceil((double)minPieces / lanes.size());

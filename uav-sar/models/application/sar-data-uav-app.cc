@@ -87,10 +87,14 @@ void SarDataUavApp::OpenGate() {
     Vector p = m_fc.GetPosition();
     if (m_metrics) {
         char det[96];
-        const char* why = m_sweepDone.size() >= m_expectFast ? "claim"
+        const char* mode = m_gateMode == GateMode::Home ? "home"
+                           : m_gateMode == GateMode::Flag ? "flag" : "sweep";
+        const char* why = GateOpen() ? "trigger"
                           : (t >= m_gateDeadlineS ? "deadline" : "sky-quiet");
-        std::snprintf(det, sizeof det, "%s; %u/%u fast swept", why,
-                      (unsigned)m_sweepDone.size(), (unsigned)m_expectFast);
+        std::snprintf(det, sizeof det, "%s/%s; swept %u landed %u flag %d of %u",
+                      mode, why, (unsigned)m_sweepDone.size(),
+                      (unsigned)m_landed.size(), m_launchOrder ? 1 : 0,
+                      (unsigned)m_expectFast);
         m_metrics->Event(t, m_nodeId, "DATA", "gate_open", det, p.x, p.y, p.z);
     }
     // Phase 2 begins. If this UAV already has a job it keeps it; otherwise it
@@ -764,6 +768,14 @@ bool SarDataUavApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, c
                 m_tasks[crid].takenBy = id;
                 m_tasks[crid].takenAt = Simulator::Now().GetSeconds();
             }
+        }
+        if (role == 4) {
+            m_landed.insert(id);
+            if (m_phaseGate && !m_gateOpen && GateOpen()) OpenGate();
+        }
+        if (role == 5) {                 // base: a candidate exists, launch
+            m_launchOrder = true;
+            if (m_phaseGate && !m_gateOpen && GateOpen()) OpenGate();
         }
         if (role == 3) {
             // A FAST UAV has finished its band. Until every sweep is done the

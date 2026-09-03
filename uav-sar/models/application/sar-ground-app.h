@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <map>
 #include <set>
+#include <functional>
 #include <vector>
 
 namespace ns3::uavsar {
@@ -85,6 +86,10 @@ public:
     void SetClueQualityFull(double q) { m_clueQualityFull = q; }
     void SetConfirmThreshold(double t) { m_confirmThr = t; }
     void SetCoopThreshold(double coop) { m_coop = coop; }
+    // LoRa flag to the base, fired once when this leader first summons. The
+    // orchestrator supplies the sink; see kLoraAirtimeS for why this is a
+    // callback and not a packet on the mesh.
+    void SetLoraFlag(std::function<void(uint16_t, double, double)> f) { m_loraFlag = std::move(f); }
     // Heterogeneous hardware. Each of the three gates a different stage, so they
     // are stored separately rather than collapsed into one "quality" scalar.
     void SetCapability(double obs, double cpu, double radioDuty) {
@@ -174,6 +179,8 @@ private:
     ns3::EventId m_rejectEvent;
     bool m_rejectHeard = false;   // a node under the drop resolved it as a miss
     double m_coop = 0.30;
+    std::function<void(uint16_t, double, double)> m_loraFlag;
+    bool m_loraSent = false;
     double m_obs = 1.0, m_cpu = 1.0, m_radioDuty = 1.0;
     double ObsScale(double q) const;   // weaker camera == shorter effective range
     // Chunks this node's radio could not take. A slow radio does not fail

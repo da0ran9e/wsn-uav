@@ -197,6 +197,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
     // proposed scheme stopped the clock on its first courier while three of its
     // UAVs were still airborne, against tsp-mc's 4-of-4 requirement.
     bs->SetExpectedReports(cfg.allHome ? numUav : (tspMc ? numUav : 1));
+    bs->SetDevice(s.bsDev.Get(0));
     s.bs.Get(0)->AddApplication(bs);
     bs->SetStartTime(Seconds(0));
     bs->SetStopTime(Seconds(cfg.simTime));
@@ -280,6 +281,11 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             }
         }
     }
+
+    const SarDataUavApp::GateMode gateMode =
+        cfg.phaseGateMode == "home" ? SarDataUavApp::GateMode::Home
+        : cfg.phaseGateMode == "flag" ? SarDataUavApp::GateMode::Flag
+        : SarDataUavApp::GateMode::Sweep;
 
     // One lane set for the whole field, sliced between the FAST UAVs below.
     std::vector<Lane> fieldLanes;
@@ -425,7 +431,7 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             // fail-open bound: the gate is fed by radio announcements, and a
             // gate that never opens is a mission that delivers nothing.
             app->SetPhaseGate(cfg.phaseGate, fastCount, cfg.phaseGateDeadlineS,
-                              cfg.phaseGateGround);
+                              cfg.phaseGateGround, gateMode);
             app->SetCues(cues);
             // Its own band among the DATA UAVs, so the DATA team ALSO sweeps the
             // whole field -- redundant with FAST by design, which is what makes
@@ -480,6 +486,8 @@ void SarScenario::Run(const SarScenarioConfig& cfg) {
             if (ci != m_caps.end())
                 app->SetCapability(ci->second.obs, ci->second.cpu, ci->second.radioDuty);
         }
+        if (gateMode == SarDataUavApp::GateMode::Flag)
+            app->SetLoraFlag([bs](uint16_t r, double fx, double fy) { bs->OnLoraFlag(r, fx, fy); });
         app->SetClueQuality(field.at(id).clueQuality);
         app->SetClueQualityFull(field.at(id).clueQualityFull);
         app->SetConfirmThreshold(cfg.confirmThreshold);

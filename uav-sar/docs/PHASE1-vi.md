@@ -822,3 +822,112 @@ phần đường vòng mà mỗi mảnh luống phải trả để tránh vùng 
 |---|---|
 | `figures/nofly-rect.png` | 780 m, 0 / 2 chữ nhật / 4 chữ nhật / trộn — **không còn đoạn đỏ nào** |
 | `visualize/replay-3d-nofly-rect.html` | **replay 3D có chuyển động** |
+
+---
+
+## 15. Phase 2 khởi hành khi nào — và tin đi đường nào (2026-09-03)
+
+Câu hỏi đặt ra: **để đội rotary xuất phát sau khi đội fix-wing đã quay về, hoặc
+sau khi có điểm nghi vấn đầu tiên** (giả thiết CL ở vùng nghi vấn gửi được một cờ
+LoRa về BS). Cài cả ba, đo, và kết quả **không giống dự đoán ban đầu của tôi** —
+phần đáng giá nhất của mục này là chỗ đó.
+
+### 15.1 Ba điều kiện mở cổng
+
+`GateMode` trong `sar-data-uav-app.h`, đội rotary **đỗ dưới đất ở căn cứ** cho tới
+khi cổng mở (`--phaseGateGround=1`), nên khác biệt duy nhất giữa các nhánh là
+**điều kiện mở**:
+
+| nhánh | mở khi | tín hiệu mang tin |
+|---|---|---|
+| `sweep` | đủ `expectFast` chiếc báo **quét xong luống** | CLAIM vai 3 |
+| `home` | đủ `expectFast` chiếc **hạ cánh ở căn cứ** | CLAIM vai 4 *(mới)* |
+| `flag` | **BS nhận cờ LoRa đầu tiên** rồi phát lệnh xuất phát | CLAIM vai 5 *(mới)* |
+
+Cả ba vẫn có `--phaseGateDeadline` và dự phòng *sky-quiet* như §10 — cổng **fail-open**,
+không bao giờ khoá vĩnh viễn vì một quảng bá rơi.
+
+**Cờ LoRa** (`kLoraFlagBytes = 8`, `kLoraAirtimeS = 0.2` — SF9/125 kHz) là **kênh
+phụ**, KHÔNG chạy trên mạng 802.15.4: khác PHY hoàn toàn, nên mô hình hoá bằng một
+callback có trễ đúng bằng thời gian trên không. CL bắn **đúng một lần** khi lần đầu
+rao ứng viên (`SarGroundApp::SetLoraFlag`). Đây là **radio mới duy nhất** mà thiết
+kế này thêm vào.
+
+### 15.2 Kết quả — 460 m, 4 nhánh × 6 hạt giống, **một bản dựng**
+
+```
+trigger    n  gate_s  lora_s first_del   served  live  taken     loc     kJ   tFix
+nogate     6       0     nan        65  12/12      28     24   9/12     342    124
+sweep      6     150     nan       nan   0/11      11      0   0/12     274    nan
+home       6     150     nan       nan   0/11      11      0   0/12     274    nan
+flag       6      63      63       107  11/11      12     10   6/12     254    140
+```
+
+`live` = số lần mặt đất còn rao ứng viên **SAU KHI** cổng đã mở. `taken` = trong số
+đó bao nhiêu lần có UAV thật sự nhận mục tiêu.
+
+`sweep` và `home` **hỏng sạch: 0/12 nạn nhân**, không một chuyến giao nào.
+
+### 15.3 Vì sao — và vì sao giả thuyết đầu của tôi SAI
+
+Giả thuyết đầu: cổng mở **quá muộn**, ứng viên đã hết hạn. **Sai.** Cột `live` bác
+bỏ nó: ở `sweep`/`home`, sau khi cổng mở vẫn còn **11 lần rao** trên 6 hạt, mà
+`taken = 0`. Ví dụ hạt s1 — CL 449 rao lúc **79.1 s**, rao lại **139.1** và
+**199.1**; cổng mở **149.9**, cất cánh **150.2**. Ứng viên còn sống nguyên. Đội vẫn
+về không: `quiet_return "no cues"` lúc 291.6 s.
+
+Nguyên nhân thật là **đường đi của tin**:
+
+> `SUMMON` là **quảng bá một chặng, phát một lần**. Chỉ chiếc UAV **đang bay trong
+> tầm của CL đúng thời điểm đó** mới nghe được.
+
+Kéo theo hai hệ quả mà thiết kế "chờ rồi cất cánh" không thoát được:
+
+1. Đội **đỗ dưới đất ở căn cứ chắc chắn lỡ lần rao đầu** — không phải xui, mà là
+   *do cấu trúc*: căn cứ ở rìa vùng, CL ở giữa rừng, một chặng không với tới.
+2. Sau khi cất cánh, bắt được **lần rao sau** là **may rủi thuần tuý** — và may đã
+   không đến: **0/6 hạt**.
+
+Thêm nữa, với `--phaseGate` đội rotary **không phát cue** (tách pha theo *chức năng*,
+§10), nên nó cũng không có đường tự tìm ra ứng viên như nhánh `nogate`.
+
+**Vậy giá trị của cờ LoRa không nằm ở chỗ mở sớm hơn.** Nó nằm ở chỗ **đưa toạ độ
+về căn cứ** — nơi đang đứng ngay cạnh chính đội cần lệnh. BS phát lệnh xuất phát
+(vai 5) **và** chuyển tiếp toạ độ ứng viên bằng A2A, lặp `kConfirmRetries` lần, giãn
+0.5 s / 0.25 s để tôn trọng sàn 200 ms của MAC (`SarBsApp::OnLoraFlag`).
+
+Bằng chứng sạch nhất là hạt **s6** của nhánh `flag`: cổng mở 71.9 s, **không còn
+lần rao nào của mặt đất sau đó** (`live = 0`), vậy mà vẫn có 1 lần nhận mục tiêu lúc
+72.2 s và 1 chuyến giao. Tin đó **chỉ có thể** đến từ đường chuyển tiếp của BS.
+
+> **Bài học phát biểu được cho paper:** thả một đội mà **không nói nó đi đâu** thì
+> vô dụng. Cổng pha là bài toán **định tuyến thông tin**, không phải bài toán
+> **định thời**. Đây là lý do một kênh phụ băng hẹp, tầm xa (LoRa, 8 B) mua được
+> thứ mà mạng mesh 802.15.4 dày đặc không mua được.
+
+### 15.4 Đọc kết quả cho trung thực
+
+`nogate` vẫn hơn về nạn nhân (**9/12** so với 6/12). Nhưng `nogate` **không tách
+pha**: đội rotary phát cue suốt hành trình, nên độ phủ sàng lọc **không quy được**
+cho Phase 1 — đúng thứ mà §10 đã loại bỏ. Trong **họ các thiết kế có tách pha**
+— tức là thứ mà paper cần — `flag` là nhánh **duy nhất chạy được**, và nó rẻ hơn
+`nogate`: **254 kJ so với 342 kJ (−26 %)**.
+
+Cái phải trả là **thời gian**: chuyến giao đầu 107 s so với 65 s, `tFix` 140 s so
+với 124 s — đội phải bay từ căn cứ ra thay vì đã sẵn trên vùng.
+
+> $n = 6$: cột nạn nhân **chưa đủ để kết luận** hơn/kém giữa `nogate` và `flag`.
+> Cột **kết luận được** là `0/12` của `sweep`/`home` và `live/taken` — đó là cơ
+> chế, không phải nhiễu.
+
+### 15.5 Hình và tái lập
+
+| tệp | nội dung |
+|---|---|
+| `figures/gate-triggers.png` | 4 nhánh × 6 hạt: mỗi lần rao, cổng, lần nhận mục tiêu, lần giao. Vạch xanh **mờ** = rao mà không ai nhận |
+| `tools/an_gate.py` | bảng trên (`python3 tools/an_gate.py RUNROOT nogate sweep home flag`) |
+| `tools/make_gate_figure.py` | dựng hình |
+
+```
+--phaseGate=1 --phaseGateGround=1 --phaseGateMode={sweep|home|flag}
+```

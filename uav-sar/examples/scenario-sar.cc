@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("phaseGate", "rotary team waits for the fixed-wing sweep to finish", cfg.phaseGate);
     cmd.AddValue("phaseGateDeadline", "fail-open bound on the phase gate (s)", cfg.phaseGateDeadlineS);
     cmd.AddValue("phaseGateGround", "rotary team waits on the ground, not airborne", cfg.phaseGateGround);
+    cmd.AddValue("phaseGateMode", "what Phase 2 waits for: sweep | home | flag", cfg.phaseGateMode);
     cmd.AddValue("victimOnNode", "victim sits exactly on a sensor (0 = continuous)", cfg.victimOnNode);
     cmd.AddValue("fixFirst", "a UAV holding a confirmed fix flies it home before taking another candidate", cfg.fixFirst);
     cmd.AddValue("victimCount", "number of REAL victims (1 = the classic setting)", cfg.victimCount);

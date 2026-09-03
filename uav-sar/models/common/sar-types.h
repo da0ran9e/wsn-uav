@@ -97,6 +97,11 @@ inline constexpr uint32_t kRptLen     = 1 + 2 + 2 + 1 + 1 + 2 + 2;  // 11 (+self
 inline constexpr uint32_t kShareLen   = 1 + 2 + 1 + 1 + 2 + 2 + 1;  // 10
 inline constexpr uint32_t kRclaimLen  = kShareLen;                  // same body
 inline constexpr uint32_t kEchoLen    = 1 + 2 + 1 + 2 + 2;          // 8 (audit W4)
+// CLAIM roles: 0 = taking a region, 1 = couriering the report, 2 = delivered
+// there, 3 = my band is swept, 4 = I have LANDED at the base, 5 = base orders
+// Phase 2 to launch. 4 and 5 exist because "the scouts have finished sweeping"
+// and "the scouts are home" and "a candidate exists" are three different
+// moments, and the rotary team may be told to wait for any of them.
 inline constexpr uint32_t kClaimLen   = 1 + 2 + 1 + 2;              // 6 [region][role][id]
 
 inline constexpr uint32_t kMaxPayload = 100;                    // safe app payload

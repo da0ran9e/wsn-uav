@@ -116,6 +116,22 @@ inline constexpr double kCruiseSpeedMps  = 20.0;    // [Design] all schemes
 // survey UAV, and it is the only lever that changes the arc.
 // Standoff at which the geofence starts steering tangentially. One turn
 // radius: the distance the aircraft needs to change its mind.
+// LoRa side channel, cell leader -> base station.
+//
+// This is NOT simulated on the 802.15.4 channel and must not be: LoRa is a
+// different PHY entirely -- sub-GHz, spread spectrum, kilometres of range at a
+// few hundred bits per second. Modelling it with the mesh radio would give it
+// the mesh's range and the mesh's collisions, both wrong.
+//
+// It is modelled as what it is: a one-way, low-rate, long-range flag that
+// reaches the base from anywhere in the field, delivered after its airtime.
+// The MODELLING ASSUMPTION is that the link closes -- at SF9/125 kHz an 8 B
+// payload is ~200 ms of airtime and several kilometres of link budget, against
+// a field under 1 km, so this is generous but not absurd. It buys exactly one
+// thing: the base learns a candidate exists WITHOUT the mesh having to carry
+// the news out to a UAV that may be nowhere near.
+inline constexpr double   kLoraAirtimeS   = 0.2;    // SF9/125 kHz, ~8 B
+inline constexpr uint32_t kLoraFlagBytes  = 8;      // cell id + coordinates
 inline constexpr double kGeofenceMarginM = 64.0;
 inline constexpr double kBankAngleDeg    = 45.0;   // [Lit/Design] survey turn bank
 inline constexpr double kGravityMps2     = 9.81;

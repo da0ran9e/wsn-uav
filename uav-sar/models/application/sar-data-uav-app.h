@@ -70,9 +70,16 @@ public:
     // instead: fly a coverage sweep over this UAV's own band, spreading CUES
     // exactly as the FAST team does, and stay divertible throughout.
     void SetNoFlyZones(const std::vector<NoFlyZone>& z) { m_zones = z; }
-    void SetPhaseGate(bool on, uint32_t fastCount, double deadlineS, bool ground) {
+    // What the rotary team waits FOR. Three different moments, minutes apart:
+    //   Sweep  every scout has finished its band       (Phase 1 complete)
+    //   Home   every scout is back on the ground       (airspace clear)
+    //   Flag   a cell leader has flagged the FIRST candidate over LoRa
+    //          (earliest -- Phase 2 starts while Phase 1 is still flying)
+    enum class GateMode { Sweep, Home, Flag };
+    void SetPhaseGate(bool on, uint32_t fastCount, double deadlineS, bool ground,
+                      GateMode mode) {
         m_phaseGate = on; m_expectFast = fastCount; m_gateDeadlineS = deadlineS;
-        m_gateGround = ground;
+        m_gateGround = ground; m_gateMode = mode;
     }
     void SetPatrol(bool v) { m_patrol = v; }
     void SetCues(const std::vector<Fragment>& c) { m_cues = c; }
@@ -153,9 +160,16 @@ private:
     // the transit from the BS once the gate opens, and a weaker radio position
     // while waiting (which is why the deadline exists).
     bool m_gateGround = false;
+    GateMode m_gateMode = GateMode::Sweep;
+    std::set<uint16_t> m_landed;      // scouts heard to be back on the ground
+    bool m_launchOrder = false;       // base released Phase 2 on a LoRa flag
     bool GateOpen() const {
         if (!m_phaseGate || m_gateOpen) return true;
-        return m_sweepDone.size() >= m_expectFast;
+        switch (m_gateMode) {
+            case GateMode::Home: return m_landed.size() >= m_expectFast;
+            case GateMode::Flag: return m_launchOrder;
+            default:             return m_sweepDone.size() >= m_expectFast;
+        }
     }
     void OpenGate();          // leave staging, begin the patrol plan
 

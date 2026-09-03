@@ -1,4 +1,6 @@
 #include "sar-bs-app.h"
+#include "../common/sar-params.h"
+#include "ns3/mac16-address.h"
 #include "../common/sar-metrics.h"
 #include "../common/sar-types.h"
 
@@ -6,6 +8,7 @@
 #include "ns3/packet.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -21,6 +24,56 @@ TypeId SarBsApp::GetTypeId() {
                             .SetParent<Application>().SetGroupName("uav-sar")
                             .AddConstructor<SarBsApp>();
     return tid;
+}
+
+void SarBsApp::OnLoraFlag(uint16_t rid, double x, double y) {
+    m_loraFlags++;
+    if (m_metrics)
+        m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "BS", "lora_rx",
+                         "candidate flagged", x, y, 0.0);
+    if (m_launched || !m_dev) return;
+    m_launched = true;
+    // CLAIM role 5: launch Phase 2. Repeated, because a single unacknowledged
+    // broadcast is not a protocol -- the same lesson the sweep-done announcement
+    // cost earlier, where one seed in five opened no gate at all.
+    for (uint32_t k = 0; k < params::kConfirmRetries; ++k) {
+        Simulator::Schedule(Seconds(k * params::kConfirmRetryS), [this]() {
+            std::vector<uint8_t> b(kClaimLen);
+            uint8_t* q = b.data();
+            *q++ = (uint8_t)Msg::CLAIM;
+            uint16_t none = 0xFFFF; std::memcpy(q, &none, 2); q += 2;
+            *q++ = 5;
+            uint16_t id = (uint16_t)m_nodeId; std::memcpy(q, &id, 2);
+            m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+            if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+        });
+        // ...and WHERE to go. Releasing the gate alone was measured and it is not
+        // enough: the team took off on time and then never claimed anything,
+        // because the summon still had to reach it across the field over the
+        // mesh and did not. The flag already carried the coordinates to the
+        // base, so the base advertises them as an ordinary A2A job advert --
+        // the same message a FAST relay would have sent, from a transmitter the
+        // grounded team is standing next to.
+        //
+        // Offset by 250 ms from the CLAIM: back-to-back Send() calls overflow
+        // the MAC queue, and 200 ms is the documented floor.
+        Simulator::Schedule(Seconds(k * params::kConfirmRetryS + 0.25),
+                            [this, rid, x, y]() {
+            std::vector<uint8_t> b(kA2ALen, 0);
+            uint8_t* q = b.data();
+            *q++ = (uint8_t)Msg::A2A; *q++ = kBroadcast;
+            uint16_t r = rid; std::memcpy(q, &r, 2); q += 2;
+            int16_t ix = (int16_t)std::lround(x * 10), iy = (int16_t)std::lround(y * 10);
+            std::memcpy(q, &ix, 2); q += 2; std::memcpy(q, &iy, 2);
+            m_dev->Send(Create<Packet>(b.data(), b.size()), Mac16Address("ff:ff"), 0);
+            if (m_metrics) { m_metrics->AddSent(); m_metrics->AddSentBytes(b.size()); }
+        });
+    }
+    if (m_metrics) {
+        Vector p(0, 0, 0);
+        m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "BS", "launch_order",
+                         "phase 2 released on first candidate", p.x, p.y, p.z);
+    }
 }
 
 bool SarBsApp::OnReceive(Ptr<NetDevice>, Ptr<const Packet> pkt, uint16_t, const Address& from) {

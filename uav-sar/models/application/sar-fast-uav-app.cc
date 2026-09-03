@@ -187,9 +187,17 @@ void SarFastUavApp::ControlTick() {
             // back at the BS puts the scout metres from them, so the handoff
             // that could not cross the field crosses trivially here.
             SendClaim(3);
-            for (uint32_t k = 1; k < params::kConfirmRetries; ++k)
+            // Role 4 says something role 3 does not: this scout is DOWN, not
+            // merely finished sweeping. The rotary team may be told to wait for
+            // the airspace to clear rather than for the survey to end, and those
+            // are minutes apart.
+            SendClaim(4);
+            for (uint32_t k = 1; k < params::kConfirmRetries; ++k) {
                 Simulator::Schedule(Seconds(k * params::kConfirmRetryS),
                                     &SarFastUavApp::SendClaim, this, (uint8_t)3);
+                Simulator::Schedule(Seconds(k * params::kConfirmRetryS),
+                                    &SarFastUavApp::SendClaim, this, (uint8_t)4);
+            }
             SendReport();
             return;
         }

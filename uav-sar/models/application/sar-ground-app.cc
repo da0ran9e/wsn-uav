@@ -460,6 +460,21 @@ void SarGroundApp::StartSummon(double cx, double cy) {
         m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "CL",
                          "summon_start", det, p.x, p.y, p.z);
     }
+    // First candidate here -> tell the base over LoRa. Once only: the flag says
+    // "a candidate exists", which stops being news the moment it is sent, and
+    // re-sending on every retarget would spend airtime to repeat it.
+    if (m_loraFlag && !m_loraSent) {
+        m_loraSent = true;
+        auto sink = m_loraFlag;
+        const uint16_t rid = m_regionId;
+        Simulator::Schedule(Seconds(params::kLoraAirtimeS),
+                            [sink, rid, cx, cy]() { sink(rid, cx, cy); });
+        if (m_metrics) {
+            m_metrics->AddSentBytes(params::kLoraFlagBytes);
+            m_metrics->Event(Simulator::Now().GetSeconds(), m_nodeId, "CL",
+                             "lora_flag", "candidate -> BS", cx, cy, 0.0);
+        }
+    }
     BeaconTick();
     Simulator::Schedule(Seconds(params::kRetargetAfterS), &SarGroundApp::MaybeRetarget, this);
 }

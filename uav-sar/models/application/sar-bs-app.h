@@ -29,6 +29,13 @@ public:
     // Mission needs this many DISTINCT reporting UAVs to complete (default 1:
     // proposed/summoned schemes close on the first report).
     void SetExpectedReports(uint32_t n) { m_expected = n; }
+    void SetDevice(ns3::Ptr<ns3::NetDevice> d) { m_dev = d; }
+    // A cell leader has found a candidate and said so over LoRa. The base turns
+    // that into a launch order on the MESH radio rather than dispatching the
+    // rotary team by fiat: the team is parked metres away at the base, so the
+    // order is a short reliable hop, and coordination stays radio-only like
+    // every other rule here.
+    void OnLoraFlag(uint16_t rid, double x, double y);
 
     bool OnReceive(ns3::Ptr<ns3::NetDevice> dev, ns3::Ptr<const ns3::Packet> pkt,
                    uint16_t proto, const ns3::Address& from);
@@ -40,6 +47,9 @@ private:
     SarMetrics* m_metrics = nullptr;
     uint32_t m_expected = 1;
     bool m_reported = false;
+    bool m_launched = false;
+    uint32_t m_loraFlags = 0;
+    ns3::Ptr<ns3::NetDevice> m_dev;
     std::set<ns3::Address> m_reporters;
 };
 

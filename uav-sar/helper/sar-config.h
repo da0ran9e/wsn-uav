@@ -143,6 +143,9 @@ struct SarScenarioConfig {
     double cameraFraction = 0.65;
     bool   phaseGate = false;        // rotary team waits for the fixed-wing sweep
     double phaseGateDeadlineS = 400; // fail-open bound if the announcement is lost
+    // sweep = scouts finished surveying, home = scouts are back on the ground,
+    // flag = a cell leader flagged the first candidate over LoRa.
+    std::string phaseGateMode = "sweep";
     bool   phaseGateGround = false;  // wait on the ground rather than airborne
     bool   victimOnNode = true;  // false = victim at a continuous position (W7)
     // D17: how many REAL victims. 1 reproduces every earlier result. Real

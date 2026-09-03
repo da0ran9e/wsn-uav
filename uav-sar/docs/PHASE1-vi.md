@@ -926,6 +926,7 @@ với 124 s — đội phải bay từ căn cứ ra thay vì đã sẵn trên v�
 |---|---|
 | `figures/gate-triggers.png` | 4 nhánh × 6 hạt: mỗi lần rao, cổng, lần nhận mục tiêu, lần giao. Vạch xanh **mờ** = rao mà không ai nhận |
 | `tools/an_gate.py` | bảng trên (`python3 tools/an_gate.py RUNROOT nogate sweep home flag`) |
+| `visualize/replay-3d-gate.html` | **replay 3D có chuyển động**, 4 nhánh (hạt s1) — thấy rõ đội rotary đỗ dưới đất tới 150 s ở hai nhánh giữa |
 | `tools/make_gate_figure.py` | dựng hình |
 
 ```

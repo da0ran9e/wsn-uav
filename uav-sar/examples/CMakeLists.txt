@@ -77,3 +77,12 @@ build_lib_example(
     ${libuav-sar}
     ${libcore}
 )
+
+# Phase 1 planner run that writes the CSVs the visualiser reads.
+build_lib_example(
+  NAME uav-sar-p1-plan-dump
+  SOURCE_FILES p1-plan-dump.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+)

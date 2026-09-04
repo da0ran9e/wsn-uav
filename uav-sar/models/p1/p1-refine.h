@@ -48,7 +48,8 @@ struct RefineStep {
     uint32_t iteration = 0;
     double   makespanS = 0.0;
     double   flightM = 0.0;
-    uint32_t servedCells = 0;      // cells still needing a visit
+    uint32_t planCells = 0;        // cells THIS plan actually visited
+    uint32_t servedCells = 0;      // cells still owed after the revision
     uint32_t droppedBySurplus = 0; // cells retired because the routes covered them
     uint32_t infeasibleVehicles = 0;
     // A plan is SELF-CONSISTENT when every cell it decided not to visit is

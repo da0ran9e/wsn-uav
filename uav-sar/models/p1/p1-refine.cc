@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <set>
 
 namespace ns3::uavsar::p1 {
 
@@ -50,6 +51,7 @@ Plan Refine(const std::map<int32_t, Demand>& demands0, const CellPlan& cells,
 
     double prevMakespan = std::numeric_limits<double>::infinity();
     double bestMakespan = std::numeric_limits<double>::infinity();
+    double retireFrac = 1.0;
     for (uint32_t it = 0; it < maxIters; ++it) {
         for (auto& [cid, d] : cur) ServiceCost(d, 0.0, dose);   // offsets applied below
 
@@ -90,8 +92,12 @@ Plan Refine(const std::map<int32_t, Demand>& demands0, const CellPlan& cells,
             offset[cid] = std::isfinite(off) ? off : 0.0;
         }
 
+        uint32_t planCells = 0;
+        for (const Route& rr : part.vehicles) planCells += (uint32_t)rr.cells.size();
+
         RefineStep step;
         step.iteration = it;
+        step.planCells = planCells;
         step.makespanS = makespan;
         step.flightM = flight;
         step.infeasibleVehicles = infeasible;
@@ -112,18 +118,42 @@ Plan Refine(const std::map<int32_t, Demand>& demands0, const CellPlan& cells,
         // Retirement is a DISCRETE decision and damping must not blur it: a cell
         // whose free dose already covers it is done, and averaging it back to a
         // small positive demand keeps it in the routing problem for ever.
-        // Damping applies only to PARTIAL reductions, which are the ones that
-        // oscillate.
-        for (auto& [cid, d] : cur) {
+        // Damping applies only to PARTIAL reductions.
+        //
+        // Retiring EVERY covered cell at once is what produces the period-2
+        // oscillation: the plan covers all of them, all of them retire, the next
+        // plan flies nothing, none of them is covered, and all of them come
+        // back. Measured exactly that way -- 115, 0, 117, 0, 117, 0. So the size
+        // of the retirement set is itself a step length: it starts at "all of
+        // them" and HALVES whenever the plan it produced turned out not to be
+        // self-consistent, keeping the cells with the largest surplus first.
+        // That is an accept/reject search with a shrinking step, not a fixed
+        // rule applied harder.
+        if (!step.selfConsistent && retireFrac > 0.03) retireFrac *= 0.5;
+
+        std::vector<std::pair<double, int32_t>> covered;   // (surplus ratio, cell)
+        for (const auto& [cid, d] : cur) {
             if (theta0[cid] <= 0.0) continue;
             const double delivered = got.count(cid) ? got[cid] : 0.0;
-            const double residual = theta0[cid] - delivered;
-            if (residual <= 0.0) {
+            if (delivered >= theta0[cid])
+                covered.push_back({delivered / theta0[cid], cid});
+        }
+        std::sort(covered.rbegin(), covered.rend());
+        const size_t keep = (size_t)std::floor(covered.size() * retireFrac);
+        std::set<int32_t> retire;
+        for (size_t k = 0; k < keep; ++k) retire.insert(covered[k].second);
+
+        for (auto& [cid, d] : cur) {
+            if (theta0[cid] <= 0.0) continue;
+            if (retire.count(cid)) {
                 d.theta = 0.0; d.penaltyS = 0.0; d.serveMps = 0.0; d.orbits = 0;
                 dropped++;
                 continue;
             }
-            d.theta = (1.0 - damping) * d.theta + damping * residual;
+            const double delivered = got.count(cid) ? got[cid] : 0.0;
+            const double residual = std::max(0.0, theta0[cid] - delivered);
+            d.theta = std::max(theta0[cid] * 0.05,
+                               (1.0 - damping) * theta0[cid] + damping * residual);
             served++;
             ServiceCost(d, offset.count(cid) ? offset[cid] : 0.0, dose);
         }

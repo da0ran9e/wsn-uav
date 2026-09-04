@@ -756,10 +756,10 @@ int main(int argc, char* argv[]) {
         Plan pl = Refine(demands, plan, dose, depot, M3, rho);
         std::printf("\n=== T4  %u aircraft, closing the c_n <-> b loop\n", M3);
         std::printf("  %-4s %10s %10s %8s %10s %7s %10s\n",
-                    "iter", "makespan", "flight", "serving", "retired", "infeas", "valid");
+                    "iter", "makespan", "flight", "visited", "retired", "infeas", "valid");
         for (const RefineStep& st : pl.history)
             std::printf("  %-4u %9.0fs %9.0fm %8u %10u %7u %10s\n",
-                        st.iteration, st.makespanS, st.flightM, st.servedCells,
+                        st.iteration, st.makespanS, st.flightM, st.planCells,
                         st.droppedBySurplus, st.infeasibleVehicles,
                         st.selfConsistent ? "yes"
                                           : (st.uncovered ? "uncovered" : "infeasible"));

@@ -64,7 +64,12 @@ struct Plan {
     Partition partition;
     std::vector<Tour> tours;
     std::vector<SpeedPlan> speeds;
-    std::map<int32_t, Demand> demands;   // as revised
+    std::map<int32_t, Demand> demands;      // after the last revision
+    // The demand set the RETURNED plan was built from. Not the same thing: the
+    // plan comes from the best iterate and the revision keeps going afterwards,
+    // so reading service costs out of `demands` describes a plan that was never
+    // built.
+    std::map<int32_t, Demand> bestDemands;
     std::vector<RefineStep> history;
     double makespanS = 0.0;      // best SELF-CONSISTENT iterate, not the last
     uint32_t bestIteration = 0;

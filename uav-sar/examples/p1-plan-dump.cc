@@ -53,6 +53,10 @@ int main(int argc, char* argv[]) {
     const Config depot{0.0, 0.0, 0.0};
     Plan pl = Refine(demands, plan, dose, depot, M, rho);
 
+    // A run that found no valid plan still has a demand set worth dumping; the
+    // feasible flag in config.csv is what says the plan is empty.
+    if (pl.bestDemands.empty()) pl.bestDemands = demands;
+
     auto open = [&](const char* n) {
         return std::fopen((dir + "/" + n).c_str(), "w");
     };
@@ -81,7 +85,7 @@ int main(int argc, char* argv[]) {
                     "score,suspect,weight,holdsObject,holdsReal,theta,penaltyS,orbits\n");
     for (const auto& [cid, c] : plan.cells) {
         const CellReading* t = t1.cells.count(cid) ? &t1.cells.at(cid) : nullptr;
-        const Demand& d = pl.demands.at(cid);
+        const Demand& d = pl.bestDemands.at(cid);
         std::fprintf(f, "%d,%d,%d,%.2f,%.2f,%s,%u,%zu,%u,%u,%.2f,%.4f,%d,%.4f,%d,%d,%.0f,%.2f,%u\n",
                      cid, c.q, c.r, c.cx, c.cy, CellClassName(c.cls), c.leader,
                      c.members.size(), c.imagers, c.matchers, c.tLocalS,
@@ -119,6 +123,70 @@ int main(int argc, char* argv[]) {
                          s.lengthM, s.speedMps, s.turning, t);
             t += s.speedMps > 0 ? s.lengthM / s.speedMps : 0.0;
         }
+    }
+    std::fclose(f);
+
+    // --- stage-by-stage state, for the step-through visualiser -------------
+    // Each stage writes what it DECIDED, so the viewer shows the plan being
+    // built rather than a finished plan with labels on it.
+    f = open("stage_partition.csv");
+    std::fprintf(f, "cellId,vehicle\n");
+    for (size_t v = 0; v < pl.partition.vehicles.size(); ++v)
+        for (int32_t c : pl.partition.vehicles[v].cells)
+            std::fprintf(f, "%d,%zu\n", c, v);
+    std::fclose(f);
+
+    // Both tours, sampled as polylines: what nearest neighbour produced and what
+    // the local search made of it. Sampling here rather than in the viewer keeps
+    // ONE Dubins implementation in the system.
+    auto emitTour = [&](FILE* fp, size_t v, const char* variant, const Tour& t) {
+        Config prev = t.depot;
+        uint32_t seq = 0;
+        auto arc = [&](const Config& a, const Config& b) {
+            const DubinsPath dp = Dubins(a, b, rho);
+            if (!dp.valid) return;
+            const int n = std::max(2, (int)std::ceil(dp.length / 12.0));
+            for (int k = 0; k <= n; ++k) {
+                const Config c = Integrate(a, dp, rho, (double)k / n);
+                std::fprintf(fp, "%zu,%s,%u,%.2f,%.2f\n", v, variant, seq++, c.x, c.y);
+            }
+        };
+        for (const Leg& l : t.legs) { arc(prev, l.cfg); prev = l.cfg; }
+        arc(prev, t.depot);
+    };
+    f = open("stage_tours.csv");
+    std::fprintf(f, "vehicle,variant,seq,x,y\n");
+    for (size_t v = 0; v < pl.partition.vehicles.size(); ++v) {
+        const auto& cells2 = pl.partition.vehicles[v].cells;
+        emitTour(f, v, "nn", SeedTour(cells2, pl.bestDemands, depot, rho));
+        emitTour(f, v, "opt", pl.tours[v]);
+    }
+    std::fclose(f);
+
+    // The heading grid each cell was discretised into, and which one T2 chose.
+    f = open("stage_headings.csv");
+    std::fprintf(f, "vehicle,cellId,k,hdgDeg,chosen\n");
+    for (size_t v = 0; v < pl.tours.size(); ++v)
+        for (const Leg& l : pl.tours[v].legs) {
+            const double chosen = l.cfg.hdg * 180.0 / M_PI;
+            for (uint32_t k = 0; k < kHeadingSamples; ++k) {
+                const double hd = 360.0 * k / kHeadingSamples;
+                double diff = std::fabs(hd - chosen);
+                if (diff > 180) diff = 360 - diff;
+                std::fprintf(f, "%zu,%d,%u,%.1f,%d\n", v, l.cellId, k, hd, diff < 1.0);
+            }
+        }
+    std::fclose(f);
+
+    // Tour lengths per stage, so the viewer can state what each step bought.
+    f = open("stage_cost.csv");
+    std::fprintf(f, "vehicle,nnM,optM,serviceS,speedTimeS,feasible\n");
+    for (size_t v = 0; v < pl.tours.size(); ++v) {
+        const Tour nn = SeedTour(pl.partition.vehicles[v].cells, pl.bestDemands, depot, rho);
+        std::fprintf(f, "%zu,%.2f,%.2f,%.2f,%.2f,%d\n", v, nn.flightM,
+                     pl.tours[v].flightM, pl.tours[v].serviceS,
+                     pl.speeds[v].solved ? pl.speeds[v].totalTimeS : 0.0,
+                     pl.speeds[v].solved);
     }
     std::fclose(f);
 

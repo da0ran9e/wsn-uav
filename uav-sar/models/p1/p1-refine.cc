@@ -46,6 +46,10 @@ Plan Refine(const std::map<int32_t, Demand>& demands0, const CellPlan& cells,
             double R, uint32_t maxIters, double tolPct, double damping) {
     Plan out;
     std::map<int32_t, Demand> cur = demands0;
+    // Always populated, so a caller that reads it after a run with NO valid plan
+    // gets the demand set the search started from rather than an empty map and a
+    // throw from .at(). `feasible` is what says whether a plan was found.
+    out.bestDemands = demands0;
     std::map<int32_t, double> theta0;
     for (const auto& [cid, d] : cur) theta0[cid] = d.theta;
 
@@ -114,6 +118,20 @@ Plan Refine(const std::map<int32_t, Demand>& demands0, const CellPlan& cells,
         step.selfConsistent = (step.uncovered == 0) && (infeasible == 0);
         if (step.selfConsistent) out.consistentIterates++;
 
+        // KEEP THE BEST, not the last. The loop is not a contraction: retiring a
+        // cell moves the route away from it, the cell comes back, and the two
+        // states alternate. Measured here as 214 -> 111 -> 81 -> 59 -> 74 -> 93
+        // over six rounds. Damping slows the swing without removing it, so what
+        // is returned is the best plan seen rather than whichever one the
+        // iteration cap happened to land on.
+        if (step.selfConsistent && makespan < bestMakespan) {
+            bestMakespan = makespan;
+            out.bestDemands = cur;       // BEFORE this round's revision
+            out.partition = part;
+            out.tours = tours;
+            out.speeds = speeds;
+            out.bestIteration = it;
+        }
         // --- revise demand ---------------------------------------------------
         // Retirement is a DISCRETE decision and damping must not blur it: a cell
         // whose free dose already covers it is done, and averaging it back to a
@@ -161,19 +179,6 @@ Plan Refine(const std::map<int32_t, Demand>& demands0, const CellPlan& cells,
         step.droppedBySurplus = dropped;
         out.history.push_back(step);
 
-        // KEEP THE BEST, not the last. The loop is not a contraction: retiring a
-        // cell moves the route away from it, the cell comes back, and the two
-        // states alternate. Measured here as 214 -> 111 -> 81 -> 59 -> 74 -> 93
-        // over six rounds. Damping slows the swing without removing it, so what
-        // is returned is the best plan seen rather than whichever one the
-        // iteration cap happened to land on.
-        if (step.selfConsistent && makespan < bestMakespan) {
-            bestMakespan = makespan;
-            out.partition = part;
-            out.tours = tours;
-            out.speeds = speeds;
-            out.bestIteration = it;
-        }
         if (std::fabs(prevMakespan - makespan) <= tolPct / 100.0 * makespan) {
             out.converged = true;
             break;

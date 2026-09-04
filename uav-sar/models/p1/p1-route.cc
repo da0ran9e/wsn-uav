@@ -75,12 +75,11 @@ Tour BestHeadings(const std::vector<int32_t>& order,
     return t;
 }
 
-Tour SolveTour(const std::vector<int32_t>& cells,
-               const std::map<int32_t, Demand>& demands,
-               const Config& depot, double R, uint32_t h) {
-    if (cells.empty()) { Tour t; t.depot = depot; return t; }
-
-    // nearest neighbour on Euclidean distance, only as a starting order
+namespace {
+// nearest neighbour on Euclidean distance, only as a starting order
+std::vector<int32_t> NnOrder(const std::vector<int32_t>& cells,
+                             const std::map<int32_t, Demand>& demands,
+                             const Config& depot) {
     std::vector<int32_t> order, left = cells;
     double cx = depot.x, cy = depot.y;
     while (!left.empty()) {
@@ -96,6 +95,22 @@ Tour SolveTour(const std::vector<int32_t>& cells,
         cy = demands.at(left[best]).y;
         left.erase(left.begin() + best);
     }
+    return order;
+}
+}  // namespace
+
+Tour SeedTour(const std::vector<int32_t>& cells,
+              const std::map<int32_t, Demand>& demands,
+              const Config& depot, double R, uint32_t h) {
+    if (cells.empty()) { Tour t; t.depot = depot; return t; }
+    return BestHeadings(NnOrder(cells, demands, depot), demands, depot, R, h);
+}
+
+Tour SolveTour(const std::vector<int32_t>& cells,
+               const std::map<int32_t, Demand>& demands,
+               const Config& depot, double R, uint32_t h) {
+    if (cells.empty()) { Tour t; t.depot = depot; return t; }
+    std::vector<int32_t> order = NnOrder(cells, demands, depot);
 
     // Every candidate order is scored by the SAME exact heading DP that will be
     // used for the answer. Scoring candidates on a cheaper proxy and the winner

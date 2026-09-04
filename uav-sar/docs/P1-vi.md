@@ -284,3 +284,20 @@ python3 tools/make_p1_viewer.py OUT.html "nhãn=RUNDIR" ...
 | `visualize/figures/p1-plan-m5.png` | cùng vùng, 5 máy bay |
 | `visualize/figures/p1-plan-wide.png` | `R_c = 220 m` |
 | `visualize/p1-replay.html` | **replay có chuyển động**, 5 cấu hình, ô sáng dần theo liều |
+| `visualize/p1-steps.html` | **9 bước lập kế hoạch**, mỗi bước hiện thứ nó QUYẾT ĐỊNH và thứ nó mua được |
+
+### 8.1 Chín bước trong `p1-steps.html`
+
+| bước | hiện |
+|---|---|
+| 0 | phân ô hex, nút theo phương thức, cụm trưởng đã bầu |
+| 1 | gán lớp A/B/C — chỉ A tốn giây bay |
+| 2 | Tầng 1: `a_n`, tập `D`, nạn nhân thật vs vật gây nhầm |
+| 3 | T0: `θ` phân tầng, ô nào phải lượn vòng |
+| 4 | T1: chia ô cho từng máy bay |
+| 5 | T2: thứ tự NN (xám) → sau 2-opt/Or-opt (đậm), kèm số mét |
+| 6 | T2: 8 hướng mũi mỗi ô, vạch đậm là hướng DP chọn |
+| 7 | T3: đường bay tô theo tốc độ LP chọn, bảng chi phí từng máy bay |
+| 8 | T4: bảng từng vòng lặp kèm dấu hợp lệ, và kế hoạch được nhận |
+
+Kiểm bằng Chromium headless: **không lỗi trang** trên **40 tổ hợp** bước × cấu hình.

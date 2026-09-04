@@ -75,6 +75,15 @@ Tour BestHeadings(const std::vector<int32_t>& order,
                   const Config& depot, double turnRadiusM,
                   uint32_t headings = kHeadingSamples);
 
+// The nearest-neighbour order alone, measured with the same exact heading DP.
+// Exposed so the step-by-step visualiser can show what the local search started
+// from -- and so that "38 % shorter" is a claim about two things this code
+// actually produced, not about a remembered baseline.
+Tour SeedTour(const std::vector<int32_t>& cells,
+              const std::map<int32_t, Demand>& demands,
+              const Config& depot, double turnRadiusM,
+              uint32_t headings = kHeadingSamples);
+
 // Cell order by nearest neighbour, improved by 2-opt and Or-opt, every candidate
 // scored with BestHeadings so the order is never chosen on a yardstick the
 // aircraft does not fly.

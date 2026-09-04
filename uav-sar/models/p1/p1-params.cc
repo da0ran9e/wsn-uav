@@ -1,4 +1,4 @@
-#include "phase1-params.h"
+#include "p1-params.h"
 
 #include <cmath>
 

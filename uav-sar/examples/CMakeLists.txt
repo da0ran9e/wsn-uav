@@ -69,10 +69,10 @@ build_lib_example(
     ${liblr-wpan}
 )
 
-# Phase 1 planning front end (cells/classes, Tier 1, T0). Pure logic.
+# Phase 1 subtree verification (pure logic; no ns-3 sim).
 build_lib_example(
-  NAME uav-sar-phase1-plan-test
-  SOURCE_FILES phase1-plan-test.cc
+  NAME uav-sar-p1-test
+  SOURCE_FILES p1-test.cc
   LIBRARIES_TO_LINK
     ${libuav-sar}
     ${libcore}

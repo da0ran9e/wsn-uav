@@ -10,10 +10,9 @@ build_lib(
     models/common/cell-grid.cc
     models/common/lane-plan.cc
     models/common/node-capability.cc
-    models/common/phase1-params.cc
-    models/common/cell-class.cc
-    models/common/tier1-detect.cc
-    models/common/service-demand.cc
+    models/p1/p1-params.cc
+    models/p1/p1-sensing.cc
+    models/p1/p1-cells.cc
     models/common/inter-cell-routing.cc
     models/network/air-ground-loss.cc
     models/network/pair-shadowing-loss.cc
@@ -37,10 +36,11 @@ build_lib(
     models/common/cell-grid.h
     models/common/lane-plan.h
     models/common/node-capability.h
-    models/common/phase1-params.h
-    models/common/cell-class.h
-    models/common/tier1-detect.h
-    models/common/service-demand.h
+    models/p1/p1-types.h
+    models/p1/p1-hex.h
+    models/p1/p1-params.h
+    models/p1/p1-sensing.h
+    models/p1/p1-cells.h
     models/common/inter-cell-routing.h
     models/network/air-ground-loss.h
     models/network/pair-shadowing-loss.h

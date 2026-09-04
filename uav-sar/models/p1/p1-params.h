@@ -81,17 +81,51 @@ inline constexpr double kRxBpsMin = 20000.0, kRxBpsMax = 250000.0;
 // (b) is the whole content of the Fano ceiling and the reason Phase 1 exists.
 // A "better" detector that separates the two stops modelling the problem.
 
-inline constexpr double kDetectMeanSignal = 0.72;   // TODO(param): from a real ROC
-inline constexpr double kDetectMeanNoise  = 0.18;   // TODO(param)
-inline constexpr double kDetectSigma      = 0.12;   // TODO(param)
-// Distance at which an obs = 1.0 node's response has halved.  TODO(param)
-inline constexpr double kDetectHalfRangeM = 55.0;
+// The detector reads a NOISY observation of the field, and the noise is drawn
+// ONCE PER NODE PER RUN -- it is one observation of that node's own footage, not
+// a per-packet event. Getting that wrong turns a fixed sensing limitation into
+// something that averages away over time.
+inline constexpr double kQualityMax = 0.95;   // TODO(param): peak match score
+inline constexpr double kDecayM     = 60.0;   // TODO(param): falloff scale
+inline constexpr double kSenseSigma = 0.10;   // TODO(param): per node, per run
 
-// A cell enters the suspect set D above this. Deliberately low: Tier 1 is biased
-// to sensitivity and Tier 2 pays for the false alarms. It must stay well below
-// the bar used to CONFIRM -- sharing one threshold between alerting and
-// confirming is a measured, expensive bug in the old system.  [design]
-inline constexpr double kAlertScore = 0.45;
+// How much of a confuser's resemblance the COMPLETE reference removes.
+//
+// This is the physical heart of the two tiers, and it is why they are two TIERS
+// and not two detectors. The SAME node, with the SAME noise draw, reads one
+// value from cue-level information and another once it holds the reference: a
+// jacket of the same colour matches at tier 1 and stops matching at tier 2.
+// Ambiguity is therefore not a fixed property of the world but a function of how
+// much reference has been delivered -- which is what makes DELIVERING an act of
+// disambiguation rather than an act of transport.
+// 1.0 = the full reference settles it outright; 0 = ambiguity survives delivery.
+inline constexpr double kClutterResolve = 1.0;   // TODO(param)
+
+// The two decision bars, and the ORDERING THEY MUST SATISFY.
+//
+//        noise floor  <  kAlertScore  <  kConfirmScore  <  R_victim
+//
+// where R_victim is what the node NEAREST a real victim reads once it holds the
+// reference -- the best reading the deployment can ever produce for a true
+// positive. Each inequality is load-bearing and each has been violated before:
+//
+//   noise < alert        a bar inside the noise makes every empty cell a
+//                        suspect and the flight plan meaningless.
+//   alert < confirm      sharing one bar between raising a candidate and
+//                        settling one was measured on the old system: nodes
+//                        with no signal confirmed on noise alone, and the fault
+//                        stayed invisible while only one candidate existed.
+//   confirm < R_victim   a bar above the best true positive confirms NOTHING.
+//                        The first placeholders here had kConfirmScore = 0.70
+//                        while the weakest sensor at the worst lattice distance
+//                        reads 0.564 -- so every real victim was rejected. The
+//                        harness now computes R_victim from the deployment and
+//                        fails if the chain breaks.
+//
+// This is a CONSTRAINT, not a tuning knob. Changing kQualityMax, kDecayM,
+// kObsMin or the node spacing moves R_victim and can break it silently.
+inline constexpr double kAlertScore   = 0.35;   // [design] ~3.5 sigma over noise
+inline constexpr double kConfirmScore = 0.50;   // [design]
 
 // Bytes one Tier-1 report costs on the narrowband uplink: cell id, score, class.
 // The asymmetry against the reference payload going the other way is what makes

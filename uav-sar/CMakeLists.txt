@@ -13,6 +13,8 @@ build_lib(
     models/p1/p1-params.cc
     models/p1/p1-sensing.cc
     models/p1/p1-cells.cc
+    models/p1/p1-tier1.cc
+    models/p1/p1-demand.cc
     models/common/inter-cell-routing.cc
     models/network/air-ground-loss.cc
     models/network/pair-shadowing-loss.cc
@@ -41,6 +43,8 @@ build_lib(
     models/p1/p1-params.h
     models/p1/p1-sensing.h
     models/p1/p1-cells.h
+    models/p1/p1-tier1.h
+    models/p1/p1-demand.h
     models/common/inter-cell-routing.h
     models/network/air-ground-loss.h
     models/network/pair-shadowing-loss.h

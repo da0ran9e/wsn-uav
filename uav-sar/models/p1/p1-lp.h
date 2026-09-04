@@ -5,11 +5,13 @@
 //
 //     minimise  c . x     subject to   A x <= b ,  x >= 0
 //
-// Two-phase primal simplex with Bland's rule. Bland's is slower than steepest
-// edge and it CANNOT CYCLE, which matters more here: the speed profile is
-// degenerate whenever several cells are satisfied exactly at once, which is
-// precisely the interesting case, and a cycling solver in a degenerate corner
-// hangs rather than fails.
+// Two-phase primal simplex. Dantzig's rule for speed, falling back to Bland's
+// when a run of degenerate pivots says a cycle is forming -- the speed profile
+// IS degenerate whenever several cells are satisfied at once, which is the
+// interesting case, and pure Bland's was measured hitting a 200000-iteration cap
+// on instances this pipeline actually produces. Rows are scaled before phase 1
+// for the same reason: the problem arrives with coefficients spanning four
+// orders of magnitude.
 //
 // This exists because the environment has no LP library (no SciPy, no OR-Tools,
 // no PuLP), and because T3 must be SOLVED rather than approximated: the whole

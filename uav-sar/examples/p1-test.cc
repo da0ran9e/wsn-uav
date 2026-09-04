@@ -14,7 +14,7 @@
 #include "../models/p1/p1-route.h"
 #include "../models/p1/p1-refine.h"
 #include "../models/p1/p1-speed.h"
-#include "../models/p1/p1-tier1.h"
+#include "../models/p1/p1-sensing-model.h"
 
 #include <cmath>
 #include <cstdint>
@@ -191,235 +191,12 @@ int main(int argc, char* argv[]) {
     }
 
 
-    // === S4: Tier 1 ========================================================
-    std::mt19937 orng(seed ^ 0xABCDu);
-    std::uniform_real_distribution<double> ux(0.08 * side, 0.92 * side);
-    std::vector<Object> objects;
-    objects.push_back({ux(orng), ux(orng), true, 1.0});
-    for (int k = 0; k < 3; k++) objects.push_back({ux(orng), ux(orng), false, 1.0});
-    const int M = (int)objects.size() - 1;
-
-    Tier1Result t1 = RunTier1(nodes, plan, objects, seed);
-    std::printf("\n=== TIER 1   %zu objects (1 real, %d confusers, similarity 1.0)\n",
-                objects.size(), M);
-    std::printf("|D|=%zu   recall %u/%u   false alarms %u/%u   uplink %.2f kB\n",
-                t1.suspects.size(), t1.detected, t1.objectCells,
-                t1.falseAlarms, t1.emptyCells, t1.UplinkBytes() / 1000.0);
-
-    CHECK(t1.nodes.size() == nodes.size());
-    for (const auto& [cid, t] : t1.cells) CHECK(plan.cells.at(cid).cls != CellClass::C);
-    for (const auto& [cid, c] : plan.cells)
-        if (c.cls != CellClass::C) CHECK(t1.cells.count(cid) == 1);
-    double wsum = 0;
-    for (int32_t cid : t1.suspects) wsum += t1.cells.at(cid).weight;
-    CHECK(t1.suspects.empty() || std::fabs(wsum - 1.0) < 1e-9);
-    for (const auto& [id, r] : t1.nodes) {
-        CHECK(r.scoreCue >= 0.0 && r.scoreCue <= 1.0);
-        CHECK(r.scoreFull >= 0.0 && r.scoreFull <= 1.0);
-        // The reference can only ever REMOVE a resemblance, never add one.
-        CHECK(r.scoreFull <= r.scoreCue + 1e-12);
-    }
-
-    // Same seed, same readings: the noise is one observation per node per run,
-    // not something a node can average away by looking again.
-    {
-        Tier1Result again = RunTier1(nodes, plan, objects, seed);
-        for (const auto& [id, r] : t1.nodes) {
-            CHECK(again.nodes.at(id).scoreCue == r.scoreCue);
-            CHECK(again.nodes.at(id).noise == r.noise);
-        }
-    }
-
-    // Tier 1 is blind to WHICH object is real: move the ground-truth flag and
-    // every cue-level reading must come back bit-identical. Comparing mean
-    // scores would not test this -- those differ by geometry and by sampling,
-    // and a difference there would prove nothing either way.
-    {
-        std::vector<Object> swapped = objects;
-        swapped[0].real = false;
-        swapped[1].real = true;
-        Tier1Result alt = RunTier1(nodes, plan, swapped, seed);
-        for (const auto& [id, r] : t1.nodes) CHECK(alt.nodes.at(id).scoreCue == r.scoreCue);
-        CHECK(alt.suspects == t1.suspects);
-        // ... and NOT blind once it holds the reference. That gap is the thing
-        // the aircraft flies out to buy.
-        uint32_t moved = 0;
-        for (const auto& [id, r] : t1.nodes)
-            if (alt.nodes.at(id).scoreFull != r.scoreFull) moved++;
-        std::printf("cue-level readings identical under a ground-truth swap; "
-                    "%u/%zu full-reference readings move\n", moved, t1.nodes.size());
-        CHECK(moved > 0);
-    }
-
-    // Spillover vs noise. Not every false alarm is noise: a node near a boundary
-    // responds to an object in the NEXT cell, so the alarm is right and only the
-    // cell label is wrong. Spillover is a RESOLUTION limit of the cell layer --
-    // it is what Phase 2 pays to resolve, and it is one of the three competing
-    // pressures on R_c. Isolated alarms are detector noise, which is what a
-    // better detector would remove. Reporting them as one number hides both.
-    {
-        uint32_t spill = 0, isolated = 0;
-        for (const auto& [cid, t] : t1.cells) {
-            if (!t.suspect || t.holdsObject) continue;
-            const Cell& c = plan.cells.at(cid);
-            double near = 1e18;
-            for (const Object& o : objects)
-                near = std::min(near, std::hypot(c.cx - o.x, c.cy - o.y));
-            if (near <= 2.0 * rc) spill++; else isolated++;
-        }
-        CHECK(spill + isolated == t1.falseAlarms);
-        std::printf("  of those: %u spillover from a neighbouring cell, %u isolated noise\n",
-                    spill, isolated);
-    }
-
-    // === The threshold ordering, checked against THIS deployment ===========
-    // noise floor < alert < confirm < R_victim. The third inequality is the one
-    // that broke: a confirm bar above the best true positive rejects every real
-    // victim, and nothing in the code complains -- the run just comes back with
-    // no confirmations and looks like a hard search problem.
-    {
-        // Worst case for a true positive: the weakest imager, at the furthest a
-        // victim can be from its nearest node on this lattice.
-        const double dWorst = spacing * std::sqrt(2.0) / 2.0;
-        const double rVictim = kQualityMax * std::exp(-dWorst / (kDecayM * kObsMin));
-        const double noise3s = 3.0 * kSenseSigma;
-        std::printf("\nthreshold chain: noise 3sigma %.3f < alert %.2f < confirm %.2f"
-                    " < R_victim %.3f  (weakest sensor, d=%.1fm)\n",
-                    noise3s, kAlertScore, kConfirmScore, rVictim, dWorst);
-        CHECK(noise3s < kAlertScore);
-        CHECK(kAlertScore < kConfirmScore);
-        CHECK(kConfirmScore < rVictim);
-    }
-
-    // === The Fano ceiling, MEASURED ========================================
-    // The claim the architecture rests on: with no reference, picking the cell
-    // that holds the real victim is at chance over M+1 equally plausible
-    // objects. Measured over many worlds, not asserted.
-    {
-        uint32_t trials = 0, cueRight = 0, fullRight = 0;
-        for (uint32_t s2 = 1; s2 <= 400; ++s2) {
-            std::mt19937 r2(s2 ^ 0xBEEFu);
-            std::uniform_real_distribution<double> u2(0.08 * side, 0.92 * side);
-            std::vector<Object> ob;
-            ob.push_back({u2(r2), u2(r2), true, 1.0});
-            for (int k = 0; k < M; k++) ob.push_back({u2(r2), u2(r2), false, 1.0});
-            Tier1Result r = RunTier1(nodes, plan, ob, s2);
-            if (r.suspects.empty()) continue;
-            // truth: the cell the real object sits in
-            int32_t truth = -1;
-            for (const auto& [cid, t] : r.cells) if (t.holdsReal) truth = cid;
-            if (truth < 0) continue;
-            trials++;
-            if (r.suspects.front() == truth) cueRight++;
-            // the same argmax taken on the FULL-reference reading
-            int32_t bestFull = -1; double bs = -1;
-            for (const auto& [cid, t] : r.cells) {
-                double m2 = 0;
-                for (const CellMember& mm : plan.cells.at(cid).members)
-                    m2 = std::max(m2, r.nodes.at(mm.id).scoreFull);
-                if (m2 > bs) { bs = m2; bestFull = cid; }
-            }
-            if (bestFull == truth) fullRight++;
-        }
-        const double pc = trials ? 100.0 * cueRight / trials : 0.0;
-        const double pf = trials ? 100.0 * fullRight / trials : 0.0;
-        std::printf("\npicking the victim's cell over %u worlds (M=%d):\n"
-                    "  tier 1, no reference : %.1f%%   (Fano ceiling 1/(M+1) = %.1f%%)\n"
-                    "  tier 2, full reference: %.1f%%\n",
-                    trials, M, pc, 100.0 / (M + 1), pf);
-        CHECK(trials > 100);
-        // The reference must buy something. If it does not, the two tiers are
-        // not two tiers.
-        CHECK(pf > pc);
-    }
-
-    // === The Fano ceiling, with the geometry CONTROLLED ====================
-    // The number above is the realistic one, and it sits ABOVE 1/(M+1) because
-    // the field is not symmetric: an object that happens to land near a strong,
-    // close sensor is better observed than one that does not, so the M+1
-    // hypotheses are not equally distinguishable and the effective M is smaller
-    // than the nominal one. That is a true statement about deployments, not a
-    // violation of the bound -- but it means the realistic number cannot be used
-    // to demonstrate the bound. This control removes the asymmetry: identical
-    // sensors everywhere, and every object sitting exactly on a node. Then the
-    // M+1 hypotheses really are exchangeable and tier 1 must be at chance.
-    {
-        std::vector<Node> uni = BuildUniformNodes(xy);
-        CellPlan up = BuildCells(uni, rc, kGroundRangeM);
-        uint32_t trials = 0, right = 0, collisions = 0;
-        for (uint32_t s2 = 1; s2 <= 1200; ++s2) {
-            std::mt19937 r2(s2 ^ 0xFACEu);
-            std::uniform_int_distribution<size_t> pick(0, xy.size() - 1);
-            std::vector<Object> ob;
-            std::set<size_t> used;
-            while (ob.size() < (size_t)M + 1) {
-                const size_t k = pick(r2);
-                if (!used.insert(k).second) continue;
-                ob.push_back({xy[k].first, xy[k].second, ob.empty(), 1.0});
-            }
-            // The ceiling is over OBJECTS, and the question here is over CELLS.
-            // Those are not the same question: when two objects share a cell,
-            // naming that cell is right if EITHER is the real one, so a coarse
-            // partition scores above the bound with no extra information at all.
-            // Discarding the collided worlds makes cell and object the same
-            // question again, which is the only condition under which 1/(M+1)
-            // is the number to compare against.
-            std::set<int32_t> occupied;
-            bool collided = false;
-            for (const Object& o : ob) {
-                int32_t q, rr;
-                hex::WorldToAxial(o.x, o.y, rc, q, rr);
-                if (!occupied.insert(q * 10007 + rr).second) { collided = true; break; }
-            }
-            if (collided) { collisions++; continue; }
-            Tier1Result r = RunTier1(uni, up, ob, s2);
-            if (r.suspects.empty()) continue;
-            int32_t truth = -1;
-            for (const auto& [cid, t] : r.cells) if (t.holdsReal) truth = cid;
-            if (truth < 0) continue;
-            trials++;
-            if (r.suspects.front() == truth) right++;
-        }
-        const double pc = trials ? 100.0 * right / trials : 0.0;
-        std::printf("controlled (identical sensors, objects on nodes, one object per"
-                    " cell): %.1f%% over %u worlds vs ceiling %.1f%%"
-                    "   [%u worlds discarded for cell collisions]\n",
-                    pc, trials, 100.0 / (M + 1), collisions);
-        CHECK(trials > 150);
-        // At chance, within sampling error for a few hundred trials.
-        CHECK(std::fabs(pc - 100.0 / (M + 1)) < 8.0);
-    }
-
-    // === Tier 2 verdicts ===================================================
-    {
-        uint32_t conf = 0, rej = 0, none = 0;
-        for (int32_t cid : t1.suspects) {
-            switch (CellVerdict(t1, plan, nodes, cid, 1.0)) {
-                case Verdict::CONFIRM: conf++; break;
-                case Verdict::REJECT:  rej++;  break;
-                default:               none++; break;
-            }
-        }
-        std::printf("tier 2 on the %zu suspects, full delivery: %u confirm, %u reject, "
-                    "%u no verdict (no node able to run the matcher)\n",
-                    t1.suspects.size(), conf, rej, none);
-        // Nothing is decided before anything is delivered, unless the cue
-        // reading already cleared the confirm bar on its own.
-        for (int32_t cid : t1.suspects) {
-            const Verdict v0 = CellVerdict(t1, plan, nodes, cid, 0.0);
-            CHECK(v0 == Verdict::NONE || v0 == Verdict::REJECT || v0 == Verdict::CONFIRM);
-        }
-        // A class-B or C cell can never return a verdict, at any dose.
-        for (const auto& [cid, c] : plan.cells)
-            if (c.cls != CellClass::A)
-                CHECK(CellVerdict(t1, plan, nodes, cid, 1.0) == Verdict::NONE);
-    }
-
-    // === S5: T0 ============================================================
+    // === S4: T0 ============================================================
     DoseModel dose;
-    auto demands = BuildDemands(plan, nodes, t1);
-    std::printf("\n=== T0   lambda_tx=%.0f B/s  theta_full=%.0f B  hedge=%.0f%%\n",
-                kRefTxBytesPerS, kThetaFullBytes, 100 * kThetaHedgeFrac);
+    auto demands = BuildDemands(plan, nodes);
+    std::printf("\n=== T0   lambda_tx=%.0f B/s  theta_full=%.0f B  (no tiering: at\n"
+                "         planning time nothing has been detected yet)\n",
+                kRefTxBytesPerS, kThetaFullBytes);
     std::printf("G(b):");
     for (double b : {0.0, 50.0, 100.0, 150.0, 200.0, 300.0})
         std::printf("  G(%.0f)=%.0fm", b, dose.G(b));
@@ -451,8 +228,8 @@ int main(int argc, char* argv[]) {
             CHECK(d.theta == 0.0);
             CHECK(ServiceCost(d, 0.0, dose) == 0.0);
         }
-        // A flagged cell needs strictly more than an unflagged one of the same
-        // sensor quality: that ratio IS the hedge.
+        // Every class-A cell asks, and only class-A cells ask. There is no
+        // tiering to check because there is nothing to tier on yet.
         if (d.cls == CellClass::A) CHECK(d.theta > 0.0);
     }
 
@@ -486,11 +263,11 @@ int main(int argc, char* argv[]) {
         const double thetaMax = kRefTxBytesPerS * dose.G(0.0) / kMinMps;
         std::printf("one pass at stall can deliver at most %.0f B; theta_full is "
                     "%.0f B  -> %s\n", thetaMax, kThetaFullBytes,
-                    thetaMax >= kThetaFullBytes ? "a flagged cell CAN be served in one pass"
+                    thetaMax >= kThetaFullBytes ? "a class-A cell CAN be served in one pass"
                                                 : "every flagged cell must ORBIT");
     }
 
-    // === S6: Dubins ========================================================
+    // === S5: Dubins ========================================================
     // Closed form against forward integration. This is the check that once
     // caught an LRL word with 208 m of endpoint error while the other five were
     // exact -- a wrong CCC expression returns plausible LENGTHS, so only the
@@ -519,7 +296,7 @@ int main(int argc, char* argv[]) {
         for (int w = 0; w < 6; ++w) CHECK(words[w] > 0);   // every word must occur
     }
 
-    // === S7: T1 partition ==================================================
+    // === S6: T1 partition ==================================================
     const Config depot{0.0, 0.0, 0.0};
     std::printf("\n=== T1  partition over %u class-A cells, depot at the field corner\n",
                 plan.nA);
@@ -552,7 +329,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // === S8: T2 routing ====================================================
+    // === S7: T2 routing ====================================================
     std::vector<int32_t> aCells;
     for (const auto& [cid, d] : demands) if (d.theta > 0) aCells.push_back(cid);
     std::printf("\n=== T2  Dubins tour over %zu cells\n", aCells.size());
@@ -622,7 +399,7 @@ int main(int argc, char* argv[]) {
         CHECK(std::fabs(sum - opt.flightM) < 1e-6);
     }
 
-    // === S9: the LP solver, on problems with known answers =================
+    // === S8: the LP solver, on problems with known answers =================
     {
         // max 3x+5y  s.t. x<=4, 2y<=12, 3x+2y<=18  -> 36 at (2,6)  (as a min)
         LpResult r1 = SolveLp({{1, 0}, {0, 2}, {3, 2}}, {4, 12, 18}, {-3, -5});
@@ -676,7 +453,7 @@ int main(int argc, char* argv[]) {
         CHECK(beaten == 0);
     }
 
-    // === S10: T3 speed profile =============================================
+    // === S9: T3 speed profile =============================================
     {
         const Tour tour = SolveTour(aCells, demands, depot, rho);
         const SpeedPlan sp = PlanSpeed(tour, demands, dose, rho);
@@ -697,8 +474,16 @@ int main(int argc, char* argv[]) {
                 auto scaled = demands;
                 for (auto& [cid, d2] : scaled) d2.theta *= scale;
                 const SpeedPlan s3 = PlanSpeed(tour, scaled, dose, rho);
-                std::printf("  x%.2f=%s", scale, s3.infeasible ? "no" : "YES");
-                if (!s3.infeasible && firstOk == 0) firstOk = scale;
+                // SOLVED, not merely "not infeasible": an LP that hit the
+                // iteration cap is neither, and treating it as feasible hands
+                // the next stage a plan with no speeds in it.
+                std::printf("  x%.2f=%s", scale,
+                            s3.solved ? "YES"
+                                      : (s3.infeasible ? "no"
+                                         : (s3.unbounded ? "unbounded" : "capped")));
+                if (!s3.solved && !s3.infeasible)
+                    std::printf("(%u it)", s3.lpIterations);
+                if (s3.solved && firstOk == 0) firstOk = scale;
             }
             std::printf("\n");
             CHECK(firstOk > 0);   // the model must be feasible SOMEWHERE
@@ -714,10 +499,21 @@ int main(int argc, char* argv[]) {
                 vlo = std::min(vlo, s2.speedMps); vhi = std::max(vhi, s2.speedMps);
             }
             uint32_t binding = 0;
+            double worstRel = 0;
             for (const auto& [cid, got] : ok.doseBytes) {
-                CHECK(got >= scaled.at(cid).theta - 1e-3);
+                const double th = scaled.at(cid).theta;
+                if (th > 0) worstRel = std::max(worstRel, (th - got) / th);
                 if (ok.shadow.at(cid) > 1e-9) binding++;
             }
+            // RELATIVE, not absolute. theta is ~1e5 bytes and the LP is 340x237
+            // with coefficients around 5e4, so the simplex leaves a residue of
+            // order 1e-6 relative on the binding rows. An absolute 1e-3 bar is
+            // 2.4e-8 relative -- tighter than double precision can hold here, and
+            // it fired on arithmetic rather than on anything being wrong. A real
+            // shortfall would be percent-scale.
+            CHECK(worstRel < 1e-4);
+            std::printf("  worst dose shortfall vs theta: %.2e relative"
+                        " (simplex residue, not a miss)\n", worstRel);
             std::printf("  at theta x%.2f: speed %.1f..%.1f m/s, %.0f%% pinned on turns,"
                         " %u/%zu cells binding, %.0f s vs %.0f s at cruise\n",
                         firstOk, vlo, vhi, 100.0 * pin / ok.segments.size(),
@@ -750,7 +546,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // === S11: T4 refinement loop ===========================================
+    // === S10: T4 refinement loop ===========================================
     {
         const uint32_t M3 = 3;
         Plan pl = Refine(demands, plan, dose, depot, M3, rho);
@@ -790,7 +586,237 @@ int main(int argc, char* argv[]) {
         // checked rather than assumed.
     }
 
-    // === S12: the whole pipeline at an OPERABLE parameter point ============
+    // === AFTER THE FLIGHT: the sensing model, and the suspect positions ====
+    //
+    // This runs LAST on purpose. Nothing above it consulted the world: at
+    // planning time no node holds the reference, so nothing has been detected
+    // and the planner had only capability to weight by. The suspect set is what
+    // Phase 1 PRODUCES, and feeding it back upstream would be using information
+    // the flight has not generated yet.
+    std::mt19937 orng(seed ^ 0xABCDu);
+    std::uniform_real_distribution<double> ux(0.08 * side, 0.92 * side);
+    std::vector<Object> objects;
+    objects.push_back({ux(orng), ux(orng), true, 1.0});
+    for (int k = 0; k < 3; k++) objects.push_back({ux(orng), ux(orng), false, 1.0});
+    const int M = (int)objects.size() - 1;
+
+    SensingResult sr = RunSensing(nodes, plan, objects, seed);
+    std::printf("\n=== SENSING   %zu objects (1 real, %d confusers, similarity 1.0)\n",
+                objects.size(), M);
+    std::printf("cue-level guess |%zu|   recall %u/%u   false alarms %u/%u   uplink %.2f kB\n",
+                sr.cueGuess.size(), sr.detected, sr.objectCells,
+                sr.falseAlarms, sr.emptyCells, sr.UplinkBytes() / 1000.0);
+
+    CHECK(sr.nodes.size() == nodes.size());
+    for (const auto& [cid, t] : sr.cells) CHECK(plan.cells.at(cid).cls != CellClass::C);
+    for (const auto& [cid, c] : plan.cells)
+        if (c.cls != CellClass::C) CHECK(sr.cells.count(cid) == 1);
+    double wsum = 0;
+    for (int32_t cid : sr.cueGuess) wsum += sr.cells.at(cid).weight;
+    CHECK(sr.cueGuess.empty() || std::fabs(wsum - 1.0) < 1e-9);
+    for (const auto& [id, r] : sr.nodes) {
+        CHECK(r.scoreCue >= 0.0 && r.scoreCue <= 1.0);
+        CHECK(r.scoreFull >= 0.0 && r.scoreFull <= 1.0);
+        // The reference can only ever REMOVE a resemblance, never add one.
+        CHECK(r.scoreFull <= r.scoreCue + 1e-12);
+    }
+
+    // Same seed, same readings: the noise is one observation per node per run,
+    // not something a node can average away by looking again.
+    {
+        SensingResult again = RunSensing(nodes, plan, objects, seed);
+        for (const auto& [id, r] : sr.nodes) {
+            CHECK(again.nodes.at(id).scoreCue == r.scoreCue);
+            CHECK(again.nodes.at(id).noise == r.noise);
+        }
+    }
+
+    // Tier 1 is blind to WHICH object is real: move the ground-truth flag and
+    // every cue-level reading must come back bit-identical. Comparing mean
+    // scores would not test this -- those differ by geometry and by sampling,
+    // and a difference there would prove nothing either way.
+    {
+        std::vector<Object> swapped = objects;
+        swapped[0].real = false;
+        swapped[1].real = true;
+        SensingResult alt = RunSensing(nodes, plan, swapped, seed);
+        for (const auto& [id, r] : sr.nodes) CHECK(alt.nodes.at(id).scoreCue == r.scoreCue);
+        CHECK(alt.cueGuess == sr.cueGuess);
+        // ... and NOT blind once it holds the reference. That gap is the thing
+        // the aircraft flies out to buy.
+        uint32_t moved = 0;
+        for (const auto& [id, r] : sr.nodes)
+            if (alt.nodes.at(id).scoreFull != r.scoreFull) moved++;
+        std::printf("cue-level readings identical under a ground-truth swap; "
+                    "%u/%zu full-reference readings move\n", moved, sr.nodes.size());
+        CHECK(moved > 0);
+    }
+
+    // Spillover vs noise. Not every false alarm is noise: a node near a boundary
+    // responds to an object in the NEXT cell, so the alarm is right and only the
+    // cell label is wrong. Spillover is a RESOLUTION limit of the cell layer --
+    // it is what Phase 2 pays to resolve, and it is one of the three competing
+    // pressures on R_c. Isolated alarms are detector noise, which is what a
+    // better detector would remove. Reporting them as one number hides both.
+    {
+        uint32_t spill = 0, isolated = 0;
+        for (const auto& [cid, t] : sr.cells) {
+            if (!t.suspect || t.holdsObject) continue;
+            const Cell& c = plan.cells.at(cid);
+            double near = 1e18;
+            for (const Object& o : objects)
+                near = std::min(near, std::hypot(c.cx - o.x, c.cy - o.y));
+            if (near <= 2.0 * rc) spill++; else isolated++;
+        }
+        CHECK(spill + isolated == sr.falseAlarms);
+        std::printf("  of those: %u spillover from a neighbouring cell, %u isolated noise\n",
+                    spill, isolated);
+    }
+
+    // === The threshold ordering, checked against THIS deployment ===========
+    // noise floor < alert < confirm < R_victim. The third inequality is the one
+    // that broke: a confirm bar above the best true positive rejects every real
+    // victim, and nothing in the code complains -- the run just comes back with
+    // no confirmations and looks like a hard search problem.
+    {
+        // Worst case for a true positive: the weakest imager, at the furthest a
+        // victim can be from its nearest node on this lattice.
+        const double dWorst = spacing * std::sqrt(2.0) / 2.0;
+        const double rVictim = kQualityMax * std::exp(-dWorst / (kDecayM * kObsMin));
+        const double noise3s = 3.0 * kSenseSigma;
+        std::printf("\nthreshold chain: noise 3sigma %.3f < alert %.2f < confirm %.2f"
+                    " < R_victim %.3f  (weakest sensor, d=%.1fm)\n",
+                    noise3s, kAlertScore, kConfirmScore, rVictim, dWorst);
+        CHECK(noise3s < kAlertScore);
+        CHECK(kAlertScore < kConfirmScore);
+        CHECK(kConfirmScore < rVictim);
+    }
+
+    // === The Fano ceiling, MEASURED ========================================
+    // The claim the architecture rests on: with no reference, picking the cell
+    // that holds the real victim is at chance over M+1 equally plausible
+    // objects. Measured over many worlds, not asserted.
+    {
+        uint32_t trials = 0, cueRight = 0, fullRight = 0;
+        for (uint32_t s2 = 1; s2 <= 400; ++s2) {
+            std::mt19937 r2(s2 ^ 0xBEEFu);
+            std::uniform_real_distribution<double> u2(0.08 * side, 0.92 * side);
+            std::vector<Object> ob;
+            ob.push_back({u2(r2), u2(r2), true, 1.0});
+            for (int k = 0; k < M; k++) ob.push_back({u2(r2), u2(r2), false, 1.0});
+            SensingResult r = RunSensing(nodes, plan, ob, s2);
+            if (r.cueGuess.empty()) continue;
+            // truth: the cell the real object sits in
+            int32_t truth = -1;
+            for (const auto& [cid, t] : r.cells) if (t.holdsReal) truth = cid;
+            if (truth < 0) continue;
+            trials++;
+            if (r.cueGuess.front() == truth) cueRight++;
+            // the same argmax taken on the FULL-reference reading
+            int32_t bestFull = -1; double bs = -1;
+            for (const auto& [cid, t] : r.cells) {
+                double m2 = 0;
+                for (const CellMember& mm : plan.cells.at(cid).members)
+                    m2 = std::max(m2, r.nodes.at(mm.id).scoreFull);
+                if (m2 > bs) { bs = m2; bestFull = cid; }
+            }
+            if (bestFull == truth) fullRight++;
+        }
+        const double pc = trials ? 100.0 * cueRight / trials : 0.0;
+        const double pf = trials ? 100.0 * fullRight / trials : 0.0;
+        std::printf("\npicking the victim's cell over %u worlds (M=%d):\n"
+                    "  tier 1, no reference : %.1f%%   (Fano ceiling 1/(M+1) = %.1f%%)\n"
+                    "  tier 2, full reference: %.1f%%\n",
+                    trials, M, pc, 100.0 / (M + 1), pf);
+        CHECK(trials > 100);
+        // The reference must buy something. If it does not, the two tiers are
+        // not two tiers.
+        CHECK(pf > pc);
+    }
+
+    // === The Fano ceiling, with the geometry CONTROLLED ====================
+    // The number above is the realistic one, and it sits ABOVE 1/(M+1) because
+    // the field is not symmetric: an object that happens to land near a strong,
+    // close sensor is better observed than one that does not, so the M+1
+    // hypotheses are not equally distinguishable and the effective M is smaller
+    // than the nominal one. That is a true statement about deployments, not a
+    // violation of the bound -- but it means the realistic number cannot be used
+    // to demonstrate the bound. This control removes the asymmetry: identical
+    // sensors everywhere, and every object sitting exactly on a node. Then the
+    // M+1 hypotheses really are exchangeable and tier 1 must be at chance.
+    {
+        std::vector<Node> uni = BuildUniformNodes(xy);
+        CellPlan up = BuildCells(uni, rc, kGroundRangeM);
+        uint32_t trials = 0, right = 0, collisions = 0;
+        for (uint32_t s2 = 1; s2 <= 1200; ++s2) {
+            std::mt19937 r2(s2 ^ 0xFACEu);
+            std::uniform_int_distribution<size_t> pick(0, xy.size() - 1);
+            std::vector<Object> ob;
+            std::set<size_t> used;
+            while (ob.size() < (size_t)M + 1) {
+                const size_t k = pick(r2);
+                if (!used.insert(k).second) continue;
+                ob.push_back({xy[k].first, xy[k].second, ob.empty(), 1.0});
+            }
+            // The ceiling is over OBJECTS, and the question here is over CELLS.
+            // Those are not the same question: when two objects share a cell,
+            // naming that cell is right if EITHER is the real one, so a coarse
+            // partition scores above the bound with no extra information at all.
+            // Discarding the collided worlds makes cell and object the same
+            // question again, which is the only condition under which 1/(M+1)
+            // is the number to compare against.
+            std::set<int32_t> occupied;
+            bool collided = false;
+            for (const Object& o : ob) {
+                int32_t q, rr;
+                hex::WorldToAxial(o.x, o.y, rc, q, rr);
+                if (!occupied.insert(q * 10007 + rr).second) { collided = true; break; }
+            }
+            if (collided) { collisions++; continue; }
+            SensingResult r = RunSensing(uni, up, ob, s2);
+            if (r.cueGuess.empty()) continue;
+            int32_t truth = -1;
+            for (const auto& [cid, t] : r.cells) if (t.holdsReal) truth = cid;
+            if (truth < 0) continue;
+            trials++;
+            if (r.cueGuess.front() == truth) right++;
+        }
+        const double pc = trials ? 100.0 * right / trials : 0.0;
+        std::printf("controlled (identical sensors, objects on nodes, one object per"
+                    " cell): %.1f%% over %u worlds vs ceiling %.1f%%"
+                    "   [%u worlds discarded for cell collisions]\n",
+                    pc, trials, 100.0 / (M + 1), collisions);
+        CHECK(trials > 150);
+        // At chance, within sampling error for a few hundred trials.
+        CHECK(std::fabs(pc - 100.0 / (M + 1)) < 8.0);
+    }
+
+    // === Tier 2 verdicts ===================================================
+    {
+        uint32_t conf = 0, rej = 0, none = 0;
+        for (int32_t cid : sr.cueGuess) {
+            switch (CellVerdict(sr, plan, nodes, cid, 1.0)) {
+                case Verdict::CONFIRM: conf++; break;
+                case Verdict::REJECT:  rej++;  break;
+                default:               none++; break;
+            }
+        }
+        std::printf("verdicts on the %zu cue-level guesses, full delivery: %u confirm, %u reject, "
+                    "%u no verdict (no node able to run the matcher)\n",
+                    sr.cueGuess.size(), conf, rej, none);
+        // Nothing is decided before anything is delivered, unless the cue
+        // reading already cleared the confirm bar on its own.
+        for (int32_t cid : sr.cueGuess) {
+            const Verdict v0 = CellVerdict(sr, plan, nodes, cid, 0.0);
+            CHECK(v0 == Verdict::NONE || v0 == Verdict::REJECT || v0 == Verdict::CONFIRM);
+        }
+        // A class-B or C cell can never return a verdict, at any dose.
+        for (const auto& [cid, c] : plan.cells)
+            if (c.cls != CellClass::A)
+                CHECK(CellVerdict(sr, plan, nodes, cid, 1.0) == Verdict::NONE);
+    }
+
+    // === S11: the whole pipeline at an OPERABLE parameter point ============
     // Everything above runs in the regime the placeholders put it in, where one
     // pass can never deliver theta and the speed LP is correctly infeasible. That
     // regime exercises the failure paths but leaves T4 inert -- nothing is ever

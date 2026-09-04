@@ -10,7 +10,7 @@
 #include "../models/p1/p1-route.h"
 #include "../models/p1/p1-sensing.h"
 #include "../models/p1/p1-speed.h"
-#include "../models/p1/p1-tier1.h"
+#include "../models/p1/p1-sensing-model.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -39,19 +39,41 @@ int main(int argc, char* argv[]) {
     std::vector<Node> nodes = BuildNodes(xy, seed);
     CellPlan plan = BuildCells(nodes, rc, kGroundRangeM);
 
+    // PLAN FIRST. The world below is not consulted by anything above the flight:
+    // at planning time no node holds the reference, so nothing has been detected
+    // and the planner has nothing to weight by except capability.
+    DoseModel dose;
+    auto demands = BuildDemands(plan, nodes);
+    for (auto& [cid, d] : demands) d.theta *= tscale;
+    const double rho = TurnRadiusM(kCruiseMps);
+    const Config depot{0.0, 0.0, 0.0};
+    Plan pl = Refine(demands, plan, dose, depot, M, rho);
+
+    // THE WORLD, and what the flight makes of it. One real victim among three
+    // confusers that a cue-level detector cannot tell it from.
     std::mt19937 orng(seed ^ 0xABCDu);
     std::uniform_real_distribution<double> ux(0.08 * side, 0.92 * side);
     std::vector<Object> objects;
     objects.push_back({ux(orng), ux(orng), true, 1.0});
     for (int k = 0; k < 3; k++) objects.push_back({ux(orng), ux(orng), false, 1.0});
 
-    Tier1Result t1 = RunTier1(nodes, plan, objects, seed);
-    DoseModel dose;
-    auto demands = BuildDemands(plan, nodes, t1);
-    for (auto& [cid, d] : demands) d.theta *= tscale;
-    const double rho = TurnRadiusM(kCruiseMps);
-    const Config depot{0.0, 0.0, 0.0};
-    Plan pl = Refine(demands, plan, dose, depot, M, rho);
+    SensingResult sr = RunSensing(nodes, plan, objects, seed);
+
+    // AFTER the flight: how much reference each cell actually received, and what
+    // it concludes. This is where the suspect positions come from.
+    std::map<int32_t, double> held;
+    for (const auto& [cid, d0] : demands) {
+        if (d0.theta <= 0) { held[cid] = 0; continue; }
+        double got = 0;
+        for (const SpeedPlan& sp : pl.speeds) {
+            if (!sp.solved) continue;
+            for (const SpeedSegment& sg : sp.segments)
+                got += kRefTxBytesPerS * sg.lengthM *
+                       dose.Prx(std::hypot(sg.x - pl.bestDemands.at(cid).x,
+                                           sg.y - pl.bestDemands.at(cid).y)) / sg.speedMps;
+        }
+        held[cid] = std::min(1.0, got / d0.theta);
+    }
 
     // A run that found no valid plan still has a demand set worth dumping; the
     // feasible flag in config.csv is what says the plan is empty.
@@ -82,16 +104,24 @@ int main(int argc, char* argv[]) {
 
     f = open("cells.csv");
     std::fprintf(f, "id,q,r,cx,cy,class,leader,members,imagers,matchers,tLocal,"
-                    "score,suspect,weight,holdsObject,holdsReal,theta,penaltyS,orbits\n");
+                    "score,suspect,weight,holdsObject,holdsReal,theta,penaltyS,orbits,"
+                    "held,verdict\n");
     for (const auto& [cid, c] : plan.cells) {
-        const CellReading* t = t1.cells.count(cid) ? &t1.cells.at(cid) : nullptr;
+        const CellReading* t = sr.cells.count(cid) ? &sr.cells.at(cid) : nullptr;
         const Demand& d = pl.bestDemands.at(cid);
-        std::fprintf(f, "%d,%d,%d,%.2f,%.2f,%s,%u,%zu,%u,%u,%.2f,%.4f,%d,%.4f,%d,%d,%.0f,%.2f,%u\n",
+        std::fprintf(f, "%d,%d,%d,%.2f,%.2f,%s,%u,%zu,%u,%u,%.2f,%.4f,%d,%.4f,%d,%d,%.0f,%.2f,%u,%.3f,%s\n",
                      cid, c.q, c.r, c.cx, c.cy, CellClassName(c.cls), c.leader,
                      c.members.size(), c.imagers, c.matchers, c.tLocalS,
                      t ? t->score : 0.0, t ? t->suspect : 0, t ? t->weight : 0.0,
                      t ? t->holdsObject : 0, t ? t->holdsReal : 0,
-                     demands.at(cid).theta, d.penaltyS, d.orbits);
+                     demands.at(cid).theta, d.penaltyS, d.orbits,
+                     held.count(cid) ? held.at(cid) : 0.0,
+                     CellVerdict(sr, plan, nodes, cid,
+                                 held.count(cid) ? held.at(cid) : 0.0) == Verdict::CONFIRM
+                         ? "confirm"
+                         : (CellVerdict(sr, plan, nodes, cid,
+                                        held.count(cid) ? held.at(cid) : 0.0) == Verdict::REJECT
+                                ? "reject" : "none"));
     }
     std::fclose(f);
 
@@ -198,9 +228,13 @@ int main(int argc, char* argv[]) {
                      st.infeasibleVehicles, st.uncovered, st.selfConsistent);
     std::fclose(f);
 
-    std::printf("%s: %zu cells (A=%u B=%u C=%u), |D|=%zu, %u vehicles, "
-                "makespan %.0fs, %s\n", dir.c_str(), plan.cells.size(), plan.nA,
-                plan.nB, plan.nC, t1.suspects.size(), M, pl.makespanS,
-                pl.feasible ? "valid plan" : "NO VALID PLAN");
+    uint32_t conf = 0;
+    for (const auto& [cid, h] : held)
+        if (CellVerdict(sr, plan, nodes, cid, h) == Verdict::CONFIRM) conf++;
+    std::printf("%s: %zu cells (A=%u B=%u C=%u), %u vehicles, makespan %.0fs, %s"
+                " -> %u suspect position%s after the flight\n",
+                dir.c_str(), plan.cells.size(), plan.nA, plan.nB, plan.nC, M,
+                pl.makespanS, pl.feasible ? "valid plan" : "NO VALID PLAN",
+                conf, conf == 1 ? "" : "s");
     return 0;
 }

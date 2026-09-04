@@ -4,10 +4,49 @@
 > `models/application/`) không bị đụng tới và các số đo trong `STATUS.md`
 > vẫn còn hiệu lực.
 >
-> Trạng thái: **toàn tuyến T0→T4 đã cài và kiểm**. `64 431` CHECK ở cấu hình
-> mặc định, sạch trên 8 tổ hợp lưới/bán kính/hạt giống.
+> Trạng thái: **toàn tuyến đã cài và kiểm**. `64 408` CHECK ở cấu hình mặc định,
+> sạch trên 8 tổ hợp lưới/bán kính/hạt giống.
 
----
+## 0. Thứ tự — và một lần sửa sai thứ tự
+
+```
+tập nút KHÔNG ĐỒNG NHẤT
+   → chia cluster (ô lục giác) + bầu CH theo NĂNG LỰC
+   → TẬP CH LÀM ĐẠI DIỆN để lập lịch bay
+   → T0 nhu cầu θ  ·  T1 hai kiểu lập lịch
+   → tập ĐƯỜNG BAY THÔ (T2)
+   → TINH CHỈNH (T3 tốc độ, T4 vòng lặp)
+   → UAV BAY & PHÁT dữ liệu tham chiếu
+   → RỒI MỚI CÓ tập vị trí nghi vấn   ← đầu ra Pha 1, đầu vào Pha 2
+```
+
+**Bản cài đầu tiên đặt phát hiện SAI CHỖ.** Nó chạy Tầng 1 *trước* khi bay, lấy
+tập nghi vấn `𝒟` và tiên nghiệm `ω_n` rồi phân tầng `θ` theo đó
+(`n ∈ 𝒟 → θ_full`, `n ∉ 𝒟 → θ_hedge`). Tức là **lập kế hoạch bằng thông tin mà
+chính chuyến bay mới sinh ra được**: lúc lập lịch chưa nút nào cầm tham chiếu,
+nên chưa nút nào nói được ở đó có gì.
+
+Đã sửa. Nay `BuildDemands()` **không nhận** kết quả cảm biến, `kThetaHedgeFrac`
+bị xoá, và `θ` chỉ còn phụ thuộc **năng lực**:
+
+$$\theta_n \;=\; \theta_{\text{full}} \,/\, I_n$$
+
+Đây vẫn là một trọng số **suy ra từ triển khai** chứ không phải cho sẵn — vẫn là
+thứ tách bài này khỏi min–max mTSP có trọng số thông thường — nhưng **hẹp hơn**
+lời tuyên bố cũ ("tiên nghiệm đo được từ chính mạng"), và phải viết đúng như thế.
+
+**Giá của việc sửa** (θ×0.60, 780 m, 3 máy bay, 5 hạt giống):
+
+| | biết `𝒟` trước (SAI) | không biết (ĐÚNG) |
+|---|---|---|
+| tìm được kế hoạch | 4/5 hạt | 2/5 hạt |
+| makespan | ~90 s | ~118 s |
+| số ô phải thăm | 12–17 | 21 (tất cả lớp A) |
+
+Biết trước tập nghi vấn **đáng giá thật** — nhưng nó là thông tin **chưa tồn tại**
+ở thời điểm lập lịch, nên không được dùng. Con số trên là **giá của tính trung
+thực**, và nếu sau này có kênh phụ thu báo cáo trước chuyến bay thì đó là một
+**mở rộng có thể đo được**, không phải mặc định.
 
 ## 1. Vì sao phải dựng lại từ đầu
 
@@ -82,7 +121,11 @@ store-and-forward nên đây là **cận trên**.
 
 ---
 
-## 4. Tầng 1 — điều then chốt
+## 4. Mô hình cảm biến — ĐẦU RA của Pha 1, không phải đầu vào
+
+`scoreCue` **không phải đầu vào lập lịch**. Nó là **đường cơ sở** để đo chuyến bay
+mua được gì: mạng tự nói được đến đâu, so với nói được đến đâu sau khi có tham
+chiếu. So sánh đó là một **kết quả**, và đó là công dụng duy nhất của nó.
 
 > **Một TẦNG không phải một BỘ PHÁT HIỆN.** Cùng một nút, cùng một lần rút nhiễu,
 > cho **hai** giá trị đọc: `scoreCue` (không tham chiếu) và `scoreFull` (đã cầm
@@ -284,7 +327,7 @@ python3 tools/make_p1_viewer.py OUT.html "nhãn=RUNDIR" ...
 | `visualize/figures/p1-plan-m5.png` | cùng vùng, 5 máy bay |
 | `visualize/figures/p1-plan-wide.png` | `R_c = 220 m` |
 | `visualize/p1-replay.html` | **replay có chuyển động**, 5 cấu hình, ô sáng dần theo liều |
-| `visualize/p1-steps.html` | **9 bước lập kế hoạch**, mỗi bước hiện thứ nó QUYẾT ĐỊNH và thứ nó mua được |
+| `visualize/p1-steps.html` | **9 bước**, kết thúc ở bước UAV bay & phát → rồi mới có vị trí nghi vấn |
 
 ### 8.1 Chín bước trong `p1-steps.html`
 
@@ -292,12 +335,12 @@ python3 tools/make_p1_viewer.py OUT.html "nhãn=RUNDIR" ...
 |---|---|
 | 0 | phân ô hex, nút theo phương thức, cụm trưởng đã bầu |
 | 1 | gán lớp A/B/C — chỉ A tốn giây bay |
-| 2 | Tầng 1: `a_n`, tập `D`, nạn nhân thật vs vật gây nhầm |
-| 3 | T0: `θ` phân tầng, ô nào phải lượn vòng |
-| 4 | T1: chia ô cho từng máy bay |
-| 5 | T2: thứ tự NN (xám) → sau 2-opt/Or-opt (đậm), kèm số mét |
-| 6 | T2: 8 hướng mũi mỗi ô, vạch đậm là hướng DP chọn |
-| 7 | T3: đường bay tô theo tốc độ LP chọn, bảng chi phí từng máy bay |
-| 8 | T4: bảng từng vòng lặp kèm dấu hợp lệ, và kế hoạch được nhận |
+| 2 | T0: `θ` theo **năng lực** (chưa có gì được phát hiện), ô nào phải lượn vòng |
+| 3 | T1: chia ô cho từng máy bay |
+| 4 | T2: đường bay **thô** — NN (xám) → 2-opt/Or-opt (đậm), kèm số mét |
+| 5 | T2: 8 hướng mũi mỗi ô, vạch đậm là hướng DP chọn |
+| 6 | T3: đường bay tô theo tốc độ LP chọn, bảng chi phí từng máy bay |
+| 7 | T4: từng vòng lặp kèm dấu hợp lệ, và kế hoạch được nhận |
+| 8 | **UAV bay & phát → RỒI MỚI có vị trí nghi vấn**: xác nhận / bác bỏ |
 
 Kiểm bằng Chromium headless: **không lỗi trang** trên **40 tổ hợp** bước × cấu hình.

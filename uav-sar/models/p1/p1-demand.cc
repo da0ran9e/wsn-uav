@@ -44,8 +44,7 @@ double DoseModel::InteractionLength(double offsetM) const {
 }
 
 std::map<int32_t, Demand> BuildDemands(const CellPlan& plan,
-                                       const std::vector<Node>& nodes,
-                                       const Tier1Result& t1) {
+                                       const std::vector<Node>& nodes) {
     std::map<uint32_t, const Node*> byId;
     for (const Node& n : nodes) byId[n.id] = &n;
 
@@ -56,9 +55,6 @@ std::map<int32_t, Demand> BuildDemands(const CellPlan& plan,
         d.cls = c.cls;
         d.x = c.cx;
         d.y = c.cy;
-        const auto ti = t1.cells.find(cid);
-        if (ti != t1.cells.end()) { d.suspect = ti->second.suspect; d.weight = ti->second.weight; }
-
         if (c.cls != CellClass::A) {
             // B can detect and never discriminate; C does neither. Reference
             // bytes here buy nothing at any price. This is where the network's
@@ -68,8 +64,8 @@ std::map<int32_t, Demand> BuildDemands(const CellPlan& plan,
         } else {
             const auto li = byId.find(c.leader);
             const double info = li != byId.end() ? li->second->Information() : 1.0;
-            const double full = kThetaFullBytes / info;
-            d.theta = d.suspect ? full : full * kThetaHedgeFrac;
+            // No tiering: at planning time there is nothing to tier ON.
+            d.theta = kThetaFullBytes / info;
         }
         out[cid] = d;
     }

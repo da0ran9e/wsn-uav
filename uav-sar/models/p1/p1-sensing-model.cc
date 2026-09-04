@@ -1,4 +1,4 @@
-#include "p1-tier1.h"
+#include "p1-sensing-model.h"
 
 #include <algorithm>
 #include <cmath>
@@ -21,9 +21,9 @@ double Response(double d, double obs) {
 
 }  // namespace
 
-Tier1Result RunTier1(const std::vector<Node>& nodes, const CellPlan& plan,
+SensingResult RunSensing(const std::vector<Node>& nodes, const CellPlan& plan,
                      const std::vector<Object>& objects, uint32_t seed) {
-    Tier1Result out;
+    SensingResult out;
     std::mt19937 rng(seed ^ 0x9E3779B9u);
     std::normal_distribution<double> gauss(0.0, kSenseSigma);
 
@@ -81,18 +81,20 @@ Tier1Result RunTier1(const std::vector<Node>& nodes, const CellPlan& plan,
         else               { out.emptyCells++;  if (t.suspect) out.falseAlarms++; }
     }
 
-    // --- D, and the prior over it -----------------------------------------
+    // What the network would have guessed on cue-level information alone. This
+    // is the BASELINE, kept so the flight can be measured against it -- it is
+    // not, and must not become, an input to the planner.
     double total = 0.0;
     for (const auto& [cid, t] : out.cells)
-        if (t.suspect) { out.suspects.push_back(cid); total += t.score; }
+        if (t.suspect) { out.cueGuess.push_back(cid); total += t.score; }
     if (total > 0.0)
-        for (int32_t cid : out.suspects) out.cells[cid].weight = out.cells[cid].score / total;
-    std::sort(out.suspects.begin(), out.suspects.end(),
+        for (int32_t cid : out.cueGuess) out.cells[cid].weight = out.cells[cid].score / total;
+    std::sort(out.cueGuess.begin(), out.cueGuess.end(),
               [&](int32_t a, int32_t b) { return out.cells[a].score > out.cells[b].score; });
     return out;
 }
 
-Verdict CellVerdict(const Tier1Result& t1, const CellPlan& plan,
+Verdict CellVerdict(const SensingResult& sr, const CellPlan& plan,
                     const std::vector<Node>& nodes, int32_t cellId, double held) {
     const auto ci = plan.cells.find(cellId);
     if (ci == plan.cells.end() || ci->second.cls != CellClass::A) return Verdict::NONE;
@@ -109,8 +111,8 @@ Verdict CellVerdict(const Tier1Result& t1, const CellPlan& plan,
         // live candidate for the wrong reason.
         const auto bi = byId.find(m.id);
         if (bi == byId.end() || !bi->second->CanMatch()) continue;
-        const auto ni = t1.nodes.find(m.id);
-        if (ni == t1.nodes.end()) continue;
+        const auto ni = sr.nodes.find(m.id);
+        if (ni == sr.nodes.end()) continue;
         anyVoter = true;
         // Partial delivery buys partial disambiguation: the reading slides from
         // the cue value to the full value as the reference arrives. Without this

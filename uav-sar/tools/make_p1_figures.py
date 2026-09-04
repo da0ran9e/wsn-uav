@@ -51,8 +51,8 @@ def main():
     cells, nodes = rows(d, "cells.csv"), rows(d, "nodes.csv")
     objs, path, hist = rows(d, "objects.csv"), rows(d, "path.csv"), rows(d, "history.csv")
 
-    fig = plt.figure(figsize=(16.4, 4.8), dpi=170)
-    gs = fig.add_gridspec(1, 4, width_ratios=[1, 1, 1, 0.9], wspace=0.22)
+    fig = plt.figure(figsize=(19.6, 4.8), dpi=170)
+    gs = fig.add_gridspec(1, 5, width_ratios=[1, 1, 1, 1, 0.9], wspace=0.22)
 
     # --- 1. Phase 0: what each cell is FOR -------------------------------
     ax = fig.add_subplot(gs[0, 0])
@@ -81,26 +81,30 @@ def main():
         Line2D([], [], marker=".", ls="", ms=9, color=MOD["acoustic"], label="nút acoustic")],
         loc="upper center", bbox_to_anchor=(0.5, -0.02), frameon=False, fontsize=6.4, ncol=2)
 
-    # --- 2. Tier 1 -------------------------------------------------------
+    # --- 2. T0 demand: the ONLY thing the planner knows ------------------
     ax = fig.add_subplot(gs[0, 1])
-    smax = max((float(c["score"]) for c in cells), default=1.0) or 1.0
-    hexes(ax, cells, lambda c: plt.cm.YlOrRd(0.15 + 0.85 * float(c["score"]) / smax), 0.85, rc)
+    tmax = max((float(c["theta"]) for c in cells), default=1.0) or 1.0
+    hexes(ax, cells, lambda c: "#eef1f5" if float(c["theta"]) <= 0 else "#2f6fd0",
+          0.9, rc)
     for c in cells:
-        if c["suspect"] == "1":
-            ax.add_patch(RegularPolygon((float(c["cx"]), float(c["cy"])), 6, radius=rc,
-                                        orientation=0.0, facecolor="none",
-                                        edgecolor="#12151a", lw=1.8, zorder=3))
+        if float(c["theta"]) <= 0:
+            continue
+        ax.add_patch(RegularPolygon((float(c["cx"]), float(c["cy"])), 6, radius=rc,
+                                    orientation=0.0,
+                                    facecolor=plt.cm.Blues(0.25 + 0.6 * float(c["theta"]) / tmax),
+                                    edgecolor="#ffffff", lw=0.8, zorder=2))
     for o in objs:
-        real = o["real"] == "1"
-        ax.plot(float(o["x"]), float(o["y"]), "*" if real else "x",
-                ms=15 if real else 9, mew=2.0,
-                color="#1f9d6b" if real else "#c2410c", zorder=6)
-    nd = sum(1 for c in cells if c["suspect"] == "1")
-    frame(ax, side, f"Tầng 1 — điểm $a_n$, |D|={nd}")
+        ax.plot(float(o["x"]), float(o["y"]), "*" if o["real"] == "1" else "x",
+                ms=14 if o["real"] == "1" else 8, mew=1.9,
+                color="#1f9d6b" if o["real"] == "1" else "#c2410c", zorder=6)
+    need = sum(1 for c in cells if float(c["theta"]) > 0)
+    frame(ax, side, f"T0 — nhu cầu θ, {need} ô phải phục vụ")
     ax.legend(handles=[
-        Line2D([], [], marker="*", ls="", ms=12, color="#1f9d6b", label="nạn nhân thật"),
-        Line2D([], [], marker="x", ls="", ms=8, mew=2, color="#c2410c", label="vật gây nhầm"),
-        Line2D([], [], marker="h", ls="", ms=9, mfc="none", mec=INK, label="ô nghi vấn (∈ D)")],
+        Line2D([], [], marker="s", ls="", ms=8, color=plt.cm.Blues(0.8),
+               label="θ lớn (cảm biến yếu → cần nhiều)"),
+        Line2D([], [], marker="s", ls="", ms=8, color=plt.cm.Blues(0.3),
+               label="θ nhỏ (cảm biến tốt)"),
+        Line2D([], [], marker="s", ls="", ms=8, color="#eef1f5", label="θ = 0 (lớp B/C)")],
         loc="upper center", bbox_to_anchor=(0.5, -0.02), frameon=False, fontsize=6.8)
 
     # --- 3. what was flown, coloured by the speed the LP chose -----------
@@ -143,8 +147,32 @@ def main():
               loc="upper center", bbox_to_anchor=(0.5, -0.30), frameon=False,
               fontsize=6.8, ncol=min(3, int(C["vehicles"])))
 
-    # --- 4. the refinement loop -----------------------------------------
+    # --- 4. AFTER the flight: the suspect positions ----------------------
     ax = fig.add_subplot(gs[0, 3])
+    hexes(ax, cells,
+          lambda c: "#2f6fd0" if c.get("verdict") == "confirm" else "#e9edf2", 0.9, rc)
+    for c in cells:
+        if c.get("verdict") == "confirm":
+            ax.add_patch(RegularPolygon((float(c["cx"]), float(c["cy"])), 6, radius=rc,
+                                        orientation=0.0, facecolor="none",
+                                        edgecolor="#12151a", lw=2.0, zorder=3))
+    for o in objs:
+        ax.plot(float(o["x"]), float(o["y"]), "*" if o["real"] == "1" else "x",
+                ms=15 if o["real"] == "1" else 9, mew=2.0,
+                color="#1f9d6b" if o["real"] == "1" else "#c2410c", zorder=6)
+    conf = [c for c in cells if c.get("verdict") == "confirm"]
+    hit = sum(1 for c in conf if c["holdsReal"] == "1")
+    frame(ax, side, f"SAU chuyến bay — {len(conf)} nghi vấn, {hit} đúng")
+    ax.legend(handles=[
+        Line2D([], [], marker="s", ls="", ms=8, color="#2f6fd0", alpha=.85,
+               label="XÁC NHẬN → chuyển cho Pha 2"),
+        Line2D([], [], marker="*", ls="", ms=12, color="#1f9d6b", label="nạn nhân thật"),
+        Line2D([], [], marker="x", ls="", ms=8, mew=2, color="#c2410c",
+               label="vật gây nhầm")],
+        loc="upper center", bbox_to_anchor=(0.5, -0.02), frameon=False, fontsize=6.8)
+
+    # --- 5. the refinement loop -----------------------------------------
+    ax = fig.add_subplot(gs[0, 4])
     it = [int(h["iteration"]) for h in hist]
     mk = [float(h["makespanS"]) for h in hist]
     ok = [h["valid"] == "1" for h in hist]

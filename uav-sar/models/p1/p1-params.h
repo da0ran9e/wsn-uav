@@ -136,14 +136,21 @@ inline constexpr uint32_t kReportBytes = 6;
 // T0 -- information demand
 // ===========================================================================
 
-// Reference bytes a class-A cell needs to settle an identity it flagged.
+// Reference bytes a class-A cell needs to settle an identity.
+//
+// EVERY class-A cell asks for this, scaled by its own sensor quality. There is
+// no "flagged" and "unflagged" tier, because at planning time NOTHING HAS BEEN
+// DETECTED YET: the aircraft has not flown, so no node has the reference, so no
+// node can say anything about what is there. The suspect set is an OUTPUT of
+// Phase 1, not an input to it.
+//
+// theta ~ 1 / I_n is therefore the ONLY source of heterogeneity in demand, and
+// it is a real one: a better sensor settles the same question on less reference.
+// That is still what separates this from a plain weighted min-max mTSP -- the
+// weights are DERIVED from the deployment rather than given -- but the claim is
+// narrower than a prior measured by the network, and must be written that way.
 // TODO(param): derive from the Chernoff exponent, theta ~ 1 / I_n(s).
 inline constexpr double kThetaFullBytes = 120000.0;
-
-// Demand for a class-A cell that did NOT flag: the hedge against a Tier-1 miss.
-// A fraction, because the RATIO is what the planner is sensitive to.
-// TODO(param): must follow from the measured Tier-1 miss rate. 0 disables it.
-inline constexpr double kThetaHedgeFrac = 0.15;
 
 // Reference broadcast rate from the aircraft.
 // TODO(param): from the airborne link budget.

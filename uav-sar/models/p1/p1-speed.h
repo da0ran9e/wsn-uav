@@ -51,6 +51,7 @@ struct SpeedPlan {
     double totalTimeS = 0.0;
     bool   solved = false;
     bool   infeasible = false;
+    bool   unbounded = false;
     uint32_t lpRows = 0, lpCols = 0, lpIterations = 0;
 };
 

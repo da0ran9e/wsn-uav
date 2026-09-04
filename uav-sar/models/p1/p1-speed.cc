@@ -87,6 +87,7 @@ SpeedPlan PlanSpeed(const Tour& tour, const std::map<int32_t, Demand>& demands,
     plan.lpCols = (uint32_t)n;
     plan.lpIterations = lp.iterations;
     plan.infeasible = lp.infeasible;
+    plan.unbounded = lp.unbounded;
     plan.solved = lp.ok;
     if (!lp.ok) return plan;
 

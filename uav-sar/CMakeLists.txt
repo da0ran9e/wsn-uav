@@ -13,7 +13,7 @@ build_lib(
     models/p1/p1-params.cc
     models/p1/p1-sensing.cc
     models/p1/p1-cells.cc
-    models/p1/p1-tier1.cc
+    models/p1/p1-sensing-model.cc
     models/p1/p1-demand.cc
     models/p1/p1-dubins.cc
     models/p1/p1-partition.cc
@@ -49,7 +49,7 @@ build_lib(
     models/p1/p1-params.h
     models/p1/p1-sensing.h
     models/p1/p1-cells.h
-    models/p1/p1-tier1.h
+    models/p1/p1-sensing-model.h
     models/p1/p1-demand.h
     models/p1/p1-dubins.h
     models/p1/p1-partition.h

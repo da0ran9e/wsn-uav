@@ -21,7 +21,14 @@ def load(d):
               "suspect": c["suspect"] == "1", "theta": float(c["theta"]),
               "pen": float(c["penaltyS"]), "orbits": int(c["orbits"]),
               "matchers": int(c["matchers"]), "leader": int(c["leader"]),
-              "tloc": float(c["tLocal"])}
+              "tloc": float(c["tLocal"]),
+              "held": float(c.get("held", 0) or 0),
+              "verdict": c.get("verdict", "none"),
+              # ground truth, for SCORING the verdict only -- the pipeline never
+              # reads it. It was missing, and the panel counted `undefined` and
+              # reported 0 victims found when the confirmed cell was the right one.
+              "real": c["holdsReal"] == "1",
+              "obj": c["holdsObject"] == "1"}
              for c in rows(d, "cells.csv")]
     nodes = [{"x": float(n["x"]), "y": float(n["y"]), "m": n["modality"],
               "lead": 0} for n in rows(d, "nodes.csv")]
@@ -113,15 +120,15 @@ th{color:var(--dim);font-weight:500} td:first-child,th:first-child{text-align:le
 <script>
 const DATA=__DATA__;
 const STEPS=[
- ["0 · Pha 0 — phân ô & bầu cụm trưởng","cells"],
+ ["0 · Pha 0 — phân cluster & bầu CH","cells"],
  ["1 · Pha 0 — gán lớp A/B/C","class"],
- ["2 · Tầng 1 — phát hiện, không tham chiếu","tier1"],
- ["3 · T0 — nhu cầu θ và chi phí phục vụ","demand"],
- ["4 · T1 — chia việc cho từng máy bay","part"],
- ["5 · T2 — thứ tự thăm (NN → 2-opt)","order"],
- ["6 · T2 — rời rạc hoá hướng mũi","head"],
- ["7 · T3 — hồ sơ tốc độ (quy hoạch tuyến tính)","speed"],
- ["8 · T4 — vòng lặp tinh chỉnh","refine"]];
+ ["2 · T0 — nhu cầu θ theo NĂNG LỰC","demand"],
+ ["3 · T1 — chia việc cho từng máy bay","part"],
+ ["4 · T2 — đường bay thô (NN → 2-opt)","order"],
+ ["5 · T2 — rời rạc hoá hướng mũi","head"],
+ ["6 · T3 — hồ sơ tốc độ (quy hoạch tuyến tính)","speed"],
+ ["7 · T4 — tinh chỉnh","refine"],
+ ["8 · UAV BAY & phát → RỒI MỚI có vị trí nghi vấn","fly"]];
 const sel=document.getElementById('which');
 Object.keys(DATA).forEach(k=>sel.add(new Option(k,k)));
 let R=DATA[sel.value], S=0;
@@ -136,7 +143,7 @@ function hex(cx,cy,r){g.beginPath();for(let i=0;i<6;i++){const a=Math.PI/180*(60
 function clsCol(c){return c==='A'?css('--a'):c==='B'?css('--b'):css('--c');}
 function objs(){for(const o of R.objs){g.fillStyle=o.real?css('--real'):css('--dec');
  g.beginPath();g.arc(tx(o.x),ty(o.y),o.real?7:5.4,0,7);g.fill();
- g.strokeStyle=css('--card');g.lineWidth=1.6;g.stroke();}}
+ g.strokeStyle=css('--ink');g.lineWidth=1.5;g.stroke();}}
 function depot(){g.fillStyle=css('--ink');g.fillRect(tx(0)-5,ty(0)-5,10,10);}
 function polyline(pts,col,w,alpha){g.save();g.globalAlpha=alpha;g.strokeStyle=col;
  g.lineWidth=w;g.lineJoin='round';g.beginPath();
@@ -156,14 +163,15 @@ function draw(){
   let col=css('--c'), al=0.16;
   if(key==='cells'){col=css('--a');al=0.10;}
   else if(key==='class'){col=clsCol(c.cls);al=0.30;}
-  else if(key==='tier1'){const t=c.score/smax;
-    col=`rgb(${Math.round(255-40*t)},${Math.round(240-180*t)},${Math.round(200-180*t)})`;al=0.95;}
   else if(key==='demand'){col=c.theta>0?css('--a'):css('--c');
     al=c.theta>0?0.14+0.55*(c.theta/tmax):0.10;}
+  else if(key==='fly'){col=c.verdict==='confirm'?css('--a')
+      :c.verdict==='reject'?css('--c'):css('--line');
+    al=c.verdict==='confirm'?0.55:0.16;}
   else if(R.part[c.id]!==undefined){col=VEH[R.part[c.id]%VEH.length];al=0.20;}
   else {col=css('--c');al=0.08;}
   g.globalAlpha=al;g.fillStyle=col;hex(tx(c.x),ty(c.y),R.rc*S2);g.fill();g.globalAlpha=1;
-  const susp=(key==='tier1'||key==='demand')&&c.suspect;
+  const susp=(key==='fly')&&c.verdict==='confirm';
   g.strokeStyle=susp?css('--ink'):css('--line');g.lineWidth=susp?2.1:0.9;
   hex(tx(c.x),ty(c.y),R.rc*S2);g.stroke();
   if(key==='demand'&&c.orbits>0){g.fillStyle=css('--warn');g.font='11px system-ui';
@@ -215,12 +223,12 @@ function panel(){
  const T={
  cells:`Phủ vùng bằng ô lục giác bán kính <b>R_c=${C.cellRadius} m</b>, rồi <b>bầu cụm trưởng theo NĂNG LỰC</b>: phương thức cảm biến là <b>bộ lọc cứng</b>, sau đó mới cân tính toán và tốc độ thu. Cây nội ô dựng <b>từ cụm trưởng đã bầu</b> — bầu vì một lý do rồi định tuyến từ cụm trưởng chọn vì lý do khác thì mọi số đếm chặng sau đó sai.<br><br>Bước hàng <b>h = 1.5·R_c = ${(+C.rowPitch).toFixed(0)} m</b> là đại lượng Pha 0 giao cho Pha 1, và là thứ nối kích thước ô với bán kính lượn <b>ρ = ${(+C.turnRadius).toFixed(1)} m</b>.`,
  class:`Chỉ <b>lớp A</b> tốn thời gian bay. Lớp B phát hiện được nhưng <b>không bao giờ phân biệt được</b> — gửi tham chiếu tới đó mua gì cũng vô ích, nên nó bị <b>loại khỏi bài toán định tuyến</b>. Đây là chỗ sự không đồng nhất của mạng <b>bớt việc</b> cho máy bay chứ không chỉ đổi trọng số.<br><br>A=${A} · B=${B} · C=${Cc}. Phát tham chiếu trong ô mất <b>T_local ${tl.length?(tl.reduce((a,b)=>a+b,0)/tl.length).toFixed(0):0} s trung bình, ${tl.length?Math.max(...tl).toFixed(0):0} s tối đa</b>.`,
- tier1:`Mỗi ô hỏi <i>“có gì bất thường ở đây không?”</i> bằng <b>dữ liệu của riêng nó</b> — không cần tham chiếu, nên <b>không tốn giây bay nào</b>. Kết quả là tập nghi vấn <b>D (${D} ô)</b> và tiên nghiệm ω_n.<br><br>Tầng này <b>không thể</b> phân biệt nạn nhân thật với vật gây nhầm: trần Fano <b>1/(M+1)</b>. Trần đó là <b>trần thông tin</b>, quan sát lâu hơn không vượt được — chỉ thông tin từ bên ngoài mới vượt, và đó chính là thứ máy bay chở đi.<br><br><b>Tiên nghiệm ω_n không phải giả định</b> — nó là đầu ra ĐO ĐƯỢC của chính mạng.`,
- demand:`θ phân tầng: ô <b>đã báo động</b> cần trả lời đầy đủ; ô lớp A <b>chưa báo</b> nhận phần phòng hờ; ô <b>B/C nhận 0</b>.<br><br>θ ∝ <b>1/I_n</b> — cảm biến tốt hơn cần <b>ÍT</b> tham chiếu hơn. Đây là chỗ “mạng không đồng nhất” thành một <b>số hạng trong hàm mục tiêu</b> thay vì một tính từ.<br><br>Rồi θ được quy thành <b>giây bay</b>: bài toán giao dữ liệu liên tục thành bài toán <b>định tuyến tổ hợp</b>. ${need} ô cần phục vụ${orb?`, <b class=warn>${orb} ô phải lượn vòng</b> vì một lượt bay không đủ`:``}.<br><br><b>Liều tỉ lệ NGHỊCH với tốc độ</b> — với phương tiện không treo được, đó là biến điều khiển duy nhất.`,
+ demand:`<b>Chưa có gì được phát hiện.</b> Máy bay chưa cất cánh nên chưa nút nào cầm tham chiếu, nên chưa nút nào nói được ở đó có gì. Tập nghi vấn là <b>ĐẦU RA</b> của Pha 1, không phải đầu vào — planner không được cầm nó.<br><br>Vậy mọi ô lớp A đều hỏi; ô <b>B/C nhận 0</b>.<br><br>θ ∝ <b>1/I_n</b> — cảm biến tốt hơn cần <b>ÍT</b> tham chiếu hơn. Đây là <b>nguồn duy nhất</b> của sự không đồng nhất trong nhu cầu, và là chỗ “mạng không đồng nhất” thành một <b>số hạng trong hàm mục tiêu</b> thay vì một tính từ.<br><br>Rồi θ được quy thành <b>giây bay</b>: bài toán giao dữ liệu liên tục thành bài toán <b>định tuyến tổ hợp</b>. ${need} ô cần phục vụ${orb?`, <b class=warn>${orb} ô phải lượn vòng</b> vì một lượt bay không đủ`:``}.<br><br><b>Liều tỉ lệ NGHỊCH với tốc độ</b> — với phương tiện không treo được, đó là biến điều khiển duy nhất.`,
  part:`Chia ô cho <b>${C.vehicles} máy bay</b>. Chi phí một khối được chấm bằng <b>Dubins</b>, không phải mét đường thẳng, và <b>chân depot nằm TRONG</b> phép cân bằng — cắt tuyến thành cung bằng nhau rồi mới nối depot là cân một đại lượng <b>không ai bay</b>.`,
  order:`Xám nhạt = thứ tự <b>láng giềng gần nhất</b>. Đậm = sau <b>2-opt + Or-opt</b>. Mọi phương án đều chấm bằng <b>đúng cái DP hướng mũi</b> sẽ dùng cho đáp án — chấm phương án bằng thước rẻ rồi chấm người thắng bằng thước thật là cách planner tự tin chọn phương án tệ hơn.<br><br>${nn.toFixed(0)} m → <b>${op.toFixed(0)} m</b> (ngắn hơn ${(100*(nn-op)/nn).toFixed(1)}%).`,
  head:`Với phương tiện không quay tại chỗ, quãng đường giữa hai chỗ <b>phụ thuộc hướng mũi ở CẢ HAI đầu</b> — nên đây không phải TSP metric. Mỗi ô được rời rạc hoá thành <b>8 hướng</b> (vạch mờ); vạch đậm là hướng T2 đã chọn.<br><br>Với thứ tự ô <b>cố định</b>, hướng tối ưu tìm được bằng <b>quy hoạch động — CHÍNH XÁC</b>. Chỉ THỨ TỰ là heuristic, nên xấp xỉ bị nhốt vào <b>một chỗ có tên</b>.`,
  speed:`Đổi biến sang <b>nghịch đảo tốc độ</b>: thời gian, liều, và hộp tốc độ đều thành <b>tuyến tính</b> ⇒ đây là một <b>quy hoạch tuyến tính, GIẢI CHÍNH XÁC</b>.<br><br>Màu vàng = chậm (giao nhiều liều), xanh đậm = nhanh. Máy bay <b>chậm lại đúng chỗ cần</b> rồi tăng tốc ở nơi không cần.<br><br><b>Khúc lượn bị GHIM</b> ở bán kính T2 đã lập, vì ρ = v²/(g·tanφ) phụ thuộc tốc độ — để LP đổi tốc độ trên khúc lượn là làm hỏng đường T2 vừa tìm. Không có ràng buộc này thì hai chặng <b>đúng riêng lẻ và sai khi ghép</b>.`,
+ fly:`Máy bay bay tour đã lập và <b>phát quảng bá tập tham chiếu</b>. Nút nào nhận đủ thì chạy đối sánh với dữ liệu quan sát <b>của chính nó</b> rồi trả lời <b>XÁC NHẬN</b> hoặc <b>BÁC BỎ</b>.<br><br><b>Đến đây mới có tập vị trí nghi vấn</b> — và đó là đầu ra của Pha 1, đầu vào cho Pha 2.<br><br>Trước khi giao, nút bị chặn bởi <b>Fano: 1/(M+1)</b> — trần THÔNG TIN, quan sát lâu hơn không vượt được. Khoảng cách giữa hai giá trị đọc (trước/sau tham chiếu) chính là thứ máy bay bay ra để mua: <b>giao dữ liệu là hành vi GỠ NHẬP NHẰNG</b>, không phải hành vi vận chuyển.`,
  refine:`Đóng vòng phụ thuộc T0 phải cắt: chi phí phục vụ cần <b>khoảng lệch b</b>, mà b do tuyến quyết định, mà tuyến lại cần chi phí.<br><br>Thêm nữa, tuyến bay <b>rải tham chiếu miễn phí</b> lên mọi ô nằm gần nó — ô nào nhận đủ thì <b>không cần thăm</b>.<br><br><b>Vòng lặp KHÔNG co:</b> bỏ một ô làm tuyến ngắn lại, có thể khiến chính ô đó hết được phủ. Nên (1) chỉ kế hoạch <b>tự nhất quán</b> mới được nhận, và (2) <b>bước rút chia đôi</b> mỗi lần thất bại.`};
  document.getElementById('txt').innerHTML=T[key];
  let tb='';
@@ -231,6 +239,15 @@ function panel(){
    `<td>${c.ok?c.t.toFixed(0):'—'}</td></tr>`);
   tb+='</table>';
  }
+ if(key==='fly'){
+  const cf=R.cells.filter(c=>c.verdict==='confirm'), rj=R.cells.filter(c=>c.verdict==='reject');
+  tb=`<table><tr><th>kết luận</th><th>số ô</th></tr>`+
+   `<tr><td style="color:${css('--real')}">XÁC NHẬN</td><td>${cf.length}</td></tr>`+
+   `<tr><td>bác bỏ</td><td>${rj.length}</td></tr></table>`+
+   `<div class=body style="margin-top:8px">Trong ${cf.length} ô xác nhận, `+
+   `<b>${cf.filter(c=>c.real).length}</b> ô thật sự chứa nạn nhân; `+
+   `${R.cells.filter(c=>c.real).length} ô có nạn nhân trên toàn vùng.</div>`;
+ }
  if(key==='refine'){
   tb='<table><tr><th>vòng</th><th>makespan</th><th>ô thăm</th><th>nghỉ hưu</th><th>hợp lệ</th></tr>';
   R.hist.forEach(h=>tb+=`<tr><td>${h.it}</td><td>${h.mk.toFixed(0)} s</td><td>${h.cells}</td>`+
@@ -239,9 +256,9 @@ function panel(){
   tb+=`<div class=body style="margin-top:8px">Kết quả nhận: <b>${R.cfg.feasible==='1'?(+R.cfg.makespan).toFixed(0)+' s ở vòng '+R.cfg.bestIter:'KHÔNG có kế hoạch hợp lệ'}</b> · ${R.cfg.consistent}/${R.hist.length} vòng hợp lệ</div>`;
  }
  document.getElementById('tb').innerHTML=tb;
- const L={cells:'<span><i class=sw style=background:#2f6fd0></i>visual</span><span><i class=sw style=background:#c2410c></i>thermal</span><span><i class=sw style=background:#7c3aed></i>acoustic</span><span>◯ cụm trưởng</span>',
+ const L={fly:'<span><i class=sw style=background:var(--a)></i>ô XÁC NHẬN = vị trí nghi vấn (kết luận)</span><span><i class=sw style=background:var(--c)></i>bác bỏ</span>',
+  cells:'<span><i class=sw style=background:#2f6fd0></i>visual</span><span><i class=sw style=background:#c2410c></i>thermal</span><span><i class=sw style=background:#7c3aed></i>acoustic</span><span>◯ cụm trưởng</span>',
   class:'<span><i class=sw style=background:var(--a)></i>A</span><span><i class=sw style=background:var(--b)></i>B</span><span><i class=sw style=background:var(--c)></i>C</span>',
-  tier1:'<span>đậm hơn = a_n cao hơn · viền đậm = ∈ D</span>',
   demand:'<span>đậm hơn = θ lớn hơn · ↻n = số vòng lượn</span>',
   speed:'<span><i class=sw style=background:rgb(250,220,60)></i>chậm (nhiều liều)</span><span><i class=sw style=background:rgb(40,50,110)></i>nhanh</span>'};
  document.getElementById('leg').innerHTML=(L[key]||'')+

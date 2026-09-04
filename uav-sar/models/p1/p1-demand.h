@@ -5,15 +5,21 @@
 //
 // Three steps, and the third changes the problem class:
 //
-//   T0.1  theta_n -- reference bytes this cell needs. Tiered: a cell that
-//         flagged needs a full answer; a class-A cell that did not gets a hedge
-//         against a tier-1 miss; a cell that can never discriminate gets
-//         nothing, because sending to it buys nothing at any price.
+//   T0.1  theta_n -- reference bytes this cell needs. Class A asks; class B and
+//         C ask for nothing, because they can never discriminate and reference
+//         spent on them buys nothing at any price.
 //
-//         theta ~ 1 / I_n : a better sensor asks for LESS. This is where the
-//         network's heterogeneity stops being an adjective and becomes a term
-//         in the objective -- and it is what separates this from a weighted
-//         min-max mTSP, where the weights are given rather than derived.
+//         NOTHING HAS BEEN DETECTED YET. T0 runs before the aircraft has flown,
+//         so no node holds the reference and no node can say what is there. The
+//         suspect set is an OUTPUT of Phase 1, not an input to it, and the
+//         planner must not be handed one.
+//
+//         theta ~ 1 / I_n : a better sensor asks for LESS. That is the only
+//         source of heterogeneity in demand, and it is where the network's
+//         unevenness stops being an adjective and becomes a term in the
+//         objective -- still what separates this from a plain weighted min-max
+//         mTSP, since the weights are DERIVED from the deployment rather than
+//         given.
 //
 //   T0.2  G(b) -- what ONE straight pass at offset b delivers, per unit of
 //         inverse speed. It depends only on geometry and p(d), so it is
@@ -35,7 +41,6 @@
 #include "p1-cells.h"
 #include "p1-params.h"
 #include "p1-sensing.h"
-#include "p1-tier1.h"
 #include "p1-types.h"
 
 #include <cstdint>
@@ -63,8 +68,6 @@ struct Demand {
     CellClass cls = CellClass::C;
     double    x = 0, y = 0;         // cell centre: the point to route to
     double    theta = 0.0;          // bytes needed; 0 = never serve
-    double    weight = 0.0;         // w_n from tier 1; 0 outside D
-    bool      suspect = false;
     // Written by ServiceCost().
     double    penaltyS = 0.0;       // seconds ADDED over flying past at cruise
     double    serveMps = 0.0;       // speed to hold over the cell; 0 = orbit
@@ -72,8 +75,7 @@ struct Demand {
 };
 
 std::map<int32_t, Demand> BuildDemands(const CellPlan& plan,
-                                       const std::vector<Node>& nodes,
-                                       const Tier1Result& t1);
+                                       const std::vector<Node>& nodes);
 
 // Seconds of service for this cell from a pass at `offsetM`. Fills the three
 // output fields and returns the penalty. A cell with theta = 0 costs nothing.

@@ -68,3 +68,12 @@ build_lib_example(
     ${libpropagation}
     ${liblr-wpan}
 )
+
+# Phase 1 planning front end (cells/classes, Tier 1, T0). Pure logic.
+build_lib_example(
+  NAME uav-sar-phase1-plan-test
+  SOURCE_FILES phase1-plan-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+)

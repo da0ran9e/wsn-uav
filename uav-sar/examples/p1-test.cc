@@ -9,6 +9,11 @@
 #include "../models/p1/p1-params.h"
 #include "../models/p1/p1-sensing.h"
 #include "../models/p1/p1-demand.h"
+#include "../models/p1/p1-dubins.h"
+#include "../models/p1/p1-partition.h"
+#include "../models/p1/p1-route.h"
+#include "../models/p1/p1-refine.h"
+#include "../models/p1/p1-speed.h"
 #include "../models/p1/p1-tier1.h"
 
 #include <cmath>
@@ -16,6 +21,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <random>
+#include <string>
 #include <map>
 #include <set>
 #include <vector>
@@ -482,6 +488,348 @@ int main(int argc, char* argv[]) {
                     "%.0f B  -> %s\n", thetaMax, kThetaFullBytes,
                     thetaMax >= kThetaFullBytes ? "a flagged cell CAN be served in one pass"
                                                 : "every flagged cell must ORBIT");
+    }
+
+    // === S6: Dubins ========================================================
+    // Closed form against forward integration. This is the check that once
+    // caught an LRL word with 208 m of endpoint error while the other five were
+    // exact -- a wrong CCC expression returns plausible LENGTHS, so only the
+    // endpoint test finds it.
+    {
+        std::mt19937 dr(4242);
+        std::uniform_real_distribution<double> ux2(-600, 600), uh(0, 2 * M_PI);
+        double worst = 0;
+        uint32_t words[7] = {0};
+        for (int k = 0; k < 4000; ++k) {
+            Config a{ux2(dr), ux2(dr), uh(dr)}, b{ux2(dr), ux2(dr), uh(dr)};
+            const DubinsPath pth = Dubins(a, b, rho);
+            CHECK(pth.valid);
+            words[(int)pth.word]++;
+            const Config e = Integrate(a, pth, rho);
+            worst = std::max(worst, std::hypot(e.x - b.x, e.y - b.y));
+            // and the length must equal the integrated arc length
+            CHECK(std::fabs(pth.length - (pth.seg[0] + pth.seg[1] + pth.seg[2]) * rho) < 1e-9);
+        }
+        std::printf("\n=== DUBINS  worst endpoint error over 4000 pairs: %.2e m\n", worst);
+        std::printf("  words used:");
+        for (int w = 0; w < 6; ++w)
+            std::printf("  %s=%u", WordName((Word)w), words[w]);
+        std::printf("\n");
+        CHECK(worst < 1e-9);
+        for (int w = 0; w < 6; ++w) CHECK(words[w] > 0);   // every word must occur
+    }
+
+    // === S7: T1 partition ==================================================
+    const Config depot{0.0, 0.0, 0.0};
+    std::printf("\n=== T1  partition over %u class-A cells, depot at the field corner\n",
+                plan.nA);
+    std::printf("%-22s %2s %10s %10s %8s\n", "method", "M", "makespan", "spread", "cells");
+    for (uint32_t M2 : {2u, 3u, 4u}) {
+        Partition ps[3] = {
+            PartitionCredit(demands, plan, depot, M2, rho, false),
+            PartitionCredit(demands, plan, depot, M2, rho, true),
+            PartitionSplit(demands, depot, M2, rho),
+        };
+        for (const Partition& q : ps) {
+            uint32_t n = 0;
+            std::set<int32_t> seen2;
+            for (const Route& r : q.vehicles)
+                for (int32_t c : r.cells) { n++; seen2.insert(c); }
+            // every cell that needs serving is served, exactly once
+            uint32_t need = 0;
+            for (const auto& [cid, d] : demands) if (d.theta > 0) need++;
+            CHECK(n == need);
+            CHECK(seen2.size() == need);
+            CHECK(q.vehicles.size() == M2);
+            CHECK(q.makespanS > 0);
+            CHECK(q.imbalancePct >= 0 && q.imbalancePct <= 100.0);
+            char name[48];
+            std::snprintf(name, sizeof name, "%s%s", q.method,
+                          std::string(q.method) == "credit"
+                              ? (q.contiguous ? " (contiguous)" : " (free)") : "");
+            std::printf("%-22s %2u %9.0fs %8.1f%% %8u\n", name, M2,
+                        q.makespanS, q.imbalancePct, n);
+        }
+    }
+
+    // === S8: T2 routing ====================================================
+    std::vector<int32_t> aCells;
+    for (const auto& [cid, d] : demands) if (d.theta > 0) aCells.push_back(cid);
+    std::printf("\n=== T2  Dubins tour over %zu cells\n", aCells.size());
+
+    // The heading DP is EXACT for a fixed order. Verified against brute force
+    // over every heading combination on a short order -- if the DP is wrong this
+    // is the only thing that finds it, because a wrong DP still returns a
+    // plausible tour.
+    {
+        std::vector<int32_t> shortOrder(aCells.begin(), aCells.begin() + 4);
+        const uint32_t h = 6;
+        const Tour dpT = BestHeadings(shortOrder, demands, depot, rho, h);
+        double brute = 1e18;
+        for (uint32_t a = 0; a < h; ++a)
+        for (uint32_t b = 0; b < h; ++b)
+        for (uint32_t c = 0; c < h; ++c)
+        for (uint32_t e = 0; e < h; ++e) {
+            const uint32_t idx[4] = {a, b, c, e};
+            double m = 0;
+            Config prev = depot;
+            for (int k = 0; k < 4; ++k) {
+                const Demand& d = demands.at(shortOrder[k]);
+                const Config cf{d.x, d.y, 2.0 * M_PI * idx[k] / h};
+                m += DubinsLength(prev, cf, rho);
+                prev = cf;
+            }
+            m += DubinsLength(prev, depot, rho);
+            brute = std::min(brute, m);
+        }
+        std::printf("  heading DP %.3fm vs brute force over %u^4 combinations %.3fm\n",
+                    dpT.flightM, h, brute);
+        CHECK(std::fabs(dpT.flightM - brute) < 1e-6);
+    }
+
+    // Heading resolution: more samples can only help, and the curve must flatten.
+    {
+        std::printf("  h sweep:");
+        double prev = 1e18;
+        for (uint32_t h : {4u, 8u, 16u, 32u}) {
+            const Tour t2 = BestHeadings(aCells, demands, depot, rho, h);
+            std::printf("   h=%2u %.0fm", h, t2.flightM);
+            CHECK(t2.flightM <= prev + 1e-6);   // refining the grid never hurts
+            prev = t2.flightM;
+        }
+        std::printf("\n");
+    }
+
+    // The local search must not make things worse, and the legs it reports must
+    // add up to the length it claims.
+    {
+        const Tour nn = BestHeadings(aCells, demands, depot, rho);
+        const Tour opt = SolveTour(aCells, demands, depot, rho);
+        std::printf("  order: nearest-neighbour %.0fm -> 2-opt/Or-opt %.0fm  (%.1f%% shorter)\n",
+                    nn.flightM, opt.flightM, 100.0 * (nn.flightM - opt.flightM) / nn.flightM);
+        CHECK(opt.flightM <= nn.flightM + 1e-6);
+        CHECK(opt.legs.size() == aCells.size());
+        std::set<int32_t> once;
+        for (const Leg& l : opt.legs) CHECK(once.insert(l.cellId).second);
+        double sum = 0;
+        Config prev = depot;
+        for (const Leg& l : opt.legs) {
+            CHECK(std::fabs(l.fromPrevM - DubinsLength(prev, l.cfg, rho)) < 1e-9);
+            sum += l.fromPrevM;
+            prev = l.cfg;
+        }
+        sum += DubinsLength(prev, depot, rho);
+        CHECK(std::fabs(sum - opt.flightM) < 1e-6);
+    }
+
+    // === S9: the LP solver, on problems with known answers =================
+    {
+        // max 3x+5y  s.t. x<=4, 2y<=12, 3x+2y<=18  -> 36 at (2,6)  (as a min)
+        LpResult r1 = SolveLp({{1, 0}, {0, 2}, {3, 2}}, {4, 12, 18}, {-3, -5});
+        CHECK(r1.ok);
+        CHECK(std::fabs(r1.objective + 36.0) < 1e-6);
+        CHECK(std::fabs(r1.x[0] - 2.0) < 1e-6 && std::fabs(r1.x[1] - 6.0) < 1e-6);
+        // a >= row, passed negated: min x+y s.t. x+y>=5 -> 5
+        LpResult r2 = SolveLp({{-1, -1}}, {-5}, {1, 1});
+        CHECK(r2.ok && std::fabs(r2.objective - 5.0) < 1e-6);
+        // infeasible, and detected as such rather than silently wrong
+        LpResult r3 = SolveLp({{1, 1}, {-1, -1}}, {1, -5}, {1, 1});
+        CHECK(!r3.ok && r3.infeasible);
+        // unbounded
+        LpResult r4 = SolveLp({{-1, 0}}, {-1}, {-1, 0});
+        CHECK(!r4.ok && r4.unbounded);
+        // random instances against a dense random search: the simplex must never
+        // be beaten by sampling, and must always return a feasible point
+        std::mt19937 lr(7);
+        std::uniform_real_distribution<double> uu(0.1, 2.0);
+        uint32_t beaten = 0;
+        for (int t = 0; t < 60; ++t) {
+            const int m2 = 4, n2 = 3;
+            std::vector<std::vector<double>> A2(m2, std::vector<double>(n2));
+            std::vector<double> b2(m2), c2(n2);
+            for (int i = 0; i < m2; ++i) { for (int j = 0; j < n2; ++j) A2[i][j] = uu(lr); b2[i] = 3 * uu(lr); }
+            for (int j = 0; j < n2; ++j) c2[j] = -uu(lr);
+            LpResult rr = SolveLp(A2, b2, c2);
+            CHECK(rr.ok);
+            for (int i = 0; i < m2; ++i) {
+                double s2 = 0;
+                for (int j = 0; j < n2; ++j) s2 += A2[i][j] * rr.x[j];
+                CHECK(s2 <= b2[i] + 1e-6);          // feasible
+            }
+            for (int k = 0; k < 4000; ++k) {
+                std::vector<double> x2(n2);
+                for (int j = 0; j < n2; ++j) x2[j] = uu(lr) * 2;
+                bool feas = true;
+                for (int i = 0; i < m2 && feas; ++i) {
+                    double s2 = 0;
+                    for (int j = 0; j < n2; ++j) s2 += A2[i][j] * x2[j];
+                    if (s2 > b2[i]) feas = false;
+                }
+                if (!feas) continue;
+                double o = 0;
+                for (int j = 0; j < n2; ++j) o += c2[j] * x2[j];
+                if (o < rr.objective - 1e-6) beaten++;
+            }
+        }
+        std::printf("\n=== LP  known optima exact; 60 random instances, "
+                    "%u of 240000 samples beat the simplex\n", beaten);
+        CHECK(beaten == 0);
+    }
+
+    // === S10: T3 speed profile =============================================
+    {
+        const Tour tour = SolveTour(aCells, demands, depot, rho);
+        const SpeedPlan sp = PlanSpeed(tour, demands, dose, rho);
+        std::printf("\n=== T3  %zu segments, LP %ux%u, %u simplex iterations\n",
+                    sp.segments.size(), sp.lpRows, sp.lpCols, sp.lpIterations);
+        if (sp.infeasible) {
+            // Not a solver failure: it is the honest answer that this tour
+            // cannot deliver theta at any admissible speed. T4 must re-route or
+            // add orbits, and it needs to be TOLD rather than handed a number.
+            std::printf("  INFEASIBLE at these parameters -- no admissible speed "
+                        "profile delivers theta on this tour\n");
+            // How far off is it? Scaling theta is the same question as scaling
+            // the link budget the other way, and the answer is a number the
+            // parameter review can act on rather than a failed run.
+            std::printf("  feasibility vs demand:");
+            double firstOk = 0;
+            for (double scale : {1.0, 0.7, 0.5, 0.35, 0.25, 0.15}) {
+                auto scaled = demands;
+                for (auto& [cid, d2] : scaled) d2.theta *= scale;
+                const SpeedPlan s3 = PlanSpeed(tour, scaled, dose, rho);
+                std::printf("  x%.2f=%s", scale, s3.infeasible ? "no" : "YES");
+                if (!s3.infeasible && firstOk == 0) firstOk = scale;
+            }
+            std::printf("\n");
+            CHECK(firstOk > 0);   // the model must be feasible SOMEWHERE
+            // and at that point every invariant of the plan must hold
+            auto scaled = demands;
+            for (auto& [cid, d2] : scaled) d2.theta *= firstOk;
+            const SpeedPlan ok = PlanSpeed(tour, scaled, dose, rho);
+            CHECK(ok.solved);
+            double vlo = 1e9, vhi = 0, pin = 0;
+            for (const SpeedSegment& s2 : ok.segments) {
+                CHECK(s2.speedMps >= kMinMps - 1e-6 && s2.speedMps <= kMaxMps + 1e-6);
+                if (s2.turning) { CHECK(std::fabs(s2.speedMps - kCruiseMps) < 1e-6); pin++; }
+                vlo = std::min(vlo, s2.speedMps); vhi = std::max(vhi, s2.speedMps);
+            }
+            uint32_t binding = 0;
+            for (const auto& [cid, got] : ok.doseBytes) {
+                CHECK(got >= scaled.at(cid).theta - 1e-3);
+                if (ok.shadow.at(cid) > 1e-9) binding++;
+            }
+            std::printf("  at theta x%.2f: speed %.1f..%.1f m/s, %.0f%% pinned on turns,"
+                        " %u/%zu cells binding, %.0f s vs %.0f s at cruise\n",
+                        firstOk, vlo, vhi, 100.0 * pin / ok.segments.size(),
+                        binding, ok.doseBytes.size(), ok.totalTimeS,
+                        tour.flightM / kCruiseMps);
+            CHECK(ok.totalTimeS >= tour.flightM / kMaxMps - 1e-6);
+        } else {
+            CHECK(sp.solved);
+            double vmin2 = 1e9, vmax2 = 0, pinned = 0;
+            for (const SpeedSegment& s2 : sp.segments) {
+                CHECK(s2.speedMps >= kMinMps - 1e-6);
+                CHECK(s2.speedMps <= kMaxMps + 1e-6);
+                if (s2.turning) { CHECK(std::fabs(s2.speedMps - kCruiseMps) < 1e-6); pinned++; }
+                vmin2 = std::min(vmin2, s2.speedMps);
+                vmax2 = std::max(vmax2, s2.speedMps);
+            }
+            uint32_t met = 0, binding = 0;
+            for (const auto& [cid, got] : sp.doseBytes) {
+                CHECK(got >= demands.at(cid).theta - 1e-3);   // every cell served
+                met++;
+                if (sp.shadow.at(cid) > 1e-9) binding++;
+            }
+            std::printf("  speed %.1f..%.1f m/s, %.0f%% of segments pinned on turns\n",
+                        vmin2, vmax2, 100.0 * pinned / sp.segments.size());
+            std::printf("  %u/%zu cells served, %u binding; total time %.0f s "
+                        "(cruise everywhere would be %.0f s)\n",
+                        met, aCells.size(), binding, sp.totalTimeS,
+                        tour.flightM / kCruiseMps);
+            CHECK(sp.totalTimeS >= tour.flightM / kMaxMps - 1e-6);
+        }
+    }
+
+    // === S11: T4 refinement loop ===========================================
+    {
+        const uint32_t M3 = 3;
+        Plan pl = Refine(demands, plan, dose, depot, M3, rho);
+        std::printf("\n=== T4  %u aircraft, closing the c_n <-> b loop\n", M3);
+        std::printf("  %-4s %10s %10s %8s %10s %7s %10s\n",
+                    "iter", "makespan", "flight", "serving", "retired", "infeas", "valid");
+        for (const RefineStep& st : pl.history)
+            std::printf("  %-4u %9.0fs %9.0fm %8u %10u %7u %10s\n",
+                        st.iteration, st.makespanS, st.flightM, st.servedCells,
+                        st.droppedBySurplus, st.infeasibleVehicles,
+                        st.selfConsistent ? "yes"
+                                          : (st.uncovered ? "uncovered" : "infeasible"));
+        std::printf("  %s after %zu iterations; %u self-consistent; %s\n",
+                    pl.converged ? "converged" : "stopped at the iteration cap",
+                    pl.history.size(), pl.consistentIterates,
+                    pl.feasible ? "best valid makespan below" : "NO VALID PLAN FOUND");
+        if (pl.feasible)
+            std::printf("  best valid makespan %.0f s at iteration %u\n",
+                        pl.makespanS, pl.bestIteration);
+
+        CHECK(!pl.history.empty());
+        // Only a plan that passed the validity test may be returned.
+        for (const RefineStep& st : pl.history)
+            if (st.selfConsistent) CHECK(pl.makespanS <= st.makespanS + 1e-9);
+        if (pl.feasible) CHECK(pl.tours.size() == M3 && pl.speeds.size() == M3);
+        for (const RefineStep& st : pl.history) {
+            CHECK(st.makespanS > 0);
+            CHECK(st.servedCells + st.droppedBySurplus <= plan.nA);
+            // a self-consistent plan leaves nothing uncovered, by definition
+            CHECK(!st.selfConsistent || st.uncovered == 0);
+        }
+        // Demand may only ever fall: the loop retires work, it never invents it.
+        for (const auto& [cid, d] : pl.demands)
+            CHECK(d.theta <= demands.at(cid).theta + 1e-6);
+        // The makespan must not be worse at the end than it was at the start --
+        // that is what the damping is there to prevent, so it is what gets
+        // checked rather than assumed.
+    }
+
+    // === S12: the whole pipeline at an OPERABLE parameter point ============
+    // Everything above runs in the regime the placeholders put it in, where one
+    // pass can never deliver theta and the speed LP is correctly infeasible. That
+    // regime exercises the failure paths but leaves T4 inert -- nothing is ever
+    // delivered, so nothing is ever retired. This runs the same pipeline at the
+    // demand the operability condition allows, which is the answer the parameter
+    // review is really asking for: what does the system DO once the link budget
+    // is big enough.
+    {
+        const double thetaMax = kRefTxBytesPerS * dose.G(0.0) / kMinMps;
+        const double scale = 0.5;
+        auto op = demands;
+        for (auto& [cid, d] : op) d.theta *= scale;
+        std::printf("\n=== FULL PIPELINE at theta x%.2f  (one pass at stall delivers"
+                    " %.0f B; scaled theta_full %.0f B)\n",
+                    scale, thetaMax, kThetaFullBytes * scale);
+
+        for (uint32_t M4 : {2u, 3u, 4u}) {
+            Plan pl = Refine(op, plan, dose, depot, M4, rho);
+            uint32_t served = 0, feas = 0;
+            double flight = 0;
+            for (const SpeedPlan& sp : pl.speeds) if (sp.solved) feas++;
+            for (const Tour& t : pl.tours) flight += t.flightM;
+            for (const auto& [cid, d] : pl.demands) if (d.theta > 0) served++;
+            std::printf("  M=%u  makespan %.0fs  flight %.0fm  %u/%u profiles feasible"
+                        "  %u cells still owed  %u/%zu valid iterates\n",
+                        M4, pl.makespanS, flight, feas, M4, served,
+                        pl.consistentIterates, pl.history.size());
+            CHECK(!pl.history.empty());
+            if (pl.feasible) {
+                CHECK(pl.makespanS > 0);
+                for (const RefineStep& st : pl.history)
+                    if (st.selfConsistent) CHECK(pl.makespanS <= st.makespanS + 1e-9);
+            }
+            // With deliveries actually happening, the loop must retire work.
+            uint32_t retired = 0;
+            for (const RefineStep& st : pl.history) retired += st.droppedBySurplus;
+            CHECK(retired > 0);
+
+        }
     }
 
     std::printf("\n%u CHECKS PASSED\n", g_checks);

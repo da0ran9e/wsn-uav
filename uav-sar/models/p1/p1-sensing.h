@@ -3,36 +3,28 @@
 
 // What a ground node can do, and where each capability binds in Phase 1.
 //
-// Four capabilities that fail INDEPENDENTLY. Each one gates a different thing,
-// and the point of listing them is that they gate DIFFERENT STAGES -- a node can
-// be excellent at one and useless at the next:
+// N3 decides the shape of this: THE CLUSTER HEAD IS THE MATCHING SUBJECT. It
+// matches its OWN observation against the reference it receives, and no data
+// moves inside the cluster during this phase. So a node's capabilities matter
+// only insofar as that node might be the head.
 //
-//   modality  what it measures      -> decides CLASS. A node of the wrong
-//                                     modality can notice something and can
-//                                     never say what it is. Reference bytes
-//                                     spent on its cell buy nothing at any
-//                                     price, so the cell is dropped from the
-//                                     routing problem entirely. This is the
-//                                     capability that removes work.
+//   camera    can it observe at all   -> MANDATORY for headship. A head without
+//                                       a camera has nothing to match, so this
+//                                       is a hard filter, not a weight.
 //
-//   obs       how far it sees       -> sets Tier-1 detection RANGE, and sets
-//                                     the Fisher information I_n, hence how
-//                                     much reference the node needs (theta ~
-//                                     1/I_n). A better sensor asks for LESS.
-//                                     This is where "the network is
-//                                     heterogeneous" stops being an adjective
-//                                     and becomes a term in the objective.
+//   obs       feature quality          -> better features carry more Chernoff
+//                                       information per unit of reference, so
+//                                       the cell needs LESS of it.
 //
-//   cpu       can it decide         -> gates whether it can run the matcher at
-//                                     all. Below kCpuMatchMin it can raise a
-//                                     candidate and never settle one, so its
-//                                     cell cannot be class A.
+//   cpu       matcher strength         -> a stronger matcher extracts more
+//                                       information from the SAME reference, so
+//                                       again the cell needs less. Second
+//                                       priority in the election, and the second
+//                                       source of demand heterogeneity.
 //
-//   rxBps     how fast it listens   -> the reference is a bulk download, not a
-//                                     trickle, and the aircraft is overhead for
-//                                     seconds. Sustained receive rate therefore
-//                                     binds here, and it sets how long the cell
-//                                     takes to spread the reference internally.
+//   rxBps     receive rate             -> third priority in the election: how
+//                                       fast the head can take the reference off
+//                                       the air while the aircraft is overhead.
 //
 // obs SCALES RANGE, NOT GAIN. That distinction was measured on the old system
 // and getting it wrong collapsed detection completely: as a gain multiplier, a
@@ -51,20 +43,25 @@ namespace ns3::uavsar::p1 {
 struct Node {
     uint32_t id = 0;
     double   x = 0, y = 0;
-    Modality modality = Modality::NONE;
-    double   obs = 0.0;        // [0,1]; 0 = no imager
+    double   obs = 0.0;        // [0,1]; 0 = no camera
     double   cpu = 0.0;        // [0,1]; fraction of the matcher it can run
     double   rxBps = 0.0;      // sustained receive rate
 
-    bool Images() const { return p1::Images(modality) && obs > 0.0; }
-    // Can this node settle an identity, given the reference it would receive?
-    bool CanMatch() const {
-        return Images() && modality == kReferenceModality && cpu >= kCpuMatchMin;
+    // The only eligibility test for headship. Everything else is a priority.
+    bool HasCamera() const { return obs > 0.0; }
+
+    // Chernoff information per unit of reference. Both terms raise it and both
+    // are necessary -- features with no matcher decide nothing, a matcher with
+    // no features has nothing to decide on -- so they multiply.
+    // TODO(param): the functional form is a placeholder until the Chernoff
+    // derivation fixes it. What is load-bearing is that BOTH capabilities enter.
+    double Information() const {
+        const double i = obs * cpu;
+        return i > 0.05 ? i : 0.05;
     }
-    // Fisher information proxy: what makes theta_n heterogeneous.
-    // TODO(param): obs stands in for I_n until the Chernoff derivation lands.
-    double Information() const { return obs > 0.05 ? obs : 0.05; }
-    // Score used by the capability-weighted election.
+
+    // Election priority, applied only among nodes that have a camera:
+    // compute first, then radio, then energy (weight 0 -- no model).
     double ElectScore() const {
         return kElectWCompute * cpu +
                kElectWRadio   * (rxBps / kRxBpsMax) +

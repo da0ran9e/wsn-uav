@@ -40,17 +40,15 @@ inline constexpr double kCellRadiusM = 94.0;
 // should come from the measured G2G range, not assumed.
 inline constexpr double kGroundRangeM = 40.0;
 
-// The modality the reference dataset is recorded in.  [design]
-inline constexpr Modality kReferenceModality = Modality::VISUAL;
+// SCOPE ASSUMPTION (0.2.2): every cell holds at least one camera node. A cell
+// that does not cannot elect a head, has no demand, and drops out of the routing
+// problem -- which thins the set the aircraft must serve and, past a point, stops
+// the kinematic constraint from binding at all. That is a stated boundary of
+// this work, not a case it handles.
 
-// A node needs this much of the matcher to run it at all. Below it, the node can
-// raise an anomaly but can never confirm or deny one -- so it cannot make its
-// cell class A.  TODO(param): from the matcher's actual compute cost.
-inline constexpr double kCpuMatchMin = 0.50;
-
-// Weights of the capability-weighted leader election. Modality is NOT among
-// them: it is a hard filter applied first, because a leader of the wrong
-// modality cannot run the match and no amount of compute compensates.
+// Election priorities, applied ONLY among nodes that have a camera. Having a
+// camera is a hard filter, not a weight: a head without one has nothing to
+// match, and no amount of compute compensates.
 // Residual energy -- PECEE's original criterion -- carries weight 0 because
 // this simulator has no per-node energy model. Weighting a constant would look
 // like a criterion without being one.
@@ -63,9 +61,7 @@ inline constexpr double kElectWEnergy  = 0.00;
 // Node population
 // ===========================================================================
 // TODO(param): the whole block is a deployment description, not physics.
-inline constexpr double kImagingFraction  = 0.65;   // nodes with any imager
-inline constexpr double kVisualFraction   = 0.55;   // of imagers, share VISUAL
-inline constexpr double kThermalFraction  = 0.30;   // ... THERMAL; rest ACOUSTIC
+inline constexpr double kCameraFraction   = 0.85;   // nodes with a camera
 inline constexpr double kObsMin = 0.45,  kObsMax = 1.00;
 inline constexpr double kCpuMin = 0.20,  kCpuMax = 1.00;
 inline constexpr double kRxBpsMin = 20000.0, kRxBpsMax = 250000.0;
@@ -149,8 +145,23 @@ inline constexpr uint32_t kReportBytes = 6;
 // That is still what separates this from a plain weighted min-max mTSP -- the
 // weights are DERIVED from the deployment rather than given -- but the claim is
 // narrower than a prior measured by the network, and must be written that way.
-// TODO(param): derive from the Chernoff exponent, theta ~ 1 / I_n(s).
-inline constexpr double kThetaFullBytes = 120000.0;
+// TODO(param): derive from the Chernoff exponent.
+inline constexpr double kThetaBaseBytes = 120000.0;
+
+// Similarity of the nearest confusing object, in [0,1). The reference needed to
+// separate two things that already look alike diverges as they converge:
+//
+//     theta  ~  (1 - s)^-2
+//
+// so this is not a tuning knob but the term that says WHY the demand is what it
+// is. s -> 1 is a confuser indistinguishable from the target, and no finite
+// amount of reference settles it.
+// TODO(param): a property of the scene and the feature extractor; must be
+// measured, or stated as the worst case the design is built for.
+inline constexpr double kConfuserSimilarity = 0.0;
+
+// Reference bytes a cell of unit capability needs, at that similarity.
+double ThetaFullBytes();
 
 // Reference broadcast rate from the aircraft.
 // TODO(param): from the airborne link budget.

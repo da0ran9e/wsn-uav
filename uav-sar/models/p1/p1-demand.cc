@@ -55,17 +55,17 @@ std::map<int32_t, Demand> BuildDemands(const CellPlan& plan,
         d.cls = c.cls;
         d.x = c.cx;
         d.y = c.cy;
-        if (c.cls != CellClass::A) {
-            // B can detect and never discriminate; C does neither. Reference
-            // bytes here buy nothing at any price. This is where the network's
-            // heterogeneity first REMOVES work from the aircraft, rather than
-            // merely reweighting it.
+        if (c.cls != CellClass::SERVED) {
+            // No camera, so no head, so nothing to match. Reference bytes here
+            // buy nothing at any price -- the cell leaves the routing problem.
             d.theta = 0.0;
         } else {
             const auto li = byId.find(c.leader);
             const double info = li != byId.end() ? li->second->Information() : 1.0;
-            // No tiering: at planning time there is nothing to tier ON.
-            d.theta = kThetaFullBytes / info;
+            // No tiering: at planning time there is nothing to tier ON. The
+            // only heterogeneity is capability -- feature quality AND matcher
+            // strength, both of which raise the Chernoff information per byte.
+            d.theta = ThetaFullBytes() / info;
         }
         out[cid] = d;
     }

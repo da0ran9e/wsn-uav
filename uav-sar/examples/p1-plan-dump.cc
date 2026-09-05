@@ -96,22 +96,22 @@ int main(int argc, char* argv[]) {
     std::fclose(f);
 
     f = open("nodes.csv");
-    std::fprintf(f, "id,x,y,modality,obs,cpu,rxBps,canMatch\n");
+    std::fprintf(f, "id,x,y,camera,obs,cpu,rxBps\n");
     for (const Node& n : nodes)
-        std::fprintf(f, "%u,%.2f,%.2f,%s,%.3f,%.3f,%.0f,%d\n", n.id, n.x, n.y,
-                     ModalityName(n.modality), n.obs, n.cpu, n.rxBps, n.CanMatch());
+        std::fprintf(f, "%u,%.2f,%.2f,%d,%.3f,%.3f,%.0f\n", n.id, n.x, n.y,
+                     n.HasCamera(), n.obs, n.cpu, n.rxBps);
     std::fclose(f);
 
     f = open("cells.csv");
-    std::fprintf(f, "id,q,r,cx,cy,class,leader,members,imagers,matchers,tLocal,"
+    std::fprintf(f, "id,q,r,cx,cy,class,leader,members,cameras,"
                     "score,suspect,weight,holdsObject,holdsReal,theta,penaltyS,orbits,"
                     "held,verdict\n");
     for (const auto& [cid, c] : plan.cells) {
         const CellReading* t = sr.cells.count(cid) ? &sr.cells.at(cid) : nullptr;
         const Demand& d = pl.bestDemands.at(cid);
-        std::fprintf(f, "%d,%d,%d,%.2f,%.2f,%s,%u,%zu,%u,%u,%.2f,%.4f,%d,%.4f,%d,%d,%.0f,%.2f,%u,%.3f,%s\n",
+        std::fprintf(f, "%d,%d,%d,%.2f,%.2f,%s,%u,%zu,%u,%.4f,%d,%.4f,%d,%d,%.0f,%.2f,%u,%.3f,%s\n",
                      cid, c.q, c.r, c.cx, c.cy, CellClassName(c.cls), c.leader,
-                     c.members.size(), c.imagers, c.matchers, c.tLocalS,
+                     c.members.size(), c.cameras,
                      t ? t->score : 0.0, t ? t->suspect : 0, t ? t->weight : 0.0,
                      t ? t->holdsObject : 0, t ? t->holdsReal : 0,
                      demands.at(cid).theta, d.penaltyS, d.orbits,
@@ -231,9 +231,9 @@ int main(int argc, char* argv[]) {
     uint32_t conf = 0;
     for (const auto& [cid, h] : held)
         if (CellVerdict(sr, plan, nodes, cid, h) == Verdict::CONFIRM) conf++;
-    std::printf("%s: %zu cells (A=%u B=%u C=%u), %u vehicles, makespan %.0fs, %s"
+    std::printf("%s: %zu cells (served=%u barren=%u), %u vehicles, makespan %.0fs, %s"
                 " -> %u suspect position%s after the flight\n",
-                dir.c_str(), plan.cells.size(), plan.nA, plan.nB, plan.nC, M,
+                dir.c_str(), plan.cells.size(), plan.nServed, plan.nBarren, M,
                 pl.makespanS, pl.feasible ? "valid plan" : "NO VALID PLAN",
                 conf, conf == 1 ? "" : "s");
     return 0;

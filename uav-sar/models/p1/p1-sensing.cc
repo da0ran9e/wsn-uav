@@ -16,16 +16,9 @@ std::vector<Node> BuildNodes(const std::vector<std::pair<double, double>>& xy,
         n.id = id++;
         n.x = x;
         n.y = y;
-        if (u01(rng) < kImagingFraction) {
-            n.obs = kObsMin + (kObsMax - kObsMin) * u01(rng);
-            const double m = u01(rng);
-            n.modality = m < kVisualFraction ? Modality::VISUAL
-                       : m < kVisualFraction + kThermalFraction ? Modality::THERMAL
-                                                                : Modality::ACOUSTIC;
-        } else {
-            n.obs = 0.0;
-            n.modality = Modality::NONE;   // scalar node
-        }
+        n.obs = u01(rng) < kCameraFraction
+                    ? kObsMin + (kObsMax - kObsMin) * u01(rng)
+                    : 0.0;                 // no camera
         n.cpu   = kCpuMin + (kCpuMax - kCpuMin) * u01(rng);
         n.rxBps = kRxBpsMin + (kRxBpsMax - kRxBpsMin) * u01(rng);
         out.push_back(n);
@@ -42,7 +35,6 @@ std::vector<Node> BuildUniformNodes(const std::vector<std::pair<double, double>>
         n.id = id++;
         n.x = x;
         n.y = y;
-        n.modality = kReferenceModality;
         n.obs = 1.0;
         n.cpu = 1.0;
         n.rxBps = kRxBpsMax;

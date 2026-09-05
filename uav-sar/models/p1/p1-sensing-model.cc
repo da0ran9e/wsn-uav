@@ -31,7 +31,7 @@ SensingResult RunSensing(const std::vector<Node>& nodes, const CellPlan& plan,
     for (const Node& n : nodes) {
         NodeReading r;
         r.id = n.id;
-        if (!n.Images()) { out.nodes[n.id] = r; continue; }
+        if (!n.HasCamera()) { out.nodes[n.id] = r; continue; }
         r.noise = gauss(rng);                 // once per node per run
         double bestCue = 0.0, bestFull = 0.0;
         for (const Object& o : objects) {
@@ -50,7 +50,7 @@ SensingResult RunSensing(const std::vector<Node>& nodes, const CellPlan& plan,
 
     // --- per cell: the leader aggregates ----------------------------------
     for (const auto& [cid, c] : plan.cells) {
-        if (c.cls == CellClass::C) continue;   // scalar-only cells never report
+        if (c.cls != CellClass::SERVED) continue;   // no head, so no verdict
         CellReading t;
         t.cellId = cid;
         for (const CellMember& m : c.members) {
@@ -97,7 +97,7 @@ SensingResult RunSensing(const std::vector<Node>& nodes, const CellPlan& plan,
 Verdict CellVerdict(const SensingResult& sr, const CellPlan& plan,
                     const std::vector<Node>& nodes, int32_t cellId, double held) {
     const auto ci = plan.cells.find(cellId);
-    if (ci == plan.cells.end() || ci->second.cls != CellClass::A) return Verdict::NONE;
+    if (ci == plan.cells.end() || ci->second.cls != CellClass::SERVED) return Verdict::NONE;
 
     std::map<uint32_t, const Node*> byId;
     for (const Node& n : nodes) byId[n.id] = &n;
@@ -110,7 +110,7 @@ Verdict CellVerdict(const SensingResult& sr, const CellPlan& plan,
         // is no answer at all, and counting it as a rejection would retire a
         // live candidate for the wrong reason.
         const auto bi = byId.find(m.id);
-        if (bi == byId.end() || !bi->second->CanMatch()) continue;
+        if (bi == byId.end() || m.id != ci->second.leader) continue;   // N3: only the head matches
         const auto ni = sr.nodes.find(m.id);
         if (ni == sr.nodes.end()) continue;
         anyVoter = true;

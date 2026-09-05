@@ -65,7 +65,7 @@ class DoseModel {
 
 struct Demand {
     int32_t   cellId = -1;
-    CellClass cls = CellClass::C;
+    CellClass cls = CellClass::BARREN;
     double    x = 0, y = 0;         // cell centre: the point to route to
     double    theta = 0.0;          // bytes needed; 0 = never serve
     // Written by ServiceCost().

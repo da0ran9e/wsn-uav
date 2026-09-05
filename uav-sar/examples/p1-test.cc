@@ -86,8 +86,8 @@ int main(int argc, char* argv[]) {
 
     std::printf("\n=== PHASE 0   %ux%u nodes @%.0fm, field %.0fm, R_c=%.0fm\n",
                 gridSize, gridSize, spacing, side, rc);
-    std::printf("cells=%zu   A=%u B=%u C=%u   leader-score CV=%.3f\n",
-                plan.cells.size(), plan.nA, plan.nB, plan.nC, LeaderScoreCv(plan));
+    std::printf("cells=%zu   served=%u barren=%u   leader-score CV=%.3f\n",
+                plan.cells.size(), plan.nServed, plan.nBarren, LeaderScoreCv(plan));
     const double rho = TurnRadiusM(kCruiseMps);
     std::printf("h=1.5R_c=%.1fm   rho(%.0fm/s,%.0fdeg)=%.1fm   h/2rho=%.2f\n",
                 plan.RowPitchM(), kCruiseMps, kBankDeg, rho, plan.RowPitchM() / (2 * rho));
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
                 100.0 * (1.0 - hex::CellArea(rc) / (M_PI * rc * rc)));
 
     // --- partition invariants ---
-    CHECK(plan.nA + plan.nB + plan.nC == plan.cells.size());
+    CHECK(plan.nServed + plan.nBarren == plan.cells.size());
     CHECK(plan.cellOfNode.size() == nodes.size());
     std::map<uint32_t, uint32_t> seen;
     for (const auto& [cid, c] : plan.cells)
@@ -117,25 +117,21 @@ int main(int argc, char* argv[]) {
 
     // --- class and election invariants ---
     for (const auto& [cid, c] : plan.cells) {
-        uint32_t matchers = 0, imagers = 0;
-        for (const CellMember& m : c.members) {
-            if (byId[m.id]->CanMatch()) matchers++;
-            if (byId[m.id]->Images()) imagers++;
-        }
-        CHECK(matchers == c.matchers && imagers == c.imagers);
-        // Class is decided by capability, and by nothing else.
-        if (matchers > 0)      CHECK(c.cls == CellClass::A);
-        else if (imagers > 0)  CHECK(c.cls == CellClass::B);
-        else                   CHECK(c.cls == CellClass::C);
-        // A class-A cell's leader must itself be able to run the match: that is
-        // the whole reason the election filters on modality before weighting.
-        if (c.cls == CellClass::A) {
+        uint32_t cameras = 0;
+        for (const CellMember& m : c.members)
+            if (byId[m.id]->HasCamera()) cameras++;
+        CHECK(cameras == c.cameras);
+        // The class is decided by ONE thing: does a camera exist here.
+        CHECK(c.cls == (cameras > 0 ? CellClass::SERVED : CellClass::BARREN));
+        if (c.cls == CellClass::SERVED) {
             CHECK(c.hasLeader);
-            CHECK(byId[c.leader]->CanMatch());
-            // and it must be the BEST such node, not merely one of them
+            // N3: the head is the matching subject, so it must have a camera...
+            CHECK(byId[c.leader]->HasCamera());
+            // ...and it must be the BEST such node, not merely one of them.
             double best = -1;
             for (const CellMember& m : c.members)
-                if (byId[m.id]->CanMatch()) best = std::max(best, byId[m.id]->ElectScore());
+                if (byId[m.id]->HasCamera())
+                    best = std::max(best, byId[m.id]->ElectScore());
             CHECK(std::fabs(c.leaderScore - best) < 1e-12);
         }
         // Every cell centre is where the hex maths says it is.
@@ -166,28 +162,16 @@ int main(int argc, char* argv[]) {
     std::printf("intra-cell trees rooted at the elected leader; %u members "
                 "unreachable in-cell\n", unreachable);
 
-    // --- T_local ---
-    double tmax = 0, tsum = 0; uint32_t na = 0;
-    for (const auto& [cid, c] : plan.cells) {
-        CHECK(c.tLocalS >= 0.0);
-        if (c.cls != CellClass::A) continue;
-        na++; tsum += c.tLocalS; tmax = std::max(tmax, c.tLocalS);
-        // Zero exactly when the leader is the only matcher it has to feed.
-        if (c.matchers == 1) CHECK(c.tLocalS == 0.0);
-    }
-    std::printf("T_local over class-A cells: mean %.1fs  max %.1fs  "
-                "(theta_full=%.0fB to every matcher)\n",
-                na ? tsum / na : 0.0, tmax, kThetaFullBytes);
-
-    // The homogeneous world must make every cell class A -- if it does not, the
-    // class rule is reading something other than capability.
+    // Every node identical and fully capable: every cell must be servable, and
+    // the leader scores must be identical. If not, the class rule is reading
+    // something other than capability.
     {
         CellPlan uni = BuildCells(BuildUniformNodes(xy), rc, kGroundRangeM);
-        CHECK(uni.nB == 0 && uni.nC == 0);
-        CHECK(uni.nA == uni.cells.size());
+        CHECK(uni.nBarren == 0);
+        CHECK(uni.nServed == uni.cells.size());
         CHECK(LeaderScoreCv(uni) == 0.0);
-        std::printf("uniform world: %u/%zu cells class A, leader CV %.3f\n",
-                    uni.nA, uni.cells.size(), LeaderScoreCv(uni));
+        std::printf("uniform world: %u/%zu cells servable, leader CV %.3f\n",
+                    uni.nServed, uni.cells.size(), LeaderScoreCv(uni));
     }
 
 
@@ -196,7 +180,7 @@ int main(int argc, char* argv[]) {
     auto demands = BuildDemands(plan, nodes);
     std::printf("\n=== T0   lambda_tx=%.0f B/s  theta_full=%.0f B  (no tiering: at\n"
                 "         planning time nothing has been detected yet)\n",
-                kRefTxBytesPerS, kThetaFullBytes);
+                kRefTxBytesPerS, ThetaFullBytes());
     std::printf("G(b):");
     for (double b : {0.0, 50.0, 100.0, 150.0, 200.0, 300.0})
         std::printf("  G(%.0f)=%.0fm", b, dose.G(b));
@@ -224,13 +208,13 @@ int main(int argc, char* argv[]) {
 
     // Only class A ever costs the aircraft anything, at any offset.
     for (auto& [cid, d] : demands) {
-        if (d.cls != CellClass::A) {
+        if (d.cls != CellClass::SERVED) {
             CHECK(d.theta == 0.0);
             CHECK(ServiceCost(d, 0.0, dose) == 0.0);
         }
         // Every class-A cell asks, and only class-A cells ask. There is no
         // tiering to check because there is nothing to tier on yet.
-        if (d.cls == CellClass::A) CHECK(d.theta > 0.0);
+        if (d.cls == CellClass::SERVED) CHECK(d.theta > 0.0);
     }
 
     // Serving is monotone in offset: further away is never cheaper.
@@ -262,8 +246,8 @@ int main(int argc, char* argv[]) {
     {
         const double thetaMax = kRefTxBytesPerS * dose.G(0.0) / kMinMps;
         std::printf("one pass at stall can deliver at most %.0f B; theta_full is "
-                    "%.0f B  -> %s\n", thetaMax, kThetaFullBytes,
-                    thetaMax >= kThetaFullBytes ? "a class-A cell CAN be served in one pass"
+                    "%.0f B  -> %s\n", thetaMax, ThetaFullBytes(),
+                    thetaMax >= ThetaFullBytes() ? "a cell CAN be served in one pass"
                                                 : "every flagged cell must ORBIT");
     }
 
@@ -298,8 +282,8 @@ int main(int argc, char* argv[]) {
 
     // === S6: T1 partition ==================================================
     const Config depot{0.0, 0.0, 0.0};
-    std::printf("\n=== T1  partition over %u class-A cells, depot at the field corner\n",
-                plan.nA);
+    std::printf("\n=== T1  partition over %u served cells, depot at the field corner\n",
+                plan.nServed);
     std::printf("%-22s %2s %10s %10s %8s\n", "method", "M", "makespan", "spread", "cells");
     for (uint32_t M2 : {2u, 3u, 4u}) {
         Partition ps[3] = {
@@ -468,9 +452,13 @@ int main(int argc, char* argv[]) {
             // How far off is it? Scaling theta is the same question as scaling
             // the link budget the other way, and the answer is a number the
             // parameter review can act on rather than a failed run.
+            // The sweep has to reach further than it used to: theta now spans
+            // 11x across cells rather than 2.2x, because BOTH feature quality
+            // and matcher strength enter the Chernoff information (0.3.1). The
+            // weakest cell sets the feasibility bound.
             std::printf("  feasibility vs demand:");
             double firstOk = 0;
-            for (double scale : {1.0, 0.7, 0.5, 0.35, 0.25, 0.15}) {
+            for (double scale : {1.0, 0.5, 0.25, 0.12, 0.06, 0.03}) {
                 auto scaled = demands;
                 for (auto& [cid, d2] : scaled) d2.theta *= scale;
                 const SpeedPlan s3 = PlanSpeed(tour, scaled, dose, rho);
@@ -574,7 +562,7 @@ int main(int argc, char* argv[]) {
         if (pl.feasible) CHECK(pl.tours.size() == M3 && pl.speeds.size() == M3);
         for (const RefineStep& st : pl.history) {
             CHECK(st.makespanS > 0);
-            CHECK(st.servedCells + st.droppedBySurplus <= plan.nA);
+            CHECK(st.servedCells + st.droppedBySurplus <= plan.nServed);
             // a self-consistent plan leaves nothing uncovered, by definition
             CHECK(!st.selfConsistent || st.uncovered == 0);
         }
@@ -608,9 +596,9 @@ int main(int argc, char* argv[]) {
                 sr.falseAlarms, sr.emptyCells, sr.UplinkBytes() / 1000.0);
 
     CHECK(sr.nodes.size() == nodes.size());
-    for (const auto& [cid, t] : sr.cells) CHECK(plan.cells.at(cid).cls != CellClass::C);
+    for (const auto& [cid, t] : sr.cells) CHECK(plan.cells.at(cid).cls != CellClass::BARREN);
     for (const auto& [cid, c] : plan.cells)
-        if (c.cls != CellClass::C) CHECK(sr.cells.count(cid) == 1);
+        if (c.cls != CellClass::BARREN) CHECK(sr.cells.count(cid) == 1);
     double wsum = 0;
     for (int32_t cid : sr.cueGuess) wsum += sr.cells.at(cid).weight;
     CHECK(sr.cueGuess.empty() || std::fabs(wsum - 1.0) < 1e-9);
@@ -812,7 +800,7 @@ int main(int argc, char* argv[]) {
         }
         // A class-B or C cell can never return a verdict, at any dose.
         for (const auto& [cid, c] : plan.cells)
-            if (c.cls != CellClass::A)
+            if (c.cls != CellClass::SERVED)
                 CHECK(CellVerdict(sr, plan, nodes, cid, 1.0) == Verdict::NONE);
     }
 
@@ -831,7 +819,7 @@ int main(int argc, char* argv[]) {
         for (auto& [cid, d] : op) d.theta *= scale;
         std::printf("\n=== FULL PIPELINE at theta x%.2f  (one pass at stall delivers"
                     " %.0f B; scaled theta_full %.0f B)\n",
-                    scale, thetaMax, kThetaFullBytes * scale);
+                    scale, thetaMax, ThetaFullBytes() * scale);
 
         for (uint32_t M4 : {2u, 3u, 4u}) {
             Plan pl = Refine(op, plan, dose, depot, M4, rho);

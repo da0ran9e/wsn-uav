@@ -6,10 +6,10 @@
 
 namespace ns3::uavsar::p1 {
 
-std::vector<int32_t> CellPlan::ClassACells() const {
+std::vector<int32_t> CellPlan::ServedCells() const {
     std::vector<int32_t> out;
     for (const auto& [cid, c] : cells)
-        if (c.cls == CellClass::A) out.push_back(cid);
+        if (c.cls == CellClass::SERVED) out.push_back(cid);
     return out;
 }
 
@@ -44,35 +44,24 @@ CellPlan BuildCells(const std::vector<Node>& nodes, double cellRadiusM,
 
     for (auto& [cid, c] : plan.cells) {
         // --- elect ---------------------------------------------------------
-        // Modality is a hard filter, applied before any weighting: a leader that
-        // cannot run the match is not a cheaper leader, it is a different job.
-        double bestMatch = -1.0, bestAny = -1.0;
-        uint32_t matchId = 0, anyId = 0;
-        bool haveMatch = false, haveAny = false;
+        // Having a camera is a HARD FILTER applied before any weighting. Under
+        // N3 the head is the matching subject, so a head without a camera is not
+        // a cheaper head -- it is a different job, and one nobody can do.
+        double best = -1.0;
+        uint32_t bestId = 0;
+        bool found = false;
         for (const CellMember& m : c.members) {
             const Node& n = *byId[m.id];
-            if (n.Images()) c.imagers++;
-            if (n.CanMatch()) c.matchers++;
+            if (!n.HasCamera()) continue;
+            c.cameras++;
             const double s = n.ElectScore();
-            if (s > bestAny) { bestAny = s; anyId = n.id; haveAny = true; }
-            if (n.CanMatch() && s > bestMatch) { bestMatch = s; matchId = n.id; haveMatch = true; }
+            if (s > best) { best = s; bestId = n.id; found = true; }
         }
-        if (haveMatch) {
-            c.cls = CellClass::A;
-            c.leader = matchId;
-            c.leaderScore = bestMatch;
-            c.hasLeader = true;
-        } else {
-            c.cls = c.imagers > 0 ? CellClass::B : CellClass::C;
-            c.leader = anyId;
-            c.leaderScore = haveAny ? bestAny : 0.0;
-            c.hasLeader = haveAny;
-        }
-        switch (c.cls) {
-            case CellClass::A: plan.nA++; break;
-            case CellClass::B: plan.nB++; break;
-            default:           plan.nC++; break;
-        }
+        c.cls = found ? CellClass::SERVED : CellClass::BARREN;
+        c.hasLeader = found;
+        c.leader = bestId;
+        c.leaderScore = found ? best : 0.0;
+        if (found) plan.nServed++; else plan.nBarren++;
 
         // --- route, rooted at the elected leader ---------------------------
         if (!c.hasLeader) { c.unreachable = (uint32_t)c.members.size(); continue; }
@@ -98,38 +87,8 @@ CellPlan BuildCells(const std::vector<Node>& nodes, double cellRadiusM,
         for (const CellMember& m : c.members)
             if (m.hops == 0xFFFFFFFFu) c.unreachable++;
 
-        c.tLocalS = LocalDisseminationS(c, nodes, kThetaFullBytes);
     }
     return plan;
-}
-
-double LocalDisseminationS(const Cell& cell, const std::vector<Node>& nodes,
-                           double bytes) {
-    // Store and forward: a node cannot pass on what it has not finished
-    // receiving, so the time to reach a member is the sum of the transfer times
-    // down its path. The cell is done when its slowest MATCHER is done --
-    // members that cannot run the match are not waited for, for the same reason
-    // class B cells are not flown to.
-    std::map<uint32_t, const Node*> byId;
-    for (const Node& n : nodes) byId[n.id] = &n;
-    std::map<uint32_t, const CellMember*> mem;
-    for (const CellMember& m : cell.members) mem[m.id] = &m;
-
-    double worst = 0.0;
-    for (const CellMember& m : cell.members) {
-        const Node* n = byId.count(m.id) ? byId.at(m.id) : nullptr;
-        if (!n || !n->CanMatch() || m.hops == 0xFFFFFFFFu) continue;
-        double t = 0.0;
-        const CellMember* cur = &m;
-        while (cur && cur->hops > 0) {
-            const Node* rx = byId.at(cur->id);
-            t += rx->rxBps > 0 ? bytes * 8.0 / rx->rxBps : 0.0;
-            cur = cur->parent >= 0 && mem.count((uint32_t)cur->parent)
-                      ? mem.at((uint32_t)cur->parent) : nullptr;
-        }
-        worst = std::max(worst, t);
-    }
-    return worst;
 }
 
 double LeaderScoreCv(const CellPlan& plan) {

@@ -11,11 +11,10 @@
 // measures.
 //
 //   partition   hex cells of circumradius R_c (p1-hex.h)
-//   elect       highest ElectScore among nodes that CAN MATCH; if none can, the
-//               highest among everyone, because the cell still has to get its
-//               Tier-1 report out
-//   classify    A = someone can match; B = someone images but nobody can match;
-//               C = nobody images
+//   elect       highest ElectScore among nodes THAT HAVE A CAMERA. Having one is
+//               a hard filter: N3 makes the head the matching subject, and a
+//               head with no camera has nothing to match.
+//   classify    SERVED = a camera exists here; BARREN = none, so no demand
 //   route       BFS over in-cell links, rooted at the elected leader
 //
 // What Phase 0 hands to Phase 1 is not "a list of clusters". It is:
@@ -46,26 +45,22 @@ struct Cell {
     int32_t   id = -1;
     int32_t   q = 0, r = 0;
     double    cx = 0, cy = 0;
-    CellClass cls = CellClass::C;
+    CellClass cls = CellClass::BARREN;
     uint32_t  leader = 0;
     bool      hasLeader = false;
     double    leaderScore = 0.0;
     std::vector<CellMember> members;
-    uint32_t  imagers = 0;
-    uint32_t  matchers = 0;        // nodes that could run the match
-    uint32_t  unreachable = 0;     // members the leader cannot reach in-cell
-    // Seconds for the reference to reach every matcher in the cell from the
-    // leader, store and forward. One of the three competing pressures on R_c.
-    double    tLocalS = 0.0;
+    uint32_t  cameras = 0;         // members that could have been head
+    uint32_t  unreachable = 0;     // members the head cannot reach in-cell
 };
 
 struct CellPlan {
     double cellRadiusM = 0;
     std::map<int32_t, Cell> cells;
     std::map<uint32_t, int32_t> cellOfNode;
-    uint32_t nA = 0, nB = 0, nC = 0;
+    uint32_t nServed = 0, nBarren = 0;
 
-    std::vector<int32_t> ClassACells() const;
+    std::vector<int32_t> ServedCells() const;
     double RowPitchM() const { return hex::RowPitch(cellRadiusM); }
 };
 
@@ -78,9 +73,17 @@ CellPlan BuildCells(const std::vector<Node>& nodes, double cellRadiusM,
 // contribution, so it should be reported honestly and not oversold.
 double LeaderScoreCv(const CellPlan& plan);
 
-// Seconds to push `bytes` from the leader to every matcher in the cell.
-double LocalDisseminationS(const Cell& cell, const std::vector<Node>& nodes,
-                           double bytes);
+// NO INTRA-CELL DISSEMINATION IN THIS PHASE.
+//
+// An earlier revision computed T_local, the time for the reference to reach
+// every capable member from the head, and reported 49.5 s on average. Under N3
+// that quantity does not exist: the head matches its OWN observation and no
+// reference moves inside the cluster. The measurement was of a mechanism the
+// model does not have.
+//
+// The intra-cell tree is still built -- it is the substrate Phase 0 provides and
+// other mechanisms (election, synchronisation) use it -- but nothing in Phase 1
+// sends payload down it.
 
 }  // namespace ns3::uavsar::p1
 

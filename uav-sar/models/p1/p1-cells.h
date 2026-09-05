@@ -64,8 +64,18 @@ struct CellPlan {
     double RowPitchM() const { return hex::RowPitch(cellRadiusM); }
 };
 
+// How the head is chosen among the nodes that have a camera. CAPABILITY is the
+// design; the other two exist so that 0.2.1's question -- how much the weighting
+// actually buys -- can be answered with a number instead of an assertion.
+enum class Election : uint8_t {
+    CAPABILITY = 0,   // compute, then radio, then energy   <- the design
+    CENTROID   = 1,   // nearest the cell centre            <- what PECEE does
+    RANDOM     = 2,   // any camera node                    <- the null
+};
+
 CellPlan BuildCells(const std::vector<Node>& nodes, double cellRadiusM,
-                    double groundRangeM);
+                    double groundRangeM,
+                    Election rule = Election::CAPABILITY, uint32_t seed = 1);
 
 // Spread of leader capability across cells (coefficient of variation). This is
 // the number that has to move for the capability-weighted election to be worth

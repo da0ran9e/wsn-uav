@@ -4,8 +4,8 @@
 > `models/application/`) không bị đụng tới và các số đo trong `STATUS.md`
 > vẫn còn hiệu lực.
 >
-> Trạng thái: **toàn tuyến đã cài và kiểm**. `64 408` CHECK ở cấu hình mặc định,
-> sạch trên 8 tổ hợp lưới/bán kính/hạt giống.
+> Trạng thái: cài **đến hết T1 (chia vùng)** rồi dừng theo yêu cầu.
+> `54 017` CHECK ở cấu hình mặc định, sạch trên 8 tổ hợp lưới/bán kính/hạt giống.
 
 ## 0. Thứ tự — và một lần sửa sai thứ tự
 
@@ -13,7 +13,7 @@
 tập nút KHÔNG ĐỒNG NHẤT
    → chia cluster (ô lục giác) + bầu CH theo NĂNG LỰC
    → TẬP CH LÀM ĐẠI DIỆN để lập lịch bay
-   → T0 nhu cầu θ  ·  T1 hai kiểu lập lịch
+   → T0 nhu cầu θ  ·  T1 hai kiểu lập lịch          ══ ĐÃ CÀI ĐẾN ĐÂY ══
    → tập ĐƯỜNG BAY THÔ (T2)
    → TINH CHỈNH (T3 tốc độ, T4 vòng lặp)
    → UAV BAY & PHÁT dữ liệu tham chiếu
@@ -48,7 +48,88 @@ Biết trước tập nghi vấn **đáng giá thật** — nhưng nó là thôn
 thực**, và nếu sau này có kênh phụ thu báo cáo trước chuyến bay thì đó là một
 **mở rộng có thể đo được**, không phải mặc định.
 
-## 1. Vì sao phải dựng lại từ đầu
+## 1. Phạm vi hiện tại
+
+Cài **đến hết T1 (chia vùng)** và dừng. T2/T3/T4 đã bị **gỡ khỏi build** —
+chúng được dựng trên các giả định mà Bản 2 đã đổi, và giữ lại là lặp lại đúng
+lỗi "ý tưởng cũ chồng lên ý tưởng mới". Chúng còn nguyên trong git tại thẻ
+`p1-full-pipeline-before-rebuild`.
+
+```
+models/p1/
+  p1-hex.h          bản sao ĐÃ KIỂM của toán hex (18 769 điểm)
+  p1-types.h        SERVED / BARREN
+  p1-params.h/.cc   mọi tham số, có nhãn TODO(param)
+  p1-sensing.h/.cc  Node: camera (bộ lọc cứng), obs, cpu, rxBps
+  p1-cells.h/.cc    Pha 0: phân ô → bầu CH → gán lớp → cây nội ô
+  p1-demand.h/.cc   T0: G(b), θ_n, c_n
+  p1-dubins.h/.cc   hình học Dubins — chỉ dùng để ĐO T1, không lái T1
+  p1-partition.h/.cc T1: credit + split, hai biến thể
+```
+
+## 2. Ba nguyên lý, và chỗ chúng cắn vào code
+
+| | nội dung | cài ở đâu |
+|---|---|---|
+| **N1** | không nghi vấn nào tồn tại trước chuyến bay | `BuildDemands()` **không nhận** kết quả cảm biến |
+| **N2** | phải phục vụ **mọi** cụm; không đồng nhất nằm ở **lượng** θ | mọi ô `SERVED` đều có θ > 0 |
+| **N3** | **CH là chủ thể đối sánh**, không có dữ liệu di chuyển trong cụm | camera là **bộ lọc cứng** khi bầu; **đã xoá** `T_local` |
+
+`T_local` bị xoá hẳn: nó đo thời gian tham chiếu lan tới mọi thành viên đủ năng
+lực (49.5 s trung bình) — một cơ chế mà **N3 nói là không tồn tại**.
+
+## 3. §0.2.1 — bầu theo năng lực đáng giá bao nhiêu
+
+Spec đánh dấu "chưa đo". Nay đo, **trên 12 thế giới** chứ không một hạt giống:
+
+```
+0.2.1 -- I_n cua CH YEU NHAT, 12 the gioi  (min / median / max)
+  capability (thiet ke)  0.336 / 0.425 / 0.466
+  centroid   (PECEE)     0.096 / 0.144 / 0.209
+  random     (null)      0.105 / 0.146 / 0.166
+  capability / centroid: 1.89x .. 4.81x, tot hon o 12/12 the gioi  -> DUOC XAC LAP
+  capability / random  : 2.30x .. 3.80x                            -> DUOC XAC LAP
+  centroid vs random: 0.144 vs 0.146 -- gan tam KHONG mang thong tin nang luc
+```
+
+Đo **CH yếu nhất**, không phải trung bình: ô đó mang `θ` lớn nhất nên đặt ra chi
+phí phục vụ khó nhất của cả bài toán.
+
+**Điểm sạch nhất để viết vào bài:** `centroid` ≈ `random`. Không phải "gần tâm là
+proxy tồi cho năng lực" — mà là **nó không phải proxy gì cả**. Đó là lý do đổi
+quy tắc bầu, phát biểu được bằng một con số.
+
+> Hai lần đầu tôi báo số cho mục này đều **sai** và đã rút lại: lần một đọc từ
+> **một hạt giống** (1.91×, không đại diện); lần hai chạy trên một `election`
+> **bị lỗi** — sentinel `best = -1.0` trong khi CENTROID chấm bằng khoảng cách
+> **âm**, nên mọi ứng viên xa tâm quá 1 m đều bị loại và có cấu hình không bầu
+> được ai. Bảng trên là sau khi sửa.
+
+## 4. T1 — thước đo, và giá của việc phân tầng
+
+Bản 2 để T1 chấm bằng **Euclid** (động học là việc của T2, T4 khép vòng). Tôi cài
+đúng thế, nhưng **đo luôn** cùng phân vùng đó bằng Dubins:
+
+```
+method                  M   makespan   spread  Dubins that      gap
+credit (free)           2       799s     5.4%         811s     1.5%
+credit (contiguous)     2       828s     5.0%         841s     1.6%
+split                   2       814s     5.2%         826s     1.5%
+credit (free)           3       585s     9.6%         595s     1.7%
+credit (contiguous)     3       556s     9.8%         576s     3.5%
+split                   3       568s    15.3%         574s     1.1%
+credit (free)           4       451s     7.1%         457s     1.4%
+credit (contiguous)     4       453s    16.3%         460s     1.6%
+split                   4       449s    10.8%         458s     2.1%
+```
+
+**Khoảng cách chỉ 1.1–3.5 %.** Tôi đã cảnh báo rủi ro này (dự án từng trả giá vì
+chấm bằng mét đường thẳng), nhưng ở đây **phân tầng của Bản 2 là đúng**: ước
+lượng Euclid ở T1 gần như không làm lệch thứ hạng khối. Cả hai biến thể đều chấm
+bằng **cùng một thước** nên không bên nào được ưu ái. Chân depot nằm **trong**
+phép chia đôi ở cả hai.
+
+## 5. Vì sao phải dựng lại từ đầu
 
 Lần cài đầu **chồng ý tưởng mới lên ý tưởng cũ**. Bảy chỗ chồng lấn cụ thể,
 trong đó hai chỗ do chính lần cài đó tạo ra:
@@ -73,7 +154,7 @@ Chỉ có một bản sao như thế — toán hex — đối chiếu với `cel
 
 ---
 
-## 2. Tham số: một chỗ, có nhãn
+## 6. Tham số: một chỗ, có nhãn
 
 `models/p1/p1-params.h`. Nhãn:
 
@@ -94,7 +175,7 @@ deployment thật và fail nếu chuỗi đứt.
 
 ---
 
-## 3. Pha 0 — một lượt, đúng thứ tự
+## 7. Pha 0 — một lượt, đúng thứ tự
 
 ```
 phân ô hex  →  bầu theo NĂNG LỰC (modality là bộ lọc CỨNG)  →  gán A/B/C
@@ -121,7 +202,7 @@ store-and-forward nên đây là **cận trên**.
 
 ---
 
-## 4. Mô hình cảm biến — ĐẦU RA của Pha 1, không phải đầu vào
+## 8. Mô hình cảm biến — ĐẦU RA của Pha 1 (đã gỡ khỏi build)
 
 `scoreCue` **không phải đầu vào lập lịch**. Nó là **đường cơ sở** để đo chuyến bay
 mua được gì: mạng tự nói được đến đâu, so với nói được đến đâu sau khi có tham
@@ -169,126 +250,22 @@ Gán nhãn ground truth theo **bán kính đáp ứng** làm gần như mọi ô
 
 ---
 
-## 5. T0 → T4
+## 9. Đã gỡ khỏi build
 
-| chặng | cách giải | kiểm chứng |
-|---|---|---|
-| **T0** `G(b)`, `θ` phân tầng, `c_n` giây | Simpson trên `p(d)` | `G(0)` Simpson **380.31 m** vs tổng chữ nhật độc lập **380.31 m** |
-| **Dubins** | port từ bản Python đã kiểm; CCC **dựng hình học** | sai số điểm cuối **1.5e-12 m** / 4000 cặp, **cả 6 từ** đều xuất hiện |
-| **T1** credit + split | cả hai chấm bằng **cùng** thước Dubins; **chân depot nằm trong** phép chia đôi | mọi ô được phục vụ đúng một lần |
-| **T2** hướng mũi | **DP chính xác** cho thứ tự cố định; chỉ THỨ TỰ là heuristic | DP **1273.308 m** = brute force trên `6⁴` tổ hợp |
-| **T3** hồ sơ tốc độ | **simplex hai pha, quy tắc Bland** | tối ưu đã biết chính xác; **240 000** mẫu ngẫu nhiên **không lần nào** thắng simplex |
-| **T4** vòng lặp | chấp nhận/từ chối + **bước rút nửa** | chỉ kế hoạch **tự nhất quán** được nhận |
+T2 (Dubins-GTSP), T3 (LP hồ sơ tốc độ), T4 (vòng lặp tinh chỉnh) và mô hình
+cảm biến sau chuyến bay **đã gỡ**. Chúng chạy được và có kiểm, nhưng dựng trên
+các giả định Bản 2 đã đổi (lớp A/B/C theo phương thức, `T_local`, `θ` chỉ theo
+`obs`). Giữ lại là lặp lại đúng lỗi đã phải sửa một lần.
 
-### 5.1 Vì sao KHÔNG dùng Noon–Bean
+Khôi phục: `git show p1-full-pipeline-before-rebuild`.
 
-Giá trị của Noon–Bean là cho phép chĩa **bộ giải ATSP chính xác trưởng thành**
-vào kết quả — mà môi trường này **không có** (không OR-Tools, không LKH, không
-Concorde). Vậy ATSP vẫn phải giải bằng heuristic, Noon–Bean **không mua được gì**
-mà vẫn tốn phình `n·h` nút cộng hằng big-M mà heuristic xử lý kém.
+Những kết quả đã đo của chúng vẫn đúng **với giả định lúc đó**, và ghi lại ở đây
+để không phải tìm lại: DP hướng mũi = brute force chính xác; `h=8` chỉ trên
+`h=32` 1.5 %; 2-opt/Or-opt ngắn hơn NN 38.2 %; simplex (cân tỉ lệ hàng +
+Dantzig/Bland) không thua 240 000 mẫu ngẫu nhiên; T4 dao động chu kỳ 2 và cần
+phép kiểm **tự nhất quán** cộng **bước rút chia đôi**.
 
-Thay vào đó **giữ phần chính xác thật sự chính xác**: với thứ tự ô **cố định**,
-hướng mũi tối ưu tìm được bằng **quy hoạch động** trên `h` trạng thái —
-chính xác, `O(n h²)`. Chỉ THỨ TỰ là heuristic. Xấp xỉ bị **nhốt vào một chỗ và
-gọi tên**, thay vì trải khắp một phép biến đổi đã mất bảo đảm.
-
-> Các cận `(6⅓+ε)` / `(7+ε)` cho rooted min-max cycle cover giả định đồ thị
-> **metric**. Chi phí Dubins **không metric**. Thuật toán dùng được; **cận thì không**,
-> và không được phát biểu.
-
-### 5.2 Kết quả T1, T2
-
-```
-T1 phân vùng (15 ô lớp A)         T2 định tuyến
-method            M  makespan     DP hướng mũi = brute force chính xác
-credit (free)     2      312s      h sweep:  4→4799m  8→4503m  16→4456m  32→4438m
-credit (contig)   2      326s      h=8 chỉ trên h=32 1.5%  →  h=8 là đủ
-split             2      352s
-credit (free)     3      214s      thứ tự: NN 4503m → 2-opt/Or-opt 2767m
-split             3      232s               (ngắn hơn 38.5%)
-```
-
-### 5.3 Ràng buộc động học giữa T2 và T3
-
-`ρ = v²/(g tan φ)` **phụ thuộc tốc độ**. T2 chốt hình học ở **một** bán kính, nên
-để T3 đổi tốc độ **trên khúc lượn** là làm hỏng đường T2 đã lập. Tốc độ vì thế
-**chỉ tự do trên đoạn thẳng**; khúc lượn ghim ở bán kính đã lập. Không có điều
-này thì hai chặng **đúng riêng lẻ và sai khi ghép**.
-
-Đo được: **34–47 % số đoạn bị ghim trên khúc lượn**.
-
-### 5.4 Hai lỗi T4 do CHẠY mới thấy
-
-**(a) Trừ liều của HỒ SƠ ĐÃ TỐI ƯU là vòng vo.** Hồ sơ được dựng để thoả đúng
-những ô đó, nên **mọi ô trông như đã đủ**, demand bị ghi giảm, và sau vài vòng
-planner **tự thuyết phục mình không bay gì cả**. Thứ T4 thật sự tìm là liều một ô
-nhận **miễn phí** vì tình cờ nằm gần đường bay **vốn đã phải bay** — đó là tính
-chất **hình học** của tuyến, đo ở tốc độ hành trình, và **không thể tự suy về 0**.
-
-**(b) Vòng lặp dao động chu kỳ 2.** Bỏ ô → tuyến ngắn lại → chính ô đó hết được
-phủ → quay lại. Đo được: `115 → 0 → 117 → 0 → 117 → 0`. Damping làm chậm dao động
-chứ không khử.
-
-Hai sửa:
-
-1. **Phép kiểm hợp lệ.** Kế hoạch **tự nhất quán** khi *mọi ô nó từ chối thăm vẫn
-   được tuyến nó thật sự dựng phủ đủ*. Vòng lặp không đạt điều đó **không phải kế
-   hoạch tệ hơn — nó không phải kế hoạch**, và không đủ tư cách được trả về.
-2. **Bước rút NỬA.** Kích thước tập nghỉ hưu chính là **độ dài bước**: bắt đầu ở
-   "tất cả", **chia đôi** mỗi lần kế hoạch sinh ra không tự nhất quán, ưu tiên giữ
-   ô thừa liều nhiều nhất.
-
-Kết quả: `0–1 / 6` vòng hợp lệ → **`5 / 6`**.
-
-```
-iter  makespan   flight  ô thăm  nghỉ hưu  hợp lệ
-0        115s     8873m      22        22   ✓
-1          0s        0m       0         0   ✗ (bỏ tất, không phủ được 22 ô)
-2        115s     8873m      22        11   ✓   ← bước chia đôi
-3         88s     6579m      11        11   ✓   ← tốt nhất
-4         89s     7307m      11        12   ✓
-```
-
----
-
-## 6. Hai phát hiện phải chuyển cho khâu duyệt tham số
-
-### 6.1 Bộ tham số hiện tại KHÔNG chạy được
-
-Một lượt bay ở tốc độ tối thiểu giao tối đa
-
-```
-λ_tx · G(0) / v_min  =  4000 × 380 / 18  =  84.5 kB     vs   θ_full = 120 kB
-```
-
-⇒ **mọi ô đã báo động đều phải lượn vòng**, và **T3 báo INFEASIBLE — đúng**.
-Ngưỡng đo được: khả thi từ **θ × 0.50** trở xuống.
-
-Ba cách nới, cần bạn chọn:
-
-| nới | thành | hệ quả |
-|---|---|---|
-| `λ_tx` 4000 → **≥ 5680 B/s** | θ_max ≥ 120 kB | cần link budget ~45 kbps |
-| `θ_full` 120 → **< 84.5 kB** | vừa khít | phải suy từ Chernoff |
-| `v_min` giảm | ít tác dụng | giới hạn khí động |
-
-### 6.2 Máy bay giao THỪA gấp bội
-
-Ở kế hoạch cuối, tỉ lệ `liều nhận / θ` cao nhất là **25.6×**. Tổng phát trên toàn
-tuyến `λ·L/v` lớn hơn nhu cầu của **bất kỳ ô đơn lẻ nào** nhiều lần, nên phần lớn
-ô được phủ **miễn phí** và bài toán định tuyến **suy biến**.
-
-> Bài toán định tuyến Phase 1 **chỉ có nghĩa khi bước hàng `h = 1.5 R_c` lớn so
-> với tầm thu**. Nếu không, một lượt bay phục vụ cả vùng lân cận và không còn gì
-> để tối ưu.
->
-> Đây là **ràng buộc thứ hai trên `R_c`**, từ vật lý khác hẳn ràng buộc `R_c ≥ 4ρ/3`.
-> Đo được: tỉ lệ ô nghỉ hưu giảm `12/15 → 16/22 → 7/11 → 4/8` khi `R_c` tăng
-> `94 → 140 → 220 → 300 m`.
-
----
-
-## 7. Sửa mệnh đề trung tâm
+## 10. Sửa mệnh đề trung tâm — VẪN CHƯA VÀO SPEC
 
 `R_c ≥ 4ρ/3` suy từ `h = 2ρ`, tức điểm **nửa đường tròn hoàn hảo** — cực tiểu
 toàn cục của chi phí rẽ. Nhưng "hàng kề tối ưu" là phép so **với nhảy hàng**, mà
@@ -310,37 +287,14 @@ bị thổi: `2.10× → 1.82×`, `1.31× → 1.15×`.
 
 ---
 
-## 8. Chạy lại
+## 11. Chạy lại
 
 ```bash
 python3 tools/check_p1_isolation.py                 # luật cách ly
 cd /home/user/ns3-dev && python3 ./ns3 build
 ./build/src/uav-sar/examples/ns3.46-uav-sar-p1-test-optimized [grid] [R_c] [seed]
-./build/src/uav-sar/examples/ns3.46-uav-sar-p1-plan-dump-optimized OUT [grid] [R_c] [M] [seed] [θscale]
-python3 tools/make_p1_figures.py RUNDIR OUT.png "tiêu đề"
-python3 tools/make_p1_viewer.py OUT.html "nhãn=RUNDIR" ...
 ```
 
-| tệp | nội dung |
-|---|---|
-| `visualize/figures/p1-plan.png` | 4 bảng: lớp ô · Tầng 1 · đường bay theo tốc độ · vòng lặp T4 |
-| `visualize/figures/p1-plan-m5.png` | cùng vùng, 5 máy bay |
-| `visualize/figures/p1-plan-wide.png` | `R_c = 220 m` |
-| `visualize/p1-replay.html` | **replay có chuyển động**, 5 cấu hình, ô sáng dần theo liều |
-| `visualize/p1-steps.html` | **9 bước**, kết thúc ở bước UAV bay & phát → rồi mới có vị trí nghi vấn |
-
-### 8.1 Chín bước trong `p1-steps.html`
-
-| bước | hiện |
-|---|---|
-| 0 | phân ô hex, nút theo phương thức, cụm trưởng đã bầu |
-| 1 | gán lớp A/B/C — chỉ A tốn giây bay |
-| 2 | T0: `θ` theo **năng lực** (chưa có gì được phát hiện), ô nào phải lượn vòng |
-| 3 | T1: chia ô cho từng máy bay |
-| 4 | T2: đường bay **thô** — NN (xám) → 2-opt/Or-opt (đậm), kèm số mét |
-| 5 | T2: 8 hướng mũi mỗi ô, vạch đậm là hướng DP chọn |
-| 6 | T3: đường bay tô theo tốc độ LP chọn, bảng chi phí từng máy bay |
-| 7 | T4: từng vòng lặp kèm dấu hợp lệ, và kế hoạch được nhận |
-| 8 | **UAV bay & phát → RỒI MỚI có vị trí nghi vấn**: xác nhận / bác bỏ |
-
-Kiểm bằng Chromium headless: **không lỗi trang** trên **40 tổ hợp** bước × cấu hình.
+Harness in ra, theo thứ tự: đối chiếu hex · Pha 0 (ô, CH, lớp, cây) · §0.2.1 so
+ba quy tắc bầu trên 12 thế giới · T0 (`G(b)`, `θ`, `c_n`, cửa sổ vận hành) ·
+Dubins tự kiểm · T1 ba phương án × ba cỡ đội, kèm khoảng cách Euclid–Dubins.

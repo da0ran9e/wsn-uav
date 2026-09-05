@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <deque>
+#include <limits>
 
 namespace ns3::uavsar::p1 {
 
@@ -14,7 +15,7 @@ std::vector<int32_t> CellPlan::ServedCells() const {
 }
 
 CellPlan BuildCells(const std::vector<Node>& nodes, double cellRadiusM,
-                    double groundRangeM) {
+                    double groundRangeM, Election rule, uint32_t seed) {
     CellPlan plan;
     plan.cellRadiusM = cellRadiusM;
 
@@ -47,20 +48,39 @@ CellPlan BuildCells(const std::vector<Node>& nodes, double cellRadiusM,
         // Having a camera is a HARD FILTER applied before any weighting. Under
         // N3 the head is the matching subject, so a head without a camera is not
         // a cheaper head -- it is a different job, and one nobody can do.
-        double best = -1.0;
+        // -infinity, not -1: the CENTROID rule scores a NEGATED DISTANCE, so
+        // every candidate beyond one metre of the centre is below -1 and a -1
+        // sentinel silently elects nobody. That produced a plan with no served
+        // cells at all, and the comparison numbers computed from it were wrong.
+        double best = -std::numeric_limits<double>::infinity();
         uint32_t bestId = 0;
         bool found = false;
+        uint32_t rnd = seed ^ (uint32_t)(cid * 2654435761u);
         for (const CellMember& m : c.members) {
             const Node& n = *byId[m.id];
             if (!n.HasCamera()) continue;
             c.cameras++;
-            const double s = n.ElectScore();
+            double s = 0.0;
+            switch (rule) {
+                case Election::CENTROID:
+                    // Closer is better, so the score is a negated distance.
+                    s = -std::hypot(n.x - c.cx, n.y - c.cy);
+                    break;
+                case Election::RANDOM:
+                    rnd = rnd * 1664525u + 1013904223u;
+                    s = (double)rnd / 4294967296.0;
+                    break;
+                default:
+                    s = n.ElectScore();
+            }
             if (s > best) { best = s; bestId = n.id; found = true; }
         }
         c.cls = found ? CellClass::SERVED : CellClass::BARREN;
         c.hasLeader = found;
         c.leader = bestId;
-        c.leaderScore = found ? best : 0.0;
+        // Always report the CAPABILITY score of whoever was elected, whatever
+        // rule chose them -- otherwise the three rules cannot be compared.
+        c.leaderScore = found ? byId[bestId]->ElectScore() : 0.0;
         if (found) plan.nServed++; else plan.nBarren++;
 
         // --- route, rooted at the elected leader ---------------------------

@@ -6,8 +6,6 @@
 namespace ns3::uavsar::p1 {
 
 DoseModel::DoseModel() : m_g(kGTableBins, 0.0) {
-    // G(b) = integral along the track of p(sqrt(b^2 + x^2)). Simpson over the
-    // positive half, doubled: the integrand is even in x.
     const double db = kGmaxOffsetM / (kGTableBins - 1);
     const double xmax = 4.0 * kGmaxOffsetM;
     const int n = 4000;                    // even, for Simpson
@@ -24,23 +22,17 @@ DoseModel::DoseModel() : m_g(kGTableBins, 0.0) {
     }
 }
 
-double DoseModel::Prx(double distanceM) const {
-    return 1.0 / (1.0 + std::exp((distanceM - kPrxD50M) / kPrxWidth));
+double DoseModel::Prx(double d) const {
+    return 1.0 / (1.0 + std::exp((d - kPrxD50M) / kPrxWidth));
 }
 
-double DoseModel::G(double offsetM) const {
-    if (offsetM <= 0.0) return m_g.front();
-    if (offsetM >= kGmaxOffsetM) return 0.0;
+double DoseModel::G(double b) const {
+    if (b <= 0.0) return m_g.front();
+    if (b >= kGmaxOffsetM) return 0.0;
     const double db = kGmaxOffsetM / (kGTableBins - 1);
-    const double t = offsetM / db;
+    const double t = b / db;
     const size_t i = (size_t)t;
-    const double f = t - i;
-    return m_g[i] * (1.0 - f) + m_g[i + 1] * f;
-}
-
-double DoseModel::InteractionLength(double offsetM) const {
-    const double p = Prx(offsetM);
-    return p > 1e-9 ? G(offsetM) / p : 0.0;
+    return m_g[i] * (1.0 - (t - i)) + m_g[i + 1] * (t - i);
 }
 
 std::map<int32_t, Demand> BuildDemands(const CellPlan& plan,
@@ -53,58 +45,54 @@ std::map<int32_t, Demand> BuildDemands(const CellPlan& plan,
         Demand d;
         d.cellId = cid;
         d.cls = c.cls;
+        d.row = c.row;
         d.x = c.cx;
         d.y = c.cy;
-        if (c.cls != CellClass::SERVED) {
-            // No camera, so no head, so nothing to match. Reference bytes here
-            // buy nothing at any price -- the cell leaves the routing problem.
-            d.theta = 0.0;
-        } else {
-            const auto li = byId.find(c.leader);
-            const double info = li != byId.end() ? li->second->Information() : 1.0;
-            // No tiering: at planning time there is nothing to tier ON. The
-            // only heterogeneity is capability -- feature quality AND matcher
-            // strength, both of which raise the Chernoff information per byte.
-            d.theta = ThetaFullBytes() / info;
-        }
+        d.offsetM = c.headOffsetM;
+        if (c.cls != CellClass::SERVED) { out[cid] = d; continue; }
+        const auto hi = byId.find(c.head);
+        const double info = hi != byId.end() ? hi->second->Information() : 1.0;
+        // P0.6, two stages: how many FILES, then how much DOSE to collect them.
+        d.files = FilesNeeded(info);
+        d.theta = DoseBytes(d.files);
         out[cid] = d;
     }
     return out;
 }
 
-double OnePassSpeed(double theta, double offsetM, const DoseModel& dose) {
-    if (theta <= 0.0) return kMaxMps;
-    const double g = dose.G(offsetM);
-    return g > 0.0 ? kRefTxBytesPerS * g / theta : 0.0;
-}
-
-double ServiceCost(Demand& d, double offsetM, const DoseModel& dose) {
-    d.penaltyS = 0.0;
-    d.serveMps = 0.0;
+double ServiceCost(Demand& d, const DoseModel& dose, double a, double rho) {
+    d.weaveS = 0.0;
+    d.doseS = 0.0;
     d.orbits = 0;
+    d.serveMps = 0.0;
+    d.feasible = true;
     if (d.theta <= 0.0) return 0.0;
 
-    const double vOk = OnePassSpeed(d.theta, offsetM, dose);
-    if (vOk >= kMinMps) {
-        // One pass is enough. Only the time LOST to holding a lower speed is
-        // charged: the transit was going to happen anyway, and charging it here
-        // would double-count it against the routing cost.
-        const double v = std::min(vOk, kCruiseMps);
-        d.serveMps = v;
-        d.penaltyS = dose.InteractionLength(offsetM) * (1.0 / v - 1.0 / kCruiseMps);
-        return d.penaltyS;
+    // Following the head costs the same whatever the dose demands.
+    d.weaveS = WeaveExtraM(d.offsetM, a) / kCruiseMps;
+
+    const double g = dose.G(DoseAtHead(d));
+    if (g <= 0.0) {                       // F3: unservable at any speed
+        d.feasible = false;
+        return d.weaveS;
     }
 
-    // One pass can never be enough, even at stall. The aircraft has to come
-    // back round: a minimum-radius orbit at the slowest speed it can hold --
-    // which is also the tightest circle it can fly, so the orbit sits as close
-    // to the cell as the airframe allows.
-    const double rho = TurnRadiusM(kMinMps);
+    const double vN = kRefTxBytesPerS * g / d.theta;   // T0.3
+    if (vN >= kMinMps) {
+        // One pass suffices. Charge only the time LOST by holding a lower speed
+        // over one cell pitch -- the pass was going to happen anyway.
+        const double v = std::min(vN, kCruiseMps);
+        d.serveMps = v;
+        d.doseS = a * std::max(0.0, 1.0 / v - 1.0 / kCruiseMps);
+        return d.CostS();
+    }
+
+    // One pass is not enough even at stall: the aircraft has to come back round.
     const double loopS = 2.0 * M_PI * rho / kMinMps;
-    const double perLoop = kRefTxBytesPerS * loopS * dose.Prx(rho);
-    d.orbits = perLoop > 0.0 ? (uint32_t)std::ceil(d.theta / perLoop) : 0u;
-    d.penaltyS = d.orbits * loopS;
-    return d.penaltyS;
+    const double perPass = kRefTxBytesPerS * g / kMinMps;
+    d.orbits = (uint32_t)std::max(1.0, std::ceil(d.theta / std::max(1.0, perPass)) - 1.0);
+    d.doseS = d.orbits * loopS + a * (1.0 / kMinMps - 1.0 / kCruiseMps);
+    return d.CostS();
 }
 
 }  // namespace ns3::uavsar::p1

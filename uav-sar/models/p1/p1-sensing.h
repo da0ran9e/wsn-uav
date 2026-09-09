@@ -22,9 +22,11 @@
 //                                       priority in the election, and the second
 //                                       source of demand heterogeneity.
 //
-//   rxBps     receive rate             -> third priority in the election: how
-//                                       fast the head can take the reference off
-//                                       the air while the aircraft is overhead.
+//   rxBps     receive rate             -> how fast the head can take the
+//                                       reference off the air while the aircraft
+//                                       is overhead. Not in the P0.5 objective
+//                                       yet: TODO(param) whether it binds at all
+//                                       once the file size is fixed.
 //
 // obs SCALES RANGE, NOT GAIN. That distinction was measured on the old system
 // and getting it wrong collapsed detection completely: as a gain multiplier, a
@@ -60,13 +62,11 @@ struct Node {
         return i > 0.05 ? i : 0.05;
     }
 
-    // Election priority, applied only among nodes that have a camera:
-    // compute first, then radio, then energy (weight 0 -- no model).
-    double ElectScore() const {
-        return kElectWCompute * cpu +
-               kElectWRadio   * (rxBps / kRxBpsMax) +
-               kElectWEnergy  * 1.0;
-    }
+    // NOTE there is no ElectScore() here any more. Under P0.5 the election
+    // objective is c(theta(I_v)) + weave time -- BOTH IN SECONDS -- and it needs
+    // the cell geometry, which a node does not have. Building it in p1-cells.cc
+    // is what removes the hand-set weight that every LEACH/HEED-style rule has
+    // to choose between incommensurable quantities.
 };
 
 // Deterministic given the seed. Positions come from the caller; capabilities are

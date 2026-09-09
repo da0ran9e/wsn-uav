@@ -1,133 +1,123 @@
-# Hệ Phase 1 mới — cài đặt, kiểm chứng, kết quả
+# Hệ Phase 1 (PA1) — cài đặt, kiểm chứng, kết quả
 
-> Tài liệu của **hệ mới** trong `models/p1/`. Hệ cũ (`models/common/`,
-> `models/application/`) không bị đụng tới và các số đo trong `STATUS.md`
-> vẫn còn hiệu lực.
+> Tài liệu của `models/p1/`. Hệ cũ (`models/common/`, `models/application/`)
+> không bị đụng tới.
 >
-> Trạng thái: cài **đến hết T1 (chia vùng)** rồi dừng theo yêu cầu.
-> `54 017` CHECK ở cấu hình mặc định, sạch trên 8 tổ hợp lưới/bán kính/hạt giống.
+> Trạng thái: cài **PHA 0 (P0.0–P0.6) → T0 → T1** rồi dừng. `22 096` CHECK,
+> sạch trên 9 tổ hợp lưới/bán kính/hạt giống.
 
-## 0. Thứ tự — và một lần sửa sai thứ tự
+## 0. Thay đổi cấu trúc của PA1
 
-```
-tập nút KHÔNG ĐỒNG NHẤT
-   → chia cluster (ô lục giác) + bầu CH theo NĂNG LỰC
-   → TẬP CH LÀM ĐẠI DIỆN để lập lịch bay
-   → T0 nhu cầu θ  ·  T1 hai kiểu lập lịch          ══ ĐÃ CÀI ĐẾN ĐÂY ══
-   → tập ĐƯỜNG BAY THÔ (T2)
-   → TINH CHỈNH (T3 tốc độ, T4 vòng lặp)
-   → UAV BAY & PHÁT dữ liệu tham chiếu
-   → RỒI MỚI CÓ tập vị trí nghi vấn   ← đầu ra Pha 1, đầu vào Pha 2
-```
-
-**Bản cài đầu tiên đặt phát hiện SAI CHỖ.** Nó chạy Tầng 1 *trước* khi bay, lấy
-tập nghi vấn `𝒟` và tiên nghiệm `ω_n` rồi phân tầng `θ` theo đó
-(`n ∈ 𝒟 → θ_full`, `n ∉ 𝒟 → θ_hedge`). Tức là **lập kế hoạch bằng thông tin mà
-chính chuyến bay mới sinh ra được**: lúc lập lịch chưa nút nào cầm tham chiếu,
-nên chưa nút nào nói được ở đó có gì.
-
-Đã sửa. Nay `BuildDemands()` **không nhận** kết quả cảm biến, `kThetaHedgeFrac`
-bị xoá, và `θ` chỉ còn phụ thuộc **năng lực**:
-
-$$\theta_n \;=\; \theta_{\text{full}} \,/\, I_n$$
-
-Đây vẫn là một trọng số **suy ra từ triển khai** chứ không phải cho sẵn — vẫn là
-thứ tách bài này khỏi min–max mTSP có trọng số thông thường — nhưng **hẹp hơn**
-lời tuyên bố cũ ("tiên nghiệm đo được từ chính mạng"), và phải viết đúng như thế.
-
-**Giá của việc sửa** (θ×0.60, 780 m, 3 máy bay, 5 hạt giống):
-
-| | biết `𝒟` trước (SAI) | không biết (ĐÚNG) |
-|---|---|---|
-| tìm được kế hoạch | 4/5 hạt | 2/5 hạt |
-| makespan | ~90 s | ~118 s |
-| số ô phải thăm | 12–17 | 21 (tất cả lớp A) |
-
-Biết trước tập nghi vấn **đáng giá thật** — nhưng nó là thông tin **chưa tồn tại**
-ở thời điểm lập lịch, nên không được dùng. Con số trên là **giá của tính trung
-thực**, và nếu sau này có kênh phụ thu báo cáo trước chuyến bay thì đó là một
-**mở rộng có thể đo được**, không phải mặc định.
-
-## 1. Phạm vi hiện tại
-
-Cài **đến hết T1 (chia vùng)** và dừng. T2/T3/T4 đã bị **gỡ khỏi build** —
-chúng được dựng trên các giả định mà Bản 2 đã đổi, và giữ lại là lặp lại đúng
-lỗi "ý tưởng cũ chồng lên ý tưởng mới". Chúng còn nguyên trong git tại thẻ
-`p1-full-pipeline-before-rebuild`.
+Đường bay không còn là "thăm tâm ô". Nó là **bay dọc đường hàng + lượn bám**:
 
 ```
-models/p1/
-  p1-hex.h          bản sao ĐÃ KIỂM của toán hex (18 769 điểm)
-  p1-types.h        SERVED / BARREN
-  p1-params.h/.cc   mọi tham số, có nhãn TODO(param)
-  p1-sensing.h/.cc  Node: camera (bộ lọc cứng), obs, cpu, rxBps
-  p1-cells.h/.cc    Pha 0: phân ô → bầu CH → gán lớp → cây nội ô
-  p1-demand.h/.cc   T0: G(b), θ_n, c_n
-  p1-dubins.h/.cc   hình học Dubins — chỉ dùng để ĐO T1, không lái T1
-  p1-partition.h/.cc T1: credit + split, hai biến thể
+Ω thô → lồi hoá (P0.0) → chọn ψ (P0.1) → lát lưới XOAY theo ψ (P0.2)
+      → mỗi nút tự tính hàng và độ lệch δ_ν (P0.4)
+      → bầu CH CÓ Ý THỨC ĐƯỜNG BAY (P0.5)
+      → nhu cầu k_n rồi θ_n (P0.6)
+      → T0 chi phí phục vụ c_n     ← TÍNH MỘT LẦN, KHÔNG LẶP
+      → T1 chia HÀNG cho các UAV   ══ ĐÃ CÀI ĐẾN ĐÂY ══
 ```
 
-## 2. Ba nguyên lý, và chỗ chúng cắn vào code
+**Vòng phụ thuộc đã biến mất.** Trước đây `c_n` phụ thuộc độ lệch, độ lệch phụ
+thuộc tuyến, tuyến lại cần `c_n` — nên T4 phải lặp, và nó **dao động chu kỳ 2**,
+phải thêm phép kiểm tự nhất quán và bước rút chia đôi. Nay đường bay là **đường
+hàng đã cố định ở Pha 0**, `δ_n` là thuộc tính của CH chứ không của kế hoạch.
+Harness kiểm điều này: chạy `ServiceCost` hai lần phải ra **cùng một số**.
 
-| | nội dung | cài ở đâu |
-|---|---|---|
-| **N1** | không nghi vấn nào tồn tại trước chuyến bay | `BuildDemands()` **không nhận** kết quả cảm biến |
-| **N2** | phải phục vụ **mọi** cụm; không đồng nhất nằm ở **lượng** θ | mọi ô `SERVED` đều có θ > 0 |
-| **N3** | **CH là chủ thể đối sánh**, không có dữ liệu di chuyển trong cụm | camera là **bộ lọc cứng** khi bầu; **đã xoá** `T_local` |
+## 1. Kiểm toán PA1 trước khi cài
 
-`T_local` bị xoá hẳn: nó đo thời gian tham chiếu lan tới mọi thành viên đủ năng
-lực (49.5 s trung bình) — một cơ chế mà **N3 nói là không tồn tại**.
+**Hai công thức P0.5/T0.4 ra từ MỘT mô hình** — lượn hình sin biên độ δ, bước
+sóng 2a:
 
-## 3. §0.2.1 — bầu theo năng lực đáng giá bao nhiêu
+| | |
+|---|---|
+| độ dài thêm trên một bước ô | `a·δ²k²/4 = π²δ²/(4a)` với `k = π/a` ✓ |
+| bán kính cong nhỏ nhất | `1/(δk²) = a²/(π²δ)` ⇒ `δ_max = a²/(π²ρ)` ✓ |
 
-Spec đánh dấu "chưa đo". Nay đo, **trên 12 thế giới** chứ không một hạt giống:
+Chúng **không độc lập** — không thể sửa một cái mà quên cái kia. Tốt.
 
-```
-0.2.1 -- I_n cua CH YEU NHAT, 12 the gioi  (min / median / max)
-  capability (thiet ke)  0.336 / 0.425 / 0.466
-  centroid   (PECEE)     0.096 / 0.144 / 0.209
-  random     (null)      0.105 / 0.146 / 0.166
-  capability / centroid: 1.89x .. 4.81x, tot hon o 12/12 the gioi  -> DUOC XAC LAP
-  capability / random  : 2.30x .. 3.80x                            -> DUOC XAC LAP
-  centroid vs random: 0.144 vs 0.146 -- gan tam KHONG mang thong tin nang luc
-```
+**F1 khớp số:** đo `E|δ| = 0.389 R_c` (PA1 nói 0.385); tỉ lệ vi phạm `46 %` với
+`n_c=1`, `2.07 %` với `n_c=5`, `0.04 %` với `n_c=10` (PA1: 45 %, ~2 %, ~0 %).
 
-Đo **CH yếu nhất**, không phải trung bình: ô đó mang `θ` lớn nhất nên đặt ra chi
-phí phục vụ khó nhất của cả bài toán.
+> ⚠️ **`δ_max ≈ 0.4 R_c` CHỈ đúng tại điểm thiết kế.** `δ_max/R_c = 3R_c/(π²ρ)`
+> **tăng tuyến tính** theo `R_c`: bằng `4/π² = 0.405` chính xác tại `R_c = 4ρ/3`,
+> nhưng `0.29 R_c` ở `0.94ρ` và `1.05 R_c` ở `3.45ρ` — chỗ đó ràng buộc **không
+> còn cắn**. Bảng F1 chỉ áp dụng **ở lân cận điểm thiết kế**; cần ghi rõ.
 
-**Điểm sạch nhất để viết vào bài:** `centroid` ≈ `random`. Không phải "gần tâm là
-proxy tồi cho năng lực" — mà là **nó không phải proxy gì cả**. Đó là lý do đổi
-quy tắc bầu, phát biểu được bằng một con số.
+**Lập luận P0.1 đúng:** chi phí mỗi lần rẽ không phụ thuộc ψ (`h` từ lưới, `ρ`
+từ khí động), tổng độ dài hàng ≈ `A/h` cũng không — nên min chi phí rẽ ⟺ min số
+hàng ⟺ min bề rộng ⊥ ψ. Harness kiểm calipers với quét thô 0.1°.
 
-> Hai lần đầu tôi báo số cho mục này đều **sai** và đã rút lại: lần một đọc từ
-> **một hạt giống** (1.91×, không đại diện); lần hai chạy trên một `election`
-> **bị lỗi** — sentinel `best = -1.0` trong khi CENTROID chấm bằng khoảng cách
-> **âm**, nên mọi ứng viên xa tâm quá 1 m đều bị loại và có cấu hình không bầu
-> được ai. Bảng trên là sau khi sửa.
-
-## 4. T1 — thước đo, và giá của việc phân tầng
-
-Bản 2 để T1 chấm bằng **Euclid** (động học là việc của T2, T4 khép vòng). Tôi cài
-đúng thế, nhưng **đo luôn** cùng phân vùng đó bằng Dubins:
+## 2. P0.5 — hai số hạng cùng đơn vị giây
 
 ```
-method                  M   makespan   spread  Dubins that      gap
-credit (free)           2       799s     5.4%         811s     1.5%
-credit (contiguous)     2       828s     5.0%         841s     1.6%
-split                   2       814s     5.2%         826s     1.5%
-credit (free)           3       585s     9.6%         595s     1.7%
-credit (contiguous)     3       556s     9.8%         576s     3.5%
-split                   3       568s    15.3%         574s     1.1%
-credit (free)           4       451s     7.1%         457s     1.4%
-credit (contiguous)     4       453s    16.3%         460s     1.6%
-split                   4       449s    10.8%         458s     2.1%
+n* = argmin  c(θ(I_ν)) + π²δ_ν²/(4a·v_cruise)   s.t.  δ_ν ≤ δ_max
 ```
 
-**Khoảng cách chỉ 1.1–3.5 %.** Tôi đã cảnh báo rủi ro này (dự án từng trả giá vì
-chấm bằng mét đường thẳng), nhưng ở đây **phân tầng của Bản 2 là đúng**: ước
-lượng Euclid ở T1 gần như không làm lệch thứ hạng khối. Cả hai biến thể đều chấm
-bằng **cùng một thước** nên không bên nào được ưu ái. Chân depot nằm **trong**
-phép chia đôi ở cả hai.
+`ElectScore()` **đã bị xoá khỏi `Node`**: mục tiêu P0.5 cần hình học ô, mà một
+nút không có. Dựng nó trong `p1-cells.cc` chính là thứ **khử trọng số chọn tay**
+mà mọi biến thể LEACH/HEED phải chọn giữa hai đại lượng không cùng đơn vị.
+
+Harness kiểm **I2** (CH luôn trong `δ_max`) và kiểm luôn **độ cong của đường
+lượn ≥ ρ** — tức đường bay P0.5 hứa hẹn là bay được thật.
+
+## 3. Kết quả — `R_c = 84 m` (≈ đúng điểm thiết kế `4ρ/3 = 84.9 m`)
+
+```
+=== PHASE 0   40x40 nút, R_c=84m, rho=63.7m (1.32 rho)
+cells=32 trên 5 hàng   served=32 barren=0   (F1 hỏng: 0)
+a=145.5m  h=126.0m  delta_max=33.7m = 0.401 R_c
+F1 theo số ứng viên:  n_c=6: 0/1   n_c=7: 0/1   n_c=12: 0/30
+
+=== P0.6/T0   Pe*=0.050  J=3  sàn Fano=0.250  K=24 tệp × 4096 B
+  F2 thoả: 0.050 < 1/(J+1) = 0.250
+  I=1.00 -> k=9 tệp,  θ=87 743 B      I=0.10 -> k=86 tệp, θ=723 824 B
+  32 CH: 32 phải lượn vòng, 0 hỏng F3;  phục vụ 837 s, trong đó lượn bám 8 s (1%)
+  MỘT lượt bay giao 60 849 B ở hành trình, 84 513 B ở tốc độ tối thiểu
+
+=== T1  (R_c=94)  5 hàng, 24 CH
+method                  M   makespan   spread     turns     depot
+credit (free)           2       462s    12.5%       37s       39s
+credit (contiguous)     2       462s    12.5%       37s       39s
+split                   2       463s    15.1%       26s       39s
+credit (free)           3       404s    44.7%       34s       73s
+credit (contiguous)     3       393s    43.1%       23s       73s
+split                   3       393s    46.0%       17s       68s
+```
+
+**Chi phí lượn bám chỉ chiếm 1 % chi phí phục vụ.** Toàn bộ phần còn lại là liều
+— và cả 32 CH đều phải lượn vòng, vì `θ` (88–724 kB) vượt xa trần một lượt bay
+(84.5 kB). Đây vẫn là vấn đề tham số cũ, nay có dạng rõ hơn: **`k_n` và cỡ tệp
+quyết định tất cả**.
+
+**Lệch tải tăng mạnh theo số UAV** (12.5 % ở M=2 → 44.7 % ở M=3) vì chỉ có **5
+hàng** — hàng là đơn vị không chia được, nên `M` gần số hàng thì lệch là tất yếu.
+Đây là hệ quả trực tiếp của việc PA1 đổi đơn vị phân hoạch từ ô sang hàng.
+
+## 4. Ba lỗi tìm ra khi cài
+
+1. **Mặc định `Election` là `CAPABILITY` chứ không phải `FLIGHT_AWARE`** — P0.5
+   không chạy. Harness bắt qua bất biến "CH phải là nút tốt nhất theo P0.5".
+2. **`pick < 0` làm sentinel trong khi chỉ số hàng CÓ THỂ ÂM** (lưới đặt trong
+   hệ hàng, toạ độ axial chạy hai phía gốc). Hàng `-2` bị coi là "không tìm
+   thấy", rơi vào nhánh dự phòng, chọn lại `-2`, rồi **thoát vòng lặp** — chỉ 3
+   trong 5 hàng được giao. Cùng loại lỗi với `best = -1.0` đã sửa ở lần trước.
+3. **Số UAV nhiều hơn số hàng** ⇒ mầm trùng ⇒ một hàng bay **hai lần**. Nay chỉ
+   gieo `min(M, |hàng|)` mầm, số UAV dư để không — hàng không chia được.
+
+## 5. Còn treo
+
+- **T0.4 tính hai lần một cách bảo thủ:** nó tính tiền lượn bám `π²δ²/(4a)` để
+  **tới** CH, **và** lấy liều ở `G(δ_n)` là độ lệch của một lượt bay **thẳng**.
+  Hai thứ đó là hai chuyến bay khác nhau. Nếu lượn tới CH thì liều gần `G(0)`;
+  nếu bay thẳng thì không có độ dài thêm. Cài **đúng như spec**, và đánh dấu
+  `DoseAtHead()` là chỗ duy nhất cần sửa nếu cách đọc kia mới đúng.
+- **§K vẫn viết "khi và chỉ khi"** với `R_c ≥ 4ρ/3`. Harness đo lại mỗi lần
+  chạy: công thức được trích **thổi** chi phí rẽ chật tới **15.5 %** so với
+  Dubins thật (tối ưu thật là CCC), và ngưỡng thật là `1.218 ρ` / `1.156 ρ`.
+- **`rxBps` chưa vào mục tiêu P0.5** — chưa rõ nó có cắn không khi cỡ tệp đã cố
+  định. `TODO(param)`.
 
 ## 5. Vì sao phải dựng lại từ đầu
 

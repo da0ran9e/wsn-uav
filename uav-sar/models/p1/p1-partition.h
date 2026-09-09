@@ -1,46 +1,29 @@
 #ifndef UAV_SAR_P1_PARTITION_H
 #define UAV_SAR_P1_PARTITION_H
 
-// T1: split the cluster heads among the aircraft.
+// T1: split the ROWS among the aircraft.
 //
-// The input is the CH set and nothing else. N1 and N2 decide that: no suspect
-// exists before the flight, so there is no subset worth preferring, and EVERY
-// cell that can host a head must be served. The heterogeneity is entirely in
-// theta_n -- how much reference each head needs -- not in which head deserves a
-// visit.
+// The unit of work is a row, not a cell. That follows from the flight model: an
+// aircraft entering a row flies it end to end, so a row cannot be shared and
+// there is nothing finer to divide. The row's weight is everything that happens
+// while flying it:
 //
-// Two variants that differ in KIND, not in tuning. Both are implemented and both
-// are measured, because comparing them under a kinematic constraint is the part
-// nobody has done:
-//
-//   CREDIT   partition first, route afterwards. Each aircraft is an account with
-//            a budget; regions grow by taking adjacent cells and then trade to
-//            level out. Seeds are placed artificially, because every classical
-//            partitioning scheme distinguishes vehicles BY THEIR DEPOTS and
-//            degenerates when they all start from the same place -- which is
-//            this deployment.
-//
-//   SPLIT    route first, cut afterwards. One Euclidean tour through every head,
-//            then cut it into M arcs of equal cost. For a FIXED sequence the
-//            min-max cut is solvable exactly by bisection on the bound, so this
-//            half is not a heuristic.
+//     W_r = sum over the heads on row r of c_n   +   row length / v_cruise
 //
 // ---------------------------------------------------------------------------
-// THE YARDSTICK, AND WHAT IT COSTS
+// WHY CONTIGUITY IS NOT IMPOSED
 // ---------------------------------------------------------------------------
-// T1 scores blocks in EUCLIDEAN travel, as specified: the kinematic cost is
-// T2's business and T4 closes the loop with the offsets the real route produced.
-// That is a deliberate staging, not an oversight -- but it is also not free, and
-// this project has been bitten by exactly this before. So the module also
-// exposes a Dubins measurement of the same partition, and the harness reports
-// the gap. An estimator that ranks blocks differently from the way they fly is
-// a partition that looks balanced and is not.
+// Every partitioning scheme in the literature either enforces or preserves
+// contiguous regions. Here the cost of changing rows is L(|dr| h, rho), which is
+// NOT monotone in |dr|: below 2 rho the turn is tight and expensive, and skipping
+// a row can be cheaper than taking the next one. So a vehicle's best set of rows
+// need not be a contiguous block, and forcing it to be one is a constraint the
+// geometry does not ask for. Both variants are built and both are measured.
 //
-// Both variants are scored on the SAME yardstick, so neither is flattered.
-//
-// The depot legs are INSIDE the balancing, both variants. Cutting a tour into
-// equal-cost arcs and attaching the legs afterwards balances a quantity nobody
-// flies: the far arc pays kilometres the near arc does not.
+// T2 becomes small once T1 is done this way: with rows as the unit, the cost
+// between consecutive rows depends only on the difference of their indices, so
+// ordering a vehicle's rows is a permutation problem over a one-dimensional
+// cost -- not a generalised TSP over heading configurations.
 
 #include "p1-demand.h"
 #include "p1-params.h"
@@ -55,39 +38,46 @@ struct Depot {
     double x = 0, y = 0;
 };
 
+struct RowWork {
+    int32_t row = 0;
+    double  lengthM = 0.0;      // extent of the row inside the field
+    double  serviceS = 0.0;     // sum of c_n over the heads on it
+    uint32_t heads = 0;
+    double  WeightS() const { return serviceS + lengthM / kCruiseMps; }
+};
+
 struct Block {
-    std::vector<int32_t> cells;    // visit order, as the estimate assumed it
-    double travelS = 0.0;          // Euclidean, including BOTH depot legs
-    double serviceS = 0.0;         // sum of c_n
-    double TotalS() const { return travelS + serviceS; }
+    std::vector<int32_t> rows;  // in the order T1 left them; T2 will reorder
+    double workS = 0.0;         // sum of W_r
+    double changeS = 0.0;       // row-to-row turns, in the order given
+    double depotS = 0.0;        // out and back
+    double TotalS() const { return workS + changeS + depotS; }
 };
 
 struct Partition {
     std::vector<Block> vehicles;
-    double makespanS = 0.0;        // the slowest aircraft -- what the mission costs
-    double imbalancePct = 0.0;     // (max - min) / max
+    double makespanS = 0.0;
+    double imbalancePct = 0.0;
     const char* method = "";
     bool contiguous = false;
 };
 
-// Nearest-neighbour order from the depot, then Euclidean length including both
-// depot legs, plus the service seconds. This is the yardstick T1 optimises.
-Block EstimateBlock(const std::vector<int32_t>& cells,
-                    const std::map<int32_t, Demand>& demands, const Depot& depot);
+// Row extents and weights, from the cells and their service costs.
+std::map<int32_t, RowWork> BuildRows(const CellPlan& plan,
+                                     const std::map<int32_t, Demand>& demands);
 
-// The same block, measured the way it will actually be flown: Dubins hops with
-// the heading at each head taken from the direction of travel. Reported, never
-// optimised against -- the gap between this and EstimateBlock is what the
-// staging costs.
-double DubinsTravelS(const Block& b, const std::map<int32_t, Demand>& demands,
-                     const Depot& depot, double turnRadiusM);
+// Cost of a set of rows flown in ascending index order, with both depot legs.
+Block CostBlock(const std::vector<int32_t>& rows,
+                const std::map<int32_t, RowWork>& work, const CellPlan& plan,
+                const Depot& depot, double turnRadiusM);
 
-Partition PartitionCredit(const std::map<int32_t, Demand>& demands,
+Partition PartitionCredit(const std::map<int32_t, RowWork>& work,
                           const CellPlan& plan, const Depot& depot,
-                          uint32_t vehicles, bool contiguous);
+                          uint32_t vehicles, double turnRadiusM, bool contiguous);
 
-Partition PartitionSplit(const std::map<int32_t, Demand>& demands,
-                         const Depot& depot, uint32_t vehicles);
+Partition PartitionSplit(const std::map<int32_t, RowWork>& work,
+                         const CellPlan& plan, const Depot& depot,
+                         uint32_t vehicles, double turnRadiusM);
 
 }  // namespace ns3::uavsar::p1
 

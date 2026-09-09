@@ -3,24 +3,12 @@
 
 // EVERY parameter of the Phase-1 system lives here and nowhere else.
 //
-// The system is being built before its parameters are known. That is workable
-// only if the unknowns sit in ONE place and each says what it is waiting for.
-// A plausible number written into a .cc file is indistinguishable from a
-// measured one three weeks later, and that is how a placeholder becomes an
-// unexamined assumption in a paper.
-//
 // Markers:
 //   TODO(param)  MUST be replaced by a measurement or a decision before any
 //                result resting on it is reported. The value here is chosen to
 //                make the pipeline run. It is not a claim.
 //   [derived]    computed from others; never set independently.
-//   [design]     a decision, not a measurement. Changing it changes the system,
-//                not the accuracy of the model.
-//
-// NOTE ON NAMES. The old system has its own kAlertThreshold on a different
-// quantity and a different scale. Nothing here is shared with it -- see
-// tools/check_p1_isolation.py, which fails the build path if this subtree ever
-// reaches into the old one.
+//   [design]     a decision, not a measurement.
 
 #include "p1-types.h"
 
@@ -29,153 +17,71 @@
 namespace ns3::uavsar::p1 {
 
 // ===========================================================================
-// PHASE 0 -- cells, leaders, classes
+// PHASE 0 -- grid
 // ===========================================================================
 
-// Cell circumradius. Not a free parameter: it is the variable the paper's design
-// rule is about, so it is swept, not set.  [design]
+// Cell circumradius. Not a free parameter: it is what the design rule is about,
+// so it is swept, not set.  [design]
 inline constexpr double kCellRadiusM = 94.0;
 
-// Ground link range between nodes, for the intra-cell tree.  TODO(param):
-// should come from the measured G2G range, not assumed.
+// Douglas-Peucker tolerance for P0.0.  [design]
+inline constexpr double kBoundaryTolM = 5.0;
+
+// Ground link range, for the intra-cell tree.  TODO(param): from measured G2G.
 inline constexpr double kGroundRangeM = 40.0;
-
-// SCOPE ASSUMPTION (0.2.2): every cell holds at least one camera node. A cell
-// that does not cannot elect a head, has no demand, and drops out of the routing
-// problem -- which thins the set the aircraft must serve and, past a point, stops
-// the kinematic constraint from binding at all. That is a stated boundary of
-// this work, not a case it handles.
-
-// Election priorities, applied ONLY among nodes that have a camera. Having a
-// camera is a hard filter, not a weight: a head without one has nothing to
-// match, and no amount of compute compensates.
-// Residual energy -- PECEE's original criterion -- carries weight 0 because
-// this simulator has no per-node energy model. Weighting a constant would look
-// like a criterion without being one.
-// TODO(param): give energy weight only once ground-node energy is modelled.
-inline constexpr double kElectWCompute = 0.55;   // [design]
-inline constexpr double kElectWRadio   = 0.45;   // [design]
-inline constexpr double kElectWEnergy  = 0.00;
 
 // ===========================================================================
 // Node population
 // ===========================================================================
-// TODO(param): the whole block is a deployment description, not physics.
-inline constexpr double kCameraFraction   = 0.85;   // nodes with a camera
+// TODO(param): a deployment description, not physics.
+inline constexpr double kCameraFraction = 0.85;
 inline constexpr double kObsMin = 0.45,  kObsMax = 1.00;
 inline constexpr double kCpuMin = 0.20,  kCpuMax = 1.00;
 inline constexpr double kRxBpsMin = 20000.0, kRxBpsMax = 250000.0;
 
 // ===========================================================================
-// PHASE 1 TIER 1 -- detection, no reference needed
+// P0.6 -- how many FILES, then how much DOSE
 // ===========================================================================
 //
-// A PLACEHOLDER standing in for a real anomaly detector. Exactly two properties
-// are load-bearing and must survive any replacement:
-//   (a) it misses, and it false-alarms;
-//   (b) it CANNOT tell a victim from a confuser.
-// (b) is the whole content of the Fano ceiling and the reason Phase 1 exists.
-// A "better" detector that separates the two stops modelling the problem.
-
-// The detector reads a NOISY observation of the field, and the noise is drawn
-// ONCE PER NODE PER RUN -- it is one observation of that node's own footage, not
-// a per-packet event. Getting that wrong turns a fixed sensing limitation into
-// something that averages away over time.
-inline constexpr double kQualityMax = 0.95;   // TODO(param): peak match score
-inline constexpr double kDecayM     = 60.0;   // TODO(param): falloff scale
-inline constexpr double kSenseSigma = 0.10;   // TODO(param): per node, per run
-
-// How much of a confuser's resemblance the COMPLETE reference removes.
+//   k_n = ceil( ln(1/Pe*) / (I_n * S_eff) )     Chernoff: files to discriminate
+//   theta_n = theta(k_n, K, C)                  coupon collector: dose to get them
 //
-// This is the physical heart of the two tiers, and it is why they are two TIERS
-// and not two detectors. The SAME node, with the SAME noise draw, reads one
-// value from cue-level information and another once it holds the reference: a
-// jacket of the same colour matches at tier 1 and stops matching at tier 2.
-// Ambiguity is therefore not a fixed property of the world but a function of how
-// much reference has been delivered -- which is what makes DELIVERING an act of
-// disambiguation rather than an act of transport.
-// 1.0 = the full reference settles it outright; 0 = ambiguity survives delivery.
-inline constexpr double kClutterResolve = 1.0;   // TODO(param)
+// The two-stage shape is the point. Discrimination is a question about FILES --
+// how many distinct pieces of reference the head needs to separate the target
+// from J confusers. Delivery is a question about DOSE -- how much air time it
+// takes to collect k distinct files out of K when they are broadcast blind, in
+// round-robin, with no acknowledgement. Collapsing them into one number loses
+// the coupon-collector term, which is where the broadcast schedule enters.
 
-// The two decision bars, and the ORDERING THEY MUST SATISFY.
-//
-//        noise floor  <  kAlertScore  <  kConfirmScore  <  R_victim
-//
-// where R_victim is what the node NEAREST a real victim reads once it holds the
-// reference -- the best reading the deployment can ever produce for a true
-// positive. Each inequality is load-bearing and each has been violated before:
-//
-//   noise < alert        a bar inside the noise makes every empty cell a
-//                        suspect and the flight plan meaningless.
-//   alert < confirm      sharing one bar between raising a candidate and
-//                        settling one was measured on the old system: nodes
-//                        with no signal confirmed on noise alone, and the fault
-//                        stayed invisible while only one candidate existed.
-//   confirm < R_victim   a bar above the best true positive confirms NOTHING.
-//                        The first placeholders here had kConfirmScore = 0.70
-//                        while the weakest sensor at the worst lattice distance
-//                        reads 0.564 -- so every real victim was rejected. The
-//                        harness now computes R_victim from the deployment and
-//                        fails if the chain breaks.
-//
-// This is a CONSTRAINT, not a tuning knob. Changing kQualityMax, kDecayM,
-// kObsMin or the node spacing moves R_victim and can break it silently.
-inline constexpr double kAlertScore   = 0.35;   // [design] ~3.5 sigma over noise
-inline constexpr double kConfirmScore = 0.50;   // [design]
+// Target probability of a wrong identification.  [design]
+inline constexpr double kTargetPe = 0.05;
 
-// Bytes one Tier-1 report costs on the narrowband uplink: cell id, score, class.
-// The asymmetry against the reference payload going the other way is what makes
-// the architecture close.  [design]
-inline constexpr uint32_t kReportBytes = 6;
+// Number of confusing objects the scene may hold. Enters through Fano: no
+// target error below J/(J+1) is meaningful without reference (F2).
+// TODO(param): a property of the scene.
+inline constexpr uint32_t kConfusers = 3;
 
-// ===========================================================================
-// T0 -- information demand
-// ===========================================================================
+// Chernoff information a unit-capability head extracts per reference file.
+// TODO(param): from the feature extractor and the matcher, not guessed.
+inline constexpr double kInfoPerFile = 0.35;
 
-// Reference bytes a class-A cell needs to settle an identity.
-//
-// EVERY class-A cell asks for this, scaled by its own sensor quality. There is
-// no "flagged" and "unflagged" tier, because at planning time NOTHING HAS BEEN
-// DETECTED YET: the aircraft has not flown, so no node has the reference, so no
-// node can say anything about what is there. The suspect set is an OUTPUT of
-// Phase 1, not an input to it.
-//
-// theta ~ 1 / I_n is therefore the ONLY source of heterogeneity in demand, and
-// it is a real one: a better sensor settles the same question on less reference.
-// That is still what separates this from a plain weighted min-max mTSP -- the
-// weights are DERIVED from the deployment rather than given -- but the claim is
-// narrower than a prior measured by the network, and must be written that way.
-// TODO(param): derive from the Chernoff exponent.
-inline constexpr double kThetaBaseBytes = 120000.0;
+// The broadcast file set.  [design]
+inline constexpr uint32_t kFileCount = 24;      // K
+inline constexpr uint32_t kFileBytes = 4096;    // TODO(param): feature vector size
 
-// Similarity of the nearest confusing object, in [0,1). The reference needed to
-// separate two things that already look alike diverges as they converge:
-//
-//     theta  ~  (1 - s)^-2
-//
-// so this is not a tuning knob but the term that says WHY the demand is what it
-// is. s -> 1 is a confuser indistinguishable from the target, and no finite
-// amount of reference settles it.
-// TODO(param): a property of the scene and the feature extractor; must be
-// measured, or stated as the worst case the design is built for.
-inline constexpr double kConfuserSimilarity = 0.0;
+// Confidence that a head has collected its k files by the time the dose is
+// spent. Higher C costs more air time through the coupon-collector tail.
+inline constexpr double kDeliveryConfidence = 0.95;   // [design]
 
-// Reference bytes a cell of unit capability needs, at that similarity.
-double ThetaFullBytes();
+// theta_n in bytes, for a head needing k of K files at confidence C.  [derived]
+double DoseBytes(uint32_t filesNeeded);
 
-// Reference broadcast rate from the aircraft.
-// TODO(param): from the airborne link budget.
-inline constexpr double kRefTxBytesPerS = 4000.0;   // ~32 kbps
+// Files a head of information rate I needs.  [derived]
+uint32_t FilesNeeded(double information);
 
-// Reception probability p(d), used only through G(b): a logistic in distance,
-// d50 being where a packet is caught half the time.
-// TODO(param): MEASURABLE TODAY from the existing forest A2G channel model.
-// This is the first placeholder that should be replaced by a measurement.
-inline constexpr double kPrxD50M  = 190.0;
-inline constexpr double kPrxWidth =  35.0;
-
-inline constexpr double   kGmaxOffsetM = 400.0;   // [design] G table cutoff
-inline constexpr uint32_t kGTableBins  = 81;
+// F2: below this target error the flight cannot help, because Fano already
+// bounds a reference-free node at 1/(J+1).  [derived]
+double FanoFloor();
 
 // ===========================================================================
 // The Phase-1 aircraft (fixed wing)
@@ -183,19 +89,58 @@ inline constexpr uint32_t kGTableBins  = 81;
 inline constexpr double kCruiseMps = 25.0;
 inline constexpr double kMinMps    = 18.0;   // TODO(param): stall margin
 inline constexpr double kMaxMps    = 30.0;   // TODO(param)
-inline constexpr double kBankDeg   = 45.0;   // [design]
+inline constexpr double kBankDeg   = 45.0;   // [design]  phi_b
 inline constexpr double kGravity   = 9.81;
 
-double TurnRadiusM(double speedMps);          // [derived]
+double TurnRadiusM(double speedMps);          // [derived] rho = v^2/(g tan phi)
 
-// The paper's design rule, as a SUFFICIENT condition:
-//   h = 1.5 R_c >= 2 rho   =>   R_c >= 4 rho / 3   =>   adjacent-row scan optimal
+// Cost of moving between two row lines a distance d apart, three regimes.
+// [derived]  L(d, rho)
+double RowChangeM(double gapM, double turnRadiusM);
+
+// P0.5 / T0.4 -- both come from ONE model: the aircraft weaves along the row on
+// a sinusoid of amplitude delta and wavelength 2a, so that it passes over each
+// head instead of standing off from it.
 //
-// It is NOT necessary, and it must not be written as an iff. Verified
+//   extra length over one cell pitch :  pi^2 delta^2 / (4a)
+//   minimum radius of curvature      :  a^2 / (pi^2 delta)
+//
+// The second gives the HARD feasibility bound: a head further than delta_max
+// from its row line cannot be followed, and reaching it would need a real Dubins
+// detour instead of a weave.
+//
+//     delta_max = a^2 / (pi^2 rho) = 3 R_c^2 / (pi^2 rho)
+//
+// Note this is NOT a fixed fraction of R_c: delta_max / R_c = 3 R_c / (pi^2 rho)
+// grows linearly with cell size. It equals 4/pi^2 = 0.405 exactly at the design
+// point R_c = 4 rho / 3, which is where the "about 0.4 R_c" figure comes from --
+// and it stops binding at all once R_c is past about 3.3 rho.  [derived]
+double MaxOffsetM(double cellRadiusM, double turnRadiusM);
+double WeaveExtraM(double offsetM, double cellPitchM);
+
+// ===========================================================================
+// T0 -- dose delivery
+// ===========================================================================
+inline constexpr double kRefTxBytesPerS = 4000.0;   // TODO(param): link budget
+
+// Reception probability p(d): a logistic in distance.
+// TODO(param): MEASURABLE from the existing forest A2G channel model.
+inline constexpr double kPrxD50M  = 190.0;
+inline constexpr double kPrxWidth =  35.0;
+
+inline constexpr double   kGmaxOffsetM = 400.0;   // [design] G table cutoff
+inline constexpr uint32_t kGTableBins  = 81;
+
+// ===========================================================================
+// The design rule
+// ===========================================================================
+// h = 1.5 R_c >= 2 rho  =>  R_c >= 4 rho / 3  =>  adjacent-row scan optimal.
+//
+// SUFFICIENT, not necessary, and it must not be written as an iff. Verified
 // numerically: with the cited turn family adjacent rows still win down to
-// 1.218 rho, and with full Dubins turns (RLR admitted) down to 1.156 rho.
-// The cited closed form also OVERSTATES the tight turn by up to 14 % because
-// the true optimum there is a CCC path, not a fly-out-and-loop-back.
+// 1.218 rho, and with full Dubins turns (RLR admitted) down to 1.156 rho. The
+// cited closed form also OVERSTATES the tight turn by up to 14 %, because the
+// true optimum there is a CCC path rather than a fly-out-and-loop-back.
 inline constexpr double kAdjacentSufficient = 4.0 / 3.0;
 inline constexpr double kAdjacentTrueCited  = 1.2178;   // [derived]
 inline constexpr double kAdjacentTrueDubins = 1.1559;   // [derived]

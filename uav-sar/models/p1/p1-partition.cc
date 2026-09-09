@@ -1,49 +1,65 @@
 #include "p1-partition.h"
 
-#include "p1-dubins.h"
-
 #include <algorithm>
 #include <cmath>
 #include <limits>
-#include <set>
 
 namespace ns3::uavsar::p1 {
 
-namespace {
-
-std::vector<int32_t> NearestNeighbour(const std::vector<int32_t>& cells,
-                                      const std::map<int32_t, Demand>& demands,
-                                      const Depot& depot) {
-    std::vector<int32_t> left = cells, out;
-    double cx = depot.x, cy = depot.y;
-    while (!left.empty()) {
-        size_t best = 0;
-        double bd = std::numeric_limits<double>::infinity();
-        for (size_t i = 0; i < left.size(); ++i) {
-            const Demand& d = demands.at(left[i]);
-            const double dd = std::hypot(d.x - cx, d.y - cy);
-            if (dd < bd) { bd = dd; best = i; }
+std::map<int32_t, RowWork> BuildRows(const CellPlan& plan,
+                                     const std::map<int32_t, Demand>& demands) {
+    std::map<int32_t, RowWork> out;
+    for (const auto& [row, cells] : plan.cellsByRow) {
+        RowWork w;
+        w.row = row;
+        double lo = std::numeric_limits<double>::infinity(), hi = -lo;
+        for (int32_t cid : cells) {
+            const Cell& c = plan.cells.at(cid);
+            double u, ww;
+            plan.field.ToRowFrame(c.cx, c.cy, u, ww);
+            lo = std::min(lo, u);
+            hi = std::max(hi, u);
+            const auto di = demands.find(cid);
+            if (di != demands.end() && di->second.theta > 0) {
+                w.serviceS += di->second.CostS();
+                w.heads++;
+            }
         }
-        out.push_back(left[best]);
-        cx = demands.at(left[best]).x;
-        cy = demands.at(left[best]).y;
-        left.erase(left.begin() + best);
+        // The row is flown from the first cell to the last, plus half a pitch of
+        // run-in and run-out so the weave has somewhere to start and finish.
+        w.lengthM = (hi - lo) + plan.cellPitchM;
+        out[row] = w;
     }
     return out;
 }
 
-// Euclidean length of a fixed order, WITH both depot legs.
-double EuclidM(const std::vector<int32_t>& order,
-               const std::map<int32_t, Demand>& demands, const Depot& depot) {
-    if (order.empty()) return 0.0;
-    double m = 0.0, px = depot.x, py = depot.y;
-    for (int32_t c : order) {
-        const Demand& d = demands.at(c);
-        m += std::hypot(d.x - px, d.y - py);
-        px = d.x; py = d.y;
-    }
-    return m + std::hypot(depot.x - px, depot.y - py);
+Block CostBlock(const std::vector<int32_t>& rows,
+                const std::map<int32_t, RowWork>& work, const CellPlan& plan,
+                const Depot& depot, double rho) {
+    Block b;
+    b.rows = rows;
+    if (rows.empty()) return b;
+    std::vector<int32_t> ord = rows;
+    std::sort(ord.begin(), ord.end());
+    b.rows = ord;
+    for (int32_t r : ord) b.workS += work.at(r).WeightS();
+    for (size_t i = 0; i + 1 < ord.size(); ++i)
+        b.changeS += RowChangeM(std::abs(ord[i + 1] - ord[i]) * plan.rowPitchM, rho)
+                     / kCruiseMps;
+    // Depot legs: out to the nearest end of the first row and back from the last.
+    auto rowPoint = [&](int32_t r) {
+        double x, y;
+        plan.field.FromRowFrame(0.0, plan.RowLineW(r), x, y);
+        return std::make_pair(x, y);
+    };
+    const auto p0 = rowPoint(ord.front());
+    const auto p1 = rowPoint(ord.back());
+    b.depotS = (std::hypot(p0.first - depot.x, p0.second - depot.y) +
+                std::hypot(p1.first - depot.x, p1.second - depot.y)) / kCruiseMps;
+    return b;
 }
+
+namespace {
 
 void Score(Partition& p) {
     double mx = 0, mn = std::numeric_limits<double>::infinity();
@@ -57,190 +73,134 @@ void Score(Partition& p) {
 
 }  // namespace
 
-Block EstimateBlock(const std::vector<int32_t>& cells,
-                    const std::map<int32_t, Demand>& demands, const Depot& depot) {
-    Block b;
-    b.cells = NearestNeighbour(cells, demands, depot);
-    b.travelS = EuclidM(b.cells, demands, depot) / kCruiseMps;
-    for (int32_t c : b.cells) b.serviceS += demands.at(c).penaltyS;
-    return b;
-}
-
-double DubinsTravelS(const Block& b, const std::map<int32_t, Demand>& demands,
-                     const Depot& depot, double R) {
-    if (b.cells.empty()) return 0.0;
-    auto hdg = [](double fx, double fy, double tx, double ty) {
-        return std::atan2(ty - fy, tx - fx);
-    };
-    std::vector<Config> pts{Config{depot.x, depot.y, 0.0}};
-    for (size_t i = 0; i < b.cells.size(); ++i) {
-        const Demand& d = demands.at(b.cells[i]);
-        const double px = i ? demands.at(b.cells[i - 1]).x : depot.x;
-        const double py = i ? demands.at(b.cells[i - 1]).y : depot.y;
-        const double nx = i + 1 < b.cells.size() ? demands.at(b.cells[i + 1]).x : depot.x;
-        const double ny = i + 1 < b.cells.size() ? demands.at(b.cells[i + 1]).y : depot.y;
-        // heading through the head: the bisector of arrive and leave
-        const double h1 = hdg(px, py, d.x, d.y), h2 = hdg(d.x, d.y, nx, ny);
-        pts.push_back({d.x, d.y, std::atan2(std::sin(h1) + std::sin(h2),
-                                            std::cos(h1) + std::cos(h2))});
-    }
-    pts.push_back({depot.x, depot.y, 0.0});
-    double m = 0.0;
-    for (size_t i = 0; i + 1 < pts.size(); ++i) m += DubinsLength(pts[i], pts[i + 1], R);
-    return m / kCruiseMps;
-}
-
-// ---------------------------------------------------------------------------
-// CREDIT
-// ---------------------------------------------------------------------------
-Partition PartitionCredit(const std::map<int32_t, Demand>& demands,
+Partition PartitionCredit(const std::map<int32_t, RowWork>& work,
                           const CellPlan& plan, const Depot& depot,
-                          uint32_t vehicles, bool contiguous) {
+                          uint32_t vehicles, double rho, bool contiguous) {
     Partition p;
     p.method = "credit";
     p.contiguous = contiguous;
     if (vehicles == 0) return p;
-
-    std::vector<int32_t> todo;
-    for (const auto& [cid, d] : demands)
-        if (d.theta > 0.0) todo.push_back(cid);
     p.vehicles.resize(vehicles);
-    if (todo.empty()) return p;
 
-    // Seeds: sort by angle about the depot and take M evenly spaced. Every
-    // classical partitioner separates vehicles by their START POINTS and
-    // degenerates when they share one; the seeds stand in for that separation.
-    std::sort(todo.begin(), todo.end(), [&](int32_t a, int32_t b) {
-        const Demand& da = demands.at(a);
-        const Demand& db = demands.at(b);
-        return std::atan2(da.y - depot.y, da.x - depot.x) <
-               std::atan2(db.y - depot.y, db.x - depot.x);
-    });
+    std::vector<int32_t> rows;
+    for (const auto& [r, w] : work) rows.push_back(r);
+    if (rows.empty()) return p;
 
-    std::map<int32_t, int32_t> owner;
+    // Seeds evenly spaced by ROW INDEX. With a shared depot the vehicles are not
+    // separated by where they start, so the seeds have to do that job.
+    //
+    // There can be FEWER ROWS THAN AIRCRAFT -- a wide cell radius over a narrow
+    // field gives three rows for four vehicles -- and then the even spacing
+    // collides, two vehicles seed on the same row, and that row is flown twice.
+    // Seeding only min(M, |rows|) vehicles leaves the surplus idle, which is the
+    // right answer: a row cannot be shared.
     std::vector<std::vector<int32_t>> own(vehicles);
-    for (uint32_t v = 0; v < vehicles; ++v) {
-        const size_t k = todo.size() * v / vehicles;
-        owner[todo[k]] = (int32_t)v;
-        own[v].push_back(todo[k]);
+    std::map<int32_t, int32_t> owner;
+    const uint32_t nSeed = (uint32_t)std::min<size_t>(vehicles, rows.size());
+    for (uint32_t v = 0; v < nSeed; ++v) {
+        const size_t k = rows.size() * v / nSeed;
+        own[v].push_back(rows[k]);
+        owner[rows[k]] = (int32_t)v;
     }
 
-    auto adjacent = [&](int32_t a, int32_t b) {
-        const Cell& ca = plan.cells.at(a);
-        const Cell& cb = plan.cells.at(b);
-        const int dq = cb.q - ca.q, dr = cb.r - ca.r;
-        return (dq == 1 && dr == 0) || (dq == -1 && dr == 0) ||
-               (dq == 0 && dr == 1) || (dq == 0 && dr == -1) ||
-               (dq == 1 && dr == -1) || (dq == -1 && dr == 1);
-    };
-
-    // Grow: the account with the most budget left (least work taken) buys next,
-    // and it buys the cell that costs IT least. Cost is measured on the WHOLE
-    // block, so the detour a cell forces is charged to whoever accepts it.
-    size_t placed = vehicles;
-    while (placed < todo.size()) {
+    while (owner.size() < rows.size()) {
         uint32_t v = 0;
         double least = std::numeric_limits<double>::infinity();
-        std::vector<double> cur(vehicles, 0.0);
+        std::vector<double> cur(vehicles);
         for (uint32_t k = 0; k < vehicles; ++k) {
-            cur[k] = EstimateBlock(own[k], demands, depot).TotalS();
+            cur[k] = CostBlock(own[k], work, plan, depot, rho).TotalS();
             if (cur[k] < least) { least = cur[k]; v = k; }
         }
-        int32_t pick = -1;
+        // A ROW INDEX CAN BE NEGATIVE: the grid is laid out in the row frame and
+        // axial coordinates run either side of the origin. So "not found" needs
+        // its own flag -- a `pick < 0` sentinel treats row -2 as a failure, falls
+        // into the fallback, picks row -2 again, and breaks out of the loop with
+        // rows still unassigned. That is exactly what happened: 3 of 5 rows flown.
+        int32_t pick = 0;
+        bool havePick = false;
         double bestDelta = std::numeric_limits<double>::infinity();
-        for (int32_t cid : todo) {
-            if (owner.count(cid)) continue;
+        for (int32_t r : rows) {
+            if (owner.count(r)) continue;
             if (contiguous) {
                 bool touches = false;
-                for (int32_t mine : own[v]) if (adjacent(mine, cid)) { touches = true; break; }
+                for (int32_t mine : own[v]) if (std::abs(mine - r) == 1) { touches = true; break; }
                 if (!touches) continue;
             }
             std::vector<int32_t> trial = own[v];
-            trial.push_back(cid);
-            const double delta = EstimateBlock(trial, demands, depot).TotalS() - cur[v];
-            if (delta < bestDelta) { bestDelta = delta; pick = cid; }
+            trial.push_back(r);
+            const double delta = CostBlock(trial, work, plan, depot, rho).TotalS() - cur[v];
+            if (delta < bestDelta) { bestDelta = delta; pick = r; havePick = true; }
         }
-        if (pick < 0) {                 // contiguity blocked every choice
-            for (int32_t cid : todo)
-                if (!owner.count(cid)) { pick = cid; break; }
-            if (pick < 0) break;
+        if (!havePick) {
+            for (int32_t r : rows)
+                if (!owner.count(r)) { pick = r; havePick = true; break; }
+            if (!havePick) break;
         }
         owner[pick] = (int32_t)v;
         own[v].push_back(pick);
-        placed++;
     }
 
-    // Trade: the busiest gives a cell to the least busy, while that strictly
-    // reduces the makespan.
     for (int iter = 0; iter < 200; ++iter) {
         std::vector<double> cur(vehicles);
         for (uint32_t k = 0; k < vehicles; ++k)
-            cur[k] = EstimateBlock(own[k], demands, depot).TotalS();
+            cur[k] = CostBlock(own[k], work, plan, depot, rho).TotalS();
         const size_t hi = std::max_element(cur.begin(), cur.end()) - cur.begin();
         const size_t lo = std::min_element(cur.begin(), cur.end()) - cur.begin();
         if (hi == lo) break;
         const double before = cur[hi];
         bool moved = false;
-        for (size_t i = 0; i < own[hi].size(); ++i) {
+        for (size_t i = 0; i < own[hi].size() && !moved; ++i) {
             std::vector<int32_t> a = own[hi], b = own[lo];
-            const int32_t cid = a[i];
+            const int32_t r = a[i];
             if (contiguous) {
                 bool touches = false;
-                for (int32_t mine : b) if (adjacent(mine, cid)) { touches = true; break; }
+                for (int32_t mine : b) if (std::abs(mine - r) == 1) { touches = true; break; }
                 if (!touches) continue;
             }
             a.erase(a.begin() + i);
-            b.push_back(cid);
-            const double na = EstimateBlock(a, demands, depot).TotalS();
-            const double nb = EstimateBlock(b, demands, depot).TotalS();
-            if (std::max(na, nb) < before - 1e-9) {
-                own[hi] = a; own[lo] = b; moved = true; break;
-            }
+            b.push_back(r);
+            const double na = CostBlock(a, work, plan, depot, rho).TotalS();
+            const double nb = CostBlock(b, work, plan, depot, rho).TotalS();
+            if (std::max(na, nb) < before - 1e-9) { own[hi] = a; own[lo] = b; moved = true; }
         }
         if (!moved) break;
     }
 
     for (uint32_t v = 0; v < vehicles; ++v)
-        p.vehicles[v] = EstimateBlock(own[v], demands, depot);
+        p.vehicles[v] = CostBlock(own[v], work, plan, depot, rho);
     Score(p);
     return p;
 }
 
-// ---------------------------------------------------------------------------
-// SPLIT
-// ---------------------------------------------------------------------------
-Partition PartitionSplit(const std::map<int32_t, Demand>& demands,
-                         const Depot& depot, uint32_t vehicles) {
+Partition PartitionSplit(const std::map<int32_t, RowWork>& work,
+                         const CellPlan& plan, const Depot& depot,
+                         uint32_t vehicles, double rho) {
     Partition p;
     p.method = "split";
-    p.contiguous = true;             // arcs of one tour are contiguous by construction
+    p.contiguous = true;             // consecutive rows, by construction
     if (vehicles == 0) return p;
-
-    std::vector<int32_t> todo;
-    for (const auto& [cid, d] : demands)
-        if (d.theta > 0.0) todo.push_back(cid);
     p.vehicles.resize(vehicles);
-    if (todo.empty()) return p;
 
-    const std::vector<int32_t> tour = NearestNeighbour(todo, demands, depot);
+    std::vector<int32_t> rows;
+    for (const auto& [r, w] : work) rows.push_back(r);
+    if (rows.empty()) return p;
+    std::sort(rows.begin(), rows.end());
 
-    // Min-max cut of a FIXED sequence into M contiguous arcs: bisection on the
-    // bound with a greedy feasibility test. Exact, not a heuristic.
-    //
-    // The feasibility test costs each arc WITH ITS DEPOT LEGS -- see the header.
-    auto arcCost = [&](size_t i, size_t j) {          // [i, j)
-        std::vector<int32_t> a(tour.begin() + i, tour.begin() + j);
-        double s = 0;
-        for (int32_t c : a) s += demands.at(c).penaltyS;
-        return EuclidM(a, demands, depot) / kCruiseMps + s;
+    // Min-max cut of the row sequence into M contiguous runs: bisection on the
+    // bound with a greedy feasibility test. Exact for a fixed sequence. The
+    // depot legs are inside the cost, not attached afterwards -- balancing arc
+    // cost alone balances a quantity nobody flies.
+    auto arc = [&](size_t i, size_t j) {
+        return CostBlock({rows.begin() + i, rows.begin() + j}, work, plan, depot, rho)
+            .TotalS();
     };
     auto feasible = [&](double bound, std::vector<size_t>& cuts) {
         cuts.clear();
         size_t i = 0;
-        while (i < tour.size()) {
+        while (i < rows.size()) {
             size_t j = i;
-            while (j < tour.size() && arcCost(i, j + 1) <= bound) j++;
-            if (j == i) return false;                 // one cell alone exceeds it
+            while (j < rows.size() && arc(i, j + 1) <= bound) j++;
+            if (j == i) return false;
             cuts.push_back(j);
             i = j;
             if (cuts.size() > vehicles) return false;
@@ -248,9 +208,9 @@ Partition PartitionSplit(const std::map<int32_t, Demand>& demands,
         return cuts.size() <= vehicles;
     };
 
-    double lo = 0.0, hi = arcCost(0, tour.size());
+    double lo = 0.0, hi = arc(0, rows.size());
     std::vector<size_t> cuts, best;
-    if (!feasible(hi, best)) { for (size_t i = 1; i <= tour.size(); ++i) best.push_back(i); }
+    if (!feasible(hi, best)) { for (size_t i = 1; i <= rows.size(); ++i) best.push_back(i); }
     for (int it = 0; it < 60; ++it) {
         const double mid = 0.5 * (lo + hi);
         if (feasible(mid, cuts)) { hi = mid; best = cuts; }
@@ -259,13 +219,9 @@ Partition PartitionSplit(const std::map<int32_t, Demand>& demands,
 
     size_t i = 0;
     for (uint32_t v = 0; v < vehicles; ++v) {
-        const size_t j = v < best.size() ? best[v] : tour.size();
-        std::vector<int32_t> a(tour.begin() + i, tour.begin() + std::max(i, j));
-        Block b;
-        b.cells = a;
-        b.travelS = EuclidM(a, demands, depot) / kCruiseMps;
-        for (int32_t c : a) b.serviceS += demands.at(c).penaltyS;
-        p.vehicles[v] = b;
+        const size_t j = v < best.size() ? best[v] : rows.size();
+        p.vehicles[v] = CostBlock({rows.begin() + i, rows.begin() + std::max(i, j)},
+                                  work, plan, depot, rho);
         i = std::max(i, j);
     }
     Score(p);

@@ -12,6 +12,7 @@ build_lib(
     models/common/node-capability.cc
     models/p1/p1-params.cc
     models/p1/p1-sensing.cc
+    models/p1/p1-field.cc
     models/p1/p1-cells.cc
     models/p1/p1-demand.cc
     models/p1/p1-dubins.cc
@@ -43,6 +44,7 @@ build_lib(
     models/p1/p1-hex.h
     models/p1/p1-params.h
     models/p1/p1-sensing.h
+    models/p1/p1-field.h
     models/p1/p1-cells.h
     models/p1/p1-demand.h
     models/p1/p1-dubins.h

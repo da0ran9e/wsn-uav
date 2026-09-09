@@ -1,42 +1,38 @@
 #ifndef UAV_SAR_P1_DEMAND_H
 #define UAV_SAR_P1_DEMAND_H
 
-// T0: turn an information demand into a routing cost.
+// T0: turn each head's information demand into seconds of flight time.
 //
-// Three steps, and the third changes the problem class:
+//   T0.1  G(b), the dose one straight pass at offset b delivers per unit of
+//         inverse speed. Depends only on geometry and p(d), so it is tabulated.
+//   T0.2  the offset is delta_n, ALREADY KNOWN from P0.5.
+//   T0.3  v_n = lambda G(delta_n) / theta_n, the fastest a single pass can be
+//   T0.4  c_n, the service cost in seconds
 //
-//   T0.1  theta_n -- reference bytes this cell needs. Class A asks; class B and
-//         C ask for nothing, because they can never discriminate and reference
-//         spent on them buys nothing at any price.
+// ---------------------------------------------------------------------------
+// THE CIRCULARITY IS GONE, AND THAT IS THE POINT OF PA1
+// ---------------------------------------------------------------------------
+// Before, c_n depended on the offset, the offset depended on the route, and the
+// route needed c_n -- so T0 had to guess, and T4 had to iterate until the guess
+// stopped moving. It oscillated, and stopping it needed a self-consistency test
+// and a halving step.
 //
-//         NOTHING HAS BEEN DETECTED YET. T0 runs before the aircraft has flown,
-//         so no node holds the reference and no node can say what is there. The
-//         suspect set is an OUTPUT of Phase 1, not an input to it, and the
-//         planner must not be handed one.
+// Now the flight path is the ROW LINE, which Phase 0 fixed before any routing
+// happened. delta_n is a property of the elected head, not of a plan. c_n is
+// computed once and is final. T4 stops being a correctness requirement and
+// becomes an optional improvement.
 //
-//         theta ~ 1 / I_n : a better sensor asks for LESS. That is the only
-//         source of heterogeneity in demand, and it is where the network's
-//         unevenness stops being an adjective and becomes a term in the
-//         objective -- still what separates this from a plain weighted min-max
-//         mTSP, since the weights are DERIVED from the deployment rather than
-//         given.
+// ---------------------------------------------------------------------------
+// ONE INCONSISTENCY IN T0.4, FLAGGED RATHER THAN SILENTLY RESOLVED
+// ---------------------------------------------------------------------------
+// T0.4 charges the weave -- pi^2 delta^2 / (4a) of extra path to reach the head
+// -- AND evaluates the dose at G(delta_n), the standoff of a straight pass. Those
+// are two different flights. If the aircraft weaves out to the head it arrives
+// overhead and the dose is nearer G(0); if it flies the row straight it pays no
+// extra length. Charging both is conservative in both directions at once.
 //
-//   T0.2  G(b) -- what ONE straight pass at offset b delivers, per unit of
-//         inverse speed. It depends only on geometry and p(d), so it is
-//         computed once into a table.
-//
-//         DOSE IS INVERSELY PROPORTIONAL TO SPEED. An aircraft that cannot
-//         hover has exactly one control for "give this place more": fly slower
-//         over it. That single fact is why T3 is a linear program.
-//
-//   T0.3  c_n -- the demand in SECONDS of flight time. Once a cell is a
-//         weighted node in a graph, a continuous delivery problem has become a
-//         combinatorial routing problem and the rest of the pipeline is
-//         standard machinery rather than new mathematics.
-//
-// CIRCULARITY, handled rather than hidden: c_n depends on the offset b, b
-// depends on the route, and the route needs c_n. The first pass assumes b = 0
-// and T4 re-enters with the offsets the route actually produced.
+// Implemented as written, because it is the spec. DoseAtHead() is the single
+// place to change if the intended reading is the other one.
 
 #include "p1-cells.h"
 #include "p1-params.h"
@@ -49,16 +45,11 @@
 
 namespace ns3::uavsar::p1 {
 
-// One pass at offset b delivers lambda_tx * G(b) / v bytes. G has units of
-// metres: it is the equivalent length of the pass at peak reception.
 class DoseModel {
   public:
     DoseModel();
     double Prx(double distanceM) const;
-    double G(double offsetM) const;
-    // Equivalent interaction length at offset b: G(b) / p(b). The distance over
-    // which the aircraft has to actually hold the reduced speed.
-    double InteractionLength(double offsetM) const;
+    double G(double offsetM) const;             // metres
   private:
     std::vector<double> m_g;
 };
@@ -66,25 +57,30 @@ class DoseModel {
 struct Demand {
     int32_t   cellId = -1;
     CellClass cls = CellClass::BARREN;
-    double    x = 0, y = 0;         // cell centre: the point to route to
-    double    theta = 0.0;          // bytes needed; 0 = never serve
+    int32_t   row = 0;
+    double    x = 0, y = 0;          // cell centre, world frame
+    double    offsetM = 0.0;         // delta_n, from P0.5
+    uint32_t  files = 0;             // k_n
+    double    theta = 0.0;           // bytes; 0 = never serve
     // Written by ServiceCost().
-    double    penaltyS = 0.0;       // seconds ADDED over flying past at cruise
-    double    serveMps = 0.0;       // speed to hold over the cell; 0 = orbit
-    uint32_t  orbits = 0;           // >0 when one pass can never be enough
+    double    weaveS = 0.0;          // time cost of following the head
+    double    doseS = 0.0;           // time cost of delivering theta
+    uint32_t  orbits = 0;            // >0 when one pass can never be enough
+    double    serveMps = 0.0;        // speed to hold over the head; 0 = orbit
+    double    CostS() const { return weaveS + doseS; }
+    bool      feasible = true;       // F3: G(delta_n) > 0
 };
 
 std::map<int32_t, Demand> BuildDemands(const CellPlan& plan,
                                        const std::vector<Node>& nodes);
 
-// Seconds of service for this cell from a pass at `offsetM`. Fills the three
-// output fields and returns the penalty. A cell with theta = 0 costs nothing.
-double ServiceCost(Demand& d, double offsetM, const DoseModel& dose);
+// The offset the dose is evaluated at. See the note above.
+inline double DoseAtHead(const Demand& d) { return d.offsetM; }
 
-// The speed at which one pass at `offsetM` exactly delivers theta. Below the
-// airframe's minimum, no single pass can ever be enough -- which is the whole
-// reason orbits exist in the cost model.
-double OnePassSpeed(double theta, double offsetM, const DoseModel& dose);
+// T0.4. `passM` is the along-row length over which the aircraft can hold the
+// reduced speed -- one cell pitch.
+double ServiceCost(Demand& d, const DoseModel& dose, double cellPitchM,
+                   double turnRadiusM);
 
 }  // namespace ns3::uavsar::p1
 

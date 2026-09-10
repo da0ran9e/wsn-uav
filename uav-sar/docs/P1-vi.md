@@ -119,143 +119,25 @@ hàng** — hàng là đơn vị không chia được, nên `M` gần số hàng
 - **`rxBps` chưa vào mục tiêu P0.5** — chưa rõ nó có cắn không khi cỡ tệp đã cố
   định. `TODO(param)`.
 
-## 5. Vì sao phải dựng lại từ đầu
+## 6. Lịch sử — cái gì đã bị bỏ, và vì sao
 
-Lần cài đầu **chồng ý tưởng mới lên ý tưởng cũ**. Bảy chỗ chồng lấn cụ thể,
-trong đó hai chỗ do chính lần cài đó tạo ra:
+Tài liệu spec đã đi qua ba bản. Ghi lại đây để không ai đi tìm những khái niệm
+đã chết trong code:
 
-| # | Chồng lấn |
-|---|---|
-| C1 | Hai mô hình "có gì ở đây": `clue-field` (`clueQuality`) và `tier1-detect` (`a_n`) |
-| C2 | Hai `kAlertThreshold` — **0.75** và **0.45**, khác đại lượng, khác thang, **cùng biên dịch** |
-| C3 | Ba mô hình dữ liệu tham chiếu: 4 tầng ngữ nghĩa / `θ` bytes / "k tệp" |
-| C4 | Hai cụm trưởng: `cell-grid` bầu theo **gần tâm** và dựng cây từ đó; lớp mới bầu theo **năng lực** nhưng **không dựng lại cây** |
-| C5 | `node-capability` viết cho các chặng cũ `EVIDENCE/IDENTITY/SEEDING`, `Modality` bắt vít lên trên |
-| C6 | Hai mô hình phủ: `lane-plan` + `gmc` phủ **vùng/nút** vs T1/T2 phục vụ **ô lớp A có trọng số** |
-| C7 | `kCpuConfirmMin` — tham số hệ mới — nằm trong file hệ cũ |
-
-**Kỷ luật không chặn được chồng lấn, nên nó thành phép kiểm.**
-`tools/check_p1_isolation.py`: `models/p1/` chỉ được include header của chính nó
-và thư viện chuẩn. Mọi thứ khác là FAIL.
-
-Chỗ nào hệ mới cần thứ hệ cũ có → **bản sao riêng + phép kiểm hai bản khớp nhau**.
-Bản sao **đã kiểm** thì an toàn; ký hiệu dùng chung mang **hai nghĩa** thì không.
-Chỉ có một bản sao như thế — toán hex — đối chiếu với `cell-grid` trên **18 769 điểm**.
-
----
-
-## 6. Tham số: một chỗ, có nhãn
-
-`models/p1/p1-params.h`. Nhãn:
-
-- `TODO(param)` — **bắt buộc** thay bằng số đo/quyết định trước khi báo cáo kết quả nào dựa vào nó
-- `[derived]` — suy ra, không đặt tay
-- `[design]` — quyết định, không phải số đo
-
-**Ràng buộc thứ tự ngưỡng**, ghi thành ràng buộc chứ không phải nút chỉnh:
-
-```
-sàn nhiễu  <  kAlertScore  <  kConfirmScore  <  R_victim
-   0.300       0.35            0.50             0.563
-```
-
-`R_victim` = điểm mà nút **gần nạn nhân nhất** đọc được khi đã cầm tham chiếu —
-giá trị true-positive tốt nhất mà deployment có thể sinh ra. Harness tính nó từ
-deployment thật và fail nếu chuỗi đứt.
-
----
-
-## 7. Pha 0 — một lượt, đúng thứ tự
-
-```
-phân ô hex  →  bầu theo NĂNG LỰC (modality là bộ lọc CỨNG)  →  gán A/B/C
-            →  dựng cây nội ô TỪ cụm trưởng đã bầu
-```
-
-Đây là chỗ sửa C4. Bầu vì một lý do rồi định tuyến từ cụm trưởng chọn vì lý do
-khác thì mọi số đếm chặng sau đó **sai một lượng không ai đo**.
-
-| lớp | điều kiện | hệ quả |
+| Khái niệm | Xuất hiện ở | Trạng thái |
 |---|---|---|
-| **A** | có nút **đúng phương thức** và **đủ tính toán** chạy đối sánh | **tốn thời gian bay** |
-| **B** | có nút chụp ảnh nhưng không phân biệt được | **không gửi tham chiếu** — mua gì cũng vô ích |
-| **C** | chỉ cảm biến vô hướng | không đóng góp |
+| **Lớp ô A / B / C** theo *phương thức cảm biến* | Bản 1, Bước 0.3 | **BỎ.** Bản 2 §0.2.2 thay bằng giả định phạm vi *"mọi ô có ≥1 nút camera"*; không còn khái niệm phương thức. Code chỉ còn `SERVED` / `BARREN`. |
+| **Tầng 1 chạy TRƯỚC chuyến bay** → tập nghi vấn `𝒟`, tiên nghiệm `ω_n`, `θ` phân tầng | Bản 1 | **BỎ.** Bản 2 N1: không nghi vấn nào tồn tại trước chuyến bay. `θ` chỉ còn theo năng lực. |
+| **`T_local`** — thời gian phát tán tham chiếu trong cụm | Bản 1 Bước 0.4 | **BỎ.** Bản 2 N3: CH đối sánh dữ liệu *của chính nó*, không có dữ liệu di chuyển trong cụm. |
+| **T2 = GTSP** với `h` cấu hình hướng mũi mỗi nút | Bản 1, Bản 2 | **THAY.** PA1 T2: bài hoán vị với chi phí `L(|Δr|·h, ρ)` chỉ phụ thuộc hiệu chỉ số hàng. Nhỏ hơn nhiều bậc. |
+| **T4 bắt buộc lặp** (vì `c_n` ↔ `b` vòng tròn) | Bản 1, Bản 2 | **THÀNH TUỲ CHỌN.** PA1 T0.2: `δ_n` cố định từ P0.5, `c_n` tính một lần. |
+| **Đơn vị phân hoạch là Ô** | Bản 1, Bản 2 | **THAY.** PA1 T1: đơn vị là **HÀNG** — UAV vào hàng nào thì bay hết hàng đó. |
 
-> **Diễn giải, có đánh dấu:** spec định nghĩa lớp A **chỉ theo phương thức**. Ở
-> đây thêm "và đủ tính toán chạy đối sánh" (`kCpuMatchMin`), vì ô không chạy nổi
-> đối sánh thì cũng không bao giờ phân biệt được — đúng lý do spec loại lớp B.
-> Đặt `kCpuMatchMin = 0` thì hai định nghĩa trùng nhau.
+Toàn bộ code của các bản trước còn trong git tại thẻ
+`p1-full-pipeline-before-rebuild`.
 
-`T_local` (bước 0.4) đã đo: **trung bình 49.5 s, tối đa 82.3 s** ở `R_c = 94 m`
-cho `θ_full = 120 kB` tới **mọi** nút phân biệt được trong ô. Mô hình
-store-and-forward nên đây là **cận trên**.
 
----
-
-## 8. Mô hình cảm biến — ĐẦU RA của Pha 1 (đã gỡ khỏi build)
-
-`scoreCue` **không phải đầu vào lập lịch**. Nó là **đường cơ sở** để đo chuyến bay
-mua được gì: mạng tự nói được đến đâu, so với nói được đến đâu sau khi có tham
-chiếu. So sánh đó là một **kết quả**, và đó là công dụng duy nhất của nó.
-
-> **Một TẦNG không phải một BỘ PHÁT HIỆN.** Cùng một nút, cùng một lần rút nhiễu,
-> cho **hai** giá trị đọc: `scoreCue` (không tham chiếu) và `scoreFull` (đã cầm
-> tham chiếu đầy đủ).
-
-Rút nhiễu riêng cho hai tầng biến Tầng 2 thành **cú tung đồng xu thứ hai không
-liên quan**, và luận điểm cả kiến trúc dựa vào — *giao dữ liệu là hành vi GỠ
-NHẬP NHẰNG, không phải hành vi vận chuyển* — âm thầm hết được mô hình hoá.
-
-Nhiễu rút **một lần mỗi nút mỗi run** — đó là một quan sát footage của chính nút
-đó, không phải sự kiện theo gói. Rút theo mỗi lần đọc cho phép nút **bình quân
-hoá giới hạn của chính nó**, biến ràng buộc cứng thành ràng buộc mềm.
-
-### 4.1 Trần Fano áp cho VẬT, không phải cho Ô
-
-| đo | kết quả |
-|---|---|
-| Tầng 1 trên bố trí thật (M=3) | **34.5 %** |
-| trần `1/(M+1)` | 25.0 % |
-| đối chứng: cảm biến giống hệt, vật đặt trên nút | 33.0 % — **vẫn trên trần** |
-| đối chứng + **một vật mỗi ô** | **25.5 %** ✓ |
-| Tầng 2, tham chiếu đầy đủ | **88.8 %** |
-
-Giả thuyết đầu của tôi (bất đối xứng do cảm biến không đồng nhất) **sai** — đối
-chứng bác bỏ. Nguyên nhân thật: khi hai vật rơi **cùng một ô**, gọi tên ô đó là
-đúng nếu **một trong hai** là thật, nên phân hoạch thô ăn điểm cao hơn trần
-**mà không cần thêm thông tin nào**.
-
-> **Trích `1/(M+1)` mà đo ở mức ô là thổi phồng Tầng 1 — ở đây 9.5 điểm phần trăm.**
-
-### 4.2 Báo giả: LAN BIÊN, không phải nhiễu
-
-Gán nhãn ground truth theo **bán kính đáp ứng** làm gần như mọi ô đều "có vật"
-(15/16). Gán theo **hình học** rồi tách hai loại:
-
-- **lan biên** — vật ở ô kề; báo động **đúng**, chỉ nhãn ô sai. Đây là **giới hạn
-  phân giải của lớp ô** và là thứ Pha 2 phải trả tiền để gỡ.
-- **nhiễu độc lập** — thứ bộ phát hiện tốt hơn sẽ khử.
-
-Đo được: **toàn lan biên, không nhiễu độc lập**.
-
----
-
-## 9. Đã gỡ khỏi build
-
-T2 (Dubins-GTSP), T3 (LP hồ sơ tốc độ), T4 (vòng lặp tinh chỉnh) và mô hình
-cảm biến sau chuyến bay **đã gỡ**. Chúng chạy được và có kiểm, nhưng dựng trên
-các giả định Bản 2 đã đổi (lớp A/B/C theo phương thức, `T_local`, `θ` chỉ theo
-`obs`). Giữ lại là lặp lại đúng lỗi đã phải sửa một lần.
-
-Khôi phục: `git show p1-full-pipeline-before-rebuild`.
-
-Những kết quả đã đo của chúng vẫn đúng **với giả định lúc đó**, và ghi lại ở đây
-để không phải tìm lại: DP hướng mũi = brute force chính xác; `h=8` chỉ trên
-`h=32` 1.5 %; 2-opt/Or-opt ngắn hơn NN 38.2 %; simplex (cân tỉ lệ hàng +
-Dantzig/Bland) không thua 240 000 mẫu ngẫu nhiên; T4 dao động chu kỳ 2 và cần
-phép kiểm **tự nhất quán** cộng **bước rút chia đôi**.
-
-## 10. Sửa mệnh đề trung tâm — VẪN CHƯA VÀO SPEC
+## 7. Sửa mệnh đề trung tâm — VẪN CHƯA VÀO SPEC
 
 `R_c ≥ 4ρ/3` suy từ `h = 2ρ`, tức điểm **nửa đường tròn hoàn hảo** — cực tiểu
 toàn cục của chi phí rẽ. Nhưng "hàng kề tối ưu" là phép so **với nhảy hàng**, mà
@@ -277,7 +159,7 @@ bị thổi: `2.10× → 1.82×`, `1.31× → 1.15×`.
 
 ---
 
-## 11. Chạy lại
+## 8. Chạy lại
 
 ```bash
 python3 tools/check_p1_isolation.py                 # luật cách ly

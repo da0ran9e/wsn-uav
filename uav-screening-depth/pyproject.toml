@@ -1,0 +1,12 @@
+[project]
+name = "uav-screening-depth"
+version = "0.1.0"
+description = "How large should the UAV signature set k be? Experimental campaign."
+requires-python = ">=3.10,<3.11"   # 3.14+ breaks ns-3 argparse (AGENT-BRIEF 4)
+dependencies = ["numpy>=1.24", "scipy>=1.10", "pyyaml>=6.0", "shapely>=2.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

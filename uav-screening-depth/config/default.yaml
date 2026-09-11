@@ -1,0 +1,100 @@
+# uav-screening-depth — resolved defaults. Every parameter carries units.
+# NO MAGIC NUMBERS IN CODE (AGENT-BRIEF §13). Anything numeric lives here.
+schema_version: 1
+
+vehicle:
+  v_mps: 20.0                  # m/s   fixed-wing cruise (Appendix A.1)
+  bank_angle_deg: 30.0         # deg
+  rho_m: 70.6                  # m     Dubins min turn radius = v^2/(g tan phi); asserted in tests
+  g_mps2: 9.80665              # m/s^2
+
+radio:
+  broadcast_radius_m: 50.0     # m     (Appendix A.1)
+  lambda_ops_per_s: 5.0        # 1/s   HARD ceiling: 200 ms min Send() spacing (Appendix A.3)
+  p_ref: 0.3                   # -     per-opportunity success at reference distance (Appendix A.2)
+  payload_ceiling_B: 100       # B     NOT 127 (Appendix A.3)
+  min_send_spacing_s: 0.2      # s
+
+signature:
+  k_min: 2                     # files
+  k_max: 40                    # files
+  C_conf: 0.95                 # -     required per-CH confidence. NOT the cluster count.
+
+deployment:
+  # Fixed deployment area: sweeping R_cluster therefore moves C (physically coherent).
+  area_m2: 2598076.211         # m^2   chosen so C == 100 at R_cluster = 100 m under hex packing
+  R_cluster_m: [50.0, 75.0, 100.0, 125.0, 150.0]   # m  (Appendix A.1: swept 50-150)
+  hex_packing_coeff: 2.598076211  # -  3*sqrt(3)/2. A/(pi R^2) is WRONG by 21% (E2 note).
+
+# Phase-1 cost model. T1 = n_passes * L_sweep / v, n_passes = max(1, theta/(lambda*t_pass)).
+phase1:
+  track_spacing_m: 100.0             # m  = 2 * broadcast_radius_m
+  turn_penalty_coeff_rho: 3.14159265 # -  extra metres per track turnaround, in units of rho (pi*rho)
+
+# Phase-2 cost model. L2 = beta*sqrt(N*A) + N*dubins_hop_coeff_rho*rho; T2 = L2/v + N*dwell.
+phase2:
+  tsp_constant_beta: 0.7124          # -  BHH constant, Euclidean TSP in an area
+  dubins_hop_coeff_rho: 1.0          # -  extra path length per visit, in units of rho
+  verify_dwell_s: 10.0               # s  per flagged cluster
+
+objective:
+  # T_miss is SWEPT as a multiple of one full single-sweep time (L_sweep/v).
+  T_miss_mult: [1.0, 3.0, 10.0, 30.0]  # -
+
+dose:
+  kernel: log                  # log | linear   (§3.1: log is correct, linear is the ablation)
+  slot_s: 1.0                  # s   discretisation granularity for the submodular ground set (§3.3)
+
+regimes:
+  # m_policy: how m is chosen as k grows. THIS DECIDES WHETHER ln k SURVIVES (§3.2).
+  - {regime: all-k,   m_policy: equal-k,        m_fixed: null, m_frac: null}
+  - {regime: m-of-k,  m_policy: fixed-3,        m_fixed: 3,    m_frac: null}
+  - {regime: m-of-k,  m_policy: proportional-50, m_fixed: null, m_frac: 0.5}
+
+# r(k): true accept rate (TAR). Increasing, concave, saturating.
+r_families:
+  sat-exp:
+    - {r_inf: 0.99, k_r: 3.0}
+    - {r_inf: 0.99, k_r: 6.0}
+    - {r_inf: 0.95, k_r: 12.0}
+  logistic:
+    - {r_inf: 0.99, k0: 4.0, s: 1.5}
+    - {r_inf: 0.99, k0: 8.0, s: 3.0}
+    - {r_inf: 0.95, k0: 14.0, s: 5.0}
+  hill:
+    - {r_inf: 0.99, k_r: 4.0, a: 1.5}
+    - {r_inf: 0.99, k_r: 8.0, a: 2.0}
+    - {r_inf: 0.95, k_r: 14.0, a: 1.0}
+
+# f(k): false alarm rate (FAR). Decreasing, convex.
+f_families:
+  exp-decay:
+    - {f0: 0.50, k_f: 3.0,  f_floor: 0.0}
+    - {f0: 0.50, k_f: 8.0,  f_floor: 0.01}
+    - {f0: 0.30, k_f: 14.0, f_floor: 0.0}
+  power-law:
+    - {f0: 0.50, b: 0.7, f_floor: 0.0}
+    - {f0: 0.50, b: 1.2, f_floor: 0.01}
+    - {f0: 0.30, b: 2.0, f_floor: 0.0}
+  logistic-dec:
+    - {f0: 0.50, k0f: 6.0,  sf: 2.0, f_floor: 0.0}
+    - {f0: 0.50, k0f: 12.0, sf: 4.0, f_floor: 0.01}
+    - {f0: 0.30, k0f: 18.0, sf: 6.0, f_floor: 0.0}
+
+e0:
+  # "interior" = k* strictly inside [k_min, k_max]. "meaningful" additionally needs depth.
+  min_relative_depth: 0.01     # -  k* must beat the better boundary by >=1% to count as meaningful
+  # Screening thresholds to sweep. alpha = m/k is DERIVED from each via the
+  # Appendix A.2 evidence model: alpha = ln(1-thr)/ln(1-0.90). See AUDIT-E0 A1.
+  suspicion_thresholds: [0.30, 0.40, 0.50, 0.60, 0.684, 0.75, 0.80, 0.85, 0.90]
+  evidence_base: 0.90          # -  the 0.90 of Appendix A.2
+  quasiconvex_tol_rel: 1.0e-9  # -  tolerance for the non-increasing-then-non-decreasing test
+  # Secondary sweep: k* vs ln C at FIXED R, varying area so C spans more than a decade (E9 preview).
+  kstar_vs_C:
+    R_cluster_m: 100.0
+    C_values: [10, 14, 20, 28, 40, 56, 80, 113, 160, 226, 320, 452, 640]
+
+stats:
+  seeds_per_config: 120        # N >= 120 (§8). E0 is deterministic; this applies from E1 on.
+  tuning_seeds: 20             # disjoint, never reported
+  bootstrap_resamples: 10000

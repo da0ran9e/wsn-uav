@@ -1,0 +1,14 @@
+# AGENT-BRIEF 10: raw run directories are NOT committed; manifests, summary
+# tables and figure CSVs ARE. Nothing is ever deleted to tidy up a result --
+# a superseded result is marked STALE/VOID in its report and kept.
+#
+# NOTE: gitignore has no trailing comments -- '#' only starts a comment at the
+# start of a line. Keep every comment on its own line.
+results/**/run-*/
+results/**/events.jsonl
+# the full long-format E0 grid (73 MB); regenerate with tools/run_e0.py
+results/**/sweep.csv
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

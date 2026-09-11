@@ -1,0 +1,276 @@
+{
+  "experiment": "E0",
+  "gate": "GO",
+  "gate_reasoning": {
+    "brief_stop_condition": "k* on a boundary for >50% of the grid in BOTH regimes",
+    "frac_boundary_all_k": 0.49444444444444446,
+    "frac_boundary_m_of_k_aggregate": 0.5237654320987655,
+    "stop_condition_met": false,
+    "caveat_on_the_aggregate": "the m-of-k aggregate mixes m fixed (0% interior, k*=40 always) with m proportional (95% interior); the two are not alternatives, because Appendix A.2 fixes the evidence model and therefore makes m proportional to k. Read the per-policy and per-alpha views.",
+    "frac_interior_proportional_policy": 0.9524691358024692,
+    "frac_interior_fixed_m_policy": 0.0,
+    "alpha_range_with_interior_kstar_above_85pct": [
+      0.1549,
+      0.2218,
+      0.301,
+      0.3979,
+      0.5003,
+      0.6021,
+      0.699
+    ]
+  },
+  "quasiconvexity": {
+    "claim": "T_total(k) is quasiconvex in k (brief 1)",
+    "frac_quasiconvex_integer_m_proportional_policy": 0.0,
+    "frac_quasiconvex_continuous_m_range": [
+      0.944444,
+      0.970988
+    ],
+    "median_violation_magnitude_range_integer_m": [
+      0.014236,
+      0.148051
+    ],
+    "mechanism": "MEASURED: m = ceil(alpha*k) makes the realised ratio m/k oscillate with k (k=3 -> m/k=0.67, k=4 -> 0.50), so theta zigzags and T_total alternates by 1-15%. The underlying objective is quasiconvex; the integer-m realisation is not.",
+    "verdict": "the claim holds for the objective but NOT for the realisable integer-m curve; the paper must state it as quasiconvex in trend, or treat m as a second decision variable."
+  },
+  "alpha_view": [
+    {
+      "suspicion_threshold": 0.3,
+      "alpha_m_over_k": 0.1549,
+      "frac_interior": 0.944444,
+      "frac_interior_meaningful": 0.944444,
+      "median_k_star": 32,
+      "median_rel_depth": 0.227963,
+      "frac_quasiconvex_integer_m": 0.0,
+      "frac_quasiconvex_continuous_m": 0.968519,
+      "median_max_violation_rel": 0.014236,
+      "median_passes_at_kstar": 1.0981
+    },
+    {
+      "suspicion_threshold": 0.4,
+      "alpha_m_over_k": 0.2218,
+      "frac_interior": 0.858025,
+      "frac_interior_meaningful": 0.82716,
+      "median_k_star": 22,
+      "median_rel_depth": 0.277989,
+      "frac_quasiconvex_integer_m": 0.0,
+      "frac_quasiconvex_continuous_m": 0.968519,
+      "median_max_violation_rel": 0.027325,
+      "median_passes_at_kstar": 1.1364
+    },
+    {
+      "suspicion_threshold": 0.5,
+      "alpha_m_over_k": 0.301,
+      "frac_interior": 0.996296,
+      "frac_interior_meaningful": 0.967284,
+      "median_k_star": 16,
+      "median_rel_depth": 0.341535,
+      "frac_quasiconvex_integer_m": 0.0,
+      "frac_quasiconvex_continuous_m": 0.965432,
+      "median_max_violation_rel": 0.03167,
+      "median_passes_at_kstar": 1.1886
+    },
+    {
+      "suspicion_threshold": 0.6,
+      "alpha_m_over_k": 0.3979,
+      "frac_interior": 0.932099,
+      "frac_interior_meaningful": 0.904938,
+      "median_k_star": 15,
+      "median_rel_depth": 0.298741,
+      "frac_quasiconvex_integer_m": 0.0,
+      "frac_quasiconvex_continuous_m": 0.969753,
+      "median_max_violation_rel": 0.042554,
+      "median_passes_at_kstar": 1.4491
+    },
+    {
+      "suspicion_threshold": 0.684,
+      "alpha_m_over_k": 0.5003,
+      "frac_interior": 0.983333,
+      "frac_interior_meaningful": 0.944444,
+      "median_k_star": 13,
+      "median_rel_depth": 0.194627,
+      "frac_quasiconvex_integer_m": 0.0,
+      "frac_quasiconvex_continuous_m": 0.947531,
+      "median_max_violation_rel": 0.054253,
+      "median_passes_at_kstar": 1.8196
+    },
+    {
+      "suspicion_threshold": 0.75,
+      "alpha_m_over_k": 0.6021,
+      "frac_interior": 0.969136,
+      "frac_interior_meaningful": 0.933333,
+      "median_k_star": 11,
+      "median_rel_depth": 0.209135,
+      "frac_quasiconvex_integer_m": 0.0,
+      "frac_quasiconvex_continuous_m": 0.952469,
+      "median_max_violation_rel": 0.065465,
+      "median_passes_at_kstar": 1.988
+    },
+    {
+      "suspicion_threshold": 0.8,
+      "alpha_m_over_k": 0.699,
+      "frac_interior": 0.907407,
+      "frac_interior_meaningful": 0.884568,
+      "median_k_star": 10,
+      "median_rel_depth": 0.151588,
+      "frac_quasiconvex_integer_m": 0.0,
+      "frac_quasiconvex_continuous_m": 0.966667,
+      "median_max_violation_rel": 0.081336,
+      "median_passes_at_kstar": 2.1274
+    },
+    {
+      "suspicion_threshold": 0.85,
+      "alpha_m_over_k": 0.8239,
+      "frac_interior": 0.605556,
+      "frac_interior_meaningful": 0.596296,
+      "median_k_star": 6,
+      "median_rel_depth": 0.081771,
+      "frac_quasiconvex_integer_m": 0.0,
+      "frac_quasiconvex_continuous_m": 0.970988,
+      "median_max_violation_rel": 0.148051,
+      "median_passes_at_kstar": 1.8619
+    },
+    {
+      "suspicion_threshold": 0.9,
+      "alpha_m_over_k": 1.0,
+      "frac_interior": 0.505556,
+      "frac_interior_meaningful": 0.474074,
+      "median_k_star": 3,
+      "median_rel_depth": 0.002386,
+      "frac_quasiconvex_integer_m": 0.944444,
+      "frac_quasiconvex_continuous_m": 0.944444,
+      "median_max_violation_rel": 0.0,
+      "median_passes_at_kstar": 1.3718
+    }
+  ],
+  "stop_condition_met": false,
+  "n_config_points": 4860,
+  "k_grid": [
+    2,
+    40
+  ],
+  "wall_s": 17.61,
+  "headline": {
+    "gate": "GO",
+    "frac_interior_by_regime": {
+      "all-k": 0.5056,
+      "m-of-k": 0.4762
+    },
+    "frac_interior_meaningful_by_regime": {
+      "all-k": 0.4741,
+      "m-of-k": 0.4639
+    }
+  },
+  "per_regime": {
+    "all-k": {
+      "n_config_points": 1620,
+      "frac_interior": 0.5055555555555555,
+      "frac_interior_meaningful": 0.4740740740740741,
+      "frac_boundary": 0.49444444444444446,
+      "frac_quasiconvex": 0.9444444444444444,
+      "frac_quasiconvex_even_k": 0.9722222222222222
+    },
+    "m-of-k": {
+      "n_config_points": 3240,
+      "frac_interior": 0.4762345679012346,
+      "frac_interior_meaningful": 0.4638888888888889,
+      "frac_boundary": 0.5237654320987655,
+      "frac_quasiconvex": 0.25,
+      "frac_quasiconvex_even_k": 0.9459876543209876
+    }
+  },
+  "per_policy": {
+    "all-k/equal-k": {
+      "n_config_points": 1620,
+      "frac_interior": 0.5055555555555555,
+      "frac_interior_meaningful": 0.4740740740740741,
+      "frac_quasiconvex": 0.9444444444444444,
+      "frac_quasiconvex_even_k": 0.9722222222222222,
+      "median_max_violation_rel": 0.0,
+      "max_max_violation_rel": 0.015119351996656169,
+      "frac_at_lower": 0.49444444444444446,
+      "frac_at_upper": 0.0,
+      "median_k_star": 3,
+      "min_k_star": 2,
+      "max_k_star": 22
+    },
+    "m-of-k/fixed-3": {
+      "n_config_points": 1620,
+      "frac_interior": 0.0,
+      "frac_interior_meaningful": 0.0,
+      "frac_quasiconvex": 0.5,
+      "frac_quasiconvex_even_k": 0.9351851851851852,
+      "median_max_violation_rel": 7.934005439415793e-06,
+      "max_max_violation_rel": 0.22913545036761074,
+      "frac_at_lower": 0.0,
+      "frac_at_upper": 1.0,
+      "median_k_star": 40,
+      "min_k_star": 40,
+      "max_k_star": 40
+    },
+    "m-of-k/proportional-50": {
+      "n_config_points": 1620,
+      "frac_interior": 0.9524691358024692,
+      "frac_interior_meaningful": 0.9277777777777778,
+      "frac_quasiconvex": 0.0,
+      "frac_quasiconvex_even_k": 0.9567901234567902,
+      "median_max_violation_rel": 0.04576751400720918,
+      "max_max_violation_rel": 0.08697600829925105,
+      "frac_at_lower": 0.012345679012345678,
+      "frac_at_upper": 0.03518518518518519,
+      "median_k_star": 12,
+      "min_k_star": 2,
+      "max_k_star": 40
+    }
+  },
+  "feasibility_passes_per_ch": [
+    {
+      "requirement": "all 10",
+      "theta_ops": 147.9,
+      "in_range_s_needed": 29.6,
+      "passes_per_ch": 5.92
+    },
+    {
+      "requirement": "5 of 10",
+      "theta_ops": 33.4,
+      "in_range_s_needed": 6.7,
+      "passes_per_ch": 1.34
+    },
+    {
+      "requirement": "3 of 10",
+      "theta_ops": 19.8,
+      "in_range_s_needed": 4.0,
+      "passes_per_ch": 0.79
+    }
+  ],
+  "ln_k_survival": {
+    "all-k": {
+      "theta_k4": 48.9,
+      "theta_k40": 746.9,
+      "ratio_k40_over_k4": 15.26,
+      "per_file_growth_k4_to_k40": 1.526
+    },
+    "m-of-k fixed m=3": {
+      "theta_k4": 26.1,
+      "theta_k40": 18.1,
+      "ratio_k40_over_k4": 0.694
+    }
+  },
+  "provenance": {
+    "schema_version": 1,
+    "git_commit": "96110cd5a701c294e42c7df972b59f6de30c5da2",
+    "git_dirty": 1,
+    "git_branch": "claude/jolly-ptolemy-nytjc1",
+    "binary_mtime": 1789100026,
+    "binary_size": 19843,
+    "binary_path": "src/screening/model.py",
+    "source_sha256": "f5a271cc20a063b7697f7a1dcfcc6f426c57f86bf276e22a8455765067071e37",
+    "python_version": "3.10.20",
+    "python_executable": "/usr/bin/python3.10",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "cpu_count": 4,
+    "config_path": "config/default.yaml",
+    "config_sha256": "d4452b51773349b33522659a54d7ca4df8e1f42e3f3a8148692a9fd79825edfb",
+    "prov_id": "1d478b3dd653a6b1"
+  }
+}

@@ -44,6 +44,20 @@ def find_lkh() -> str | None:
     return shutil.which("LKH")
 
 
+def _require_lkh(explicit: str | None) -> str:
+    """Resolve the solver, failing with a clear message. An explicitly supplied
+    path that does not exist is an error, not a reason to fall back: the task
+    forbids quietly substituting a different solver for LKH."""
+    if explicit is not None:
+        if not (os.path.isfile(explicit) and os.access(explicit, os.X_OK)):
+            raise RuntimeError(f"LKH not found at the given path: {explicit}")
+        return explicit
+    found = find_lkh()
+    if found is None:
+        raise RuntimeError("LKH not found; set LKH_BIN or put LKH on PATH")
+    return found
+
+
 def bhh_tour_length_m(n_stops: int, area_m2: float, beta: float) -> float:
     """Beardwood-Halton-Hammersley estimate: l ~ beta * sqrt(n * A).
 
@@ -181,9 +195,7 @@ def dubins_tour(chs: list[tuple[float, float]], *, rho: float, n_headings: int,
     if C == 1:
         return TourResult(1, n_headings, 0.0, "trivial", 0.0, {}, time.time() - t0)
 
-    lkh = lkh or find_lkh()
-    if lkh is None:
-        raise RuntimeError("LKH not found; set LKH_BIN or put LKH on PATH")
+    lkh = _require_lkh(lkh)
 
     cost, nodes, M = build_cost_matrix(chs, n_headings, rho)
     order = _run_lkh(cost, lkh, seed=seed)

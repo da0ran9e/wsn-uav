@@ -500,15 +500,38 @@ blocks E2, E3, E5 and E7 &mdash; see <code>env.txt</code>.</li>
 def main(argv: list[str]) -> int:
     REPORT.mkdir(parents=True, exist_ok=True)
     which = argv[1:] or ["all"]
-    targets = {"E0": build_e0, "index": build_index}
-    todo = list(targets) if which == ["all"] else which
+    import report_cluster_radius as RCR
+    targets = {"E0": build_e0, "index": build_index,
+               "cluster-radius": lambda: RCR.build(
+                   RES, header, table, src, page, read_csv)}
+    # Inputs each page needs. "all" builds every page whose inputs exist and
+    # says which it skipped; naming a page explicitly makes a missing input an
+    # error, so a typo or a half-run campaign cannot pass silently.
+    needs = {
+        "E0": [RES / "E0" / "verdict.json"],
+        "cluster-radius": [RES / "cluster-radius" / "summary.json"],
+        "index": [RES / "E0" / "verdict.json"],
+    }
+    explicit = which != ["all"]
+    todo = list(targets) if not explicit else which
+    skipped = []
     for t in todo:
         if t not in targets:
             print(f"unknown report {t!r}; known: {list(targets)}")
             return 2
+        missing = [q for q in needs.get(t, []) if not q.exists()]
+        if missing:
+            rel = ", ".join(str(q.relative_to(ROOT)) for q in missing)
+            if explicit:
+                print(f"FATAL: {t} needs {rel}, which is missing")
+                return 2
+            skipped.append(f"{t} (needs {rel})")
+            continue
         out = REPORT / f"{t}.html"
         out.write_text(targets[t]())
         print(f"wrote {out.relative_to(ROOT)}  ({out.stat().st_size/1024:.1f} KB)")
+    for sk in skipped:
+        print(f"skipped {sk}")
     return 0
 
 

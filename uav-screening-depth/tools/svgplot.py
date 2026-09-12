@@ -44,13 +44,35 @@ def _fmt(v: float) -> str:
 
 def line_chart(series: list[dict], *, x_label: str, y_label: str, title: str = "",
                width: int = 760, height: int = 360, log_y: bool = False,
-               y_min: float | None = None, caption: str = "") -> str:
-    """series: [{name, x: [...], y: [...], marker_at: x|None, dashed: bool}]"""
+               y_min: float | None = None, caption: str = "",
+               vlines: list[tuple] | None = None,
+               shade_x: tuple | None = None, log_x: bool = False) -> str:
+    """series: [{name, x, y, lo?, hi?, marker_at?, dashed?, color?}]
+
+    lo/hi draw a confidence ribbon. vlines is [(x, label), ...]; shade_x is
+    (x0, x1, label) for an operating-range band.
+    """
     ml, mr, mt, mb = 68, 150, 28 if title else 14, 46
     pw, ph = width - ml - mr, height - mt - mb
     xs = [v for s in series for v in s["x"]]
     ys = [v for s in series for v in s["y"] if v is not None and (not log_y or v > 0)]
-    x0, x1, xticks = _nice(min(xs), max(xs))
+    for s_ in series:
+        for key in ("lo", "hi"):
+            for v in s_.get(key, []) or []:
+                if v is not None and (not log_y or v > 0):
+                    ys.append(v)
+    if vlines:
+        xs += [vx for vx, _ in vlines]
+    if shade_x:
+        xs += [shade_x[0], shade_x[1]]
+    if log_x:
+        lx0, lx1 = math.log10(min(xs)), math.log10(max(xs))
+        pad = 0.04 * max(lx1 - lx0, 1e-9)
+        lx0, lx1 = lx0 - pad, lx1 + pad
+        xticks = [v for v in sorted(set(xs))]
+        x0, x1 = 10 ** lx0, 10 ** lx1
+    else:
+        x0, x1, xticks = _nice(min(xs), max(xs))
     if log_y:
         ly0, ly1 = math.log10(min(ys)), math.log10(max(ys))
         ly0, ly1 = math.floor(ly0), math.ceil(ly1)
@@ -60,7 +82,11 @@ def line_chart(series: list[dict], *, x_label: str, y_label: str, title: str = "
         lo = min(ys) if y_min is None else y_min
         y0, y1, yticks = _nice(lo, max(ys))
         ty = lambda v: mt + ph - (v - y0) / (y1 - y0) * ph
-    tx = lambda v: ml + (v - x0) / (x1 - x0) * pw
+    if log_x:
+        tx = lambda v: ml + (math.log10(v) - math.log10(x0)) / \
+            (math.log10(x1) - math.log10(x0)) * pw
+    else:
+        tx = lambda v: ml + (v - x0) / (x1 - x0) * pw
 
     o = [f'<svg viewBox="0 0 {width} {height}" width="100%" role="img" '
          f'aria-label="{html.escape(title or y_label)}" class="chart">']
@@ -78,6 +104,22 @@ def line_chart(series: list[dict], *, x_label: str, y_label: str, title: str = "
             continue
         o.append(f'<line x1="{x:.1f}" y1="{mt}" x2="{x:.1f}" y2="{mt+ph}" class="grid"/>'
                  f'<text x="{x:.1f}" y="{mt+ph+18}" class="tk" text-anchor="middle">{_fmt(t)}</text>')
+    if shade_x:
+        sx0, sx1 = max(x0, shade_x[0]), min(x1, shade_x[1])
+        if sx1 > sx0:
+            o.append(f'<rect x="{tx(sx0):.1f}" y="{mt}" width="{tx(sx1)-tx(sx0):.1f}" '
+                     f'height="{ph}" fill="#2563eb" opacity="0.06"/>')
+            if len(shade_x) > 2 and shade_x[2]:
+                o.append(f'<text x="{(tx(sx0)+tx(sx1))/2:.1f}" y="{mt+12}" '
+                         f'class="tk" text-anchor="middle">{html.escape(shade_x[2])}</text>')
+    for vx, vlab in (vlines or []):
+        if x0 <= vx <= x1:
+            o.append(f'<line x1="{tx(vx):.1f}" y1="{mt}" x2="{tx(vx):.1f}" '
+                     f'y2="{mt+ph}" stroke="#dc2626" stroke-width="1.5" '
+                     f'stroke-dasharray="4,3"/>')
+            if vlab:
+                o.append(f'<text x="{tx(vx)+4:.1f}" y="{mt+ph-6}" class="tk" '
+                         f'fill="#dc2626">{html.escape(vlab)}</text>')
     o.append(f'<line x1="{ml}" y1="{mt+ph}" x2="{ml+pw}" y2="{mt+ph}" class="ax"/>'
              f'<line x1="{ml}" y1="{mt}" x2="{ml}" y2="{mt+ph}" class="ax"/>')
     o.append(f'<text x="{ml+pw/2:.0f}" y="{height-6}" class="al" text-anchor="middle">'
@@ -87,6 +129,16 @@ def line_chart(series: list[dict], *, x_label: str, y_label: str, title: str = "
 
     for i, s in enumerate(series):
         c = s.get("color", PALETTE[i % len(PALETTE)])
+        lo, hi = s.get("lo"), s.get("hi")
+        if lo and hi:
+            up = [(tx(x), ty(v)) for x, v in zip(s["x"], hi)
+                  if v is not None and (not log_y or v > 0)]
+            dn = [(tx(x), ty(v)) for x, v in zip(s["x"], lo)
+                  if v is not None and (not log_y or v > 0)][::-1]
+            if len(up) > 1 and len(dn) > 1:
+                d = " ".join(f"{'M' if j == 0 else 'L'}{x:.1f},{y:.1f}"
+                             for j, (x, y) in enumerate(up + dn)) + " Z"
+                o.append(f'<path d="{d}" fill="{c}" opacity="0.16" stroke="none"/>')
         pts = [(tx(x), ty(y)) for x, y in zip(s["x"], s["y"])
                if y is not None and (not log_y or y > 0)]
         d = " ".join(f"{'M' if j == 0 else 'L'}{x:.1f},{y:.1f}" for j, (x, y) in enumerate(pts))

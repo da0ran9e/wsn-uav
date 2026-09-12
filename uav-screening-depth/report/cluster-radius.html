@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cluster radius — interior R*?</title><style>
+:root{--fg:#111827;--mut:#6b7280;--bd:#e5e7eb;--bg:#fff;--sb:#f9fafb;
+--ok:#065f46;--okbg:#ecfdf5;--warn:#92400e;--warnbg:#fffbeb;--bad:#991b1b;--badbg:#fef2f2;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sb);color:var(--fg);
+font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 72px}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:19px;margin:38px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--bd)}
+h3{font-size:15.5px;margin:24px 0 8px}
+p{margin:10px 0}
+.sub{color:var(--mut);margin:0 0 18px}
+.card{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:18px 20px;margin:16px 0}
+.banner{display:inline-block;padding:5px 12px;border-radius:999px;font-weight:650;font-size:12.5px;
+letter-spacing:.04em;text-transform:uppercase}
+.CURRENT{background:var(--okbg);color:var(--ok);border:1px solid #a7f3d0}
+.STALE{background:var(--warnbg);color:var(--warn);border:1px solid #fde68a}
+.VOID{background:var(--badbg);color:var(--bad);border:1px solid #fecaca}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 22px;margin:14px 0 0}
+.meta div{font-size:13px;color:var(--mut)}
+.meta b{display:block;color:var(--fg);font-weight:600;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+font-size:12.5px;word-break:break-all}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:12px 0}
+th,td{border-bottom:1px solid var(--bd);padding:7px 9px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+thead th{background:var(--sb);font-weight:650;font-size:12.5px;color:var(--mut);
+text-transform:uppercase;letter-spacing:.03em}
+tbody tr:hover{background:var(--sb)}
+td.num,th.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.tw{overflow-x:auto}
+.chart{display:block;margin:6px 0 0;background:var(--bg)}
+.ct{font-size:13px;font-weight:650;fill:var(--fg)}
+.tk{font-size:11px;fill:var(--mut)}
+.al{font-size:11.5px;fill:var(--mut)}
+.lg{font-size:11.5px;fill:var(--fg)}
+.vl{font-size:10px;fill:var(--mut);font-variant-numeric:tabular-nums}
+.grid{stroke:var(--bd);stroke-width:1}
+.ax{stroke:#9ca3af;stroke-width:1}
+.cap{font-size:12.5px;color:var(--mut);margin:8px 0 0;border-left:3px solid var(--bd);padding-left:10px}
+.src{font-size:12px;margin:10px 0 0}
+.src a{color:#2563eb}
+code{background:var(--sb);border:1px solid var(--bd);border-radius:4px;padding:1px 5px;
+font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace}
+.verdict{border-left:4px solid #059669;background:var(--okbg)}
+.verdict.no{border-left-color:#dc2626;background:var(--badbg)}
+.flag{border-left:4px solid #d97706;background:var(--warnbg)}
+.big{font-size:30px;font-weight:700;letter-spacing:-.02em}
+ul,ol{margin:10px 0;padding-left:22px}li{margin:5px 0}
+.kv{display:flex;gap:26px;flex-wrap:wrap;margin:12px 0}
+.kv>div{min-width:140px}.kv .l{font-size:12px;color:var(--mut)}
+.kv .v{font-size:21px;font-weight:650;font-variant-numeric:tabular-nums}
+.q{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.q.done{background:#059669}.q.blocked{background:#dc2626}.q.todo{background:#d1d5db}
+.q.part{background:#d97706}
+</style></head><body><div class="wrap"><h1>Cluster radius &amp;mdash; does an interior R* exist?</h1><p class="sub">Targeted probe. T_total(R) = T1(R) + h_max(R)&middot;T_hop(R, n_c). Everything turned on T_hop, which nobody had measured.</p><div class="card"><span class="banner STALE">STALE</span><div class="meta"><div>git SHA<b>36019ab15037 (dirty)</b></div><div>generated<b>2026-09-12 08:43:32Z</b></div><div>N seeds<b>120 per configuration</b></div><div>config sha256<b>d4452b51773349b3</b></div><div>source sha256<b>efc2eaaf5056765d</b></div><div>python<b>3.10.20</b></div><div>ns-3<b>3.46 (ea50b72a)</b></div><div>LKH<b>3.0.13</b></div><div>B4/B5 runs<b>2,171</b></div><div>A6 tours<b>0</b></div></div></div>
+<div class="card flag"><p><strong>This page is incomplete.</strong> 1 configuration(s) short of 120 seeds; the B5 seed-only arm did not run; no realised Dubins tours. Every number below is from the data that does exist; nothing is extrapolated across the gap. The banner stays STALE until the missing arms are run.</p></div>
+<div class="card verdict"><p class="big">T_hop measures in single-digit seconds &mdash; R* lands outside 94&ndash;400 m</p><p>The probe had three possible outcomes. The measurement picks the second: <strong>T_hop = 1.51&ndash;2.80 s</strong> at k = 8 over R = 94&ndash;300 m, against the <strong>&ge; 6.91 s</strong> that would be needed to bring R* inside 400 m. The design rule becomes <em>make clusters as large as the kinematics allow</em>, not &ldquo;tune R to an interior optimum&rdquo;.</p><ul><li><strong>Contention was the wrong suspect.</strong> The hypothesis behind the "tens of seconds" estimate was that hundreds of nodes sharing a 5 packet/s channel would serialise. They do not: MAC drop rates stay below a few per cent and rise only mildly with density, while completion time barely moves. What sets T_hop is the advertise-then-push round trip, not channel saturation.</li><li><strong>T_hop falls with R</strong>, exponent -0.63 [-0.84, -0.44], R&sup2; = 0.97. The closed form assumes T_hop constant in R, so it is an approximation, not a law.</li><li><strong>A pre-registered prediction failed, and it was mine.</strong> I predicted T_hop would scale as k/&lambda; with exponent near 1. Measured: +0.28 [+0.25, +0.32], R&sup2; = 0.99 at R = 150 m &mdash; quadrupling k multiplies T_hop by only about 1.5&times;. Prediction 3.2 is <strong>REFUTED</strong>. See below for what the data says instead.</li><li><strong>Spatial reuse absorbs the R&sup2; traffic growth</strong>: T_spread exponent in n_c is &ndash; at R = 150 m, while MAC drops rise over the same range.</li><li><strong>The kinematic bound R &ge; 4&rho;/3 = 94.1 m binds hard below itself</strong>: realised tours are &ndash;&times; the BHH estimate above it but &ndash;&times; below, a &ndash; % penalty. It is not the active constraint, because T_total falls in R throughout.</li><li><strong>B5 not measured yet</strong> &mdash; the seed-only arm did not run.</li></ul><p>Predictions were registered in <code>docs/PREREGISTRATION-cluster-radius.md</code> and committed before these sweeps were read. Scorecard at the end.</p></div>
+<h2>B4 &mdash; the measurement</h2>
+<p>One hexagonal cell, nodes on a lattice, real LR-WPAN PHY and MAC with CSMA. Nodes within 50 m of a line through the cell centre are seeded at t = 0 exactly as a passing UAV would leave them; the epidemic spread then runs to completion. No UAV, no trajectory, no air-to-ground link &mdash; that is the shortcut that made this fast.</p>
+<svg viewBox="0 0 760 360" width="100%" role="img" aria-label="Full-cell completion time, 120 seeds per point" class="chart">
+<text x="68" y="16" class="ct">Full-cell completion time, 120 seeds per point</text>
+<line x1="68" y1="314.0" x2="610" y2="314.0" class="grid"/><text x="60" y="318.0" class="tk" text-anchor="end">0</text>
+<line x1="68" y1="242.5" x2="610" y2="242.5" class="grid"/><text x="60" y="246.5" class="tk" text-anchor="end">2.00</text>
+<line x1="68" y1="171.0" x2="610" y2="171.0" class="grid"/><text x="60" y="175.0" class="tk" text-anchor="end">4.00</text>
+<line x1="68" y1="99.5" x2="610" y2="99.5" class="grid"/><text x="60" y="103.5" class="tk" text-anchor="end">6.00</text>
+<line x1="68" y1="28.0" x2="610" y2="28.0" class="grid"/><text x="60" y="32.0" class="tk" text-anchor="end">8.00</text>
+<line x1="68.0" y1="28" x2="68.0" y2="314" class="grid"/><text x="68.0" y="332" class="tk" text-anchor="middle">50.0</text>
+<line x1="176.4" y1="28" x2="176.4" y2="314" class="grid"/><text x="176.4" y="332" class="tk" text-anchor="middle">100</text>
+<line x1="284.8" y1="28" x2="284.8" y2="314" class="grid"/><text x="284.8" y="332" class="tk" text-anchor="middle">150</text>
+<line x1="393.2" y1="28" x2="393.2" y2="314" class="grid"/><text x="393.2" y="332" class="tk" text-anchor="middle">200</text>
+<line x1="501.6" y1="28" x2="501.6" y2="314" class="grid"/><text x="501.6" y="332" class="tk" text-anchor="middle">250</text>
+<line x1="610.0" y1="28" x2="610.0" y2="314" class="grid"/><text x="610.0" y="332" class="tk" text-anchor="middle">300</text>
+<line x1="68" y1="314" x2="610" y2="314" class="ax"/><line x1="68" y1="28" x2="68" y2="314" class="ax"/>
+<text x="339" y="354" class="al" text-anchor="middle">cluster radius R (m)</text>
+<text x="14" y="171" class="al" text-anchor="middle" transform="rotate(-90 14 171)">T_spread (s)</text>
+<path d="M89.7,263.0 L163.4,244.6 L219.8,217.2 L284.8,198.7 L393.2,157.2 L501.6,118.0 L610.0,70.8 L610.0,95.3 L501.6,129.1 L393.2,167.5 L284.8,209.2 L219.8,220.9 L163.4,251.6 L89.7,269.7 Z" fill="#2563eb" opacity="0.16" stroke="none"/>
+<path d="M89.7,266.4 L163.4,249.2 L219.8,219.3 L284.8,205.8 L393.2,162.3 L501.6,124.3 L610.0,79.4" fill="none" stroke="#2563eb" stroke-width="2"/>
+<line x1="622" y1="42" x2="644" y2="42" stroke="#2563eb" stroke-width="2"/><text x="650" y="46" class="lg">k = 4</text>
+<path d="M89.7,250.0 L163.4,223.5 L219.8,196.8 L284.8,175.7 L393.2,136.2 L501.6,95.7 L501.6,100.9 L393.2,141.0 L284.8,182.2 L219.8,204.5 L163.4,229.2 L89.7,254.9 Z" fill="#d97706" opacity="0.16" stroke="none"/>
+<path d="M89.7,252.8 L163.4,226.0 L219.8,201.6 L284.8,178.9 L393.2,139.0 L501.6,98.4" fill="none" stroke="#d97706" stroke-width="2"/>
+<line x1="622" y1="60" x2="644" y2="60" stroke="#d97706" stroke-width="2"/><text x="650" y="64" class="lg">k = 8</text>
+<path d="M89.7,229.6 L163.4,199.8 L219.8,169.3 L284.8,150.5 L393.2,103.6 L501.6,65.4 L501.6,72.7 L393.2,111.6 L284.8,156.1 L219.8,177.8 L163.4,206.4 L89.7,238.6 Z" fill="#059669" opacity="0.16" stroke="none"/>
+<path d="M89.7,235.0 L163.4,203.1 L219.8,174.3 L284.8,153.4 L393.2,107.7 L501.6,68.5" fill="none" stroke="#059669" stroke-width="2"/>
+<line x1="622" y1="78" x2="644" y2="78" stroke="#059669" stroke-width="2"/><text x="650" y="82" class="lg">k = 16</text>
+</svg>
+<p class="cap">Ribbons are 10,000-resample bootstrap CIs on the median. T_spread rises sub-linearly in R while h_max(R) rises linearly &mdash; which is exactly why T_hop comes out falling.</p>
+<svg viewBox="0 0 760 360" width="100%" role="img" aria-label="T_hop &amp;mdash; the load-bearing number" class="chart">
+<text x="68" y="16" class="ct">T_hop &amp;mdash; the load-bearing number</text>
+<line x1="68" y1="314.0" x2="610" y2="314.0" class="grid"/><text x="60" y="318.0" class="tk" text-anchor="end">0</text>
+<line x1="68" y1="266.3" x2="610" y2="266.3" class="grid"/><text x="60" y="270.3" class="tk" text-anchor="end">2.00</text>
+<line x1="68" y1="218.7" x2="610" y2="218.7" class="grid"/><text x="60" y="222.7" class="tk" text-anchor="end">4.00</text>
+<line x1="68" y1="171.0" x2="610" y2="171.0" class="grid"/><text x="60" y="175.0" class="tk" text-anchor="end">6.00</text>
+<line x1="68" y1="123.3" x2="610" y2="123.3" class="grid"/><text x="60" y="127.3" class="tk" text-anchor="end">8.00</text>
+<line x1="68" y1="75.7" x2="610" y2="75.7" class="grid"/><text x="60" y="79.7" class="tk" text-anchor="end">10.0</text>
+<line x1="68" y1="28.0" x2="610" y2="28.0" class="grid"/><text x="60" y="32.0" class="tk" text-anchor="end">12.0</text>
+<line x1="68.0" y1="28" x2="68.0" y2="314" class="grid"/><text x="68.0" y="332" class="tk" text-anchor="middle">50.0</text>
+<line x1="176.4" y1="28" x2="176.4" y2="314" class="grid"/><text x="176.4" y="332" class="tk" text-anchor="middle">100</text>
+<line x1="284.8" y1="28" x2="284.8" y2="314" class="grid"/><text x="284.8" y="332" class="tk" text-anchor="middle">150</text>
+<line x1="393.2" y1="28" x2="393.2" y2="314" class="grid"/><text x="393.2" y="332" class="tk" text-anchor="middle">200</text>
+<line x1="501.6" y1="28" x2="501.6" y2="314" class="grid"/><text x="501.6" y="332" class="tk" text-anchor="middle">250</text>
+<line x1="610.0" y1="28" x2="610.0" y2="314" class="grid"/><text x="610.0" y="332" class="tk" text-anchor="middle">300</text>
+<line x1="163.7" y1="28" x2="163.7" y2="314" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3"/>
+<text x="167.7" y="308" class="tk" fill="#dc2626">4&amp;rho;/3</text>
+<line x1="68" y1="314" x2="610" y2="314" class="ax"/><line x1="68" y1="28" x2="68" y2="314" class="ax"/>
+<text x="339" y="354" class="al" text-anchor="middle">cluster radius R (m)</text>
+<text x="14" y="171" class="al" text-anchor="middle" transform="rotate(-90 14 171)">T_hop = T_spread / h_max(R)   (s)</text>
+<path d="M89.7,143.9 L163.4,261.5 L219.8,267.9 L284.8,275.6 L393.2,279.1 L501.6,281.3 L610.0,281.6 L610.0,284.8 L501.6,283.2 L393.2,281.5 L284.8,279.1 L219.8,269.7 L163.4,266.7 L89.7,166.3 Z" fill="#2563eb" opacity="0.16" stroke="none"/>
+<path d="M89.7,155.2 L163.4,264.9 L219.8,268.9 L284.8,277.9 L393.2,280.3 L501.6,282.4 L610.0,282.7" fill="none" stroke="#2563eb" stroke-width="2"/>
+<line x1="622" y1="42" x2="644" y2="42" stroke="#2563eb" stroke-width="2"/><text x="650" y="46" class="lg">k = 4</text>
+<path d="M89.7,100.8 L163.4,245.4 L219.8,258.2 L284.8,267.9 L393.2,274.5 L501.6,277.6 L501.6,278.5 L393.2,275.6 L284.8,270.1 L219.8,261.9 L163.4,249.8 L89.7,117.0 Z" fill="#d97706" opacity="0.16" stroke="none"/>
+<path d="M89.7,110.0 L163.4,247.3 L219.8,260.5 L284.8,269.0 L393.2,275.1 L501.6,278.1" fill="none" stroke="#d97706" stroke-width="2"/>
+<line x1="622" y1="60" x2="644" y2="60" stroke="#d97706" stroke-width="2"/><text x="650" y="64" class="lg">k = 8</text>
+<path d="M89.7,32.8 L163.4,227.5 L219.8,245.1 L284.8,259.5 L393.2,267.2 L501.6,272.6 L501.6,273.8 L393.2,269.0 L284.8,261.4 L219.8,249.1 L163.4,232.5 L89.7,62.5 Z" fill="#059669" opacity="0.16" stroke="none"/>
+<path d="M89.7,50.8 L163.4,230.0 L219.8,247.5 L284.8,260.5 L393.2,268.2 L501.6,273.1" fill="none" stroke="#059669" stroke-width="2"/>
+<line x1="622" y1="78" x2="644" y2="78" stroke="#059669" stroke-width="2"/><text x="650" y="82" class="lg">k = 16</text>
+</svg>
+<p class="cap">R = 60 m is plotted but excluded from every exponent fit, as pre-registered: h_max(60) = 0.2, so T_hop there is 5x T_spread and its CI is inflated by the same factor.</p>
+<div class="tw"><table><thead><tr><th class="">R (m)</th><th class="num">h_max</th><th class="num">n_c</th><th class="num">seeded</th><th class="num">T_spread median (s) [95% CI]</th><th class="num">T_hop median (s) [95% CI]</th><th class="num">packets/cell</th><th class="num">MAC drop rate</th><th class="num">censored</th></tr></thead><tbody><tr><td class="">60</td><td class="num">0.20</td><td class="num">23</td><td class="num">97%</td><td class="num">1.71 [1.65, 1.79]</td><td class="num">8.56 [8.26, 8.95]</td><td class="num">97</td><td class="num">0.0743</td><td class="num">0/120</td></tr><tr><td class="">94</td><td class="num">0.88</td><td class="num">61</td><td class="num">67%</td><td class="num">2.46 [2.37, 2.53]</td><td class="num">2.80 [2.70, 2.88]</td><td class="num">276</td><td class="num">0.0487</td><td class="num">0/120</td></tr><tr><td class="">120</td><td class="num">1.40</td><td class="num">99</td><td class="num">54%</td><td class="num">3.14 [3.06, 3.28]</td><td class="num">2.25 [2.19, 2.34]</td><td class="num">478</td><td class="num">0.0403</td><td class="num">0/120</td></tr><tr><td class="">150</td><td class="num">2.00</td><td class="num">147</td><td class="num">45%</td><td class="num">3.78 [3.69, 3.87]</td><td class="num">1.89 [1.84, 1.93]</td><td class="num">748</td><td class="num">0.0333</td><td class="num">0/120</td></tr><tr><td class="">200</td><td class="num">3.00</td><td class="num">257</td><td class="num">34%</td><td class="num">4.89 [4.84, 4.97]</td><td class="num">1.63 [1.61, 1.66]</td><td class="num">1412</td><td class="num">0.0273</td><td class="num">0/120</td></tr><tr><td class="">250</td><td class="num">4.00</td><td class="num">397</td><td class="num">28%</td><td class="num">6.03 [5.96, 6.11]</td><td class="num">1.51 [1.49, 1.53]</td><td class="num">2263</td><td class="num">0.0232</td><td class="num">0/120</td></tr></tbody></table></div>
+<p class="src">Plotted from: <a href="../results/cluster-radius/b4_by_config.csv">cluster-radius/b4_by_config.csv</a></p>
+<h3>The k/&lambda; floor does not bind &mdash; a refuted prediction</h3>
+<div class="card flag"><p>I pre-registered the mechanism as the per-node send pacing: moving k fragments across one ring should cost at least k/&lambda; = k &times; 200 ms, so T_hop should scale with k at exponent &asymp; 1. <strong>The measurement refutes that</strong>: the exponent is +0.28 [+0.25, +0.32], R&sup2; = 0.99 at R = 150 m and +0.19 [+0.19, +0.19], R&sup2; = 1.00 at R = 250 m.</p><p>The data also says why. At k = 16 and R &ge; 150 m, T_hop is at most 2.25 s &mdash; <strong>below the 3.2 s a single node would need to emit 16 fragments</strong>. A ring is therefore served by several nodes pushing different fragments concurrently, so per-node pacing never becomes the per-ring cost once n_c &gg; k. Consistent with that, packets per node rise roughly linearly in k (see the table) while completion time does not.</p><p>This <em>strengthens</em> the headline conclusion rather than weakening it, and it closes the one escape hatch the pre-registration left open. I had noted that k = 16 with a slow advertisement regime might lift T_hop to the 6.91 s needed for an interior R*. It does not: T_hop is far less sensitive to k than the floor argument assumed.</p></div>
+<svg viewBox="0 0 760 360" width="100%" role="img" aria-label="T_hop against k, against the predicted per-node floor" class="chart">
+<text x="68" y="16" class="ct">T_hop against k, against the predicted per-node floor</text>
+<line x1="68" y1="314.0" x2="610" y2="314.0" class="grid"/><text x="60" y="318.0" class="tk" text-anchor="end">0</text>
+<line x1="68" y1="242.5" x2="610" y2="242.5" class="grid"/><text x="60" y="246.5" class="tk" text-anchor="end">1.00</text>
+<line x1="68" y1="171.0" x2="610" y2="171.0" class="grid"/><text x="60" y="175.0" class="tk" text-anchor="end">2.00</text>
+<line x1="68" y1="99.5" x2="610" y2="99.5" class="grid"/><text x="60" y="103.5" class="tk" text-anchor="end">3.00</text>
+<line x1="68" y1="28.0" x2="610" y2="28.0" class="grid"/><text x="60" y="32.0" class="tk" text-anchor="end">4.00</text>
+<line x1="68.0" y1="28" x2="68.0" y2="314" class="grid"/><text x="68.0" y="332" class="tk" text-anchor="middle">4.00</text>
+<line x1="158.3" y1="28" x2="158.3" y2="314" class="grid"/><text x="158.3" y="332" class="tk" text-anchor="middle">6.00</text>
+<line x1="248.7" y1="28" x2="248.7" y2="314" class="grid"/><text x="248.7" y="332" class="tk" text-anchor="middle">8.00</text>
+<line x1="339.0" y1="28" x2="339.0" y2="314" class="grid"/><text x="339.0" y="332" class="tk" text-anchor="middle">10.0</text>
+<line x1="429.3" y1="28" x2="429.3" y2="314" class="grid"/><text x="429.3" y="332" class="tk" text-anchor="middle">12.0</text>
+<line x1="519.7" y1="28" x2="519.7" y2="314" class="grid"/><text x="519.7" y="332" class="tk" text-anchor="middle">14.0</text>
+<line x1="610.0" y1="28" x2="610.0" y2="314" class="grid"/><text x="610.0" y="332" class="tk" text-anchor="middle">16.0</text>
+<line x1="68" y1="314" x2="610" y2="314" class="ax"/><line x1="68" y1="28" x2="68" y2="314" class="ax"/>
+<text x="339" y="354" class="al" text-anchor="middle">k (fragments in the signature set)</text>
+<text x="14" y="171" class="al" text-anchor="middle" transform="rotate(-90 14 171)">T_hop (s)</text>
+<path d="M68.0,198.7 L248.7,175.7 L610.0,150.5 L610.0,156.1 L248.7,182.2 L68.0,209.2 Z" fill="#2563eb" opacity="0.16" stroke="none"/>
+<path d="M68.0,205.8 L248.7,178.9 L610.0,153.4" fill="none" stroke="#2563eb" stroke-width="2"/>
+<line x1="622" y1="42" x2="644" y2="42" stroke="#2563eb" stroke-width="2"/><text x="650" y="46" class="lg">measured, R = 150 m</text>
+<path d="M68.0,216.0 L248.7,204.8 L610.0,189.7 L610.0,193.3 L248.7,207.5 L68.0,221.5 Z" fill="#d97706" opacity="0.16" stroke="none"/>
+<path d="M68.0,219.2 L248.7,206.2 L610.0,191.2" fill="none" stroke="#d97706" stroke-width="2"/>
+<line x1="622" y1="60" x2="644" y2="60" stroke="#d97706" stroke-width="2"/><text x="650" y="64" class="lg">measured, R = 250 m</text>
+<path d="M68.0,256.8 L248.7,199.6 L610.0,85.2" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="622" y1="78" x2="644" y2="78" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,4"/><text x="650" y="82" class="lg">predicted k/&amp;lambda; (k &amp;times; 200 ms) &amp;mdash; REFUTED</text>
+</svg>
+<p class="cap">The red line is what I predicted and is wrong. Measured T_hop is far flatter, and at k = 16 it sits BELOW the per-node floor -- which is only possible if several nodes serve one ring concurrently.</p>
+<div class="tw"><table><thead><tr><th class="">R (m)</th><th class="num">k</th><th class="num">n_c</th><th class="num">T_spread (s)</th><th class="num">T_hop (s)</th><th class="num">per-node k/&amp;lambda; (s)</th><th class="num">packets/node</th></tr></thead><tbody><tr><td class="">94</td><td class="num">4</td><td class="num">61</td><td class="num">1.814</td><td class="num">2.061</td><td class="num">0.80</td><td class="num">2.83</td></tr><tr><td class="">94</td><td class="num">8</td><td class="num">61</td><td class="num">2.461</td><td class="num">2.797</td><td class="num">1.60</td><td class="num">4.53</td></tr><tr><td class="">94</td><td class="num">16</td><td class="num">61</td><td class="num">3.103</td><td class="num">3.526</td><td class="num">3.20</td><td class="num">7.02</td></tr><tr><td class="">150</td><td class="num">4</td><td class="num">147</td><td class="num">3.026</td><td class="num">1.513</td><td class="num">0.80</td><td class="num">3.48</td></tr><tr><td class="">150</td><td class="num">8</td><td class="num">147</td><td class="num">3.780</td><td class="num">1.890</td><td class="num">1.60</td><td class="num">5.09</td></tr><tr><td class="">150</td><td class="num">16</td><td class="num">147</td><td class="num">4.492</td><td class="num">2.246</td><td class="num">3.20</td><td class="num">7.65</td></tr><tr><td class="">250</td><td class="num">4</td><td class="num">397</td><td class="num">5.306</td><td class="num">1.326</td><td class="num">0.80</td><td class="num">4.02</td></tr><tr><td class="">250</td><td class="num">8</td><td class="num">397</td><td class="num">6.032</td><td class="num">1.508</td><td class="num">1.60</td><td class="num">5.70</td></tr><tr><td class="">250</td><td class="num">16</td><td class="num">397</td><td class="num">6.867</td><td class="num">1.717</td><td class="num">3.20</td><td class="num">8.26</td></tr></tbody></table></div>
+<p class="src">Plotted from: <a href="../results/cluster-radius/b4_by_config.csv">cluster-radius/b4_by_config.csv</a></p>
+<h3>Does spatial reuse cancel the R&sup2; traffic growth?</h3>
+<p class="cap"><strong>T_spread against node count at fixed R</strong>: no data for this chart yet &mdash; the corresponding sweep arm has not run.</p>
+<div class="tw"><table><thead><tr><th class="">R (m)</th><th class="num">spacing (m)</th><th class="num">n_c</th><th class="num">T_spread median (s)</th><th class="num">packets/cell</th><th class="num">packets/node</th><th class="num">MAC TX drops</th><th class="num">MAC drop rate</th></tr></thead><tbody><tr><td class="">94</td><td class="num">20</td><td class="num">61</td><td class="num">2.46 [2.37, 2.53]</td><td class="num">276</td><td class="num">4.53</td><td class="num">1542</td><td class="num">0.0487</td></tr><tr><td class="">150</td><td class="num">20</td><td class="num">147</td><td class="num">3.78 [3.69, 3.87]</td><td class="num">748</td><td class="num">5.09</td><td class="num">2914</td><td class="num">0.0333</td></tr><tr><td class="">250</td><td class="num">20</td><td class="num">397</td><td class="num">6.03 [5.96, 6.11]</td><td class="num">2263</td><td class="num">5.70</td><td class="num">6154</td><td class="num">0.0232</td></tr></tbody></table></div>
+<p class="src">Plotted from: <a href="../results/cluster-radius/b4_by_config.csv">cluster-radius/b4_by_config.csv</a></p>
+<h3>Completion fraction over time</h3>
+<h3>Protocol sensitivity, and Trickle</h3>
+<div class="tw"><table><thead><tr><th class="">advertisement interval (s)</th><th class="num">T_spread median (s)</th><th class="num">T_hop median (s)</th><th class="num">packets/cell</th></tr></thead><tbody><tr><td class="">0.50</td><td class="num">3.78 [3.69, 3.87]</td><td class="num">1.89</td><td class="num">748</td></tr></tbody></table></div>
+<p>T_hop depends on the advertisement rate as well as on the channel &mdash; exponent &ndash;. That is a protocol parameter, not a channel property, so it is reported rather than buried. The verdict survives it: even the slowest setting tested stays well below the 6.91 s threshold.</p>
+<div class="tw"><table><thead><tr><th class="">R (m)</th><th class="num">T_spread, Trickle on (s)</th><th class="num">T_spread, Trickle off (s)</th><th class="num">packets on</th><th class="num">packets off</th><th class="num">packet saving</th></tr></thead><tbody></tbody></table></div>
+<p class="src">Plotted from: <a href="../results/cluster-radius/b4_by_config.csv">cluster-radius/b4_by_config.csv</a></p>
+<h2>B5 &mdash; is pooling a precondition?</h2>
+<div class="card flag"><p>The seed-only arm did not run, so this claim is <strong>NOT MEASURED</strong>. It is not assumed to hold.</p></div>
+<h2>A6 &mdash; the flight side, T1(R)</h2>
+<svg viewBox="0 0 760 360" width="100%" role="img" aria-label="Phase-1 flight time: estimate vs realised tour" class="chart">
+<text x="68" y="16" class="ct">Phase-1 flight time: estimate vs realised tour</text>
+<line x1="68" y1="314.0" x2="610" y2="314.0" class="grid"/><text x="60" y="318.0" class="tk" text-anchor="end">0</text>
+<line x1="68" y1="242.5" x2="610" y2="242.5" class="grid"/><text x="60" y="246.5" class="tk" text-anchor="end">100</text>
+<line x1="68" y1="171.0" x2="610" y2="171.0" class="grid"/><text x="60" y="175.0" class="tk" text-anchor="end">200</text>
+<line x1="68" y1="99.5" x2="610" y2="99.5" class="grid"/><text x="60" y="103.5" class="tk" text-anchor="end">300</text>
+<line x1="68" y1="28.0" x2="610" y2="28.0" class="grid"/><text x="60" y="32.0" class="tk" text-anchor="end">400</text>
+<line x1="68.0" y1="28" x2="68.0" y2="314" class="grid"/><text x="68.0" y="332" class="tk" text-anchor="middle">0</text>
+<line x1="203.5" y1="28" x2="203.5" y2="314" class="grid"/><text x="203.5" y="332" class="tk" text-anchor="middle">100</text>
+<line x1="339.0" y1="28" x2="339.0" y2="314" class="grid"/><text x="339.0" y="332" class="tk" text-anchor="middle">200</text>
+<line x1="474.5" y1="28" x2="474.5" y2="314" class="grid"/><text x="474.5" y="332" class="tk" text-anchor="middle">300</text>
+<line x1="610.0" y1="28" x2="610.0" y2="314" class="grid"/><text x="610.0" y="332" class="tk" text-anchor="middle">400</text>
+<rect x="195.4" y="28" width="414.6" height="286" fill="#2563eb" opacity="0.06"/>
+<text x="402.7" y="40" class="tk" text-anchor="middle">operating range</text>
+<line x1="195.5" y1="28" x2="195.5" y2="314" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3"/>
+<text x="199.5" y="308" class="tk" fill="#dc2626">4&amp;rho;/3 = 94.1 m</text>
+<line x1="68" y1="314" x2="610" y2="314" class="ax"/><line x1="68" y1="28" x2="68" y2="314" class="ax"/>
+<text x="339" y="354" class="al" text-anchor="middle">cluster radius R (m)</text>
+<text x="14" y="171" class="al" text-anchor="middle" transform="rotate(-90 14 171)">T1 (s)</text>
+<path d="M149.3,35.0 L195.4,130.3 L230.6,174.5 L271.2,200.1 L339.0,225.8 L406.8,242.0 L474.5,251.6 L542.2,263.1 L610.0,269.9 L610.0,269.9 L542.2,263.1 L474.5,251.6 L406.8,242.0 L339.0,225.8 L271.2,200.1 L230.6,174.5 L195.4,130.3 L149.3,35.0 Z" fill="#2563eb" opacity="0.16" stroke="none"/>
+<path d="M149.3,35.0 L195.4,130.3 L230.6,174.5 L271.2,200.1 L339.0,225.8 L406.8,242.0 L474.5,251.6 L542.2,263.1 L610.0,269.9" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="622" y1="42" x2="644" y2="42" stroke="#2563eb" stroke-width="2" stroke-dasharray="5,4"/><text x="650" y="46" class="lg">BHH estimate &amp;beta;&amp;radic;(C&amp;middot;A)</text>
+</svg>
+<p class="cap">Dubins tours via heading sampling (8 headings, chosen on tuning seeds) -> Noon-Bean -> ATSP -> LKH 3.0.13, 120 scenarios per point. T1 ~ 1/R as the closed form predicts, but the realised tour is uniformly longer than the estimate.</p>
+<p class="cap"><strong>The turn penalty, and where it bites</strong>: no data for this chart yet &mdash; the corresponding sweep arm has not run.</p>
+<div class="tw"><table><thead><tr><th class="">R (m)</th><th class="num">C realised (median)</th><th class="num">C asymptotic A/((3&amp;radic;3/2)R&amp;sup2;)</th><th class="num">BHH T1 (s)</th><th class="num">Dubins T1 (s)</th><th class="num">ratio</th><th class="num">below 4&amp;rho;/3?</th></tr></thead><tbody></tbody></table></div>
+<p><strong>Curvature.</strong> Every realised tour was sampled at 2 m arc-length steps and checked numerically: the worst |&kappa;|&middot;&rho; over all 0 tours is <strong>None</strong>. Dubins arcs saturate the constraint exactly &mdash; that is what a value of 1 means &mdash; and nothing exceeds it, so no tour is kinematically infeasible.</p><p><strong>Cell counts.</strong> The realised tiling yields 1.1&ndash;1.4&times; the asymptotic A/((3&radic;3/2)R&sup2;) because boundary cells are kept; both are reported rather than forced to agree. A/(&pi;R&sup2;) is not used anywhere &mdash; it undercounts by 20.9 %.</p>
+<p class="src">Plotted from: <a href="../results/cluster-radius/a6_by_config.csv">cluster-radius/a6_by_config.csv</a> &middot; <a href="../results/cluster-radius/dubins_vs_bhh.csv">cluster-radius/dubins_vs_bhh.csv</a></p>
+<svg viewBox="0 0 760 360" width="100%" role="img" aria-label="Heterogeneity &amp;eta; shortens the tour" class="chart">
+<text x="68" y="16" class="ct">Heterogeneity &amp;eta; shortens the tour</text>
+<line x1="68" y1="314.0" x2="610" y2="314.0" class="grid"/><text x="60" y="318.0" class="tk" text-anchor="end">0</text>
+<line x1="68" y1="242.5" x2="610" y2="242.5" class="grid"/><text x="60" y="246.5" class="tk" text-anchor="end">100</text>
+<line x1="68" y1="171.0" x2="610" y2="171.0" class="grid"/><text x="60" y="175.0" class="tk" text-anchor="end">200</text>
+<line x1="68" y1="99.5" x2="610" y2="99.5" class="grid"/><text x="60" y="103.5" class="tk" text-anchor="end">300</text>
+<line x1="68" y1="28.0" x2="610" y2="28.0" class="grid"/><text x="60" y="32.0" class="tk" text-anchor="end">400</text>
+<line x1="68.0" y1="28" x2="68.0" y2="314" class="grid"/><text x="68.0" y="332" class="tk" text-anchor="middle">0</text>
+<line x1="203.5" y1="28" x2="203.5" y2="314" class="grid"/><text x="203.5" y="332" class="tk" text-anchor="middle">100</text>
+<line x1="339.0" y1="28" x2="339.0" y2="314" class="grid"/><text x="339.0" y="332" class="tk" text-anchor="middle">200</text>
+<line x1="474.5" y1="28" x2="474.5" y2="314" class="grid"/><text x="474.5" y="332" class="tk" text-anchor="middle">300</text>
+<line x1="610.0" y1="28" x2="610.0" y2="314" class="grid"/><text x="610.0" y="332" class="tk" text-anchor="middle">400</text>
+<line x1="68" y1="314" x2="610" y2="314" class="ax"/><line x1="68" y1="28" x2="68" y2="314" class="ax"/>
+<text x="339" y="354" class="al" text-anchor="middle">cluster radius R (m)</text>
+<text x="14" y="171" class="al" text-anchor="middle" transform="rotate(-90 14 171)">T1 (s)</text>
+<path d="M149.3,35.0 L195.4,130.3 L230.6,174.5 L271.2,200.1 L339.0,225.8 L406.8,242.0 L474.5,251.6 L542.2,263.1 L610.0,269.9" fill="none" stroke="#2563eb" stroke-width="2"/>
+<line x1="622" y1="42" x2="644" y2="42" stroke="#2563eb" stroke-width="2"/><text x="650" y="46" class="lg">&amp;eta; = 0.0</text>
+<path d="M149.3,35.0 L195.4,130.3 L230.6,174.5 L271.2,200.1 L339.0,225.8 L406.8,242.0 L474.5,251.6 L542.2,263.1 L610.0,269.9" fill="none" stroke="#d97706" stroke-width="2"/>
+<line x1="622" y1="60" x2="644" y2="60" stroke="#d97706" stroke-width="2"/><text x="650" y="64" class="lg">&amp;eta; = 0.5</text>
+<path d="M149.3,87.6 L195.4,157.0 L230.6,189.2 L271.2,209.0 L339.0,229.5 L406.8,246.6 L474.5,251.6 L542.2,263.1 L610.0,269.9" fill="none" stroke="#059669" stroke-width="2"/>
+<line x1="622" y1="78" x2="644" y2="78" stroke="#059669" stroke-width="2"/><text x="650" y="82" class="lg">&amp;eta; = 1.0</text>
+</svg>
+<p class="cap">Clustered deployments leave hex cells empty, so there are fewer stops. eta reaches the flight side only through the occupied-cell count.</p>
+<p class="src">Plotted from: <a href="../results/cluster-radius/a6_by_config.csv">cluster-radius/a6_by_config.csv</a></p>
+<h2>Composition and the decision</h2>
+<svg viewBox="0 0 760 360" width="100%" role="img" aria-label="T_total(R) = T1(R) + h_max(R)&amp;middot;T_hop(R, n_c)" class="chart">
+<text x="68" y="16" class="ct">T_total(R) = T1(R) + h_max(R)&amp;middot;T_hop(R, n_c)</text>
+<line x1="68" y1="314.0" x2="610" y2="314.0" class="grid"/><text x="60" y="318.0" class="tk" text-anchor="end">1.00</text>
+<line x1="68" y1="218.7" x2="610" y2="218.7" class="grid"/><text x="60" y="222.7" class="tk" text-anchor="end">10.0</text>
+<line x1="68" y1="123.3" x2="610" y2="123.3" class="grid"/><text x="60" y="127.3" class="tk" text-anchor="end">100</text>
+<line x1="68" y1="28.0" x2="610" y2="28.0" class="grid"/><text x="60" y="32.0" class="tk" text-anchor="end">1000</text>
+<line x1="68.0" y1="28" x2="68.0" y2="314" class="grid"/><text x="68.0" y="332" class="tk" text-anchor="middle">0</text>
+<line x1="203.5" y1="28" x2="203.5" y2="314" class="grid"/><text x="203.5" y="332" class="tk" text-anchor="middle">100</text>
+<line x1="339.0" y1="28" x2="339.0" y2="314" class="grid"/><text x="339.0" y="332" class="tk" text-anchor="middle">200</text>
+<line x1="474.5" y1="28" x2="474.5" y2="314" class="grid"/><text x="474.5" y="332" class="tk" text-anchor="middle">300</text>
+<line x1="610.0" y1="28" x2="610.0" y2="314" class="grid"/><text x="610.0" y="332" class="tk" text-anchor="middle">400</text>
+<rect x="195.4" y="28" width="414.6" height="286" fill="#2563eb" opacity="0.06"/>
+<text x="402.7" y="40" class="tk" text-anchor="middle">operating range</text>
+<line x1="195.5" y1="28" x2="195.5" y2="314" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3"/>
+<text x="199.5" y="308" class="tk" fill="#dc2626">4&amp;rho;/3</text>
+<line x1="68" y1="314" x2="610" y2="314" class="ax"/><line x1="68" y1="28" x2="68" y2="314" class="ax"/>
+<text x="339" y="354" class="al" text-anchor="middle">cluster radius R (m)</text>
+<text x="14" y="171" class="al" text-anchor="middle" transform="rotate(-90 14 171)">time (s)</text>
+<path d="M149.3,66.6 L195.4,83.8 L230.6,94.9 L271.2,103.0 L339.0,112.8 L406.8,120.4 L474.5,125.7 L474.5,126.3 L406.8,121.1 L339.0,113.4 L271.2,103.4 L230.6,95.2 L195.4,84.1 L149.3,66.9 Z" fill="#2563eb" opacity="0.16" stroke="none"/>
+<path d="M149.3,66.8 L195.4,84.0 L230.6,95.1 L271.2,103.3 L339.0,113.2 L406.8,120.9 L474.5,126.0" fill="none" stroke="#2563eb" stroke-width="2"/>
+<line x1="622" y1="42" x2="644" y2="42" stroke="#2563eb" stroke-width="2"/><text x="650" y="46" class="lg">T_total, k = 4</text>
+<path d="M149.3,66.7 L195.4,83.7 L230.6,94.8 L271.2,102.9 L339.0,112.7 L406.8,120.2 L406.8,121.0 L339.0,113.2 L271.2,103.3 L230.6,95.1 L195.4,84.0 L149.3,66.9 Z" fill="#d97706" opacity="0.16" stroke="none"/>
+<path d="M149.3,66.8 L195.4,83.9 L230.6,95.0 L271.2,103.1 L339.0,113.0 L406.8,120.6" fill="none" stroke="#d97706" stroke-width="2"/>
+<line x1="622" y1="60" x2="644" y2="60" stroke="#d97706" stroke-width="2"/><text x="650" y="64" class="lg">T_total, k = 8</text>
+<path d="M149.3,66.6 L195.4,83.6 L230.6,94.6 L271.2,102.6 L339.0,112.5 L406.8,119.8 L406.8,120.5 L339.0,113.0 L271.2,103.1 L230.6,95.0 L195.4,83.9 L149.3,66.8 Z" fill="#059669" opacity="0.16" stroke="none"/>
+<path d="M149.3,66.7 L195.4,83.8 L230.6,94.8 L271.2,102.9 L339.0,112.7 L406.8,120.3" fill="none" stroke="#059669" stroke-width="2"/>
+<line x1="622" y1="78" x2="644" y2="78" stroke="#059669" stroke-width="2"/><text x="650" y="82" class="lg">T_total, k = 16</text>
+<path d="M149.3,67.0 L195.4,84.3 L230.6,95.7 L271.2,104.1 L339.0,114.6 L406.8,123.0" fill="none" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="622" y1="96" x2="644" y2="96" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,4"/><text x="650" y="100" class="lg">T1 only</text>
+<path d="M149.3,291.7 L195.4,276.7 L230.6,266.6 L271.2,258.9 L339.0,248.3 L406.8,239.6" fill="none" stroke="#059669" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="622" y1="114" x2="644" y2="114" stroke="#059669" stroke-width="2" stroke-dasharray="5,4"/><text x="650" y="118" class="lg">ground term, k = 8</text>
+</svg>
+<p class="cap">Log scale, because the two terms differ by more than an order of magnitude. That gap IS the result: the ground term never grows enough to turn the curve over inside the operating range.</p>
+<div class="tw"><table><thead><tr><th class="">R (m)</th><th class="num">T1 (s)</th><th class="num">ground term (s)</th><th class="num">ground share of T_total</th><th class="num">T_total (s) [95% CI]</th></tr></thead><tbody><tr><td class="">60</td><td class="num">390.20</td><td class="num">1.71</td><td class="num">0.4%</td><td class="num">391.91 [390.84, 393.01]</td></tr><tr><td class="">94</td><td class="num">256.86</td><td class="num">2.46</td><td class="num">0.9%</td><td class="num">259.32 [258.60, 260.17]</td></tr><tr><td class="">120</td><td class="num">195.10</td><td class="num">3.14</td><td class="num">1.6%</td><td class="num">198.24 [197.65, 199.25]</td></tr><tr><td class="">150</td><td class="num">159.30</td><td class="num">3.78</td><td class="num">2.3%</td><td class="num">163.08 [162.26, 163.84]</td></tr><tr><td class="">200</td><td class="num">123.39</td><td class="num">4.89</td><td class="num">3.8%</td><td class="num">128.28 [127.71, 129.16]</td></tr><tr><td class="">250</td><td class="num">100.75</td><td class="num">6.03</td><td class="num">5.6%</td><td class="num">106.78 [105.88, 107.77]</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th class="">k</th><th class="num">R* grid search</th><th class="num">R* 95% CI</th><th class="num">interior to 94&amp;ndash;400 m?</th><th class="num">T_hop used (s)</th><th class="num">R* closed form</th></tr></thead><tbody><tr><td class="">4</td><td class="num">300 m</td><td class="num">[300, 300] m</td><td class="num"><strong>yes</strong></td><td class="num">1.51</td><td class="num">854 m</td></tr><tr><td class="">8</td><td class="num">250 m</td><td class="num">[250, 250] m</td><td class="num"><strong>yes</strong></td><td class="num">1.89</td><td class="num">765 m</td></tr><tr><td class="">16</td><td class="num">250 m</td><td class="num">[250, 250] m</td><td class="num"><strong>yes</strong></td><td class="num">2.25</td><td class="num">701 m</td></tr></tbody></table></div>
+<p>The grid search is capped at R = 300 m, the top of the flight grid, and the measured curve is still falling there. The closed form, fed the <em>measured</em> T_hop, puts R* well beyond the operating range. Both are reported because neither alone is trustworthy: the grid search cannot see past its own edge, and the closed form assumes T_hop constant in R, which the measurement refutes.</p><p><strong>Self-check.</strong> Fed T_hop = 2 s the closed form returns R* = 736.8 m against the 736 m quoted in the brief, so the model agrees with the group&rsquo;s own analytic figure. Inverting it, R* reaches 400 m only if T_hop &ge; 6.91 s.</p>
+<p class="src">Plotted from: <a href="../results/cluster-radius/composition.csv">cluster-radius/composition.csv</a></p>
+<h2>Pre-registration scorecard</h2>
+<p>Registered in <code>docs/PREREGISTRATION-cluster-radius.md</code> and committed before these sweeps were read.</p>
+<div class="tw"><table><thead><tr><th class="">#</th><th class="num">prediction</th><th class="num">registered range</th><th class="num">measured</th><th class="num">verdict</th></tr></thead><tbody><tr><td class="">3.1</td><td class="num">T_hop is a few seconds, not tens</td><td class="num">1.3&ndash;4 s</td><td class="num">1.51&ndash;2.80 s</td><td class="num">CONFIRMED</td></tr><tr><td class="">3.2</td><td class="num">T_hop exponent in k</td><td class="num">[0.6, 1.4]</td><td class="num">+0.28 [+0.25, +0.32], R&sup2; = 0.99</td><td class="num">REFUTED</td></tr><tr><td class="">3.3</td><td class="num">T_hop exponent in R</td><td class="num">[&minus;0.9, &minus;0.3]</td><td class="num">-0.63 [-0.84, -0.44], R&sup2; = 0.97</td><td class="num">CONFIRMED</td></tr><tr><td class="">3.4</td><td class="num">T_spread exponent in n_c</td><td class="num">[&minus;0.4, +0.2]</td><td class="num">&ndash;</td><td class="num">NOT MEASURED</td></tr><tr><td class="">3.5</td><td class="num">R* outside the range, above 400 m</td><td class="num">500&ndash;800 m</td><td class="num">grid edge 250 m, closed form 765 m</td><td class="num">CONFIRMED</td></tr><tr><td class="">3.6</td><td class="num">Dubins/BHH flat above 4&rho;/3, worse below</td><td class="num">&gt; 5 % gap</td><td class="num">&ndash;&times; vs &ndash;&times;</td><td class="num">REFUTED</td></tr><tr><td class="">3.7</td><td class="num">no node completes without pooling</td><td class="num">0.000</td><td class="num">not run</td><td class="num">NOT MEASURED</td></tr></tbody></table></div>
+<h2>What this probe does not establish</h2>
+<ul><li><strong>T_hop is protocol-dependent.</strong> It is reported as a function of R, n_c, k <em>and</em> the advertisement interval. A materially different dissemination protocol would move it. What is protocol-independent is the k/&lambda; floor, and that floor alone already exceeds the contention term.</li><li><strong>One cell, not a network.</strong> No UAV, no trajectory, no air-to-ground link, no inter-cluster traffic. That was the point of the shortcut, but cross-cell interference is absent.</li><li><strong>The sweep is reduced</strong> to 45 configurations, not the full 7&times;3&times;3&times;2 factorial. N = 120 seeds per configuration was held fixed &mdash; the factorial was cut, never N.</li><li><strong>T1 uses a hex-tiling stand-in for Phase 0</strong>, not PECEE: cluster heads are the node nearest each occupied cell centre. A real CH election would move the stops, though not the 1/R scaling.</li><li><strong>The composed CI treats the two terms as independent</strong>, because they come from separate seed sets.</li><li><strong>No claim about R &gt; 400 m</strong> beyond &ldquo;the curve is still falling&rdquo;. The flight grid stops there.</li></ul></div></body></html>

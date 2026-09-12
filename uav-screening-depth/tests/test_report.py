@@ -121,3 +121,67 @@ def test_index_names_blocked_items_and_why(reports):
     h = reports["index.html"]
     assert "BLOCKED" in h
     assert "PECEE" in h and "ns-3" in h and "LKH" in h
+
+
+# ---- cluster-radius probe page -------------------------------------------
+CR_PAGE = "cluster-radius.html"
+
+
+def _cr(reports):
+    if CR_PAGE not in reports:
+        pytest.skip("cluster-radius page not built (probe data absent)")
+    return reports[CR_PAGE]
+
+
+def test_cluster_radius_links_its_csvs(reports):
+    h = _cr(reports)
+    for name in ("cluster-radius/b4_by_config.csv", "cluster-radius/a6_by_config.csv",
+                 "cluster-radius/composition.csv"):
+        assert f"../results/{name}" in h, f"{name} not linked"
+        assert (RES / name).exists(), f"{name} linked but missing"
+
+
+def test_cluster_radius_declares_the_reduced_sweep(reports):
+    """The sweep was cut from the full factorial; the page must say so, and must
+    say N was not cut."""
+    h = _cr(reports)
+    assert "45 configurations" in h
+    assert "never N" in h
+
+
+def test_cluster_radius_reports_the_refuted_prediction(reports):
+    """A failed prediction of mine must be stated, not quietly dropped."""
+    h = _cr(reports)
+    assert "REFUTED" in h
+    assert "Pre-registration scorecard" in h
+    assert "PREREGISTRATION-cluster-radius.md" in h
+
+
+def test_cluster_radius_does_not_claim_T_hop_is_constant(reports):
+    """The closed form assumes it; the measurement refutes it. The page must not
+    assert constancy anywhere."""
+    h = _cr(reports)
+    assert "T_hop constant" not in h or "assumes T_hop constant" in h
+    assert re.search(r"approximation, not a law", h)
+
+
+def test_cluster_radius_states_protocol_dependence(reports):
+    h = _cr(reports)
+    assert "protocol parameter, not a channel property" in h
+
+
+def test_cluster_radius_banner_matches_completeness(reports):
+    """STALE exactly when an arm is missing; CURRENT only when all are present."""
+    import json
+    sm = json.loads((RES / "cluster-radius" / "summary.json").read_text())
+    gaps = bool(sm.get("incomplete_configs")) or sm["B5"]["verdict"] == "NOT RUN"
+    h = _cr(reports)
+    expect = "STALE" if gaps else "CURRENT"
+    assert f'class="banner {expect}"' in h, f"banner should be {expect}"
+
+
+def test_cluster_radius_lists_its_limits(reports):
+    h = _cr(reports)
+    assert "What this probe does not establish" in h
+    for token in ("protocol-dependent", "One cell, not a network", "PECEE"):
+        assert token in h

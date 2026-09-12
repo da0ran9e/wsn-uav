@@ -52,6 +52,13 @@ def line_chart(series: list[dict], *, x_label: str, y_label: str, title: str = "
     lo/hi draw a confidence ribbon. vlines is [(x, label), ...]; shade_x is
     (x0, x1, label) for an operating-range band.
     """
+    # An empty chart is a missing measurement, not a blank rectangle: say so in
+    # place rather than raising or drawing nothing.
+    series = [s for s in series if s.get("x") and s.get("y")]
+    if not series:
+        t = f"<strong>{html.escape(title)}</strong>: " if title else ""
+        return (f'<p class="cap">{t}no data for this chart yet &mdash; the '
+                f'corresponding sweep arm has not run.</p>')
     ml, mr, mt, mb = 68, 150, 28 if title else 14, 46
     pw, ph = width - ml - mr, height - mt - mb
     xs = [v for s in series for v in s["x"]]
@@ -163,6 +170,10 @@ def bar_chart(groups: list[str], series: list[dict], *, y_label: str, title: str
               width: int = 760, height: int = 340, y_max: float | None = None,
               caption: str = "", value_fmt: str = "{:.2f}") -> str:
     """groups: category labels. series: [{name, y: [... one per group]}]"""
+    series = [s for s in series if s.get("y")]
+    if not series or not groups:
+        t = f"<strong>{html.escape(title)}</strong>: " if title else ""
+        return (f'<p class="cap">{t}no data for this chart yet.</p>')
     ml, mr, mt, mb = 68, 150, 28 if title else 14, 56
     pw, ph = width - ml - mr, height - mt - mb
     ys = [v for s in series for v in s["y"]]

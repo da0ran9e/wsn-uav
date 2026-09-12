@@ -204,3 +204,110 @@ def max_abs_curvature(samples: list[tuple[float, float, float, str]],
             arc = ds
         worst = max(worst, dp / arc)
     return worst
+
+
+# --------------------------------------------------------------------------
+# Vectorised all-pairs length matrix.
+#
+# The scalar dubins_path() above verifies every candidate word by forward
+# integration, which is what caught the LRL transcription bug. That check cannot
+# be vectorised cheaply, so this fast path CROSS-CHECKS itself against the scalar
+# implementation on random pairs every time it is called, and raises on any
+# disagreement. The scalar path remains the reference.
+#
+# Why it exists: a 120-cluster instance with 8 headings needs a 960x960 matrix,
+# i.e. ~922,000 scalar calls, which dominated the entire tour computation.
+# --------------------------------------------------------------------------
+
+def length_matrix(nodes: list[tuple[float, float, float]], rho: float, *,
+                  check_samples: int = 400, rtol: float = 1e-7,
+                  rng_seed: int = 0):
+    """All-pairs Dubins path lengths as a numpy array of shape (n, n).
+
+    Diagonal is 0. Raises AssertionError if the vectorised result disagrees with
+    the scalar reference on the sampled pairs.
+    """
+    import numpy as np
+
+    n = len(nodes)
+    arr = np.asarray(nodes, dtype=float)
+    x, y, psi = arr[:, 0], arr[:, 1], arr[:, 2]
+    dx = x[None, :] - x[:, None]
+    dy = y[None, :] - y[:, None]
+    D = np.hypot(dx, dy)
+    theta = np.where(D > 0, np.mod(np.arctan2(dy, dx), TWO_PI), 0.0)
+    d = D / rho
+    a = np.mod(psi[:, None] - theta, TWO_PI)
+    b = np.mod(psi[None, :] - theta, TWO_PI)
+
+    sa, ca, sb, cb = np.sin(a), np.cos(a), np.sin(b), np.cos(b)
+    cab = np.cos(a - b)
+    d2 = d * d
+    best = np.full((n, n), np.inf)
+
+    def upd(t, p, q, ok):
+        np.minimum(best, np.where(ok, t + p + q, np.inf), out=best)
+
+    with np.errstate(invalid="ignore", divide="ignore"):
+        # LSL
+        psq = 2 + d2 - 2 * cab + 2 * d * (sa - sb)
+        ok = psq >= 0
+        tmp1 = np.arctan2(cb - ca, d + sa - sb)
+        upd(np.mod(-a + tmp1, TWO_PI), np.sqrt(np.where(ok, psq, 0.0)),
+            np.mod(b - tmp1, TWO_PI), ok)
+        # RSR
+        psq = 2 + d2 - 2 * cab + 2 * d * (sb - sa)
+        ok = psq >= 0
+        tmp1 = np.arctan2(ca - cb, d - sa + sb)
+        upd(np.mod(a - tmp1, TWO_PI), np.sqrt(np.where(ok, psq, 0.0)),
+            np.mod(-b + tmp1, TWO_PI), ok)
+        # LSR
+        psq = -2 + d2 + 2 * cab + 2 * d * (sa + sb)
+        ok = psq >= 0
+        p = np.sqrt(np.where(ok, psq, 0.0))
+        tmp2 = np.arctan2(-ca - cb, d + sa + sb) - np.arctan2(-2.0, p)
+        upd(np.mod(-a + tmp2, TWO_PI), p,
+            np.mod(-np.mod(b, TWO_PI) + tmp2, TWO_PI), ok)
+        # RSL
+        psq = d2 - 2 + 2 * cab - 2 * d * (sa + sb)
+        ok = psq >= 0
+        p = np.sqrt(np.where(ok, psq, 0.0))
+        tmp2 = np.arctan2(ca + cb, d - sa - sb) - np.arctan2(2.0, p)
+        upd(np.mod(a - tmp2, TWO_PI), p, np.mod(b - tmp2, TWO_PI), ok)
+        # RLR, then LRL by the same mirror symmetry the scalar path uses
+        for mirror in (False, True):
+            aa = np.mod(-a, TWO_PI) if mirror else a
+            bb = np.mod(-b, TWO_PI) if mirror else b
+            saa, caa, sbb, cbb = np.sin(aa), np.cos(aa), np.sin(bb), np.cos(bb)
+            tmp = (6.0 - d2 + 2 * np.cos(aa - bb) + 2 * d * (saa - sbb)) / 8.0
+            ok = np.abs(tmp) <= 1.0
+            p = np.mod(TWO_PI - np.arccos(np.clip(tmp, -1.0, 1.0)), TWO_PI)
+            t = np.mod(aa - np.arctan2(caa - cbb, d - saa + sbb)
+                       + np.mod(p / 2.0, TWO_PI), TWO_PI)
+            q = np.mod(aa - bb - t + np.mod(p, TWO_PI), TWO_PI)
+            upd(t, p, q, ok)
+
+    out = best * rho
+    np.fill_diagonal(out, 0.0)
+
+    import random
+    rnd = random.Random(rng_seed)
+    checked = 0
+    for _ in range(min(check_samples, max(0, n * (n - 1)))):
+        i, j = rnd.randrange(n), rnd.randrange(n)
+        if i == j:
+            continue
+        ref = dubins_path(nodes[i], nodes[j], rho)
+        if ref is None:
+            continue
+        got = float(out[i, j])
+        if not abs(got - ref.length) <= rtol * max(1.0, ref.length):
+            raise AssertionError(
+                f"vectorised Dubins length disagrees with the scalar reference at "
+                f"({i},{j}): {got} vs {ref.length}")
+        checked += 1
+    if check_samples > 0 and n > 1 and checked == 0:
+        # Only a failure when checks were ASKED for; check_samples=0 is a
+        # deliberate opt-out used by tests that verify every pair exhaustively.
+        raise AssertionError("vectorised Dubins matrix was never cross-checked")
+    return out

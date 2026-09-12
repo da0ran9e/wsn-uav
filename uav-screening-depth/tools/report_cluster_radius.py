@@ -7,6 +7,7 @@ summary.json written by tools/analyse_cluster_radius.py.
 from __future__ import annotations
 
 import json
+from html import escape as html_escape
 from pathlib import Path
 
 import svgplot as S
@@ -18,6 +19,14 @@ RHO_BOUND = 94.13
 def _f(x, n=2) -> str:
     try:
         return f"{float(x):.{n}f}"
+    except (TypeError, ValueError):
+        return "&ndash;"
+
+
+def _e(x) -> str:
+    """Scientific notation that tolerates a missing value."""
+    try:
+        return f"{float(x):.1e}"
     except (TypeError, ValueError):
         return "&ndash;"
 
@@ -41,6 +50,12 @@ def build(RES: Path, header, table, src, page, read_csv):
                 f', R&sup2; = {f["r2"]:.2f}')
 
     def rows(arm=None, **kw):
+        # Validate column names: rows(R=...) instead of rows(R_m=...) silently
+        # selected nothing, which is how this bug reached the report module.
+        if b4:
+            unknown = set(kw) - set(b4[0])
+            if unknown:
+                raise KeyError(f"no such column(s): {sorted(unknown)}")
         out = []
         for r in b4:
             if arm is not None and r["arm"] != arm:
@@ -57,12 +72,31 @@ def build(RES: Path, header, table, src, page, read_csv):
     n_dub = sum(int(r["n_seeds"]) for r in a6 if r["arm"] == "dubins")
     need = sm["closed_form_selfcheck"]["T_hop_needed_for_R_star_400m_s"]
 
+    incomplete = sm.get("incomplete_configs") or {}
+    b5_missing = b5.get("verdict") == "NOT RUN"
+    dubins_missing = not any(r["arm"] == "dubins" for r in a6)
+    gaps = []
+    if incomplete:
+        gaps.append(f"{len(incomplete)} configuration(s) short of 120 seeds")
+    if b5_missing:
+        gaps.append("the B5 seed-only arm did not run")
+    if dubins_missing:
+        gaps.append("no realised Dubins tours")
+    banner = "CURRENT" if not gaps else "STALE"
+
     o = [header("Cluster radius &mdash; does an interior R* exist?",
                 "Targeted probe. T_total(R) = T1(R) + h_max(R)&middot;T_hop(R, n_c). "
                 "Everything turned on T_hop, which nobody had measured.",
-                banner="CURRENT", n_seeds="120 per configuration",
+                banner=banner, n_seeds="120 per configuration",
                 extra={"ns-3": "3.46 (ea50b72a)", "LKH": "3.0.13",
                        "B4/B5 runs": f"{n_b4:,}", "A6 tours": f"{n_dub:,}"})]
+
+    if gaps:
+        o.append('<div class="card flag"><p><strong>This page is incomplete.</strong> '
+                 + "; ".join(html_escape(g) for g in gaps) +
+                 '. Every number below is from the data that does exist; nothing is '
+                 'extrapolated across the gap. The banner stays STALE until the '
+                 'missing arms are run.</p></div>')
 
     # ---------------------------------------------------------------- verdict
     interior = bool(k8.get("interior_to_operating_range"))
@@ -75,16 +109,20 @@ def build(RES: Path, header, table, src, page, read_csv):
         f'that would be needed to bring R* inside 400 m. The design rule becomes '
         f'<em>make clusters as large as the kinematics allow</em>, not &ldquo;tune R '
         f'to an interior optimum&rdquo;.</p><ul>'
-        f'<li><strong>Why the hop-count estimate missed it, and why contention was '
-        f'the wrong suspect.</strong> T_hop is floored by the <em>radio</em>: moving '
-        f'k fragments across one ring costs at least k/&lambda; = k &times; 200 ms '
-        f'because of the mandatory Send() spacing &mdash; 1.6 s at k = 8. Contention '
-        f'adds order 20 %, not an order of magnitude.</li>'
+        f'<li><strong>Contention was the wrong suspect.</strong> The hypothesis '
+        f'behind the "tens of seconds" estimate was that hundreds of nodes sharing a '
+        f'5 packet/s channel would serialise. They do not: MAC drop rates stay below '
+        f'a few per cent and rise only mildly with density, while completion time '
+        f'barely moves. What sets T_hop is the advertise-then-push round trip, not '
+        f'channel saturation.</li>'
         f'<li><strong>T_hop falls with R</strong>, exponent {fitstr("T_hop_vs_R_k8")}. '
         f'The closed form assumes T_hop constant in R, so it is an approximation, not '
         f'a law.</li>'
-        f'<li><strong>T_hop scales with k</strong>: exponent {fitstr("T_hop_vs_k_R150")} '
-        f'at R = 150 m, consistent with the k/&lambda; floor being the mechanism.</li>'
+        f'<li><strong>A pre-registered prediction failed, and it was mine.</strong> '
+        f'I predicted T_hop would scale as k/&lambda; with exponent near 1. Measured: '
+        f'{fitstr("T_hop_vs_k_R150")} at R = 150 m &mdash; quadrupling k multiplies '
+        f'T_hop by only about 1.5&times;. Prediction 3.2 is <strong>REFUTED</strong>. '
+        f'See below for what the data says instead.</li>'
         f'<li><strong>Spatial reuse absorbs the R&sup2; traffic growth</strong>: '
         f'T_spread exponent in n_c is {fitstr("T_spread_vs_nc_R150")} at R = 150 m, '
         f'while MAC drops rise over the same range.</li>'
@@ -93,11 +131,13 @@ def build(RES: Path, header, table, src, page, read_csv):
         f'{_f(kb["mean_above"])}&times; the BHH estimate above it but '
         f'{_f(kb["mean_below"])}&times; below, a {_f(kb["penalty_pct"], 0)} % penalty. '
         f'It is not the active constraint, because T_total falls in R throughout.</li>'
-        f'<li><strong>Pooling is a precondition (B5)</strong>: '
-        f'{b5["nodes_completing_all_k_without_pooling"]:,} of {b5["total_nodes"]:,} '
-        f'nodes complete all k without relaying, Wilson CI '
-        f'[{b5["wilson_lo"]:.1e}, {b5["wilson_hi"]:.1e}] &mdash; '
-        f'<strong>{b5["verdict"]}</strong>.</li></ul>'
+        + (f'<li><strong>Pooling is a precondition (B5)</strong>: '
+           f'{b5["nodes_completing_all_k_without_pooling"]:,} of '
+           f'{b5["total_nodes"]:,} nodes complete all k without relaying, Wilson CI '
+           f'[{_e(b5["wilson_lo"])}, {_e(b5["wilson_hi"])}] &mdash; '
+           f'<strong>{b5["verdict"]}</strong>.</li>' if not b5_missing
+           else '<li><strong>B5 not measured yet</strong> &mdash; the seed-only arm '
+                'did not run.</li>') + '</ul>'
         f'<p>Predictions were registered in '
         f'<code>docs/PREREGISTRATION-cluster-radius.md</code> and committed before '
         f'these sweeps were read. Scorecard at the end.</p></div>')
@@ -151,10 +191,32 @@ def build(RES: Path, header, table, src, page, read_csv):
                      f'{r["censored"]}/{r["n_seeds"]}'] for r in main8]))
     o.append(src("cluster-radius/b4_by_config.csv"))
 
-    o.append("<h3>The mechanism: T_hop is floored by k/&lambda;, not by contention</h3>")
+    o.append("<h3>The k/&lambda; floor does not bind &mdash; a refuted prediction</h3>")
+    k16 = [r for r in rows("main", k=16.0) if r["T_hop_med"] and float(r["R_m"]) >= 150]
+    if k16:
+        worst16 = max(float(r["T_hop_med"]) for r in k16)
+        o.append(
+            f'<div class="card flag"><p>I pre-registered the mechanism as the '
+            f'per-node send pacing: moving k fragments across one ring should cost at '
+            f'least k/&lambda; = k &times; 200 ms, so T_hop should scale with k at '
+            f'exponent &asymp; 1. <strong>The measurement refutes that</strong>: the '
+            f'exponent is {fitstr("T_hop_vs_k_R150")} at R = 150 m and '
+            f'{fitstr("T_hop_vs_k_R250")} at R = 250 m.</p>'
+            f'<p>The data also says why. At k = 16 and R &ge; 150 m, T_hop is at most '
+            f'{worst16:.2f} s &mdash; <strong>below the 3.2 s a single node would need '
+            f'to emit 16 fragments</strong>. A ring is therefore served by several '
+            f'nodes pushing different fragments concurrently, so per-node pacing never '
+            f'becomes the per-ring cost once n_c &gg; k. Consistent with that, packets '
+            f'per node rise roughly linearly in k (see the table) while completion time '
+            f'does not.</p>'
+            f'<p>This <em>strengthens</em> the headline conclusion rather than '
+            f'weakening it, and it closes the one escape hatch the pre-registration '
+            f'left open. I had noted that k = 16 with a slow advertisement regime might '
+            f'lift T_hop to the {_f(need)} s needed for an interior R*. It does not: '
+            f'T_hop is far less sensitive to k than the floor argument assumed.</p></div>')
     kser = []
     for R in (150.0, 250.0):
-        rs = [r for r in rows("main", R=R) if r["T_hop_med"]]
+        rs = [r for r in rows("main", R_m=R) if r["T_hop_med"]]
         rs.sort(key=lambda r: float(r["k"]))
         if rs:
             kser.append({"name": f"measured, R = {int(R)} m",
@@ -162,14 +224,25 @@ def build(RES: Path, header, table, src, page, read_csv):
                          "y": [float(r["T_hop_med"]) for r in rs],
                          "lo": [float(r["T_hop_lo"]) for r in rs],
                          "hi": [float(r["T_hop_hi"]) for r in rs]})
-    kser.append({"name": "k/&lambda; floor = k &times; 200 ms", "x": [4, 8, 16],
-                 "y": [0.8, 1.6, 3.2], "color": "#6b7280", "dashed": True})
+    kser.append({"name": "predicted k/&lambda; (k &times; 200 ms) &mdash; REFUTED",
+                 "x": [4, 8, 16], "y": [0.8, 1.6, 3.2], "color": "#dc2626",
+                 "dashed": True})
     o.append(S.line_chart(kser, x_label="k (fragments in the signature set)",
                           y_label="T_hop (s)", y_min=0,
-                          title="T_hop against k, with the physical send-pacing floor",
-                          caption="The >= 200 ms Send() spacing is a hard LR-WPAN "
-                                  "constraint, so one ring cannot be served faster "
-                                  "than k/lambda. Measured T_hop tracks that floor."))
+                          title="T_hop against k, against the predicted per-node floor",
+                          caption="The red line is what I predicted and is wrong. "
+                                  "Measured T_hop is far flatter, and at k = 16 it "
+                                  "sits BELOW the per-node floor -- which is only "
+                                  "possible if several nodes serve one ring "
+                                  "concurrently."))
+    o.append(table(["R (m)", "k", "n_c", "T_spread (s)", "T_hop (s)",
+                    "per-node k/&lambda; (s)", "packets/node"],
+                   [[_f(r["R_m"], 0), r["k"], _f(r["n_c"], 0),
+                     _f(r["T_spread_med"], 3), _f(r["T_hop_med"], 3),
+                     _f(int(r["k"]) * 0.2), _f(r["pkts_per_node_med"])]
+                    for r in sorted([r for r in b4 if r["arm"] == "main"],
+                                    key=lambda r: (float(r["R_m"]), int(r["k"])))
+                    if float(r["R_m"]) in (94.0, 150.0, 250.0)]))
     o.append(src("cluster-radius/b4_by_config.csv"))
 
     o.append("<h3>Does spatial reuse cancel the R&sup2; traffic growth?</h3>")
@@ -256,15 +329,20 @@ def build(RES: Path, header, table, src, page, read_csv):
 
     # ------------------------------------------------------------------- B5
     o.append("<h2>B5 &mdash; is pooling a precondition?</h2>")
-    o.append(f'<div class="card verdict"><p>Relaying disabled, seeding only. Across '
-             f'{b5["n_runs"]:,} runs and {b5["total_nodes"]:,} nodes &mdash; with '
-             f'{100*b5["seeded_frac_mean"]:.0f} % of nodes seeded directly by the '
-             f'corridor &mdash; <strong>'
-             f'{b5["nodes_completing_all_k_without_pooling"]:,} nodes</strong> ended '
-             f'up holding all k. Wilson 95 % CI [{b5["wilson_lo"]:.1e}, '
-             f'{b5["wilson_hi"]:.1e}].</p><p>The claim &ldquo;no individual node '
-             f'collects enough on its own; pooling is a precondition, not an '
-             f'optimisation&rdquo; is <strong>{b5["verdict"]}</strong>.</p></div>')
+    if b5_missing:
+        o.append('<div class="card flag"><p>The seed-only arm did not run, so this '
+                 'claim is <strong>NOT MEASURED</strong>. It is not assumed to '
+                 'hold.</p></div>')
+    else:
+        o.append(f'<div class="card verdict"><p>Relaying disabled, seeding only. Across '
+                 f'{b5["n_runs"]:,} runs and {b5["total_nodes"]:,} nodes &mdash; with '
+                 f'{100*b5["seeded_frac_mean"]:.0f} % of nodes seeded directly by the '
+                 f'corridor &mdash; <strong>'
+                 f'{b5["nodes_completing_all_k_without_pooling"]:,} nodes</strong> '
+                 f'ended up holding all k. Wilson 95 % CI [{_e(b5["wilson_lo"])}, '
+                 f'{_e(b5["wilson_hi"])}].</p><p>The claim &ldquo;no individual node '
+                 f'collects enough on its own; pooling is a precondition, not an '
+                 f'optimisation&rdquo; is <strong>{b5["verdict"]}</strong>.</p></div>')
 
     # ------------------------------------------------------------------- A6
     o.append("<h2>A6 &mdash; the flight side, T1(R)</h2>")
@@ -343,15 +421,18 @@ def build(RES: Path, header, table, src, page, read_csv):
     o.append("<h2>Composition and the decision</h2>")
     cser = []
     for k in (4, 8, 16):
-        rs = sorted([r for r in comp if int(r["k"]) == k],
-                    key=lambda r: float(r["R_m"]))
+        rs = sorted([r for r in comp if int(r["k"]) == k
+                     and r["t1_source"] == "bhh"], key=lambda r: float(r["R_m"]))
         if rs:
             cser.append({"name": f"T_total, k = {k}",
                          "x": [float(r["R_m"]) for r in rs],
                          "y": [float(r["T_total_med_s"]) for r in rs],
                          "lo": [float(r["T_total_lo_s"]) for r in rs],
                          "hi": [float(r["T_total_hi_s"]) for r in rs]})
-    rs8 = sorted([r for r in comp if int(r["k"]) == 8], key=lambda r: float(r["R_m"]))
+    rs8 = sorted([r for r in comp if int(r["k"]) == 8 and r["t1_source"] == "bhh"],
+                 key=lambda r: float(r["R_m"]))
+    rs8d = sorted([r for r in comp if int(r["k"]) == 8 and r["t1_source"] == "dubins"],
+                  key=lambda r: float(r["R_m"]))
     if rs8:
         cser.append({"name": "T1 only", "x": [float(r["R_m"]) for r in rs8],
                      "y": [float(r["T1_med_s"]) for r in rs8],
@@ -360,6 +441,11 @@ def build(RES: Path, header, table, src, page, read_csv):
                      "x": [float(r["R_m"]) for r in rs8],
                      "y": [float(r["T_spread_med_s"]) for r in rs8],
                      "color": "#059669", "dashed": True})
+    if rs8d:
+        cser.append({"name": "T_total with realised Dubins T1, k = 8",
+                     "x": [float(r["R_m"]) for r in rs8d],
+                     "y": [float(r["T_total_med_s"]) for r in rs8d],
+                     "color": "#7c3aed"})
     o.append(S.line_chart(cser, x_label="cluster radius R (m)", y_label="time (s)",
                           log_y=True, shade_x=(OPLO, OPHI, "operating range"),
                           vlines=[(RHO_BOUND, "4&rho;/3")],
@@ -383,6 +469,17 @@ def build(RES: Path, header, table, src, page, read_csv):
                       else "no"),
                      _f(v["T_hop_used_s"]), f'{_f(v["R_star_closed_form_m"], 0)} m']
                     for k, v in sorted(rstar.items(), key=lambda kv: int(kv[0]))]))
+    rsd = sm.get("R_star_with_realised_dubins_T1", {})
+    k8d = rsd.get("8") or rsd.get(8) or {}
+    if k8d:
+        o.append(f'<p><strong>Using the realised Dubins tour instead of the BHH '
+                 f'estimate moves R* further out, not closer.</strong> The realised '
+                 f'tour is longer, so the 1/R term is larger and the optimum sits at '
+                 f'a larger R: grid search gives '
+                 f'{_f(k8d.get("R_star_grid_m"), 0)} m and the closed form '
+                 f'{_f(k8d.get("R_star_closed_form_m"), 0)} m at k = 8. The BHH-based '
+                 f'figures quoted above are therefore the <em>conservative</em> ones '
+                 f'for this conclusion.</p>')
     o.append(f'<p>The grid search is capped at R = '
              f'{_f(max(float(r["R_m"]) for r in comp), 0)} m, the top of the flight '
              f'grid, and the measured curve is still falling there. The closed form, '
@@ -418,8 +515,9 @@ def build(RES: Path, header, table, src, page, read_csv):
          f'{_f(kb["mean_above"])}&times; vs {_f(kb["mean_below"])}&times;',
          sm["scorecard"]["3.6"]],
         ["3.7", "no node completes without pooling", "0.000",
-         f'{b5["nodes_completing_all_k_without_pooling"]} of '
-         f'{b5["total_nodes"]:,}', sm["scorecard"]["3.7"]],
+         (f'{b5["nodes_completing_all_k_without_pooling"]} of '
+          f'{b5["total_nodes"]:,}' if not b5_missing else "not run"),
+         sm["scorecard"]["3.7"]],
     ], nums=set()))
 
     # ---------------------------------------------------------------- limits

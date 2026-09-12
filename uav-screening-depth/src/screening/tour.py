@@ -96,16 +96,24 @@ def build_cost_matrix(chs: list[tuple[float, float]], n_headings: int,
             cluster_of.append(ci)
     n = len(nodes)
 
-    # true Dubins cost between every ordered pair in different clusters
+    # True Dubins cost between every ordered pair in different clusters. Built
+    # with the vectorised length matrix, which cross-checks itself against the
+    # scalar forward-verified reference on every call: at 120 clusters x 8
+    # headings this is a 960x960 matrix and the scalar loop dominated everything
+    # else in the pipeline (27 s vs 1.9 s per instance).
+    L = DB.length_matrix(nodes, rho)
     d = [[0] * n for _ in range(n)]
     total = 0
     for i in range(n):
+        ci = cluster_of[i]
+        row = L[i]
+        di = d[i]
         for j in range(n):
-            if cluster_of[i] == cluster_of[j]:
+            if ci == cluster_of[j]:
                 continue
-            p = DB.dubins_path(nodes[i], nodes[j], rho)
-            w = int(round((p.length if p else 1e9) * _SCALE))
-            d[i][j] = w
+            v = row[j]
+            w = int(round((v if v < 1e8 else 1e9) * _SCALE))
+            di[j] = w
             total += w
     # The Noon-Bean penalty M is NOT optional. Forbidding non-successor
     # intra-cluster arcs is not enough to force one visit per cluster, because

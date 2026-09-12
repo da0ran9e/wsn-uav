@@ -57,6 +57,24 @@ def main() -> int:
                int(r["trickle"]), float(r["adv_interval_s"]))
         groups[key].append(r)
 
+    # A stale or half-written runs.csv once fed this script 12 rows from an old
+    # smoke test and it produced a complete-looking summary. Every configuration
+    # must carry exactly the declared number of seeds, or the run is refused.
+    want = cfg["stats"]["seeds_report"]
+    short = {f"{k[0]}|R{k[2]:g}|sp{k[3]:g}|k{k[4]}|tr{k[5]}|ai{k[6]:g}|{k[1]}": len(v)
+             for k, v in groups.items() if len(v) != want}
+    if short and "--allow-partial" not in sys.argv:
+        print(f"REFUSING TO ANALYSE: {len(short)} of {len(groups)} configurations do "
+              f"not have exactly {want} seeds. Pass --allow-partial to override.")
+        for name, n in sorted(short.items())[:12]:
+            print(f"  {name}: {n}")
+        if len(short) > 12:
+            print(f"  ... and {len(short)-12} more")
+        return 2
+    out["incomplete_configs"] = short
+    out["n_runs"] = len(runs)
+    out["n_configs"] = len(groups)
+
     b4_rows = []
     for key, rs in sorted(groups.items()):
         arm, mode, R, sp, k, tr, ai = key
@@ -105,6 +123,11 @@ def main() -> int:
         w.writerows(b4_rows)
 
     def pick(**kw) -> list[dict]:
+        # Reject unknown column names loudly. Calling this with R= instead of
+        # R_m= silently selected nothing and quietly dropped whole fits.
+        unknown = set(kw) - set(b4_rows[0])
+        if unknown:
+            raise KeyError(f"no such column(s) in b4_by_config: {sorted(unknown)}")
         return [r for r in b4_rows
                 if all(abs(r[a] - b) < 1e-9 if isinstance(b, float) else r[a] == b
                        for a, b in kw.items())]
@@ -131,7 +154,7 @@ def main() -> int:
         "R=60 excluded (pre-registered: h_max=0.2 there)")
     fit("T_spread_vs_R_k8", main_k8, "R_m", "T_spread_med", "R=60 excluded")
     for R in (150.0, 250.0):
-        fit(f"T_hop_vs_k_R{int(R)}", pick(arm="main", R=R), "k", "T_hop_med",
+        fit(f"T_hop_vs_k_R{int(R)}", pick(arm="main", R_m=R), "k", "T_hop_med",
             "exponent in k; k/lambda floor predicts ~1")
     # n_c axis: combine the spacing arm with the matching main config
     for R in cfg["sweep"]["spacing_sweep_R_m"]:
@@ -140,7 +163,8 @@ def main() -> int:
                 and r["mode"] == "spread" and r["arm"] in ("main", "spacing")]
         fit(f"T_spread_vs_nc_R{R}", rows, "n_c", "T_spread_med",
             "spatial reuse vs R^2 traffic growth")
-    fit("T_hop_vs_advint_R150", pick(arm="advint", R=150.0) + pick(arm="main", R=150.0, k=8),
+    fit("T_hop_vs_advint_R150",
+        pick(arm="advint", R_m=150.0) + pick(arm="main", R_m=150.0, k=8),
         "adv_interval_s", "T_hop_med", "protocol sensitivity, not a channel property")
     out["fits"] = fits
 
@@ -149,16 +173,25 @@ def main() -> int:
     b5_runs = [r for r in runs if r["mode"] == "seedonly"]
     tot_nodes = sum(int(r["n_nodes"]) for r in b5_runs)
     tot_complete = sum(int(r["n_complete"]) for r in b5_runs)
-    w5 = S.wilson(tot_complete, tot_nodes)
-    out["B5"] = {
-        "n_runs": len(b5_runs), "total_nodes": tot_nodes,
-        "nodes_completing_all_k_without_pooling": tot_complete,
-        "fraction": w5.point, "wilson_lo": w5.lo, "wilson_hi": w5.hi,
-        "seeded_frac_mean": round(S.mean([r["seeded_frac"] for r in b5]), 5),
-        "claim": "no individual node collects enough on its own; pooling is a "
-                 "precondition, not an optimisation",
-        "verdict": ("SUPPORTED" if tot_complete == 0 else "REFUTED"),
-    }
+    if not b5_runs:
+        # A missing arm is reported, never silently treated as a pass.
+        out["B5"] = {"verdict": "NOT RUN", "n_runs": 0, "total_nodes": 0,
+                     "nodes_completing_all_k_without_pooling": None,
+                     "fraction": None, "wilson_lo": None, "wilson_hi": None,
+                     "seeded_frac_mean": None,
+                     "claim": "no individual node collects enough on its own; "
+                              "pooling is a precondition, not an optimisation"}
+    else:
+        w5 = S.wilson(tot_complete, tot_nodes)
+        out["B5"] = {
+            "n_runs": len(b5_runs), "total_nodes": tot_nodes,
+            "nodes_completing_all_k_without_pooling": tot_complete,
+            "fraction": w5.point, "wilson_lo": w5.lo, "wilson_hi": w5.hi,
+            "seeded_frac_mean": round(S.mean([r["seeded_frac"] for r in b5]), 5),
+            "claim": "no individual node collects enough on its own; pooling is a "
+                     "precondition, not an optimisation",
+            "verdict": ("SUPPORTED" if tot_complete == 0 else "REFUTED"),
+        }
 
     # =================================================== A6
     bhh = read(RES / "A6" / "t1_bhh.csv")
@@ -243,32 +276,40 @@ def main() -> int:
     comp_rows = []
     comp_curves = {}
     import random
-    for k in cfg["sweep"]["k_values"]:
-        Rs, med, lo, hi = [], [], [], []
-        for R in g["R_grid_flight_m"]:
-            t1s = seed_samples_T1("bhh", eta0, float(R))
-            tss = seed_samples_Tspread(float(R), k)
-            if not t1s or not tss:
-                continue
-            rng = random.Random(20260912 + k + int(R))
-            reps = []
-            for _ in range(2000):
-                a = t1s[rng.randrange(len(t1s))]
-                b = tss[rng.randrange(len(tss))]
-                reps.append(a + b)
-            reps.sort()
-            point = S.median(t1s) + S.median(tss)
-            Rs.append(float(R)); med.append(point)
-            lo.append(reps[int(0.025 * len(reps))]); hi.append(reps[int(0.975 * len(reps))])
-            comp_rows.append({"k": k, "R_m": float(R),
-                              "T1_med_s": round(S.median(t1s), 3),
-                              "T_spread_med_s": round(S.median(tss), 3),
-                              "T_total_med_s": round(point, 3),
-                              "T_total_lo_s": round(reps[int(0.025*len(reps))], 3),
-                              "T_total_hi_s": round(reps[int(0.975*len(reps))], 3),
-                              "T_spread_share": round(S.median(tss) / point, 5),
-                              **prov})
-        comp_curves[k] = (Rs, med, lo, hi)
+    # Two T1 sources. BHH covers the whole flight grid; the realised Dubins tour
+    # covers only the five R where LKH was run but is ~1.7x longer. BHH is the
+    # CONSERVATIVE choice for the conclusion reached here: a smaller T1 shrinks
+    # the 1/R term and so pulls R* DOWN, towards the operating range. Both are
+    # computed and reported.
+    for t1_src in ("bhh", "dubins"):
+        grid = (g["R_grid_flight_m"] if t1_src == "bhh" else g["R_grid_dubins_m"])
+        for k in cfg["sweep"]["k_values"]:
+            Rs, med, lo, hi = [], [], [], []
+            for R in grid:
+                t1s = seed_samples_T1(t1_src, eta0, float(R))
+                tss = seed_samples_Tspread(float(R), k)
+                if not t1s or not tss:
+                    continue
+                rng = random.Random(20260912 + k + int(R))
+                reps = []
+                for _ in range(2000):
+                    a = t1s[rng.randrange(len(t1s))]
+                    b = tss[rng.randrange(len(tss))]
+                    reps.append(a + b)
+                reps.sort()
+                point = S.median(t1s) + S.median(tss)
+                Rs.append(float(R)); med.append(point)
+                lo.append(reps[int(0.025 * len(reps))])
+                hi.append(reps[int(0.975 * len(reps))])
+                comp_rows.append({"t1_source": t1_src, "k": k, "R_m": float(R),
+                                  "T1_med_s": round(S.median(t1s), 3),
+                                  "T_spread_med_s": round(S.median(tss), 3),
+                                  "T_total_med_s": round(point, 3),
+                                  "T_total_lo_s": round(reps[int(0.025*len(reps))], 3),
+                                  "T_total_hi_s": round(reps[int(0.975*len(reps))], 3),
+                                  "T_spread_share": round(S.median(tss) / point, 5),
+                                  **prov})
+            comp_curves[(t1_src, k)] = (Rs, med, lo, hi)
     with open(OUT / "composition.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, list(comp_rows[0]))
         w.writeheader()
@@ -277,9 +318,12 @@ def main() -> int:
     # R*: grid-search argmin on the measured curve, with a bootstrap CI, plus the
     # closed form. Both reported even when they disagree.
     rstar = {}
+    rstar_dubins = {}
     sc_h = math.sqrt(g["hex_packing_coeff"])
-    for k in cfg["sweep"]["k_values"]:
-        Rs, med, _, _ = comp_curves[k]
+    for t1_src in ("bhh", "dubins"):
+      target = rstar if t1_src == "bhh" else rstar_dubins
+      for k in cfg["sweep"]["k_values"]:
+        Rs, med, _, _ = comp_curves[(t1_src, k)]
         if not Rs:
             continue
         i = min(range(len(med)), key=lambda j: med[j])
@@ -288,7 +332,7 @@ def main() -> int:
         stars = []
         samples = {}
         for R in Rs:
-            samples[R] = (seed_samples_T1("bhh", eta0, R), seed_samples_Tspread(R, k))
+            samples[R] = (seed_samples_T1(t1_src, eta0, R), seed_samples_Tspread(R, k))
         for _ in range(2000):
             curve = []
             for R in Rs:
@@ -298,11 +342,12 @@ def main() -> int:
             stars.append(Rs[min(range(len(curve)), key=lambda j: curve[j])])
         stars.sort()
         # closed form from the measured T_hop at the reference R
-        ref = pick(arm="main", R=150.0, k=k)
+        ref = pick(arm="main", R_m=150.0, k=k)
         th = float(ref[0]["T_hop_med"]) if ref and ref[0]["T_hop_med"] != "" else None
         closed = (math.sqrt(r_tx * t["beta_bhh"] * g["area_m2"]
                             / (sc_h * v["v_mps"] * th)) if th else None)
-        rstar[k] = {
+        target[k] = {
+            "t1_source": t1_src,
             "R_star_grid_m": Rs[i],
             "R_star_ci_m": [stars[int(0.025 * len(stars))],
                             stars[int(0.975 * len(stars))]],
@@ -318,6 +363,7 @@ def main() -> int:
                     "max(R) means the measured curve is still falling at the edge",
         }
     out["R_star"] = rstar
+    out["R_star_with_realised_dubins_T1"] = rstar_dubins
     out["closed_form_selfcheck"] = {
         "T_hop_2s_gives_R_star_m": round(
             math.sqrt(r_tx * 0.7 * g["area_m2"] / (sc_h * v["v_mps"] * 2.0)), 1),
@@ -372,7 +418,8 @@ def main() -> int:
     gap = out["kinematic_bound"]["penalty_pct"]
     sc["3.6"] = ("CONFIRMED" if gap is not None
                  and gap > REG["3.6"]["min_ratio_gap_pct"] else "REFUTED")
-    sc["3.7"] = ("CONFIRMED"
+    sc["3.7"] = ("NOT MEASURED" if out["B5"]["verdict"] == "NOT RUN"
+                 else "CONFIRMED"
                  if out["B5"]["nodes_completing_all_k_without_pooling"]
                  == REG["3.7"]["nodes_completing"] else "REFUTED")
     out["registered_ranges"] = REG

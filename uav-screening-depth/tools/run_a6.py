@@ -118,13 +118,21 @@ def main() -> int:
                  for R in sc_cfg["eta_dubins_R_m"] for s in seeds]
         print(f"A6 dubins: {len(work)} tours (LKH)", flush=True)
         t1 = time.time()
-        with ProcessPoolExecutor(max_workers=a.workers) as ex:
-            rows = list(ex.map(_dubins_one, work, chunksize=1))
+        # Write incrementally. These tours take tens of seconds each at the
+        # largest C, and buffering them all until the end meant one interrupted
+        # run threw away every completed tour.
+        rows = []
         with open(OUT / "t1_dubins.csv", "w", newline="") as fh:
             w = csv.DictWriter(fh, COLS)
             w.writeheader()
-            for r in rows:
-                w.writerow({**r, **prov})
+            with ProcessPoolExecutor(max_workers=a.workers) as ex:
+                for i, r in enumerate(ex.map(_dubins_one, work, chunksize=1), 1):
+                    rows.append(r)
+                    w.writerow({**r, **prov})
+                    fh.flush()
+                    if i % 60 == 0:
+                        print(f"    {i}/{len(work)} tours, {time.time()-t1:.0f}s",
+                              flush=True)
         worst = max(float(r["max_kappa_rho"]) for r in rows)
         print(f"  -> t1_dubins.csv ({len(rows)} rows, {time.time()-t1:.0f}s); "
               f"worst |kappa|*rho over every realised tour = {worst:.9f}", flush=True)

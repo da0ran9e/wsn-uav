@@ -1,0 +1,206 @@
+{
+  "provenance": {
+    "schema_version": 1,
+    "git_commit": "36019ab15037c0fd7650982cdd89c8b0b813bbff",
+    "git_dirty": 1,
+    "git_branch": "claude/jolly-ptolemy-nytjc1",
+    "binary_mtime": 1789100026,
+    "binary_size": 19843,
+    "binary_path": "src/screening/model.py",
+    "source_sha256": "d72a00d60e83c449d6304f755e64407551bbb79783e520480c93c575673a03ed",
+    "python_version": "3.10.20",
+    "python_executable": "/usr/bin/python3.10",
+    "platform": "Linux-6.18.44-fc-v24-x86_64-with-glibc2.39",
+    "cpu_count": 4,
+    "config_path": "config/cluster-radius.yaml",
+    "config_sha256": "24e22177b63edee1e6adc7b0da47d124904edbe0d3534e767077adade4215b82",
+    "prov_id": "bc48c85adf467ea9"
+  },
+  "fit_excludes_R_m": 60.0,
+  "incomplete_configs": {
+    "main|R300|sp20|k4|tr1|ai0.5|spread": 11
+  },
+  "n_runs": 2171,
+  "n_configs": 19,
+  "fits": {
+    "T_hop_vs_R_k8": {
+      "exponent": -0.629,
+      "ci_lo": -0.8401,
+      "ci_hi": -0.442,
+      "r2": 0.9701,
+      "prefactor": 46.538304,
+      "n_points": 5,
+      "x": "R_m",
+      "y": "T_hop_med",
+      "note": "R=60 excluded (pre-registered: h_max=0.2 there)"
+    },
+    "T_spread_vs_R_k8": {
+      "exponent": 0.906,
+      "ci_lo": 0.8629,
+      "ci_hi": 0.9325,
+      "r2": 0.9993,
+      "prefactor": 0.040476,
+      "n_points": 5,
+      "x": "R_m",
+      "y": "T_spread_med",
+      "note": "R=60 excluded"
+    },
+    "T_hop_vs_k_R150": {
+      "exponent": 0.2849,
+      "ci_lo": 0.2488,
+      "ci_hi": 0.3209,
+      "r2": 0.9947,
+      "prefactor": 1.027965,
+      "n_points": 3,
+      "x": "k",
+      "y": "T_hop_med",
+      "note": "exponent in k; k/lambda floor predicts ~1"
+    },
+    "T_hop_vs_k_R250": {
+      "exponent": 0.1861,
+      "ci_lo": 0.1851,
+      "ci_hi": 0.1871,
+      "r2": 1.0,
+      "prefactor": 1.024544,
+      "n_points": 3,
+      "x": "k",
+      "y": "T_hop_med",
+      "note": "exponent in k; k/lambda floor predicts ~1"
+    },
+    "T_spread_vs_nc_R94": {
+      "exponent": null,
+      "note": "too few points spatial reuse vs R^2 traffic growth"
+    },
+    "T_spread_vs_nc_R150": {
+      "exponent": null,
+      "note": "too few points spatial reuse vs R^2 traffic growth"
+    },
+    "T_spread_vs_nc_R250": {
+      "exponent": null,
+      "note": "too few points spatial reuse vs R^2 traffic growth"
+    },
+    "T_hop_vs_advint_R150": {
+      "exponent": null,
+      "note": "too few points protocol sensitivity, not a channel property"
+    }
+  },
+  "B5": {
+    "verdict": "NOT RUN",
+    "n_runs": 0,
+    "total_nodes": 0,
+    "nodes_completing_all_k_without_pooling": null,
+    "fraction": null,
+    "wilson_lo": null,
+    "wilson_hi": null,
+    "seeded_frac_mean": null,
+    "claim": "no individual node collects enough on its own; pooling is a precondition, not an optimisation"
+  },
+  "kinematic_bound": {
+    "R_min_m": 94.13,
+    "dubins_over_bhh_above_bound": null,
+    "dubins_over_bhh_below_bound": null,
+    "mean_above": null,
+    "mean_below": null,
+    "penalty_pct": null,
+    "worst_kappa_rho_over_all_tours": null
+  },
+  "R_star": {
+    "4": {
+      "t1_source": "bhh",
+      "R_star_grid_m": 300.0,
+      "R_star_ci_m": [
+        300.0,
+        300.0
+      ],
+      "T_total_at_R_star_s": 93.81,
+      "interior_to_operating_range": true,
+      "at_upper_boundary": false,
+      "at_lower_boundary": false,
+      "T_hop_used_s": 1.5131,
+      "R_star_closed_form_m": 854.5,
+      "grid_max_R_m": 300.0,
+      "note": "grid search is capped by the R grid; a closed-form R* beyond max(R) means the measured curve is still falling at the edge"
+    },
+    "8": {
+      "t1_source": "bhh",
+      "R_star_grid_m": 250.0,
+      "R_star_ci_m": [
+        250.0,
+        250.0
+      ],
+      "T_total_at_R_star_s": 106.78,
+      "interior_to_operating_range": true,
+      "at_upper_boundary": false,
+      "at_lower_boundary": false,
+      "T_hop_used_s": 1.89,
+      "R_star_closed_form_m": 764.6,
+      "grid_max_R_m": 250.0,
+      "note": "grid search is capped by the R grid; a closed-form R* beyond max(R) means the measured curve is still falling at the edge"
+    },
+    "16": {
+      "t1_source": "bhh",
+      "R_star_grid_m": 250.0,
+      "R_star_ci_m": [
+        250.0,
+        250.0
+      ],
+      "T_total_at_R_star_s": 107.62,
+      "interior_to_operating_range": true,
+      "at_upper_boundary": false,
+      "at_lower_boundary": false,
+      "T_hop_used_s": 2.2458,
+      "R_star_closed_form_m": 701.4,
+      "grid_max_R_m": 250.0,
+      "note": "grid search is capped by the R grid; a closed-form R* beyond max(R) means the measured curve is still falling at the edge"
+    }
+  },
+  "R_star_with_realised_dubins_T1": {},
+  "closed_form_selfcheck": {
+    "T_hop_2s_gives_R_star_m": 736.8,
+    "task_states_m": 736,
+    "T_hop_needed_for_R_star_400m_s": 6.906
+  },
+  "registered_ranges": {
+    "3.1": {
+      "T_hop_band_s": [
+        1.3,
+        4.0
+      ],
+      "refute_above_s": 10.0
+    },
+    "3.2": {
+      "k_exponent": [
+        0.6,
+        1.4
+      ]
+    },
+    "3.3": {
+      "R_exponent": [
+        -0.9,
+        -0.3
+      ]
+    },
+    "3.4": {
+      "nc_exponent_max": 0.2,
+      "nc_exponent_min": -0.4
+    },
+    "3.5": {
+      "R_star_above_m": 400.0
+    },
+    "3.6": {
+      "min_ratio_gap_pct": 5.0
+    },
+    "3.7": {
+      "nodes_completing": 0
+    }
+  },
+  "scorecard": {
+    "3.1": "CONFIRMED",
+    "3.2": "REFUTED",
+    "3.3": "CONFIRMED",
+    "3.4": "NOT MEASURED",
+    "3.5": "CONFIRMED",
+    "3.6": "REFUTED",
+    "3.7": "NOT MEASURED"
+  }
+}

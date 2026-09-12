@@ -1,0 +1,2 @@
+arm,eta,R_m,seed,C_realised,C_asymptotic,n_cells_total,mean_members,tour_len_m,T1_s,max_kappa_rho,solver,words,wall_s,schema_version,prov_id
+dubins,0.0,60,1000,120,106.9167,120,20.833,17362.603,868.1301,1.0,LKH(LKH),"{""LSL"": 14, ""LSR"": 32, ""RSL"": 48, ""RSR"": 26}",32.678,1,e8b1ee08c792dd29

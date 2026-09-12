@@ -146,3 +146,44 @@ def test_word_win_counts_are_balanced_across_mirror_pairs():
     assert set(c) == set(D.WORDS)
     for u, w in (("LSL", "RSR"), ("LSR", "RSL"), ("LRL", "RLR")):
         assert 0.7 < c[u] / c[w] < 1.43, f"{u}:{c[u]} vs {w}:{c[w]} unbalanced"
+
+
+# ---- vectorised all-pairs matrix -----------------------------------------
+def test_length_matrix_matches_scalar_everywhere_on_a_small_instance():
+    """Exhaustive agreement, not just the built-in sample check."""
+    rng = random.Random(31)
+    nodes = [(rng.uniform(0, 800), rng.uniform(0, 800), rng.uniform(0, D.TWO_PI))
+             for _ in range(24)]
+    M = D.length_matrix(nodes, RHO, check_samples=0)
+    for i in range(len(nodes)):
+        for j in range(len(nodes)):
+            if i == j:
+                assert M[i][j] == 0.0
+                continue
+            ref = D.dubins_path(nodes[i], nodes[j], RHO)
+            assert float(M[i][j]) == pytest.approx(ref.length, rel=1e-9), f"({i},{j})"
+
+
+def test_length_matrix_self_check_catches_a_corrupted_result(monkeypatch):
+    """The built-in cross-check must actually fire, not just exist."""
+    rng = random.Random(5)
+    nodes = [(rng.uniform(0, 500), rng.uniform(0, 500), rng.uniform(0, D.TWO_PI))
+             for _ in range(12)]
+    real = D.dubins_path
+
+    def wrong(q0, q1, rho, **kw):
+        p = real(q0, q1, rho, **kw)
+        if p is None:
+            return None
+        return D.DubinsPath(p.word, p.t * 1.5, p.p, p.q, p.rho, p.x0, p.y0, p.psi0)
+
+    monkeypatch.setattr(D, "dubins_path", wrong)
+    with pytest.raises(AssertionError, match="disagrees with the scalar reference"):
+        D.length_matrix(nodes, RHO, check_samples=50)
+
+
+def test_length_matrix_is_asymmetric():
+    """Dubins distance is directional; a symmetric matrix would mean a bug."""
+    nodes = [(0.0, 0.0, 0.0), (200.0, 120.0, 2.0), (50.0, 400.0, 4.0)]
+    M = D.length_matrix(nodes, RHO, check_samples=0)
+    assert abs(float(M[0][1]) - float(M[1][0])) > 1.0

@@ -58,7 +58,7 @@ def stamp(config_path: Path | None = None) -> dict:
         "cpu_count": os.cpu_count(),
     }
     if config_path is not None:
-        d["config_path"] = str(Path(config_path).relative_to(ROOT))
+        d["config_path"] = str(Path(config_path).resolve().relative_to(ROOT))
         d["config_sha256"] = config_sha256(config_path)
     # Compact stamp carried on every data row. The full stamp lives in
     # config.txt; repeating two 64-char hashes per row would triple the size of

@@ -1,0 +1,11 @@
+run_id,t_s,frac_complete
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1000,0,0.130435
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1000,0.25,0.956522
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1000,1.25,1
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1001,0,0.0434783
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1001,0.25,0.913043
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1001,1.75,1
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1002,0,0
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1002,0.25,0.826087
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1002,0.5,0.956522
+main~main|R60|sp20|k4|tr1|ai0.5|spread|s1002,2,1

@@ -1,0 +1,69 @@
+# Cluster-radius probe (B4, B5, A6, composition). Every parameter, with units.
+# Notation follows the probe prompt. NOTE: KY-HIEU-vi.md, which the prompt says
+# fixes notation, is NOT present in this repository -- see STATUS.md. Symbols used
+# here are exactly those written in the prompt.
+schema_version: 1
+
+geometry:
+  area_m2: 1000000.0        # m^2   A = 1 km^2
+  side_m: 1000.0            # m     square region
+  r_tx_m: 50.0              # m     intra-cluster range (CALIBRATED, see radio)
+  r_bc_m: 50.0              # m     UAV corridor half-width at seeding
+  R_grid_m: [60, 94, 120, 150, 200, 250, 300]        # m   B4 sweep
+  R_grid_flight_m: [60, 94, 120, 150, 200, 250, 300, 350, 400]  # m  A6 sweep
+  R_grid_dubins_m: [60, 94, 150, 250, 400]           # m   actual LKH tours
+  operating_range_m: [94, 400]   # m  the range the question asks about
+  hex_packing_coeff: 2.598076211  # -  3*sqrt(3)/2. A/(pi R^2) is WRONG by 21%.
+
+vehicle:
+  v_mps: 20.0               # m/s
+  bank_angle_deg: 30.0      # deg
+  rho_m: 70.6               # m    v^2/(g tan phi)
+  kinematic_R_min_m: 94.13  # m    4*rho/3, the lower bound to test
+
+tour:
+  beta_bhh: 0.7124          # -   BHH constant. The prompt writes "beta ~ 0.7".
+  n_headings: 8             # -   CHOSEN ON TUNING SEEDS: within 0.9% of 12
+                            #     headings at 2.2x less cost; 4 is 2.4-9.3% off.
+  curvature_sample_m: 2.0   # m   arc-length step for the |kappa| <= 1/rho check
+
+radio:
+  lambda_ops_per_s: 5.0     # 1/s  hard ceiling: >= 200 ms between Send() calls
+  send_spacing_s: 0.2       # s
+  payload_ceiling_B: 100    # B    NOT the 127 B PSDU
+  frag_bytes: 64            # B
+  tx_power_dBm: -8.0        # dBm  CALIBRATED: measured PER(50 m) = 0.005,
+                            #      PER(55) = 0.09, PER(60) = 0.55, PER(65) = 0.98
+                            #      -> reliable range ~52 m, 50% point ~59 m
+  path_loss_exponent: 3.0   # -    LogDistancePropagationLossModel
+
+protocol:
+  adv_interval_s: 0.5       # s    Trickle Imin / advertisement period
+  adv_interval_max_s: 32.0  # s    Trickle Imax
+  trickle_k: 2              # -    suppression threshold
+  suppress_window_s: 1.0    # s    do not re-push a fragment heard this recently
+  adv_interval_sweep_s: [0.25, 1.0, 2.0, 4.0]   # s  reported as a sensitivity axis
+  stop_time_s: 900.0        # s    cap; runs stop early on full completion
+  stop_time_seedonly_s: 30.0
+
+sweep:
+  k_values: [4, 8, 16]          # fragments
+  spacing_values_m: [15, 20, 30]  # m  varies n_c independently of R
+  spacing_reference_m: 20
+  spacing_sweep_R_m: [94, 150, 250]
+  trickle_values: [0, 1]
+
+scenario:
+  n_nodes: 2500             # -   A / 20m^2 lattice-equivalent density
+  eta_values: [0.0, 0.5, 1.0]     # -  deployment heterogeneity
+  eta_reference: 0.0
+  eta_dubins_R_m: [94, 150, 250]  # m  where eta is also run with real tours
+  hotspots: 8
+  hotspot_sigma_m: 70.0
+
+stats:
+  seeds_report: 120         # N >= 120 (AGENT-BRIEF 8). Reporting seeds 1000..1119.
+  seed_report_base: 1000
+  seeds_tuning: 20          # disjoint, seeds 0..19, NEVER reported
+  seed_tuning_base: 0
+  bootstrap_resamples: 10000

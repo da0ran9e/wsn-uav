@@ -8,6 +8,11 @@ results/**/run-*/
 results/**/events.jsonl
 # the full long-format E0 grid (73 MB); regenerate with tools/run_e0.py
 results/**/sweep.csv
+# Per-worker sweep shards: intermediate scratch, merged into runs.csv / curves.csv
+# at the end of a run. Raw output in the sense of AGENT-BRIEF 10, and a moving
+# target while a sweep is in flight.
+results/**/shard-*.csv
+results/**/curve-*.csv
 __pycache__/
 *.pyc
 .pytest_cache/

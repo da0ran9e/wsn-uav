@@ -1,147 +1,179 @@
 # STATUS — single source of current truth
 
 A newcomer reading only this file must be able to continue the work.
-Last updated: 2026-09-11. Maintained per AGENT-BRIEF §11.
+Last updated: 2026-09-12. Maintained per AGENT-BRIEF §11.
+
+Two pieces of work exist in this repo:
+
+| work item | state |
+|---|---|
+| **E0** — does an interior `k*` exist? (screening-depth gate) | complete, GO conditional, reviewed-pending |
+| **Cluster-radius probe** — does an interior `R*` exist, in 94–400 m? | **measurement in flight**, see §2 |
 
 ---
 
-## 1. What is true right now
+## 1. E0 — screening depth (gate: GO, conditional)
 
-**E0 is complete. The gate is GO, but conditionally, and the condition is the
-most important result so far.**
+Unchanged from the previous session. Summary:
 
-The brief's literal stop condition (`k*` on a boundary for >50% of the grid in
-*both* regimes) is not met: 49.4% boundary in `all-k`, 52.4% in the `m-of-k`
-aggregate. So E1 is unblocked. But those per-regime averages are nearly
-meaningless, because they average over structurally opposite cases:
-
-| m-policy | interior `k*` | median `k*` | what it means |
+| m-policy | interior `k*` | median `k*` | reading |
 |---|---|---|---|
-| `m-of-k`, m ∝ k | **95.2%** | 12 | the paper's question is well posed |
-| `m-of-k`, m fixed | **0.0%** | 40 (always) | **no optimum exists at all** — θ is flat in k, so extra files are free |
-| `all-k` (m=k) | 50.6% | 3 | optimum exists but is cosmetic (median depth 0.2%, below the 1% bar) and 49.4% sit on the k=2 floor |
+| `m ∝ k` | **95.2%** | 12 | the question is well posed |
+| `m` fixed | **0.0%** | 40, every point | **no optimum exists** — θ is flat in k |
+| `all-k` (m=k) | 50.6% | 3 | exists but cosmetic (median depth 0.2%) |
 
-Measured over 4,860 config points × 39 values of `k`, plus a 9-threshold sweep at
-1,620 points each. All of it is deterministic — no seeds, no CIs, because there is
-nothing sampled. `N ≥ 120` applies from E1 onward.
+Both E0 acceptance findings stand: the `ln k` factor exists only in Regime A (and
+is mild even there — per-file cost grows 1.53× over a 10× range in k), and Regime A
+needs 5.92 passes per CH at k=10. Full detail in `report/E0.html`,
+`docs/AUDIT-E0.md`.
 
-### The three acceptance criteria
-1. **Interior fraction per regime** — reported above and in `report/E0.html`.
-2. **Regime A feasibility** — reproduces the brief's table exactly: 5.92 / 1.34 /
-   0.79 passes per CH for all-10 / 5-of-10 / 3-of-10. **Regime A needs the UAV
-   over every cluster ~6 times at k=10.** It is only feasible at the small `k` it
-   actually selects (median 3), which is the same as saying Regime A is feasible
-   only where the screening question is uninteresting.
-3. **Does `ln k` survive Regime B?** — **No.** θ_A grows 15.3× from k=4 to 40;
-   with m fixed at 3 it *falls* (26.1 → 18.1). The `ln k` factor exists only in
-   Regime A, exactly as the brief predicts. **And it is mild even there:** at
-   C_conf = 0.95, θ_A ≈ k·[ln k + 2.97]/|ln(1−p)| and ln k only spans 0.69–3.69
-   over k = 2…40, so per-file cost grows just 1.53× while the linear factor
-   contributes 10×. "θ_A grows like k ln k" must not be written as "θ_A is driven
-   by ln k".
-
-### Two findings the brief did not anticipate
-
-**(a) `m` is not a free knob — Appendix A.2 fixes it, and it is proportional to k.**
-With pixel-stride interleaving over `k` files partitioning one payload, noisy-OR
-gives `C = 1 − 0.1^(m/k)`, a function of the *ratio* alone, so
-`α = m/k = ln(1−thr)/ln(0.10)`. An interior `k*` exists for 85.8–99.6% of the grid
-across thresholds 0.30–0.80 (α = 0.16–0.70), and median `k*` falls monotonically
-32 → 3 as the threshold rises — the signature of a genuine tunable optimum.
-At thr = 0.90, α = 1 and the regime degenerates into Regime A, reproducing its
-numbers from an independently coded path.
-**This derivation is mine, not the brief's** (`docs/AUDIT-E0.md`, A1). If it is
-wrong and `m` is really fixed, the premise collapses. It is open problem #1.
-
-**(b) The quasiconvexity claim does not hold as stated.**
-The paper's central structural claim is that `T_total(k)` is quasiconvex so a
-unique interior optimum exists. Measured: **0%** of curves are quasiconvex under
-integer `m = ⌈αk⌉`, versus **94.4–97.1%** under real-valued `m = αk`.
-Mechanism, measured not assumed: the *realised* ratio `m/k` oscillates with the
-parity of `k` (at α=0.5, k=3 gives 0.67 but k=4 gives 0.50), so θ zigzags by
-+7.7/−1.4 opportunities and `T_total` alternates by 1–15%.
-So **the objective is quasiconvex; the realisable curve is not.** `m` is
-physically an integer, so this cannot be waved away. The paper must either state
-quasiconvexity *in trend* and report the sawtooth, or promote `m` to a second
-decision variable and optimise over `(k, m)`.
+**Correction to the record:** the commit message at `98822fd` states "Tests: 158
+passed"; the true figure at that commit was 267 (parametrized tests expand). I did
+not amend that commit, deliberately — it is the pre-registration commit for the
+cluster-radius probe and it must be visibly untouched after the sweeps were read.
 
 ---
 
-## 2. Stale or void numbers
+## 2. Cluster-radius probe — IN FLIGHT
 
-None. This is the first campaign result set. Everything carries `prov_id`
-`1d478b3dd653a6b1` and `report/E0.html` is banner `CURRENT`.
+**The one question:** `T_total(R) = T1(R) + h_max(R)·T_hop(R, n_c)` — does an
+interior minimum exist, and does it land inside 94–400 m? Everything turns on
+`T_hop`, which nobody had measured.
+
+### What is already settled
+
+- **ns-3.46 built and LR-WPAN verified** (commit `ea50b72a`, `lr-wpan-data`
+  example runs and receives). LKH 3.0.13 built from source. Both recorded in
+  `results/*/env.txt`.
+- **The radio was calibrated, not assumed.** TX power −8 dBm gives measured
+  PER(50 m) = 0.005, PER(55) = 0.09, PER(60) = 0.55, PER(65) = 0.98 — a *reliable*
+  50 m hop, 50 % point at 59 m.
+- **Contention is real and instrumented.** Six LR-WPAN MAC/PHY trace sources
+  connected on every run; MAC TX drop rate ≈ 2.9 % overall, rising with node
+  density and with Trickle disabled. Zero `Send()` failures, zero censored runs.
+- **Heading resolution chosen on tuning seeds only** (0–19, never reported):
+  8 headings, within 0.9 % of 12 at 2.2× less cost.
+- **Pre-registration committed before any sweep output was read** —
+  `docs/PREREGISTRATION-cluster-radius.md` at `98822fd`. Seven numbered
+  predictions, each with the measurement that would refute it. The report's
+  scorecard is computed mechanically from those ranges.
+
+### Early results (partial data, ~45 % of the B4 sweep)
+
+These will be restated from the full sweep; they are here because they are already
+decision-relevant.
+
+- **`T_hop` is single-digit seconds, not tens.** 1.3–2.8 s at k = 8 over
+  R = 94–300 m, against the **6.9 s** needed to bring `R*` inside 400 m.
+- **`T_hop` falls with R**, exponent **−0.63**, inside the pre-registered
+  [−0.9, −0.3]. The closed form assumes `T_hop` constant in R, so it is an
+  approximation.
+- **A prediction of mine failed.** I registered `T_hop ∝ k/λ` with exponent ≈ 1.
+  Measured: **0.19–0.28**. At k = 16 and R ≥ 150 m, `T_hop` is *below* the 3.2 s a
+  single node needs to emit 16 fragments — so rings are served by several nodes in
+  parallel and per-node pacing never becomes the per-ring cost. **Prediction 3.2
+  is REFUTED** and the report says so.
+- **B5 (pooling is a precondition) looks supported**: in the pilot, 0 of 147 nodes
+  completed all k with relaying disabled despite 45 % being seeded. The full arm
+  has not run yet.
+
+### What remains
+
+1. B4 sweep: ~45 % done. Remaining cost is dominated by the `trickle_off` arm at
+   R = 250–300 m.
+2. A6 realised-Dubins tours: restarted with a vectorised cost matrix (27 s → 1.9 s
+   per 960×960 instance) and incremental writes.
+3. Analysis → `report/cluster-radius.html`. The page currently builds with a
+   **STALE** banner and explicitly names which arms are missing; it will not
+   silently present a gap.
 
 ---
 
-## 3. Open problems, ranked
+## 3. Stale or void numbers
 
-1. **Is `m` proportional to `k`, or fixed?** (Tier 0 — blocks the paper's premise,
-   not just E0.) The two answers give 95% vs 0% interior. My derivation from
-   Appendix A.2 says proportional, but it assumes the `k` files *partition* one
-   payload. If each file is instead a full-strength independent signature, `m` is
-   fixed and there is no optimum to find. **Someone who knows the physical system
-   must settle this before E1 is worth starting.** Note also a tension I could not
-   resolve: the parent `wsn-uav` `CLAUDE.md` describes *unequal* per-layer
-   utilities (0.30/0.12/0.05/0.40) while A.2 specifies equal-contribution pixel
-   stride and says to match it exactly. I followed A.2.
-2. **Quasiconvexity fails for integer `m`** (Tier 0 for any output that claims
-   it). Restate as trend-level with the sawtooth reported, or optimise `(k, m)`.
-3. **Regime A is operationally marginal** (5.92 passes/CH at k=10). If the paper
-   needs all-k it must argue feasibility rather than assume it.
-4. **`r(k)` and `f(k)` are entirely unmeasured.** They are plausible parametric
-   families. They decide *where* `k*` lands, so nothing downstream of E0 is
-   quantitative until they come from data. E0 only establishes that an optimum
-   *can* exist.
-5. **Environment: ns-3, PECEE and LKH are all absent**, though §4 says they are
-   available. **E2, E3, E5, E7 are blocked.** I did not stub them — a stub
-   standing in for a measurement is the failure mode §8 warns about.
-6. **Repository location.** §5 requires a standalone `uav-screening-depth` repo
-   and says explicitly not to put this inside `wsn-uav`. Push access for this
-   session is scoped to `da0ran9e/wsn-uav` on branch
-   `claude/jolly-ptolemy-nytjc1` only, so the tree lives as a self-contained
-   subtree: it imports nothing from the parent and extracts with
-   `git subtree split -P uav-screening-depth`. **Needs the user to create the
+None void. The cluster-radius page is **STALE** by its own banner until the B4
+`trickle_off`/`spacing`/`seedonly` arms and the A6 Dubins arm land. Everything in
+`report/E0.html` is CURRENT.
+
+---
+
+## 4. Open problems, ranked
+
+1. **`KY-HIEU-vi.md` is missing.** The probe prompt says notation is fixed by that
+   file; it is not in this repository. I used the prompt's own symbols verbatim and
+   invented none, but there is a known collision: heterogeneity is `h` in
+   `AGENT-BRIEF` and `η` in the probe prompt, while `h_max` is a third quantity.
+   **If that document disagrees, the probe's symbols need a pass.**
+2. **Is `m` proportional to `k`, or fixed?** (From E0, unchanged and still the
+   top blocker for the screening-depth paper.) 95 % vs 0 % interior. My derivation
+   from Appendix A.2 says proportional; it assumes the k files partition one
+   payload. Someone who knows the physical system must settle it.
+3. **Quasiconvexity fails for integer `m`** (E0). Restate as trend-level with the
+   sawtooth reported, or optimise over `(k, m)` jointly.
+4. **Does each node match its own data, or does the CH match for the cluster?**
+   (Probe prompt §9.1 — *explicitly flagged as unanswered by the group, and built
+   wrong twice already.*) Not assumed either way here. It does not affect this
+   probe's measurement, but it decides where the matching cost lands.
+5. **Is the declared dose identical across nodes, or per-node?** (Probe prompt
+   §9.2.) If it differs, the coverage problem becomes **set-cover with non-uniform
+   demands** — a different problem from the one currently specified. Nothing in
+   this probe assumes uniformity, because the probe does not solve coverage at all.
+6. **`T_hop` is protocol-dependent.** Reported as a function of R, `n_c`, k *and*
+   the advertisement interval for that reason. What is protocol-independent is the
+   `k/λ` floor — and the measurement shows that floor does not bind.
+7. **PECEE is absent**, so Phase 0 is a hex-tiling stand-in (CH = node nearest each
+   occupied cell centre). Moves individual stops, not the `1/R` scaling.
+8. **Repository location.** AGENT-BRIEF §5 wants a standalone `uav-screening-depth`
+   repo. Push access is scoped to `da0ran9e/wsn-uav` branch
+   `claude/jolly-ptolemy-nytjc1`, so this is a self-contained subtree that extracts
+   with `git subtree split -P uav-screening-depth`. **Needs the user to create the
    repo.**
-7. **E0's main grid confounds `R` with `C`** (fixed area ⇒ `C = A/2.598R²`). The
-   `k*` vs `ln C` data is computed separately at fixed `R` and is labelled
-   PREVIEW; no slope, intercept or R² is quoted. That is E9's job.
 
 ---
 
-## 4. What to do next
+## 5. What to do next
 
-1. **Answer open problem #1.** Everything else is contingent on it.
-2. **Review E0** per §11.3 — especially `docs/AUDIT-E0.md` assumption A1. Do not
-   start E1 until the gate is reviewed (§Appendix C.6).
-3. Once reviewed, **E1** is implementable here (needs `shapely`, which pip can
-   install). **E4** is also pure Python and unblocked if given synthetic geometry.
-4. Decide how to handle the blocked items: either provision ns-3/PECEE/LKH, or
-   rescope the paper to what can be measured without them and say so.
+1. Let the B4 and A6 sweeps finish, then `analyse_cluster_radius.py` and
+   `make_report.py cluster-radius`. The analysis **refuses** input where any
+   configuration is short of 120 seeds, so a partial re-run cannot be mistaken for
+   a complete one.
+2. Review the probe per §11.3, starting with `docs/AUDIT-cluster-radius.md` §3
+   (assumptions) and §5 (things I am unsure about).
+3. Settle open problems 1, 4 and 5 — all three are questions for the group, not
+   measurements.
 
 ---
 
-## 5. How to reproduce everything in this file
+## 6. How to reproduce
 
 ```bash
-python3.10 -m pytest tests/ -q          # 108 tests
-python3.10 tools/run_e0.py              # ~19 s -> results/E0/
-python3.10 tools/make_report.py all     # -> report/E0.html, report/index.html
-python3.10 tools/assert_one_build.py results/E0/kstar.csv results/E0/alpha_sweep.csv
+python3.10 -m pytest tests/ -q                 # 292 tests
+python3.10 tools/campaign_stats.py --selftest
+python3.10 tools/run_e0.py && python3.10 tools/make_report.py E0
+
+# probe (needs ns-3.46 at ~/ns3-dev and LKH on PATH)
+cp ns3/cell-spread.cc ~/ns3-dev/scratch/ && (cd ~/ns3-dev && ./ns3 build cell-spread)
+python3.10 tools/run_b4.py --workers 3         # ~5 CPU-hours, 5400 runs
+python3.10 tools/run_a6.py --arms bhh,dubins --workers 4
+python3.10 tools/analyse_cluster_radius.py
+python3.10 tools/make_report.py all
 ```
 
-`results/E0/sweep.csv` (73 MB) is gitignored and regenerated by `run_e0.py`;
-every summary table it feeds is committed.
+Raw run directories and the 73 MB E0 `sweep.csv` are gitignored; every summary
+table a report plots is committed.
 
 ---
 
-## 6. Deviations from the brief, in one place
+## 7. Deviations from the briefs, in one place
 
-| § | brief says | actual | why |
+| source | says | actual | why |
 |---|---|---|---|
-| 5 | standalone repo, not inside `wsn-uav` | self-contained subtree inside `wsn-uav` | push scope; extracts cleanly, see open problem #6 |
-| 4 | ns-3 and PECEE available | absent, LKH too | environment; recorded in `env.txt` |
-| 6.2 | `metrics.csv` per run | E0 emits `sweep.csv`/`kstar.csv` | E0 has no simulation runs; §6.2 schema untouched, awaiting E1 |
-| A.4 | N ≥ 120 seeds | E0 is deterministic | nothing is sampled; applies from E1 |
+| AGENT-BRIEF §5 | standalone repo | subtree inside `wsn-uav` | push scope; extracts cleanly |
+| AGENT-BRIEF §4 | ns-3 and PECEE available | ns-3 built from scratch here; PECEE still absent | environment |
+| probe §3 | 7×3×3×2 = 126 configurations | **45** | ≈20 CPU-hours otherwise. **N = 120 seeds per configuration was never cut — only the factorial.** |
+| probe §5 | Dubins tours at ≥4 R values | 5 (60, 94, 150, 250, 400 m) | 60 answers the kinematic-bound question, 400 reaches the top of the range |
+| probe §2 | full `git clone` | shallow clone at tag `ns-3.46` | same tree and SHA, far less disk |
+| probe preamble | notation fixed by `KY-HIEU-vi.md` | file absent; prompt's symbols used verbatim | see open problem 1 |
 
-Fuller list with justifications: `docs/AUDIT-E0.md` §2.
+Fuller lists with justification: `docs/AUDIT-E0.md` §2,
+`docs/AUDIT-cluster-radius.md` §4.

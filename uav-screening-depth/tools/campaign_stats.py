@@ -168,6 +168,48 @@ def loglog_slope(xs: list[float], ys: list[float]) -> tuple[float, float, float]
     return b, a, r2
 
 
+def ols_linear(xs: list[float], ys: list[float]) -> tuple[float, float, float]:
+    """OLS fit y = a + b x. Returns (intercept a, slope b, R^2)."""
+    n = len(xs)
+    if n < 2:
+        return (float("nan"),) * 3
+    mx, my = sum(xs) / n, sum(ys) / n
+    sxx = sum((x - mx) ** 2 for x in xs)
+    if sxx == 0:
+        return (float("nan"),) * 3
+    b = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
+    a = my - b * mx
+    sst = sum((y - my) ** 2 for y in ys)
+    ssr = sum((y - (a + b * x)) ** 2 for x, y in zip(xs, ys))
+    return a, b, (1.0 - ssr / sst if sst > 0 else float("nan"))
+
+
+def bootstrap_linear_ci(xs: list[float], ys: list[float], *, resamples: int = 2000,
+                        alpha: float = 0.05, seed: int = 20260912
+                        ) -> tuple[CI, CI, float]:
+    """CIs on the intercept and slope of y = a + b x, by resampling pairs.
+
+    Used to separate the fixed protocol startup latency (a) from the marginal
+    per-hop cost (b) in T_spread = a + b * h_max. The ratio T_spread/h_max
+    conflates the two and inflates as h_max -> 0.
+    """
+    pts = list(zip(xs, ys))
+    a0, b0, r2 = ols_linear(xs, ys)
+    if len(pts) < 3:
+        return CI(a0, float("nan"), float("nan")), CI(b0, float("nan"), float("nan")), r2
+    rng = random.Random(seed)
+    A, B = [], []
+    for _ in range(resamples):
+        s = [pts[rng.randrange(len(pts))] for _ in range(len(pts))]
+        a, b, _ = ols_linear([q[0] for q in s], [q[1] for q in s])
+        if not (math.isnan(a) or math.isnan(b)):
+            A.append(a); B.append(b)
+    A.sort(); B.sort()
+    lo_i = int(math.floor(alpha / 2 * len(A)))
+    hi_i = min(len(A) - 1, int(math.ceil((1 - alpha / 2) * len(A))) - 1)
+    return (CI(a0, A[lo_i], A[hi_i]), CI(b0, B[lo_i], B[hi_i]), r2)
+
+
 def bootstrap_slope_ci(xs: list[float], ys: list[float], *,
                        resamples: int = 2000, alpha: float = 0.05,
                        seed: int = 20260912) -> CI:
@@ -254,6 +296,19 @@ def _selftest() -> int:
     # a flat relationship must give exponent 0
     b0 = loglog_slope([1, 2, 4, 8], [5, 5, 5, 5])[0]
     check("slope flat", abs(b0) < 1e-12, f"{b0}")
+    # linear fit on an exact line y = 4 + 3x
+    a, b, r2 = ols_linear([1.0, 2.0, 3.0, 4.0], [7.0, 10.0, 13.0, 16.0])
+    check("linear exact a", abs(a - 4.0) < 1e-9, f"{a}")
+    check("linear exact b", abs(b - 3.0) < 1e-9, f"{b}")
+    check("linear exact r2", abs(r2 - 1.0) < 1e-12, f"{r2}")
+    ca, cb, _ = bootstrap_linear_ci([1.0, 2.0, 3.0, 4.0, 5.0],
+                                    [7.0, 10.0, 13.0, 16.0, 19.0], resamples=300)
+    check("linear CI degenerate", abs(cb.point - 3.0) < 1e-9 and cb.lo <= 3.0 <= cb.hi,
+          str(cb))
+    # a flat line must give slope 0 and intercept = the level
+    a0, b0, _ = ols_linear([1.0, 2.0, 3.0], [5.0, 5.0, 5.0])
+    check("linear flat", abs(b0) < 1e-12 and abs(a0 - 5.0) < 1e-12, f"{a0},{b0}")
+
     # slope CI must bracket the truth on a noisy power law
     rng = random.Random(1)
     xs2 = [float(x) for x in range(2, 40)]

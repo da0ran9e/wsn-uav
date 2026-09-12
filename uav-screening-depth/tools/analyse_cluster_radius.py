@@ -166,6 +166,28 @@ def main() -> int:
     fit("T_hop_vs_advint_R150",
         pick(arm="advint", R_m=150.0) + pick(arm="main", R_m=150.0, k=8),
         "adv_interval_s", "T_hop_med", "protocol sensitivity, not a channel property")
+    # --- separate the fixed startup latency from the marginal per-hop cost ---
+    # T_spread = a + b * h_max. The ratio T_spread/h_max conflates the two and
+    # blows up as h_max -> 0, which is the whole reason R=60 (h_max = 0.2) had to
+    # be excluded from the exponent fits. b is the quantity the closed form for R*
+    # actually wants.
+    hop_fit = {}
+    for k in cfg["sweep"]["k_values"]:
+        rs = [r for r in pick(arm="main", k=k)
+              if r["T_hop_med"] != "" and r["R_m"] != FIT_EXCLUDE_R]
+        xs = [r["h_max"] for r in rs]
+        ys = [float(r["T_spread_med"]) for r in rs]
+        if len(xs) >= 3:
+            ca, cb, r2 = S.bootstrap_linear_ci(xs, ys)
+            hop_fit[k] = {
+                "startup_latency_s": round(ca.point, 4),
+                "startup_ci": [round(ca.lo, 4), round(ca.hi, 4)],
+                "marginal_per_hop_s": round(cb.point, 4),
+                "marginal_per_hop_ci": [round(cb.lo, 4), round(cb.hi, 4)],
+                "r2": round(r2, 4), "n_points": len(xs),
+                "note": "T_spread = a + b*h_max over R in 94..300 (R=60 excluded)",
+            }
+    out["hop_cost_fit"] = hop_fit
     out["fits"] = fits
 
     # ------------------------------------------------- B5
@@ -346,6 +368,12 @@ def main() -> int:
         th = float(ref[0]["T_hop_med"]) if ref and ref[0]["T_hop_med"] != "" else None
         closed = (math.sqrt(r_tx * t["beta_bhh"] * g["area_m2"]
                             / (sc_h * v["v_mps"] * th)) if th else None)
+        # Same closed form fed the MARGINAL per-hop cost b instead of the ratio
+        # T_spread/h_max, which is the quantity the derivation actually assumes.
+        bmarg = (hop_fit.get(k) or {}).get("marginal_per_hop_s")
+        closed_marg = (math.sqrt(r_tx * t["beta_bhh"] * g["area_m2"]
+                                 / (sc_h * v["v_mps"] * bmarg))
+                       if bmarg and bmarg > 0 else None)
         target[k] = {
             "t1_source": t1_src,
             "R_star_grid_m": Rs[i],
@@ -358,6 +386,9 @@ def main() -> int:
             "at_lower_boundary": Rs[i] <= g["operating_range_m"][0],
             "T_hop_used_s": th,
             "R_star_closed_form_m": round(closed, 1) if closed else None,
+            "marginal_per_hop_s": bmarg,
+            "R_star_closed_form_marginal_m": (round(closed_marg, 1)
+                                              if closed_marg else None),
             "grid_max_R_m": max(Rs),
             "note": "grid search is capped by the R grid; a closed-form R* beyond "
                     "max(R) means the measured curve is still falling at the edge",

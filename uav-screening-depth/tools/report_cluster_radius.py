@@ -191,6 +191,53 @@ def build(RES: Path, header, table, src, page, read_csv):
                      f'{r["censored"]}/{r["n_seeds"]}'] for r in main8]))
     o.append(src("cluster-radius/b4_by_config.csv"))
 
+    # --- startup vs marginal per-hop cost -----------------------------------
+    hf = sm.get("hop_cost_fit") or {}
+    hf8 = hf.get("8") or hf.get(8) or {}
+    if hf8:
+        o.append("<h3>Separating protocol startup from the marginal per-hop cost</h3>")
+        o.append(
+            f'<p>Dividing T_spread by h_max conflates two different things: a fixed '
+            f'startup latency that does not depend on how far the data has to travel, '
+            f'and the marginal cost of each additional hop. Fitting '
+            f'<code>T_spread = a + b&middot;h_max</code> over R = 94&ndash;300 m '
+            f'separates them:</p>')
+        o.append(table(["k", "startup a (s) [95% CI]",
+                        "marginal per hop b (s) [95% CI]", "R&sup2;"],
+                       [[k, f'{_f(v["startup_latency_s"])} '
+                         f'[{_f(v["startup_ci"][0])}, {_f(v["startup_ci"][1])}]',
+                         f'<strong>{_f(v["marginal_per_hop_s"])}</strong> '
+                         f'[{_f(v["marginal_per_hop_ci"][0])}, '
+                         f'{_f(v["marginal_per_hop_ci"][1])}]', _f(v["r2"], 3)]
+                        for k, v in sorted(hf.items(), key=lambda kv: int(kv[0]))]))
+        hser2 = []
+        for k in (4, 8, 16):
+            rs = [r for r in rows("main", k=float(k))
+                  if r["T_hop_med"] and float(r["R_m"]) >= 94]
+            if rs:
+                hser2.append({"name": f"k = {k}",
+                              "x": [float(r["h_max"]) for r in rs],
+                              "y": [float(r["T_spread_med"]) for r in rs],
+                              "lo": [float(r["T_spread_lo"]) for r in rs],
+                              "hi": [float(r["T_spread_hi"]) for r in rs]})
+        o.append(S.line_chart(hser2, x_label="h_max(R) = (R &minus; r_bc)/r_tx",
+                              y_label="T_spread (s)", y_min=0,
+                              title="T_spread is linear in the hop count",
+                              caption="Near-perfect straight lines, so the hop model "
+                                      "itself is sound -- what the ratio T_spread/h_max "
+                                      "hides is the non-zero intercept."))
+        o.append(src("cluster-radius/b4_by_config.csv"))
+        o.append(
+            f'<p><strong>This is the number the closed form for R* actually wants.</strong> '
+            f'The derivation assumes a constant per-hop cost, which is b = '
+            f'{_f(hf8["marginal_per_hop_s"])} s at k = 8, not the '
+            f'T_spread/h_max ratio. A startup term of '
+            f'{_f(hf8["startup_latency_s"])} s explains most of the apparent '
+            f'decline of T_hop with R: as h_max grows the fixed cost is amortised '
+            f'over more hops. So "T_hop falls with R" and "the per-hop cost is '
+            f'constant" are the same observation, and the closed form is closer to '
+            f'right than the raw ratio suggested &mdash; it just needs b.</p>')
+
     o.append("<h3>The k/&lambda; floor does not bind &mdash; a refuted prediction</h3>")
     k16 = [r for r in rows("main", k=16.0) if r["T_hop_med"] and float(r["R_m"]) >= 150]
     if k16:
@@ -461,13 +508,16 @@ def build(RES: Path, header, table, src, page, read_csv):
                      f'{_f(r["T_total_med_s"])} [{_f(r["T_total_lo_s"])}, '
                      f'{_f(r["T_total_hi_s"])}]'] for r in rs8]))
     o.append(table(["k", "R* grid search", "R* 95% CI", "interior to 94&ndash;400 m?",
-                    "T_hop used (s)", "R* closed form"],
+                    "T_hop ratio (s)", "R* closed form (ratio)",
+                    "marginal b (s)", "R* closed form (marginal b)"],
                    [[k, f'{_f(v["R_star_grid_m"], 0)} m',
                      f'[{_f(v["R_star_ci_m"][0], 0)}, {_f(v["R_star_ci_m"][1], 0)}] m',
                      ("<strong>yes</strong>" if v["interior_to_operating_range"]
                       else "no &mdash; at the upper edge" if v["at_upper_boundary"]
                       else "no"),
-                     _f(v["T_hop_used_s"]), f'{_f(v["R_star_closed_form_m"], 0)} m']
+                     _f(v["T_hop_used_s"]), f'{_f(v["R_star_closed_form_m"], 0)} m',
+                     _f(v.get("marginal_per_hop_s")),
+                     f'{_f(v.get("R_star_closed_form_marginal_m"), 0)} m']
                     for k, v in sorted(rstar.items(), key=lambda kv: int(kv[0]))]))
     rsd = sm.get("R_star_with_realised_dubins_T1", {})
     k8d = rsd.get("8") or rsd.get(8) or {}

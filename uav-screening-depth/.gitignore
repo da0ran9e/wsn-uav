@@ -13,6 +13,8 @@ results/**/sweep.csv
 # target while a sweep is in flight.
 results/**/shard-*.csv
 results/**/curve-*.csv
+# in-flight writes, promoted by rename when the stage completes
+results/**/*.partial.csv
 __pycache__/
 *.pyc
 .pytest_cache/

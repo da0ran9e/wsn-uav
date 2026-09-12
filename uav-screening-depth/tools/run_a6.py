@@ -103,11 +103,13 @@ def main() -> int:
         print(f"A6 bhh: {len(work)} scenarios", flush=True)
         with ProcessPoolExecutor(max_workers=a.workers) as ex:
             rows = list(ex.map(_bhh_one, work, chunksize=32))
-        with open(OUT / "t1_bhh.csv", "w", newline="") as fh:
+        partial = OUT / "t1_bhh.partial.csv"
+        with open(partial, "w", newline="") as fh:
             w = csv.DictWriter(fh, COLS)
             w.writeheader()
             for r in rows:
                 w.writerow({**r, **prov})
+        partial.replace(OUT / "t1_bhh.csv")
         print(f"  -> t1_bhh.csv ({len(rows)} rows, {time.time()-t0:.0f}s)", flush=True)
 
     if "dubins" in arms:
@@ -122,7 +124,9 @@ def main() -> int:
         # largest C, and buffering them all until the end meant one interrupted
         # run threw away every completed tour.
         rows = []
-        with open(OUT / "t1_dubins.csv", "w", newline="") as fh:
+        final = OUT / "t1_dubins.csv"
+        partial = OUT / "t1_dubins.partial.csv"
+        with open(partial, "w", newline="") as fh:
             w = csv.DictWriter(fh, COLS)
             w.writeheader()
             with ProcessPoolExecutor(max_workers=a.workers) as ex:
@@ -133,6 +137,7 @@ def main() -> int:
                     if i % 60 == 0:
                         print(f"    {i}/{len(work)} tours, {time.time()-t1:.0f}s",
                               flush=True)
+        partial.replace(final)   # atomic promote; never a half-written t1_dubins.csv
         worst = max(float(r["max_kappa_rho"]) for r in rows)
         print(f"  -> t1_dubins.csv ({len(rows)} rows, {time.time()-t1:.0f}s); "
               f"worst |kappa|*rho over every realised tour = {worst:.9f}", flush=True)

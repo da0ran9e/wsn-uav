@@ -86,3 +86,12 @@ build_lib_example(
     ${libuav-sar}
     ${libcore}
 )
+
+# R_c scaling study: flight time past the heads vs intra-cell flood time.
+build_lib_example(
+  NAME uav-sar-p1-scaling-test
+  SOURCE_FILES p1-scaling-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+)

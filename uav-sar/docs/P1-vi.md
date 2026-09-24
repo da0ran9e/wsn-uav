@@ -137,6 +137,74 @@ Toàn bộ code của các bản trước còn trong git tại thẻ
 `p1-full-pipeline-before-rebuild`.
 
 
+## 6b. Hai thí nghiệm về `R_c` — bay qua CL vs lan gói trong ô
+
+Hai tác động ngược chiều của `R_c`, đo trên **6 hạt giống**, vùng 780×484 m,
+1600 nút @20 m, tầm mặt đất 40 m, ρ=63.7 m.
+
+```
+  R_c |     bay qua moi CL (s)    |   lan 1 goi trong o (s)   | ty le
+      |   min    TB    max        |   min    TB    max        | bay/lan
+   40 |   456   456   456         |   0.6   0.6   0.7         |   702x
+   80 |   245   246   247         |   3.1   3.2   3.4         |    76x
+  140 |   152   155   159         |   6.5   6.7   7.0         |    23x
+  200 |   186   189   191         |   6.3   7.2   7.7         |    26x
+  250 |   123   126   130         |   9.2  10.3  11.4         |    12x
+  280 |   139   141   146         |   8.7  10.2  13.4         |    14x
+
+tuong quan: bay vs R_c = -0.756   lan vs R_c = +0.933   bay vs lan = -0.887
+```
+
+**Ba kết luận.**
+
+**(1) Hai đại lượng nghịch chiều đúng như spec nói** — `bay` giảm (`−0.756`),
+`lan` tăng (`+0.933`), tương quan giữa chúng `−0.887`. Nguồn rõ ràng: số hàng
+`9 → 2` kéo thời gian bay xuống; độ sâu cây `1.8 → 8.7` và số nút phải phát
+`3.3 → 154` kéo thời gian lan lên.
+
+**(2) Nhưng chúng KHÔNG cùng bậc độ lớn — lan gói tin không bao giờ là nút thắt.**
+Tỉ lệ đi từ **702×** xuống **12×**, và **không bao giờ chạm 1**. Ở mọi `R_c`
+trong dải, thời gian bay lớn hơn thời gian lan ít nhất **một bậc**. Nghĩa là
+`T_local` **không phải** một trong các tác động đáng kể lên `R_c` — đúng như
+nghi vấn ❓ mà Bản 2 §0.4 tự đặt ra sau khi chốt N3.
+
+**(3) Khe MAC quyết định tất cả, kích thước gói không quyết định gì.**
+100 B ở 250 kbps là **3.2 ms** airtime, so với khe **200 ms** đã đo — chênh
+**62×**. Mọi kết luận về `R_c` mà phụ thuộc độ dài gói là kết luận về sai biến.
+
+### N3 đáng giá bao nhiêu — bằng giây
+
+Bản 1 để cụm trưởng **phát tán tập tham chiếu** trong ô (`T_local`). N3 bỏ điều
+đó. Dùng đúng mô hình lan trên, một tập tham chiếu là `87 743 B = 878 gói`:
+
+| `R_c` | bay cả vùng | lan **1 gói** | lan **cả tập tham chiếu** |
+|---:|---:|---:|---:|
+| 40 m | 456 s | 0.7 s | 576 s (**1×** chuyến bay) |
+| 80 m | 246 s | 3.3 s | 2 895 s (**12×**) |
+| 160 m | 164 s | 7.1 s | 6 248 s (**38×**) |
+| 280 m | 139 s | 9.7 s | 8 546 s (**61×**) |
+
+**Phát tán tham chiếu trong một ô tốn gấp hàng chục lần bay hết cả vùng.**
+N3 không phải một phép đơn giản hoá — nó là **phiên bản duy nhất khép được**.
+
+### Mô hình lan, và giới hạn của nó
+
+Ba mô hình, vì sự thật bị kẹp chứ không biết chính xác:
+
+| | |
+|---|---|
+| `depth` | tái dùng không gian hoàn hảo — cùng độ sâu phát cùng lúc. **Cận dưới.** |
+| `forwarders` | không tái dùng — mỗi lần phát một khe. **Cận trên.** |
+| `slots` | **tô màu khe tham lam**: nút phát ở khe sớm nhất sau cha nó mà không có ai trong `2×` tầm mặt đất đang phát. **Số nên trích.** |
+
+Tái dùng không gian mua được nhiều ở ô lớn: `R_c=250` có **158 nút phải phát**
+nén vào **53 khe** — gấp **3.0×**.
+
+⚠️ Khe 200 ms là số đo cho **`Send()` liên tiếp từ MỘT nút**. Ở đây tôi tính
+một khe đầy cho **mỗi lần phát của mỗi nút** — bi quan — nhưng lại cho nhiều nút
+phát **cùng khe** khi đủ xa — lạc quan. Hai cái bù nhau, và `TODO(param)`: cần
+đo tranh chấp CSMA giữa các nút khác nhau để chốt.
+
 ## 7. Sửa mệnh đề trung tâm — VẪN CHƯA VÀO SPEC
 
 `R_c ≥ 4ρ/3` suy từ `h = 2ρ`, tức điểm **nửa đường tròn hoàn hảo** — cực tiểu

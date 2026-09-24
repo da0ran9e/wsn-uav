@@ -132,6 +132,32 @@ inline constexpr double   kGmaxOffsetM = 400.0;   // [design] G table cutoff
 inline constexpr uint32_t kGTableBins  = 81;
 
 // ===========================================================================
+// Intra-cell flooding -- for the R_c scaling study, not for the planner
+// ===========================================================================
+//
+// A packet leaving the head has to reach every member of its cell. How long
+// that takes is the other half of the R_c trade-off: bigger cells mean fewer
+// cells and a shorter flight, but a deeper tree and a longer flood.
+//
+// The numbers here are MEASURED on this project's own radio, not assumed:
+//   * app payload ceiling is 100 B, not the 127 B PSDU -- 125 B made Send()
+//     fail, 100 B did not.
+//   * back-to-back Send() calls need >= 200 ms of stagger or the MAC queue
+//     overflows and most packets are lost. 50 ms was verified insufficient.
+//
+// Note what that implies before reading any result: 100 B at 250 kbps is 3.2 ms
+// of airtime against a 200 ms slot, so AIRTIME IS IRRELEVANT HERE. The flood is
+// paced entirely by the MAC, and any conclusion about cell size that depends on
+// packet length is a conclusion about the wrong variable.
+inline constexpr uint32_t kFloodPacketBytes = 100;      // [measured ceiling]
+inline constexpr double   kPhyBps           = 250000.0; // 802.15.4 O-QPSK
+inline constexpr double   kMacSlotS         = 0.200;    // [measured]
+// Two nodes closer than this cannot transmit in the same slot. A node's own
+// range is kGroundRangeM; interference reaches further than reception does.
+// TODO(param): measured capture ratio would pin this down.
+inline constexpr double   kReuseRangeM      = 2.0 * kGroundRangeM;
+
+// ===========================================================================
 // The design rule
 // ===========================================================================
 // h = 1.5 R_c >= 2 rho  =>  R_c >= 4 rho / 3  =>  adjacent-row scan optimal.

@@ -205,6 +205,89 @@ một khe đầy cho **mỗi lần phát của mỗi nút** — bi quan — như
 phát **cùng khe** khi đủ xa — lạc quan. Hai cái bù nhau, và `TODO(param)`: cần
 đo tranh chấp CSMA giữa các nút khác nhau để chốt.
 
+## 6c. Nhiều anten trên UAV có đổi được gì không? — **KHÔNG**
+
+Câu hỏi: UAV mang nhiều anten, phát **các gói khác nhau** tới **nhiều nút cùng
+lúc**, mỗi nút chỉ nghe được từ một anten. Điều đó có dịch chuyển hai kết quả ở
+§6b không?
+
+Trả lời phải **ĐO**, không lý luận, vì nó quy về hai phép đếm.
+
+`examples/p1-antenna-test.cc`, 6 hạt giống, lưới 1600 nút, quét `R_c` 40→280 m.
+Đường bay lấy đúng PA1: dọc luống cộng lượn ra CH, dấu của độ lệch theo phía CH
+thật. Lấy mẫu **mỗi 2 m**.
+
+### Điều kiện để anten thêm có ích
+
+Phải đồng thời: **(a)** có hơn một nút dưới máy bay cùng lúc, **và (b)** các nút
+đó cần **nội dung khác nhau**. Dưới **I4** (quay vòng đều, không báo nhận) (b)
+**sai theo thiết kế** — mọi CH nhận cùng một luồng tham chiếu, và chính sự đồng
+nhất đó mới làm phép quy xác suất→liều hợp lệ. Vậy **một** anten vô hướng đã
+phục vụ **mọi** nút trong `p(d)` cùng lúc rồi.
+
+### A. Một lần quảng bá phục vụ bao nhiêu CH
+
+| `R_c` (m) | số CH | trong tầm cùng lúc (trải 6 hạt) | nhiều nhất | % thời gian có ≥2 |
+|---|---|---|---|---|
+| 40 | 111 | **21.4** [21.1, 21.6] | 32 | 100 % |
+| 94 (điểm thiết kế) | — | **≈4** | 8 | ~95 % |
+| 140 | 13 | **1.92** [1.76, 2.19] | 4 | 60 % |
+| 200 | 10 | **1.35** [1.28, 1.39] | 3 | 35 % |
+| 280 | 6 | **0.76** [0.75, 0.77] | 2 | 15 % |
+
+Ở điểm thiết kế, **một** búp sóng đã phủ ~4 CH cùng lúc. Anten thứ hai phải vượt
+con số đó, mà nó không thể: nội dung giống hệt nhau.
+
+### B. Một lượt bay gieo sẵn bao nhiêu
+
+Phải tách hai khái niệm, đừng lẫn:
+
+| | nghĩa | dùng cho |
+|---|---|---|
+| `pass` | nằm trong tầm ở **một thời điểm nào đó** của lượt bay | **một luồng** gói — đúng cái T0 làm |
+| `snap` | nằm trong tầm ở **đúng một thời điểm** | **một gói** duy nhất |
+
+Với `R_c ≤ 180 m`, **`snap` = 100 %**: một gói duy nhất phủ **trọn ô**. Lý do là
+tầm không–đất `d50 = 190 m` lớn hơn bán kính ô, nên **vết phủ của UAV nuốt cả ô**.
+
+| `R_c` (m) | `snap` gieo | khe còn lại từ tập `snap` | khe nếu lan từ **một CH** |
+|---|---|---|---|
+| 94 | 100 % | **0** | ~20 |
+| 180 | 99 % | 0.67 | 32.9 |
+| 240 | 92 % | 5.81 | 37.9 |
+| 280 | 85 % | 15.5 | 51.2 |
+
+**Quảng bá đã xoá gần hết phần việc của mạng mặt đất — miễn phí, không cần anten
+nào thêm.** Gieo nhiều gốc không đòi nhiều anten: **một** lần quảng bá đã gieo
+mọi nút trong tầm.
+
+### Kết luận
+
+| | nhiều anten đổi được gì |
+|---|---|
+| §6b thí nghiệm 1 (bay qua CL) | **Không.** Thuần động học: hàng × chiều dài + rẽ + lượn. Vô tuyến không xuất hiện trong bất kỳ số hạng nào. |
+| §6b thí nghiệm 2 (lan trong ô) | **Không.** Nguồn là CH, lan trên mạng **mặt đất**; UAV không có mặt. |
+| T0 (giao liều UAV→CH) | **Không** — và đây mới là chỗ tưởng có. Quảng bá đã phục vụ mọi CH trong tầm **cùng lúc**; thêm búp sóng chỉ có ích nếu các CH cần nội dung khác nhau, điều I4 cố tình loại bỏ. |
+
+Nói chặt: với **K** CH trong tầm và nội dung **như nhau**, quảng bá tốn **1** lần
+truyền; unicast với **S** anten tốn **⌈K/S⌉**. Quảng bá **luôn** ≥ tốt bằng, và
+tốt hơn hẳn khi `K > S`. Đo được `K ≈ 4` ở điểm thiết kế.
+
+### ⚠️ Kết luận này treo trên hai tham số chưa đo
+
+1. **`p(d)` với `d50 = 190 m` vẫn là `TODO(param)`.** Toàn bộ §6c đứng trên nó.
+2. **Độ cao bay `z` chưa phải tham số của p1**, nên `p(d)` đang tính trên khoảng
+   cách **ngang**. Độ nhạy, tại `R_c = 94 m`:
+
+   | `z` (m) | 0 | 50 | 100 | 125 | 150 | 175 | 200 |
+   |---|---|---|---|---|---|---|---|
+   | CH trong tầm | 3.96 | 3.70 | 2.81 | 2.12 | **1.26** | 0.73 | **0.00** |
+
+   Trên **~165 m** con số tụt dưới 1 và lập luận **đổ**. Dưới đó nó vững. Phải
+   chốt `z` và đo `p(d)` trước khi trích §6c vào bài.
+
+Hình: `docs/visualize/result/p1-antenna.png`.
+
 ## 7. Sửa mệnh đề trung tâm — VẪN CHƯA VÀO SPEC
 
 `R_c ≥ 4ρ/3` suy từ `h = 2ρ`, tức điểm **nửa đường tròn hoàn hảo** — cực tiểu

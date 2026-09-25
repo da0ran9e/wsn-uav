@@ -95,3 +95,12 @@ build_lib_example(
     ${libuav-sar}
     ${libcore}
 )
+
+# Does a multi-antenna UAV move either scaling result?
+build_lib_example(
+  NAME uav-sar-p1-antenna-test
+  SOURCE_FILES p1-antenna-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+)

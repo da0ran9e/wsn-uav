@@ -138,6 +138,7 @@ struct RunConfig {
     uint32_t passes = 200;
     uint32_t seed = 1;
     std::string out;
+    std::string dump;   // per-packet bitmap, every pass and node
 };
 
 Ptr<SpectrumChannel> BuildChannel(const RunConfig& c, bool withFading) {
@@ -402,6 +403,10 @@ int Fly(const RunConfig& c) {
 
     FILE* f = c.out.empty() ? nullptr : std::fopen(c.out.c_str(), "w");
     if (f) std::fprintf(f, "alpha,fading,pass,node,lateralM,received,longest,runStart,runEnd\n");
+    // One row per pass and node: sequence numbers 0..kPackets-1 as bits, MSB first,
+    // packed into hex. 1 = received intact, 0 = lost.
+    FILE* fd = c.dump.empty() ? nullptr : std::fopen(c.dump.c_str(), "w");
+    if (fd) std::fprintf(fd, "pass,node,packets,bitsHex\n");
 
     std::printf("alpha %.2f  fading %s  TX %+.0f dBm  sensitivity %.0f dBm  %u passes  "
                 "%u packets each\n", c.alpha, c.fading.c_str(), c.txDbm, c.sensDbm,
@@ -421,6 +426,16 @@ int Fly(const RunConfig& c) {
             const NodeResult r = Summarise(w.got[k]);
             CHECK(r.longest <= r.received);
             all[k].push_back(r);
+            if (fd) {
+                std::fprintf(fd, "%u,%u,%u,", p, k + 1, kPackets);
+                for (uint32_t s = 0; s < kPackets; s += 4) {
+                    uint32_t nib = 0;
+                    for (uint32_t b = 0; b < 4; ++b)
+                        nib = nib << 1 | (s + b < kPackets ? w.got[k][s + b] : 0);
+                    std::fputc("0123456789abcdef"[nib], fd);
+                }
+                std::fputc('\n', fd);
+            }
             if (f)
                 std::fprintf(f, "%.2f,%s,%u,%u,%.0f,%u,%u,%d,%d\n", c.alpha, c.fading.c_str(),
                              p, k + 1, std::fabs(pos[k].x), r.received, r.longest,
@@ -428,6 +443,7 @@ int Fly(const RunConfig& c) {
         }
     }
     if (f) std::fclose(f);
+    if (fd) std::fclose(fd);
 
     // The fade the channel applied must be the fade that was asked for.
     CHECK(fs.n == (uint64_t)kNodes * kPackets * c.passes);
@@ -493,6 +509,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("passes", "independent passes", c.passes);
     cmd.AddValue("seed", "RNG seed; pass p uses run p", c.seed);
     cmd.AddValue("out", "CSV output", c.out);
+    cmd.AddValue("dump", "per-packet bitmap CSV (pass mode)", c.dump);
     cmd.Parse(argc, argv);
     CHECK(c.mode == "calib" || c.mode == "pass");
     CHECK(c.fading == "rician" || c.fading == "nakagami" || c.fading == "none");

@@ -48,6 +48,20 @@ Một gói = 10 ms = 0.5 m đường bay. Node 4 nhận liền ~850 gói ≈ **8
 
 Node giữa gần như không nhạy α (−15 % từ 2.6 → 3.35); node xa nhất nhạy **8×**.
 
+### Minh hoạ một lượt bay — từng gói một
+
+![dải gói node 4](visualize/result/a2g-strip-node4.png)
+
+Dữ liệu **trực tiếp** từ ns-3 (`--dump` ghi bitmap nhận/mất của từng gói). Lượt
+được chọn **theo quy tắc**, không chọn tay: lượt có chuỗi dài nhất của node 4 gần
+trung vị nhất — lượt 57, chuỗi 841 gói (trung vị 842.5). Ba khung phóng cũng chọn
+theo quy tắc: ① cửa sổ 100 gói đầu tiên phía UAV tiến tới có tỉ lệ nhận 40–60 %,
+② quanh điểm bắt đầu và ③ quanh điểm kết thúc của chuỗi dài nhất.
+
+Điều hình cho thấy: chuỗi 841 gói **không** kết thúc vì UAV ra khỏi tầm — nó bị bẻ
+bởi **một gói lỗi lẻ** (3629, rồi 4471) do fade sâu khi UAV mới cách ~200 m, nơi
+tỉ lệ nhận vẫn 97–99 %. Đó chính là đuôi fade Rician ở mục 4.1.
+
 ## 4. Ba điều phát hiện khi cài
 
 ### 4.1 Nakagami m = 1.8 **không** tương đương Rician K = 2 cho chỉ số này
@@ -142,11 +156,12 @@ chuyển tiếp ~3 dB của đường PER, không phải lỗi.
 ```bash
 B=/home/user/ns3-dev/build/src/uav-sar/examples/ns3.46-uav-sar-a2g-run-test-optimized
 $B --mode=calib --out=calib.csv
-$B --alpha=3.0  --fading=rician   --passes=200 --out=r30.csv
+$B --alpha=3.0  --fading=rician   --passes=200 --out=r30.csv --dump=bits30.csv
 $B --alpha=2.6  --fading=rician   --passes=200 --out=r26.csv
 $B --alpha=3.35 --fading=rician   --passes=200 --out=r335.csv
 $B --alpha=3.0  --fading=nakagami --passes=200 --out=n30.csv
 python3 tools/a2g_run_report.py <thư mục csv> a2g-run.png
+python3 tools/a2g_strip_figure.py bits30.csv r30.csv 4 a2g-strip-node4.png
 ```
 
 Mỗi cấu hình 200 lượt chạy ~30 s. Dữ liệu và hình: `docs/visualize/result/a2g-run/`,

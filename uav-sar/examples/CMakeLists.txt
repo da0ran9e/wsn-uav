@@ -104,3 +104,16 @@ build_lib_example(
     ${libuav-sar}
     ${libcore}
 )
+
+# URBAN branch: longest unbroken packet run from a passing UAV, PHY-direct.
+build_lib_example(
+  NAME uav-sar-a2g-run-test
+  SOURCE_FILES a2g-run-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+    ${liblr-wpan}
+    ${libpropagation}
+    ${libspectrum}
+    ${libmobility}
+)

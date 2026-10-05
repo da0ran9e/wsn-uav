@@ -1,0 +1,20 @@
+ns-3, 127-byte frame, sensitivity -100 dBm: PER 50% at -101.00 dBm
+
+                                           0 m           300 m           600 m           900 m
+--- alpha 3.0: LONGEST RUN, mean ± sd
+  spec table (hard -100)                   823             208              40              11
+  analytic, hard -100                817 ± 228        203 ± 67          40 ± 9          10 ± 2
+  analytic, ns-3 PER curve           845 ± 222        244 ± 90         52 ± 12          14 ± 2
+  ns-3 simulation                    850 ± 226        245 ± 85         50 ± 11          14 ± 2
+  ns-3 curve, 4 fades/packet         548 ± 163        106 ± 34          19 ± 4           5 ± 1
+--- alpha 3.35: LONGEST RUN, mean ± sd
+  spec table (hard -100)                   740             151              20               4
+  analytic, hard -100                749 ± 204        143 ± 41          20 ± 5           4 ± 1
+  analytic, ns-3 PER curve           781 ± 191        169 ± 51          27 ± 7           5 ± 1
+  ns-3 simulation                    788 ± 198        174 ± 63          25 ± 5           5 ± 1
+  ns-3 curve, 4 fades/packet         517 ± 152         72 ± 20           9 ± 2           1 ± 0
+--- alpha 3.0, Nakagami m=1.8 (the spec's stand-in for Rician K=2)
+  ns-3 simulation                   1411 ± 206       587 ± 217         67 ± 18          14 ± 3
+  ratio to Rician                        1.66x           2.40x           1.33x           1.02x
+
+  docs/visualize/result/a2g-run.png

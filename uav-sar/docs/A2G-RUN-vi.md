@@ -138,6 +138,83 @@ quan giảm dần chứ không cắt phẳng ở 1.06 ms — nên giá trị th�
 
 Chỉ dùng cho nhánh đô thị. Không đưa sang kịch bản rừng.
 
+## 5b. Đổi độ cao bay — 50 → 300 m
+
+### Câu hỏi phải chốt trước: điểm gãy suy hao có đi theo độ cao không?
+
+Đặc tả neo đoạn suy hao tự do tại **d_ref = H = 100 m**. Khi đổi H có hai cách hiểu,
+và chúng cho **kết luận ngược nhau**:
+
+| | đoạn tự do kéo tới | lý lẽ |
+|---|---|---|
+| **(a) d_ref = H** — theo đúng công thức đặc tả | độ cao bay | node ngay dưới luôn thấy UAV, nên ít nhất tới H là không gian tự do |
+| **(b) d_ref = 100 m** — cố định, để đối chiếu | 100 m | 100 m là tính chất của kênh, không phải của hình học bay |
+
+Chạy cả hai (`--alt`, `--dref`). Mỗi điểm 200 lượt, α = 3.0, Rician K = 2. Mọi độ cao
+dùng **cùng seed** → mỗi gói gặp cùng một mức fade ở mọi độ cao (so sánh cặp): khác
+biệt giữa các độ cao là do hình học, không do may rủi.
+
+### (a) d_ref = H — theo đặc tả
+
+| H (m) | biên SNR ngay trên đầu | chuỗi dài nhất: lệch 0 m | 300 m | 600 m | 900 m |
+|---|---|---|---|---|---|
+| 50 | 36.0 dB | 810 | 151 | 25 | 6 |
+| 75 | 32.4 dB | 839 | 206 | 38 | 10 |
+| 100 | 30.0 dB | 850 | 245 | 50 | 14 |
+| **120** | 28.4 dB | **856** | 268 | 60 | 17 |
+| 150 | 26.4 dB | 817 | 292 | 73 | 23 |
+| 200 | 23.9 dB | 741 | 317 | 91 | 30 |
+| 300 | 20.4 dB | 580 | 315 | 114 | 43 |
+
+**Hai xu hướng ngược chiều:**
+
+- **Node xa được lợi đều khi bay cao** — node 1/7 tăng từ 6 lên 43 gói, vì đoạn suy
+  hao tự do dài ra theo H.
+- **Node 4 đạt đỉnh ở ~120 m rồi giảm.** Bay cao làm UAV xa node 4 hơn ở điểm gần
+  nhất, nên biên SNR ngay trên đầu tụt từ 36 xuống 20 dB. Chuỗi dài nhất do **fade
+  sâu** quyết định (mục 4.1), mà biên càng mỏng thì càng nhiều fade đủ sâu để làm
+  hỏng gói. Ngược lại, bay thấp (50 m) thì biên ngay trên đầu dày, nhưng vùng biên
+  dày lại hẹp, vì sau 50 m suy hao đã dốc theo α.
+
+Ở 300 m, node 4 nhận **nhiều gói hơn** (5610 so với 4002) nhưng chuỗi liền mạch lại
+**ngắn hơn** (580 so với 850): phủ rộng hơn nhưng lốm đốm hơn.
+
+### (b) d_ref = 100 m — đối chiếu
+
+| H (m) | lệch 0 m | 300 m | 600 m | 900 m |
+|---|---|---|---|---|
+| 50 | 963 | 266 | 52 | 14 |
+| 100 | 850 | 245 | 50 | 14 |
+| 200 | 510 | 184 | 45 | 13 |
+| 300 | 279 | 128 | 37 | 12 |
+
+Ở đây bay cao **chỉ** làm xa thêm: mọi node đều kém đi, và thấp nhất là tốt nhất.
+
+### ⚠️ Kết luận về độ cao do giả thiết quyết định, không do mô phỏng
+
+Với (a), độ cao tối ưu cho node ngay dưới là ~120 m và node xa thì "càng cao càng
+tốt". Với (b), "càng thấp càng tốt" cho mọi node. **Lợi ích của việc bay cao trong
+(a) đã được cài sẵn vào mô hình**, qua việc kéo dài đoạn suy hao tự do. Không mô
+hình nào trong hai cái đã được đo.
+
+Cách chốt đúng là một mô hình theo **góc ngẩng**: xác suất có tầm nhìn thẳng tăng
+khi góc ngẩng tăng (Al-Hourani 2014, có bộ tham số cho đô thị). Mô hình đó sẽ cho
+thấy độ cao giúp được bao nhiêu, thay vì giả định trước. Chưa cài — chờ anh quyết.
+Lưu ý thêm: α = 3.0 lấy từ phép đo ở độ cao thấp (Qiu 2017); ở 200–300 m, α thật
+nhiều khả năng nhỏ hơn.
+
+### Minh hoạ: node 4 ở mỗi độ cao
+
+![tổng hợp theo độ cao](visualize/result/a2g-alt.png)
+
+![dải gói node 4 theo độ cao](visualize/result/a2g-alt-strips-node4.png)
+
+Mỗi dải là một lượt bay, chọn theo cùng quy tắc trung vị như mục 3. Ở 75 m và 100 m,
+quy tắc chọn ra cùng lượt 57, và chuỗi bị bẻ ở đúng cùng hai gói (3629, 4471). Đó là
+hệ quả của seed chung, đã kiểm tra: hai bitmap khác nhau ở 393 gói, nhưng quanh
+điểm ngay trên đầu node 4, cả 4 gói mất ở 100 m đều cũng mất ở 75 m — các fade sâu
+dùng chung.
+
 ## 6. Kiểm chứng tự động
 
 Mỗi lần chạy kiểm (CHECK, không phải `assert` — ns-3 build NDEBUG):
@@ -162,6 +239,11 @@ $B --alpha=3.35 --fading=rician   --passes=200 --out=r335.csv
 $B --alpha=3.0  --fading=nakagami --passes=200 --out=n30.csv
 python3 tools/a2g_run_report.py <thư mục csv> a2g-run.png
 python3 tools/a2g_strip_figure.py bits30.csv r30.csv 4 a2g-strip-node4.png
+
+# độ cao: với mỗi H trong 50 75 100 120 150 200 300
+$B --alt=$H            --passes=200 --out=h$H.csv --dump=bits-h$H.csv
+$B --alt=$H --dref=100 --passes=200 --out=f$H.csv
+python3 tools/a2g_alt_figures.py <thư mục> a2g-alt.png a2g-alt-strips-node4.png
 ```
 
 Mỗi cấu hình 200 lượt chạy ~30 s. Dữ liệu và hình: `docs/visualize/result/a2g-run/`,

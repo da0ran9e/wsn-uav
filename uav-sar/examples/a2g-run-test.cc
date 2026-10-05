@@ -4,7 +4,7 @@
 // not be carried into the forest SAR model -- that one has its own channel stack
 // (ForestA2gLossModel) and its own parameters (sar-params.h).
 //
-// Geometry: 7 ground nodes on a line, 300 m apart. The UAV flies at 100 m, 50 m/s,
+// Geometry: 7 ground nodes on a line, 300 m apart. The UAV flies at 100 m (--alt), 50 m/s,
 // straight and level, PERPENDICULAR to that line and directly over node 4, from
 // -2000 m to +2000 m. It broadcasts one numbered 127-byte PSDU every 10 ms --
 // 8001 packets a pass. A file cannot repair a lost packet, so what matters to a
@@ -71,7 +71,6 @@ static uint32_t g_checks = 0;
 namespace {
 
 // ---- the spec ---------------------------------------------------------------
-constexpr double   kAltM       = 100.0;
 constexpr double   kSpeedMps   = 50.0;
 constexpr double   kTrackHalfM = 2000.0;
 constexpr double   kSpacingM   = 300.0;
@@ -80,14 +79,16 @@ constexpr uint32_t kMiddle     = 3;          // node 4, zero-based
 constexpr double   kPeriodS    = 0.010;      // IEEE 802.15.4 default slot
 constexpr uint32_t kPsduBytes  = 127;        // aMaxPhyPacketSize
 constexpr uint32_t kChannel    = 11;         // 2405 MHz
-constexpr double   kRefDistM   = 100.0;      // the two segments meet here
 constexpr double   kFspl1mDb   = 40.05;      // 20 log10(4 pi / lambda), 2.4 GHz
 constexpr double   kStartS     = 1.0;        // after the MAC has initialised
 const uint32_t kPackets = (uint32_t)std::lround(2 * kTrackHalfM / (kSpeedMps * kPeriodS)) + 1;
 
-double PathLossDb(double d, double alpha) {
-    if (d < kRefDistM) return kFspl1mDb + 20.0 * std::log10(d);
-    return kFspl1mDb + 20.0 * std::log10(kRefDistM) + 10.0 * alpha * std::log10(d / kRefDistM);
+// Free space up to dref, then alpha. The spec anchors dref at the flight
+// altitude H: the node straight below always has a clear line, so free space
+// holds at least that far. --dref can pin it elsewhere for comparison.
+double PathLossDb(double d, double alpha, double dref) {
+    if (d < dref) return kFspl1mDb + 20.0 * std::log10(d);
+    return kFspl1mDb + 20.0 * std::log10(dref) + 10.0 * alpha * std::log10(d / dref);
 }
 
 }  // namespace
@@ -133,6 +134,8 @@ struct RunConfig {
     double alpha = 3.0;
     double txDbm = 10.0;
     double sensDbm = -100.0;
+    double altM = 100.0;
+    double drefM = -1.0;   // <= 0: equal to altM, as in the spec
     double kFactor = 2.0;
     double nakagamiM = 1.8;
     uint32_t passes = 200;
@@ -148,7 +151,7 @@ Ptr<SpectrumChannel> BuildChannel(const RunConfig& c, bool withFading) {
     // reach so the third segment never applies.
     Ptr<ThreeLogDistancePropagationLossModel> pl = CreateObject<ThreeLogDistancePropagationLossModel>();
     pl->SetAttribute("Distance0", DoubleValue(1.0));
-    pl->SetAttribute("Distance1", DoubleValue(kRefDistM));
+    pl->SetAttribute("Distance1", DoubleValue(c.drefM));
     pl->SetAttribute("Distance2", DoubleValue(1e9));
     pl->SetAttribute("Exponent0", DoubleValue(2.0));
     pl->SetAttribute("Exponent1", DoubleValue(c.alpha));
@@ -219,10 +222,10 @@ void RunWorld(const RunConfig& c, bool withFading, bool flying,
     Ptr<ConstantVelocityMobilityModel> um = uav.Get(0)->GetObject<ConstantVelocityMobilityModel>();
     if (flying) {
         // At kStartS the aircraft must be at y = -kTrackHalfM.
-        um->SetPosition(Vector(0, -kTrackHalfM - kSpeedMps * kStartS, kAltM));
+        um->SetPosition(Vector(0, -kTrackHalfM - kSpeedMps * kStartS, c.altM));
         um->SetVelocity(Vector(0, kSpeedMps, 0));
     } else {
-        um->SetPosition(Vector(0, 0, kAltM));
+        um->SetPosition(Vector(0, 0, c.altM));
         um->SetVelocity(Vector(0, 0, 0));
     }
     w.uavMob = um;
@@ -278,14 +281,14 @@ void RunWorld(const RunConfig& c, bool withFading, bool flying,
             w.txDbmMin = std::min(w.txDbmMin, dbm);
             w.txDbmMax = std::max(w.txDbmMax, dbm);
         }));
-    const double alpha = c.alpha;
+    const double alpha = c.alpha, dref = c.drefM;
     ch->TraceConnectWithoutContext("PathLoss",
         Callback<void, Ptr<const SpectrumPhy>, Ptr<const SpectrumPhy>, double>(
-            [&w, &fs, alpha](Ptr<const SpectrumPhy>, Ptr<const SpectrumPhy> rx, double lossDb) {
+            [&w, &fs, alpha, dref](Ptr<const SpectrumPhy>, Ptr<const SpectrumPhy> rx, double lossDb) {
                 auto it = w.mob.find(PeekPointer(rx));
                 if (it == w.mob.end()) return;
                 const double d = w.uavMob->GetDistanceFrom(it->second);
-                const double fadeDb = PathLossDb(d, alpha) - lossDb;   // gain, dB
+                const double fadeDb = PathLossDb(d, alpha, dref) - lossDb;   // gain, dB
                 fs.n++;
                 fs.sumLin += std::pow(10.0, fadeDb / 10.0);
                 if (fadeDb < -10) fs.below10++;
@@ -343,10 +346,10 @@ int Calibrate(const RunConfig& c) {
     std::vector<Vector> pos;
     for (size_t i = 0; i < target.size(); ++i) {
         const double pl = c.txDbm - target[i];
-        const double d = kRefDistM * std::pow(10.0, (pl - PathLossDb(kRefDistM, c.alpha)) /
+        const double d = c.drefM * std::pow(10.0, (pl - PathLossDb(c.drefM, c.alpha, c.drefM)) /
                                                         (10.0 * c.alpha));
-        CHECK(d > kAltM);
-        const double r = std::sqrt(d * d - kAltM * kAltM);
+        CHECK(d > c.altM);
+        const double r = std::sqrt(d * d - c.altM * c.altM);
         // Spread around the circle; receivers do not transmit, so they cannot clash.
         const double th = 2.0 * M_PI * i / target.size();
         pos.push_back(Vector(r * std::cos(th), r * std::sin(th), 0));
@@ -402,15 +405,15 @@ int Fly(const RunConfig& c) {
         pos.push_back(Vector(((double)k - kMiddle) * kSpacingM, 0, 0));
 
     FILE* f = c.out.empty() ? nullptr : std::fopen(c.out.c_str(), "w");
-    if (f) std::fprintf(f, "alpha,fading,pass,node,lateralM,received,longest,runStart,runEnd\n");
+    if (f) std::fprintf(f, "alpha,fading,pass,node,lateralM,received,longest,runStart,runEnd,altM,drefM\n");
     // One row per pass and node: sequence numbers 0..kPackets-1 as bits, MSB first,
     // packed into hex. 1 = received intact, 0 = lost.
     FILE* fd = c.dump.empty() ? nullptr : std::fopen(c.dump.c_str(), "w");
     if (fd) std::fprintf(fd, "pass,node,packets,bitsHex\n");
 
-    std::printf("alpha %.2f  fading %s  TX %+.0f dBm  sensitivity %.0f dBm  %u passes  "
-                "%u packets each\n", c.alpha, c.fading.c_str(), c.txDbm, c.sensDbm,
-                c.passes, kPackets);
+    std::printf("altitude %.0f m  free space to %.0f m  alpha %.2f  fading %s  TX %+.0f dBm  "
+                "sensitivity %.0f dBm  %u passes  %u packets each\n", c.altM, c.drefM, c.alpha,
+                c.fading.c_str(), c.txDbm, c.sensDbm, c.passes, kPackets);
 
     std::vector<std::vector<NodeResult>> all(kNodes);
     FadeStats fs;
@@ -437,9 +440,9 @@ int Fly(const RunConfig& c) {
                 std::fputc('\n', fd);
             }
             if (f)
-                std::fprintf(f, "%.2f,%s,%u,%u,%.0f,%u,%u,%d,%d\n", c.alpha, c.fading.c_str(),
+                std::fprintf(f, "%.2f,%s,%u,%u,%.0f,%u,%u,%d,%d,%.0f,%.0f\n", c.alpha, c.fading.c_str(),
                              p, k + 1, std::fabs(pos[k].x), r.received, r.longest,
-                             r.runStart, r.runEnd);
+                             r.runStart, r.runEnd, c.altM, c.drefM);
         }
     }
     if (f) std::fclose(f);
@@ -488,7 +491,7 @@ int Fly(const RunConfig& c) {
         stat(all[k], false, m, sd, a, b);
         stat(all[k], true, rm, rsd, ra, rb);
         std::printf("%6u %7.0fm %8.1fm | %10.0f | %10.0f ± %5.0f %8.0f %8.0f\n", k + 1,
-                    std::fabs(pos[k].x), std::hypot(pos[k].x, kAltM), m, rm, rsd, ra, rb);
+                    std::fabs(pos[k].x), std::hypot(pos[k].x, c.altM), m, rm, rsd, ra, rb);
     }
     std::printf("\n%u CHECKS PASSED\n", g_checks);
     return 0;
@@ -510,9 +513,13 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("seed", "RNG seed; pass p uses run p", c.seed);
     cmd.AddValue("out", "CSV output", c.out);
     cmd.AddValue("dump", "per-packet bitmap CSV (pass mode)", c.dump);
+    cmd.AddValue("alt", "flight altitude, m", c.altM);
+    cmd.AddValue("dref", "free-space segment ends here, m (<= 0: at the altitude)", c.drefM);
     cmd.Parse(argc, argv);
     CHECK(c.mode == "calib" || c.mode == "pass");
     CHECK(c.fading == "rician" || c.fading == "nakagami" || c.fading == "none");
     CHECK(kPackets == 8001);
+    CHECK(c.altM > 0);
+    if (c.drefM <= 0) c.drefM = c.altM;
     return c.mode == "calib" ? Calibrate(c) : Fly(c);
 }

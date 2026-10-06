@@ -190,6 +190,41 @@ Trong hình (c), vài điểm ở vùng tốt (−97…−93 dBm) nằm dưới 
 chuỗi không có hop thật sự yếu: hop "nghẽn" chỉ là hop có nhiều lần phát nhất, và
 thất bại của nó đến từ can nhiễu hoặc vùng giáp ranh, không phải che khuất.
 
+## 4c. Gói hỏng có chặn các gói khác không?
+
+Trong cấu hình gốc, mỗi node phát **gói ở đầu hàng đợi cho tới khi có ACK** (FIFO), nên
+một gói hỏng đúng là bắt các gói phía sau phải chờ — chặn đầu hàng. Câu hỏi là việc
+chặn đó có **làm chậm** cả file không.
+
+Phép thử: `--policy=rotate` — gói phát hỏng bị đẩy xuống **cuối hàng**, lần phát sau
+dùng gói khác, không gói nào chặn gói nào. Cùng 200 chuỗi, cùng seed (chính sách
+mặc định FIFO vẫn tái tạo chiến dịch trùng từng byte):
+
+| | FIFO: xong · trung vị | rotate: xong · trung vị | T_rotate ÷ T_FIFO (cặp, trung vị) | gói tới đích theo thứ tự |
+|---|---|---|---|---|
+| 50 m | 145/200 · 22.7 s | 144/200 · 20.9 s | **0.98** | 100 % → 52 % |
+| 75 m | 87/200 · 43.1 s | 88/200 · 45.1 s | **1.06** | 100 % → 52 % |
+| 100 m | 31/200 · 126 s | 29/200 · 136 s | **0.92** | 100 % → 49 % |
+
+**Bỏ chặn đầu hàng không rút ngắn thời gian.** Nó chỉ làm gói đến **lộn thứ tự**.
+(Từng cặp chuỗi lệch ±30 % do ngẫu nhiên: khi chính sách khác đi, chuỗi sự kiện khác
+đi, và các lần bốc lỗi phân kỳ. Trung vị thì quanh 1.)
+
+Lý do: tỉ lệ thành công p ở hop nghẽn là tính chất của **liên kết**, không phụ thuộc
+gói nào đang được phát. Hop đó chỉ chuyển được trung bình p gói mỗi khung 30 ms, dù
+đó là gói "bị chặn" hay gói khác. File cần đủ 100 gói, nên vẫn mất 100/p khung. Gói
+xếp hàng ở node đứng trước hop nghẽn **không phải vì bị một gói chặn**, mà vì hop đó
+chỉ có **thông lượng** p gói/khung.
+
+Cũng không có hiện tượng "chặn lan ngược". Các hop phía trước vẫn chuyển hết gói tới
+node đứng trước hop nghẽn từ sớm (ở dải 50 m: xong sau ~8 s trên tổng 22.7 s, xem
+hình không–thời gian), còn các hop phía sau thì đói gói. Bộ đệm ở đây không giới hạn;
+nếu có giới hạn, sẽ có chặn ngược, nhưng thời gian hoàn thành vẫn do hop nghẽn quyết
+định.
+
+→ Để nhanh hơn, phải **tăng p của hop nghẽn hoặc đi vòng qua nó** — sắp xếp lại thứ
+tự phát không giúp gì.
+
 ## 5. Độ nhạy — mỗi dòng đổi MỘT tham số
 
 | cấu hình | 50 m | 75 m | 100 m |

@@ -78,6 +78,7 @@ struct Cfg {
     double limitS = 120.0;
     uint32_t runs = 200, traceRun = 1, seed = 1;
     bool selftest = false;
+    std::string policy = "fifo";   // fifo: retry the head until ACKed; rotate: a failed packet goes to the back
     std::string out = "chain";
 };
 
@@ -280,6 +281,11 @@ RunResult RunOnce(const Cfg& c, uint32_t run, bool keepTrace, Ptr<G2gLinkLossMod
                 node[i].traceIdx = -1;
                 Node& m2 = node[i];
                 if (m2.okThis) return;
+                // rotate: no head-of-line blocking -- the next attempt carries another packet
+                if (c.policy == "rotate" && m2.queue.size() > 1) {
+                    m2.queue.push_back(m2.queue.front());
+                    m2.queue.pop_front();
+                }
                 if (m2.rxThis) { R.cAckLost[i]++; return; }
                 CHECK(sentInSlot[i] == (int64_t)s);
                 const double sig = c.txDbm - dataLoss[(size_t)i * N + i + 1];
@@ -344,9 +350,11 @@ int main(int argc, char* argv[]) {
     // own streams and its own substream.)
     cmd.AddValue("traceRun", "chain whose attempt-by-attempt trace is dumped", c.traceRun);
     cmd.AddValue("seed", "RNG seed", c.seed);
+    cmd.AddValue("policy", "fifo | rotate: what a node sends after a failed attempt", c.policy);
     cmd.AddValue("selftest", "no shadowing, no fading: arrivals must match the schedule", c.selftest);
     cmd.AddValue("out", "output prefix", c.out);
     cmd.Parse(argc, argv);
+    CHECK(c.policy == "fifo" || c.policy == "rotate");
     c.slotS = slotMs / 1000.0;
     CHECK(c.slotS >= 0.006);   // data + turnaround + ACK must fit: ~5.2 ms
 

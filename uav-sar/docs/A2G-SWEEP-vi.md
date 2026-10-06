@@ -175,6 +175,12 @@ done; done; wait            # ~1 giờ trên 4 lõi
 python3 tools/a2g_sweep_report.py <thư mục> docs/visualize/result 1000
 ```
 
+Lưu ý tái tạo: ns-3 cấp chỉ số luồng ngẫu nhiên từ một bộ đếm **không đặt lại** giữa
+các chuyến bay trong cùng tiến trình. Các chuyến vẫn độc lập với nhau, và chạy lại
+**đúng cách chia trên** (4 tiến trình × 6 chuyến, `--firstRun` = 1/7/13/19) sẽ tái tạo
+chính xác. Đổi cách chia thì vẫn ra kết quả tương đương về thống kê, nhưng từng
+chuyến sẽ khác (xem `G2G-CHAIN-vi.md` §8).
+
 Đã commit: `docs/visualize/result/a2g-sweep/` — trung bình theo node qua 24 chuyến
 (`s*-node-means.csv`), đường bay, bitmap hàng y = 1500 m của chuyến bay 1, và báo cáo.
 Dữ liệu thô từng chuyến (13.5 MB) không commit; chạy lại lệnh trên để tái tạo.

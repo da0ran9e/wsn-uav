@@ -6,10 +6,12 @@ URBAN BRANCH ONLY -- see examples/g2g-chain-test.cc.
     python3 tools/g2g_chain_report.py report DIR OUTDIR   # tables and figures
 
 DIR holds the campaign (TAG-runs.csv, TAG-hops.csv, TAG-arrivals.csv per
-configuration) and, for the space-time figures, rep-sS-* files: the chain chosen
-by `select`, re-run alone with its trace. Choice of chain, by rule: among the
-chains that delivered the whole file, the one whose completion time is closest
-to their median (ties: lowest run number).
+configuration) and, for the space-time figures, rep-sS-* files: chains 1..r
+re-run with --traceRun=r, r being the chain `select` chose (ns-3 does not reset
+its stream counter between chains, so chain r is only reproduced by running
+1..r again). Choice of chain, by rule: among the chains that delivered the whole
+file, the one whose completion time is closest to their median (ties: lowest
+run number).
 """
 import csv, glob, os, re, sys
 
@@ -20,7 +22,7 @@ from matplotlib.collections import LineCollection
 import numpy as np
 
 INK, INK2, GRID, SURF = "#0b0b0b", "#52514e", "#e6e5e1", "#fcfcfb"
-OK, FAIL = "#2a78d6", "#e34948"
+OK, ACKLOST, FAIL = "#2a78d6", "#eda100", "#e34948"   # validated CVD-safe trio
 SP_RAMP = {50: "#86b6ef", 75: "#3987e5", 100: "#0d366b"}     # ordinal, validated
 SPACINGS = (50, 75, 100)
 PER50_DBM = -101.0          # ns-3, 127-byte frame, sensitivity -100 dBm (A2G-RUN calib)
@@ -115,34 +117,40 @@ def tables(src):
 def fig_spacetime(src, out):
     fig = plt.figure(figsize=(14, 11.5), dpi=180, facecolor=SURF)
     gs = fig.add_gridspec(3, 2, width_ratios=[5.2, 1], hspace=.55, wspace=.04,
-                          left=.07, right=.98, top=.9, bottom=.05)
+                          left=.07, right=.98, top=.875, bottom=.05)
     for row, s in enumerate(SPACINGS):
         rep = f"rep-s{s}"
         tr_path = os.path.join(src, f"{rep}-trace.csv")
         if not os.path.exists(tr_path):
             continue
         tr = list(csv.DictReader(open(tr_path)))
-        hops = list(csv.DictReader(open(os.path.join(src, f"{rep}-hops.csv"))))
-        run = list(csv.DictReader(open(os.path.join(src, f"{rep}-runs.csv"))))[0]
         prim = runs_of(src, f"main-s{s}-M3")
+        run = pick(prim)
+        hops = [h for h in hops_of(src, f"main-s{s}-M3") if h["run"] == run["run"]]
         frac = np.mean([r["complete"] == "1" for r in prim])
         H = len(hops)
         a = fig.add_subplot(gs[row, 0])
         t = np.array([float(x["t"]) for x in tr])
         nd = np.array([int(x["node"]) for x in tr])
         ok = np.array([x["ok"] == "1" for x in tr])
-        for mask, col, lw, z in ((~ok, FAIL, .5, 2), (ok, OK, .7, 3)):
+        rx = np.array([x["rx"] == "1" for x in tr])
+        for mask, col, lw, z in ((~rx, FAIL, .5, 2), (rx & ~ok, ACKLOST, 1.2, 4), (ok, OK, .7, 3)):
             segs = [[(ti, ni), (ti, ni + 1)] for ti, ni in zip(t[mask], nd[mask])]
             a.add_collection(LineCollection(segs, colors=col, linewidths=lw, zorder=z))
         # a few packets followed hop by hop
         seq = np.array([int(x["seq"]) for x in tr])
         for k in (0, 49, 99):
-            m = ok & (seq == k)
-            if not m.any():
+            # where the packet really was: the FIRST attempt at each hop whose data
+            # arrived (an ACK can be lost after the packet has already moved on)
+            first = {}
+            for ti, ni, si, ri in zip(t, nd, seq, rx):
+                if si == k and ri and ni not in first:
+                    first[ni] = ti
+            if not first:
                 continue
-            o = np.argsort(nd[m])
-            xs = np.concatenate(([t[m][o][0]], t[m][o] + .0045))
-            ys = np.concatenate(([0], nd[m][o] + 1))
+            ns = sorted(first)
+            xs = np.array([first[ns[0]]] + [first[n] + .0045 for n in ns])
+            ys = np.array([ns[0]] + [n + 1 for n in ns])
             a.plot(xs, ys, color=INK, lw=1.3, zorder=4)
             a.annotate(f"gói {k + 1}", (xs[-1], ys[-1]), xytext=(4, -2), textcoords="offset points",
                        fontsize=7.5, color=INK, va="top")
@@ -172,13 +180,13 @@ def fig_spacetime(src, out):
         b.annotate(f"hop yếu nhất\n{prx[w]:.1f} dBm", (prx[w], w + .5), xytext=(6, 0),
                    textcoords="offset points", fontsize=7.5, color=FAIL, va="center")
         style(b)
-    fig.suptitle("Đường đi của gói tin qua dải: mỗi vạch là một lần phát dữ liệu từ node này "
-                 "sang node kế — xanh = có ACK, đỏ = mất", x=.07, ha="left", fontsize=12.5,
-                 color=INK, y=.985)
-    fig.text(.07, .945, "Dữ liệu trực tiếp từ ns-3. Đường đen: hành trình của gói 1, 50, 100. "
+    fig.suptitle("Đường đi của gói tin qua dải: mỗi vạch là một lần phát dữ liệu sang node kế — "
+                 "xanh = tới và có ACK, vàng = tới nhưng mất ACK, đỏ = không tới", x=.07,
+                 ha="left", fontsize=12.5, color=INK, y=.985)
+    fig.text(.07, .945, "Dữ liệu trực tiếp từ ns-3. Đường đen: hành trình thật của gói 1, 50, 100. "
              "Cột phải: công suất thu trung vị từng hop (đường truyền + che khuất tĩnh), hop yếu "
-             "nhất tô đỏ. TDMA M = 3, khe 10 ms, Rayleigh T_c = 100 ms, σ = 7.8 dB. NHÁNH ĐÔ THỊ.",
-             fontsize=8.3, color=INK2, ha="left")
+             "nhất tô đỏ.\nTDMA M = 3, khe 10 ms, Rayleigh T_c = 100 ms, σ = 7.8 dB, +10 dBm. "
+             "NHÁNH ĐÔ THỊ.", fontsize=8.3, color=INK2, ha="left", va="top")
     fig.savefig(out, facecolor=SURF)
     print(f"  {out}")
 
@@ -189,14 +197,14 @@ def fig_zoom(src, out, s=50, until=0.6):
     if not os.path.exists(tr_path):
         return
     tr = [x for x in csv.DictReader(open(tr_path)) if float(x["t"]) <= until]
-    H = len(list(csv.DictReader(open(os.path.join(src, f"rep-s{s}-hops.csv")))))
+    H = int(round(1000 / s))
     fig, a = plt.subplots(figsize=(14, 5.6), dpi=180, facecolor=SURF)
     for k in range(int(until / .01) + 1):
         if k % 3 == 0:
             a.axvspan(k * .01, k * .01 + .01, color="#f0efec", lw=0, zorder=0)
     for x in tr:
         t, n = float(x["t"]), int(x["node"])
-        col = OK if x["ok"] == "1" else FAIL
+        col = OK if x["ok"] == "1" else (ACKLOST if x["rx"] == "1" else FAIL)
         a.add_patch(plt.Rectangle((t, n + .12), .00445, .76, fc=col, ec="none", zorder=3))
         if int(x["seq"]) < 3 or x["ok"] != "1":
             a.text(t + .0022, n + .5, x["seq"], ha="center", va="center", fontsize=5.5,
@@ -210,7 +218,8 @@ def fig_zoom(src, out, s=50, until=0.6):
                  fontsize=8.5, color=INK2)
     style(a, grid=False)
     fig.suptitle(f"Lịch TDMA nhìn gần: {until:.1f} s đầu, dải cách {s} m — mỗi khối là một gói "
-                 "dữ liệu 4.26 ms (số = thứ tự gói); xanh = có ACK, đỏ = mất", x=.07, ha="left",
+                 "dữ liệu 4.26 ms (số = thứ tự gói); xanh = có ACK, vàng = mất ACK, đỏ = không tới",
+                 x=.07, ha="left",
                  fontsize=11.5, color=INK, y=.98)
     fig.text(.07, .915, "Gói đi chéo xuống từng hop một khe (sóng truyền), nhiều node cách nhau "
              "3 hop phát cùng khe. Một hop đỏ liên tiếp làm cả hàng sau phải chờ. Chuỗi đại diện, "
@@ -259,7 +268,7 @@ def fig_outcomes(src, out):
         a.scatter(x[~done], y[~done] * np.exp(np.random.default_rng(s).normal(0, .06, (~done).sum())),
                   s=16, marker="x", color=SP_RAMP[s], lw=1, zorder=3)
     a.axhline(LIMIT_S, color=INK2, lw=.8)
-    a.text(-121, LIMIT_S * 1.45, "chưa xong\nsau 300 s", fontsize=7.5, color=INK2, va="center")
+    a.text(-100.4, LIMIT_S * 1.45, "chưa xong sau 300 s", fontsize=7.5, color=INK2, va="center")
     a.axvline(PER50_DBM, color=INK2, lw=1, ls="--")
     a.text(PER50_DBM + .3, 1.1, "PER 50 %", fontsize=7.5, color=INK2)
     a.set_yscale("log")
@@ -269,7 +278,7 @@ def fig_outcomes(src, out):
     a.set_ylabel("thời gian hoàn thành (s, log)", fontsize=8.5, color=INK2)
     a.set_title("Hop yếu nhất quyết định tất cả\nmỗi điểm một chuỗi; × = không xong",
                 loc="left", fontsize=10.5, color=INK)
-    a.legend(fontsize=8, frameon=False, loc="upper right", labelcolor=INK2)
+    a.legend(fontsize=8, frameon=False, loc="lower left", labelcolor=INK2)
     style(a)
     fig.suptitle("Dải G2G ~1 km, 100 gói unicast từ đầu tới cuối — TDMA M = 3, Rayleigh "
                  "T_c = 100 ms, che khuất tĩnh σ = 7.8 dB, +10 dBm. NHÁNH ĐÔ THỊ.", x=.01,

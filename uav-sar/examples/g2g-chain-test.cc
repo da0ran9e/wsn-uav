@@ -75,7 +75,7 @@ struct Cfg {
     double txDbm = 10.0, sensDbm = -100.0;
     double n = 3.5, sigmaDb = 7.8, cohS = 0.1, kFactor = 0.0;
     double limitS = 120.0;
-    uint32_t runs = 200, firstRun = 1, seed = 1;
+    uint32_t runs = 200, traceRun = 1, seed = 1;
     bool selftest = false;
     std::string out = "chain";
 };
@@ -92,7 +92,7 @@ struct Node {
     int64_t traceIdx = -1;               // row of the attempt in flight
 };
 
-struct Attempt { double t; uint32_t node; uint16_t seq; bool ok; };
+struct Attempt { double t; uint32_t node; uint16_t seq; bool rx; bool ok; };  // rx: data arrived; ok: ACK came back
 
 struct RunResult {
     bool complete = false;
@@ -176,6 +176,7 @@ RunResult RunOnce(const Cfg& c, uint32_t run, bool keepTrace, Ptr<G2gLinkLossMod
                 Node& m = node[i];
                 if (dst != i) { R.overheard++; return; }
                 if (type == kTypeData && len == kDataBytes && src + 1u == i) {
+                    if (node[src].traceIdx >= 0) R.trace[node[src].traceIdx].rx = true;
                     if (!m.seen[seq]) {
                         m.seen[seq] = 1;
                         if (i == N - 1) {
@@ -229,7 +230,7 @@ RunResult RunOnce(const Cfg& c, uint32_t run, bool keepTrace, Ptr<G2gLinkLossMod
             R.attempts[i]++;
             if (keepTrace) {
                 m.traceIdx = (int64_t)R.trace.size();
-                R.trace.push_back({Simulator::Now().GetSeconds() - kStartS, i, m.awaitSeq, false});
+                R.trace.push_back({Simulator::Now().GetSeconds() - kStartS, i, m.awaitSeq, false, false});
             }
             send(i, kTypeData, (uint8_t)(i + 1), m.awaitSeq);
             Simulator::Schedule(Seconds(kAckWaitS), [&, i]() {
@@ -274,7 +275,11 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("K", "Rician K of the fading (0 = Rayleigh)", c.kFactor);
     cmd.AddValue("limit", "give up after this long, s", c.limitS);
     cmd.AddValue("runs", "independent chains", c.runs);
-    cmd.AddValue("firstRun", "RNG run index of the first chain (its trace is dumped)", c.firstRun);
+    // ns-3 hands out random-stream indices from a process-wide counter that is not
+    // reset between chains, so chain r is reproduced only by running 1..r again in
+    // one process: --runs=r --traceRun=r. (Chains stay independent: each has its
+    // own streams and its own substream.)
+    cmd.AddValue("traceRun", "chain whose attempt-by-attempt trace is dumped", c.traceRun);
     cmd.AddValue("seed", "RNG seed", c.seed);
     cmd.AddValue("selftest", "no shadowing, no fading: arrivals must match the schedule", c.selftest);
     cmd.AddValue("out", "output prefix", c.out);
@@ -310,9 +315,9 @@ int main(int argc, char* argv[]) {
     double sSh = 0, sSh2 = 0, sF = 0;
     uint32_t nComplete = 0;
     std::vector<double> times;
-    for (uint32_t run = c.firstRun; run < c.firstRun + c.runs; ++run) {
+    for (uint32_t run = 1; run <= c.runs; ++run) {
         Ptr<G2gLinkLossModel> link;
-        RunResult R = RunOnce(c, run, run == c.firstRun, link);
+        RunResult R = RunOnce(c, run, run == c.traceRun, link);
         CHECK(R.txFail == 0);
         CHECK(R.delivered <= c.packets);
         // Flow conservation: a node only holds what its predecessor sent it, so the
@@ -349,11 +354,14 @@ int main(int argc, char* argv[]) {
                          c.txDbm - PathLossDb(c.spacingM, c.n) - R.shadowDb[h]);
         for (uint32_t k = 0; k < c.packets; ++k)
             std::fprintf(fa, "%u,%u,%.6f\n", run, k, R.arrivalS[k]);
-        if (run == c.firstRun) {
+        if (run == c.traceRun) {
             FILE* ft = std::fopen((c.out + "-trace.csv").c_str(), "w");
-            std::fprintf(ft, "t,node,seq,ok\n");
-            for (const Attempt& a : R.trace)
-                std::fprintf(ft, "%.6f,%u,%u,%d\n", a.t, a.node, a.seq, a.ok ? 1 : 0);
+            std::fprintf(ft, "t,node,seq,rx,ok\n");
+            for (const Attempt& a : R.trace) {
+                CHECK(!a.ok || a.rx);   // an ACK only ever answers data that arrived
+                std::fprintf(ft, "%.6f,%u,%u,%d,%d\n", a.t, a.node, a.seq, a.rx ? 1 : 0,
+                             a.ok ? 1 : 0);
+            }
             std::fclose(ft);
         }
     }

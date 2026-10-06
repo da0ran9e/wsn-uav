@@ -110,6 +110,86 @@ phải). Gói 1 đi qua phần đầu dải gần như tức thì (đoạn thẳ
 0.6 s đầu ở dải 50 m: gói đi chéo xuống từng hop một khe, và các node cách nhau 3
 hop phát cùng khe. Một hop đỏ liên tiếp làm cả dòng phía sau phải chờ.
 
+## 4b. Gói hỏng vì đâu, và vì sao thời gian giãn ra nhiều lần
+
+Mỗi lần phát dữ liệu được phân loại tại thời điểm hết hạn chờ ACK, dựa trên những gì
+kênh **thật sự áp dụng** (trace `PathLoss` của ns-3: công suất thu đã gồm fading,
+và can nhiễu từ các node phát cùng khe). Ngưỡng lấy từ đường PER đã đo của ns-3 cho
+khung 127 B: dưới −102.25 dBm gần như luôn hỏng, trên −99.25 dBm gần như không bao giờ
+hỏng nếu chỉ có tạp âm. Phép đo chỉ đọc trace, không bốc số ngẫu nhiên nào: kết quả
+chạy lại **trùng từng byte**, và mỗi lần phát đều được kế toán đúng một nguyên nhân
+(CHECK, sai lệch ≤ 1 lần đang dở dang khi dừng).
+
+### Nguyên nhân: che khuất tĩnh, áp đảo
+
+| tỉ lệ trong các lần thất bại | che khuất tĩnh | fade sâu | giáp ranh | can nhiễu | mất ACK |
+|---|---|---|---|---|---|
+| 50 m · chuỗi xong | **60 %** | 17 % | 13 % | 8 % | 2 % |
+| 50 m · không xong | **93 %** | 2 % | 3 % | 2 % | 0.2 % |
+| 75 m · chuỗi xong | **78 %** | 11 % | 9 % | 1 % | 0.7 % |
+| 75 m · không xong | **96 %** | 2 % | 2 % | 0.3 % | 0.1 % |
+| 100 m · chuỗi xong | **89 %** | 5 % | 6 % | 0.2 % | 0.4 % |
+| 100 m · không xong | **98 %** | 1 % | 1 % | 0.0 % | 0.1 % |
+
+- **Che khuất tĩnh** = công suất thu nằm dưới ngưỡng, và công suất *trung vị* của
+  liên kết (suy hao + che khuất, chưa tính fading) **cũng** dưới điểm PER 50 %. Liên
+  kết vốn đã chết; gói chỉ lọt qua khi fading Rayleigh tình cờ tạo ra một khối cộng
+  hưởng mạnh.
+- **Tại hop nghẽn** của các chuỗi đã xong: che khuất tĩnh chiếm **86 / 93 / 96 %**
+  thất bại ở 50 / 75 / 100 m.
+- **Can nhiễu chỉ đáng kể ở 50 m** (8 % thất bại trong các chuỗi xong): ở M = 3, node
+  phát cùng khe chỉ cách máy thu 100 m. Điều này khớp với việc M = 4 giúp được một
+  chút ở 50 m (72 → 82 %) nhưng không giúp gì ở 75–100 m.
+- **Mất ACK không đáng kể** (≤ 2 %).
+
+### Vì sao thời gian giãn ra nhiều lần: đúng bằng 1/p của hop nghẽn
+
+Lịch TDMA cho mỗi hop **một lần phát mỗi khung** (M × 10 ms = 30 ms). Không mất gói,
+100 gói xếp hàng nối đuôi nhau qua dải, mất 100 × 30 ms ≈ **3 s** — đó là mức 3.1 s
+lý tưởng.
+
+Khi một hop chỉ thành công với xác suất p, mỗi gói cần trung bình **1/p** khung để
+qua hop đó. Các hop khác chỉ ngồi chờ. Thời gian hoàn thành vì vậy là:
+
+> **T ≈ (số lần phát ở hop nghẽn) × 30 ms ≈ 100 × 30 ms / p_nghẽn = 3.1 s / p_nghẽn**
+
+Đo trên các chuỗi đã xong:
+
+| | T ÷ (số lần phát ở hop nghẽn × 30 ms) | p hop nghẽn (trung vị) | 1/p | T ÷ 3.1 s (đo) |
+|---|---|---|---|---|
+| 50 m | 1.04 | 0.137 | **7.3×** | **7.3×** |
+| 75 m | 1.03 | 0.074 | **13.6×** | **13.9×** |
+| 100 m | 1.02 | 0.025 | **40.5×** | **40.7×** |
+
+Hop nghẽn bận **suốt** thời gian truyền (tỉ số 1.02–1.04), và độ giãn khớp 1/p tới
+từng chuỗi (hình b).
+
+### Vì sao chỉ vài dB đã thành "gấp nhiều lần": p rơi theo hàm mũ
+
+Với fading Rayleigh và một ngưỡng xấp xỉ −101 dBm, một lần phát chỉ thành công nếu
+fade vượt được phần thiếu hụt:
+
+> **p = exp(−10^((−101 − Prx_trung vị)/10))**
+
+Tương quan log giữa p dự đoán và p đo ở hop nghẽn là **0.93–0.97**. Phần thiếu hụt
+nằm **trong luỹ thừa của luỹ thừa**, nên:
+
+| Prx trung vị hop nghẽn | p | thời gian cho 100 gói |
+|---|---|---|
+| −101 dBm | 0.37 | ~8 s |
+| −104 dBm | 0.14 | ~23 s |
+| −106 dBm | 0.04 | ~75 s |
+| −108 dBm | 0.007 | ~465 s → **không xong trong 300 s** |
+
+Đó là "vách" ở khoảng −107 dBm trong bảng hop yếu nhất (mục 4). Cứ thiếu thêm 2 dB,
+thời gian nhân lên **3–6 lần**.
+
+![nguyên nhân và độ giãn](visualize/result/g2g-chain-causes.png)
+
+Trong hình (c), vài điểm ở vùng tốt (−97…−93 dBm) nằm dưới đường Rayleigh. Đó là các
+chuỗi không có hop thật sự yếu: hop "nghẽn" chỉ là hop có nhiều lần phát nhất, và
+thất bại của nó đến từ can nhiễu hoặc vùng giáp ranh, không phải che khuất.
+
 ## 5. Độ nhạy — mỗi dòng đổi MỘT tham số
 
 | cấu hình | 50 m | 75 m | 100 m |

@@ -326,6 +326,132 @@ def fig_sens(src, out):
     fig.savefig(out, facecolor=SURF)
     print(f"  {out}")
 
+# ---------------------------------------------------------------- figure: why packets fail, why time stretches
+CAUSES = [("failStatic", "che khuất tĩnh: liên kết vốn dưới ngưỡng", "#2a78d6"),
+          ("failFade", "fade sâu: liên kết đủ tốt, khối fade xấu", "#eb6834"),
+          ("failMarginal", "giáp ranh: −102.25 … −99.25 dBm", "#1baf7a"),
+          ("failInterf", "can nhiễu: tín hiệu đủ mạnh vẫn hỏng", "#eda100"),
+          ("ackLost", "mất ACK: dữ liệu đã tới", "#e87ba4")]   # categorical slots 1-5, fixed order
+FRAME_S = 0.03   # M x slot: one attempt per hop per frame
+
+
+def bottlenecks(src, s):
+    runs = {r["run"]: r for r in runs_of(src, f"main-s{s}-M3")}
+    hops = hops_of(src, f"main-s{s}-M3")
+    by = {}
+    for h in hops:
+        by.setdefault(h["run"], []).append(h)
+    out = []
+    for run, hh in by.items():
+        if runs[run]["complete"] != "1":
+            continue
+        b = max(hh, key=lambda h: int(h["attempts"]))
+        out.append(dict(T=float(runs[run]["completeS"]), att=int(b["attempts"]),
+                        p=int(b["acked"]) / int(b["attempts"]), med=float(b["medianPrxDbm"])))
+    return out
+
+
+def causes_table(src):
+    print("\nWhy data attempts fail (share of failed attempts), primary runs:")
+    for s in SPACINGS:
+        runs = {r["run"]: r for r in runs_of(src, f"main-s{s}-M3")}
+        hops = hops_of(src, f"main-s{s}-M3")
+        for grp, name in (("1", "completed"), ("0", "not completed")):
+            hh = [h for h in hops if runs[h["run"]]["complete"] == grp]
+            tot = {c: sum(int(h[c]) for h in hh) for c, _, _ in CAUSES}
+            F = sum(tot.values())
+            att = sum(int(h["attempts"]) for h in hh)
+            print(f"  {s:3d} m {name:13s}: {F:8d} of {att:8d} attempts failed | " +
+                  "  ".join(f"{c} {tot[c] / F:5.1%}" for c, _, _ in CAUSES))
+    print("\nWhy the time stretches -- completed chains, bottleneck = hop with most attempts:")
+    for s in SPACINGS:
+        b = bottlenecks(src, s)
+        T = np.array([x["T"] for x in b]); A = np.array([x["att"] for x in b])
+        P = np.array([x["p"] for x in b])
+        print(f"  {s:3d} m: T / (bottleneck attempts x 30 ms) median {np.median(T / (A * FRAME_S)):.3f}"
+              f" | bottleneck success p median {np.median(P):.3f} -> 1/p {np.median(1 / P):.1f}x"
+              f" | T / 3.1 s median {np.median(T / 3.1):.1f}x")
+
+
+def fig_causes(src, out):
+    fig, ax = plt.subplots(1, 3, figsize=(16.5, 5.2), dpi=170, facecolor=SURF,
+                           gridspec_kw=dict(width_ratios=[1.25, 1, 1]))
+    # (a) causes
+    a = ax[0]
+    labels, rows = [], []
+    for s in SPACINGS:
+        runs = {r["run"]: r for r in runs_of(src, f"main-s{s}-M3")}
+        hops = hops_of(src, f"main-s{s}-M3")
+        for grp, name in (("1", "xong"), ("0", "không xong")):
+            hh = [h for h in hops if runs[h["run"]]["complete"] == grp]
+            tot = np.array([sum(int(h[c]) for h in hh) for c, _, _ in CAUSES], float)
+            rows.append(tot / tot.sum())
+            labels.append(f"{s} m · {name}")
+    y = np.arange(len(rows))
+    left = np.zeros(len(rows))
+    for k, (c, lab, col) in enumerate(CAUSES):
+        v = np.array([r[k] for r in rows])
+        a.barh(y, v, left=left, color=col, height=.68, edgecolor=SURF, lw=2, label=lab)
+        for yy, vv, ll in zip(y, v, left):
+            if vv >= .06:
+                a.text(ll + vv / 2, yy, f"{vv:.0%}", ha="center", va="center", fontsize=7.5,
+                       color=SURF if k in (0, 1) else INK)
+        left += v
+    a.set_yticks(y)
+    a.set_yticklabels(labels, fontsize=8.5, color=INK)
+    a.set_ylim(len(y) - .4, -.6)
+    a.set_xlim(0, 1)
+    a.xaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0))
+    a.set_title("(a) Vì sao một lần phát dữ liệu thất bại\n(tỉ lệ trong các lần thất bại)",
+                loc="left", fontsize=10.5, color=INK)
+    a.legend(fontsize=7.5, frameon=False, loc="upper center", bbox_to_anchor=(.45, -.08),
+             ncol=2, labelcolor=INK2)
+    style(a)
+    # (b) stretch = 1/p
+    a = ax[1]
+    for s in SPACINGS:
+        b = bottlenecks(src, s)
+        P = np.array([x["p"] for x in b]); T = np.array([x["T"] for x in b])
+        a.scatter(1 / P, T / 3.1, s=16, color=SP_RAMP[s], ec=SURF, lw=.4, label=f"cách {s} m", zorder=3)
+    g = np.array([1, 200])
+    a.plot(g, g, color=INK2, lw=1, ls="--", zorder=2)
+    a.text(60, 40, "y = x", fontsize=8, color=INK2, rotation=38)
+    a.set_xscale("log"); a.set_yscale("log")
+    a.set_xlim(1, 200); a.set_ylim(1, 200)
+    a.set_xlabel("1 / (tỉ lệ thành công ở hop nghẽn)", fontsize=8.5, color=INK2)
+    a.set_ylabel("thời gian hoàn thành ÷ 3.1 s lý tưởng", fontsize=8.5, color=INK2)
+    a.set_title("(b) Thời gian giãn ĐÚNG BẰNG 1/p của hop nghẽn\nmỗi điểm một chuỗi đã xong",
+                loc="left", fontsize=10.5, color=INK)
+    a.legend(fontsize=8, frameon=False, loc="upper left", labelcolor=INK2)
+    style(a)
+    # (c) p from the link's median power, Rayleigh
+    a = ax[2]
+    for s in SPACINGS:
+        b = bottlenecks(src, s)
+        a.scatter([x["med"] for x in b], [x["p"] for x in b], s=16, color=SP_RAMP[s], ec=SURF,
+                  lw=.4, zorder=3)
+    m = np.linspace(-112, -92, 200)
+    a.plot(m, np.exp(-10 ** ((PER50_DBM - m) / 10)), color=INK, lw=1.6, zorder=4)
+    a.annotate("Rayleigh: p = exp(−10^((−101 − Prx)/10))", (-103.2, np.exp(-10 ** ((-101 + 103.2) / 10))),
+               xytext=(-111.5, .5), fontsize=8, color=INK,
+               arrowprops=dict(arrowstyle="-", color=INK2, lw=.8))
+    a.axhline(100 * FRAME_S / LIMIT_S, color=INK2, lw=.8, ls=":")
+    a.text(-111.5, 100 * FRAME_S / LIMIT_S * 1.15, "p = 0.01: 100 gói cần > 300 s", fontsize=7.5,
+           color=INK2)
+    a.set_yscale("log")
+    a.set_xlim(-112, -92); a.set_ylim(.004, 1.2)
+    a.set_xlabel("Prx trung vị của hop nghẽn (dBm)", fontsize=8.5, color=INK2)
+    a.set_ylabel("tỉ lệ thành công mỗi lần phát", fontsize=8.5, color=INK2)
+    a.set_title("(c) và p rơi theo hàm mũ khi hop yếu đi\nmỗi 2 dB thiếu hụt: thời gian × vài lần",
+                loc="left", fontsize=10.5, color=INK)
+    style(a)
+    fig.suptitle("Gói G2G hỏng vì đâu, và vì sao thời gian giãn ra nhiều lần — đo trên 600 chuỗi "
+                 "(cấu hình gốc), phân loại từng lần phát", x=.01, ha="left", fontsize=12,
+                 color=INK, y=1.0)
+    fig.tight_layout(rect=(0, 0, 1, .95))
+    fig.savefig(out, facecolor=SURF)
+    print(f"  {out}")
+
 
 def main():
     mode, src = sys.argv[1], sys.argv[2]
@@ -337,6 +463,9 @@ def main():
     outdir = sys.argv[3]
     os.makedirs(outdir, exist_ok=True)
     tables(src)
+    if "failStatic" in hops_of(src, "main-s50-M3")[0]:
+        causes_table(src)
+        fig_causes(src, os.path.join(outdir, "g2g-chain-causes.png"))
     fig_spacetime(src, os.path.join(outdir, "g2g-chain-spacetime.png"))
     fig_zoom(src, os.path.join(outdir, "g2g-chain-schedule.png"))
     fig_outcomes(src, os.path.join(outdir, "g2g-chain-outcomes.png"))

@@ -41,6 +41,7 @@
 #include <cstdio>
 #include <deque>
 #include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -90,6 +91,7 @@ struct Node {
     bool awaiting = false;
     uint16_t awaitSeq = 0;
     int64_t traceIdx = -1;               // row of the attempt in flight
+    bool rxThis = false, okThis = false; // this slot's attempt: data arrived / ACK came back
 };
 
 struct Attempt { double t; uint32_t node; uint16_t seq; bool rx; bool ok; };  // rx: data arrived; ok: ACK came back
@@ -102,6 +104,20 @@ struct RunResult {
     std::vector<uint64_t> attempts, acked, holds;   // holds[i]: distinct packets at node i
     std::vector<double> shadowDb, arrivalS;
     std::vector<Attempt> trace;
+    // Why each data attempt failed, per hop. Classified at the ACK deadline from
+    // what the channel actually applied (ns-3's PathLoss trace), against ns-3's
+    // own PER curve for a 127-byte frame: PER ~ 1 below -102.25 dBm, ~ 0 above
+    // -99.25 dBm, with noise alone.
+    //   staticLow  faded Prx < -102.25 and the link's MEDIAN (path loss + static
+    //              shadowing) is itself below the PER-50% point: a bad link
+    //   deepFade   faded Prx < -102.25 but the median is above it: a decent link
+    //              caught in a fade
+    //   marginal   -102.25 <= faded Prx <= -99.25: the transition band
+    //   interfered faded Prx > -99.25, so noise alone would not lose it: someone
+    //              else on the air (same-slot sender) spoiled it
+    //   ackLost    the data arrived, the ACK did not come back
+    std::vector<uint64_t> cStatic, cFade, cMarginal, cInterf, cAckLost;
+    std::vector<double> sirInterfDb;   // signal / interference of the 'interfered' ones
 };
 
 double PathLossDb(double d, double n) { return kFspl1mDb + 10.0 * n * std::log10(d); }
@@ -132,14 +148,34 @@ RunResult RunOnce(const Cfg& c, uint32_t run, bool keepTrace, Ptr<G2gLinkLossMod
 
     std::vector<Node> node(N);
     RunResult R;
+    // Loss from each DATA sender to every node, for the slot it sent in.
+    int32_t curTx = -1;
+    uint64_t curSlot = 0;
+    std::vector<double> dataLoss((size_t)N * N, 0.0);
+    std::vector<int64_t> sentInSlot(N, -1);
+    std::map<const SpectrumPhy*, uint32_t> idxOf;
     R.attempts.assign(hops, 0);
     R.acked.assign(hops, 0);
     R.arrivalS.assign(c.packets, -1.0);
+    R.cStatic.assign(hops, 0); R.cFade.assign(hops, 0); R.cMarginal.assign(hops, 0);
+    R.cInterf.assign(hops, 0); R.cAckLost.assign(hops, 0);
     for (uint32_t i = 0; i < N; ++i) {
         node[i].phy = DynamicCast<lrwpan::LrWpanNetDevice>(devs.Get(i))->GetPhy();
+        idxOf[PeekPointer(node[i].phy)] = i;
         node[i].mob = nc.Get(i)->GetObject<MobilityModel>();
         node[i].seen.assign(c.packets, 0);
     }
+
+    // Observation only: reads what the channel applied, draws nothing.
+    ch->TraceConnectWithoutContext("PathLoss",
+        Callback<void, Ptr<const SpectrumPhy>, Ptr<const SpectrumPhy>, double>(
+            [&](Ptr<const SpectrumPhy>, Ptr<const SpectrumPhy> rx, double lossDb) {
+                if (curTx < 0) return;
+                auto it = idxOf.find(PeekPointer(rx));
+                if (it == idxOf.end()) return;
+                dataLoss[(size_t)curTx * N + it->second] = lossDb;
+                sentInSlot[curTx] = (int64_t)curSlot;
+            }));
 
     auto send = [&](uint32_t i, uint8_t type, uint8_t dst, uint16_t seq) {
         node[i].pendType = type;
@@ -159,8 +195,10 @@ RunResult RunOnce(const Cfg& c, uint32_t run, bool keepTrace, Ptr<G2gLinkLossMod
                 b[0] = m.pendType; b[1] = (uint8_t)i; b[2] = m.pendDst;
                 b[3] = m.pendSeq >> 8; b[4] = m.pendSeq & 0xff;
                 (m.pendType == kTypeData ? R.dataTx : R.ackTx)++;
-                m.pendType = 0;
+                curTx = m.pendType == kTypeData ? (int32_t)i : -1;   // the channel reports
+                m.pendType = 0;                                      // losses inside StartTx
                 m.phy->PdDataRequest(len, Create<Packet>(b.data(), len));
+                curTx = -1;
             }));
         me.phy->SetPdDataConfirmCallback(lrwpan::PdDataConfirmCallback(
             [&, i](lrwpan::PhyEnumeration s) {
@@ -177,6 +215,7 @@ RunResult RunOnce(const Cfg& c, uint32_t run, bool keepTrace, Ptr<G2gLinkLossMod
                 if (dst != i) { R.overheard++; return; }
                 if (type == kTypeData && len == kDataBytes && src + 1u == i) {
                     if (node[src].traceIdx >= 0) R.trace[node[src].traceIdx].rx = true;
+                    if (node[src].awaiting && node[src].awaitSeq == seq) node[src].rxThis = true;
                     if (!m.seen[seq]) {
                         m.seen[seq] = 1;
                         if (i == N - 1) {
@@ -194,6 +233,7 @@ RunResult RunOnce(const Cfg& c, uint32_t run, bool keepTrace, Ptr<G2gLinkLossMod
                 } else if (type == kTypeAck && len == kAckBytes && src == i + 1 && m.awaiting &&
                            seq == m.awaitSeq) {
                     m.awaiting = false;
+                    m.okThis = true;
                     m.queue.pop_front();
                     R.acked[i]++;
                     if (m.traceIdx >= 0) R.trace[m.traceIdx].ok = true;
@@ -221,11 +261,13 @@ RunResult RunOnce(const Cfg& c, uint32_t run, bool keepTrace, Ptr<G2gLinkLossMod
     // The schedule: one event per slot; the owners of the slot send.
     const uint64_t maxSlots = (uint64_t)std::ceil(c.limitS / c.slotS);
     std::function<void(uint64_t)> slot = [&](uint64_t s) {
+        curSlot = s;
         for (uint32_t i = 0; i + 1 < N; ++i) {
             if (i % c.slots != s % c.slots) continue;
             Node& m = node[i];
             if (m.queue.empty()) continue;
             m.awaiting = true;
+            m.rxThis = m.okThis = false;
             m.awaitSeq = m.queue.front();
             R.attempts[i]++;
             if (keepTrace) {
@@ -233,9 +275,30 @@ RunResult RunOnce(const Cfg& c, uint32_t run, bool keepTrace, Ptr<G2gLinkLossMod
                 R.trace.push_back({Simulator::Now().GetSeconds() - kStartS, i, m.awaitSeq, false, false});
             }
             send(i, kTypeData, (uint8_t)(i + 1), m.awaitSeq);
-            Simulator::Schedule(Seconds(kAckWaitS), [&, i]() {
+            Simulator::Schedule(Seconds(kAckWaitS), [&, i, s]() {
                 node[i].awaiting = false;   // no ACK: the packet stays at the head
                 node[i].traceIdx = -1;
+                Node& m2 = node[i];
+                if (m2.okThis) return;
+                if (m2.rxThis) { R.cAckLost[i]++; return; }
+                CHECK(sentInSlot[i] == (int64_t)s);
+                const double sig = c.txDbm - dataLoss[(size_t)i * N + i + 1];
+                const uint64_t before = link->nShadow;
+                const double med = c.txDbm - PathLossDb(c.spacingM, c.n) -
+                                   link->ShadowDb(node[i].mob, node[i + 1].mob);
+                CHECK(link->nShadow == before);   // the pair was drawn already: no RNG used
+                if (sig < -102.25) {
+                    (med < c.sensDbm - 1.0 ? R.cStatic : R.cFade)[i]++;
+                } else if (sig <= -99.25) {
+                    R.cMarginal[i]++;
+                } else {
+                    double imw = 0.0;
+                    for (uint32_t j = 0; j < N; ++j)
+                        if (j != i && sentInSlot[j] == (int64_t)s)
+                            imw += std::pow(10.0, (c.txDbm - dataLoss[(size_t)j * N + i + 1]) / 10.0);
+                    R.cInterf[i]++;
+                    R.sirInterfDb.push_back(imw > 0 ? sig - 10.0 * std::log10(imw) : 999.0);
+                }
             });
         }
         if (s + 1 < maxSlots) Simulator::Schedule(Seconds(c.slotS), [&slot, s]() { slot(s + 1); });
@@ -308,7 +371,8 @@ int main(int argc, char* argv[]) {
     FILE* fh = std::fopen((c.out + "-hops.csv").c_str(), "w");
     FILE* fa = std::fopen((c.out + "-arrivals.csv").c_str(), "w");
     std::fprintf(fr, "run,complete,completeS,firstS,delivered,dataTx,ackTx,overheard\n");
-    std::fprintf(fh, "run,hop,attempts,acked,shadowDb,medianPrxDbm\n");
+    std::fprintf(fh, "run,hop,attempts,acked,shadowDb,medianPrxDbm,"
+                     "failStatic,failFade,failMarginal,failInterf,ackLost\n");
     std::fprintf(fa, "run,seq,arrivalS\n");
 
     uint64_t nSh = 0, nF = 0, nF10 = 0, nF20 = 0;
@@ -329,6 +393,11 @@ int main(int argc, char* argv[]) {
             CHECK(R.holds[h + 1] <= R.holds[h]);
             CHECK(R.acked[h] <= R.attempts[h]);
             CHECK(R.acked[h] <= R.holds[h + 1]);
+            // Every attempt is accounted for: ACKed, or failed for exactly one reason.
+            // (At most one is still in flight when the chain completes and stops.)
+            const uint64_t classified = R.acked[h] + R.cStatic[h] + R.cFade[h] +
+                                        R.cMarginal[h] + R.cInterf[h] + R.cAckLost[h];
+            CHECK(classified <= R.attempts[h] && R.attempts[h] - classified <= 1);
         }
         nSh += link->nShadow; sSh += link->sumShadow; sSh2 += link->sumShadow2;
         nF += link->nFade; nF10 += link->nFade10; nF20 += link->nFade20; sF += link->sumFade;
@@ -349,9 +418,12 @@ int main(int argc, char* argv[]) {
                      R.completeS, R.firstS, R.delivered, (unsigned long)R.dataTx,
                      (unsigned long)R.ackTx, (unsigned long)R.overheard);
         for (uint32_t h = 0; h < hops; ++h)
-            std::fprintf(fh, "%u,%u,%lu,%lu,%.3f,%.2f\n", run, h, (unsigned long)R.attempts[h],
-                         (unsigned long)R.acked[h], R.shadowDb[h],
-                         c.txDbm - PathLossDb(c.spacingM, c.n) - R.shadowDb[h]);
+            std::fprintf(fh, "%u,%u,%lu,%lu,%.3f,%.2f,%lu,%lu,%lu,%lu,%lu\n", run, h,
+                         (unsigned long)R.attempts[h], (unsigned long)R.acked[h], R.shadowDb[h],
+                         c.txDbm - PathLossDb(c.spacingM, c.n) - R.shadowDb[h],
+                         (unsigned long)R.cStatic[h], (unsigned long)R.cFade[h],
+                         (unsigned long)R.cMarginal[h], (unsigned long)R.cInterf[h],
+                         (unsigned long)R.cAckLost[h]);
         for (uint32_t k = 0; k < c.packets; ++k)
             std::fprintf(fa, "%u,%u,%.6f\n", run, k, R.arrivalS[k]);
         if (run == c.traceRun) {

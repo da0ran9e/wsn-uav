@@ -130,3 +130,16 @@ build_lib_example(
     ${libspectrum}
     ${libmobility}
 )
+
+# URBAN branch: G2G multi-hop chain across one wide cluster, strict TDMA, unicast + ACK.
+build_lib_example(
+  NAME uav-sar-g2g-chain-test
+  SOURCE_FILES g2g-chain-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+    ${liblr-wpan}
+    ${libpropagation}
+    ${libspectrum}
+    ${libmobility}
+)

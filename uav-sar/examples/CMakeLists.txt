@@ -117,3 +117,16 @@ build_lib_example(
     ${libspectrum}
     ${libmobility}
 )
+
+# URBAN branch: lawnmower sweep over a large field -- do later passes make up losses?
+build_lib_example(
+  NAME uav-sar-a2g-sweep-test
+  SOURCE_FILES a2g-sweep-test.cc
+  LIBRARIES_TO_LINK
+    ${libuav-sar}
+    ${libcore}
+    ${liblr-wpan}
+    ${libpropagation}
+    ${libspectrum}
+    ${libmobility}
+)

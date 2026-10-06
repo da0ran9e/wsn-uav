@@ -40,6 +40,8 @@
 //   a2g-run-test --mode=calib --out=calib.csv
 //   a2g-run-test --mode=pass  --alpha=3.0 --fading=rician --passes=200 --out=runs.csv
 
+#include "a2g-common.h"
+
 #include "ns3/core-module.h"
 #include "ns3/lr-wpan-module.h"
 #include "ns3/mobility-module.h"
@@ -70,63 +72,19 @@ static uint32_t g_checks = 0;
 
 namespace {
 
+using a2g::kChannel;
+using a2g::kPeriodS;
+using a2g::kPsduBytes;
+using a2g::PathLossDb;
+
 // ---- the spec ---------------------------------------------------------------
 constexpr double   kSpeedMps   = 50.0;
 constexpr double   kTrackHalfM = 2000.0;
 constexpr double   kSpacingM   = 300.0;
 constexpr uint32_t kNodes      = 7;
 constexpr uint32_t kMiddle     = 3;          // node 4, zero-based
-constexpr double   kPeriodS    = 0.010;      // IEEE 802.15.4 default slot
-constexpr uint32_t kPsduBytes  = 127;        // aMaxPhyPacketSize
-constexpr uint32_t kChannel    = 11;         // 2405 MHz
-constexpr double   kFspl1mDb   = 40.05;      // 20 log10(4 pi / lambda), 2.4 GHz
 constexpr double   kStartS     = 1.0;        // after the MAC has initialised
 const uint32_t kPackets = (uint32_t)std::lround(2 * kTrackHalfM / (kSpeedMps * kPeriodS)) + 1;
-
-// Free space up to dref, then alpha. The spec anchors dref at the flight
-// altitude H: the node straight below always has a clear line, so free space
-// holds at least that far. --dref can pin it elsewhere for comparison.
-double PathLossDb(double d, double alpha, double dref) {
-    if (d < dref) return kFspl1mDb + 20.0 * std::log10(d);
-    return kFspl1mDb + 20.0 * std::log10(dref) + 10.0 * alpha * std::log10(d / dref);
-}
-
-}  // namespace
-
-// ---- Rician fading, redrawn on every call (i.e. every packet, every receiver) --
-class RicianFadingLossModel : public PropagationLossModel {
-  public:
-    static TypeId GetTypeId() {
-        static TypeId tid = TypeId("ns3::RicianFadingLossModel")
-                                .SetParent<PropagationLossModel>()
-                                .AddConstructor<RicianFadingLossModel>()
-                                .AddAttribute("K", "Rician K factor (linear)",
-                                              DoubleValue(2.0),
-                                              MakeDoubleAccessor(&RicianFadingLossModel::m_k),
-                                              MakeDoubleChecker<double>(0.0));
-        return tid;
-    }
-    RicianFadingLossModel() : m_n(CreateObject<NormalRandomVariable>()) {}
-
-  private:
-    double DoCalcRxPower(double txPowerDbm, Ptr<MobilityModel>, Ptr<MobilityModel>) const override {
-        // Unit mean power: LoS part K/(K+1), scattered part 1/(K+1) split over I and Q.
-        const double los = std::sqrt(m_k / (m_k + 1.0));
-        const double sc = std::sqrt(1.0 / (m_k + 1.0) / 2.0);
-        const double i = los + sc * m_n->GetValue();
-        const double q = sc * m_n->GetValue();
-        return txPowerDbm + 10.0 * std::log10(i * i + q * q);
-    }
-    int64_t DoAssignStreams(int64_t stream) override {
-        m_n->SetStream(stream);
-        return 1;
-    }
-    double m_k = 2.0;
-    Ptr<NormalRandomVariable> m_n;
-};
-NS_OBJECT_ENSURE_REGISTERED(RicianFadingLossModel);
-
-namespace {
 
 struct RunConfig {
     std::string mode = "pass";
@@ -145,35 +103,8 @@ struct RunConfig {
 };
 
 Ptr<SpectrumChannel> BuildChannel(const RunConfig& c, bool withFading) {
-    Ptr<SingleModelSpectrumChannel> ch = CreateObject<SingleModelSpectrumChannel>();
-
-    // Free space (n = 2) from 1 m to 100 m, then alpha. Distance2 is pushed out of
-    // reach so the third segment never applies.
-    Ptr<ThreeLogDistancePropagationLossModel> pl = CreateObject<ThreeLogDistancePropagationLossModel>();
-    pl->SetAttribute("Distance0", DoubleValue(1.0));
-    pl->SetAttribute("Distance1", DoubleValue(c.drefM));
-    pl->SetAttribute("Distance2", DoubleValue(1e9));
-    pl->SetAttribute("Exponent0", DoubleValue(2.0));
-    pl->SetAttribute("Exponent1", DoubleValue(c.alpha));
-    pl->SetAttribute("Exponent2", DoubleValue(c.alpha));
-    pl->SetAttribute("ReferenceLoss", DoubleValue(kFspl1mDb));
-
-    if (withFading && c.fading == "rician") {
-        Ptr<RicianFadingLossModel> f = CreateObject<RicianFadingLossModel>();
-        f->SetAttribute("K", DoubleValue(c.kFactor));
-        pl->SetNext(f);
-    } else if (withFading && c.fading == "nakagami") {
-        Ptr<NakagamiPropagationLossModel> f = CreateObject<NakagamiPropagationLossModel>();
-        f->SetAttribute("m0", DoubleValue(c.nakagamiM));
-        f->SetAttribute("m1", DoubleValue(c.nakagamiM));
-        f->SetAttribute("m2", DoubleValue(c.nakagamiM));
-        pl->SetNext(f);
-    } else {
-        CHECK(!withFading || c.fading == "none");
-    }
-    ch->AddPropagationLossModel(pl);
-    ch->SetPropagationDelayModel(CreateObject<ConstantSpeedPropagationDelayModel>());
-    return ch;
+    return a2g::BuildChannel(c.alpha, c.drefM, withFading ? c.fading : "none", c.kFactor,
+                             c.nakagamiM);
 }
 
 // What one pass leaves behind, per node.

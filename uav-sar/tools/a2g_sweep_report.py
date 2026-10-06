@@ -15,8 +15,8 @@ Two different things can make up a lost packet, and they are kept apart:
 "best" is the single segment that delivered the most distinct chunks;
 "union" is the whole mission. union - best is exactly the across-pass part.
 
-Curves use interior rows only (500 <= y <= fieldY - 500): near the lane ends
-the turns add passes that a long field would not have. The maps show everything.
+Curves and the table use interior nodes only (see interior()); the maps and
+the "whole field" line show everything, edges included.
 """
 import csv, glob, os, sys
 
@@ -71,15 +71,24 @@ def style(ax, grid=True):
         s.set_visible(False)
 
 
-def interior(rows):
+def interior(rows, lanes):
+    """Nodes with lanes on both sides and away from the lane ends.
+
+    Across the lanes: between the second and the second-to-last lane. Near an
+    outer lane a node has neighbours on one side only and hears ~3 lanes instead
+    of ~5 -- an edge-of-field effect that would otherwise masquerade as a
+    distance effect (at L = 850 m it made the curve zig-zag between 55 % and 90 %).
+    Along the lanes: 500 m clear of the ends, where the turns add passes."""
     ymax = max(float(r["y"]) for r in rows)
-    return [r for r in rows if 500 <= float(r["y"]) <= ymax - 500]
+    lo, hi = sorted(lanes)[1], sorted(lanes)[-2]
+    return [r for r in rows if 500 <= float(r["y"]) <= ymax - 500 and lo <= float(r["x"]) <= hi]
 
 
 def table(D, Ls):
-    print("Interior rows. 'done' = share of (node, mission) pairs holding the whole file.")
+    print("Interior nodes (between the 2nd and 2nd-to-last lane, 500 m clear of the lane ends).\n"
+          "'đủ file' = share of (node, mission) pairs holding the whole file.")
     for L in Ls:
-        rows = interior(D[L]["rows"])
+        rows = interior(D[L]["rows"], D[L]["lanes"])
         print(f"\n=== lanes {L} m apart, {len(D[L]['runs'])} missions, {len(D[L]['lanes'])} lanes")
         print(f"{'dist to lane':>12} {'n':>6} {'pkts rx':>8} {'lanes heard':>11} | "
               + " | ".join(f"K={K:<4} đủ file best -> union (mảnh thiếu TB)" for K in (500, 1000, 2000)))
@@ -95,6 +104,11 @@ def table(D, Ls):
                 mu = np.mean([K - int(r[f"union{K}"]) for r in g])
                 parts.append(f"{b:6.1%} -> {u:6.1%} (thiếu {mb:5.1f} -> {mu:4.1f})")
             print(s + " | ".join(parts))
+        allr = D[L]["rows"]
+        print(f"{'whole field':>12} {len(allr):6d} " + " " * 21 + "| " + " | ".join(
+            f"{np.mean([int(r[f'best{K}']) == K for r in allr]):6.1%} -> "
+            f"{np.mean([int(r[f'union{K}']) == K for r in allr]):6.1%}" + " " * 22
+            for K in (500, 1000, 2000)))
 
 
 # ---------------------------------------------------------------- figure 1: paths
@@ -179,7 +193,8 @@ def fig_maps(D, Ls, K, out):
             a.set_xticks([0, 1000, 2000, 3000, 4000])
             a.set_yticks([0, 1000, 2000, 3000])
             style(a, grid=False)
-    cb = fig.colorbar(im, ax=ax, shrink=.6, pad=.02)
+    fig.subplots_adjust(left=.04, right=.86, top=.88, bottom=.04, hspace=.32, wspace=.12)
+    cb = fig.colorbar(im, cax=fig.add_axes([.885, .25, .014, .5]))
     cb.set_label(f"xác suất có đủ file K = {K} gói", fontsize=9, color=INK2)
     cb.ax.tick_params(labelsize=8, colors=INK2)
     cb.outline.set_visible(False)
@@ -188,7 +203,6 @@ def fig_maps(D, Ls, K, out):
     fig.text(.01, .955, "Vạch trắng đứt: vị trí luống. Hàng trên: chỉ tính lượt (luống hoặc "
              "đoạn rẽ) cho nhiều mảnh nhất; hàng dưới: gộp mọi lượt. Khác biệt giữa hai hàng "
              "= phần các lượt khác bù được.", fontsize=8.5, color=INK2, ha="left")
-    fig.subplots_adjust(left=.04, right=.86, top=.88, bottom=.04, hspace=.32, wspace=.12)
     fig.savefig(out, facecolor=SURF)
     print(f"  {out}")
 
@@ -198,16 +212,27 @@ def fig_curves(D, Ls, out):
     fig, ax = plt.subplots(1, len(Ls), figsize=(5.0 * len(Ls), 4.6), dpi=170,
                            facecolor=SURF, sharey=True)
     for a, L in zip(np.atleast_1d(ax), Ls):
-        rows = interior(D[L]["rows"])
+        rows = interior(D[L]["rows"], D[L]["lanes"])
         ds = sorted({float(r["dLane"]) for r in rows})
+        labels = []
         for K in (500, 1000, 2000):
             b = [np.mean([int(r[f"best{K}"]) == K for r in rows if float(r["dLane"]) == d]) for d in ds]
             u = [np.mean([int(r[f"union{K}"]) == K for r in rows if float(r["dLane"]) == d]) for d in ds]
-            a.fill_between(ds, b, u, color=K_RAMP[K], alpha=.18, lw=0)
+            a.fill_between(ds, b, u, color=K_RAMP[K], alpha=.13, lw=0)
             a.plot(ds, u, "-o", ms=5, lw=2, color=K_RAMP[K], mec=SURF, mew=1.2)
             a.plot(ds, b, "--", lw=1.4, color=K_RAMP[K])
-            a.annotate(f"K = {K}", (ds[-1], u[-1]), xytext=(6, 0), textcoords="offset points",
-                       va="center", fontsize=8, color=INK2)
+            labels.append([u[-1], K])
+        # Lines that end at the same height share one label rather than overprint.
+        groups = []
+        for y, K in sorted(labels, reverse=True):
+            if groups and abs(groups[-1][0] - y) < .04:
+                groups[-1][1].append(K)
+            else:
+                groups.append([y, [K]])
+        for y, Ks in groups:
+            a.annotate("K = " + ", ".join(str(k) for k in sorted(Ks)), (ds[-1], y),
+                       xytext=(6, 0), textcoords="offset points", va="center",
+                       fontsize=8, color=INK2)
         a.set_title(f"Luống cách {L} m", fontsize=10.5, color=INK, loc="left")
         a.set_xlabel("khoảng cách tới luống gần nhất (m)", fontsize=8.5, color=INK2)
         a.set_xlim(-20, max(ds) * 1.25)
@@ -223,8 +248,8 @@ def fig_curves(D, Ls, out):
                labelcolor=INK2)
     fig.suptitle("Đủ file theo khoảng cách tới luống — vùng tô = phần bù từ lượt khác",
                  x=.01, ha="left", fontsize=12, color=INK, y=1.0)
-    fig.text(.01, .92, "Chỉ các hàng node bên trong (500 ≤ y ≤ 2500 m) để loại hiệu ứng "
-             "đoạn rẽ ở đầu luống. K = số gói của file, phát xoay vòng.", fontsize=8.5,
+    fig.text(.01, .92, "Chỉ node bên trong: giữa luống thứ 2 và luống áp chót (có luống ở cả "
+             "hai phía), cách đầu luống ≥ 500 m. K = số gói của file, phát xoay vòng.", fontsize=8.5,
              color=INK2, ha="left")
     fig.tight_layout(rect=(0, 0, 1, .9))
     fig.savefig(out, facecolor=SURF)
@@ -316,7 +341,8 @@ def main():
     table(D, Ls)
     os.makedirs(outdir, exist_ok=True)
     fig_paths(D, Ls, os.path.join(outdir, "a2g-sweep-path.png"))
-    fig_maps(D, Ls, K, os.path.join(outdir, f"a2g-sweep-map-K{K}.png"))
+    for k in sorted({K, 2000}):
+        fig_maps(D, Ls, k, os.path.join(outdir, f"a2g-sweep-map-K{k}.png"))
     fig_curves(D, Ls, os.path.join(outdir, "a2g-sweep-curves.png"))
     for L in Ls:
         fig_node(D, L, os.path.join(outdir, f"a2g-sweep-node-L{L}.png"))

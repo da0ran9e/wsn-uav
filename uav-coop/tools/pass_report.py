@@ -172,9 +172,10 @@ def fig_distance(data, out):
     for lo, hi in zip(edges[:-1], edges[1:]):
         s = [r for r in nd if lo <= float(r["dPathM"]) < hi]
         m.append(np.mean([float(r["rxMean"]) for r in s]) if s else np.nan)
-        p10.append(np.mean([float(r["rxP10"]) for r in s]) if s else np.nan)
-        p90.append(np.mean([float(r["rxP90"]) for r in s]) if s else np.nan)
-    a.fill_between(mid, p10, p90, color=C_GOT, alpha=.18, lw=0, zorder=1, label="P10–P90 giữa các lượt bay")
+        p10.append(np.percentile([float(r["rxMean"]) for r in s], 10) if s else np.nan)
+        p90.append(np.percentile([float(r["rxMean"]) for r in s], 90) if s else np.nan)
+    a.fill_between(mid, p10, p90, color=C_GOT, alpha=.18, lw=0, zorder=1,
+                   label="P10–P90 giữa các node cùng khoảng cách")
     a.plot(mid, m, color=C_GOT, lw=2.2, zorder=3, label="trung bình mỗi 50 m")
     a.axhline(nPk, color=INK2, lw=.8, ls=(0, (3, 3)))
     a.text(d.max(), nPk, f"phát {nPk:,} gói", ha="right", va="bottom", fontsize=8, color=INK2)
@@ -239,7 +240,7 @@ def fig_strip(data, out):
         ax.text(t, -.75, lab, ha="center", va="bottom", fontsize=8.5, color=INK)
     ax.set_xlabel("thời điểm phát, s (một ô = một gói, 10 ms)", fontsize=9, color=INK2)
     ax.set_title(f"Gói nhận được (xanh) và mất (đỏ) trong lượt bay 1, các node ở khoảng cách khác nhau tới "
-                 f"đường bay", loc="left", fontsize=10.5, color=INK, pad=18)
+                 f"đường bay", loc="left", fontsize=10.5, color=INK, pad=30)
     style(ax)
     fig.tight_layout()
     fig.savefig(out, facecolor=SURF)

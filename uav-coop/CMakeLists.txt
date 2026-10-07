@@ -2,7 +2,7 @@
 # clusters. Starts from the parameter set measured in uav-sar's a2g-*/g2g-*
 # experiments (urban branch). Step 1: hex lattice, random contiguous region made
 # convex on demand, random nodes with capabilities, CH/CL. Step 2: Dubins flight
-# path through the strongest nodes.
+# path across the cluster: random boundary entry -> CH -> random boundary exit.
 
 build_lib(
   LIBNAME uav-coop
@@ -12,7 +12,7 @@ build_lib(
     models/common/region.cc
     models/common/deploy.cc
     models/common/dubins.cc
-    models/common/tour.cc
+    models/common/path.cc
 
   HEADER_FILES
     models/common/coop-params.h
@@ -21,7 +21,7 @@ build_lib(
     models/common/region.h
     models/common/deploy.h
     models/common/dubins.h
-    models/common/tour.h
+    models/common/path.h
 
   LIBRARIES_TO_LINK
     ${libcore}

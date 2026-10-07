@@ -1,13 +1,16 @@
-"""Figures for step 1: lattice -> random contiguous region -> random nodes -> CH, CLs.
+"""Figures for steps 1-2: lattice -> region -> nodes -> CH, CLs -> flight path across the cluster.
 
     python3 tools/deploy_figures.py DIR OUTDIR [--prefix deploy] [--seeds "seed*-lattice.csv"]
                                     [--conv "conv*-lattice.csv"] [--sweep sweep.csv]
+                                    [--picks 0,1,2] [--rhos 1,100,400]
 
 DIR holds the output of uav-coop-deploy --out=PREFIX: PREFIX-lattice.csv,
 PREFIX-growth.csv, PREFIX-region.csv, PREFIX-nodes-sS.csv. Optional:
   --seeds  regions other seeds give (free growth)       -> deploy-seeds.png
   --conv   one run per convexity, same seed (convK-*)   -> deploy-convexity.png
   --sweep  measured convexity over many seeds, per K     (panel of the same figure)
+  --picks  flight paths for several entry/exit draws (pickK-*)  -> deploy-path.png
+  --rhos   K,R1,R2: draw K at other turn radii (rhoR-*)          (panels of the same figure)
 """
 import argparse, csv, glob, math, os, re, sys
 
@@ -410,79 +413,91 @@ def fig_convexity(files, sweep, out):
 
 # ------------------------------------------------------------------ figure: the flight path
 C_TURN, C_STRAIGHT = "#2a78d6", INK
-RANK_C = {1: C_CH, 2: C_CL, 3: C_CL}
+C_GATE = "#eda100"
 
 
-def tour_panel(a, src, prefix, s, lat, nodes_s, w, title):
-    tp = os.path.join(src, f"{prefix}-tour-s{s}.csv")
-    if not os.path.exists(tp):
+def path_panel(a, src, prefix, s, lat, nodes_s, w, title):
+    pp = os.path.join(src, f"{prefix}-path-s{s}.csv")
+    if not os.path.exists(pp):
         return False
-    tr = list(csv.DictReader(open(tp)))
-    wp = list(csv.DictReader(open(os.path.join(src, f"{prefix}-tourwp-s{s}.csv"))))
+    tr = list(csv.DictReader(open(pp)))
+    wp = {r["point"]: r for r in csv.DictReader(open(os.path.join(src, f"{prefix}-pathwp-s{s}.csv")))}
     sel = {(int(x["q"]), int(x["r"])) for x in lat if x["selected"] == "1"}
     hexes(a, sel, w, "#f3f2ee", "#ffffff", lw=.5)
     a.add_collection(LineCollection(boundary(sel, w), colors=INK2, linewidths=.9, zorder=2))
     a.scatter([float(n["x"]) for n in nodes_s], [float(n["y"]) for n in nodes_s], s=1.2,
               color="#b9b8b2", lw=0, zorder=2)
-    # path, coloured by segment kind: the middle segment of LSL/RSR/LSR/RSL is straight
+    # path, coloured by segment kind: the middle segment of LSL/RSR/LSR/RSL is straight;
+    # the leads outside the cluster are dashed
     X = np.array([float(r["x"]) for r in tr]); Y = np.array([float(r["y"]) for r in tr])
-    leg = np.array([int(r["leg"]) for r in tr]); seg = np.array([int(r["seg"]) for r in tr])
-    words = {int(r["flyOrder"]): r["legWord"] for r in wp}
+    part = np.array([int(r["part"]) for r in tr]); seg = np.array([int(r["seg"]) for r in tr])
+    words = {1: wp["entry"]["legWord"], 2: wp["CH"]["legWord"]}
     for i in range(len(tr) - 1):
-        if leg[i] != leg[i + 1]:
+        if part[i] != part[i + 1]:
             continue
-        straight = words.get(leg[i], "LLL")[seg[i]] == "S"
+        if seg[i] < 0:
+            a.plot(X[i:i + 2], Y[i:i + 2], color=C_STRAIGHT, lw=1.4, ls=(0, (2, 2)), zorder=4)
+            continue
+        straight = words[part[i]][seg[i]] == "S"
         a.plot(X[i:i + 2], Y[i:i + 2], color=C_STRAIGHT if straight else C_TURN,
                lw=2.0 if straight else 1.6, zorder=4, solid_capstyle="round")
     # direction arrows every ~400 m
     d = np.concatenate(([0], np.cumsum(np.hypot(np.diff(X), np.diff(Y)))))
-    for t in np.arange(200, d[-1], 400):
+    for t in np.arange(150, d[-1], 400):
         i = int(np.searchsorted(d, t))
-        if 0 < i < len(X) - 1 and leg[i] == leg[i + 1]:
+        if 0 < i < len(X) - 1 and part[i - 1] == part[i + 1]:
             a.annotate("", (X[i + 1], Y[i + 1]), (X[i - 1], Y[i - 1]),
                        arrowprops=dict(arrowstyle="-|>", color=INK, lw=0, mutation_scale=11), zorder=5)
-    for r in wp:
-        x, y, th, rank = float(r["x"]), float(r["y"]), math.radians(float(r["thDeg"])), int(r["rank"])
-        a.scatter([x], [y], s=260 if rank == 1 else 110, marker="*" if rank == 1 else "o",
-                  color=RANK_C[rank], edgecolors=INK, linewidths=.8, zorder=6)
-        off, ha = {1: ((9, 6), "left"), 2: ((-9, -4), "right"), 3: ((9, -14), "left")}[rank]
-        a.annotate(f"{rank}{' CH' if rank == 1 else ''} #{r['id']}", (x, y), xytext=off, ha=ha,
-                   textcoords="offset points", fontsize=7.5, color=INK, zorder=7,
+    for key, lab in (("entry", "vào"), ("exit", "ra")):
+        r = wp[key]
+        a.scatter([float(r["x"])], [float(r["y"])], s=90, marker="D", color=C_GATE, edgecolors=INK,
+                  linewidths=.8, zorder=6)
+        a.annotate(lab, (float(r["x"]), float(r["y"])), xytext=(8, 6), textcoords="offset points",
+                   fontsize=8, color=INK, zorder=7,
                    bbox=dict(boxstyle="round,pad=.15", fc=SURF, ec="none", alpha=.85))
-    rho, L, closed = float(wp[0]["rho"]), float(wp[0]["lengthM"]), wp[0]["closed"] == "1"
-    xs = np.concatenate((X, [float(n["x"]) for n in nodes_s][:0]))
-    pad = .15 * max(X.max() - X.min(), Y.max() - Y.min(), 2 * w)
-    a.set_xlim(min(X.min(), min(float(r["x"]) for r in wp)) - pad, max(X.max(), max(float(r["x"]) for r in wp)) + pad)
-    a.set_ylim(min(Y.min(), min(float(r["y"]) for r in wp)) - pad, max(Y.max(), max(float(r["y"]) for r in wp)) + pad)
-    legs = " · ".join(f"{r['legWord']} {float(r['legM']):.0f}" for r in sorted(wp, key=lambda r: int(r["flyOrder"]))
-                      if r["legWord"] != "-")
-    a.set_title(f"{title}\n{'vòng kín' if closed else 'đường mở'} · ρ = {rho:.0f} m · {L:,.0f} m = "
-                f"{L / 50:.0f} s ở 50 m/s\n{legs}", loc="left", fontsize=8.5, color=INK)
+    c = wp["CH"]
+    a.scatter([float(c["x"])], [float(c["y"])], s=260, marker="*", color=C_CH, edgecolors=INK,
+              linewidths=.8, zorder=6)
+    a.annotate(f"CH #{c['id']}", (float(c["x"]), float(c["y"])), xytext=(9, 6), textcoords="offset points",
+               fontsize=7.5, color=INK, zorder=7,
+               bbox=dict(boxstyle="round,pad=.15", fc=SURF, ec="none", alpha=.85))
+    rho, L = float(c["rho"]), float(c["lengthM"])
+    xs = [float(x["cx"]) for x in lat if x["selected"] == "1"] + list(X)
+    ys = [float(x["cy"]) for x in lat if x["selected"] == "1"] + list(Y)
+    a.set_xlim(min(xs) - .6 * w, max(xs) + .6 * w)
+    a.set_ylim(min(ys) - .6 * w, max(ys) + .6 * w)
+    a.set_title(f"{title}\nρ = {rho:.0f} m · vào → CH → ra {L:,.0f} m = {L / 50:.0f} s ở 50 m/s\n"
+                f"{wp['entry']['legWord']} {float(wp['entry']['legM']):.0f} · {wp['CH']['legWord']} "
+                f"{float(wp['CH']['legM']):.0f}", loc="left", fontsize=8.5, color=INK)
     style(a)
     return True
 
 
-def fig_tour(src, prefix, lat, nodes, w, out):
-    fig, ax = plt.subplots(2, 3, figsize=(16.5, 11.5), dpi=170, facecolor=SURF)
-    for a, s in zip(ax[0], sorted(nodes)):
-        tour_panel(a, src, prefix, s, lat, nodes[s], w, f"spacing {s} m — 3 node mạnh nhất")
+def fig_path(src, lat, nodes, w, out, picks, rhos):
     s = 35 if 35 in nodes else sorted(nodes)[0]
-    variants = [("rho100", "cùng 3 điểm (spacing 35 m), ρ = 100 m"),
-                ("rho400", "cùng 3 điểm, ρ = 400 m"),
-                ("open", "cùng 3 điểm, ρ mặc định, đường mở")]
-    for a, (pfx, title) in zip(ax[1], variants):
-        if not tour_panel(a, src, pfx, s, lat, nodes[s], w, title):
-            a.axis("off")
+    panels = [(f"pick{k}", f"lần bốc {k}") for k in picks] + \
+             [(f"rho{r}", f"lần bốc {rhos[0]}, ρ = {r} m") for r in rhos[1:]]
+    panels = [(p, t) for p, t in panels if os.path.exists(os.path.join(src, f"{p}-path-s{s}.csv"))]
+    cols = 3
+    rows = (len(panels) + cols - 1) // cols
+    fig, ax = plt.subplots(rows, cols, figsize=(16.5, 6.1 * rows), dpi=150, facecolor=SURF, squeeze=False)
+    for a in ax.flat:
+        a.axis("off")
+    for a, (pfx, title) in zip(ax.flat, panels):
+        a.axis("on")
+        path_panel(a, src, pfx, s, lat, nodes[s], w, title)
     h = [plt.Line2D([], [], color=C_TURN, lw=1.6), plt.Line2D([], [], color=C_STRAIGHT, lw=2),
-         plt.Line2D([], [], marker="*", color=C_CH, mec=INK, ls="", ms=12),
-         plt.Line2D([], [], marker="o", color=C_CL, mec=INK, ls="", ms=8)]
-    fig.legend(h, ["đoạn quay (bán kính ρ)", "đoạn thẳng", "CH (mạnh nhất)", "node mạnh thứ 2, 3"],
-               loc="upper left", ncol=4, frameon=False, fontsize=9, bbox_to_anchor=(.01, .975),
+         plt.Line2D([], [], color=C_STRAIGHT, lw=1.4, ls=(0, (2, 2))),
+         plt.Line2D([], [], marker="D", color=C_GATE, mec=INK, ls="", ms=8),
+         plt.Line2D([], [], marker="*", color=C_CH, mec=INK, ls="", ms=12)]
+    fig.legend(h, ["đoạn quay (bán kính ρ)", "đoạn thẳng", "bay thẳng ngoài cụm (dài ρ)",
+                   "điểm vào / ra (ngẫu nhiên trên biên)", "CH"],
+               loc="upper left", ncol=5, frameon=False, fontsize=9, bbox_to_anchor=(.01, .975),
                labelcolor=INK2)
-    fig.suptitle("Đường bay Dubins qua 3 node mạnh nhất cụm — hướng bay tại mỗi điểm và thứ tự được "
-                 "chọn cho ngắn nhất (ρ mặc định = 50²/g = 255 m)", x=.01, ha="left", fontsize=12,
-                 color=INK, y=1.0)
-    fig.tight_layout(rect=(0, 0, 1, .945), h_pad=3.5)
+    fig.suptitle(f"Đường bay Dubins xuyên cụm: vào ở một điểm biên ngẫu nhiên → qua CH → ra ở một điểm "
+                 f"biên ngẫu nhiên khác (spacing {s} m) — hướng tại mỗi điểm chọn cho ngắn nhất", x=.01,
+                 ha="left", fontsize=12, color=INK, y=1.0)
+    fig.tight_layout(rect=(0, 0, 1, .955), h_pad=3.0)
     fig.savefig(out, facecolor=SURF)
     print(f"  {out}")
 
@@ -492,6 +507,8 @@ def main():
     ap.add_argument("src"); ap.add_argument("outdir")
     ap.add_argument("--prefix", default="deploy")
     ap.add_argument("--seeds"); ap.add_argument("--conv"); ap.add_argument("--sweep")
+    ap.add_argument("--picks", help="entry/exit draws pickK-path-sS.csv to show, e.g. 0,1,2")
+    ap.add_argument("--rhos", help="K,R1,R2: draw K again from rhoR1-/rhoR2-path-sS.csv")
     o = ap.parse_args()
     os.makedirs(o.outdir, exist_ok=True)
     lat, gro, nodes, w, meta = load(o.src, o.prefix)
@@ -503,8 +520,10 @@ def main():
     fig_spacing(lat, nodes, w, os.path.join(o.outdir, "deploy-spacing.png"))
     if "score" in nodes[show][0]:
         fig_roles(lat, nodes, w, os.path.join(o.outdir, "deploy-roles.png"), show)
-    if os.path.exists(os.path.join(o.src, f"{o.prefix}-tour-s{show}.csv")):
-        fig_tour(o.src, o.prefix, lat, nodes, w, os.path.join(o.outdir, "deploy-tour.png"))
+    if o.picks:
+        picks = [int(k) for k in o.picks.split(",")]
+        rhos = [int(r) for r in o.rhos.split(",")] if o.rhos else [picks[0]]
+        fig_path(o.src, lat, nodes, w, os.path.join(o.outdir, "deploy-path.png"), picks, rhos)
     if o.seeds:
         fs = glob.glob(os.path.join(o.src, o.seeds))
         if fs:

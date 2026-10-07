@@ -8,8 +8,8 @@ Those values live in `models/common/coop-params.h`.
 **Status: steps 1–2.** Hex lattice (corner radius R = 100 m) from the origin → a truly
 random contiguous region whose concavities are filled up to a target convexity (default:
 fully convex) → random sensor nodes with three random capabilities → one CH, one CL per
-cell → a closed Dubins flight path through the three strongest nodes (min turn radius a
-parameter). See [`docs/DEPLOY-vi.md`](docs/DEPLOY-vi.md).
+cell → an open Dubins flight path across the cluster: in at a random boundary point,
+over the CH, out at another (min turn radius a parameter). See [`docs/DEPLOY-vi.md`](docs/DEPLOY-vi.md).
 
 ## Layout
 ```
@@ -22,7 +22,7 @@ uav-coop/
 │   ├── region.{h,cc}         # random growth + concavity filling to a convexity; holes
 │   ├── deploy.{h,cc}         # uniform random nodes; capabilities; CH and CL roles
 │   ├── dubins.{h,cc}         # shortest Dubins path between two poses (six words)
-│   └── tour.{h,cc}           # shortest Dubins loop/path through a few points
+│   └── path.{h,cc}           # shortest open Dubins path through points, headings constrained
 ├── examples/coop-deploy.cc   # runs step 1 with checks, writes CSV
 ├── tools/deploy_figures.py   # the step-by-step figures
 └── docs/                     # DEPLOY-vi.md, figures/, data/

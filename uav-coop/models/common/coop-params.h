@@ -26,7 +26,6 @@ inline constexpr double   kSpacingM     = 30.0;    // [design] 20-50 m: one node
 inline constexpr double   kConvexity    = 1.0;
 
 // ---- flight path (step 2) ---------------------------------------------------
-inline constexpr uint32_t kTourNodes    = 3;       // the strongest nodes, CH included
 // Minimum turn radius v^2 / (g tan(bank)): 50 m/s, 45 deg -> 254.9 m (the same fixed-wing
 // turn as uav-sar's lawnmower sweep).
 inline constexpr double   kMinTurnRadiusM = 50.0 * 50.0 / 9.80665;

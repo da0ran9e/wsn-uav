@@ -1,24 +1,25 @@
 // Steps 1-2: hex lattice (corner radius R) -> random contiguous region, concavities
 // filled up to a target convexity -> random nodes with three capabilities -> CH and
-// CLs -> a Dubins flight path through the strongest nodes.
+// CLs -> a Dubins flight path crossing the cluster: in at a random boundary point,
+// over the CH, out at another random boundary point.
 //
 // Writes, for the figures:
 //   PREFIX-lattice.csv    cells near the region: selected? grown or filled? order? hole?
 //   PREFIX-growth.csv     the order cells grew in, and the frontier at each step
 //   PREFIX-region.csv     convexity before and after filling
 //   PREFIX-nodes-sS.csv   per spacing S: position, capabilities, roles
-//   PREFIX-tour-sS.csv    per spacing: the flight path, sampled every 2 m
-//   PREFIX-tourwp-sS.csv  per spacing: the points it flies through, and its legs
+//   PREFIX-path-sS.csv    per spacing: the flight path, sampled every 2 m
+//   PREFIX-pathwp-sS.csv  per spacing: entry, CH, exit, and the legs between
 // and checks the geometry, the region, the deployment and the path before writing.
 //
-//   uav-coop-deploy --radius=100 --cells=60 --convexity=1 --spacings=20,35,50 --rho=255 --out=deploy
+//   uav-coop-deploy --radius=100 --cells=60 --convexity=1 --spacings=20,35,50 --rho=255 --pick=0 --out=deploy
 
 #include "../models/common/coop-params.h"
 #include "../models/common/coop-rng.h"
 #include "../models/common/deploy.h"
 #include "../models/common/hex-grid.h"
 #include "../models/common/region.h"
-#include "../models/common/tour.h"
+#include "../models/common/path.h"
 
 #include "ns3/core-module.h"
 
@@ -50,6 +51,8 @@ static uint32_t g_checks = 0;
 namespace {
 
 constexpr uint64_t kStreamRegion = 1, kStreamNodes = 2, kStreamTest = 3, kStreamCaps = 4;
+// entry/exit points: stream kStreamCross + pick, so --pick redraws them alone
+constexpr uint64_t kStreamCross = 16;
 
 void CheckGeometry(const HexGrid& g) {
     for (int32_t q = -4; q <= 4; ++q)
@@ -141,13 +144,32 @@ void CheckDubins() {
     CHECK(std::fabs(s.Length() - 1000) < 1e-9);
 }
 
-void CheckTour(const Tour& t, const std::vector<Point>& pts, double rho, bool closed) {
+// A boundary edge of the cluster: the shared side of a cluster cell and a cell outside.
+struct Edge { Point a, b, in; };   // in: unit normal pointing into the cluster
+
+// The straight line flown before the entry (sign -1) or after the exit (+1), lead m
+// long, stays outside the cluster.
+bool LeadOutside(const HexGrid& g, const std::unordered_set<Hex, HexHash>& inside, const Point& p,
+                 double th, double sign, double lead) {
+    for (double t = 1; t <= lead; t += 2)
+        if (inside.count(g.CellAt({p.x + sign * t * std::cos(th), p.y + sign * t * std::sin(th)})))
+            return false;
+    return true;
+}
+
+void CheckPath(const HexGrid& g, const std::unordered_set<Hex, HexHash>& inside, const Path& t,
+               const std::vector<Point>& pts, const std::vector<HeadingOk>& ok, const Edge& in,
+               const Edge& outE, double rho, double lead) {
     const size_t n = pts.size();
-    CHECK(t.poses.size() == n && t.legs.size() == (closed ? n : n - 1));
+    CHECK(t.poses.size() == n && t.legs.size() == n - 1);
     double sum = 0, poly = 0;
-    for (size_t i = 0; i < t.legs.size(); ++i) {
+    for (size_t i = 0; i < n; ++i) {
+        CHECK(std::hypot(t.poses[i].x - pts[i].x, t.poses[i].y - pts[i].y) < 1e-9);   // through the points, in order
+        CHECK(ok[i] == nullptr || ok[i](t.poses[i].th));                          // headings allowed
+    }
+    for (size_t i = 0; i + 1 < n; ++i) {
         const Pose& a = t.poses[i];
-        const Pose& b = t.poses[(i + 1) % n];
+        const Pose& b = t.poses[i + 1];
         const Pose e = DubinsAt(a, t.legs[i], t.legs[i].Length());   // the leg lands on the next pose
         CHECK(std::hypot(e.x - b.x, e.y - b.y) < 1e-6 * rho);
         CHECK(std::fabs(std::remainder(e.th - b.th, 2 * M_PI)) < 1e-9);
@@ -166,22 +188,31 @@ void CheckTour(const Tour& t, const std::vector<Point>& pts, double rho, bool cl
     CHECK(std::fabs(sum - t.length) < 1e-6);
     CHECK(t.length >= poly - 1e-6);                 // never shorter than straight lines
     CHECK(t.length <= t.gridLength + 1e-9);         // refinement only improves
-    for (size_t i = 0; i < n; ++i)                  // passes through every point
-        CHECK(std::hypot(t.poses[i].x - pts[t.order[i]].x, t.poses[i].y - pts[t.order[i]].y) < 1e-9);
-    // No random choice of headings, in any order, beats it.
+    // Entry and exit lie on the cluster's edge: just inside is in, just outside is out.
+    for (const auto& [E, P] : {std::pair<const Edge&, const Point&>{in, pts.front()}, {outE, pts.back()}}) {
+        const double ex = E.b.x - E.a.x, ey = E.b.y - E.a.y;
+        CHECK(std::fabs(ex * (P.y - E.a.y) - ey * (P.x - E.a.x)) < 1e-6 * g.Radius());
+        CHECK(inside.count(g.CellAt({P.x + 1e-3 * E.in.x, P.y + 1e-3 * E.in.y})) == 1);
+        CHECK(inside.count(g.CellAt({P.x - 1e-3 * E.in.x, P.y - 1e-3 * E.in.y})) == 0);
+    }
+    // Comes from outside and leaves to the outside along straight lines.
+    CHECK(LeadOutside(g, inside, pts.front(), t.poses.front().th, -1, lead));
+    CHECK(LeadOutside(g, inside, pts.back(), t.poses.back().th, +1, lead));
+    // No random choice of allowed headings beats it.
     CoopRng rng(4242, 98);
-    std::vector<int> ord(n);
-    for (size_t i = 0; i < n; ++i) ord[i] = (int)i;
-    do {
-        for (int k = 0; k < 400; ++k) {
-            std::vector<Pose> ps;
-            for (int i : ord) ps.push_back({pts[i].x, pts[i].y, rng.Uniform(0, 2 * M_PI)});
-            double c = 0;
-            for (size_t i = 0; i + 1 < n; ++i) c += DubinsShortest(ps[i], ps[i + 1], rho).Length();
-            if (closed) c += DubinsShortest(ps[n - 1], ps[0], rho).Length();
-            CHECK(c >= t.length - 1e-6);
+    for (int k = 0, tried = 0; k < 2000 && tried < 200000; ++tried) {
+        std::vector<Pose> ps;
+        bool good = true;
+        for (size_t i = 0; i < n; ++i) {
+            ps.push_back({pts[i].x, pts[i].y, rng.Uniform(0, 2 * M_PI)});
+            good = good && (ok[i] == nullptr || ok[i](ps.back().th));
         }
-    } while (std::next_permutation(ord.begin(), ord.end()));
+        if (!good) continue;
+        ++k;
+        double c = 0;
+        for (size_t i = 0; i + 1 < n; ++i) c += DubinsShortest(ps[i], ps[i + 1], rho).Length();
+        CHECK(c >= t.length - 1e-6);
+    }
 }
 
 void CheckRoles(const std::vector<SensorNode>& v, size_t ch) {
@@ -221,7 +252,7 @@ int main(int argc, char* argv[]) {
     uint32_t cells = params::kRegionCells;
     double convexity = params::kConvexity;
     double rho = params::kMinTurnRadiusM;
-    bool open = false;
+    uint32_t pick = 0;
     std::string spacings = "20,35,50";
     uint32_t seed = 1;
     std::string out = "deploy";
@@ -231,7 +262,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("convexity", "target convexity: fill concavities until reached; 1 = convex",
                  convexity);
     cmd.AddValue("rho", "minimum turn radius of the flight path, m", rho);
-    cmd.AddValue("open", "open path instead of a closed loop", open);
+    cmd.AddValue("pick", "which random entry/exit pair (same region and nodes)", pick);
     cmd.AddValue("spacings", "node spacing(s), m, comma-separated: one node per s^2", spacings);
     cmd.AddValue("seed", "random seed", seed);
     cmd.AddValue("out", "output prefix", out);
@@ -389,59 +420,112 @@ int main(int argc, char* argv[]) {
         std::printf("         |   the CH is %s the best in all three at once\n", topAll ? "ALSO" : "NOT");
     }
 
-    // ---- step 5: a Dubins flight path through the strongest nodes -------------
-    std::printf("\nflight path through the %u strongest nodes (CH first): %s Dubins, min turn "
-                "radius %.1f m\n", params::kTourNodes, open ? "open" : "closed", rho);
+    // ---- step 5: a Dubins flight path across the cluster, over the CH ----------
+    // The cluster's outer edge (hole edges excluded: a hole is inside the cluster).
+    std::unordered_set<Hex, HexHash> inside(sel);
+    inside.insert(holes.begin(), holes.end());
+    std::vector<Edge> edges;
+    double perim = 0;
+    for (const Hex& h : reg.cells) {
+        const Point c = g.Centre(h);
+        const std::array<Point, 6> v = g.Corners(h);
+        for (int k = 0; k < 6; ++k) {
+            const Point& a = v[k];
+            const Point& b = v[(k + 1) % 6];
+            const Point m{(a.x + b.x) / 2, (a.y + b.y) / 2};
+            const Hex across = g.CellAt({2 * m.x - c.x, 2 * m.y - c.y});
+            CHECK(HexGrid::Distance(across, h) == 1);
+            if (inside.count(across)) continue;
+            const double d = std::hypot(c.x - m.x, c.y - m.y);
+            edges.push_back({a, b, {(c.x - m.x) / d, (c.y - m.y) / d}});
+            perim += std::hypot(b.x - a.x, b.y - a.y);
+        }
+    }
+    CHECK(!edges.empty());
+    // Two points drawn uniformly along that edge (by length).
+    CoopRng rx(seed, kStreamCross + pick);
+    auto onEdge = [&](size_t& which) {
+        double u = rx.Uniform() * perim;
+        for (which = 0; which + 1 < edges.size(); ++which) {
+            const double L = std::hypot(edges[which].b.x - edges[which].a.x, edges[which].b.y - edges[which].a.y);
+            if (u < L) break;
+            u -= L;
+        }
+        const Edge& e = edges[which];
+        const double L = std::hypot(e.b.x - e.a.x, e.b.y - e.a.y);
+        const double f = std::min(u / L, 1.0);
+        return Point{e.a.x + f * (e.b.x - e.a.x), e.a.y + f * (e.b.y - e.a.y)};
+    };
+    size_t eIn = 0, eOut = 0;
+    const Point entry = onEdge(eIn), exitP = onEdge(eOut);
+    // Flying in from, and out to, the outside: a straight lead of one turn radius
+    // before the entry and after the exit must stay outside the cluster.
+    const double lead = rho;
+    std::printf("\nflight path across the cluster (perimeter %.0f m, %zu edges): entry -> CH -> exit, "
+                "random entry/exit (pick %u), open Dubins, min turn radius %.1f m, straight "
+                "lead-in/out %.0f m outside\n", perim, edges.size(), pick, rho, lead);
+    std::printf("  entry (%.0f, %.0f), exit (%.0f, %.0f): %.0f m apart\n", entry.x, entry.y, exitP.x,
+                exitP.y, std::hypot(exitP.x - entry.x, exitP.y - entry.y));
+    // Strictly across the edge (not along it), and the lead clear of the cluster.
+    const Edge& EI = edges[eIn];
+    const Edge& EO = edges[eOut];
+    const std::vector<HeadingOk> ok = {
+        [&](double th) {
+            return std::cos(th) * EI.in.x + std::sin(th) * EI.in.y > 1e-6 &&
+                   LeadOutside(g, inside, entry, th, -1, lead);
+        },
+        nullptr,
+        [&](double th) {
+            return std::cos(th) * EO.in.x + std::sin(th) * EO.in.y < -1e-6 &&
+                   LeadOutside(g, inside, exitP, th, +1, lead);
+        }};
     for (const Roles& R : roles) {
-        std::vector<size_t> idx(R.nodes.size());
-        for (size_t i = 0; i < idx.size(); ++i) idx[i] = i;
-        std::sort(idx.begin(), idx.end(), [&](size_t a, size_t b) {
-            const double sa = R.nodes[a].Score(), sb = R.nodes[b].Score();
-            return sa != sb ? sa > sb : R.nodes[a].id < R.nodes[b].id;
-        });
-        idx.resize(std::min<size_t>(params::kTourNodes, idx.size()));
-        CHECK(idx.front() == R.ch);                       // the CH is among them, first
-        std::vector<Point> pts;
-        for (size_t i : idx) pts.push_back(R.nodes[i].pos);
-        const Tour t = PlanTour(pts, rho, !open);
-        CheckTour(t, pts, rho, !open);
-        double poly = 0;
-        for (size_t i = 0; i < t.legs.size(); ++i)
-            poly += std::hypot(t.poses[(i + 1) % pts.size()].x - t.poses[i].x,
-                               t.poses[(i + 1) % pts.size()].y - t.poses[i].y);
-        std::printf("  %4.0f m: nodes", R.s);
-        for (size_t i : idx) std::printf(" #%u", R.nodes[i].id);
-        std::printf("  | fly order");
-        for (int o : t.order) std::printf(" #%u", R.nodes[idx[o]].id);
-        std::printf("  | %.0f m (straight lines %.0f m, +%.0f%%) = %.1f s at %.0f m/s\n", t.length,
-                    poly, 100 * (t.length / poly - 1), t.length / params::kUavSpeedMps,
-                    params::kUavSpeedMps);
+        const SensorNode& chN = R.nodes[R.ch];
+        const std::vector<Point> pts = {entry, chN.pos, exitP};
+        const Path t = PlanPath(pts, rho, ok);
+        CHECK(!t.poses.empty());
+        CheckPath(g, inside, t, pts, ok, edges[eIn], edges[eOut], rho, lead);
+        const double poly = std::hypot(chN.pos.x - entry.x, chN.pos.y - entry.y) +
+                            std::hypot(exitP.x - chN.pos.x, exitP.y - chN.pos.y);
+        std::printf("  %4.0f m: CH #%u | entry -> CH -> exit %.0f m (straight lines %.0f m, +%.0f%%) "
+                    "= %.1f s at %.0f m/s; with leads %.0f m\n", R.s, chN.id, t.length, poly,
+                    100 * (t.length / poly - 1), t.length / params::kUavSpeedMps,
+                    params::kUavSpeedMps, t.length + 2 * lead);
         for (size_t i = 0; i < t.legs.size(); ++i)
             std::printf("         leg %zu: %s %.0f m (%.0f / %.0f / %.0f)\n", i + 1,
                         t.legs[i].Word().c_str(), t.legs[i].Length(), t.legs[i].seg[0] * rho,
                         t.legs[i].seg[1] * rho, t.legs[i].seg[2] * rho);
         char sfx[32];
         std::snprintf(sfx, sizeof sfx, "-s%.0f.csv", R.s);
-        FILE* fp = std::fopen((out + "-tour" + sfx).c_str(), "w");
-        std::fprintf(fp, "leg,seg,x,y,thDeg\n");
+        // part 0: lead-in, 1: entry -> CH, 2: CH -> exit, 3: lead-out; seg -1 = a lead
+        FILE* fp = std::fopen((out + "-path" + sfx).c_str(), "w");
+        std::fprintf(fp, "part,seg,x,y,thDeg\n");
+        auto leadLine = [&](int part, const Pose& p, double sign) {
+            for (double d = 0; d <= lead + 1e-9; d += 2) {
+                const double tt = sign < 0 ? d - lead : d;
+                std::fprintf(fp, "%d,-1,%.3f,%.3f,%.4f\n", part, p.x + tt * std::cos(p.th),
+                             p.y + tt * std::sin(p.th), p.th * 180 / M_PI);
+            }
+        };
+        leadLine(0, t.poses.front(), -1);
         for (size_t i = 0; i < t.legs.size(); ++i) {
             std::vector<int> sg;
             const std::vector<Pose> sm = DubinsSample(t.poses[i], t.legs[i], 2.0, &sg);
             for (size_t k = 0; k < sm.size(); ++k)
-                std::fprintf(fp, "%zu,%d,%.3f,%.3f,%.4f\n", i, sg[k], sm[k].x, sm[k].y,
+                std::fprintf(fp, "%zu,%d,%.3f,%.3f,%.4f\n", i + 1, sg[k], sm[k].x, sm[k].y,
                              sm[k].th * 180 / M_PI);
         }
+        leadLine(3, t.poses.back(), +1);
         std::fclose(fp);
-        FILE* fw = std::fopen((out + "-tourwp" + sfx).c_str(), "w");
-        std::fprintf(fw, "flyOrder,rank,id,x,y,score,thDeg,legWord,legM,closed,rho,lengthM\n");
-        for (size_t i = 0; i < t.poses.size(); ++i) {
-            const size_t rank = (size_t)t.order[i];
+        FILE* fw = std::fopen((out + "-pathwp" + sfx).c_str(), "w");
+        std::fprintf(fw, "point,id,x,y,thDeg,legWord,legM,rho,leadM,lengthM,pick\n");
+        const char* name[3] = {"entry", "CH", "exit"};
+        for (size_t i = 0; i < 3; ++i) {
             const bool hasLeg = i < t.legs.size();
-            std::fprintf(fw, "%zu,%zu,%u,%.3f,%.3f,%.6f,%.4f,%s,%.3f,%d,%.3f,%.3f\n", i, rank + 1,
-                         R.nodes[idx[rank]].id, t.poses[i].x, t.poses[i].y,
-                         R.nodes[idx[rank]].Score(), t.poses[i].th * 180 / M_PI,
-                         hasLeg ? t.legs[i].Word().c_str() : "-", hasLeg ? t.legs[i].Length() : 0.0,
-                         open ? 0 : 1, rho, t.length);
+            std::fprintf(fw, "%s,%d,%.3f,%.3f,%.4f,%s,%.3f,%.3f,%.3f,%.3f,%u\n", name[i],
+                         i == 1 ? (int)chN.id : -1, t.poses[i].x, t.poses[i].y,
+                         t.poses[i].th * 180 / M_PI, hasLeg ? t.legs[i].Word().c_str() : "-",
+                         hasLeg ? t.legs[i].Length() : 0.0, rho, lead, t.length, pick);
         }
         std::fclose(fw);
     }

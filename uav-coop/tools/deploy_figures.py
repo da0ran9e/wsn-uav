@@ -1,12 +1,15 @@
-"""Figures for step 1: lattice -> random contiguous region -> random nodes.
+"""Figures for step 1: lattice -> random contiguous region -> random nodes -> CH, CLs.
 
-    python3 tools/deploy_figures.py DIR OUTDIR [PREFIX] [SEEDS_GLOB]
+    python3 tools/deploy_figures.py DIR OUTDIR [--prefix deploy] [--seeds "seed*-lattice.csv"]
+                                    [--conv "conv*-lattice.csv"] [--sweep sweep.csv]
 
-DIR holds the output of uav-coop-deploy --out=PREFIX (default "deploy"):
-PREFIX-lattice.csv, PREFIX-growth.csv, PREFIX-nodes-sS.csv. SEEDS_GLOB (optional,
-e.g. "seed*-lattice.csv") adds a figure of the regions other seeds grow.
+DIR holds the output of uav-coop-deploy --out=PREFIX: PREFIX-lattice.csv,
+PREFIX-growth.csv, PREFIX-region.csv, PREFIX-nodes-sS.csv. Optional:
+  --seeds  regions other seeds give (free growth)       -> deploy-seeds.png
+  --conv   one run per convexity, same seed (convK-*)   -> deploy-convexity.png
+  --sweep  measured convexity over many seeds, per K     (panel of the same figure)
 """
-import csv, glob, math, os, re, sys
+import argparse, csv, glob, math, os, re, sys
 
 import matplotlib
 matplotlib.use("Agg")
@@ -71,7 +74,24 @@ def load(src, prefix):
     c = {(int(x["q"]), int(x["r"])): (float(x["cx"]), float(x["cy"])) for x in lat}
     a, b = c[(0, 0)], c[(1, 0)]
     w = math.hypot(b[0] - a[0], b[1] - a[1])
-    return lat, gro, nodes, w
+    mp = os.path.join(src, f"{prefix}-region.csv")
+    meta = next(csv.DictReader(open(mp))) if os.path.exists(mp) else {"convexityAsked": "0"}
+    return lat, gro, nodes, w, meta
+
+
+def ellipse_xy(lat, meta, w):
+    """Boundary of the envelope ellipse at the level that just holds its cells."""
+    a, th = float(meta["aspect"]), math.radians(float(meta["thetaDeg"]))
+    c, s = math.cos(th), math.sin(th)
+    t = 0.0
+    for x in lat:
+        if x.get("envelope") == "1":
+            px, py = float(x["cx"]), float(x["cy"])
+            u, v = px * c + py * s, -px * s + py * c
+            t = max(t, u * u / a + v * v * a)
+    ph = np.linspace(0, 2 * math.pi, 300)
+    u, v = math.sqrt(t * a) * np.cos(ph), math.sqrt(t / a) * np.sin(ph)
+    return u * c - v * s, u * s + v * c
 
 
 def style(ax):
@@ -97,7 +117,7 @@ def frame(ax, cells, w, pad=1.6):
 
 
 # ------------------------------------------------------------------ figure: the steps
-def fig_steps(lat, gro, nodes, w, out, s_show=35):
+def fig_steps(lat, gro, nodes, w, out, s_show, meta):
     sel = {(int(x["q"]), int(x["r"])) for x in lat if x["selected"] == "1"}
     allc = {(int(x["q"]), int(x["r"])) for x in lat}
     order = [(int(x["q"]), int(x["r"])) for x in gro]
@@ -134,13 +154,22 @@ def fig_steps(lat, gro, nodes, w, out, s_show=35):
     a.add_collection(pc)
     a.add_collection(LineCollection(boundary(sel, w), colors=INK, linewidths=1.2, zorder=3))
     a.plot(0, 0, "*", ms=11, color=FRONTIER, mec=INK, mew=.6, zorder=4)
+    convex = float(meta["convexityAsked"]) >= 1.0
     cb = fig.colorbar(pc, ax=a, shrink=.55, pad=.01)
-    cb.set_label("thứ tự được thêm vào vùng", fontsize=7.5, color=INK2)
+    cb.set_label("thứ hạng khoảng cách elip từ tâm" if convex else "thứ tự được thêm vào vùng",
+                 fontsize=7.5, color=INK2)
     cb.ax.tick_params(labelsize=7, colors=INK2)
     cb.outline.set_visible(False)
     frame(a, sel, w)
-    a.set_title(f"② Chọn ngẫu nhiên {len(sel)} cell liền kề\nmọc từ cell gốc, mỗi bước thêm một "
-                "cell kề", loc="left", fontsize=10, color=INK)
+    if convex:
+        ex, ey = ellipse_xy(lat, meta, w)
+        a.plot(ex, ey, color=FRONTIER, lw=1.6, ls="--", zorder=4)
+        a.set_title(f"② Vùng lồi κ = 1: elip ngẫu nhiên (dẹt {float(meta['aspect']):.2f}, nghiêng "
+                    f"{float(meta['thetaDeg']):.0f}°)\n{len(sel)} cell có tâm gần gốc nhất theo "
+                    "khoảng cách elip", loc="left", fontsize=10, color=INK)
+    else:
+        a.set_title(f"② Chọn ngẫu nhiên {len(sel)} cell liền kề (κ = {float(meta['convexityAsked']):g})"
+                    "\nmọc từ cell gốc, mỗi bước thêm một cell kề", loc="left", fontsize=10, color=INK)
     style(a)
 
     # 3. the nodes
@@ -269,22 +298,171 @@ def fig_seeds(files, out):
     print(f"  {out}")
 
 
+# ------------------------------------------------------------------ figure: capabilities and roles
+STRENGTH = LinearSegmentedColormap.from_list("strength", ["#e3eefc", "#86b6ef", "#2a78d6", "#0d366b"])
+C_CL, C_CH = "#eda100", "#e34948"
+
+
+def fig_roles(lat, nodes, w, out, s):
+    sel = {(int(x["q"]), int(x["r"])) for x in lat if x["selected"] == "1"}
+    nd = nodes[s]
+    X = np.array([float(n["x"]) for n in nd]); Y = np.array([float(n["y"]) for n in nd])
+    S = np.array([float(n["score"]) for n in nd])
+    cl = np.array([n["isCL"] == "1" for n in nd]); ch = np.array([n["isCH"] == "1" for n in nd])
+    fig = plt.figure(figsize=(17, 7.6), dpi=170, facecolor=SURF)
+    gs = fig.add_gridspec(3, 3, width_ratios=[2.3, 1, 1], hspace=.75, wspace=.32,
+                          left=.03, right=.98, top=.86, bottom=.08)
+    a = fig.add_subplot(gs[:, 0])
+    hexes(a, sel, w, "#f3f2ee", "#ffffff", lw=.8)
+    a.add_collection(LineCollection(boundary(sel, w), colors=INK, linewidths=1.2, zorder=3))
+    o = np.argsort(S)
+    sc = a.scatter(X[o], Y[o], c=S[o], cmap=STRENGTH, vmin=0, vmax=S.max(), s=14, lw=0, zorder=4)
+    a.scatter(X[cl & ~ch], Y[cl & ~ch], s=58, facecolors="none", edgecolors=C_CL, linewidths=1.6, zorder=5)
+    a.scatter(X[ch], Y[ch], s=340, marker="*", color=C_CH, edgecolors=INK, linewidths=.8, zorder=6)
+    c = [n for n in nd if n["isCH"] == "1"][0]
+    a.annotate(f"CH #{c['id']}\nquan sát {float(c['obs']):.2f} · tính toán {float(c['cpu']):.2f} · "
+               f"giao tiếp {float(c['comm']):.2f}\nđiểm = {float(c['score']):.3f}",
+               (float(c["x"]), float(c["y"])), xytext=(18, 18), textcoords="offset points",
+               fontsize=8.5, color=INK, bbox=dict(boxstyle="round,pad=.3", fc=SURF, ec=INK2, lw=.6),
+               arrowprops=dict(arrowstyle="-", color=INK2, lw=.8), zorder=7)
+    cb = fig.colorbar(sc, ax=a, shrink=.45, pad=.07, location="bottom")
+    cb.set_label("điểm = quan sát × tính toán × giao tiếp", fontsize=8, color=INK2)
+    cb.ax.tick_params(labelsize=7, colors=INK2); cb.outline.set_visible(False)
+    a.scatter([], [], s=58, facecolors="none", edgecolors=C_CL, linewidths=1.6, label="CL: mạnh nhất cell")
+    a.scatter([], [], s=200, marker="*", color=C_CH, edgecolors=INK, linewidths=.8, label="CH: mạnh nhất vùng")
+    a.legend(loc="lower left", fontsize=8.5, frameon=False, labelcolor=INK2)
+    frame(a, sel, w, pad=1.0)
+    empty = len(sel) - int(cl.sum())
+    a.set_title(f"Spacing {s} m: {len(nd)} node · {int(cl.sum())} CL (một mỗi cell có node"
+                f"{'' if not empty else f'; {empty} cell trống'}) · 1 CH",
+                loc="left", fontsize=10.5, color=INK)
+    style(a)
+    # the three capabilities
+    for k, (col, lab) in enumerate((("obs", "quan sát  ~ U[0, 1)"), ("cpu", "tính toán  ~ U[0, 1)"),
+                                    ("comm", "giao tiếp  ~ U(0, 1]  (> 0)"))):
+        b = fig.add_subplot(gs[k, 1])
+        v = np.array([float(n[col]) for n in nd])
+        b.hist(v, bins=20, range=(0, 1), color="#86b6ef", edgecolor=SURF, lw=1)
+        b.hist(v[cl], bins=20, range=(0, 1), color=C_CL, edgecolor=SURF, lw=1, alpha=.9)
+        b.axvline(float(c[col]), color=C_CH, lw=1.6)
+        b.set_title(lab, loc="left", fontsize=9, color=INK)
+        b.tick_params(colors=INK2, labelsize=7)
+        b.set_facecolor(SURF)
+        for sp in b.spines.values():
+            sp.set_visible(False)
+    # strength: everyone vs CLs vs CH
+    b = fig.add_subplot(gs[:2, 2])
+    b.hist(S, bins=30, range=(0, 1), color="#86b6ef", edgecolor=SURF, lw=1, label="mọi node")
+    b.hist(S[cl], bins=30, range=(0, 1), color=C_CL, edgecolor=SURF, lw=1, label="CL")
+    b.axvline(S[ch][0], color=C_CH, lw=1.8, label="CH")
+    b.set_xlabel("điểm", fontsize=8, color=INK2)
+    b.set_title("Điểm: tích ba thuộc tính\nphần lớn node yếu vì chỉ cần MỘT thuộc tính thấp",
+                loc="left", fontsize=9.5, color=INK)
+    b.legend(fontsize=8, frameon=False, labelcolor=INK2)
+    b.tick_params(colors=INK2, labelsize=7); b.set_facecolor(SURF)
+    for sp in b.spines.values():
+        sp.set_visible(False)
+    b = fig.add_subplot(gs[2, 2])
+    b.axis("off")
+    top = {col: max(float(n[col]) for n in nd) for col in ("obs", "cpu", "comm")}
+    b.text(0, 1, "Không node nào đứng đầu cả ba cùng lúc.\n"
+           f"Cao nhất từng thuộc tính:\n  quan sát {top['obs']:.3f}, tính toán {top['cpu']:.3f},\n"
+           f"  giao tiếp {top['comm']:.3f}\n"
+           f"CH: {float(c['obs']):.3f}, {float(c['cpu']):.3f}, {float(c['comm']):.3f}\n"
+           "→ CH = tích lớn nhất,\n   không phải max từng thuộc tính.",
+           fontsize=8.5, color=INK, va="top", transform=b.transAxes)
+    fig.text(.03, .97, "Thuộc tính và vai trò của node — vạch dọc đỏ = CH, cột cam = phân bố của các CL",
+             fontsize=12.5, color=INK, ha="left", va="top")
+    fig.savefig(out, facecolor=SURF)
+    print(f"  {out}")
+
+
+# ------------------------------------------------------------------ figure: the convexity knob
+def fig_convexity(files, sweep, out):
+    def kap(f):
+        return float(re.search(r"conv([\d.]+)-lattice\.csv$", f).group(1))
+    files = sorted(files, key=kap, reverse=True)
+    n = len(files) + (1 if sweep else 0)
+    fig, ax = plt.subplots(1, n, figsize=(3.4 * n, 4.2), dpi=170, facecolor=SURF)
+    for a, f in zip(ax, files):
+        lat = list(csv.DictReader(open(f)))
+        meta = next(csv.DictReader(open(f.replace("-lattice.csv", "-region.csv"))))
+        c = {(int(x["q"]), int(x["r"])): (float(x["cx"]), float(x["cy"])) for x in lat}
+        w = math.hypot(c[(1, 0)][0] - c[(0, 0)][0], c[(1, 0)][1] - c[(0, 0)][1])
+        sel = {(int(x["q"]), int(x["r"])) for x in lat if x["selected"] == "1"}
+        env = {(int(x["q"]), int(x["r"])) for x in lat if x["envelope"] == "1"}
+        holes = {(int(x["q"]), int(x["r"])) for x in lat if x["hole"] == "1"}
+        hexes(a, env - sel, w, SURF, "#c3c2b7", lw=.5)
+        hexes(a, sel, w, REGION, "#ffffff", lw=.4, z=2)
+        if holes:
+            hexes(a, holes, w, HOLE, INK2, lw=.7, z=2)
+        a.add_collection(LineCollection(boundary(sel, w), colors=INK, linewidths=1.0, zorder=3))
+        if env:
+            ex, ey = ellipse_xy(lat, meta, w)
+            a.plot(ex, ey, color=FRONTIER, lw=1.3, ls="--", zorder=4)
+        a.plot(0, 0, "*", ms=7, color=FRONTIER, mec=INK, mew=.5, zorder=5)
+        frame(a, sel | env, w, pad=.9)
+        k = float(meta["convexityAsked"])
+        a.set_title(f"κ = {k:g}" + (" (mọc tự do)" if k == 0 else "") +
+                    f"\nđộ lồi đo được {float(meta['convexityMeasured']):.2f}", loc="left",
+                    fontsize=9.5, color=INK)
+        style(a); a.set_xticks([]); a.set_yticks([])
+    if sweep:
+        a = ax[-1]
+        rows = list(csv.DictReader(open(sweep)))
+        ks = sorted({float(r["kappa"]) for r in rows if float(r["kappa"]) > 0})
+        m = [np.mean([float(r["measured"]) for r in rows if float(r["kappa"]) == k]) for k in ks]
+        lo = [np.min([float(r["measured"]) for r in rows if float(r["kappa"]) == k]) for k in ks]
+        hi = [np.max([float(r["measured"]) for r in rows if float(r["kappa"]) == k]) for k in ks]
+        free = [float(r["measured"]) for r in rows if float(r["kappa"]) == 0]
+        a.fill_between(ks, lo, hi, color="#86b6ef", alpha=.35, lw=0)
+        a.plot(ks, m, "-o", color="#2a78d6", ms=5, lw=2)
+        a.plot([0, 1], [0, 1], color=INK2, lw=.8, ls=":")
+        a.axhline(np.mean(free), color=FRONTIER, lw=1.2, ls="--")
+        a.text(.32, np.mean(free) - .035, f"mọc tự do (κ = 0): {np.mean(free):.2f}", fontsize=7.5,
+               color=INK2)
+        a.set_xlim(.25, 1.02); a.set_ylim(.5, 1.02)
+        a.set_xlabel("κ đặt", fontsize=8, color=INK2)
+        a.set_ylabel("độ lồi đo được", fontsize=8, color=INK2)
+        a.set_title(f"30 seed mỗi κ: trung bình\n(vùng tô: min–max)", loc="left", fontsize=9.5, color=INK)
+        a.grid(color=GRID, lw=.6); a.set_facecolor(SURF)
+        a.tick_params(colors=INK2, labelsize=7.5)
+        for sp in a.spines.values():
+            sp.set_visible(False)
+    fig.suptitle("Tham số độ lồi κ: vùng chiếm một phần κ của bao lồi ngẫu nhiên (elip, nét đứt vàng) — "
+                 "κ = 1 lồi tuyệt đối; độ lồi = số cell ÷ số cell trong bao lồi của vùng",
+                 x=.01, ha="left", fontsize=11, color=INK, y=1.0)
+    fig.tight_layout(rect=(0, 0, 1, .9))
+    fig.savefig(out, facecolor=SURF)
+    print(f"  {out}")
+
+
 def main():
-    src, outdir = sys.argv[1], sys.argv[2]
-    prefix = sys.argv[3] if len(sys.argv) > 3 else "deploy"
-    seeds = sys.argv[4] if len(sys.argv) > 4 else None
-    os.makedirs(outdir, exist_ok=True)
-    lat, gro, nodes, w = load(src, prefix)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("src"); ap.add_argument("outdir")
+    ap.add_argument("--prefix", default="deploy")
+    ap.add_argument("--seeds"); ap.add_argument("--conv"); ap.add_argument("--sweep")
+    o = ap.parse_args()
+    os.makedirs(o.outdir, exist_ok=True)
+    lat, gro, nodes, w, meta = load(o.src, o.prefix)
     global W
     W = w
     show = 35 if 35 in nodes else sorted(nodes)[len(nodes) // 2]
-    fig_steps(lat, gro, nodes, w, os.path.join(outdir, "deploy-steps.png"), show)
-    fig_growth(lat, gro, w, os.path.join(outdir, "deploy-growth.png"))
-    fig_spacing(lat, nodes, w, os.path.join(outdir, "deploy-spacing.png"))
-    if seeds:
-        fs = glob.glob(os.path.join(src, seeds))
+    fig_steps(lat, gro, nodes, w, os.path.join(o.outdir, "deploy-steps.png"), show, meta)
+    if float(meta["convexityAsked"]) < 1.0:      # a convex region is not grown
+        fig_growth(lat, gro, w, os.path.join(o.outdir, "deploy-growth.png"))
+    fig_spacing(lat, nodes, w, os.path.join(o.outdir, "deploy-spacing.png"))
+    if "score" in nodes[show][0]:
+        fig_roles(lat, nodes, w, os.path.join(o.outdir, "deploy-roles.png"), show)
+    if o.seeds:
+        fs = glob.glob(os.path.join(o.src, o.seeds))
         if fs:
-            fig_seeds(fs, os.path.join(outdir, "deploy-seeds.png"))
+            fig_seeds(fs, os.path.join(o.outdir, "deploy-seeds.png"))
+    if o.conv:
+        fs = glob.glob(os.path.join(o.src, o.conv))
+        if fs:
+            fig_convexity(fs, os.path.join(o.src, o.sweep) if o.sweep else None,
+                          os.path.join(o.outdir, "deploy-convexity.png"))
 
 
 if __name__ == "__main__":

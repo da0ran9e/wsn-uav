@@ -5,8 +5,10 @@ project that starts from the parameter set measured in `uav-sar`'s urban
 experiments (`uav-sar/docs/A2G-RUN-vi.md`, `A2G-SWEEP-vi.md`, `G2G-CHAIN-vi.md`).
 Those values live in `models/common/coop-params.h`.
 
-**Status: step 1 — deployment.** Hex lattice from the origin → random contiguous
-region of cells → random sensor nodes. See [`docs/DEPLOY-vi.md`](docs/DEPLOY-vi.md).
+**Status: step 1 — deployment.** Hex lattice from the origin → contiguous region of
+cells with a convexity knob (default: fully convex) → random sensor nodes with three
+random capabilities → one CH for the region, one CL per cell.
+See [`docs/DEPLOY-vi.md`](docs/DEPLOY-vi.md).
 
 ## Layout
 ```
@@ -16,8 +18,8 @@ uav-coop/
 │   ├── coop-params.h         # the carried-over parameter set
 │   ├── coop-rng.h            # portable seeded RNG (mt19937_64, independent streams)
 │   ├── hex-grid.{h,cc}       # pointy-top lattice, axial coordinates
-│   ├── region.{h,cc}         # Eden growth of a contiguous region; holes; connectivity
-│   └── deploy.{h,cc}         # uniform random nodes, one per spacing^2
+│   ├── region.{h,cc}         # region of given convexity (envelope + growth); holes; convexity
+│   └── deploy.{h,cc}         # uniform random nodes; capabilities; CH and CL roles
 ├── examples/coop-deploy.cc   # runs step 1 with checks, writes CSV
 ├── tools/deploy_figures.py   # the step-by-step figures
 └── docs/                     # DEPLOY-vi.md, figures/, data/
@@ -29,6 +31,6 @@ ln -s /home/user/wsn-uav/uav-coop /home/user/ns3-dev/src/uav-coop
 cd /home/user/ns3-dev
 python3.10 ./ns3 configure -d optimized --enable-examples --enable-modules="uav-sar;uav-coop"
 cmake --build cmake-cache -j 4
-./build/src/uav-coop/examples/ns3.46-uav-coop-deploy-optimized --cells=60 --spacings=20,35,50 --seed=1 --out=deploy
-python3 /home/user/wsn-uav/uav-coop/tools/deploy_figures.py . figures deploy "seed*-lattice.csv"
+./build/src/uav-coop/examples/ns3.46-uav-coop-deploy-optimized --cells=60 --convexity=1 --spacings=20,35,50 --seed=1 --out=deploy
+python3 /home/user/wsn-uav/uav-coop/tools/deploy_figures.py . figures
 ```

@@ -20,6 +20,11 @@ namespace ns3::uavcoop::params {
 inline constexpr double   kCellWidthM   = 100.0;
 inline constexpr uint32_t kRegionCells  = 60;      // [design] size of the random region
 inline constexpr double   kSpacingM     = 30.0;    // [design] 20-50 m: one node per spacing^2
+// Convexity = the share of a random convex envelope the region fills. 1: the region
+// IS the envelope (convex). Lower: a random contiguous subset of it. 0: no envelope
+// at all, free growth (step 1's original behaviour).
+inline constexpr double   kConvexity    = 1.0;
+inline constexpr double   kMaxAspect    = 2.0;     // [design] envelope: ellipse, aspect U[1, this]
 
 // ---- UAV --------------------------------------------------------------------
 inline constexpr double kUavAltM    = 100.0;

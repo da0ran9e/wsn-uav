@@ -144,9 +144,6 @@ void CheckDubins() {
     CHECK(std::fabs(s.Length() - 1000) < 1e-9);
 }
 
-// A boundary edge of the cluster: the shared side of a cluster cell and a cell outside.
-struct Edge { Point a, b, in; };   // in: unit normal pointing into the cluster
-
 // The straight line flown before the entry (sign -1) or after the exit (+1), lead m
 // long, stays outside the cluster.
 bool LeadOutside(const HexGrid& g, const std::unordered_set<Hex, HexHash>& inside, const Point& p,
@@ -215,13 +212,15 @@ void CheckPath(const HexGrid& g, const std::unordered_set<Hex, HexHash>& inside,
     }
 }
 
-void CheckRoles(const std::vector<SensorNode>& v, size_t ch) {
+void CheckRoles(const std::vector<SensorNode>& v, size_t ch, const std::vector<double>& ed,
+                double margin) {
     size_t nCH = 0;
     std::map<Hex, std::vector<size_t>> byCell;
+    CHECK(ch < v.size() && ed[ch] >= margin);              // the CH is far enough in
     for (size_t i = 0; i < v.size(); ++i) {
         CHECK(v[i].obs >= 0 && v[i].obs < 1 && v[i].cpu >= 0 && v[i].cpu < 1);
         CHECK(v[i].comm > 0 && v[i].comm <= 1);
-        CHECK(v[i].Score() <= v[ch].Score());              // nobody beats the CH
+        if (ed[i] >= margin) CHECK(v[i].Score() <= v[ch].Score());   // no eligible node beats it
         nCH += v[i].isCH;
         byCell[v[i].cell].push_back(i);
     }
@@ -230,6 +229,7 @@ void CheckRoles(const std::vector<SensorNode>& v, size_t ch) {
         size_t nCL = 0, cl = 0;
         for (size_t i : idx) if (v[i].isCL) { nCL++; cl = i; }
         CHECK(nCL == 1);                                   // exactly one CL per occupied cell
+        if (cell == v[ch].cell) continue;                  // the CH's cell: the CH, see above
         for (size_t i : idx) CHECK(v[i].Score() <= v[cl].Score());
     }
 }
@@ -253,6 +253,7 @@ int main(int argc, char* argv[]) {
     double convexity = params::kConvexity;
     double rho = params::kMinTurnRadiusM;
     uint32_t pick = 0;
+    double chMargin = params::kChMarginM;
     std::string spacings = "20,35,50";
     uint32_t seed = 1;
     std::string out = "deploy";
@@ -262,12 +263,13 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("convexity", "target convexity: fill concavities until reached; 1 = convex",
                  convexity);
     cmd.AddValue("rho", "minimum turn radius of the flight path, m", rho);
+    cmd.AddValue("chMargin", "the CH is at least this far from the cluster's edge, m", chMargin);
     cmd.AddValue("pick", "which random entry/exit pair (same region and nodes)", pick);
     cmd.AddValue("spacings", "node spacing(s), m, comma-separated: one node per s^2", spacings);
     cmd.AddValue("seed", "random seed", seed);
     cmd.AddValue("out", "output prefix", out);
     cmd.Parse(argc, argv);
-    CHECK(radius > 0 && cells >= 1 && convexity >= 0 && convexity <= 1 && rho > 0);
+    CHECK(radius > 0 && cells >= 1 && convexity >= 0 && convexity <= 1 && rho > 0 && chMargin >= 0);
 
     // ---- step 1: the lattice ----------------------------------------------
     const HexGrid g = HexGrid::FromRadius(radius);
@@ -341,10 +343,22 @@ int main(int argc, char* argv[]) {
         std::fclose(fm);
     }
 
+    // The cluster's outer edge: for the CH margin and for the entry/exit points.
+    const std::vector<Edge> edges = OuterEdges(g, reg);
+    CHECK(!edges.empty());
+    double perim = 0;
+    for (const Edge& e : edges) {
+        perim += std::hypot(e.b.x - e.a.x, e.b.y - e.a.y);
+        // the normal points into the cluster: just inside is in, just outside is out
+        const Point m{(e.a.x + e.b.x) / 2, (e.a.y + e.b.y) / 2};
+        CHECK(sel.count(g.CellAt({m.x + 1e-3 * e.in.x, m.y + 1e-3 * e.in.y})) == 1);
+        CHECK(sel.count(g.CellAt({m.x - 1e-3 * e.in.x, m.y - 1e-3 * e.in.y})) == 0);
+    }
+
     // ---- step 3: random nodes, one per spacing^2 ------------------------------
     std::stringstream ss(spacings);
     std::string tok;
-    struct Roles { double s; std::vector<SensorNode> nodes; size_t ch; };
+    struct Roles { double s; std::vector<SensorNode> nodes; size_t ch, free; std::vector<double> ed; };
     std::vector<Roles> roles;
     std::printf("\n%8s %7s %11s %13s %14s %16s %10s\n", "spacing", "nodes", "per cell",
                 "per-cell sd", "chi2 / dof", "NN dist mean", "NN min");
@@ -355,9 +369,25 @@ int main(int argc, char* argv[]) {
         std::vector<SensorNode> nodes = DeployNodes(g, reg, s, rn);
         CoopRng rc(seed, kStreamCaps);    // own stream: positions do not depend on it
         AssignCapabilities(nodes, rc);
-        const size_t ch = AssignRoles(nodes);
-        CheckRoles(nodes, ch);
-        roles.push_back({s, nodes, ch});
+        std::vector<double> ed(nodes.size());
+        for (size_t i = 0; i < nodes.size(); ++i) ed[i] = EdgeDistance(nodes[i].pos, edges);
+        // Without the margin, for comparison: only the CH and its cell's CL may differ.
+        std::vector<SensorNode> freeRoles = nodes;
+        const size_t free = AssignRoles(freeRoles, ed, 0.0);
+        CheckRoles(freeRoles, free, ed, 0.0);
+        const size_t ch = AssignRoles(nodes, ed, chMargin);
+        if (ch == nodes.size()) {
+            std::fprintf(stderr, "no node is %.0f m from the edge: lower --chMargin\n", chMargin);
+            return 1;
+        }
+        CheckRoles(nodes, ch, ed, chMargin);
+        for (size_t i = 0; i < nodes.size(); ++i) {
+            CHECK(nodes[i].pos.x == freeRoles[i].pos.x && nodes[i].pos.y == freeRoles[i].pos.y);
+            CHECK(nodes[i].Score() == freeRoles[i].Score());
+            if (nodes[i].isCL != freeRoles[i].isCL)
+                CHECK(nodes[i].cell == nodes[ch].cell || nodes[i].cell == nodes[free].cell);
+        }
+        roles.push_back({s, nodes, ch, free, ed});
         CHECK(nodes.size() == NodeCount(g, reg, s));
         std::vector<uint32_t> perCell(nFinal, 0);
         for (const SensorNode& nd : nodes) {
@@ -385,10 +415,10 @@ int main(int argc, char* argv[]) {
                     nodes.size(), mean, std::sqrt(var / cells), chi2, dof, nnMean, nnMean / s,
                     nnMin);
         FILE* f = std::fopen((out + "-nodes-s" + tok + ".csv").c_str(), "w");
-        std::fprintf(f, "id,x,y,q,r,nnM,obs,cpu,comm,score,isCH,isCL\n");
+        std::fprintf(f, "id,x,y,q,r,nnM,edgeM,obs,cpu,comm,score,isCH,isCL\n");
         for (size_t i = 0; i < nodes.size(); ++i)
-            std::fprintf(f, "%u,%.3f,%.3f,%d,%d,%.3f,%.6f,%.6f,%.6f,%.6f,%d,%d\n", nodes[i].id,
-                         nodes[i].pos.x, nodes[i].pos.y, nodes[i].cell.q, nodes[i].cell.r, nn[i],
+            std::fprintf(f, "%u,%.3f,%.3f,%d,%d,%.3f,%.3f,%.6f,%.6f,%.6f,%.6f,%d,%d\n", nodes[i].id,
+                         nodes[i].pos.x, nodes[i].pos.y, nodes[i].cell.q, nodes[i].cell.r, nn[i], ed[i],
                          nodes[i].obs, nodes[i].cpu, nodes[i].comm, nodes[i].Score(),
                          nodes[i].isCH ? 1 : 0, nodes[i].isCL ? 1 : 0);
         std::fclose(f);
@@ -418,30 +448,15 @@ int main(int argc, char* argv[]) {
         std::printf("%6.0f m | %-44s | %9u %13zu %12.3f\n", R.s, chs, nCL,
                     (size_t)nFinal - occupied.size(), clSum / nCL);
         std::printf("         |   the CH is %s the best in all three at once\n", topAll ? "ALSO" : "NOT");
+        const SensorNode& f = R.nodes[R.free];
+        std::printf("         |   %.0f m from the edge (margin %.0f m); strongest anywhere: #%u, "
+                    "strength %.3f, %.0f m from the edge%s\n", R.ed[R.ch], chMargin, f.id,
+                    f.Score(), R.ed[R.free], R.free == R.ch ? " (the same node)" : "");
     }
 
     // ---- step 5: a Dubins flight path across the cluster, over the CH ----------
-    // The cluster's outer edge (hole edges excluded: a hole is inside the cluster).
     std::unordered_set<Hex, HexHash> inside(sel);
     inside.insert(holes.begin(), holes.end());
-    std::vector<Edge> edges;
-    double perim = 0;
-    for (const Hex& h : reg.cells) {
-        const Point c = g.Centre(h);
-        const std::array<Point, 6> v = g.Corners(h);
-        for (int k = 0; k < 6; ++k) {
-            const Point& a = v[k];
-            const Point& b = v[(k + 1) % 6];
-            const Point m{(a.x + b.x) / 2, (a.y + b.y) / 2};
-            const Hex across = g.CellAt({2 * m.x - c.x, 2 * m.y - c.y});
-            CHECK(HexGrid::Distance(across, h) == 1);
-            if (inside.count(across)) continue;
-            const double d = std::hypot(c.x - m.x, c.y - m.y);
-            edges.push_back({a, b, {(c.x - m.x) / d, (c.y - m.y) / d}});
-            perim += std::hypot(b.x - a.x, b.y - a.y);
-        }
-    }
-    CHECK(!edges.empty());
     // Two points drawn uniformly along that edge (by length).
     CoopRng rx(seed, kStreamCross + pick);
     auto onEdge = [&](size_t& which) {

@@ -25,6 +25,11 @@ inline constexpr double   kSpacingM     = 30.0;    // [design] 20-50 m: one node
 // below the grown region's own convexity (~0.55-0.82) change nothing.
 inline constexpr double   kConvexity    = 1.0;
 
+// The CH must be at least this far from the cluster's outer edge ([design]; 0 = the
+// strongest node anywhere). Only narrows who may be CH: positions and capabilities
+// of every node are drawn exactly as without it.
+inline constexpr double   kChMarginM    = 300.0;
+
 // ---- flight path (step 2) ---------------------------------------------------
 // Minimum turn radius v^2 / (g tan(bank)): 50 m/s, 45 deg -> 254.9 m (the same fixed-wing
 // turn as uav-sar's lawnmower sweep).

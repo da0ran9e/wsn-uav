@@ -48,6 +48,17 @@ std::vector<Hex> Holes(const Region& reg);
 // True if every cell can reach every other through shared edges.
 bool IsConnected(const std::vector<Hex>& cells);
 
+// A side of the cluster's outer edge: shared by a cluster cell and a cell outside
+// (hole sides excluded -- a hole is inside the cluster).
+struct Edge {
+    Point a, b;
+    Point in;   // unit normal pointing into the cluster
+};
+std::vector<Edge> OuterEdges(const HexGrid& g, const Region& reg);
+
+// Distance from p to the nearest of the edges.
+double EdgeDistance(const Point& p, const std::vector<Edge>& edges);
+
 }  // namespace ns3::uavcoop
 
 #endif

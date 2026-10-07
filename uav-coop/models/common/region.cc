@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <deque>
+#include <limits>
 
 namespace ns3::uavcoop {
 
@@ -154,6 +155,35 @@ bool IsConnected(const std::vector<Hex>& cells) {
             }
     }
     return seen.size() == in.size();
+}
+
+std::vector<Edge> OuterEdges(const HexGrid& g, const Region& reg) {
+    std::unordered_set<Hex, HexHash> inside(reg.cells.begin(), reg.cells.end());
+    for (const Hex& h : Holes(reg)) inside.insert(h);
+    std::vector<Edge> edges;
+    for (const Hex& h : reg.cells) {
+        const Point c = g.Centre(h);
+        const std::array<Point, 6> v = g.Corners(h);
+        for (int k = 0; k < 6; ++k) {
+            const Point& a = v[k];
+            const Point& b = v[(k + 1) % 6];
+            const Point m{(a.x + b.x) / 2, (a.y + b.y) / 2};
+            if (inside.count(g.CellAt({2 * m.x - c.x, 2 * m.y - c.y}))) continue;   // the cell across
+            const double d = std::hypot(c.x - m.x, c.y - m.y);
+            edges.push_back({a, b, {(c.x - m.x) / d, (c.y - m.y) / d}});
+        }
+    }
+    return edges;
+}
+
+double EdgeDistance(const Point& p, const std::vector<Edge>& edges) {
+    double best = std::numeric_limits<double>::infinity();
+    for (const Edge& e : edges) {
+        const double ex = e.b.x - e.a.x, ey = e.b.y - e.a.y;
+        const double t = std::clamp(((p.x - e.a.x) * ex + (p.y - e.a.y) * ey) / (ex * ex + ey * ey), 0.0, 1.0);
+        best = std::min(best, std::hypot(p.x - e.a.x - t * ex, p.y - e.a.y - t * ey));
+    }
+    return best;
 }
 
 }  // namespace ns3::uavcoop

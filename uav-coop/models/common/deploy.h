@@ -38,10 +38,13 @@ std::vector<SensorNode> DeployNodes(const HexGrid& g, const Region& reg, double 
 // obs ~ U[0, 1), cpu ~ U[0, 1), comm ~ U(0, 1].
 void AssignCapabilities(std::vector<SensorNode>& nodes, CoopRng& rng);
 
-// CH: the strongest node of the whole region. CL: the strongest node of each cell
-// that has any (the CH is also its own cell's CL). Ties go to the lower id.
-// Returns the index of the CH.
-size_t AssignRoles(std::vector<SensorNode>& nodes);
+// CH: the strongest node among those at least `margin` from the cluster's edge
+// (edgeDist[i] for node i). CL: the strongest node of each cell that has any, except
+// that the CH leads its own cell. Ties go to the lower id. Positions and capabilities
+// are not touched: the margin only narrows who may be CH.
+// Returns the index of the CH, or nodes.size() if no node is far enough in.
+size_t AssignRoles(std::vector<SensorNode>& nodes, const std::vector<double>& edgeDist,
+                   double margin);
 
 }  // namespace ns3::uavcoop
 

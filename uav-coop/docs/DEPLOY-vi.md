@@ -69,14 +69,36 @@ Khả năng **quan sát** ~ U[0, 1), **tính toán** ~ U[0, 1), **giao tiếp** 
 (luôn > 0). Điểm = **tích** của ba thuộc tính: cao chỉ khi cả ba cùng cao. Không node
 nào đứng đầu cả ba cùng lúc, nên cần một điểm gộp.
 
-- **CH** = mạnh nhất vùng.
-- **CL** = mạnh nhất mỗi cell. CH cũng là CL của cell nó nằm.
+- **CH** = node mạnh nhất **trong số các node cách biên cụm ít nhất d** (`--chMargin`,
+  mặc định **300 m**; 0 = không ràng buộc).
+- **CL** = mạnh nhất mỗi cell. Riêng cell chứa CH thì CH làm CL.
+
+**Vì sao ràng buộc này không làm lệch phân bố các node khác:** vị trí và thuộc tính của
+mọi node vẫn được bốc y như cũ, từ cùng luồng ngẫu nhiên. Ràng buộc chỉ thu hẹp tập
+node được phép làm CH, tức chỉ đổi nhãn. Chương trình kiểm tra điều này mỗi lần chạy:
+vị trí và điểm của từng node trùng khớp với khi không có ràng buộc, và nhãn CL chỉ có
+thể khác ở cell của CH mới và cell của CH cũ.
+
+Không chọn hai cách khác:
+- bốc lại vị trí CH thì phân bố đều của vị trí bị phá;
+- đổi thuộc tính của node mạnh nhất cho một node ở giữa cụm thì làm thuộc tính phụ thuộc
+  vào vị trí.
 
 ![vai trò](figures/deploy-roles.png)
 
-CH ở cả ba mật độ là cùng node **#825**: quan sát 0.96, tính toán 0.94, giao tiếp 1.00,
-điểm 0.905. Có 109 CL; không cell nào trống, kể cả ở 50 m. Điểm trung bình của CL là
-0.65 / 0.52 / 0.43 ở 20 / 35 / 50 m.
+Ở seed 1, node mạnh nhất tuyệt đối là **#825** (điểm 0.905), nhưng nó chỉ cách biên
+**19 m**. Với d = 300 m:
+
+| spacing | CH | quan sát / tính toán / giao tiếp | điểm | cách biên |
+|---|---|---|---|---|
+| 20 m | #3112 | 0.97 / 0.87 / 0.99 | 0.830 | 597 m |
+| 35 m, 50 m | #136 | 0.91 / 0.96 / 0.95 | 0.829 | 556 m |
+
+Có 109 CL; không cell nào trống, kể cả ở 50 m.
+
+Nếu không node nào đủ xa biên, chương trình dừng và báo lỗi. Điều này xảy ra với các vùng
+mảnh, chưa lấp lõm: seed 1–6 khi κ = 0, và κ = 0.55. Các vùng đó chỉ dùng để minh hoạ
+hình dạng, nên chạy với `--chMargin=0`.
 
 ## ⑤ Đường bay Dubins xuyên cụm: vào → CH → ra
 
@@ -97,29 +119,27 @@ mở, không khép vòng.
 
 ![đường bay](figures/deploy-path.png)
 
-Spacing 35 m, CH #825. Độ dài tính từ điểm vào tới điểm ra, chưa gồm hai đoạn bay thẳng
+Spacing 35 m, CH #136. Độ dài tính từ điểm vào tới điểm ra, chưa gồm hai đoạn bay thẳng
 ngoài cụm (2 × 255 m):
 
 | lần bốc | vào ↔ ra | vào → CH → ra | đường thẳng | thời gian @ 50 m/s |
 |---|---|---|---|---|
-| 0 | 416 m | 2 657 m | 2 281 m (+16 %) | 53 s |
-| 1 | 1 585 m | 2 932 m | 2 844 m (+3 %) | 59 s |
-| 2 | 1 509 m | 3 111 m | 1 663 m (+87 %) | 62 s |
-| 3 | 1 163 m | 2 654 m | 1 165 m (+128 %) | 53 s |
-| 4 | 1 383 m | 2 510 m | 2 409 m (+4 %) | 50 s |
-| 5 | 1 802 m | 1 921 m | 1 917 m (+0 %) | 38 s |
+| 0 | 416 m | 2 555 m | 2 266 m (+13 %) | 51 s |
+| 1 | 1 585 m | 2 038 m | 2 010 m (+1 %) | 41 s |
+| 2 | 1 509 m | 1 626 m | 1 620 m (+0 %) | 33 s |
+| 3 | 1 163 m | 1 760 m | 1 694 m (+4 %) | 35 s |
+| 4 | 1 383 m | 1 963 m | 1 919 m (+2 %) | 39 s |
+| 5 | 1 802 m | 1 874 m | 1 872 m (+0 %) | 37 s |
 
-- **Khi điểm ra (hoặc vào) nằm gần CH** (lần bốc 2, 3), máy bay qua CH xong không kịp quay
-  về hướng điểm ra, nên phải lượn trọn một vòng bán kính ρ. Đường dài gấp 1.9–2.3 lần
-  đường thẳng.
-- **Khi CH nằm gần đường nối vào–ra** (lần bốc 1, 4, 5), đường bay gần như thẳng.
-- **Lần bốc 0:** vào và ra chỉ cách nhau 416 m, cùng ở mép nam. Máy bay vào tới CH rồi
-  quay ra gần chỗ cũ. Vì hai điểm bốc độc lập nên trường hợp này có thể xảy ra.
+- Với CH ở sâu trong cụm, các vòng lượn trọn của bản trước (khi CH nằm sát biên và sát
+  điểm ra) biến mất. Đường bay chỉ dài hơn đường thẳng 0–4 %.
+- Lần bốc 0 vẫn dài hơn 13 %: vào và ra cùng ở mép nam, cách nhau 416 m, nên máy bay
+  vào tới CH rồi quay đầu. Vì hai điểm bốc độc lập nên trường hợp này có thể xảy ra.
 - Điểm vào của lần bốc 4 và 5 gần trùng nhau là trùng hợp ngẫu nhiên: hai luồng ngẫu
   nhiên khác nhau cho số đầu tiên lệch nhau 10⁻⁴.
 
-Ảnh hưởng của ρ (lần bốc 1): 2 876 m với ρ = 100 m, 2 932 m với ρ = 255 m, 2 995 m với
-ρ = 400 m. Khi đường đã gần thẳng, bán kính quay chỉ thay đổi chỗ lượn qua CH.
+Ảnh hưởng của ρ (lần bốc 1): 2 020 m với ρ = 100 m, 2 038 m với ρ = 255 m, 2 058 m với
+ρ = 400 m. Khi đường gần thẳng, bán kính quay chỉ thay đổi chỗ lượn qua CH.
 
 ## Kiểm tra tự động (1.58 triệu CHECK, tất cả qua)
 
@@ -131,8 +151,12 @@ ngoài cụm (2 × 255 m):
     ⌈κ·|bao|⌉ cell;
   - độ lồi đo lại khớp; κ = 1 → độ lồi đúng 1 và không lỗ thủng.
 - **Node:** đủ số lượng, nằm trong đúng lục giác của mình; kiểm định χ² cho phân bố đều.
-- **Vai trò:** thuộc tính trong miền (giao tiếp > 0); đúng một CH không ai hơn; mỗi cell
-  có node có đúng một CL không ai hơn.
+- **Vai trò:**
+  - thuộc tính trong miền (giao tiếp > 0);
+  - đúng một CH, cách biên ≥ d, không node đủ xa biên nào hơn nó;
+  - mỗi cell có node có đúng một CL không ai hơn (cell của CH: CH);
+  - so với khi không ràng buộc: vị trí và điểm trùng từng node, nhãn CL chỉ khác ở cell
+    của hai CH.
 - **Dubins:**
   - với 20 000 cặp tư thế ngẫu nhiên, **cả 6 dạng** (không chỉ dạng ngắn nhất) đều dựng
     lại đúng tư thế đích (sai số < 10⁻⁶ ρ);
@@ -161,9 +185,10 @@ ngoài cụm (2 × 255 m):
 
 ```bash
 B=/home/user/ns3-dev/build/src/uav-coop/examples/ns3.46-uav-coop-deploy-optimized
-$B --spacings=20,35,50 --out=deploy                       # R=100, 60 cell, κ=1, ρ=255, lần bốc 0
-for k in 0.55 0.7 0.85 1; do $B --convexity=$k --spacings=35 --out=conv$k; done
-for s in 1 2 3 4 5 6; do $B --convexity=0 --seed=$s --spacings=50 --out=seed$s; done
+$B --spacings=20,35,50 --out=deploy             # R=100, 60 cell, κ=1, CH cách biên ≥ 300 m, ρ=255, lần bốc 0
+$B --convexity=0.55 --chMargin=0 --spacings=35 --out=conv0.55   # vùng mảnh: không node nào cách biên 300 m
+for k in 0.7 0.85 1; do $B --convexity=$k --spacings=35 --out=conv$k; done
+for s in 1 2 3 4 5 6; do $B --convexity=0 --chMargin=0 --seed=$s --spacings=50 --out=seed$s; done
 for k in 0 1 2 3 4 5; do $B --pick=$k --spacings=35 --out=pick$k; done
 for r in 100 400; do $B --rho=$r --pick=1 --spacings=35 --out=rho$r; done
 # sweep.csv: κ ∈ {0.6 … 1} × seed 1..30, các cột 2–5 của *-region.csv

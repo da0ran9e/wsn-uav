@@ -312,7 +312,7 @@ def fig_roles(lat, nodes, w, out, s):
     cb.set_label("điểm = quan sát × tính toán × giao tiếp", fontsize=8, color=INK2)
     cb.ax.tick_params(labelsize=7, colors=INK2); cb.outline.set_visible(False)
     a.scatter([], [], s=58, facecolors="none", edgecolors=C_CL, linewidths=1.6, label="CL: mạnh nhất cell")
-    a.scatter([], [], s=200, marker="*", color=C_CH, edgecolors=INK, linewidths=.8, label="CH: mạnh nhất vùng")
+    a.scatter([], [], s=200, marker="*", color=C_CH, edgecolors=INK, linewidths=.8, label="CH: mạnh nhất trong các node đủ xa biên")
     a.legend(loc="lower left", fontsize=8.5, frameon=False, labelcolor=INK2)
     frame(a, sel, w, pad=1.0)
     empty = len(sel) - int(cl.sum())
@@ -352,7 +352,8 @@ def fig_roles(lat, nodes, w, out, s):
            f"Cao nhất từng thuộc tính:\n  quan sát {top['obs']:.3f}, tính toán {top['cpu']:.3f},\n"
            f"  giao tiếp {top['comm']:.3f}\n"
            f"CH: {float(c['obs']):.3f}, {float(c['cpu']):.3f}, {float(c['comm']):.3f}\n"
-           "→ CH = tích lớn nhất,\n   không phải max từng thuộc tính.",
+           "→ CH = tích lớn nhất (trong các node\n   đủ xa biên), không phải max từng\n   thuộc tính."
+           + (f"\nCH cách biên cụm {float(c['edgeM']):.0f} m." if "edgeM" in c else ""),
            fontsize=8.5, color=INK, va="top", transform=b.transAxes)
     fig.text(.03, .97, "Thuộc tính và vai trò của node — vạch dọc đỏ = CH, cột cam = phân bố của các CL",
              fontsize=12.5, color=INK, ha="left", va="top")

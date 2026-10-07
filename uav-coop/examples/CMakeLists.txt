@@ -22,3 +22,17 @@ build_lib_example(
     ${libpropagation}
     ${liblr-wpan}
 )
+
+# Step 4: inside each cell, a short summary of what the cell holds, up to the CL.
+build_lib_example(
+  NAME uav-coop-summary
+  SOURCE_FILES coop-summary.cc
+  LIBRARIES_TO_LINK
+    ${libuav-coop}
+    ${libcore}
+    ${libnetwork}
+    ${libmobility}
+    ${libspectrum}
+    ${libpropagation}
+    ${liblr-wpan}
+)

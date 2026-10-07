@@ -5,7 +5,7 @@ project that starts from the parameter set measured in `uav-sar`'s urban
 experiments (`uav-sar/docs/A2G-RUN-vi.md`, `A2G-SWEEP-vi.md`, `G2G-CHAIN-vi.md`).
 Those values live in `models/common/coop-params.h`.
 
-**Status: steps 1–3 + routes.** Hex lattice (corner radius R = 100 m) from the origin → a truly
+**Status: steps 1–4.** Hex lattice (corner radius R = 100 m) from the origin → a truly
 random contiguous region whose concavities are filled up to a target convexity (default:
 fully convex) → random sensor nodes with three random capabilities → one CH (kept at least
 300 m from the edge), one CL per cell → an open Dubins flight path across the cluster: in
@@ -14,6 +14,8 @@ at a random boundary point, over the CH, out at another (min turn radius a param
 numbered stream; packets received per node — [`docs/PASS-vi.md`](docs/PASS-vi.md). Pre-built
 routes planned at the BS (PECEE elastic clustering: next hop to the CL, to each adjacent
 cell through its single gateway link, main route to the CH; no node left out) — [`docs/ROUTING-vi.md`](docs/ROUTING-vi.md).
+Step 4, inside one cell: every node's share of the file summarised up the tree to the CL,
+which learns exactly what the cell holds and lacks — [`docs/SUMMARY-vi.md`](docs/SUMMARY-vi.md).
 
 ## Layout
 ```
@@ -27,14 +29,18 @@ uav-coop/
 │   ├── deploy.{h,cc}         # uniform random nodes; capabilities; CH and CL roles
 │   ├── dubins.{h,cc}         # shortest Dubins path between two poses (six words)
 │   ├── path.{h,cc}           # shortest open Dubins path through points, headings constrained
-│   └── routing.{h,cc}        # gateways, bridges, route tables: to the CL, to each adjacent cell, main to the CH
+│   ├── routing.{h,cc}        # gateways, bridges, route tables: to the CL, to each adjacent cell, main to the CH
+│   └── manifest.{h,cc}       # compact chunk-set frames: Rice-coded lists or bitmap, <= 100 B, self-contained
 ├── examples/coop-deploy.cc   # steps 1-2 with checks, writes CSV
 ├── examples/coop-pass.cc     # step 3: UAV broadcast pass over the deployment (ns-3 LR-WPAN)
 ├── examples/coop-a2g.h       # the urban A2G channel (free space to H, then alpha; Rician)
+├── examples/coop-summary.cc  # step 4: per cell, a short summary of what the cell holds, up to the CL
+├── examples/coop-g2g.h       # the urban G2G channel (n 3.5, static shadowing, Rayleigh blocks)
 ├── tools/deploy_figures.py   # the step-by-step figures
 ├── tools/pass_report.py      # merges pass missions, per-node summary, figures
 ├── tools/route_figures.py    # route figures
-└── docs/                     # DEPLOY-vi.md, PASS-vi.md, ROUTING-vi.md, figures/, data/
+├── tools/summary_report.py   # step 4 tables and figures
+└── docs/                     # DEPLOY-vi.md, PASS-vi.md, ROUTING-vi.md, SUMMARY-vi.md, figures/, data/
 ```
 
 ## Build and run (ns-3.46 tree with this dir linked as src/uav-coop)

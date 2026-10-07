@@ -1,0 +1,34 @@
+# uav-coop
+
+UAV-assisted dissemination with edge cooperation inside wide clusters — a new
+project that starts from the parameter set measured in `uav-sar`'s urban
+experiments (`uav-sar/docs/A2G-RUN-vi.md`, `A2G-SWEEP-vi.md`, `G2G-CHAIN-vi.md`).
+Those values live in `models/common/coop-params.h`.
+
+**Status: step 1 — deployment.** Hex lattice from the origin → random contiguous
+region of cells → random sensor nodes. See [`docs/DEPLOY-vi.md`](docs/DEPLOY-vi.md).
+
+## Layout
+```
+uav-coop/
+├── CMakeLists.txt            # build_lib; core only so far
+├── models/common/            # pure logic, no ns-3 simulation objects
+│   ├── coop-params.h         # the carried-over parameter set
+│   ├── coop-rng.h            # portable seeded RNG (mt19937_64, independent streams)
+│   ├── hex-grid.{h,cc}       # pointy-top lattice, axial coordinates
+│   ├── region.{h,cc}         # Eden growth of a contiguous region; holes; connectivity
+│   └── deploy.{h,cc}         # uniform random nodes, one per spacing^2
+├── examples/coop-deploy.cc   # runs step 1 with checks, writes CSV
+├── tools/deploy_figures.py   # the step-by-step figures
+└── docs/                     # DEPLOY-vi.md, figures/, data/
+```
+
+## Build and run (ns-3.46 tree with this dir linked as src/uav-coop)
+```bash
+ln -s /home/user/wsn-uav/uav-coop /home/user/ns3-dev/src/uav-coop
+cd /home/user/ns3-dev
+python3.10 ./ns3 configure -d optimized --enable-examples --enable-modules="uav-sar;uav-coop"
+cmake --build cmake-cache -j 4
+./build/src/uav-coop/examples/ns3.46-uav-coop-deploy-optimized --cells=60 --spacings=20,35,50 --seed=1 --out=deploy
+python3 /home/user/wsn-uav/uav-coop/tools/deploy_figures.py . figures deploy "seed*-lattice.csv"
+```

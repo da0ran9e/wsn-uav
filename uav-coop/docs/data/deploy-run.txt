@@ -1,0 +1,10 @@
+lattice: pointy-top hexagons, width 100.0 m (flat to flat = centre spacing), corner radius 57.74 m, cell area 8660.3 m^2
+region: 60 cells grown from (0,0), 0.520 km^2, extent 1150 x 1415 m, farthest cell 9 rings out, 0 enclosed hole(s)
+
+ spacing   nodes    per cell   per-cell sd     chi2 / dof     NN dist mean     NN min
+    20 m    1299       21.65          4.30     51.3 /  59      10.7 m (0.53 s)    0.68 m
+    35 m     424        7.07          2.70     61.9 /  59      18.9 m (0.54 s)    1.48 m
+    50 m     208        3.47          1.90     62.6 /  59      27.6 m (0.55 s)    1.58 m
+  NN mean for a uniform (Poisson) field of the same density is 0.50 s; edges push it up.
+
+1205537 CHECKS PASSED

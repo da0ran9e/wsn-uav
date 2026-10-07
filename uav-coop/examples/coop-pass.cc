@@ -17,7 +17,7 @@
 // Mission r depends on (seed, r) alone, so missions can be split over processes
 // with --firstRun and merged afterwards (tools/pass_report.py).
 //
-//   uav-coop-pass --nodes=deploy-nodes-s35.csv --path=deploy-path-s35.csv --runs=120 --out=pass
+//   uav-coop-pass --nodes=deploy-nodes-s35.csv --path=deploy-path-s35.csv --runs=120 --out=pass [--bits]
 
 #include "coop-a2g.h"
 
@@ -127,6 +127,7 @@ int main(int argc, char* argv[]) {
     double kFactor = params::kA2gRicianK, txDbm = params::kTxPowerDbm, sens = params::kRxSensDbm;
     uint32_t runs = 120, firstRun = 1, seed = 1;
     std::string out = "pass";
+    bool bits = false;
     CommandLine cmd(__FILE__);
     cmd.AddValue("nodes", "nodes CSV from uav-coop-deploy", nodesFile);
     cmd.AddValue("path", "path CSV from uav-coop-deploy (same spacing)", pathFile);
@@ -138,6 +139,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("firstRun", "index of the first mission", firstRun);
     cmd.AddValue("seed", "RNG seed", seed);
     cmd.AddValue("out", "output prefix", out);
+    cmd.AddValue("bits", "also write every mission's reception bitmaps (PREFIX-bits-rR.bin)", bits);
     cmd.Parse(argc, argv);
     const double dref = alt;
     const double dt = params::kSlotS;
@@ -367,6 +369,18 @@ int main(int argc, char* argv[]) {
         }
         std::fflush(fw);
         if (run == firstRun) strip = got;
+        if (bits) {
+            // One row per node (nodes CSV order), packet s = bit (s % 8) of byte s / 8.
+            FILE* fb = std::fopen((out + "-bits-r" + std::to_string(run) + ".bin").c_str(), "wb");
+            std::vector<uint8_t> row((nPk + 7) / 8);
+            for (uint32_t k = 0; k < nNodes; ++k) {
+                std::fill(row.begin(), row.end(), 0);
+                for (uint32_t s = 0; s < nPk; ++s)
+                    if (got[k][s]) row[s / 8] |= (uint8_t)(1u << (s % 8));
+                CHECK(std::fwrite(row.data(), 1, row.size(), fb) == row.size());
+            }
+            std::fclose(fb);
+        }
         std::fprintf(fr, "%u,%u,%.3f,%u,%u", run, heard, rxTot / nNodes,
                      (uint32_t)rxAll[chIdx].back(), (uint32_t)runAll[chIdx].back());
         for (uint32_t d : doneRun) std::fprintf(fr, ",%u", d);

@@ -13,6 +13,7 @@ build_lib(
     models/common/deploy.cc
     models/common/dubins.cc
     models/common/path.cc
+    models/common/routing.cc
 
   HEADER_FILES
     models/common/coop-params.h
@@ -22,6 +23,7 @@ build_lib(
     models/common/deploy.h
     models/common/dubins.h
     models/common/path.h
+    models/common/routing.h
 
   LIBRARIES_TO_LINK
     ${libcore}

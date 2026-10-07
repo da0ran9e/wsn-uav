@@ -30,6 +30,12 @@ inline constexpr double   kConvexity    = 1.0;
 // of every node are drawn exactly as without it.
 inline constexpr double   kChMarginM    = 300.0;
 
+// ---- routes (PECEE elastic clustering) --------------------------------------
+// G2G link = two nodes at most this far apart ([design]). 50 m: the shortest hop of
+// G2G-CHAIN, median margin 11.5 dB over the 127-byte PER-50 % point (75 m: 5.3 dB,
+// 100 m: 1 dB -- the chain stalled there).
+inline constexpr double   kLinkRangeM   = 50.0;
+
 // ---- flight path (step 2) ---------------------------------------------------
 // Minimum turn radius v^2 / (g tan(bank)): 50 m/s, 45 deg -> 254.9 m (the same fixed-wing
 // turn as uav-sar's lawnmower sweep).

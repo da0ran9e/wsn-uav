@@ -36,3 +36,12 @@ build_lib_example(
     ${libpropagation}
     ${liblr-wpan}
 )
+
+# Step 5 (trial, logic level): the base manifest phase between cells.
+build_lib_example(
+  NAME uav-coop-manifest
+  SOURCE_FILES coop-manifest.cc
+  LIBRARIES_TO_LINK
+    ${libuav-coop}
+    ${libcore}
+)

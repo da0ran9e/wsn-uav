@@ -5,7 +5,7 @@ project that starts from the parameter set measured in `uav-sar`'s urban
 experiments (`uav-sar/docs/A2G-RUN-vi.md`, `A2G-SWEEP-vi.md`, `G2G-CHAIN-vi.md`).
 Those values live in `models/common/coop-params.h`.
 
-**Status: steps 1–4.** Hex lattice (corner radius R = 100 m) from the origin → a truly
+**Status: steps 1–4, step 5 in trial.** Hex lattice (corner radius R = 100 m) from the origin → a truly
 random contiguous region whose concavities are filled up to a target convexity (default:
 fully convex) → random sensor nodes with three random capabilities → one CH (kept at least
 300 m from the edge), one CL per cell → an open Dubins flight path across the cluster: in
@@ -16,6 +16,8 @@ routes planned at the BS (PECEE elastic clustering: next hop to the CL, to each 
 cell through its single gateway link, main route to the CH; no node left out) — [`docs/ROUTING-vi.md`](docs/ROUTING-vi.md).
 Step 4, inside one cell: every node's share of the file summarised up the tree to the CL,
 which learns exactly what the cell holds and lacks — [`docs/SUMMARY-vi.md`](docs/SUMMARY-vi.md).
+Step 5 (trial, logic level): the base manifest phase between cells, border cells first —
+[`docs/MANIFEST-vi.md`](docs/MANIFEST-vi.md), which keeps the author's description verbatim.
 
 ## Layout
 ```
@@ -36,11 +38,12 @@ uav-coop/
 ├── examples/coop-a2g.h       # the urban A2G channel (free space to H, then alpha; Rician)
 ├── examples/coop-summary.cc  # step 4: per cell, a short summary of what the cell holds, up to the CL
 ├── examples/coop-g2g.h       # the urban G2G channel (n 3.5, static shadowing, Rayleigh blocks)
+├── examples/coop-manifest.cc # step 5 trial: manifests between cells (logic level, frame-hop costs)
 ├── tools/deploy_figures.py   # the step-by-step figures
 ├── tools/pass_report.py      # merges pass missions, per-node summary, figures
 ├── tools/route_figures.py    # route figures
 ├── tools/summary_report.py   # step 4 tables and figures
-└── docs/                     # DEPLOY-vi.md, PASS-vi.md, ROUTING-vi.md, SUMMARY-vi.md, figures/, data/
+└── docs/                     # DEPLOY-vi.md, PASS-vi.md, ROUTING-vi.md, SUMMARY-vi.md, MANIFEST-vi.md, figures/, data/
 ```
 
 ## Build and run (ns-3.46 tree with this dir linked as src/uav-coop)

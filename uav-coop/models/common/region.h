@@ -1,8 +1,17 @@
-// A random contiguous set of cells.
+// A random contiguous set of cells, made more convex on demand.
 //
-// Eden growth from a seed cell: at every step one cell is drawn uniformly from the
-// frontier (unselected cells touching the region) and added. The region is
-// connected by construction, compact on average, ragged at the edge.
+// 1  Eden growth from the origin's cell: at every step one cell is drawn uniformly
+//    from the frontier (unselected cells touching the region) and added. Truly
+//    random; ragged; may enclose holes.
+// 2  Concavity filling to a target convexity kappa. The cells whose centres lie in
+//    the convex hull of the region's centres but are not in the region are its
+//    concavities (inlets and holes). They are filled one at a time -- always the
+//    one with the most region neighbours, ties drawn at random, so holes and narrow
+//    inlets go first -- until convexity >= kappa. kappa = 1 fills them all and the
+//    region becomes convex; kappa at or below the raw convexity changes nothing.
+//
+// Convexity = cells / (lattice cells whose centre lies in the convex hull of the
+// cells' centres). Filling never moves the hull, so it rises linearly to 1.
 
 #ifndef UAVCOOP_REGION_H
 #define UAVCOOP_REGION_H
@@ -17,28 +26,20 @@
 namespace ns3::uavcoop {
 
 struct Region {
-    std::vector<Hex> cells;        // in the order they were added; cells[0] = seed
-    std::vector<uint32_t> frontierSize;   // frontier size just before each addition
-    // The convex envelope the region was grown inside; empty when growth was free.
-    std::vector<Hex> envelope;
-    double aspect = 0.0, thetaRad = 0.0;   // the envelope ellipse
+    std::vector<Hex> cells;        // the grown cells in growth order, then the filled ones
+    std::vector<uint32_t> frontierSize;   // frontier size just before each growth step
+    uint32_t nGrown = 0;           // cells[0 .. nGrown) grew; the rest were filled in
+    double rawConvexity = 1.0, convexity = 1.0;
 };
 
-// Free Eden growth; with `allowed`, only cells in it can join.
-Region GrowRegion(uint32_t nCells, const Hex& seed, CoopRng& rng,
-                  const std::unordered_set<Hex, HexHash>* allowed = nullptr);
+// Eden growth from `seed`.
+Region GrowRegion(uint32_t nCells, const Hex& seed, CoopRng& rng);
 
-// A region of nCells cells around the origin with the given convexity in [0, 1]:
-//   convexity > 0   envelope = the round(nCells / convexity) cells whose centres are
-//                   nearest the origin in a random ellipse metric (aspect U[1, maxAspect],
-//                   orientation U[0, pi)) -- the lattice cut by a convex set, so convex.
-//                   The region grows from the origin inside it; at 1 it fills it.
-//   convexity = 0   free growth, no envelope.
-Region MakeRegion(const HexGrid& g, uint32_t nCells, double convexity, double maxAspect,
-                  CoopRng& rng);
+// Grow nCells from the origin, then fill concavities up to convexity kappa in [0, 1].
+Region MakeRegion(const HexGrid& g, uint32_t nCells, double kappa, CoopRng& rng);
 
-// cells / (lattice cells whose centre lies in the convex hull of the cells' centres).
-// 1 exactly for a convex region.
+// The lattice cells inside the convex hull of the cells' centres (the cells included).
+std::vector<Hex> HullCells(const HexGrid& g, const std::vector<Hex>& cells);
 double Convexity(const HexGrid& g, const std::vector<Hex>& cells);
 
 // Unselected cells that cannot reach the outside without crossing the region.

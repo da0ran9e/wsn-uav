@@ -1,8 +1,9 @@
 // Regular hexagonal lattice anchored at the origin.
 //
 // Pointy-top hexagons, axial coordinates (q, r). Cell (0, 0) is centred on the
-// origin. "Width" is the flat-to-flat width, which is also the distance between
-// the centres of two neighbouring cells:
+// origin. The project sizes cells by the corner radius R (FromRadius); internally the
+// flat-to-flat width is kept, which is also the distance between the centres of two
+// neighbouring cells:
 //
 //   corner radius  R    = width / sqrt(3)
 //   centre         x    = width * (q + r / 2),   y = 1.5 R * r
@@ -40,6 +41,7 @@ struct Point {
 class HexGrid {
   public:
     explicit HexGrid(double width);
+    static HexGrid FromRadius(double cornerRadius) { return HexGrid(cornerRadius * 1.7320508075688772); }
 
     double Width() const { return m_w; }
     double Radius() const { return m_R; }     // centre to corner

@@ -79,21 +79,6 @@ def load(src, prefix):
     return lat, gro, nodes, w, meta
 
 
-def ellipse_xy(lat, meta, w):
-    """Boundary of the envelope ellipse at the level that just holds its cells."""
-    a, th = float(meta["aspect"]), math.radians(float(meta["thetaDeg"]))
-    c, s = math.cos(th), math.sin(th)
-    t = 0.0
-    for x in lat:
-        if x.get("envelope") == "1":
-            px, py = float(x["cx"]), float(x["cy"])
-            u, v = px * c + py * s, -px * s + py * c
-            t = max(t, u * u / a + v * v * a)
-    ph = np.linspace(0, 2 * math.pi, 300)
-    u, v = math.sqrt(t * a) * np.cos(ph), math.sqrt(t / a) * np.sin(ph)
-    return u * c - v * s, u * s + v * c
-
-
 def style(ax):
     ax.set_facecolor(SURF)
     ax.set_aspect("equal")
@@ -140,36 +125,31 @@ def fig_steps(lat, gro, nodes, w, out, s_show, meta):
     a.text(.04 * w, .42 * R, f"R = {R:.1f} m", fontsize=7, color=INK, zorder=4)
     a.set_xlim(-2.6 * w, 2.6 * w)
     a.set_ylim(-2.4 * w, 2.4 * w)
-    a.set_title(f"① Lưới lục giác đều từ gốc (★)\nrộng {w:.0f} m mặt–mặt · R = {R:.1f} m · "
+    a.set_title(f"① Lưới lục giác đều từ gốc (★)\nR = {R:.0f} m · rộng mặt–mặt {w:.0f} m · "
                 f"{math.sqrt(3) / 2 * w * w:,.0f} m²/cell", loc="left", fontsize=10, color=INK)
     style(a)
 
-    # 2. the region, coloured by the order it grew in
+    # 2. the region: grown at random, then concavities filled
     a = ax[1]
+    filled = {(int(x["q"]), int(x["r"])) for x in lat if x.get("filled") == "1"}
     hexes(a, allc - sel, w, SURF, "#d8d7d2", lw=.4)
     R_ = w / math.sqrt(3)
     polys = [corners(*axial_centre(q, r, w), R_) for q, r in order]
     pc = PolyCollection(polys, array=np.arange(len(order)), cmap=ORDER, edgecolors=SURF,
                         linewidths=.8, zorder=2)
     a.add_collection(pc)
+    if filled:
+        hexes(a, filled, w, "#fbe7b5", FRONTIER, lw=.8, z=2)
     a.add_collection(LineCollection(boundary(sel, w), colors=INK, linewidths=1.2, zorder=3))
     a.plot(0, 0, "*", ms=11, color=FRONTIER, mec=INK, mew=.6, zorder=4)
-    convex = float(meta["convexityAsked"]) >= 1.0
     cb = fig.colorbar(pc, ax=a, shrink=.55, pad=.01)
-    cb.set_label("thứ hạng khoảng cách elip từ tâm" if convex else "thứ tự được thêm vào vùng",
-                 fontsize=7.5, color=INK2)
+    cb.set_label("thứ tự mọc ngẫu nhiên", fontsize=7.5, color=INK2)
     cb.ax.tick_params(labelsize=7, colors=INK2)
     cb.outline.set_visible(False)
     frame(a, sel, w)
-    if convex:
-        ex, ey = ellipse_xy(lat, meta, w)
-        a.plot(ex, ey, color=FRONTIER, lw=1.6, ls="--", zorder=4)
-        a.set_title(f"② Vùng lồi κ = 1: elip ngẫu nhiên (dẹt {float(meta['aspect']):.2f}, nghiêng "
-                    f"{float(meta['thetaDeg']):.0f}°)\n{len(sel)} cell có tâm gần gốc nhất theo "
-                    "khoảng cách elip", loc="left", fontsize=10, color=INK)
-    else:
-        a.set_title(f"② Chọn ngẫu nhiên {len(sel)} cell liền kề (κ = {float(meta['convexityAsked']):g})"
-                    "\nmọc từ cell gốc, mỗi bước thêm một cell kề", loc="left", fontsize=10, color=INK)
+    a.set_title(f"② {meta['cellsGrown']} cell mọc ngẫu nhiên (độ lồi {float(meta['rawConvexity']):.2f})"
+                f"\n+ lấp {len(filled)} chỗ lõm (vàng) → độ lồi {float(meta['convexityMeasured']):.2f}",
+                loc="left", fontsize=10, color=INK)
     style(a)
 
     # 3. the nodes
@@ -381,58 +361,128 @@ def fig_roles(lat, nodes, w, out, s):
 def fig_convexity(files, sweep, out):
     def kap(f):
         return float(re.search(r"conv([\d.]+)-lattice\.csv$", f).group(1))
-    files = sorted(files, key=kap, reverse=True)
+    files = sorted(files, key=kap)
     n = len(files) + (1 if sweep else 0)
-    fig, ax = plt.subplots(1, n, figsize=(3.4 * n, 4.2), dpi=170, facecolor=SURF)
+    fig, ax = plt.subplots(1, n, figsize=(3.6 * n, 4.4), dpi=170, facecolor=SURF)
     for a, f in zip(ax, files):
         lat = list(csv.DictReader(open(f)))
         meta = next(csv.DictReader(open(f.replace("-lattice.csv", "-region.csv"))))
         c = {(int(x["q"]), int(x["r"])): (float(x["cx"]), float(x["cy"])) for x in lat}
         w = math.hypot(c[(1, 0)][0] - c[(0, 0)][0], c[(1, 0)][1] - c[(0, 0)][1])
         sel = {(int(x["q"]), int(x["r"])) for x in lat if x["selected"] == "1"}
-        env = {(int(x["q"]), int(x["r"])) for x in lat if x["envelope"] == "1"}
+        filled = {(int(x["q"]), int(x["r"])) for x in lat if x["filled"] == "1"}
         holes = {(int(x["q"]), int(x["r"])) for x in lat if x["hole"] == "1"}
-        hexes(a, env - sel, w, SURF, "#c3c2b7", lw=.5)
-        hexes(a, sel, w, REGION, "#ffffff", lw=.4, z=2)
+        hexes(a, sel - filled, w, REGION, "#ffffff", lw=.4)
+        if filled:
+            hexes(a, filled, w, "#fbe7b5", FRONTIER, lw=.7, z=2)
         if holes:
             hexes(a, holes, w, HOLE, INK2, lw=.7, z=2)
         a.add_collection(LineCollection(boundary(sel, w), colors=INK, linewidths=1.0, zorder=3))
-        if env:
-            ex, ey = ellipse_xy(lat, meta, w)
-            a.plot(ex, ey, color=FRONTIER, lw=1.3, ls="--", zorder=4)
         a.plot(0, 0, "*", ms=7, color=FRONTIER, mec=INK, mew=.5, zorder=5)
-        frame(a, sel | env, w, pad=.9)
+        frame(a, sel, w, pad=.9)
         k = float(meta["convexityAsked"])
-        a.set_title(f"κ = {k:g}" + (" (mọc tự do)" if k == 0 else "") +
-                    f"\nđộ lồi đo được {float(meta['convexityMeasured']):.2f}", loc="left",
-                    fontsize=9.5, color=INK)
+        a.set_title(f"κ = {k:g}: +{len(filled)} cell lấp\nđộ lồi {float(meta['convexityMeasured']):.2f}"
+                    f" · {meta['cells']} cell", loc="left", fontsize=9.5, color=INK)
         style(a); a.set_xticks([]); a.set_yticks([])
     if sweep:
         a = ax[-1]
         rows = list(csv.DictReader(open(sweep)))
-        ks = sorted({float(r["kappa"]) for r in rows if float(r["kappa"]) > 0})
-        m = [np.mean([float(r["measured"]) for r in rows if float(r["kappa"]) == k]) for k in ks]
-        lo = [np.min([float(r["measured"]) for r in rows if float(r["kappa"]) == k]) for k in ks]
-        hi = [np.max([float(r["measured"]) for r in rows if float(r["kappa"]) == k]) for k in ks]
-        free = [float(r["measured"]) for r in rows if float(r["kappa"]) == 0]
-        a.fill_between(ks, lo, hi, color="#86b6ef", alpha=.35, lw=0)
-        a.plot(ks, m, "-o", color="#2a78d6", ms=5, lw=2)
-        a.plot([0, 1], [0, 1], color=INK2, lw=.8, ls=":")
-        a.axhline(np.mean(free), color=FRONTIER, lw=1.2, ls="--")
-        a.text(.32, np.mean(free) - .035, f"mọc tự do (κ = 0): {np.mean(free):.2f}", fontsize=7.5,
-               color=INK2)
-        a.set_xlim(.25, 1.02); a.set_ylim(.5, 1.02)
-        a.set_xlabel("κ đặt", fontsize=8, color=INK2)
-        a.set_ylabel("độ lồi đo được", fontsize=8, color=INK2)
-        a.set_title(f"30 seed mỗi κ: trung bình\n(vùng tô: min–max)", loc="left", fontsize=9.5, color=INK)
+        ks = sorted({float(r["kappa"]) for r in rows})
+        add = [[int(r["cells"]) - int(r["cellsGrown"]) for r in rows if float(r["kappa"]) == k] for k in ks]
+        a.fill_between(ks, [min(v) for v in add], [max(v) for v in add], color="#fbe7b5", lw=0)
+        a.plot(ks, [np.mean(v) for v in add], "-o", color=FRONTIER, ms=5, lw=2)
+        raw = [float(r["raw"]) for r in rows if float(r["kappa"]) == ks[-1]]
+        a.set_xlabel("κ (độ lồi mục tiêu)", fontsize=8, color=INK2)
+        a.set_ylabel("số cell được lấp", fontsize=8, color=INK2)
+        a.set_title(f"30 seed: cell lấp thêm theo κ\n(độ lồi gốc {np.mean(raw):.2f} TB, "
+                    f"{min(raw):.2f}–{max(raw):.2f})", loc="left", fontsize=9.5, color=INK)
         a.grid(color=GRID, lw=.6); a.set_facecolor(SURF)
         a.tick_params(colors=INK2, labelsize=7.5)
         for sp in a.spines.values():
             sp.set_visible(False)
-    fig.suptitle("Tham số độ lồi κ: vùng chiếm một phần κ của bao lồi ngẫu nhiên (elip, nét đứt vàng) — "
-                 "κ = 1 lồi tuyệt đối; độ lồi = số cell ÷ số cell trong bao lồi của vùng",
+    fig.suptitle("Tham số độ lồi κ: vùng mọc ngẫu nhiên, rồi lấp chỗ lõm (vàng) — cell bị vùng bao "
+                 "nhiều nhất được lấp trước — cho tới khi độ lồi ≥ κ; κ = 1 lồi hoàn toàn",
                  x=.01, ha="left", fontsize=11, color=INK, y=1.0)
     fig.tight_layout(rect=(0, 0, 1, .9))
+    fig.savefig(out, facecolor=SURF)
+    print(f"  {out}")
+
+
+# ------------------------------------------------------------------ figure: the flight path
+C_TURN, C_STRAIGHT = "#2a78d6", INK
+RANK_C = {1: C_CH, 2: C_CL, 3: C_CL}
+
+
+def tour_panel(a, src, prefix, s, lat, nodes_s, w, title):
+    tp = os.path.join(src, f"{prefix}-tour-s{s}.csv")
+    if not os.path.exists(tp):
+        return False
+    tr = list(csv.DictReader(open(tp)))
+    wp = list(csv.DictReader(open(os.path.join(src, f"{prefix}-tourwp-s{s}.csv"))))
+    sel = {(int(x["q"]), int(x["r"])) for x in lat if x["selected"] == "1"}
+    hexes(a, sel, w, "#f3f2ee", "#ffffff", lw=.5)
+    a.add_collection(LineCollection(boundary(sel, w), colors=INK2, linewidths=.9, zorder=2))
+    a.scatter([float(n["x"]) for n in nodes_s], [float(n["y"]) for n in nodes_s], s=1.2,
+              color="#b9b8b2", lw=0, zorder=2)
+    # path, coloured by segment kind: the middle segment of LSL/RSR/LSR/RSL is straight
+    X = np.array([float(r["x"]) for r in tr]); Y = np.array([float(r["y"]) for r in tr])
+    leg = np.array([int(r["leg"]) for r in tr]); seg = np.array([int(r["seg"]) for r in tr])
+    words = {int(r["flyOrder"]): r["legWord"] for r in wp}
+    for i in range(len(tr) - 1):
+        if leg[i] != leg[i + 1]:
+            continue
+        straight = words.get(leg[i], "LLL")[seg[i]] == "S"
+        a.plot(X[i:i + 2], Y[i:i + 2], color=C_STRAIGHT if straight else C_TURN,
+               lw=2.0 if straight else 1.6, zorder=4, solid_capstyle="round")
+    # direction arrows every ~400 m
+    d = np.concatenate(([0], np.cumsum(np.hypot(np.diff(X), np.diff(Y)))))
+    for t in np.arange(200, d[-1], 400):
+        i = int(np.searchsorted(d, t))
+        if 0 < i < len(X) - 1 and leg[i] == leg[i + 1]:
+            a.annotate("", (X[i + 1], Y[i + 1]), (X[i - 1], Y[i - 1]),
+                       arrowprops=dict(arrowstyle="-|>", color=INK, lw=0, mutation_scale=11), zorder=5)
+    for r in wp:
+        x, y, th, rank = float(r["x"]), float(r["y"]), math.radians(float(r["thDeg"])), int(r["rank"])
+        a.scatter([x], [y], s=260 if rank == 1 else 110, marker="*" if rank == 1 else "o",
+                  color=RANK_C[rank], edgecolors=INK, linewidths=.8, zorder=6)
+        off, ha = {1: ((9, 6), "left"), 2: ((-9, -4), "right"), 3: ((9, -14), "left")}[rank]
+        a.annotate(f"{rank}{' CH' if rank == 1 else ''} #{r['id']}", (x, y), xytext=off, ha=ha,
+                   textcoords="offset points", fontsize=7.5, color=INK, zorder=7,
+                   bbox=dict(boxstyle="round,pad=.15", fc=SURF, ec="none", alpha=.85))
+    rho, L, closed = float(wp[0]["rho"]), float(wp[0]["lengthM"]), wp[0]["closed"] == "1"
+    xs = np.concatenate((X, [float(n["x"]) for n in nodes_s][:0]))
+    pad = .15 * max(X.max() - X.min(), Y.max() - Y.min(), 2 * w)
+    a.set_xlim(min(X.min(), min(float(r["x"]) for r in wp)) - pad, max(X.max(), max(float(r["x"]) for r in wp)) + pad)
+    a.set_ylim(min(Y.min(), min(float(r["y"]) for r in wp)) - pad, max(Y.max(), max(float(r["y"]) for r in wp)) + pad)
+    legs = " · ".join(f"{r['legWord']} {float(r['legM']):.0f}" for r in sorted(wp, key=lambda r: int(r["flyOrder"]))
+                      if r["legWord"] != "-")
+    a.set_title(f"{title}\n{'vòng kín' if closed else 'đường mở'} · ρ = {rho:.0f} m · {L:,.0f} m = "
+                f"{L / 50:.0f} s ở 50 m/s\n{legs}", loc="left", fontsize=8.5, color=INK)
+    style(a)
+    return True
+
+
+def fig_tour(src, prefix, lat, nodes, w, out):
+    fig, ax = plt.subplots(2, 3, figsize=(16.5, 11.5), dpi=170, facecolor=SURF)
+    for a, s in zip(ax[0], sorted(nodes)):
+        tour_panel(a, src, prefix, s, lat, nodes[s], w, f"spacing {s} m — 3 node mạnh nhất")
+    s = 35 if 35 in nodes else sorted(nodes)[0]
+    variants = [("rho100", "cùng 3 điểm (spacing 35 m), ρ = 100 m"),
+                ("rho400", "cùng 3 điểm, ρ = 400 m"),
+                ("open", "cùng 3 điểm, ρ mặc định, đường mở")]
+    for a, (pfx, title) in zip(ax[1], variants):
+        if not tour_panel(a, src, pfx, s, lat, nodes[s], w, title):
+            a.axis("off")
+    h = [plt.Line2D([], [], color=C_TURN, lw=1.6), plt.Line2D([], [], color=C_STRAIGHT, lw=2),
+         plt.Line2D([], [], marker="*", color=C_CH, mec=INK, ls="", ms=12),
+         plt.Line2D([], [], marker="o", color=C_CL, mec=INK, ls="", ms=8)]
+    fig.legend(h, ["đoạn quay (bán kính ρ)", "đoạn thẳng", "CH (mạnh nhất)", "node mạnh thứ 2, 3"],
+               loc="upper left", ncol=4, frameon=False, fontsize=9, bbox_to_anchor=(.01, .975),
+               labelcolor=INK2)
+    fig.suptitle("Đường bay Dubins qua 3 node mạnh nhất cụm — hướng bay tại mỗi điểm và thứ tự được "
+                 "chọn cho ngắn nhất (ρ mặc định = 50²/g = 255 m)", x=.01, ha="left", fontsize=12,
+                 color=INK, y=1.0)
+    fig.tight_layout(rect=(0, 0, 1, .945), h_pad=3.5)
     fig.savefig(out, facecolor=SURF)
     print(f"  {out}")
 
@@ -449,11 +499,12 @@ def main():
     W = w
     show = 35 if 35 in nodes else sorted(nodes)[len(nodes) // 2]
     fig_steps(lat, gro, nodes, w, os.path.join(o.outdir, "deploy-steps.png"), show, meta)
-    if float(meta["convexityAsked"]) < 1.0:      # a convex region is not grown
-        fig_growth(lat, gro, w, os.path.join(o.outdir, "deploy-growth.png"))
+    fig_growth(lat, gro, w, os.path.join(o.outdir, "deploy-growth.png"))
     fig_spacing(lat, nodes, w, os.path.join(o.outdir, "deploy-spacing.png"))
     if "score" in nodes[show][0]:
         fig_roles(lat, nodes, w, os.path.join(o.outdir, "deploy-roles.png"), show)
+    if os.path.exists(os.path.join(o.src, f"{o.prefix}-tour-s{show}.csv")):
+        fig_tour(o.src, o.prefix, lat, nodes, w, os.path.join(o.outdir, "deploy-tour.png"))
     if o.seeds:
         fs = glob.glob(os.path.join(o.src, o.seeds))
         if fs:

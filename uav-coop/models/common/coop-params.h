@@ -15,16 +15,21 @@
 namespace ns3::uavcoop::params {
 
 // ---- deployment (step 1) ----------------------------------------------------
-// "Cell width" = flat-to-flat width of a pointy-top hexagon = the distance between
-// the centres of two neighbouring cells. Corner radius R = width / sqrt(3).
-inline constexpr double   kCellWidthM   = 100.0;
-inline constexpr uint32_t kRegionCells  = 60;      // [design] size of the random region
+// Cells are sized by the corner radius R of a pointy-top hexagon: flat-to-flat width
+// = R sqrt(3) = the distance between neighbouring centres, area = (3 sqrt(3) / 2) R^2.
+inline constexpr double   kCellRadiusM  = 100.0;   // R = 100 m: width 173.2 m, 25 981 m^2
+inline constexpr uint32_t kRegionCells  = 60;      // [design] cells grown at random
 inline constexpr double   kSpacingM     = 30.0;    // [design] 20-50 m: one node per spacing^2
-// Convexity = the share of a random convex envelope the region fills. 1: the region
-// IS the envelope (convex). Lower: a random contiguous subset of it. 0: no envelope
-// at all, free growth (step 1's original behaviour).
+// Target convexity: grow at random, then fill the concavities (cells in the region's
+// convex hull that are not in it) until convexity >= this. 1: convex. Values at or
+// below the grown region's own convexity (~0.55-0.82) change nothing.
 inline constexpr double   kConvexity    = 1.0;
-inline constexpr double   kMaxAspect    = 2.0;     // [design] envelope: ellipse, aspect U[1, this]
+
+// ---- flight path (step 2) ---------------------------------------------------
+inline constexpr uint32_t kTourNodes    = 3;       // the strongest nodes, CH included
+// Minimum turn radius v^2 / (g tan(bank)): 50 m/s, 45 deg -> 254.9 m (the same fixed-wing
+// turn as uav-sar's lawnmower sweep).
+inline constexpr double   kMinTurnRadiusM = 50.0 * 50.0 / 9.80665;
 
 // ---- UAV --------------------------------------------------------------------
 inline constexpr double kUavAltM    = 100.0;

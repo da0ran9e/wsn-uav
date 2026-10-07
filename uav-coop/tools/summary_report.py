@@ -149,10 +149,10 @@ def fig_time(data, prefix, figs):
     style(a)
     a = ax[2]
     b = np.array([int(r["bytes"]) for r in cells]); n = np.array([int(r["nodes"]) for r in cells])
-    a.hist(b / n, bins=60, color=C_BLUE, alpha=.85)
+    a.hist(b / n, bins=np.linspace(0, np.percentile(b / n, 99.5), 50), color=C_BLUE, alpha=.85)
     a.axvline(np.median(b / n), color=INK, lw=1.2)
     a.text(np.median(b / n), a.get_ylim()[1] * .92, f"  trung vị {np.median(b / n):.0f} B/node", fontsize=8.5, color=INK)
-    a.set_xlabel("byte tóm tắt mỗi node (tổng byte của cell / số node)", fontsize=9, color=INK2)
+    a.set_xlabel("byte tóm tắt mỗi node (tổng byte của cell / số node; bỏ 0,5 % lớn nhất)", fontsize=9, color=INK2)
     a.set_ylabel("số cell", fontsize=9, color=INK2)
     a.set_title("Chi phí", loc="left", fontsize=10.5, color=INK)
     a.grid(color=GRIDC, lw=.6)

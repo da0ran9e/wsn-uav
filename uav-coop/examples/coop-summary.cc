@@ -18,8 +18,10 @@
 // children have delivered (or, with what it has, once a child has stayed quiet for a
 // few rounds per level below it: a dead link must not stall the cell). The tree was
 // planned from distances; static shadowing can kill a planned link, so after three
-// missed ACKs in a row a node reports to another node in range that is closer to the
-// CL (fewer hops: no loops), and that node reports again with the newcomer included.
+// missed ACKs in a row a node reports to another node within 1.5x the link range that
+// is closer to the CL in the order (hops, id) -- no loops -- and that node reports
+// again with the newcomer included. Which nodes a summary covers travels as a mask,
+// so a node heard through two parents is counted once.
 // Each cell is on its own channel (PECEE colours neighbours apart).
 //
 // Radio: the urban G2G channel of G2G-CHAIN (n 3.5, static per-pair shadowing
@@ -30,7 +32,7 @@
 // what cost) and PREFIX-nodes.csv (the first mission, per node: its final parent and
 // what it sent).
 //
-//   uav-coop-summary --nodes=deploy-nodes-s35.csv --routes=deploy-routes-s35.csv \
+//   uav-coop-summary --nodes=deploy-nodes-s35.csv --routes=deploy-routes-s35.csv
 //                    --bits=bits-r{r}.bin --K=2000 --runs=120 --out=summary
 
 #include "coop-g2g.h"
@@ -76,11 +78,12 @@ namespace {
 
 constexpr uint32_t kChannel = 11;
 constexpr uint32_t kManifestMax = 100;   // manifest bytes per frame (app payload ceiling)
-constexpr uint32_t kSumHeader = 6;       // type, src, dst, seq, flags, nodes covered
+constexpr uint32_t kSumHeader = 5;       // type, src, dst, seq, flags; then the covered mask, ceil(n / 8) B
 constexpr uint32_t kAckBytes = 5;        // as an 802.15.4 ACK: 2 FCF + 1 seq + 2 FCS
 constexpr uint8_t kSum = 1, kAck = 2;
 constexpr double kStartS = 1.0;
 constexpr uint32_t kSwitchAfter = 3;   // missed ACKs in a row before trying another parent
+constexpr double kAltRangeFactor = 1.5;   // other parents up to this x the link range
 
 struct Cfg {
     std::string nodesFile = "deploy-nodes-s35.csv", routesFile = "deploy-routes-s35.csv";
@@ -153,7 +156,7 @@ struct Member {
     uint32_t subtree = 1;                      // nodes in its subtree, itself included
     std::vector<uint8_t> lacks;                // own lacks, AND the children's as they arrive
     std::map<int32_t, std::vector<uint8_t>> childKnown;   // chunks of the child's summary heard
-    std::map<int32_t, uint32_t> childCovered;  // nodes the child's final summary covers
+    std::map<int32_t, uint64_t> childCovered;  // nodes the child's final summary covers (bit = node)
     std::map<int32_t, bool> childFinal;
     std::map<int32_t, uint64_t> childHeard;    // round of the child's last frame
     uint32_t height = 0;                       // levels below it
@@ -209,7 +212,11 @@ CellResult RunCell(const Cfg& c, const std::vector<GroundNode>& nodes, const std
         for (uint32_t o = 0; o < n; ++o) {
             const GroundNode& h = nodes[mem[o]];
             const double d = std::hypot(g.x - h.x, g.y - h.y);
-            if ((int32_t)o != m[k].parent && h.hopsCL < g.hopsCL && d <= c.linkRangeM) alt.push_back({d, (int32_t)o});
+            // closer to the CL in the order (hops, id): no loops; a little beyond the
+            // planned range (weaker, but better than a dead link)
+            const bool closer = h.hopsCL < g.hopsCL || (h.hopsCL == g.hopsCL && h.id < g.id);
+            if ((int32_t)o != m[k].parent && closer && d <= kAltRangeFactor * c.linkRangeM)
+                alt.push_back({d, (int32_t)o});
         }
         std::sort(alt.begin(), alt.end());
         for (const auto& [d, o] : alt) m[k].alternates.push_back(o);
@@ -271,14 +278,18 @@ CellResult RunCell(const Cfg& c, const std::vector<GroundNode>& nodes, const std
         m[k].phy->PlmeSetTRXStateRequest(lrwpan::IEEE_802_15_4_PHY_TX_ON);
     };
     uint64_t roundNow = 0;
-    auto clComplete = [&]() {   // every node of the cell is in the CL's summary
-        uint32_t covered = 1;
-        for (int32_t ch2 : m[cl].children) {
-            if (!m[cl].childFinal[ch2]) return false;
-            covered += m[cl].childCovered[ch2];
-        }
-        return covered == n;
+    // The nodes a node's summary covers: itself and its children's final summaries.
+    // A mask, not a count: a node that re-parented after its old parent already had
+    // its summary is then covered twice, and must be counted once.
+    auto coveredBy = [&](uint32_t k) {
+        uint64_t mask = 1ull << k;
+        for (int32_t ch2 : m[k].children)
+            if (m[k].childFinal[ch2]) mask |= m[k].childCovered[ch2];
+        return mask;
     };
+    const uint64_t all = n == 64 ? ~0ull : (1ull << n) - 1;
+    const uint32_t maskBytes = (n + 7) / 8;
+    auto clComplete = [&]() { return coveredBy(cl) == all; };   // every node is in the CL's summary
 
     for (uint32_t k = 0; k < n; ++k) {
         m[k].phy->SetPlmeSetTRXStateConfirmCallback(lrwpan::PlmeSetTRXStateConfirmCallback(
@@ -304,9 +315,10 @@ CellResult RunCell(const Cfg& c, const std::vector<GroundNode>& nodes, const std
                     if (me.awaiting && src == (uint8_t)me.parent && seq == me.seq) me.acked = true;
                     return;
                 }
-                CHECK(type == kSum && len >= kSumHeader + kManifestHeader);
+                CHECK(type == kSum && len >= kSumHeader + maskBytes + kManifestHeader);
                 const int32_t child = src;
-                CHECK(nodes[mem[child]].hopsCL > nodes[mem[k]].hopsCL);
+                CHECK(nodes[mem[child]].hopsCL > nodes[mem[k]].hopsCL ||
+                      (nodes[mem[child]].hopsCL == nodes[mem[k]].hopsCL && nodes[mem[child]].id > nodes[mem[k]].id));
                 if (!me.childKnown.count(child)) {   // a node that switched to this parent
                     me.childKnown[child].assign(K, 0);
                     me.childFinal[child] = false;
@@ -318,7 +330,7 @@ CellResult RunCell(const Cfg& c, const std::vector<GroundNode>& nodes, const std
                 me.lastSeqFrom[src] = seq;
                 me.childHeard[child] = roundNow;
                 const bool final = f[4] & 1;
-                const ManifestView v = DecodeManifest(std::vector<uint8_t>(f.begin() + kSumHeader, f.end()));
+                const ManifestView v = DecodeManifest(std::vector<uint8_t>(f.begin() + kSumHeader + maskBytes, f.end()));
                 CHECK(v.kind == kSum && v.b <= K && v.a < v.b);
                 for (uint32_t j = v.a; j < v.b; ++j) {
                     me.childKnown[child][j] = 1;
@@ -329,10 +341,13 @@ CellResult RunCell(const Cfg& c, const std::vector<GroundNode>& nodes, const std
                 }
                 if (final) {
                     for (uint32_t j = 0; j < K; ++j) CHECK(me.childKnown[child][j]);
-                    if (me.started && (!me.childFinal[child] || me.childCovered[child] != f[5]))
+                    uint64_t mask = 0;
+                    for (uint32_t b = 0; b < maskBytes; ++b) mask |= (uint64_t)f[kSumHeader + b] << (8 * b);
+                    CHECK(mask >> child & 1);
+                    if (me.started && (coveredBy(k) | mask) != coveredBy(k))
                         me.stale = true;   // more of the cell to report upward
                     me.childFinal[child] = true;
-                    me.childCovered[child] = f[5];
+                    me.childCovered[child] |= mask;
                 }
                 if ((int32_t)k == cl && clComplete() && !finished) {
                     finished = true;
@@ -399,12 +414,10 @@ CellResult RunCell(const Cfg& c, const std::vector<GroundNode>& nodes, const std
                     const ManifestView v = DecodeManifest(mf.bytes);   // round trip, every frame
                     CHECK(v.a == me.ptr && v.b == mf.b);
                     for (uint32_t j = v.a; j < v.b; ++j) CHECK(v.member[j - v.a] == me.lacks[j]);
-                    uint32_t covered = 1;
-                    for (int32_t ch2 : me.children)
-                        if (me.childFinal[ch2]) covered += me.childCovered[ch2];
+                    const uint64_t covered = coveredBy(k);
                     me.seq++;
-                    me.frame = {kSum, (uint8_t)k, (uint8_t)me.parent, me.seq,
-                                (uint8_t)(mf.b == K ? 1 : 0), (uint8_t)covered};
+                    me.frame = {kSum, (uint8_t)k, (uint8_t)me.parent, me.seq, (uint8_t)(mf.b == K ? 1 : 0)};
+                    for (uint32_t b = 0; b < maskBytes; ++b) me.frame.push_back((uint8_t)(covered >> (8 * b)));
                     me.frame.insert(me.frame.end(), mf.bytes.begin(), mf.bytes.end());
                     me.frameEnd = mf.b;
                 }
@@ -426,9 +439,7 @@ CellResult RunCell(const Cfg& c, const std::vector<GroundNode>& nodes, const std
     // What the CL now knows: its own lacks AND everything its children reported.
     R.complete = finished;
     R.lacksAtCL = (uint32_t)std::count(m[cl].lacks.begin(), m[cl].lacks.end(), 1);
-    R.coveredAtCL = 1;
-    for (int32_t ch2 : m[cl].children)
-        if (m[cl].childFinal[ch2]) R.coveredAtCL += m[cl].childCovered[ch2];
+    R.coveredAtCL = (uint32_t)__builtin_popcountll(coveredBy(cl));
     R.exact = m[cl].lacks == trueLacks;
     for (uint32_t j = 0; j < K; ++j) CHECK(m[cl].lacks[j] >= trueLacks[j]);   // never claims too much
     if (R.complete && R.coveredAtCL == n) CHECK(R.exact);   // heard everyone: exact
@@ -483,7 +494,7 @@ int main(int argc, char* argv[]) {
                          hopsCL.at(r.at("id"))});
     std::map<Hex, std::vector<size_t>> cells;
     for (size_t i = 0; i < nodes.size(); ++i) cells[nodes[i].cell].push_back(i);
-    for (const auto& [h, v] : cells) CHECK(v.size() <= 255);
+    for (const auto& [h, v] : cells) CHECK(v.size() <= 64);   // the covered mask
     std::printf("%zu nodes in %zu cells; file of %u chunks; summaries up the toCL tree, %.0f ms slots in "
                 "post-order, one sender per cell; G2G n %.1f, shadowing %.1f dB, coherence %.0f ms%s\n",
                 nodes.size(), cells.size(), c.K, c.slotS * 1e3, c.n, c.selftest ? 0.0 : c.sigmaDb,

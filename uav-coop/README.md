@@ -12,8 +12,8 @@ fully convex) → random sensor nodes with three random capabilities → one CH 
 at a random boundary point, over the CH, out at another (min turn radius a parameter). See
 [`docs/DEPLOY-vi.md`](docs/DEPLOY-vi.md). Step 3: the UAV flies that path broadcasting a
 numbered stream; packets received per node — [`docs/PASS-vi.md`](docs/PASS-vi.md). Pre-built
-routes (PECEE elastic clustering: next hop to the CL, to each adjacent cell, main route
-to the CH) — [`docs/ROUTING-vi.md`](docs/ROUTING-vi.md).
+routes planned at the BS (PECEE elastic clustering: next hop to the CL, to each adjacent
+cell through its single gateway link, main route to the CH; no node left out) — [`docs/ROUTING-vi.md`](docs/ROUTING-vi.md).
 
 ## Layout
 ```
@@ -27,7 +27,7 @@ uav-coop/
 │   ├── deploy.{h,cc}         # uniform random nodes; capabilities; CH and CL roles
 │   ├── dubins.{h,cc}         # shortest Dubins path between two poses (six words)
 │   ├── path.{h,cc}           # shortest open Dubins path through points, headings constrained
-│   └── routing.{h,cc}        # route tables: to the CL, to each adjacent cell, main to the CH
+│   └── routing.{h,cc}        # gateways, bridges, route tables: to the CL, to each adjacent cell, main to the CH
 ├── examples/coop-deploy.cc   # steps 1-2 with checks, writes CSV
 ├── examples/coop-pass.cc     # step 3: UAV broadcast pass over the deployment (ns-3 LR-WPAN)
 ├── examples/coop-a2g.h       # the urban A2G channel (free space to H, then alpha; Rician)

@@ -36,7 +36,9 @@ def load(src, prefix, s):
     sel = {(int(x["q"]), int(x["r"])) for x in lat if x["selected"] == "1"}
     nodes = {r["id"]: r for r in csv.DictReader(open(os.path.join(src, f"{prefix}-nodes-s{s}.csv")))}
     routes = {r["id"]: r for r in csv.DictReader(open(os.path.join(src, f"{prefix}-routes-s{s}.csv")))}
-    return c, w, sel, nodes, routes
+    gws = list(csv.DictReader(open(os.path.join(src, f"{prefix}-gateways-s{s}.csv"))))
+    bridges = list(csv.DictReader(open(os.path.join(src, f"{prefix}-bridges-s{s}.csv"))))
+    return c, w, sel, nodes, routes, gws, bridges
 
 
 def cells_layer(a, c, w, sel, fc="#f3f2ee", lw=.7):
@@ -85,8 +87,9 @@ def trace(routes, i):
     return path
 
 
-def free_path(nodes, routes, i, ch, rng):
+def free_path(nodes, routes, i, ch, rng, bridges):
     """One shortest path ignoring cells, following free hop counts down (lowest id)."""
+    extra = {(b["a"], b["b"]) for b in bridges} | {(b["b"], b["a"]) for b in bridges}
     link = 0
     pos = {k: xy(v) for k, v in nodes.items()}
     path = [i]
@@ -95,7 +98,7 @@ def free_path(nodes, routes, i, ch, rng):
         h = int(routes[cur]["freeHopsCH"])
         best = None
         for k, p in pos.items():
-            if int(routes[k]["freeHopsCH"]) == h - 1 and math.dist(p, pos[cur]) <= rng:
+            if int(routes[k]["freeHopsCH"]) == h - 1 and (math.dist(p, pos[cur]) <= rng or (cur, k) in extra):
                 if best is None or int(k) < int(best):
                     best = k
         path.append(best)
@@ -103,7 +106,7 @@ def free_path(nodes, routes, i, ch, rng):
 
 
 def fig_main(src, prefix, s, out, rng):
-    c, w, sel, nodes, routes = load(src, prefix, s)
+    c, w, sel, nodes, routes, gws, bridges = load(src, prefix, s)
     ch = [k for k, n in nodes.items() if n["isCH"] == "1"][0]
     fig = plt.figure(figsize=(18, 13.5), dpi=150, facecolor=SURF)
     gs = fig.add_gridspec(2, 2, width_ratios=[1.25, 1], height_ratios=[1, 1], hspace=.18, wspace=.08,
@@ -119,17 +122,17 @@ def fig_main(src, prefix, s, out, rng):
         segs.append([xy(nodes[k]), xy(nodes[r["mainNext"]])])
         cols.append(RAMP(int(r["hopsCH"]) / hmax))
     a.add_collection(LineCollection(segs, colors=cols, linewidths=.9, zorder=3))
-    bad = [k for k, r in routes.items() if r["hopsCH"] == "-1"]
-    iso = [k for k in bad if routes[k]["degree"] == "0"]
-    cut = [k for k in bad if routes[k]["degree"] != "0" and routes[k]["freeHopsCH"] != "-1"]
-    island = [k for k in bad if routes[k]["degree"] != "0" and routes[k]["freeHopsCH"] == "-1"]
-    for ks, mk, lab in ((iso, "x", f"node cô lập ({len(iso)})"),
-                        (island, "s", f"cụm node tách khỏi phần còn lại ({len(island)})"),
-                        (cut, "D", f"tới được CH nếu bỏ qua cell, nhưng không theo bảng ({len(cut)})")):
-        if ks:
-            a.scatter([xy(nodes[k])[0] for k in ks], [xy(nodes[k])[1] for k in ks], marker=mk,
-                      s=22 if mk == "x" else 16, color=C_BAD, lw=1.1 if mk == "x" else .4,
-                      edgecolors=INK if mk != "x" else None, zorder=5, label=lab)
+    assert all(r["hopsCH"] != "-1" for r in routes.values())   # nobody is cut off
+    a.add_collection(LineCollection([[xy(nodes[g["gwA"]]), xy(nodes[g["gwB"]])] for g in gws], colors=INK,
+                                    linewidths=2.2, zorder=4))
+    a.plot([], [], color=INK, lw=2.2, label=f"gateway: liên kết duy nhất giữa hai cell kề ({len(gws)})")
+    for kind, col, lab in (("0", C_BAD, "bắc cầu trong cell"), ("1", "#eb6834", "gateway bắc cầu")):
+        bs = [b for b in bridges if b["gateway"] == kind]
+        if bs:
+            a.add_collection(LineCollection([[xy(nodes[b["a"]]), xy(nodes[b["b"]])] for b in bs], colors=col,
+                                            linewidths=1.6, linestyles=(0, (2, 1.5)), zorder=5))
+            a.plot([], [], color=col, lw=1.6, ls=(0, (2, 1.5)),
+                   label=f"{lab} > {rng:.0f} m ({len(bs)}, dài nhất {max(float(b['metres']) for b in bs):.0f} m)")
     cls = [k for k, n in nodes.items() if n["isCL"] == "1" and n["isCH"] != "1"]
     a.scatter([xy(nodes[k])[0] for k in cls], [xy(nodes[k])[1] for k in cls], s=26, facecolors="none",
               edgecolors=C_CL, linewidths=1.3, zorder=4, label="CL")
@@ -151,12 +154,12 @@ def fig_main(src, prefix, s, out, rng):
     ex = []
     for k in range(6):
         ang = math.radians(60 * k + 30)
-        cand = [i for i, r in routes.items() if r["hopsCH"] != "-1"]
+        cand = list(routes)
         ex.append(max(cand, key=lambda i: (xy(nodes[i])[0] - cx) * math.cos(ang) + (xy(nodes[i])[1] - cy) * math.sin(ang)))
     ex = list(dict.fromkeys(ex))
     for j, i in enumerate(ex):
         p = trace(routes, i)
-        f = free_path(nodes, routes, i, ch, rng)
+        f = free_path(nodes, routes, i, ch, rng, bridges)
         b.plot([xy(nodes[k])[0] for k in f], [xy(nodes[k])[1] for k in f], color=INK2, lw=.9,
                ls=(0, (2, 2)), zorder=3, label="ngắn nhất bỏ qua cell" if j == 0 else None)
         b.plot([xy(nodes[k])[0] for k in p], [xy(nodes[k])[1] for k in p], color=SIX[j % 6], lw=1.8,
@@ -171,7 +174,7 @@ def fig_main(src, prefix, s, out, rng):
     style(b)
     # (c) hops vs cell-free hops
     d = fig.add_subplot(gs[1, 1])
-    ok = [r for r in routes.values() if r["hopsCH"] != "-1"]
+    ok = list(routes.values())
     fh = np.array([int(r["freeHopsCH"]) for r in ok]); hh = np.array([int(r["hopsCH"]) for r in ok])
     m = max(hh.max(), fh.max()) + 1
     H = np.zeros((m, m))
@@ -193,14 +196,15 @@ def fig_main(src, prefix, s, out, rng):
     d.tick_params(colors=INK2, labelsize=8)
     for sp in d.spines.values():
         sp.set_visible(False)
-    fig.suptitle("Routing dựng sẵn kiểu PECEE elastic clustering: mỗi node lưu next hop tới CL, tới từng cell "
-                 "kề, và chọn đường chính ngắn nhất tới CH", x=.04, ha="left", fontsize=13, color=INK)
+    fig.suptitle("Routing dựng sẵn tại BS (PECEE elastic clustering): next hop tới CL, tới từng cell kề qua "
+                 "một gateway duy nhất, đường chính ngắn nhất tới CH — không node nào bị bỏ sót",
+                 x=.04, ha="left", fontsize=13, color=INK)
     fig.savefig(out, facecolor=SURF)
     print(f"  {out}")
 
 
 def fig_tables(src, prefix, s, out, rng):
-    c, w, sel, nodes, routes = load(src, prefix, s)
+    c, w, sel, nodes, routes, gws, bridges = load(src, prefix, s)
     ch = [k for k, n in nodes.items() if n["isCH"] == "1"][0]
     chc = cell_of(nodes[ch])
     # a cell next to the CH's cell with all six neighbours in the region
@@ -236,11 +240,8 @@ def fig_tables(src, prefix, s, out, rng):
     cl = [k for k in memA if nodes[k]["isCL"] == "1"][0]
     arrows(a, [(k, routes[k]["toCL"]) for k in memA if routes[k]["toCL"] != "-1"], "#1c5cab")
     a.scatter(*xy(nodes[cl]), s=90, facecolors="none", edgecolors=C_CL, linewidths=2, zorder=5)
-    noCL = [k for k in memA if routes[k]["toCL"] == "-1" and k != cl]
-    if noCL:
-        a.scatter([xy(nodes[k])[0] for k in noCL], [xy(nodes[k])[1] for k in noCL], marker="x", s=30,
-                  color=C_BAD, zorder=5)
-    a.set_title(f"cell {A}: next hop tới CL #{cl}\n({len(memA)} node; {len(noCL)} không tới được CL trong cell)",
+    a.set_title(f"cell {A}: next hop tới CL #{cl}\n({len(memA)} node, TB "
+                f"{np.mean([int(routes[k]['hopsCL']) for k in memA]):.1f} hop)",
                 loc="left", fontsize=9.5, color=INK)
     # panels 1..6: next hops toward each adjacent cell
     for j, B in enumerate(nbs):
@@ -250,17 +251,19 @@ def fig_tables(src, prefix, s, out, rng):
         a.add_collection(PolyCollection([corners(*c[B], R)], facecolors=SIX[j] + "22", edgecolors=SIX[j],
                                         linewidths=1.2, zorder=1))
         key = f"{B[0]}:{B[1]}"
-        pairs, miss, hops = [], 0, []
+        pairs, hops = [], []
         for k in memA:
             ent = dict(e.split(">") for e in routes[k]["toCells"].split("|") if e)
             nx, h = ent[key].split("/")
-            if nx == "-1":
-                miss += 1
-                continue
             pairs.append((k, nx)); hops.append(int(h))
         arrows(a, pairs, SIX[j])
+        g = next(g for g in gws if {(int(g["qA"]), int(g["rA"])), (int(g["qB"]), int(g["rB"]))} == {A, B})
+        ga, gb = (g["gwA"], g["gwB"]) if (int(g["qA"]), int(g["rA"])) == A else (g["gwB"], g["gwA"])
+        for k in (ga, gb):
+            a.scatter(*xy(nodes[k]), s=70, marker="D", color=SIX[j], edgecolors=INK, linewidths=1, zorder=6)
         main = sum(1 for k in memA if routes[k]["mainVia"] == key)
-        a.set_title(f"next hop tới cell kề {B}\nTB {np.mean(hops):.1f} hop; {miss} node không tới được; "
+        a.set_title(f"next hop tới cell kề {B}: qua gateway #{ga} → #{gb} ({float(g['metres']):.0f} m"
+                    f"{', bắc cầu' if g['bridge'] == '1' else ''})\nTB {np.mean(hops):.1f} hop; "
                     f"{main} node chọn làm đường chính", loc="left", fontsize=9.5, color=INK)
         if B == chc:
             a.scatter(*xy(nodes[ch]), s=200, marker="*", color=C_CH, edgecolors=INK, linewidths=.8, zorder=6)
@@ -278,7 +281,7 @@ def fig_tables(src, prefix, s, out, rng):
     a.set_title("đường chính của từng node trong cell\n(màu = bảng được chọn; đỏ sao = CH)", loc="left",
                 fontsize=9.5, color=INK)
     fig.suptitle(f"Bảng routing của một cell (cell {A}, kề cell của CH): mỗi node lưu 1 next hop tới CL và 1 "
-                 f"next hop tới mỗi cell kề — spacing {s} m, liên kết ≤ {rng:.0f} m",
+                 f"next hop tới mỗi cell kề, luôn qua gateway duy nhất (♦) — spacing {s} m, liên kết ≤ {rng:.0f} m",
                  x=.01, ha="left", fontsize=12.5, color=INK)
     fig.tight_layout(rect=(0, 0, 1, .95))
     fig.savefig(out, facecolor=SURF)

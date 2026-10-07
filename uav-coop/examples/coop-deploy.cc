@@ -13,6 +13,8 @@
 //   PREFIX-pathwp-sS.csv  per spacing: entry, CH, exit, and the legs between
 //   PREFIX-routes-sS.csv  per spacing: each node's route table (to its CL, to each
 //                         adjacent cell, main route to the CH)
+//   PREFIX-gateways-sS.csv, PREFIX-bridges-sS.csv  the gateway link of each adjacent
+//                         cell pair; links added beyond range so no node is cut off
 // and checks the geometry, the region, the deployment and the path before writing.
 //
 //   uav-coop-deploy --radius=100 --cells=60 --convexity=1 --spacings=20,35,50 --rho=255 --pick=0 --out=deploy
@@ -233,36 +235,71 @@ std::vector<uint32_t> Bfs(const Routing& R, const std::vector<int32_t>& to, cons
 
 void CheckRouting(const std::vector<SensorNode>& v, size_t ch, const Routing& R, double range) {
     const size_t n = v.size();
-    // Links: exactly the pairs within range, both ways.
-    size_t nl = 0;
-    for (size_t i = 0; i < n; ++i)
-        for (size_t j = i + 1; j < n; ++j) {
-            const bool near = std::hypot(v[i].pos.x - v[j].pos.x, v[i].pos.y - v[j].pos.y) <= range;
-            const bool ij = std::binary_search(R.links[i].begin(), R.links[i].end(), (int32_t)j);
-            const bool ji = std::binary_search(R.links[j].begin(), R.links[j].end(), (int32_t)i);
-            CHECK(near == ij && ij == ji);
-            nl += near;
-        }
-    size_t deg = 0;
-    for (const auto& l : R.links) deg += l.size();
-    CHECK(deg == 2 * nl);
     auto linked = [&](int32_t a, int32_t b) {
         return std::binary_search(R.links[a].begin(), R.links[a].end(), b);
     };
+    // Links: exactly the pairs within range plus the listed bridges, both ways; a
+    // bridge is longer than range (it was needed).
+    std::set<std::pair<int32_t, int32_t>> br;
+    for (const Bridge& b : R.bridges) {
+        CHECK(b.metres > range);
+        CHECK(std::fabs(std::hypot(v[b.a].pos.x - v[b.b].pos.x, v[b.a].pos.y - v[b.b].pos.y) - b.metres) < 1e-9);
+        CHECK(b.gateway ? HexGrid::Distance(v[b.a].cell, v[b.b].cell) == 1 : v[b.a].cell == v[b.b].cell);
+        CHECK(br.insert({std::min(b.a, b.b), std::max(b.a, b.b)}).second);
+    }
+    size_t nl = 0;
+    for (size_t i = 0; i < n; ++i) {
+        CHECK(std::is_sorted(R.links[i].begin(), R.links[i].end()));
+        for (size_t j = i + 1; j < n; ++j) {
+            const bool want = std::hypot(v[i].pos.x - v[j].pos.x, v[i].pos.y - v[j].pos.y) <= range ||
+                              br.count({(int32_t)i, (int32_t)j});
+            CHECK(want == linked(i, j) && want == linked(j, i));
+            nl += want;
+        }
+    }
+    size_t deg = 0;
+    for (const auto& l : R.links) deg += l.size();
+    CHECK(deg == 2 * nl);
     std::map<Hex, std::vector<int32_t>> members;
     for (size_t i = 0; i < n; ++i) members[v[i].cell].push_back((int32_t)i);
+    // Gateways: one per adjacent pair, mirrored, the best by the stated rule.
+    for (const auto& [A, memA] : members)
+        for (const Hex& B : HexGrid::Neighbours(A)) {
+            auto it = R.gateway.find({A, B});
+            if (!members.count(B)) { CHECK(it == R.gateway.end()); continue; }
+            CHECK(it != R.gateway.end());
+            const Gateway& g = it->second;
+            const Gateway& m = R.gateway.at({B, A});
+            CHECK(g.a == m.b && g.b == m.a && g.bridge == m.bridge);
+            CHECK(v[g.a].cell == A && v[g.b].cell == B && linked(g.a, g.b));
+            uint32_t bestHops = kNoRoute;
+            double bestD = 1e18, nearest = 1e18;
+            for (int32_t a : memA)
+                for (int32_t b : members.at(B)) {
+                    const double d = std::hypot(v[a].pos.x - v[b].pos.x, v[a].pos.y - v[b].pos.y);
+                    nearest = std::min(nearest, d);
+                    if (d > range) continue;
+                    const uint32_t h = R.table[a].toCL.hops + R.table[b].toCL.hops;
+                    if (h < bestHops || (h == bestHops && d < bestD)) { bestHops = h; bestD = d; }
+                }
+            if (g.bridge) {
+                CHECK(bestHops == kNoRoute && std::fabs(g.metres - nearest) < 1e-9);
+            } else {
+                CHECK(R.table[g.a].toCL.hops + R.table[g.b].toCL.hops == bestHops);
+                CHECK(std::fabs(g.metres - bestD) < 1e-9);
+            }
+        }
     for (const auto& [A, mem] : members) {
         std::vector<char> inA(n, 0);
         for (int32_t i : mem) inA[i] = 1;
         int32_t cl = -1;
         for (int32_t i : mem) if (v[i].isCL) cl = i;
         CHECK(cl >= 0);
-        // toCL: in-cell hops, walked hop by hop.
+        // The cell is in one piece, and toCL matches an in-cell BFS, walked hop by hop.
         const std::vector<uint32_t> hc = Bfs(R, {cl}, inA);
         for (int32_t i : mem) {
             const CellHop& t = R.table[i].toCL;
-            CHECK(t.hops == hc[i]);
-            if (t.hops == kNoRoute) { CHECK(t.next == kNoHop); continue; }
+            CHECK(hc[i] != kNoRoute && t.hops == hc[i]);
             int32_t cur = i;
             for (uint32_t k = 0; k < t.hops; ++k) {
                 const int32_t nx = R.table[cur].toCL.next;
@@ -270,46 +307,45 @@ void CheckRouting(const std::vector<SensorNode>& v, size_t ch, const Routing& R,
                 CHECK(R.table[nx].toCL.hops == R.table[cur].toCL.hops - 1);
                 cur = nx;
             }
-            CHECK(cur == cl && t.entry == cl);
+            CHECK(cur == cl);
         }
-        // toCell[B]: hops within A and B, walked: stays in A, the last hop lands in B.
+        // toCell[B]: inside A to the gateway a, then the single hop a -> b.
         for (const Hex& B : HexGrid::Neighbours(A)) {
-            auto it = members.find(B);
-            if (it == members.end()) {
+            auto g = R.gateway.find({A, B});
+            if (g == R.gateway.end()) {
                 for (int32_t i : mem) CHECK(R.table[i].toCell.count(B) == 0);
                 continue;
             }
-            std::vector<char> inAB = inA;
-            for (int32_t j : it->second) inAB[j] = 1;
-            const std::vector<uint32_t> hb = Bfs(R, it->second, inAB);
+            const std::vector<uint32_t> hg = Bfs(R, {g->second.a}, inA);
             for (int32_t i : mem) {
                 const CellHop& t = R.table[i].toCell.at(B);
-                CHECK(t.hops == hb[i]);
-                if (t.hops == kNoRoute) continue;
+                CHECK(t.hops == hg[i] + 1);
                 int32_t cur = i;
                 for (uint32_t k = 0; k < t.hops; ++k) {
                     const int32_t nx = R.table[cur].toCell.at(B).next;
                     CHECK(linked(cur, nx));
-                    CHECK(k + 1 < t.hops ? v[nx].cell == A : v[nx].cell == B);
+                    if (k + 1 < t.hops) CHECK(inA[nx]);
+                    else CHECK(cur == g->second.a && nx == g->second.b);
                     cur = nx;
-                    if (k + 1 < t.hops) CHECK(R.table[cur].toCell.at(B).hops == t.hops - k - 1);
                 }
-                CHECK(cur == t.entry);
             }
         }
     }
-    // Main route: walked from every node, every hop lowers the remaining count by one
-    // and is a link inside the cell or into an adjacent cell; ends at the CH.
+    // Main route: every node has one; walked, it ends at the CH, every hop lowers the
+    // remaining count by one, and cells are crossed only over gateway links.
     const std::vector<uint32_t> fh = FreeHops(R, ch);
     for (size_t i = 0; i < n; ++i) {
         const RouteTable& t = R.table[i];
-        if (t.hopsToCH == kNoRoute) { CHECK(t.mainNext == kNoHop); continue; }
+        CHECK(t.hopsToCH != kNoRoute);                // nobody is left out
         CHECK(t.hopsToCH >= fh[i]);                   // never shorter than ignoring cells
         int32_t cur = (int32_t)i;
         for (uint32_t k = 0; k < t.hopsToCH; ++k) {
             const int32_t nx = R.table[cur].mainNext;
             CHECK(linked(cur, nx));
-            CHECK(v[nx].cell == v[cur].cell || HexGrid::Distance(v[nx].cell, v[cur].cell) == 1);
+            if (v[nx].cell != v[cur].cell) {
+                const Gateway& g = R.gateway.at({v[cur].cell, v[nx].cell});
+                CHECK(cur == g.a && nx == g.b);
+            }
             CHECK(R.table[nx].hopsToCH == R.table[cur].hopsToCH - 1);
             cur = nx;
         }
@@ -664,58 +700,68 @@ int main(int argc, char* argv[]) {
     }
 
     // ---- step 6: pre-built routes over the cells (PECEE elastic clustering) ----
-    std::printf("\nroutes: G2G link = nodes at most %.0f m apart; per node: next hop to its CL, to "
-                "each adjacent cell, main route to the CH\n", linkRange);
-    std::printf("%8s %8s %7s %9s %11s %11s %12s %14s %13s\n", "spacing", "links", "degree",
-                "isolated", "no route CL", "no main", "hops to CH", "free (no cells)", "stretch max");
+    std::printf("\nroutes (planned at the BS): G2G link = nodes at most %.0f m apart, plus bridges "
+                "so no node is cut off; one gateway link per pair of adjacent cells\n", linkRange);
+    std::printf("%8s %8s %7s %15s %17s %10s %15s %15s %12s\n", "spacing", "links", "degree",
+                "in-cell bridges", "gateway bridges", "longest", "hops to CH", "free (no cells)",
+                "stretch max");
     for (const Roles& R : roles) {
         const Routing rt = BuildRouting(R.nodes, R.ch, linkRange);
         CheckRouting(R.nodes, R.ch, rt, linkRange);
         const std::vector<uint32_t> fh = FreeHops(rt, R.ch);
-        size_t links = 0, iso = 0, noCL = 0, noMain = 0, freeOnly = 0;
-        double hm = 0, fm = 0, smax = 0;
+        size_t links = 0, bIn = 0, bGw = 0;
+        double hm = 0, fm = 0, smax = 0, blong = 0;
         uint32_t hmax = 0;
-        size_t nr = 0;
+        for (const Bridge& b : rt.bridges) {
+            (b.gateway ? bGw : bIn)++;
+            blong = std::max(blong, b.metres);
+        }
         for (size_t i = 0; i < R.nodes.size(); ++i) {
             links += rt.links[i].size();
-            iso += rt.links[i].empty();
-            noCL += rt.table[i].toCL.hops == kNoRoute;
             const uint32_t h = rt.table[i].hopsToCH;
-            if (h == kNoRoute) { noMain++; freeOnly += fh[i] != kNoRoute; continue; }
-            nr++;
             hm += h;
             fm += fh[i];
             hmax = std::max(hmax, h);
             if (fh[i] > 0) smax = std::max(smax, (double)h / fh[i]);
         }
-        std::printf("%6.0f m %8zu %7.2f %9zu %11zu %11zu %7.1f (max %u) %9.1f %13.2f\n", R.s,
-                    links / 2, (double)links / R.nodes.size(), iso, noCL, noMain, hm / nr, hmax,
-                    fm / nr, smax);
-        std::printf("         | %zu node(s) without a main route could reach the CH ignoring cells\n",
-                    freeOnly);
+        const size_t nn = R.nodes.size();
+        std::printf("%6.0f m %8zu %7.2f %15zu %17zu %8.1f m %8.1f (max %u) %15.1f %12.2f\n", R.s,
+                    links / 2, (double)links / nn, bIn, bGw, blong, hm / nn, hmax, fm / nn, smax);
+        std::printf("         | %zu gateways (one per adjacent cell pair)\n", rt.gateway.size() / 2);
         char sfx[32];
         std::snprintf(sfx, sizeof sfx, "-s%.0f.csv", R.s);
+        auto id = [&](int32_t k) { return k == kNoHop ? -1 : (int64_t)R.nodes[k].id; };
         FILE* f = std::fopen((out + "-routes" + sfx).c_str(), "w");
         std::fprintf(f, "id,degree,toCL,hopsCL,mainNext,mainVia,hopsCH,metresCH,freeHopsCH,toCells\n");
-        auto id = [&](int32_t k) { return k == kNoHop ? -1 : (int64_t)R.nodes[k].id; };
-        for (size_t i = 0; i < R.nodes.size(); ++i) {
+        for (size_t i = 0; i < nn; ++i) {
             const RouteTable& t = rt.table[i];
-            char via[32] = "-";
-            if (t.hopsToCH != kNoRoute)
-                std::snprintf(via, sizeof via, t.mainViaCL ? "CL" : "%d:%d", t.mainCell.q, t.mainCell.r);
-            std::fprintf(f, "%u,%zu,%lld,%d,%lld,%s,%d,%.1f,%d,", R.nodes[i].id, rt.links[i].size(),
-                         (long long)id(t.toCL.next), t.toCL.hops == kNoRoute ? -1 : (int)t.toCL.hops,
-                         (long long)id(t.mainNext), via, t.hopsToCH == kNoRoute ? -1 : (int)t.hopsToCH,
-                         t.metresToCH, fh[i] == kNoRoute ? -1 : (int)fh[i]);
+            char via[32];
+            std::snprintf(via, sizeof via, t.mainViaCL ? "CL" : "%d:%d", t.mainCell.q, t.mainCell.r);
+            if (i == R.ch) std::snprintf(via, sizeof via, "-");
+            std::fprintf(f, "%u,%zu,%lld,%u,%lld,%s,%u,%.1f,%u,", R.nodes[i].id, rt.links[i].size(),
+                         (long long)id(t.toCL.next), t.toCL.hops, (long long)id(t.mainNext), via,
+                         t.hopsToCH, t.metresToCH, fh[i]);
             bool first = true;
             for (const auto& [B, h] : t.toCell) {
-                std::fprintf(f, "%s%d:%d>%lld/%d", first ? "" : "|", B.q, B.r, (long long)id(h.next),
-                             h.hops == kNoRoute ? -1 : (int)h.hops);
+                std::fprintf(f, "%s%d:%d>%lld/%u", first ? "" : "|", B.q, B.r, (long long)id(h.next), h.hops);
                 first = false;
             }
             std::fprintf(f, "\n");
         }
         std::fclose(f);
+        FILE* fg = std::fopen((out + "-gateways" + sfx).c_str(), "w");
+        std::fprintf(fg, "qA,rA,qB,rB,gwA,gwB,metres,bridge\n");
+        for (const auto& [AB, g] : rt.gateway)
+            if (AB.first < AB.second)
+                std::fprintf(fg, "%d,%d,%d,%d,%lld,%lld,%.2f,%d\n", AB.first.q, AB.first.r, AB.second.q,
+                             AB.second.r, (long long)id(g.a), (long long)id(g.b), g.metres, g.bridge ? 1 : 0);
+        std::fclose(fg);
+        FILE* fb = std::fopen((out + "-bridges" + sfx).c_str(), "w");
+        std::fprintf(fb, "a,b,metres,gateway\n");
+        for (const Bridge& b : rt.bridges)
+            std::fprintf(fb, "%lld,%lld,%.2f,%d\n", (long long)id(b.a), (long long)id(b.b), b.metres,
+                         b.gateway ? 1 : 0);
+        std::fclose(fb);
     }
     std::printf("\n%u CHECKS PASSED\n", g_checks);
     return 0;

@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <deque>
+#include <functional>
 #include <queue>
-#include <set>
 #include <tuple>
 
 namespace ns3::uavcoop {
@@ -24,20 +24,22 @@ double Dist(const SensorNode& a, const SensorNode& b) {
     return std::hypot(a.pos.x - b.pos.x, a.pos.y - b.pos.y);
 }
 
-// Shortest routes from every allowed node to the nearest of `targets`, over links
-// between allowed nodes. next[v]: the next hop from v toward the targets; entry[v]:
-// the target it ends at. Ties: lower predecessor index.
+void AddLink(std::vector<std::vector<int32_t>>& links, int32_t a, int32_t b) {
+    links[a].insert(std::upper_bound(links[a].begin(), links[a].end(), b), b);
+    links[b].insert(std::upper_bound(links[b].begin(), links[b].end(), a), a);
+}
+
+// Shortest routes (hops, then metres) from every node of `in` to `target`, over links
+// between nodes of `in`. next[v]: the next hop from v toward the target. Ties: lower
+// predecessor index.
 void Search(const std::vector<SensorNode>& nodes, const std::vector<std::vector<int32_t>>& links,
-            const std::vector<char>& allowed, const std::vector<int32_t>& targets,
-            std::vector<Cost>& cost, std::vector<int32_t>& next, std::vector<int32_t>& entry) {
-    using Item = std::tuple<uint32_t, double, int32_t>;   // hops, metres, node
+            const std::vector<char>& in, int32_t target, std::vector<Cost>& cost,
+            std::vector<int32_t>& next) {
+    using Item = std::tuple<uint32_t, double, int32_t>;
     std::priority_queue<Item, std::vector<Item>, std::greater<Item>> pq;
-    for (int32_t t : targets) {
-        cost[t] = {0, 0.0};
-        next[t] = kNoHop;
-        entry[t] = t;
-        pq.push({0, 0.0, t});
-    }
+    cost[target] = {0, 0.0};
+    next[target] = kNoHop;
+    pq.push({0, 0.0, target});
     std::vector<char> done(nodes.size(), 0);
     while (!pq.empty()) {
         const auto [h, m, u] = pq.top();
@@ -45,13 +47,12 @@ void Search(const std::vector<SensorNode>& nodes, const std::vector<std::vector<
         if (done[u]) continue;
         done[u] = 1;
         for (int32_t v : links[u]) {
-            if (!allowed[v] || done[v]) continue;
+            if (!in[v] || done[v]) continue;
             const Cost c{h + 1, m + Dist(nodes[u], nodes[v])};
             const bool tie = !(c < cost[v]) && !(cost[v] < c);
             if (c < cost[v] || (tie && u < next[v])) {
                 cost[v] = c;
                 next[v] = u;
-                entry[v] = entry[u];
                 pq.push({c.hops, c.metres, v});
             }
         }
@@ -65,7 +66,7 @@ Routing BuildRouting(const std::vector<SensorNode>& nodes, size_t ch, double ran
     Routing R;
     R.links.assign(n, {});
     R.table.assign(n, {});
-    // Links, by bucketing into range x range squares.
+    // ---- links in range, by bucketing into range x range squares ------------
     std::map<std::pair<int64_t, int64_t>, std::vector<int32_t>> bucket;
     auto key = [&](const Point& p) {
         return std::make_pair((int64_t)std::floor(p.x / range), (int64_t)std::floor(p.y / range));
@@ -90,47 +91,93 @@ Routing BuildRouting(const std::vector<SensorNode>& nodes, size_t ch, double ran
         if (nodes[i].isCL) cl[nodes[i].cell] = (int32_t)i;
     }
 
-    std::vector<Cost> cost(n);
-    std::vector<int32_t> next(n), entry(n);
-    std::vector<char> allowed(n, 0);
-    auto reset = [&] {
-        std::fill(cost.begin(), cost.end(), Cost{});
-        std::fill(next.begin(), next.end(), kNoHop);
-        std::fill(entry.begin(), entry.end(), kNoHop);
-        std::fill(allowed.begin(), allowed.end(), 0);
-    };
-    auto store = [&](int32_t v, CellHop& h) {
-        if (cost[v].hops == kNoRoute) return;
-        h.next = next[v];
-        h.hops = cost[v].hops;
-        h.metres = cost[v].metres;
-        h.entry = entry[v];
-    };
-
+    // ---- every cell in one piece: join its components by the shortest links ----
+    // Kruskal over all in-cell pairs, starting from the in-range components.
     for (const auto& [A, mem] : members) {
-        // toCL: inside the cell.
-        reset();
-        for (int32_t v : mem) allowed[v] = 1;
-        Search(nodes, R.links, allowed, {cl.at(A)}, cost, next, entry);
-        for (int32_t v : mem) store(v, R.table[v].toCL);
-        // toCell[B]: inside A and B, for every adjacent cell B that has nodes.
-        for (const Hex& B : HexGrid::Neighbours(A)) {
-            auto it = members.find(B);
-            if (it == members.end()) continue;
-            reset();
-            for (int32_t v : mem) allowed[v] = 1;
-            for (int32_t v : it->second) allowed[v] = 1;
-            Search(nodes, R.links, allowed, it->second, cost, next, entry);
-            for (int32_t v : mem) store(v, R.table[v].toCell[B]);
+        std::map<int32_t, int32_t> parent;
+        for (int32_t v : mem) parent[v] = v;
+        std::function<int32_t(int32_t)> find = [&](int32_t v) {
+            return parent[v] == v ? v : parent[v] = find(parent[v]);
+        };
+        for (int32_t u : mem)
+            for (int32_t v : R.links[u])
+                if (nodes[v].cell == A) parent[find(u)] = find(v);
+        std::vector<std::tuple<double, int32_t, int32_t>> pairs;
+        for (size_t x = 0; x < mem.size(); ++x)
+            for (size_t y = x + 1; y < mem.size(); ++y)
+                if (find(mem[x]) != find(mem[y]))
+                    pairs.push_back({Dist(nodes[mem[x]], nodes[mem[y]]), mem[x], mem[y]});
+        std::sort(pairs.begin(), pairs.end());
+        for (const auto& [d, u, v] : pairs) {
+            if (find(u) == find(v)) continue;
+            parent[find(u)] = find(v);
+            AddLink(R.links, u, v);
+            R.bridges.push_back({u, v, d, false});
         }
     }
 
-    // Main route: shortest route to the CH when every node may only forward along one
-    // of its own stored next hops (toCL or a toCell). Dijkstra from the CH backwards
-    // over those edges; each node's main next hop is the stored one on its shortest.
+    // ---- toCL, inside the cell ------------------------------------------------
+    std::vector<Cost> cost(n);
+    std::vector<int32_t> next(n);
+    std::vector<char> in(n, 0);
+    auto inCell = [&](const std::vector<int32_t>& mem) {
+        std::fill(cost.begin(), cost.end(), Cost{});
+        std::fill(next.begin(), next.end(), kNoHop);
+        std::fill(in.begin(), in.end(), 0);
+        for (int32_t v : mem) in[v] = 1;
+    };
+    for (const auto& [A, mem] : members) {
+        inCell(mem);
+        Search(nodes, R.links, in, cl.at(A), cost, next);
+        for (int32_t v : mem) R.table[v].toCL = {next[v], cost[v].hops, cost[v].metres};
+    }
+
+    // ---- one gateway per pair of adjacent cells -------------------------------
+    for (const auto& [A, memA] : members)
+        for (const Hex& B : HexGrid::Neighbours(A)) {
+            if (!(A < B) || !members.count(B)) continue;
+            const std::vector<int32_t>& memB = members.at(B);
+            Gateway best;
+            std::tuple<uint32_t, double, int32_t, int32_t> bestKey{kNoRoute, 0, 0, 0};
+            double nearest = 1e18;
+            int32_t na = kNoHop, nb = kNoHop;
+            for (int32_t a : memA)
+                for (int32_t b : memB) {
+                    const double d = Dist(nodes[a], nodes[b]);
+                    if (d < nearest) { nearest = d; na = a; nb = b; }
+                    if (d > range) continue;
+                    const auto k = std::make_tuple(R.table[a].toCL.hops + R.table[b].toCL.hops, d, a, b);
+                    if (best.a == kNoHop || k < bestKey) { bestKey = k; best = {a, b, d, false}; }
+                }
+            if (best.a == kNoHop) {   // no cross link in range: bridge the nearest pair
+                best = {na, nb, nearest, true};
+                AddLink(R.links, na, nb);
+                R.bridges.push_back({na, nb, nearest, true});
+            }
+            R.gateway[{A, B}] = best;
+            R.gateway[{B, A}] = {best.b, best.a, best.metres, best.bridge};
+        }
+
+    // ---- toCell[B]: inside the cell to the gateway a, then a -> b -------------
+    for (const auto& [A, mem] : members)
+        for (const Hex& B : HexGrid::Neighbours(A)) {
+            auto g = R.gateway.find({A, B});
+            if (g == R.gateway.end()) continue;
+            inCell(mem);
+            Search(nodes, R.links, in, g->second.a, cost, next);
+            for (int32_t v : mem) {
+                CellHop& h = R.table[v].toCell[B];
+                h.hops = cost[v].hops + 1;
+                h.metres = cost[v].metres + g->second.metres;
+                h.next = v == g->second.a ? g->second.b : next[v];
+            }
+        }
+
+    // ---- main route: shortest to the CH over each node's own stored next hops ----
+    // Dijkstra from the CH backwards over those edges.
     std::vector<Cost> D(n);
     std::vector<std::vector<std::pair<int32_t, int32_t>>> back(n);   // next -> (v, choice)
-    std::vector<std::vector<std::pair<int32_t, Hex>>> choice(n);     // v: (next, cell or CL)
+    std::vector<std::vector<std::pair<int32_t, Hex>>> choice(n);     // v: (next, cell; own = CL)
     for (size_t v = 0; v < n; ++v) {
         const RouteTable& t = R.table[v];
         if (t.toCL.next != kNoHop) choice[v].push_back({t.toCL.next, nodes[v].cell});

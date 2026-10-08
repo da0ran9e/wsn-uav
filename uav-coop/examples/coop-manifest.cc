@@ -7,21 +7,25 @@
 // --bits, folded onto K chunks, split into F files). A cell is ready when its CL has
 // the intra-cell summary (summary-cells.csv of the same mission).
 //
-// Roles, from the plan: border cells (an edge on the cluster's outline), near-border
-// cells (the next cell of some border cell, not border themselves), the rest.
-//   border, ready, lacking         -> MANIFEST of its state to its next cell
-//   near-border, ready + wait,     -> REVERSE manifest to each border cell that should
-//     lacking, not reached by one     have sent it one and did not
-//   any cell a manifest reaches    -> sends back what it holds of what the origin
-//                                     lacks, marks those as held, passes the rest on to
-//                                     its own next cell; stops when nothing is lacking
-//                                     or at the CH's cell (the rest: secondary phase)
-//   any cell data passes through   -> keeps a copy of what it lacks
-//   a border cell a reverse        -> sends what it holds of what the sender lacks;
-//     manifest reaches               if it lacks anything itself, it is now triggered
-// Received chunks are stored at the CL and the strong nodes of the cell.
+// Roles, from the plan. "x waits for b" when x is the next cell of border cell b.
+//   initiator: a border cell no other border cell sends to -> when ready and lacking,
+//              MANIFEST of what it HOLDS (what it lacks is everything else) to its next
+//   waiter:    any cell that is the next cell of a border cell, border or not -> waits;
+//              after ready + wait, if it lacks and a border cell that should have sent
+//              it a manifest has not, it sends that cell a REVERSE manifest
+// A manifest reaching cell x (from cell p):
+//   - x sends back toward p what it holds of what the manifest lacks;
+//   - the manifest x passes on describes x as it now stands: what the manifest held
+//     (plus what x just sent) AND what x itself holds -- so x's own gaps join it;
+//   - passed on to x's next cell while anything is lacking; at the CH's cell the base
+//     phase ends (the rest: secondary phase).
+// Data going back: every cell it reaches keeps what it lacks, and passes on toward
+// the origin only what the cell behind it lacked (by the manifest that cell sent).
+// A border cell a reverse manifest reaches sends what it holds of what the sender
+// lacks; if it lacks anything itself, it is now triggered.
+// Kept chunks go to the CL; the strong nodes on the way keep a copy of their own.
 //
-//   uav-coop-manifest --nodes=deploy-nodes-s35.csv --bits=bits-r{r}.bin \
+//   uav-coop-manifest --nodes=deploy-nodes-s35.csv --bits=bits-r{r}.bin
 //                     --summary=summary-cells.csv --runs=120 --out=manifest
 
 #include "../models/common/coop-params.h"
@@ -109,7 +113,7 @@ std::vector<std::vector<uint8_t>> ReadChunks(const std::string& file, size_t nNo
     return have;
 }
 
-enum Role { kBorder = 0, kNear = 1, kInner = 2 };
+enum Role { kInit = 0, kWaitBorder = 1, kWaitInner = 2, kOther = 3 };
 
 struct Cfg {
     std::string nodesFile = "deploy-nodes-s35.csv", bits = "bits-r{r}.bin", summary = "";
@@ -128,28 +132,26 @@ struct Plan {
     std::vector<std::vector<int32_t>> members;
     std::vector<int32_t> cl, next;   // per cell: CL node; next cell index (-1 at the CH's cell)
     std::vector<int> role;
+    std::vector<uint8_t> border;
+    std::vector<std::vector<size_t>> upstream;   // border cells whose next cell this is
     std::vector<std::vector<int32_t>> keepers;   // CL + nodes above the cell's mean strength
     size_t chCell = 0;
 };
 
-// In-cell multicast from node e to the cell's keepers: nodes on the union of the
-// shortest in-cell paths, e excluded (= frame-hops if each forwards once).
-uint32_t StoreCost(const Plan& P, size_t cell, int32_t e) {
-    std::set<int32_t> mem(P.members[cell].begin(), P.members[cell].end());
-    std::map<int32_t, int32_t> parent{{e, -1}};
-    std::deque<int32_t> q{e};
-    while (!q.empty()) {
-        const int32_t u = q.front();
-        q.pop_front();
-        for (int32_t v : P.R.links[u])
-            if (mem.count(v) && !parent.count(v)) { parent[v] = u; q.push_back(v); }
+// A kept chunk goes from the node it arrives at to the CL; the strong nodes on that
+// path keep a copy as it passes. Returns the hops; marks the holders.
+uint32_t StoreAtCL(const Plan& P, size_t cell, int32_t e, uint32_t j, std::vector<std::vector<uint8_t>>& holder) {
+    const int32_t cl = P.cl[cell];
+    const std::set<int32_t> keep(P.keepers[cell].begin(), P.keepers[cell].end());
+    uint32_t hops = 0;
+    for (int32_t v = e;; v = P.R.table[v].toCL.next) {
+        CHECK(P.nodes[v].cell == P.cells[cell]);
+        if (keep.count(v)) holder[v][j] = 1;
+        if (v == cl) break;
+        ++hops;
     }
-    std::set<int32_t> used;
-    for (int32_t k : P.keepers[cell]) {
-        CHECK(parent.count(k));   // the cell is in one piece (routing's bridges)
-        for (int32_t v = k; v != e; v = parent.at(v)) used.insert(v);
-    }
-    return (uint32_t)used.size();
+    CHECK(hops == P.R.table[e].toCL.hops);
+    return hops;
 }
 
 // Bytes of a manifest of `held` (K chunks in F files): per file one byte, plus the
@@ -195,167 +197,176 @@ MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector
     for (size_t x = 0; x < nc; ++x)
         for (int32_t i : P.members[x])
             for (uint32_t j = 0; j < K; ++j) have[x][j] |= node[i][j];
-    std::vector<std::vector<uint8_t>> holder = node;   // node-level, grows at the keepers
+    std::vector<std::vector<uint8_t>> holder = node;   // node-level, grows where chunks are kept
     auto lacking = [&](size_t x) { return (uint32_t)std::count(have[x].begin(), have[x].end(), 0); };
     for (size_t x = 0; x < nc; ++x) {
         M.cell[x].lacks0 = lacking(x);
         if (M.cell[x].lacks0 == 0) M.cell[x].fullS = 0;
     }
-    std::vector<uint8_t> sent(nc, 0);            // a border cell has sent its manifest
-    std::vector<std::set<size_t>> heardFrom(nc);  // near-border: manifests received from
+    std::vector<uint8_t> sent(nc, 0);             // has sent its own manifest
+    std::vector<std::set<size_t>> heardFrom(nc);   // waiters: upstream border cells heard
 
-    // Events: (time, seq, kind, ...). Manifests carry the origin's state as known
-    // along the way ("held"), the path so far, and the TTL.
+    // A manifest in flight: the cells it passed (origin first) and, per hop, the
+    // manifest that cell sent -- what the data coming back is filtered by.
     struct Ev {
         double t;
         uint64_t seq;
-        int kind;           // 0 trigger border, 1 near-border check, 2 manifest at cell, 3 reverse at border
-        size_t at;
-        size_t origin;
-        std::vector<size_t> path;          // cells from the origin to `at`
-        std::vector<uint8_t> held;         // the origin's state as the manifest says
+        int kind;   // 0 initiator ready, 1 waiter checks, 2 manifest at cell, 3 reverse at border,
+                    // 4 data at cell path[ttl] (its last chunk)
+        size_t at, origin;
+        std::vector<size_t> path;
+        std::vector<std::vector<uint8_t>> said;   // said[k]: manifest path[k] sent to path[k+1]
         uint32_t ttl;
-        int32_t entry;                     // node it arrives at
+        int32_t entry;   // node it arrives at
+        std::vector<uint32_t> js = {};   // data: the chunks
     };
     auto cmp = [](const Ev& a, const Ev& b) { return a.t != b.t ? a.t > b.t : a.seq > b.seq; };
     std::priority_queue<Ev, std::vector<Ev>, decltype(cmp)> pq(cmp);
     uint64_t seqNo = 0;
     for (size_t x = 0; x < nc; ++x) {
-        if (P.role[x] == kBorder) pq.push({ready[x], seqNo++, 0, x, x, {}, {}, 0, -1});
-        if (P.role[x] == kNear) pq.push({ready[x] + c.waitS, seqNo++, 1, x, x, {}, {}, 0, -1});
+        if (P.role[x] == kInit) pq.push({ready[x], seqNo++, 0, x, x, {}, {}, 0, -1});
+        if (!P.upstream[x].empty()) pq.push({ready[x] + c.waitS, seqNo++, 1, x, x, {}, {}, 0, -1});
     }
     const double slot = c.slotS;
-    auto markFull = [&](size_t x, double t) {
-        if (M.cell[x].fullS < 0 && lacking(x) == 0) M.cell[x].fullS = t;
+    auto frames = [&](const std::vector<uint8_t>& held) {
+        const uint32_t bytes = ManifestBytes(held, c.files);
+        M.manifestBytes += bytes;
+        return (bytes + kFramePayload - 1) / kFramePayload;
     };
-    // Chunks js go from cell `from` back along `back` (cells, from's neighbour first,
-    // ending at the destination). Every cell on the way keeps what it lacks; the
-    // destination keeps them all. Pipelined: the last chunk arrives (hops + m - 1)
-    // slots after t.
-    auto sendBack = [&](double t, size_t from, const std::vector<size_t>& back, const std::vector<uint32_t>& js) {
-        if (js.empty() || back.empty()) return;
-        const uint32_t m = (uint32_t)js.size();
-        // the holder nearest to the gateway toward the first cell, per chunk
-        uint64_t hops = 0;
-        uint32_t firstLeg = 0;   // the farthest holder, for the timing
-        int32_t entry = -1;
-        for (uint32_t j : js) {
-            int32_t best = -1;
+    // Chunks js (all needed by path[k-1]) leave cell path[k] back toward path[0], one
+    // cell per event. Pipelined: an event's time is when the batch's LAST chunk
+    // arrives; each further hop of h frame-hops adds h slots.
+    auto sendBack = [&](double t, size_t k, const std::vector<size_t>& path,
+                        const std::vector<std::vector<uint8_t>>& said, const std::vector<uint32_t>& js) {
+        if (js.empty()) return;
+        const size_t from = path[k];
+        const size_t to = path[k - 1];
+        uint32_t firstLeg = 0;
+        for (uint32_t j : js) {   // the holder nearest to the gateway toward `to`
+            CHECK(!said[k - 1][j] && have[from][j]);
             uint32_t bh = kNoRoute;
             for (int32_t i : P.members[from])
-                if (holder[i][j] && P.R.table[i].toCell.at(P.cells[back[0]]).hops < bh) {
-                    bh = P.R.table[i].toCell.at(P.cells[back[0]]).hops;
-                    best = i;
-                }
-            CHECK(best >= 0);   // the cell holds it, so some node does
-            hops += bh;
+                if (holder[i][j]) bh = std::min(bh, P.R.table[i].toCell.at(P.cells[to]).hops);
+            CHECK(bh != kNoRoute);   // the cell holds it, so some node does
+            M.hopsData += bh;
             firstLeg = std::max(firstLeg, bh);
         }
-        M.cell[from].supplied += m;
-        const Gateway& g0 = P.R.gateway.at({P.cells[from], P.cells[back[0]]});
-        entry = g0.b;
-        uint64_t pathHops = 0;   // per chunk, for the timing
-        for (size_t k = 0; k < back.size(); ++k) {
-            const size_t x = back[k];
-            const bool last = k + 1 == back.size();
-            uint32_t kept = 0;
-            for (uint32_t j : js)
-                if (!have[x][j]) {
-                    have[x][j] = 1;
-                    kept++;
-                    for (int32_t i : P.keepers[x]) holder[i][j] = 1;
-                } else if (last) {
-                    M.dup++;
-                }
-            const double tArr = t + (double)(firstLeg + pathHops + m - 1) * slot;
-            if (kept) {
-                (last ? M.cell[x].received : M.cell[x].cached) += kept;
-                M.hopsStore += (uint64_t)kept * StoreCost(P, x, entry);
-                markFull(x, tArr);
-                M.lastS = std::max(M.lastS, tArr);
-            }
-            if (!last) {   // through x toward the next cell back
-                const Gateway& g = P.R.gateway.at({P.cells[x], P.cells[back[k + 1]]});
-                const uint32_t h = P.R.table[entry].toCell.at(P.cells[back[k + 1]]).hops;
-                CHECK(h >= 1);
-                hops += (uint64_t)m * h;
-                pathHops += h;
-                entry = g.b;
-            }
-        }
-        M.hopsData += hops;
+        M.cell[from].supplied += (uint32_t)js.size();
+        Ev d{t + (double)(firstLeg + js.size() - 1) * slot, seqNo++, 4, to, from, path, said, (uint32_t)(k - 1),
+             P.R.gateway.at({P.cells[from], P.cells[to]}).b, js};
+        pq.push(d);
     };
-    auto forward = [&](double t, size_t from, int32_t fromNode, size_t origin, std::vector<size_t> path,
-                       const std::vector<uint8_t>& held, uint32_t ttl) {
-        const int32_t nx = P.next[from];
+    // Data reaches cell path[i]: keep what it lacks (to the CL), pass on what the cell
+    // behind it lacked.
+    auto dataAt = [&](const Ev& e) {
+        const size_t i = e.ttl;
+        const size_t x = e.path[i];
+        const bool origin = i == 0;
+        std::vector<uint32_t> keep, pass;
+        for (uint32_t j : e.js) {
+            if (!have[x][j]) keep.push_back(j);
+            else if (origin) M.dup++;
+            if (!origin && !e.said[i - 1][j]) pass.push_back(j);
+        }
+        uint32_t viaCL = 0;
+        for (uint32_t j : keep) {
+            have[x][j] = 1;
+            viaCL = StoreAtCL(P, x, e.entry, j, holder);
+            M.hopsStore += viaCL;
+        }
+        if (!keep.empty()) {
+            (origin ? M.cell[x].received : M.cell[x].cached) += (uint32_t)keep.size();
+            const double atCL = e.t + viaCL * slot;
+            if (M.cell[x].fullS < 0 && lacking(x) == 0) M.cell[x].fullS = atCL;
+            M.lastS = std::max(M.lastS, atCL);
+        }
+        if (origin || pass.empty()) return;
+        // on toward path[i-1]: kept ones from the CL, the others gateway to gateway
+        const size_t nx = e.path[i - 1];
+        const uint32_t fromCL = P.R.table[P.cl[x]].toCell.at(P.cells[nx]).hops;
+        const uint32_t direct = P.R.table[e.entry].toCell.at(P.cells[nx]).hops;
+        uint32_t worst = 0;
+        for (uint32_t j : pass) {
+            const bool kept = std::find(keep.begin(), keep.end(), j) != keep.end();
+            M.hopsData += kept ? fromCL : direct;
+            worst = std::max(worst, kept ? viaCL + fromCL : direct);
+        }
+        Ev d{e.t + worst * slot, seqNo++, 4, nx, e.origin, e.path, e.said, (uint32_t)(i - 1),
+             P.R.gateway.at({P.cells[x], P.cells[nx]}).b, pass};
+        pq.push(d);
+    };
+    // Cell x passes a manifest on to its next cell.
+    auto passOn = [&](double t, size_t x, int32_t fromNode, Ev e) {
+        const int32_t nx = P.next[x];
+        const std::vector<uint8_t>& held = e.said.back();
+        if (std::count(held.begin(), held.end(), 0) == 0) return;   // nothing lacking
         if (nx < 0) { M.toCH++; M.chRemainder += (uint32_t)std::count(held.begin(), held.end(), 0); return; }
-        if (ttl == 0) return;
+        if (e.ttl == 0) return;
         const uint32_t h = P.R.table[fromNode].toCell.at(P.cells[nx]).hops;
-        const uint32_t bytes = ManifestBytes(held, c.files);
-        const uint32_t frames = (bytes + kFramePayload - 1) / kFramePayload;
-        M.hopsManifest += (uint64_t)frames * h;
-        M.manifestBytes += bytes;
-        path.push_back((size_t)nx);
-        const Gateway& g = P.R.gateway.at({P.cells[from], P.cells[nx]});
-        pq.push({t + (h + frames - 1) * slot, seqNo++, 2, (size_t)nx, origin, path, held, ttl - 1, g.b});
+        const uint32_t f = frames(held);
+        M.hopsManifest += (uint64_t)f * h;
+        e.path.push_back((size_t)nx);
+        e.at = (size_t)nx;
+        e.kind = 2;
+        e.ttl--;
+        e.entry = P.R.gateway.at({P.cells[x], P.cells[nx]}).b;
+        e.t = t + (h + f - 1) * slot;
+        e.seq = seqNo++;
+        pq.push(e);
+    };
+    auto own = [&](double t, size_t x) {   // x sends its own manifest
+        sent[x] = 1;
+        M.cell[x].manifests++;
+        Ev e{t, 0, 2, x, x, {x}, {have[x]}, c.ttl, P.cl[x]};
+        passOn(t, x, P.cl[x], e);
     };
 
     while (!pq.empty()) {
         Ev e = pq.top();
         pq.pop();
         const size_t x = e.at;
-        if (e.kind == 0) {   // a border cell is ready
-            if (sent[x] || lacking(x) == 0) continue;
-            // A cell that received nothing is never triggered (the trigger is the end of
-            // reception); only a reverse manifest wakes it.
-            if (lacking(x) == K) continue;
-            sent[x] = 1;
-            M.cell[x].manifests++;
-            forward(e.t, x, P.cl[x], x, {x}, have[x], c.ttl);
-        } else if (e.kind == 1) {   // a near-border cell checks
+        if (e.kind == 0) {
+            // Received nothing: never triggered (the trigger is the end of reception).
+            if (!sent[x] && lacking(x) > 0 && lacking(x) < K) own(e.t, x);
+        } else if (e.kind == 1) {
             if (lacking(x) == 0) continue;
-            for (size_t b = 0; b < nc; ++b) {
-                if (P.role[b] != kBorder || P.next[b] != (int32_t)x || heardFrom[x].count(b)) continue;
+            for (size_t b : P.upstream[x]) {
+                if (heardFrom[x].count(b)) continue;
                 const uint32_t h = P.R.table[P.cl[x]].toCell.at(P.cells[b]).hops;
-                const uint32_t bytes = ManifestBytes(have[x], c.files);
-                const uint32_t frames = (bytes + kFramePayload - 1) / kFramePayload;
-                M.hopsManifest += (uint64_t)frames * h;
-                M.manifestBytes += bytes;
+                const uint32_t f = frames(have[x]);
+                M.hopsManifest += (uint64_t)f * h;
                 M.cell[x].reverse++;
-                const Gateway& g = P.R.gateway.at({P.cells[x], P.cells[b]});
-                pq.push({e.t + (h + frames - 1) * slot, seqNo++, 3, b, x, {x, b}, have[x], 1, g.b});
+                pq.push({e.t + (h + f - 1) * slot, seqNo++, 3, b, x, {x, b}, {have[x]}, 1,
+                         P.R.gateway.at({P.cells[x], P.cells[b]}).b});
             }
-        } else if (e.kind == 2) {   // a manifest reaches cell x
-            if (P.role[x] == kNear) heardFrom[x].insert(e.path[e.path.size() - 2]);
+        } else if (e.kind == 2) {
+            const size_t k = e.path.size() - 1;
+            const size_t p = e.path[k - 1];
+            heardFrom[x].insert(p);
             M.cell[x].forwarded++;
-            // to the CL, which knows the cell's state
-            M.hopsManifest += (uint64_t)P.R.table[e.entry].toCL.hops *
-                              ((ManifestBytes(e.held, c.files) + kFramePayload - 1) / kFramePayload);
+            M.hopsManifest += (uint64_t)P.R.table[e.entry].toCL.hops * frames(e.said.back());   // to the CL
+            std::vector<uint32_t> give;
+            std::vector<uint8_t> held = e.said.back();
+            for (uint32_t j = 0; j < K; ++j)
+                if (!held[j] && have[x][j]) { give.push_back(j); held[j] = 1; }
+            sendBack(e.t, k, e.path, e.said, give);
+            for (uint32_t j = 0; j < K; ++j) held[j] = held[j] && have[x][j];   // x as it stands
+            e.said.push_back(held);
+            passOn(e.t, x, P.cl[x], e);
+        } else if (e.kind == 4) {
+            dataAt(e);
+        } else {   // reverse manifest at border cell x from waiter e.origin
             std::vector<uint32_t> give;
             for (uint32_t j = 0; j < K; ++j)
-                if (!e.held[j] && have[x][j]) give.push_back(j);
-            std::vector<uint8_t> held = e.held;
-            for (uint32_t j : give) held[j] = 1;   // cut: "A4689" -> "AB89"
-            std::vector<size_t> back(e.path.rbegin() + 1, e.path.rend());
-            sendBack(e.t, x, back, give);
-            if (std::count(held.begin(), held.end(), 0) == 0) continue;
-            forward(e.t, x, P.cl[x], e.origin, e.path, held, e.ttl);
-        } else {   // a reverse manifest reaches border cell x from near-border e.origin
-            std::vector<uint32_t> give;
-            for (uint32_t j = 0; j < K; ++j)
-                if (!e.held[j] && have[x][j]) give.push_back(j);
-            sendBack(e.t, x, {e.origin}, give);
-            if (!sent[x] && lacking(x) > 0) {   // it understands: it must send its own
-                sent[x] = 1;
-                M.cell[x].manifests++;
-                forward(e.t, x, P.cl[x], x, {x}, have[x], c.ttl);
-            }
+                if (!e.said[0][j] && have[x][j]) give.push_back(j);
+            sendBack(e.t, 1, e.path, e.said, give);
+            if (!sent[x] && lacking(x) > 0) own(e.t, x);   // it understands: its turn
         }
     }
     for (size_t x = 0; x < nc; ++x) {
         M.cell[x].lacksEnd = lacking(x);
         CHECK(M.cell[x].lacksEnd <= M.cell[x].lacks0);
-        for (int32_t i : P.members[x])            // node-level holdings stay inside the cell's
+        for (int32_t i : P.members[x])
             for (uint32_t j = 0; j < K; ++j) CHECK(!holder[i][j] || have[x][j]);
     }
     return M;
@@ -414,7 +425,9 @@ int main(int argc, char* argv[]) {
     const size_t nc = P.cells.size();
     P.chCell = P.ci.at(P.nodes[P.ch].cell);
     P.next.assign(nc, -1);
-    P.role.assign(nc, kInner);
+    P.role.assign(nc, kOther);
+    P.border.assign(nc, 0);
+    P.upstream.resize(nc);
     P.keepers.resize(nc);
     for (size_t x = 0; x < nc; ++x) {
         CHECK(P.cl[x] >= 0);
@@ -424,7 +437,7 @@ int main(int argc, char* argv[]) {
         CHECK((P.next[x] < 0) == (x == P.chCell));
         if (P.next[x] >= 0) CHECK(HexGrid::Distance(P.cells[x], P.cells[P.next[x]]) == 1);
         for (const Hex& h : HexGrid::Neighbours(P.cells[x]))
-            if (!P.ci.count(h)) P.role[x] = kBorder;
+            if (!P.ci.count(h)) P.border[x] = 1;
         double mean = 0;
         for (int32_t i : P.members[x]) mean += P.nodes[i].Score();
         mean /= P.members[x].size();
@@ -432,16 +445,18 @@ int main(int argc, char* argv[]) {
             if (i == P.cl[x] || P.nodes[i].Score() > mean) P.keepers[x].push_back(i);
     }
     for (size_t x = 0; x < nc; ++x)
-        if (P.role[x] == kBorder && P.next[x] >= 0 && P.role[P.next[x]] == kInner) P.role[P.next[x]] = kNear;
-    uint32_t nb = 0, nn = 0, nk = 0;
+        if (P.border[x] && P.next[x] >= 0) P.upstream[P.next[x]].push_back(x);
+    uint32_t cnt[4] = {}, nk = 0, nb = 0;
     for (size_t x = 0; x < nc; ++x) {
-        nb += P.role[x] == kBorder;
-        nn += P.role[x] == kNear;
+        if (!P.upstream[x].empty()) P.role[x] = P.border[x] ? kWaitBorder : kWaitInner;
+        else if (P.border[x]) P.role[x] = kInit;
+        cnt[P.role[x]]++;
+        nb += P.border[x];
         nk += (uint32_t)P.keepers[x].size();
     }
-    std::printf("%zu cells: %u border, %u near-border, %zu other; keepers (CL + above-mean) %u, %.1f per "
-                "cell; %u chunks in %u files; near-border wait %.1f s\n", nc, nb, nn, nc - nb - nn, nk,
-                (double)nk / nc, c.K, c.files, c.waitS);
+    std::printf("%zu cells, %u border: %u initiate, %u border cells wait, %u other cells wait, %u neither; "
+                "keepers (CL + above-mean) %.1f per cell; %u chunks in %u files; wait %.1f s\n", nc, nb,
+                cnt[kInit], cnt[kWaitBorder], cnt[kWaitInner], cnt[kOther], (double)nk / nc, c.K, c.files, c.waitS);
 
     std::map<std::pair<std::string, std::string>, double> readyAt;   // (run, "q:r") -> s
     if (!c.summary.empty())
@@ -481,7 +496,7 @@ int main(int argc, char* argv[]) {
             const CellOut& o = M.cell[x];
             l0 += o.lacks0 > 0;
             l1 += o.lacksEnd > 0;
-            b0 += o.lacks0 > 0 && P.role[x] == kBorder;
+            b0 += o.lacks0 > 0 && P.border[x];
             std::fprintf(fc, "%u,%d,%d,%d,%.3f,%u,%u,%.3f,%u,%u,%u,%u,%u,%u\n", run, P.cells[x].q, P.cells[x].r,
                          P.role[x], ready[x], o.lacks0, o.lacksEnd, o.fullS, o.manifests, o.forwarded, o.reverse,
                          o.supplied, o.cached, o.received);

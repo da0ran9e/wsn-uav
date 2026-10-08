@@ -42,135 +42,139 @@ Các đề xuất 1–7 mà (c) trả lời:
 6. CL báo danh sách thiếu cho các gateway của cell;
 7. gộp manifest khi gặp nhau.
 
+**(d) Đính chính sau bản thử đầu**
+
+> 1. manifest mô tả những gì mình có, không phải những gì mình thiếu, những mảnh nó chưa có thì đều là mảnh thiếu
+> 2. chỉ những cell biết phía trước mình có một cell biên khác mới chờ, nếu nó cũng vừa là biên nhưng lại vừa là bước tiếp theo của cell biên khác vậy thì nó cũng chờ, chỉ những cell biên không có biên khác của mình sẽ chủ động gửi manifest
+> 3. ta sẽ thử bằng thử nghiệm sau
+> 4. dữ liệu về CL đi qua các node mạnh thì nó tự lưu lại một bản sao cho mình chứ không chủ động yêu cầu dữ liệu
+
+(d) trả lời bốn phát hiện của bản thử đầu:
+1. cell cận biên tự thiếu mà vẫn nghe được manifest của cell biên;
+2. 13 cell biên có cell kế tiếp cũng là cell biên;
+3. cell biên trắng cạnh cell cận biên đủ;
+4. chi phí lưu ở các node quan trọng.
+
 ## 1. Thuật ngữ
 
 | | |
 |---|---|
 | **cell biên** | cell có ít nhất một cạnh lục giác giáp ngoài cụm (seed 1: 40 / 109 cell) |
 | **cell kế tiếp** của cell X | cell đầu tiên trên đường chính từ CL của X về CH, đi qua gateway (ROUTING-vi.md) |
-| **cell cận biên** | cell không phải biên, và là cell kế tiếp của ít nhất một cell biên |
+| **X chờ b** | X là cell kế tiếp của cell biên b. X có thể là cell biên hay không (d-2) |
+| **cell chờ** | cell chờ ít nhất một cell biên. Seed 1: 13 cell biên + 22 cell khác |
+| **cell biên chủ động** | cell biên không chờ cell biên nào. Seed 1: 27 cell |
 | **trạng thái của cell** | hợp các mảnh mà mọi node trong cell có; CL biết chính xác sau bước tóm tắt (SUMMARY-vi.md) |
-| **node quan trọng** | CL và các node mạnh của cell (điểm năng lực > trung bình của cell) |
+| **node mạnh** | node có điểm năng lực > trung bình của cell |
 
-## 2. Gói manifest
+## 2. Gói manifest: những gì cell CÓ
 
-Một manifest mô tả **trạng thái của cell gốc**: cell đó *có* gì, theo từng file. Theo ví
-dụ (c):
+Manifest mô tả **những gì cell có**. Mảnh nào chưa có đều là mảnh thiếu (d-1). Theo ví dụ
+(c):
 - Có 3 file: A = gói 1–3, B = 4–6, C = 7–9.
-- Manifest `A4689` = có đủ A; với B có 4, 6 (thiếu 5); với C có 8, 9 (thiếu 7).
+- Manifest `A4689` = có đủ A; với B có 4, 6; với C có 8, 9. Vậy thiếu 5 và 7.
 
 ```
 loại (MANIFEST / MANIFEST NGƯỢC) | cell gốc (q, r) | seq | TTL
 cho mỗi file:  fileId | ĐỦ                      -- "A"
-                      | đoạn manifest (manifest.h) của các gói CÓ / THIẾU, dạng nào ngắn hơn
+                      | đoạn manifest (manifest.h) của các gói có (bộ mã tự chọn: liệt kê có,
+                        liệt kê thiếu, hay bitmap, tuỳ cách nào ngắn hơn -- nội dung vẫn là "có")
 ```
-Mỗi file là một mục riêng. File đã đủ chỉ tốn một cờ, nên manifest của cell gần đủ rất
-ngắn.
+
+**Sửa manifest ở cell đi qua.** Cell X nhận manifest M:
+1. X gửi trả ngay những gì X có mà M thiếu, và coi chúng là đã có: `A4689` → `AB89`
+   (X có gói 5).
+2. Manifest X chuyển đi tiếp mô tả **X như hiện tại**, theo nguyên tắc (a) "sửa lại
+   manifest theo điều kiện cell đó hiện tại": một mảnh là "có" nếu nó có trong M (sau
+   bước 1) **và** X cũng có. Mảnh nào X thiếu thì thành mảnh thiếu, kể cả khi cell gốc đã
+   có.
+3. Cell phía trước gửi trả mảnh đó. X **giữ lại cho mình**, và chỉ chuyển tiếp về phía
+   cell gốc nếu cell sau nó cũng thiếu (theo manifest cell đó đã gửi cho X).
+
+Ví dụ: X thiếu gói 8 mà cell gốc có. Manifest X gửi đi là `AB9`. Cell kế tiếp gửi gói 8
+về, X giữ, và không chuyển cho cell gốc.
+
+Nhờ cách sửa này, phần thiếu của **mọi cell manifest đi qua tự gộp vào manifest**: "chỉ
+các cell ở biên manifest nhưng các cell còn lại đều hưởng lợi" (b).
 
 ## 3. Hành vi (pha cơ sở)
 
-1. **Kích hoạt (cell biên).** Cell biên chủ động khi thoả cả hai điều kiện:
-   - tóm tắt nội cell đã xong;
-   - UAV đã ra khỏi tầm theo kế hoạch bay — đề xuất 2, (c) đồng ý.
+1. **Kích hoạt.** Cell biên chủ động gửi manifest (những gì nó có) tới cell kế tiếp khi
+   đủ ba điều kiện:
+   - đã xong tóm tắt nội cell;
+   - UAV đã ra khỏi tầm theo kế hoạch bay (đề xuất 2, (c) đồng ý);
+   - cell đó thiếu.
 
-   Nếu cell biên thiếu thì gửi manifest tới **cell kế tiếp**. Cell biên đủ thì im lặng.
-2. **Cell cận biên** chờ một khoảng T_chờ, rồi xét **trạng thái của chính mình** (c-1):
-   - đủ → không làm gì (cell biên "ít nhiều cũng có được thông tin");
-   - thiếu, mà một cell biên lẽ ra phải gửi manifest tới mình lại im lặng → gửi
-     **manifest ngược** (trạng thái của mình) tới cell biên đó.
+   Cell biên chủ động mà đủ, hoặc chưa nhận được gói nào (không có gì kích hoạt), thì im
+   lặng.
+2. **Cell chờ** chờ T_chờ rồi xét **trạng thái của chính mình** (c-1):
+   - đủ → không làm gì;
+   - thiếu → gửi **manifest ngược** (những gì nó có) tới từng cell biên lẽ ra phải gửi cho
+     nó mà chưa gửi.
+3. **Nhận manifest:** đối chiếu, gửi trả, sửa manifest, chuyển tiếp như mục 2. Manifest
+   không còn mảnh thiếu thì dừng.
+4. **Dữ liệu đi ngược về:** cell nào dữ liệu tới cũng giữ phần mình thiếu, và chỉ chuyển
+   tiếp phần mà cell sau nó thiếu.
+5. **Lưu:** mảnh giữ lại được đưa **về CL**. Node mạnh nào nằm trên đường đó tự lưu một bản
+   sao, không chủ động xin dữ liệu (d-4).
+6. **Nhận manifest ngược, tại cell biên:**
+   - gửi trả những gì cell chờ thiếu mà mình có;
+   - nếu chính nó cũng thiếu, kể cả chưa nhận được gì ("tự hiểu ra tình hình"), thì từ
+     giờ coi như đã được kích hoạt: gửi manifest của mình như bước 1.
+7. **Tới CH:** pha cơ sở dừng. Phần còn lại thuộc pha thứ cấp (chưa bàn).
+8. **Song song:** trao đổi nội cell vẫn chạy (b). Mỗi cặp gateway có kênh riêng; cần lịch
+   cho gateway (đề xuất 4).
 
-   Các cell khác không chờ.
-3. **Nhận manifest, tại mỗi cell trên đường đi:**
-   - đối chiếu với trạng thái của mình;
-   - **gửi ngay** những gói mình có mà cell gốc thiếu, ngược về cell gốc theo đúng đường
-     manifest đã đi;
-   - **sửa manifest** cho các gói vừa gửi thành "có" (ví dụ `A4689` → `AB89`), rồi
-     chuyển cho cell kế tiếp của mình.
+## 4. Bản cài thử: phạm vi và giả định
 
-   Manifest đã đủ mọi file thì không đi tiếp nữa.
-4. **Dữ liệu đi ngược về.** Mỗi cell dữ liệu đi qua, nếu chính nó thiếu gói đó, **lưu một
-   bản sao** (b, c-3). Gói nhận được lưu tại **CL và các node mạnh** của cell.
-5. **Nhận manifest ngược, tại cell biên.** Cell biên "tự hiểu tình hình":
-   - nó gửi cho cell cận biên những gói nó có mà cell kia thiếu;
-   - nếu chính nó thiếu (kể cả chưa nhận được gì) thì từ giờ coi như đã được kích hoạt:
-     gửi manifest của mình như bước 1.
-6. **Tới CH.** Manifest tới CH mà vẫn còn thiếu: CH ghi nhận hướng đang thiếu, **pha cơ sở
-   dừng**. Phần còn lại thuộc **pha manifest thứ cấp**, chạy song song với nhiệm vụ nhận
-   diện (chưa bàn).
-7. **Song song:** trong lúc manifest chạy, các cell vẫn trao đổi dữ liệu nội cell.
-8. **Kênh:** mỗi cặp gateway có kênh riêng cho liên lạc giữa hai cell; cần lịch cho
-   gateway (đề xuất 4, (c) đồng ý).
-
-## 4. Bản cài thử đầu tiên: phạm vi và giả định
-
-`uav-coop-manifest` là bản thử **mức logic**, chưa có radio. Mục tiêu là kiểm tra luồng
-manifest: ai gửi, ai đáp ứng, cắt manifest, lưu bản sao, manifest ngược, dừng ở CH. Bản
-này đếm gói và số hop, chưa mô phỏng kênh.
+`uav-coop-manifest` là bản thử **mức logic**, chưa có radio. Nó đếm gói và số hop, và mô
+phỏng theo sự kiện: dữ liệu chỉ được tính là đã có khi thực sự tới nơi.
 
 | | bản thử |
 |---|---|
-| trạng thái ban đầu của mỗi cell | hợp các mảnh từ các lượt bay thật (bitmap của uav-coop-pass, gấp về K mảnh) |
-| thời điểm cell biên kích hoạt | lúc CL của nó xong tóm tắt (summary-cells.csv của cùng lượt bay) |
-| file | nhiều file: K mảnh chia đều thành F file (mặc định F = 4, K = 2 000) |
-| đường đi | đường chính về CH và đúng các gateway, từ routing dựng sẵn |
-| chi phí | đếm frame × hop: trong cell (theo bảng routing) và qua gateway |
-| thời gian | mỗi frame-hop một khe 10 ms, không mất gói, không tranh chấp: **cận dưới lạc quan** |
-| lưu ở CL + node mạnh | tính số hop để phát mảnh tới các node đó (cây đường ngắn nhất trong cell) |
-| chưa có | radio, mất gói, ACK/phát lại (đề xuất 5), lịch gateway (đề xuất 4), trao đổi nội cell song song (bước 7) |
+| trạng thái ban đầu | hợp các mảnh từ các lượt bay thật (bitmap uav-coop-pass, gấp về K mảnh) |
+| lúc sẵn sàng | lúc CL của cell xong tóm tắt (summary-cells.csv cùng lượt bay) |
+| file | K mảnh chia đều thành F file (mặc định K = 2 000, F = 4) |
+| đường đi | đường chính về CH qua gateway, từ routing dựng sẵn |
+| chi phí | frame × hop: manifest (tới CL rồi ra gateway), dữ liệu (node giữ mảnh → gateway, gateway → gateway, hoặc qua CL nếu cell giữ lại), lưu (về CL) |
+| thời gian | mỗi frame-hop một khe 10 ms, không mất gói, không tranh chấp; dữ liệu đi nối đuôi nhau (mảnh m tới sau mảnh đầu m − 1 khe): **cận dưới lạc quan** |
+| chưa có | radio, mất gói, ACK/phát lại (đề xuất 5), lịch gateway (đề xuất 4), trao đổi nội cell song song |
 
-**Điểm còn để ngỏ:** cell bên trong (không phải cận biên) tự thiếu thì chờ pha thứ cấp.
-Theo dữ liệu 120 lượt bay, chuyện này xảy ra 5 lần, trong đó 3 lần có gói không nằm trong
-manifest nào đi qua.
-
-## 5. Kết quả bản thử (120 lượt bay, K = 2 000 mảnh chia thành 4 file)
-
-Bố trí seed 1:
-- 109 cell: **40 cell biên**, **22 cell cận biên**, 47 cell còn lại;
-- node quan trọng (CL + node mạnh): trung bình 7.6 mỗi cell.
+## 5. Kết quả (120 lượt bay, K = 2 000 mảnh chia thành 4 file, T_chờ = 2 s)
 
 | | |
 |---|---|
-| cell thiếu lúc đầu | 504 lần trên 13 080 lần cell: **499 cell biên**, 5 cell cận biên |
-| sau pha cơ sở | **còn 1 lần** (6 / 10 783 mảnh) — xem 6.1 |
-| manifest được gửi | 497 manifest + 6 manifest ngược; trung bình mỗi manifest đi **1.01 cell** |
-| manifest tới CH | **0** — pha cơ sở luôn xong trước khi tới CH |
-| kích thước manifest | trung vị 169 B cho cả lượt bay (mọi manifest cộng lại); các file đủ chỉ tốn 1 byte |
-| thời gian từ lúc cell sẵn sàng tới khi đủ | **trung vị 80 ms**, p90 0.9 s, tối đa 2.05 s (cận dưới lạc quan, mục 4) |
-| frame × hop mỗi lượt bay (trung vị) | manifest 28, dữ liệu 199, **lưu tại CL + node mạnh 805** |
+| cell thiếu lúc đầu | 504 lần trên 13 080 lần cell: 414 cell biên chủ động, 85 cell biên chờ, 5 cell khác chờ |
+| **sau pha cơ sở** | **0** — mọi cell đủ, kể cả trường hợp bản thử đầu bỏ sót (6.1 cũ) |
+| thời gian từ lúc sẵn sàng tới khi đủ | **trung vị 155 ms**, p90 1.0 s, tối đa 2.1 s |
+|   cell biên chủ động | trung vị 140 ms, tối đa 1.1 s |
+|   cell chờ | trung vị 0.54 s, tối đa 2.1 s (gồm cả T_chờ khi phải gửi manifest ngược) |
+| manifest | 415 manifest + 27 manifest ngược; trung bình mỗi manifest đi 1.15 cell; **không manifest nào tới CH** |
+| cell đi qua được hưởng lợi | 64 lần, giữ lại 93 mảnh |
+| frame × hop mỗi lượt bay (trung vị) | manifest 28, dữ liệu 200, lưu về CL 339 |
+| lần nhận trùng | trung vị 0, tối đa 1 lần mỗi lượt bay |
 
-- **Lưu bản sao tại CL và node mạnh tốn gấp 4 lần việc chở dữ liệu tới cell.** Một mảnh
-  tới gateway rồi còn phải đi tới khoảng 7–8 node trong cell.
-- **"Các cell còn lại đều hưởng lợi"** chỉ thấy rõ trong kịch bản thiếu nhiều. Ở dữ liệu
-  thật, manifest chỉ đi một cell nên chỉ có 5 lần một cell khác giữ được bản sao.
+So với bản thử đầu, chi phí lưu giảm từ 805 xuống 339 frame-hop, vì giờ mảnh chỉ đi về CL
+và node mạnh tự giữ bản sao dọc đường (d-4).
 
-**Kịch bản kiểm tra `--blank`** (cho một cell coi như không nhận được gói nào):
+**Kịch bản kiểm tra `--blank`** (cho một cell coi như không nhận được gói nào; lượt bay 1):
 
-| | kết quả |
+| cell trắng | kết quả |
 |---|---|
-| cell biên (3,−5) **và** cell cận biên (2,−4) cùng trắng | cell cận biên chờ 2 s, thiếu, nên gửi manifest ngược → cell biên "tự hiểu", gửi manifest "cần tất cả" → cell kế tiếp gửi 2 000 mảnh; cell cận biên giữ bản sao trên đường. **Cả hai đủ sau 22.3 s.** |
-| chỉ cell biên (3,−5) trắng, cell cận biên đủ | theo (c-1), cell cận biên đủ nên không làm gì → **cell biên trắng không bao giờ được đánh thức** — xem 6.3 |
+| (3,−5) biên chủ động + (2,−4) cell chờ nó | (2,−4) chờ 2 s, thiếu, nên gửi manifest ngược → (3,−5) tự hiểu, gửi manifest → (2,−4) giữ bản sao 2 000 mảnh dọc đường. Cả hai đủ lúc **22.3 s** |
+| (−5,9) biên chủ động + (−5,8) **biên chờ** | giống trên, đủ lúc **23.3 s**: nhờ (d-2) mà lỗ hổng 6.2 cũ đã được bịt |
+| chỉ (−5,9) trắng | (−5,8) thiếu đúng 1 mảnh nên vẫn gửi manifest ngược → (−5,9) được đánh thức, đủ lúc 23.3 s |
+| chỉ (3,−5) trắng | (2,−4) đủ nên không làm gì (c-1) → (3,−5) **không được đánh thức** — để thử nghiệm sau (d-3) |
 
-## 6. Phát hiện cần quyết định
+Hai trường hợp 2 000 mảnh mất khoảng 22 s vì cả file phải đi qua một liên kết G2G, mỗi
+mảnh một khe 10 ms.
 
-1. **Cell cận biên tự thiếu nhưng vẫn nghe được manifest của cell biên.** Nó không gửi
-   manifest ngược, vì cell biên không im lặng. Nhưng manifest đi qua không chứa mảnh nó
-   cần, nên mảnh đó không bao giờ được đáp ứng. Xảy ra 1 / 13 080 lần.
+## 6. Còn để ngỏ
 
-   Cách sửa đơn giản: khi manifest đi qua, cell cận biên thêm phần mình thiếu vào (đề xuất
-   3 cũ). Hoặc để mảnh đó cho pha thứ cấp.
-2. **13 / 40 cell biên có cell kế tiếp cũng là cell biên.** Theo (c-1), chỉ cell cận biên
-   (không phải biên) mới chờ. Vậy không ai chờ manifest của 13 cell biên này. Nếu một
-   trong số chúng không nhận được gói nào, nó không bao giờ được đánh thức (thử với
-   (−5, 9) → (−5, 8)).
-
-   Cách sửa: vai trò "chờ và gửi manifest ngược" thuộc về **cell kế tiếp của mỗi cell biên,
-   bất kể nó là gì**.
-3. **Cell biên trắng cạnh một cell cận biên đủ.** Quy tắc (c-1) giả định rằng nếu cell cận
-   biên đủ thì cell biên "ít nhiều cũng có được thông tin". Trong 120 lượt bay thật giả
-   định này luôn đúng: mọi node nhận được ít nhất 350 gói. Nhưng nếu UAV bay lệch hẳn
-   khỏi một mép cụm, cell biên ở đó sẽ bị bỏ sót tới pha thứ cấp.
-4. **Chi phí lưu ở node quan trọng.** Có thể chỉ lưu ở CL ngay, còn việc chép sang node
-   mạnh làm sau trong trao đổi nội cell, cho nhanh và nhẹ hơn.
+1. **Cell biên trắng cạnh một cell chờ đủ** (d-3): để thử nghiệm sau.
+2. **Pha thứ cấp:** chưa bàn. Với dữ liệu hiện tại, chưa lần nào manifest tới CH.
+3. **Lên mức radio:** kênh G2G, lịch gateway, ACK và phát lại; thử cụm rộng hơn hoặc file
+   lớn hơn để manifest phải đi nhiều cell.
 
 ## 7. Chạy lại
 
@@ -182,16 +186,16 @@ $M ... --runs=1 --blank=3:-5,2:-4 --out=blank    # cell trắng: kiểm tra mani
 ```
 
 `docs/data/manifest-cells.csv` có một dòng cho mỗi lượt bay × cell, với các cột:
-- vai trò (0 biên, 1 cận biên, 2 khác);
+- vai trò (0 biên chủ động, 1 biên chờ, 2 cell khác chờ, 3 không);
 - lúc sẵn sàng; số mảnh thiếu trước và sau; lúc đủ;
 - số manifest đã gửi / chuyển tiếp / manifest ngược;
 - số mảnh đã gửi đi / giữ bản sao / nhận.
 
 `manifest-missions.csv`: tổng theo lượt bay.
 
-Bản thử chạy rất nhanh (120 lượt bay trong khoảng 18 s) và có khoảng 5.6 × 10⁸ CHECK, tất
-cả qua:
-- routing dựng lại khớp `deploy-routes-s35.csv`;
+120 lượt bay chạy trong khoảng 20 s, với 5.6 × 10⁸ CHECK, tất cả qua:
+- routing dựng lại khớp bản đã lưu;
 - mọi manifest được mã hoá rồi giải mã lại khớp;
-- dữ liệu chỉ đi từ node thật sự giữ mảnh, và chỉ đi qua gateway;
-- số mảnh thiếu chỉ giảm, không bao giờ tăng.
+- dữ liệu chỉ đi từ node thật sự giữ mảnh, chỉ đi qua gateway, và chỉ tới cell cần nó;
+- đường về CL đi đúng cây `toCL`;
+- số mảnh thiếu chỉ giảm.

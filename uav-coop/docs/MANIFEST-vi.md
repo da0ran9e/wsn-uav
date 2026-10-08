@@ -203,6 +203,21 @@ mảnh một khe 10 ms.
 - **Số bản trung bình mỗi mảnh trong một cell** gần như không đổi: khoảng 20, vì pha manifest
   chỉ thêm vài trăm mảnh.
 
+**So giữa các cell** (một cell "có" một mảnh nếu ít nhất một node của nó có):
+
+![so các cell](figures/manifest-cell-holdings.png)
+
+- **Trước manifest:** các cell chênh nhau tối đa **75 mảnh** ở lượt bay 1. Trên 120 lượt bay,
+  trung vị là **78 mảnh**, tối đa 101.
+  - Chênh lệch luôn nằm ở vài cell biên xa đường bay: mũi phía bắc và mép phía đông.
+  - Cell ở đỉnh mũi bắc thiếu ở **120 / 120** lượt bay; cell kế bên phía tây cũng 120 / 120;
+    cell mép đông 103 / 120.
+- **Sau manifest:** mọi cell đều có đủ 2 000 mảnh, nên chênh lệch giữa các cell là **0** ở cả
+  120 lượt bay.
+- **Đủ chưa chắc đã vững.** Ở các cell biên xa đường bay, nhiều mảnh chỉ có đúng một bản:
+  đỉnh mũi bắc có 204, cell kế bên 45, mép đông 27. Sau manifest, số mảnh có từ 2 bản trở lên
+  thấp nhất là 1 796 / 2 000.
+
 Việc đưa dữ liệu tới từng node, hoặc tới CL và các node mạnh, thuộc bước trao đổi nội cell
 đã để lại sau (SUMMARY-vi.md).
 

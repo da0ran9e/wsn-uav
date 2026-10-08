@@ -7,6 +7,7 @@ blank-cell scenarios manifest-blank{A,B}-{cells,trace}.csv, and draws
   manifest-map.png       who sent what to whom: roles, manifests, data, copies
   manifest-timeline.png  when, cell by cell; and the latency over 120 missions
   manifest-holdings.png  where the data sits afterwards (manifest-holdings.csv, mission 1)
+  manifest-cell-holdings.png  the same, cell by cell, and over all missions
 """
 import argparse, csv, math, os
 
@@ -364,6 +365,121 @@ def fig_holdings(data, out):
     print(f"  {out}")
 
 
+def fig_cell_holdings(data, out):
+    """The same comparison as manifest-holdings.png, but cell by cell (a cell holds the
+    union of what its nodes hold)."""
+    c, w, sel = load_lattice(data)
+    R = w / math.sqrt(3)
+    K = 2000
+    rows = list(csv.reader(open(os.path.join(data, "manifest-holdings.csv"))))[1:]
+    cb = {(int(r[1]), int(r[2])): r for r in rows if r[0] == "cellBefore"}
+    ca = {(int(r[1]), int(r[2])): r for r in rows if r[0] == "cellAfter"}
+    before = {h: K - int(cb[h][4]) for h in sel}
+    after = {h: K - int(ca[h][4]) for h in sel}
+    two = {h: K - int(ca[h][4]) - int(ca[h][5]) for h in sel}   # held by >= 2 nodes
+    cells = list(csv.DictReader(open(os.path.join(data, "manifest-cells.csv"))))
+    nrun = len({r["run"] for r in cells})
+    lackMean = {h: 0.0 for h in sel}; lackRuns = {h: 0 for h in sel}
+    for r in cells:
+        h = (int(r["q"]), int(r["r"]))
+        lackMean[h] += int(r["lacks0"]) / nrun
+        lackRuns[h] += int(r["lacks0"]) > 0
+    dp = {}
+    pos = {r["id"]: (int(r["q"]), int(r["r"])) for r in csv.DictReader(open(os.path.join(data, "deploy-nodes-s35.csv")))}
+    for r in csv.DictReader(open(os.path.join(data, "pass-nodes.csv"))):
+        dp.setdefault(pos[r["id"]], []).append(float(r["dPathM"]))
+    dist = {h: float(np.mean(dp[h])) for h in sel}
+
+    def cmap_map(a, val, lo, hi, cmap, title, label=None, fmt="{:.0f}", show=lambda v: True, cbl=""):
+        polys = [corners(*c[h], R) for h in sel]
+        norm = matplotlib.colors.Normalize(lo, hi)
+        a.add_collection(PolyCollection(polys, facecolors=[cmap(norm(val[h])) for h in sel], edgecolors="#ffffff",
+                                        linewidths=.7, zorder=1))
+        segs = []
+        for q, r in sel:
+            v = corners(*c[(q, r)], R)
+            for k, (dq, dr) in enumerate(EDGE_NB):
+                if (q + dq, r + dr) not in sel:
+                    segs.append([v[k], v[(k + 1) % 6]])
+        a.add_collection(LineCollection(segs, colors=INK2, linewidths=1.0, zorder=2))
+        for h in sel:
+            if show(val[h]):
+                a.text(c[h][0], c[h][1], fmt.format(label[h] if label else val[h]), fontsize=6.5, ha="center",
+                       va="center", color=INK, zorder=3)
+        q, r, x, y = ch_cell(data)
+        a.scatter([x], [y], s=150, marker="*", color=C_CH, edgecolors=INK, linewidths=.7, zorder=4)
+        xs = [c[h][0] for h in sel]; ys = [c[h][1] for h in sel]
+        a.set_xlim(min(xs) - w, max(xs) + w); a.set_ylim(min(ys) - w, max(ys) + w)
+        a.set_aspect("equal"); a.set_facecolor(SURF)
+        a.tick_params(colors=INK2, labelsize=7)
+        for sp in a.spines.values():
+            sp.set_visible(False)
+        a.set_title(title, loc="left", fontsize=10, color=INK)
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        cb_ = plt.colorbar(sm, ax=a, shrink=.55, pad=.01)
+        cb_.ax.tick_params(labelsize=7, colors=INK2); cb_.outline.set_visible(False)
+        cb_.set_label(cbl, fontsize=8, color=INK2)
+
+    lack_c = matplotlib.colors.LinearSegmentedColormap.from_list("l", ["#f1f0eb", "#f6c3c3", "#e34948", "#8f1d1b"])
+    fig = plt.figure(figsize=(19, 12.5), dpi=150, facecolor=SURF)
+    gs = fig.add_gridspec(2, 3, hspace=.22, wspace=.1, left=.03, right=.98, top=.9, bottom=.06)
+    lacksB = {h: K - before[h] for h in sel}
+    lacksA = {h: K - after[h] for h in sel}
+    cmap_map(fig.add_subplot(gs[0, 0]), lacksB, 0, 101, lack_c,
+             f"(a) TRƯỚC manifest: cell thiếu bao nhiêu mảnh (lượt bay 1)\n"
+             f"chênh lệch giữa các cell: {max(lacksB.values())} mảnh", show=lambda v: v > 0, cbl="mảnh cell thiếu")
+    cmap_map(fig.add_subplot(gs[0, 1]), lacksA, 0, 101, lack_c,
+             "(b) SAU manifest: mọi cell đủ 2000 mảnh\nchênh lệch giữa các cell: 0", show=lambda v: v > 0,
+             cbl="mảnh cell thiếu")
+    lone = {h: K - two[h] for h in sel}
+    cmap_map(fig.add_subplot(gs[0, 2]), lone, 0, 210, lack_c,
+             "(c) SAU manifest: mảnh mà cell chỉ có ĐÚNG MỘT bản\n(đủ nhưng mong manh: mất node đó là thiếu lại)",
+             show=lambda v: v > 0, cbl="mảnh chỉ có 1 bản")
+    cmap_map(fig.add_subplot(gs[1, 0]), lackMean, 0, max(lackMean.values()), lack_c,
+             f"(d) {nrun} lượt bay, TRƯỚC manifest: số mảnh cell thiếu, trung bình\n(nhãn: số lượt bay cell đó thiếu)",
+             label=lackRuns, show=lambda v: v > 0, fmt="{}", cbl="mảnh thiếu, trung bình")
+    # (e) cell holdings against distance from the path
+    a = fig.add_subplot(gs[1, 1])
+    hs = sorted(sel, key=lambda h: dist[h])
+    x = [dist[h] for h in hs]
+    a.scatter(x, [before[h] for h in hs], s=26, color=C_LACK, label="cả cell, trước manifest", zorder=3)
+    a.scatter(x, [after[h] for h in hs], s=14, color="#1baf7a", label="cả cell, sau manifest", zorder=4)
+    a.scatter(x, [two[h] for h in hs], s=14, marker="s", color="#2a78d6", label="mảnh có ≥ 2 bản trong cell, sau", zorder=2)
+    a.set_ylim(1700, 2010)
+    a.set_xlabel("khoảng cách trung bình từ cell tới đường bay, m", fontsize=9, color=INK2)
+    a.set_ylabel("mảnh (/2000)", fontsize=9, color=INK2)
+    a.legend(frameon=False, fontsize=8.5, labelcolor=INK2, loc="lower left")
+    a.set_title("(e) Lượt bay 1, từng cell theo khoảng cách tới đường bay", loc="left", fontsize=10, color=INK)
+    a.grid(color=GRIDC, lw=.6); a.set_facecolor(SURF)
+    a.tick_params(colors=INK2, labelsize=8)
+    for sp in a.spines.values():
+        sp.set_visible(False)
+    # (f) spread between cells per mission
+    a = fig.add_subplot(gs[1, 2])
+    per = {}
+    for r in cells:
+        per.setdefault(r["run"], []).append((int(r["lacks0"]), int(r["lacksEnd"])))
+    sb = [max(v[0] for v in x) - min(v[0] for v in x) for x in per.values()]
+    sa = [max(v[1] for v in x) - min(v[1] for v in x) for x in per.values()]
+    a.hist(sb, bins=np.arange(0, 110, 5), color=C_LACK, alpha=.85, label="trước manifest")
+    a.hist(sa, bins=np.arange(0, 110, 5), color="#1baf7a", alpha=.85, label="sau manifest (luôn 0)")
+    a.axvline(np.median(sb), color=INK, lw=1)
+    a.text(np.median(sb), a.get_ylim()[1] * .92, f"  trung vị {np.median(sb):.0f}", fontsize=8.5, color=INK)
+    a.set_xlabel("chênh lệch giữa cell nhiều nhất và ít nhất trong một lượt bay, mảnh", fontsize=9, color=INK2)
+    a.set_ylabel("số lượt bay", fontsize=9, color=INK2)
+    a.legend(frameon=False, fontsize=8.5, labelcolor=INK2)
+    a.set_title(f"(f) {nrun} lượt bay: chênh lệch giữa các cell", loc="left", fontsize=10, color=INK)
+    a.grid(color=GRIDC, lw=.6); a.set_facecolor(SURF)
+    a.tick_params(colors=INK2, labelsize=8)
+    for sp in a.spines.values():
+        sp.set_visible(False)
+    fig.suptitle("So sánh giữa các CELL (cell có = hợp các node của nó; K = 2000): trước manifest chênh tới ~100 "
+                 "mảnh ở vài cell biên xa đường bay, sau manifest mọi cell bằng nhau", x=.01, ha="left",
+                 fontsize=12.5, color=INK)
+    fig.savefig(out, facecolor=SURF)
+    print(f"  {out}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("data"); ap.add_argument("figs")
@@ -372,6 +488,7 @@ def main():
     fig_map(o.data, os.path.join(o.figs, "manifest-map.png"))
     fig_timeline(o.data, os.path.join(o.figs, "manifest-timeline.png"))
     fig_holdings(o.data, os.path.join(o.figs, "manifest-holdings.png"))
+    fig_cell_holdings(o.data, os.path.join(o.figs, "manifest-cell-holdings.png"))
 
 
 if __name__ == "__main__":

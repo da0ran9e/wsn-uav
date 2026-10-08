@@ -1,0 +1,7 @@
+scenario,missions,summaryExact%,summaryMedianS,summaryP90S,cellsLackingPerMission,lackingChunksMedian,lackingChunksMax,cellsLackingAfter,chunksLackingAfter,latencyMedianS,latencyP90S,latencyMaxS,manifests,reverse,cellsPerManifest,toCH,chRemainder,copiesKept,hopsDataMedian,hopsManifestMedian,hopsStoreMedian,cellsKeepGapBefore,cellsKeepGapAfter,keepGapChunksMaxAfter
+gốc,120,99.235,0.631,2.051,4.200,4.000,101,0,0,0.155,1.000,2.130,415,27,1.154,0,0,93,199.500,28.000,339.000,16.767,16.767,360
+số 1,120,99.419,0.511,1.701,0.000,0,0,0,0,0,nan,0,0,0,0.000,0,0,0,0.000,0.000,0.000,4.383,4.383,18
+số 2,120,99.289,0.651,2.081,3.567,4.000,51,0,0,0.120,0.570,2.171,350,8,1.211,0,0,114,92.000,23.000,49.000,16.117,16.117,511
+số 3,120,99.251,0.701,2.143,5.500,7.000,96,3,3,0.360,1.572,2.230,514,48,1.249,0,0,277,323.000,36.500,250.000,19.067,19.067,384
+số 4,120,99.373,0.562,1.781,1.300,1.000,4,0,0,0.100,0.120,0.140,156,0,1.000,0,0,0,3.000,8.000,7.000,6.108,6.108,243
+số 5,120,99.350,0.621,1.891,1.167,4.000,10,0,0,0.100,0.961,2.160,122,8,1.098,0,0,11,9.500,7.000,5.000,8.683,8.683,204

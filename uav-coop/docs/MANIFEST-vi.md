@@ -259,6 +259,41 @@ mạnh của cell giữ nó. Bảng đầy đủ: `docs/data/scenarios/scenarios
   - Nếu yêu cầu là "mảnh nằm ở node quan trọng là được", cần thêm bước **gom về CL và node
     mạnh** trong cell. Bước này có thể chạy song song với manifest, theo (b).
 
+## 5c. Sáu đường bay (K = 2000, α = 3.0, mỗi đường 120 lượt bay)
+
+Đường số 0 là đường gốc. Các đường số 1–5 là các cặp điểm vào/ra ngẫu nhiên trên biên cụm,
+đi qua CH (DEPLOY-vi.md mục ⑤). Bảng đầy đủ: `docs/data/scenarios/scenarios-paths.csv`.
+
+| đường bay | 0 (gốc, chữ U) | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|---|
+| độ dài (gồm 2 đoạn bay thẳng ngoài cụm) | 3 064 m | 2 547 m | 2 135 m | 2 269 m | 2 472 m | 2 383 m |
+| cell thiếu mỗi lượt bay | 4.2 | **0** | 3.6 | 5.5 | 1.3 | 1.2 |
+| số mảnh thiếu khi có thiếu (trung vị / tối đa) | 4 / 101 | — | 4 / 51 | 7 / 96 | 1 / 4 | 4 / 10 |
+| còn thiếu sau pha cơ sở (cả 120 lượt bay) | 0 | 0 | 0 | 3 lần, mỗi lần 1 mảnh | 0 | 0 |
+| thời gian tới khi đủ, trung vị / tối đa | 0.15 / 2.1 s | — | 0.12 / 2.2 s | 0.36 / 2.2 s | 0.10 / 0.14 s | 0.10 / 2.2 s |
+| manifest + manifest ngược (cả 120 lượt bay) | 415 + 27 | 0 | 350 + 8 | 514 + 48 | 156 + 0 | 122 + 8 |
+| cell có mảnh không ở node quan trọng | 16.8 | 4.4 | 16.1 | 19.1 | 6.1 | 8.7 |
+
+![sáu đường bay](figures/paths-maps.png)
+![tóm tắt sáu đường bay](figures/paths-summary.png)
+
+- **Chỗ thiếu luôn là các cell ở xa đường bay nhất,** nằm ở biên cụm. Đổi đường bay thì vùng
+  thiếu dời theo:
+  - mũi bắc với đường 0 và 3;
+  - mũi nam với đường 2;
+  - mép đông với đường 3 và 5;
+  - hai cell phía bắc với đường 4.
+- **Pha cơ sở lấp gần như hết ở mọi đường bay.** Trên 720 lượt bay, chỉ còn 3 lần một cell
+  bên trong thiếu đúng 1 mảnh (đường 3). Manifest gần như chỉ đi 1 cell (1.0–1.25), và chưa
+  lần nào tới CH.
+- **Đường bay càng phủ đều cụm thì càng ít việc cho manifest.**
+  - Đường 1 không cần manifest nào.
+  - Đường 4 và 5 chỉ cần khoảng 1 cell mỗi lượt bay, và cell thiếu chỉ thiếu vài mảnh.
+  - Chữ U của đường 0 để hở mũi bắc. Đường 3 bay vòng ở phía tây nên để hở cả mũi bắc lẫn mép
+    đông.
+- **Mảnh không ở node quan trọng** (4–19 cell mỗi lượt bay) cũng nằm ở đúng các cell xa đường
+  bay. Đây là việc của bước gom nội cell, không phải của manifest.
+
 ## 6. Còn để ngỏ
 
 1. **Cell biên trắng cạnh một cell chờ đủ** (d-3): để thử nghiệm sau.

@@ -221,6 +221,44 @@ mảnh một khe 10 ms.
 Việc đưa dữ liệu tới từng node, hoặc tới CL và các node mạnh, thuộc bước trao đổi nội cell
 đã để lại sau (SUMMARY-vi.md).
 
+## 5b. Các kịch bản khác (mỗi kịch bản 120 lượt bay)
+
+Cùng bố trí và cùng routing. Một mảnh "ở node quan trọng" nghĩa là CL hoặc ít nhất một node
+mạnh của cell giữ nó. Bảng đầy đủ: `docs/data/scenarios/scenarios.csv`.
+
+| | gốc (K = 2000) | đường bay số 1 | kênh α = 3.35 | file K = 4000 | file K = 6000 |
+|---|---|---|---|---|---|
+| tóm tắt nội cell: CL chính xác / trung vị | 99.2 % / 0.63 s | 99.4 % / 0.51 s | 99.2 % / 0.90 s | 98.8 % / 1.8 s | 98.4 % / 3.5 s |
+| cell thiếu mỗi lượt bay (/109) | 4.2 | **0** | 23.6 | 31.3 | 70.3 |
+| còn thiếu sau pha cơ sở | 0 | 0 | 1.1 | 3.2 | 46.3 |
+| thời gian tới khi đủ, trung vị / p90 | 0.15 / 1.0 s | — | 2.6 / 7.0 s | 3.6 / 8.2 s | 2.1 / 9.7 s |
+| số cell mỗi manifest đi qua | 1.15 | — | 2.3 | 2.6 | 5.3 |
+| manifest tới CH mà còn thiếu | 0 | 0 | 0 | 0 | 12.8 / lượt bay |
+| cell có mảnh không ở node quan trọng | 16.8 | 4.4 | 36.2 | 59.7 | 94.4 |
+
+![bản đồ các kịch bản](figures/scenarios-maps.png)
+![tóm tắt](figures/scenarios-summary.png)
+
+- **Đường bay quyết định nhiều nhất.**
+  - Đường số 1 gần thẳng, cắt chéo qua cụm, nên mọi cell đều nằm trong khoảng 1 km quanh
+    đường bay: **không cell nào thiếu, không cần manifest**.
+  - Đường chữ U (gốc) để hở mũi phía bắc, vì vậy luôn là các cell ở đó thiếu.
+- **Kênh xấu hơn (α = 3.35) hoặc file lớn hơn (K = 4000)** làm vùng thiếu lan rộng: 23–31 cell
+  thiếu mỗi lượt bay, trải theo cả dải phía bắc. Pha cơ sở vẫn lấp được gần hết: manifest đi
+  qua 2–3 cell, và các cell đi qua tự gộp phần thiếu của mình (3.6 × 10⁵ mảnh bản sao).
+  - Phần còn lại (1–3 cell mỗi lượt bay) đều là **cell bên trong không có manifest nào đi
+    qua**. Theo thiết kế, các cell này chờ pha thứ cấp.
+- **File K = 6000** (mỗi mảnh chỉ được phát khoảng một lần): 70 / 109 cell thiếu.
+  - Cả cụm vẫn có đủ mọi mảnh, nhưng chúng nằm ở các cell sát hai nhánh đường bay phía nam,
+    **không nằm trên đường về CH**.
+  - Vì vậy manifest tới CH vẫn còn thiếu, trung bình 12.8 lần mỗi lượt bay. Đây đúng là
+    trường hợp (b): CH "đoán hướng đang có và hướng đang thiếu" ở pha manifest thứ cấp.
+- **Node quan trọng:** pha manifest không chuyển dữ liệu bên trong cell. Vì vậy số cell có
+  mảnh chỉ nằm ở node thường **không đổi** qua pha manifest: từ 4 (đường bay số 1) tới 94
+  (K = 6000) cell mỗi lượt bay.
+  - Nếu yêu cầu là "mảnh nằm ở node quan trọng là được", cần thêm bước **gom về CL và node
+    mạnh** trong cell. Bước này có thể chạy song song với manifest, theo (b).
+
 ## 6. Còn để ngỏ
 
 1. **Cell biên trắng cạnh một cell chờ đủ** (d-3): để thử nghiệm sau.

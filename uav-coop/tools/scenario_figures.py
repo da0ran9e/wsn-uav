@@ -45,7 +45,7 @@ def main():
     xs = [c[h][0] for h in sel]; ys = [c[h][1] for h in sel]
 
     def draw(a, val, vmax, cmap, title, path, label=None):
-        norm = matplotlib.colors.Normalize(0, max(vmax, 1e-9))
+        norm = matplotlib.colors.Normalize(0, max(vmax, 1))
         a.add_collection(PolyCollection([corners(*c[h], R) for h in sel],
                                         facecolors=[cmap(norm(val[h])) for h in sel], edgecolors="#ffffff",
                                         linewidths=.6, zorder=1))
@@ -110,9 +110,9 @@ def main():
     x = np.arange(n)
     labs = [r["label"] for r in rows]
     a = ax[0]
-    a.bar(x - .2, [r["before"] for r in rows], .4, color="#f6c3c3", label="cell thiếu trước")
-    a.bar(x + .2, [r["after"] for r in rows], .4, color="#e34948", label="còn thiếu sau pha cơ sở")
-    a.bar(x + .2, [r["keep"] for r in rows], .12, color="#2a78d6", label="cell có mảnh không ở node quan trọng")
+    a.bar(x - .27, [r["before"] for r in rows], .27, color="#f6c3c3", label="cell thiếu trước")
+    a.bar(x, [r["after"] for r in rows], .27, color="#e34948", label="còn thiếu sau pha cơ sở")
+    a.bar(x + .27, [r["keep"] for r in rows], .27, color="#2a78d6", label="cell có mảnh không ở node quan trọng")
     a.set_title("Số cell mỗi lượt bay (/109)", loc="left", fontsize=10.5, color=INK)
     a = ax[1]
     a.bar(x, [r["latMed"] for r in rows], .5, color="#1baf7a", label="trung vị")

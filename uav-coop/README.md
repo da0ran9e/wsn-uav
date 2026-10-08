@@ -5,6 +5,14 @@ project that starts from the parameter set measured in `uav-sar`'s urban
 experiments (`uav-sar/docs/A2G-RUN-vi.md`, `A2G-SWEEP-vi.md`, `G2G-CHAIN-vi.md`).
 Those values live in `models/common/coop-params.h`.
 
+**Packaged (closed) at this state — a different cooperation scheme continues in
+[`../uav-coop2`](../uav-coop2), on the same network, flight path and broadcast.** Where it
+stopped: the base manifest phase (border cells first, logic level) fills every lacking cell
+on 5 of 6 flight paths at K = 2000, typically 1–6 s after the UAV leaves, never reaching the
+CH; it falls short at K = 6000 (46 of 70 lacking cells stay lacking). Open, not started: the
+secondary phase, the blank-border-cell experiment, gathering to the important nodes, a
+radio-level (ns-3) manifest. Details and numbers: [`docs/MANIFEST-vi.md`](docs/MANIFEST-vi.md) §5–§6.
+
 **Status: steps 1–4, step 5 in trial.** Hex lattice (corner radius R = 100 m) from the origin → a truly
 random contiguous region whose concavities are filled up to a target convexity (default:
 fully convex) → random sensor nodes with three random capabilities → one CH (kept at least

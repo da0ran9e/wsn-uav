@@ -177,6 +177,8 @@ uint32_t ManifestBytes(const std::vector<uint8_t>& held, uint32_t files) {
 struct CellOut {
     uint32_t lacks0 = 0, lacksEnd = 0, manifests = 0, forwarded = 0, reverse = 0, supplied = 0,
              cached = 0, received = 0;
+    // chunks the cell holds that none of its keepers (CL + strong nodes) holds
+    uint32_t keepGap0 = 0, keepGapEnd = 0;
     double fullS = -1;
 };
 
@@ -205,6 +207,17 @@ MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector
             for (uint32_t j = 0; j < K; ++j) have[x][j] |= node[i][j];
     std::vector<std::vector<uint8_t>> holder = node;   // node-level, grows where chunks are kept
     auto lacking = [&](size_t x) { return (uint32_t)std::count(have[x].begin(), have[x].end(), 0); };
+    auto keepGap = [&](size_t x, const std::vector<std::vector<uint8_t>>& h) {
+        uint32_t gap = 0;
+        for (uint32_t j = 0; j < K; ++j) {
+            if (!have[x][j]) continue;
+            bool atKeeper = false;
+            for (int32_t i : P.keepers[x]) atKeeper = atKeeper || h[i][j];
+            gap += !atKeeper;
+        }
+        return gap;
+    };
+    for (size_t x = 0; x < nc; ++x) M.cell[x].keepGap0 = keepGap(x, node);
     for (size_t x = 0; x < nc; ++x) {
         M.cell[x].lacks0 = lacking(x);
         if (M.cell[x].lacks0 == 0) M.cell[x].fullS = 0;
@@ -375,6 +388,7 @@ MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector
         }
     }
     for (size_t x = 0; x < nc; ++x) {
+        M.cell[x].keepGapEnd = keepGap(x, holder);
         M.cell[x].lacksEnd = lacking(x);
         CHECK(M.cell[x].lacksEnd <= M.cell[x].lacks0);
         for (int32_t i : P.members[x])
@@ -505,7 +519,7 @@ int main(int argc, char* argv[]) {
 
     FILE* fc = std::fopen((c.out + "-cells.csv").c_str(), "w");
     std::fprintf(fc, "run,q,r,role,readyS,lacks0,lacksEnd,fullS,manifests,forwarded,reverse,supplied,cached,"
-                     "received\n");
+                     "received,keepGap0,keepGapEnd\n");
     FILE* fm = std::fopen((c.out + "-missions.csv").c_str(), "w");
     std::fprintf(fm, "run,cellsLacking0,cellsLackingEnd,borderLacking0,lastS,hopsManifest,hopsData,hopsStore,"
                      "manifestBytes,dup,toCH,chRemainder\n");
@@ -550,9 +564,9 @@ int main(int argc, char* argv[]) {
             l0 += o.lacks0 > 0;
             l1 += o.lacksEnd > 0;
             b0 += o.lacks0 > 0 && P.border[x];
-            std::fprintf(fc, "%u,%d,%d,%d,%.3f,%u,%u,%.3f,%u,%u,%u,%u,%u,%u\n", run, P.cells[x].q, P.cells[x].r,
-                         P.role[x], ready[x], o.lacks0, o.lacksEnd, o.fullS, o.manifests, o.forwarded, o.reverse,
-                         o.supplied, o.cached, o.received);
+            std::fprintf(fc, "%u,%d,%d,%d,%.3f,%u,%u,%.3f,%u,%u,%u,%u,%u,%u,%u,%u\n", run, P.cells[x].q,
+                         P.cells[x].r, P.role[x], ready[x], o.lacks0, o.lacksEnd, o.fullS, o.manifests, o.forwarded,
+                         o.reverse, o.supplied, o.cached, o.received, o.keepGap0, o.keepGapEnd);
         }
         std::fprintf(fm, "%u,%u,%u,%u,%.3f,%llu,%llu,%llu,%llu,%llu,%u,%u\n", run, l0, l1, b0, M.lastS,
                      (unsigned long long)M.hopsManifest, (unsigned long long)M.hopsData,

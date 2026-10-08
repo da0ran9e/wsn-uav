@@ -169,6 +169,24 @@ và node mạnh tự giữ bản sao dọc đường (d-4).
 Hai trường hợp 2 000 mảnh mất khoảng 22 s vì cả file phải đi qua một liên kết G2G, mỗi
 mảnh một khe 10 ms.
 
+**Hình** (`tools/manifest_figures.py`):
+
+![bản đồ manifest](figures/manifest-map.png)
+
+- **(a), (b) lượt bay 1:** sáu cell biên thiếu, mỗi cell gửi manifest (nét đứt đen) sang cell kế
+  tiếp và được trả ngay (xanh). Cell biên chờ (−5,8) tự thiếu 1 mảnh, nên manifest của (−5,9)
+  đi tiếp qua nó với "thiếu 1". (−5,8) giữ bản sao mảnh trả về: phần thiếu của cell đi qua đã
+  tự gộp vào manifest. (−4,8) là cell biên chờ, thiếu 1 mảnh và không ai gửi manifest qua nó,
+  nên nó gửi manifest ngược (đỏ).
+- **(c), (d):** hai kịch bản cell trắng.
+
+![dòng thời gian](figures/manifest-timeline.png)
+
+- **(a), (b):** dòng thời gian của từng cell. Chấm xám là lúc CL xong tóm tắt, đỏ nhạt là
+  khoảng đang thiếu, vạch đỏ là lúc đủ.
+- **(c):** phân bố thời gian trên 120 lượt bay. 22 % cell chờ đủ **trước cả khi chính nó xong
+  tóm tắt**, nhờ một manifest đi qua mang mảnh nó thiếu về.
+
 ## 6. Còn để ngỏ
 
 1. **Cell biên trắng cạnh một cell chờ đủ** (d-3): để thử nghiệm sau.

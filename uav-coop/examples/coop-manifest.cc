@@ -188,7 +188,13 @@ struct MissionOut {
 };
 
 MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector<uint8_t>>& node,
-                      const std::vector<double>& ready) {
+                      const std::vector<double>& ready, FILE* trace) {
+    // trace rows: what, sentS, atS, from q,r, to q,r, origin q,r, chunks
+    auto tr = [&](const char* what, double t0, double t1, size_t a, size_t b, size_t o, uint64_t n) {
+        if (!trace) return;
+        std::fprintf(trace, "%s,%.4f,%.4f,%d,%d,%d,%d,%d,%d,%llu\n", what, t0, t1, P.cells[a].q, P.cells[a].r,
+                     P.cells[b].q, P.cells[b].r, P.cells[o].q, P.cells[o].r, (unsigned long long)n);
+    };
     const size_t nc = P.cells.size();
     const uint32_t K = c.K;
     MissionOut M;
@@ -254,6 +260,7 @@ MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector
         M.cell[from].supplied += (uint32_t)js.size();
         Ev d{t + (double)(firstLeg + js.size() - 1) * slot, seqNo++, 4, to, from, path, said, (uint32_t)(k - 1),
              P.R.gateway.at({P.cells[from], P.cells[to]}).b, js};
+        tr("data", t, d.t, from, to, path[0], js.size());
         pq.push(d);
     };
     // Data reaches cell path[i]: keep what it lacks (to the CL), pass on what the cell
@@ -277,6 +284,7 @@ MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector
         if (!keep.empty()) {
             (origin ? M.cell[x].received : M.cell[x].cached) += (uint32_t)keep.size();
             const double atCL = e.t + viaCL * slot;
+            tr(origin ? "received" : "copy", e.t, atCL, x, x, e.path[0], keep.size());
             if (M.cell[x].fullS < 0 && lacking(x) == 0) M.cell[x].fullS = atCL;
             M.lastS = std::max(M.lastS, atCL);
         }
@@ -293,6 +301,7 @@ MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector
         }
         Ev d{e.t + worst * slot, seqNo++, 4, nx, e.origin, e.path, e.said, (uint32_t)(i - 1),
              P.R.gateway.at({P.cells[x], P.cells[nx]}).b, pass};
+        tr("data", e.t, d.t, x, nx, e.path[0], pass.size());
         pq.push(d);
     };
     // Cell x passes a manifest on to its next cell.
@@ -312,6 +321,7 @@ MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector
         e.entry = P.R.gateway.at({P.cells[x], P.cells[nx]}).b;
         e.t = t + (h + f - 1) * slot;
         e.seq = seqNo++;
+        tr("manifest", t, e.t, x, (size_t)nx, e.path[0], (uint64_t)std::count(held.begin(), held.end(), 0));
         pq.push(e);
     };
     auto own = [&](double t, size_t x) {   // x sends its own manifest
@@ -336,6 +346,7 @@ MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector
                 const uint32_t f = frames(have[x]);
                 M.hopsManifest += (uint64_t)f * h;
                 M.cell[x].reverse++;
+                tr("reverse", e.t, e.t + (h + f - 1) * slot, x, b, x, lacking(x));
                 pq.push({e.t + (h + f - 1) * slot, seqNo++, 3, b, x, {x, b}, {have[x]}, 1,
                          P.R.gateway.at({P.cells[x], P.cells[b]}).b});
             }
@@ -490,7 +501,13 @@ int main(int argc, char* argv[]) {
             for (size_t x = 0; x < nc; ++x)
                 ready[x] = readyAt.at({std::to_string(run), std::to_string(P.cells[x].q) + ":" +
                                                                 std::to_string(P.cells[x].r)});
-        const MissionOut M = RunMission(c, P, node, ready);
+        FILE* trace = nullptr;
+        if (run == c.firstRun) {
+            trace = std::fopen((c.out + "-trace.csv").c_str(), "w");
+            std::fprintf(trace, "what,sentS,atS,fq,fr,tq,tr,oq,or,chunks\n");
+        }
+        const MissionOut M = RunMission(c, P, node, ready, trace);
+        if (trace) std::fclose(trace);
         uint32_t l0 = 0, l1 = 0, b0 = 0;
         for (size_t x = 0; x < nc; ++x) {
             const CellOut& o = M.cell[x];

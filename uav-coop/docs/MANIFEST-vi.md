@@ -187,6 +187,25 @@ mảnh một khe 10 ms.
 - **(c):** phân bố thời gian trên 120 lượt bay. 22 % cell chờ đủ **trước cả khi chính nó xong
   tóm tắt**, nhờ một manifest đi qua mang mảnh nó thiếu về.
 
+**Dữ liệu nằm ở đâu sau pha manifest** (lượt bay 1, `manifest-holdings.csv`):
+
+![phân bổ](figures/manifest-holdings.png)
+
+- **Pha manifest lấp chỗ thiếu của CELL, không làm từng node đủ.**
+  - Chỉ **11 / 2 312 node** nhận thêm dữ liệu (6 CL, 5 node mạnh nằm trên đường về CL), tổng
+    252 mảnh.
+  - Mọi node khác vẫn giữ đúng phần nhận từ UAV: node xa đường bay chỉ có 300–500 / 2 000.
+- **Ai giữ đủ 2 000 mảnh:** 30 / 109 CL, 166 / 717 node mạnh và 323 / 1 486 node thường. Tất
+  cả đều ở gần đường bay.
+- **Sau pha manifest, mọi cell đều đủ ở mức hợp các node.** Nhưng ở các cell xa đường bay,
+  nhiều mảnh chỉ còn **đúng một bản**: cell (−5,9) có 204 mảnh như vậy, cell (−7,8) có 45. Mất
+  node đó là cell lại thiếu.
+- **Số bản trung bình mỗi mảnh trong một cell** gần như không đổi: khoảng 20, vì pha manifest
+  chỉ thêm vài trăm mảnh.
+
+Việc đưa dữ liệu tới từng node, hoặc tới CL và các node mạnh, thuộc bước trao đổi nội cell
+đã để lại sau (SUMMARY-vi.md).
+
 ## 6. Còn để ngỏ
 
 1. **Cell biên trắng cạnh một cell chờ đủ** (d-3): để thử nghiệm sau.

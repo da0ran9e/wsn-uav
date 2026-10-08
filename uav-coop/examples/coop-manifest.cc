@@ -188,7 +188,7 @@ struct MissionOut {
 };
 
 MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector<uint8_t>>& node,
-                      const std::vector<double>& ready, FILE* trace) {
+                      const std::vector<double>& ready, FILE* trace, FILE* hold) {
     // trace rows: what, sentS, atS, from q,r, to q,r, origin q,r, chunks
     auto tr = [&](const char* what, double t0, double t1, size_t a, size_t b, size_t o, uint64_t n) {
         if (!trace) return;
@@ -380,6 +380,34 @@ MissionOut RunMission(const Cfg& c, const Plan& P, const std::vector<std::vector
         for (int32_t i : P.members[x])
             for (uint32_t j = 0; j < K; ++j) CHECK(!holder[i][j] || have[x][j]);
     }
+    if (hold) {   // where the data sits now: per node, before and after
+        for (size_t x = 0; x < nc; ++x)
+            for (int32_t i : P.members[x]) {
+                const bool strong = std::find(P.keepers[x].begin(), P.keepers[x].end(), i) != P.keepers[x].end();
+                const uint32_t before = (uint32_t)std::count(node[i].begin(), node[i].end(), 1);
+                const uint32_t after = (uint32_t)std::count(holder[i].begin(), holder[i].end(), 1);
+                CHECK(after >= before);
+                std::fprintf(hold, "node,%u,%d,%d,%d,%d,%u,%u\n", P.nodes[i].id, P.cells[x].q, P.cells[x].r,
+                             i == P.cl[x] ? 1 : 0, strong && i != P.cl[x] ? 1 : 0, before, after);
+            }
+        // per cell: copies of each chunk among its nodes, before and after
+        for (size_t x = 0; x < nc; ++x)
+            for (int pass = 0; pass < 2; ++pass) {
+                const auto& src = pass == 0 ? node : holder;
+                uint32_t minC = UINT32_MAX, one = 0, none = 0;
+                double sum = 0;
+                for (uint32_t j = 0; j < K; ++j) {
+                    uint32_t n = 0;
+                    for (int32_t i : P.members[x]) n += src[i][j];
+                    minC = std::min(minC, n);
+                    one += n == 1;
+                    none += n == 0;
+                    sum += n;
+                }
+                std::fprintf(hold, "%s,%d,%d,%zu,%u,%u,%u,%.3f\n", pass == 0 ? "cellBefore" : "cellAfter",
+                             P.cells[x].q, P.cells[x].r, P.members[x].size(), none, one, minC, sum / K);
+            }
+    }
     return M;
 }
 
@@ -506,8 +534,16 @@ int main(int argc, char* argv[]) {
             trace = std::fopen((c.out + "-trace.csv").c_str(), "w");
             std::fprintf(trace, "what,sentS,atS,fq,fr,tq,tr,oq,or,chunks\n");
         }
-        const MissionOut M = RunMission(c, P, node, ready, trace);
+        FILE* hold = nullptr;
+        if (run == c.firstRun) {
+            hold = std::fopen((c.out + "-holdings.csv").c_str(), "w");
+            // node rows: kind,id,q,r,isCL,isStrong,before,after
+            // cell rows: kind,q,r,nodes,chunksNowhere,chunksOneCopy,minCopies,meanCopies
+            std::fprintf(hold, "kind,a,b,c,d,e,f,g\n");
+        }
+        const MissionOut M = RunMission(c, P, node, ready, trace, hold);
         if (trace) std::fclose(trace);
+        if (hold) std::fclose(hold);
         uint32_t l0 = 0, l1 = 0, b0 = 0;
         for (size_t x = 0; x < nc; ++x) {
             const CellOut& o = M.cell[x];

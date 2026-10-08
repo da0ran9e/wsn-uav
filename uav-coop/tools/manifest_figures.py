@@ -6,6 +6,7 @@ Reads deploy-lattice.csv, manifest-cells.csv, manifest-trace.csv (mission 1) and
 blank-cell scenarios manifest-blank{A,B}-{cells,trace}.csv, and draws
   manifest-map.png       who sent what to whom: roles, manifests, data, copies
   manifest-timeline.png  when, cell by cell; and the latency over 120 missions
+  manifest-holdings.png  where the data sits afterwards (manifest-holdings.csv, mission 1)
 """
 import argparse, csv, math, os
 
@@ -240,6 +241,129 @@ def fig_timeline(data, out):
     print(f"  {out}")
 
 
+def fig_holdings(data, out):
+    """Where the data sits after the base manifest phase (mission 1)."""
+    c, w, sel = load_lattice(data)
+    R = w / math.sqrt(3)
+    rows = list(csv.reader(open(os.path.join(data, "manifest-holdings.csv"))))[1:]
+    pos = {r["id"]: r for r in csv.DictReader(open(os.path.join(data, "deploy-nodes-s35.csv")))}
+    dpath = {r["id"]: float(r["dPathM"]) for r in csv.DictReader(open(os.path.join(data, "pass-nodes.csv")))}
+    nodes = [r for r in rows if r[0] == "node"]
+    cb = {(int(r[1]), int(r[2])): r for r in rows if r[0] == "cellBefore"}
+    ca = {(int(r[1]), int(r[2])): r for r in rows if r[0] == "cellAfter"}
+    K = 2000
+    fig = plt.figure(figsize=(19, 12.5), dpi=150, facecolor=SURF)
+    gs = fig.add_gridspec(2, 3, width_ratios=[1, 1, 1.25], hspace=.25, wspace=.12, left=.03, right=.98, top=.9,
+                          bottom=.06)
+    ramp = matplotlib.colors.LinearSegmentedColormap.from_list("h", ["#f1f0eb", "#86b6ef", "#3987e5", "#1c5cab", "#0d366b"])
+
+    def cells_bg(a, colors=None):
+        polys, cols = [], []
+        for h in sel:
+            polys.append(corners(*c[h], R))
+            cols.append(colors[h] if colors else "#f3f2ee")
+        a.add_collection(PolyCollection(polys, facecolors=cols, edgecolors="#ffffff", linewidths=.7, zorder=1))
+        xs = [c[h][0] for h in sel]; ys = [c[h][1] for h in sel]
+        a.set_xlim(min(xs) - w, max(xs) + w); a.set_ylim(min(ys) - w, max(ys) + w)
+        a.set_aspect("equal"); a.set_facecolor(SURF)
+        a.tick_params(colors=INK2, labelsize=7.5)
+        for sp in a.spines.values():
+            sp.set_visible(False)
+
+    # (a) chunks per node after the phase
+    a = fig.add_subplot(gs[0, 0])
+    cells_bg(a)
+    x = [float(pos[r[1]]["x"]) for r in nodes]; y = [float(pos[r[1]]["y"]) for r in nodes]
+    v = [int(r[7]) for r in nodes]
+    sc = a.scatter(x, y, c=v, cmap=ramp, vmin=0, vmax=K, s=6, lw=0, zorder=3)
+    cl = [r for r in nodes if r[4] == "1"]
+    a.scatter([float(pos[r[1]]["x"]) for r in cl], [float(pos[r[1]]["y"]) for r in cl], s=22, facecolors="none",
+              edgecolors="#eda100", lw=1.1, zorder=4)
+    gain = [r for r in nodes if int(r[7]) > int(r[6])]
+    a.scatter([float(pos[r[1]]["x"]) for r in gain], [float(pos[r[1]]["y"]) for r in gain], s=90, marker="o",
+              facecolors="none", edgecolors=C_LACK, lw=1.8, zorder=5)
+    cb_ = fig.colorbar(sc, ax=a, shrink=.6, pad=.01)
+    cb_.ax.tick_params(labelsize=7.5, colors=INK2); cb_.outline.set_visible(False)
+    cb_.set_label("mảnh node đang giữ (/2000)", fontsize=8.5, color=INK2)
+    a.set_title(f"(a) Mỗi node giữ bao nhiêu mảnh sau pha manifest\nvòng cam = CL; vòng đỏ = {len(gain)} node "
+                f"nhận thêm qua manifest", loc="left", fontsize=10, color=INK)
+
+    # (b) cells: copies of each chunk, at least / at most one
+    a = fig.add_subplot(gs[0, 1])
+    one = {h: int(ca[h][5]) for h in sel}
+    m1 = max(one.values()) or 1
+    col = {h: ("#f1f0eb" if one[h] == 0 else matplotlib.colors.to_hex(plt.cm.Reds(.25 + .65 * one[h] / m1))) for h in sel}
+    cells_bg(a, col)
+    for h in sel:
+        if int(cb[h][4]) > 0:
+            a.add_collection(PolyCollection([corners(*c[h], R * .9)], facecolors="none", edgecolors=INK, lw=1.4, zorder=3))
+        if one[h]:
+            a.text(c[h][0], c[h][1], str(one[h]), fontsize=7, ha="center", va="center", color=INK, zorder=4)
+    a.set_title("(b) Số mảnh chỉ còn ĐÚNG MỘT bản trong cell (đỏ: càng nhiều càng mong manh)\n"
+                "viền đen = cell thiếu trước manifest (giờ đều đủ ở mức cell)", loc="left", fontsize=10, color=INK)
+
+    # (c) per node: before vs after, by distance from the path
+    a = fig.add_subplot(gs[0, 2])
+    d = np.array([dpath[r[1]] for r in nodes])
+    b = np.array([int(r[6]) for r in nodes]); af = np.array([int(r[7]) for r in nodes])
+    kind = np.array([2 if r[4] == "1" else 1 if r[5] == "1" else 0 for r in nodes])
+    for k, lab, colr, sz in ((0, "node thường", "#b9b8b2", 4), (1, "node mạnh", "#2a78d6", 7), (2, "CL", "#eda100", 16)):
+        m = kind == k
+        a.scatter(d[m], af[m], s=sz, color=colr, lw=0, alpha=.8, label=lab, zorder=2 + k)
+    for r in gain:
+        a.annotate("", (dpath[r[1]], int(r[7])), (dpath[r[1]], int(r[6])),
+                   arrowprops=dict(arrowstyle="-|>", color=C_LACK, lw=1.4, mutation_scale=9), zorder=6)
+    a.axhline(K, color=INK2, lw=.8, ls=(0, (3, 3)))
+    a.set_xlabel("khoảng cách từ node tới đường bay, m", fontsize=9, color=INK2)
+    a.set_ylabel("mảnh node đang giữ", fontsize=9, color=INK2)
+    a.legend(frameon=False, fontsize=8.5, labelcolor=INK2, loc="lower left")
+    a.set_title("(c) Theo khoảng cách tới đường bay; mũi tên đỏ = phần nhận thêm qua manifest",
+                loc="left", fontsize=10, color=INK)
+    a.grid(color=GRIDC, lw=.6); a.set_facecolor(SURF)
+    a.tick_params(colors=INK2, labelsize=8)
+    for sp in a.spines.values():
+        sp.set_visible(False)
+
+    # (d) per cell: cell union vs CL vs nodes, cells sorted by distance from the path
+    a = fig.add_subplot(gs[1, :])
+    cd = {}
+    for r in nodes:
+        cd.setdefault((int(r[2]), int(r[3])), []).append(r)
+    order = sorted(cd, key=lambda h: np.mean([dpath[r[1]] for r in cd[h]]))
+    xs = np.arange(len(order))
+    union_b = [K - int(cb[h][4]) for h in order]
+    clv = [int(next(r for r in cd[h] if r[4] == "1")[7]) for h in order]
+    strong = [np.mean([int(r[7]) for r in cd[h] if r[5] == "1"] or [np.nan]) for h in order]
+    mean_all = [np.mean([int(r[7]) for r in cd[h]]) for h in order]
+    mx = [max(int(r[7]) for r in cd[h]) for h in order]
+    mn = [min(int(r[7]) for r in cd[h]) for h in order]
+    a.fill_between(xs, mn, mx, color="#d9e8fb", lw=0, label="node trong cell: thấp nhất – cao nhất", step="mid")
+    a.plot(xs, mean_all, color="#3987e5", lw=1.6, label="trung bình mọi node", drawstyle="steps-mid")
+    a.plot(xs, strong, color="#1c5cab", lw=1.2, ls=(0, (3, 2)), label="trung bình node mạnh", drawstyle="steps-mid")
+    a.scatter(xs, clv, s=18, color="#eda100", edgecolors=INK, lw=.4, zorder=4, label="CL")
+    a.plot(xs, [K] * len(xs), color="#1baf7a", lw=2, label="cả cell (hợp mọi node) sau manifest = 2000 ở mọi cell")
+    lack = [i for i, u in enumerate(union_b) if u < K]
+    a.scatter([xs[i] for i in lack], [union_b[i] for i in lack], marker="v", s=50, color=C_LACK, zorder=5,
+              label="cả cell TRƯỚC manifest (chỉ các cell thiếu)")
+    a.set_xlim(-1, len(xs))
+    a.set_ylim(0, K * 1.06)
+    a.set_xticks(xs[::6])
+    a.set_xticklabels([f"{np.mean([dpath[r[1]] for r in cd[order[i]]]):.0f}" for i in xs[::6]], fontsize=7.5)
+    a.set_xlabel("109 cell, xếp theo khoảng cách trung bình tới đường bay (m)", fontsize=9, color=INK2)
+    a.set_ylabel("mảnh (/2000)", fontsize=9, color=INK2)
+    a.legend(frameon=False, fontsize=8.5, labelcolor=INK2, loc="lower left", ncol=3)
+    a.set_title("(d) Từng cell: CẢ CELL có đủ, nhưng từng node (kể cả CL) vẫn chỉ giữ phần mình nhận từ UAV",
+                loc="left", fontsize=10, color=INK)
+    a.grid(color=GRIDC, lw=.6); a.set_facecolor(SURF)
+    a.tick_params(colors=INK2, labelsize=8)
+    for sp in a.spines.values():
+        sp.set_visible(False)
+    fig.suptitle("Phân bổ dữ liệu sau pha manifest cơ sở (lượt bay 1, K = 2000): pha manifest lấp chỗ thiếu "
+                 "của CELL, không làm từng node đủ", x=.01, ha="left", fontsize=12.5, color=INK)
+    fig.savefig(out, facecolor=SURF)
+    print(f"  {out}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("data"); ap.add_argument("figs")
@@ -247,6 +371,7 @@ def main():
     os.makedirs(o.figs, exist_ok=True)
     fig_map(o.data, os.path.join(o.figs, "manifest-map.png"))
     fig_timeline(o.data, os.path.join(o.figs, "manifest-timeline.png"))
+    fig_holdings(o.data, os.path.join(o.figs, "manifest-holdings.png"))
 
 
 if __name__ == "__main__":

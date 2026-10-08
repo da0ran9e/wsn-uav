@@ -125,6 +125,155 @@ các cell ở biên manifest nhưng các cell còn lại đều hưởng lợi" 
 8. **Song song:** trao đổi nội cell vẫn chạy (b). Mỗi cặp gateway có kênh riêng; cần lịch
    cho gateway (đề xuất 4).
 
+## 3b. Mã giả
+
+Mã giả dưới đây mô tả đúng những gì bản cài chạy: `examples/coop-summary.cc` cho Thuật toán
+2 và `examples/coop-manifest.cc` cho Thuật toán 3–5. Tất cả các thuật toán đều hướng sự kiện:
+mỗi thủ tục `KHI …` chạy khi sự kiện tương ứng xảy ra.
+
+### Ký hiệu
+
+| ký hiệu | nghĩa |
+|---|---|
+| $\mathcal{C}$, $\mathcal{B}\subseteq\mathcal{C}$ | tập cell; tập cell biên (có cạnh giáp ngoài cụm) |
+| $V(c)$, $\mathrm{CL}(c)$ | các node của cell $c$; CL của cell $c$ |
+| $I(c)$ | **node quan trọng** của cell $c$: $\{\mathrm{CL}(c)\}\cup\{v\in V(c): s(v)>\bar s(c)\}$, với $s(v)$ là điểm năng lực, $\bar s(c)$ là trung bình của cell |
+| $c_{\mathrm{CH}}$ | cell chứa CH |
+| $\mathrm{next}(c)$ | cell kế tiếp của $c$ trên đường chính từ $\mathrm{CL}(c)$ về CH; $\mathrm{next}(c_{\mathrm{CH}})=\bot$ |
+| $\mathrm{gw}(a,b)=(g_a,g_b)$ | liên kết gateway duy nhất giữa hai cell kề $a,b$; $g_a\in V(a)$, $g_b\in V(b)$ |
+| $\mathrm{toCL}(v)$ | next hop của node $v$ tới CL của cell mình (cây trong cell) |
+| $F=\{0,\dots,K-1\}$ | các mảnh, chia đều thành $F_1,\dots,F_m$ file |
+| $h_v\subseteq F$ | các mảnh node $v$ đang giữ |
+| $H_c=\bigcup_{v\in V(c)}h_v$ | các mảnh cell $c$ đang có (trạng thái của cell) |
+| $L_c=F\setminus H_c$ | các mảnh cell $c$ thiếu |
+| $t^{\mathrm{rdy}}_c$, $T_{\mathrm{wait}}$, $\mathrm{TTL}$ | lúc CL của $c$ có tóm tắt nội cell; thời gian chờ; số cell tối đa một manifest đi |
+
+Một **manifest** là bộ $\langle o,\pi,\Sigma,\tau\rangle$:
+- $o$: cell gốc;
+- $\pi=(\pi_0=o,\pi_1,\dots,\pi_k)$: các cell manifest đã đi qua;
+- $\Sigma=(\Sigma_0,\dots,\Sigma_{k-1})$: $\Sigma_i\subseteq F$ là nội dung "**có**" mà $\pi_i$ đã
+  gửi cho $\pi_{i+1}$; nội dung hiện tại là $\Sigma_{k-1}$;
+- $\tau$: TTL còn lại.
+
+Trên đường truyền, nội dung được mã hoá theo từng file: một cờ ĐỦ, hoặc các đoạn manifest
+(mục 2).
+
+Một **lô dữ liệu** là bộ $\langle\pi,\Sigma,i,J\rangle$: tập mảnh $J$ đang tới cell $\pi_i$ trên
+đường về cell gốc.
+
+### Thuật toán 1 — Lập vai trò (tại BS, trước khi bay)
+
+```text
+Algorithm 1  PLANROLES(C, B, next)
+ 1: for each c ∈ C do
+ 2:     up(c) ← { b ∈ B : next(b) = c }                 ▷ cell biên lẽ ra gửi manifest cho c
+ 3: for each c ∈ C do
+ 4:     if up(c) ≠ ∅ then role(c) ← WAITER              ▷ (d-2): kể cả khi c cũng là cell biên
+ 5:     else if c ∈ B then role(c) ← INITIATOR          ▷ cell biên không chờ cell biên nào
+ 6:     else role(c) ← NONE
+ 7: return role, up
+```
+
+### Thuật toán 2 — Tóm tắt nội cell về CL (SUMMARY-vi.md)
+
+Mỗi node gửi lên cha **giao các phần thiếu** của cả nhánh của nó. Lên tới CL, kết quả chính
+là $L_c$.
+
+```text
+Algorithm 2  INTRACELLSUMMARY(c)                       ▷ chạy song song ở mọi cell
+ 1: for each v ∈ V(c) do
+ 2:     λ_v ← F \ h_v                                   ▷ phần thiếu của nhánh, ban đầu của riêng v
+ 3:     μ_v ← {v}                                       ▷ mặt nạ các node đã được tính
+ 4:     p_v ← toCL(v);  children(v) ← { u : toCL(u) = v }
+ 5: σ ← thứ tự hậu tự của cây toCL (con trước cha)      ▷ lịch TDMA, mỗi khe một node phát
+ 6: repeat theo vòng, mỗi khe một node v theo σ:
+ 7:     if mọi con của v đã gửi đủ, hoặc mọi con chưa đủ đã im lặng ≥ G·(cao(u)+1) vòng then
+ 8:         gửi đoạn manifest kế tiếp của λ_v, kèm μ_v, cho p_v; chờ ACK trong khe
+ 9:         if 3 lần liền không ACK and còn cha thay thế then
+10:             p_v ← node gần CL hơn theo (số hop, id) trong tầm 1.5·r_link;  gửi lại từ đầu
+11: KHI node u nhận một đoạn [a,b) của λ_w, μ_w từ con w:
+12:     λ_u[j] ← λ_u[j] ∧ λ_w[j]   với mọi j ∈ [a,b)        ▷ giao phần thiếu = hợp phần có
+13:     if đây là đoạn cuối then μ_u ← μ_u ∪ μ_w
+14:     if u đã bắt đầu gửi and λ_u hay μ_u thay đổi then u gửi lại tóm tắt từ đầu
+15: CL kết thúc khi μ_CL = V(c):  L_c ← λ_CL,  H_c ← F \ L_c
+```
+
+### Thuật toán 3 — Kích hoạt
+
+```text
+Algorithm 3  TRIGGERS
+ 1: KHI t = t^rdy_c với role(c) = INITIATOR:
+ 2:     if not sent(c) and 0 < |L_c| < K then SENDOWN(c)   ▷ chưa nhận được gì thì không có gì kích hoạt
+ 3: KHI t = t^rdy_c + T_wait với role(c) = WAITER:
+ 4:     if L_c = ∅ then return                          ▷ (c-1): mình đủ thì cell biên "ít nhiều cũng đủ"
+ 5:     for each b ∈ up(c) chưa gửi manifest qua c do
+ 6:         gửi MANIFEST NGƯỢC ⟨c, (c,b), (H_c), 1⟩ tới b qua gw(c,b)
+ 7:
+ 8: procedure SENDOWN(c)
+ 9:     sent(c) ← true
+10:     PASSON(c, ⟨c, (c), (H_c), TTL⟩)
+11:
+12: procedure PASSON(x, ⟨o,π,Σ,τ⟩)                      ▷ x = π_k, nội dung hiện tại M = Σ_{k-1}
+13:     if M = F then return                            ▷ không còn gì thiếu
+14:     if next(x) = ⊥ then                             ▷ x là cell của CH
+15:         ghi nhận F \ M cho PHA THỨ CẤP; return      ▷ pha cơ sở dừng ở CH
+16:     if τ = 0 then return
+17:     y ← next(x);  (g_x, g_y) ← gw(x,y)
+18:     gửi ⟨o, π‖y, Σ, τ−1⟩ từ CL(x) qua g_x → g_y
+```
+
+### Thuật toán 4 — Nhận manifest (tại mỗi cell trên đường)
+
+```text
+Algorithm 4  ONMANIFEST(x, ⟨o,π,Σ,τ⟩)                  ▷ x = π_k; tại CL(x), sau khi đi g_y → CL(x)
+ 1: M ← Σ_{k−1};  heard(x) ← heard(x) ∪ {π_{k−1}}
+ 2: G ← (F \ M) ∩ H_x                                    ▷ những gì x có mà manifest thiếu
+ 3: SENDBACK(x, k, π, Σ, G)                              ▷ gửi ngay về cell gốc
+ 4: M ← M ∪ G                                           ▷ cắt manifest: "A4689" → "AB89"
+ 5: M ← M ∩ H_x                                         ▷ (a), (d-1): manifest đi tiếp mô tả x như hiện tại;
+ 6:                                                      ▷   mảnh x thiếu thành mảnh thiếu
+ 7: PASSON(x, ⟨o, π, Σ‖M, τ⟩)
+ 8:
+ 9: procedure SENDBACK(x, k, π, Σ, G)
+10:     if G = ∅ then return
+11:     for each j ∈ G do chọn holder v ∈ V(x) có j, gần gateway về π_{k−1} nhất
+12:     gửi lô ⟨π, Σ, k−1, G⟩ qua gw(x, π_{k−1})
+```
+
+### Thuật toán 5 — Dữ liệu đi ngược về và manifest ngược
+
+```text
+Algorithm 5a  ONDATA(⟨π,Σ,i,J⟩)                         ▷ lô J tới cell z = π_i tại node g_z
+ 1: K_z ← J \ H_z                                       ▷ những gì z đang thiếu: giữ bản sao
+ 2: for each j ∈ K_z do
+ 3:     chuyển j theo toCL từ g_z tới CL(z)
+ 4:     for each v trên đường đó với v ∈ I(z) do h_v ← h_v ∪ {j}   ▷ (d-4): node mạnh tự giữ bản sao
+ 5: H_z ← H_z ∪ K_z
+ 6: if i = 0 then return                                ▷ z là cell gốc
+ 7: P ← { j ∈ J : j ∉ Σ_{i−1} }                         ▷ chỉ những gì cell phía sau đã báo là thiếu
+ 8: if P ≠ ∅ then gửi lô ⟨π, Σ, i−1, P⟩ qua gw(z, π_{i−1})
+ 9:                                                      ▷ (mảnh vừa giữ đi từ CL, mảnh khác đi thẳng gateway → gateway)
+
+Algorithm 5b  ONREVERSE(b, ⟨w,(w,b),(H_w),1⟩)           ▷ tại cell biên b, từ cell chờ w
+ 1: SENDBACK(b, 1, (w,b), (H_w), (F \ H_w) ∩ H_b)       ▷ gửi cho w những gì b có mà w thiếu
+ 2: if not sent(b) and L_b ≠ ∅ then SENDOWN(b)          ▷ "tự hiểu ra tình hình", kể cả khi chưa nhận được gì
+```
+
+### Các tính chất (được kiểm tự động trong mọi lần chạy)
+
+1. **An toàn.**
+   - $H_c$ chỉ tăng.
+   - Mọi mảnh được gửi đi đều do một node thực sự giữ ($\exists v\in V(x): j\in h_v$).
+   - Mọi mảnh node giữ đều thuộc $H_c$ của cell nó.
+2. **Chỉ qua gateway.** Dữ liệu và manifest đổi cell chỉ qua đúng liên kết
+   $\mathrm{gw}(\cdot,\cdot)$.
+3. **Chỉ tới nơi cần.** Lô dữ liệu đi tiếp từ $\pi_i$ về $\pi_{i-1}$ chỉ gồm những mảnh mà
+   $\Sigma_{i-1}$ báo là thiếu. Mọi cell trên đường giữ đúng phần nó thiếu.
+4. **Dừng.** Mỗi manifest đi theo $\mathrm{next}(\cdot)$, một đường hữu hạn không vòng tới
+   $c_{\mathrm{CH}}$. Manifest dừng khi đủ, khi tới CH, hoặc khi hết TTL.
+5. **Đủ về cell.** Sau Thuật toán 4, mọi mảnh của $\Sigma_{k-1}\setminus\Sigma_k$ mà $x$ có đều
+   đã được gửi về. Phần $x$ không có tiếp tục đi qua $\mathrm{next}(x)$.
+
 ## 4. Bản cài thử: phạm vi và giả định
 
 `uav-coop-manifest` là bản thử **mức logic**, chưa có radio. Nó đếm gói và số hop, và mô

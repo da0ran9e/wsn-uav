@@ -695,6 +695,13 @@ Mỗi cell Axe chọn it nhất 1 cặp Banks và đường đi (cell paths) tư
 circle cell cũng cần được phục vụ theo cell path chứ không được gửi lung tung
 ```
 
+*43. 2026-10-09 · uav-coop2 · phát biểu bài toán lớp 3 và mã giả; phần đầu: BS lập đường bay, bảng mảnh dữ liệu theo d_track gửi CH*
+
+```text
+giờ chúng ta vừa thử phát biểu lại bài toán tầng 3 này và vừa thử viết pseudo nhé, nếu được hãy 
+trước tiên là phần đầu, BS thiết lập đường bay, tính toán lộ trình và gửi cho CH bảng thông tin về các mảnh dữ liệu sẽ được phát theo toạ độ đường bay (d_track) để xác định axe và phân công nhiệm vụ
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

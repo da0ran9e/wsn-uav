@@ -14,12 +14,16 @@ Reused from `uav-coop`, not copied:
 **Status: step 0 — the situation right after the pass** — [`docs/STATE-vi.md`](docs/STATE-vi.md).
 Files count only as runs of consecutive packets, and the path can be bent with
 `uav-coop-deploy --angle` — [`docs/RUNS-vi.md`](docs/RUNS-vi.md).
+Layer 3 (the paper's contribution): the River scheme — problem statement, cell-level
+structure (River, Axe, Banks, critical cells, Circle) and the BS's pre-flight plan in
+pseudocode — [`docs/L3-vi.md`](docs/L3-vi.md); sketches by `tools/concept_cells.py`.
 
 ## Layout
 ```
 uav-coop2/
 ├── tools/state_report.py   # who holds what after the pass: per node, per cell (zones A/B/C)
 ├── tools/runs_report.py    # whole files from consecutive packets only, across flight paths
-└── docs/                   # STATE-vi.md, RUNS-vi.md, figures/, data/
+├── tools/concept_cells.py  # cell-level sketches of the River scheme (no text)
+└── docs/                   # STATE-vi.md, RUNS-vi.md, L3-vi.md, figures/, data/
 ```
 The ns-3 module (linking `uav-coop`) is added with the first C++ of the new scheme.

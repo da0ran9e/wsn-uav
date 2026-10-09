@@ -556,6 +556,85 @@ tiếp theo tôi và bạn cùng thảo luận, lên kế hoạch thật kỹ tr
 nếu bạn có thể hãy gom tất cả những mô tả của tôi lại thành một bản trong CLAUDE.md tránh quên khi đổi session (dùng lời gốc của tôi, không chỉnh sửa)
 ```
 
+*36. 2026-10-09 · quy tắc làm việc · hỏi về nén/mã hoá bản ghi*
+
+```text
+có cách nào nén hoặc mã hoá đoạn hội thoại kiểu vậy không, chỉ cần mã hoá đơn giản để không thể đọc bằng mắt thường mà bạn vẫn có thể dễ dàng giải mã để đọc bất cứ lúc nào ngay cả khi đổi sesssion
+```
+
+*37. 2026-10-09 · quy tắc làm việc · hoàn tác mã hoá, repo private*
+
+```text
+thôi hoàn tác đi, ta chỉ cần set repo private là được
+```
+
+*38. 2026-10-09 · uav-coop2 · nhiều file nối tiếp, node được trao đổi gói; tầm nhìn nghiên cứu (ví dụ, chưa phải bản cuối)*
+
+```text
+UAV sẽ phát nhiều file nối tiếp nhau và coi như các file không thay thế được cho nhau và các node hoàn toán có thể trao đổi các gói mà nó cần cho nhau để ghép lại thành file 
+
+trước tiên tôi sẽ nhắc lại về tầm nhìn của nghiên cứu một chút để bạn cập nhật lại, dưới đây là một tình huống giả định ví dụ đọc và bám ý chính là được, không nên coi đây là phiên bản cuối cùng: 
+"Một khu vực đô thị được phủ bởi hàng nghìn node IoT mỗi thiết bị đang phục vụ một mục tiêu khác nhau do đó năng lực cũng khác nhau. 
+
+* Một số được tích hợp sẵn camera, ví dụ: camera an ninh, chuông cửa, máy bán hàng tự động…thậm chí là camera hành trình của ô tô (node di động)
+* Một số có khả năng tính toán tại biên mạnh
+* Một số có kênh vô tuyến tốt 
+
+Tính chất chung của các camera là nó ghi hình liên tục và được lưu vào bộ nhớ. Bộ nhớ mỗi thiết bị khác nhau nên thông tin cũng có hạn khác nhau. Tổng lại là một khối dữ liệu khổng lồ.
+Giả sử một đứa trẻ đi lạc, hoặc một đối tượng cần được truy vết sau một vụ việc. 
+Phần mạng có hàng nghìn ống kính chĩa vào ngõ nhỏ, mặt tiền cửa hàng, sân chung cư và lối vào toà nhà. Hoàn toàn có khả năng thông tin đối tượng đang được tìm kiếm đã được ghi lại.
+Có thể có nhiều mục tiêu tìm kiếm hoặc đối tượng di chuyển tạo thành một vệt đường đi nhiều camera bắt được 
+Vấn đề là chúng chỉ đang làm nhiệm vụ của mình, hoành toàn không hay biết sự kiện gì vừa sảy ra hay cần tìm ai.
+Một số it camera giao thông có đường dữ liệu riêng về BS nhưng:
+
+* Độ phủ nhỏ, ít điểm quan sát
+* Tốn thời gian tải và xử lý khối dữ liệu lớn 
+
+Cái thiếu là truy vấn: một mô tả cô đọng về đối tượng, đặt được vào tay từng nút biên trước khi bằng chứng bị ghi đè.
+Tại sao không tải dữ liệu về:
+
+* Trong các kịch bản ở nơi hoang dã (rừng quốc gia, khu bảo tồn…) camera từ các thiết bị an ninh chỉ có LoRa, vệ tinh chuyển được vài trăm byte/h. 
+* Trong trường hợp đô thị, dữ liệu thô về mặt pháp lý không thể được tải về một cách đơn giản.
+
+Để đưa được các truy vấn này đến các thiết bị, UAV là một sự lựa chọn hiển nhiên. 
+Truy vấn này được mô tả là một tập ảnh tham chiếu hoặc video.
+Phương án
+Chiến lược 3 Pha:
+Pha 0 (phát tán). Các thiết bị mặt đất được chia thành các Cluster có chặn trên kích thước. bầu CH cho mỗi cụm.
+Pha 1. Đội bay 1 xuất phát mang theo tập dấu vết mô tả đối tượng và bay theo một quỹ đạo sao cho giao được cho mọi cụm mặt đất đủ lượng.
+Phản hồi. Mỗi cụm đã khôi phục được tập dấu vết sẽ quét ngược kho lưu trữ cục bộ của mình, tính một điểm nghi vấn, và gửi một báo cáo ngắn qua đường truyền tầm xa tốc độ thấp sẵn có về BS. BS tập hợp thành một danh sách cụm nghi vấn đã xếp hạng.
+Pha 2 (xác minh). Đội bay 2 tới các cụm nghi vấn theo thứ tự xếp hạng để xác nhận hoặc bác bỏ.
+Mô hình hệ thống
+Mạng mặt đất và các lớp năng lực
+Mạng mặt đất gồm N node tổ chức thành C cụm. Mỗi cụm c có một cluster head và các node lá của nó nằm trong bán kính nội cụm Rc. Cluster head là thiết bị mạnh hơn hẳn lá.
+Mạng mặt đất không đồng nhất, mỗi node có những năng lực và quyền sở hữu riêng:
+
+* Camera
+* Khả năng tính toán 
+* Kênh truyền không dây
+* Bộ nhớ lưu trữ (dữ liệu mới sẽ ghi đè lên dữ liệu cũ)
+* Các node không cùng chủ sở hữu có thể sẽ không chấp nhận việc hợp tác do bảo mật 
+
+Miền không lồi: địa hình khu vực đô thị phức tạp, có vật cản 
+
+* Vật cản mềm: sông, hồ có thể bay qua nhưng hoàn toàn không có thiết bị nào 
+* Vật cản cứng: khu vực cấm bay, cao ốc UAV không thể bay vào nhưng vẫn có thể truyền tin được từ bên ngoài 
+* Vật cản che khuất: hẻm núi không thể bay cũng không có thiết bị để truyền tin 
+
+Tập dấu vết (dùng cho phase 1)
+Đối tượng được mô tả bằng một tập dữ liệu là ảnh tham chiếu được trích ra từ tập ảnh gốc rõ nét hoặc video. Có 4 cách mô tả tập dấu vết:
+
+* Là tập ảnh có manh mối độc lập, là các ảnh khác nhau. 
+* Là các ảnh khác nhau nhưng liên quan đến nhau (cùng được trích ra từ một video) 
+* Là từ một ảnh được chia ra theo pattern (mỗi manh mối đều mang đặc trưng của ảnh gốc nhận càng nhiều càng khôi phục được ảnh gốc rõ nét)
+* Là một ảnh được chia ra theo fountain coding (cần thu thập một lượng cố định mới có thể khôi phục ảnh) 
+
+Động học phương tiện
+Đội bay gồm các UAV fixed wing cho phase 1 và rotary wing cho phase 2 chịu ràng buộc độ cong phụ thuộc tốc độ. Với fixed wing còn chịu ràng buộc về tốc độ trên ngưỡng thất tốc và không thể hover.
+Kênh phản hồi
+Mỗi cụm bị gắn cờ gửi một báo cáo về BS khoảng vài byte qua LoRa hoặc vệ tinh có giới hạn chu kỳ phát do đó có độ trễ phản hồi khác nhau với mỗi Cluster."
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

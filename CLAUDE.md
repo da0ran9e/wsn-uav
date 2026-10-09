@@ -653,6 +653,20 @@ quan trọng là chúng ta sẽ tập trung vào pha 1 của giải pháp này t
 Hiện tại ta đang tập trung vào vấn đề của lớp 3 là chính và đây sẽ là đóng góp chính của paper
 ```
 
+*40. 2026-10-09 · uav-coop2 · trả lời; ý tưởng River / Axe / Banks, critical cells và Circle · kèm ảnh runs-maps*
+
+```text
+1. chưa cần biết số file, tuỳ vào cài đặt tham số, nhưng UAV cứ phát liên tục cluster nhận được càng nhiều càng tốt 
+2. Tôi có thêm ý tưởng về các node manh, không cần tất cả các cell đều phải nhận dạng, mà sẽ chọn ra một vài CL vượt trội hơn phần trung bình được coi là các điểm xử lý chính bên cạnh CH
+3. và các node này mới cần đủ bộ 
+4. tạm thời chưa xét đến năng lượng, bộ nhớ hay thời gian
+
+
+ý tưởng tiếp theo liên quan đến vệt các node nhận được file dọc đường, tôi định sẽ gọi các node có xác xuất cao (tham số) nhận được ít nhất 1 file đầy đủ là River (theo dòng chảy của dữ liệu đổ xuống) các node được UAV chính xác bay ngang qua tạo thành một vệt gọi là Axe các node nằm ở biên tạo thành hai vệt gọi là Banks, dòng sông này mang nhiều dữ liệu nhất và sẽ có trách nhiệm phân phối đến các cell có node quan trọng. 
+
+Các critical cells (quan trọng) này sau khi UAV bay qua sẽ chủ động yêu cầu các gói thiếu thông qua hàng xóm. Vì vậy, các hàng xóm của cell đó cần sẵn sàng phục vụ và tạo thành một vòng service bao quanh critical cell gọi là circle. Để ổn định lưu lượng mỗi hàng xóm sẽ đảm nhận một phần dữ liệu còn thiếu, tuỳ vào lượng dữ liệu mà nó thiếu Circle có thể điều chỉnh kích thước và vị trí, ví dụ circle 6 hàng xóm hoặc circle 12 ...
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

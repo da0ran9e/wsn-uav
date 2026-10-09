@@ -405,6 +405,7 @@ int main(int argc, char* argv[]) {
     double convexity = params::kConvexity;
     double rho = params::kMinTurnRadiusM;
     uint32_t pick = 0;
+    double angle = -1;
     double chMargin = params::kChMarginM;
     double linkRange = params::kLinkRangeM;
     std::string spacings = "20,35,50";
@@ -419,11 +420,15 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("chMargin", "the CH is at least this far from the cluster's edge, m", chMargin);
     cmd.AddValue("linkRange", "G2G link: nodes at most this far apart, m", linkRange);
     cmd.AddValue("pick", "which random entry/exit pair (same region and nodes)", pick);
+    cmd.AddValue("angle", "bend of the path: exit at this angle from the entry, ccw, seen from the CH, "
+                 "deg (180 = straight across, towards 0 or 360 = a tighter U); entry still from --pick; "
+                 "-1 = random exit", angle);
     cmd.AddValue("spacings", "node spacing(s), m, comma-separated: one node per s^2", spacings);
     cmd.AddValue("seed", "random seed", seed);
     cmd.AddValue("out", "output prefix", out);
     cmd.Parse(argc, argv);
     CHECK(radius > 0 && cells >= 1 && convexity >= 0 && convexity <= 1 && rho > 0 && chMargin >= 0);
+    CHECK(angle == -1 || (angle > 0 && angle < 360));
 
     // ---- step 1: the lattice ----------------------------------------------
     const HexGrid g = HexGrid::FromRadius(radius);
@@ -625,14 +630,44 @@ int main(int argc, char* argv[]) {
         const double f = std::min(u / L, 1.0);
         return Point{e.a.x + f * (e.b.x - e.a.x), e.a.y + f * (e.b.y - e.a.y)};
     };
+    // Where the ray from c at bearing th last leaves the cluster.
+    auto onRay = [&](const Point& c, double th, size_t& which) {
+        const double dx = std::cos(th), dy = std::sin(th);
+        double best = -1;
+        for (size_t i = 0; i < edges.size(); ++i) {
+            const Edge& e = edges[i];
+            const double ex = e.b.x - e.a.x, ey = e.b.y - e.a.y, den = dx * ey - dy * ex;
+            if (std::fabs(den) < 1e-12) continue;
+            const double t = ((e.a.x - c.x) * ey - (e.a.y - c.y) * ex) / den;
+            const double u = ((e.a.x - c.x) * dy - (e.a.y - c.y) * dx) / den;
+            if (t > 0 && u >= 0 && u <= 1 && t > best) { best = t; which = i; }
+        }
+        CHECK(best > 0);
+        return Point{c.x + best * dx, c.y + best * dy};
+    };
     size_t eIn = 0, eOut = 0;
-    const Point entry = onEdge(eIn), exitP = onEdge(eOut);
+    const Point entry = onEdge(eIn);
+    Point exitP;
+    if (angle < 0) exitP = onEdge(eOut);
+    else {
+        // Exit by angle around the CH; one CH for every spacing, or the angle is ambiguous.
+        const Point ch = roles[0].nodes[roles[0].ch].pos;
+        for (const Roles& R : roles)
+            CHECK(R.nodes[R.ch].pos.x == ch.x && R.nodes[R.ch].pos.y == ch.y);
+        const double thIn = std::atan2(entry.y - ch.y, entry.x - ch.x);
+        exitP = onRay(ch, thIn + angle * M_PI / 180, eOut);
+        CHECK(std::fabs(std::remainder(std::atan2(exitP.y - ch.y, exitP.x - ch.x) - thIn -
+                                       angle * M_PI / 180, 2 * M_PI)) < 1e-9);
+        CHECK(EdgeDistance(exitP, edges) < 1e-6);
+    }
     // Flying in from, and out to, the outside: a straight lead of one turn radius
     // before the entry and after the exit must stay outside the cluster.
     const double lead = rho;
     std::printf("\nflight path across the cluster (perimeter %.0f m, %zu edges): entry -> CH -> exit, "
-                "random entry/exit (pick %u), open Dubins, min turn radius %.1f m, straight "
-                "lead-in/out %.0f m outside\n", perim, edges.size(), pick, rho, lead);
+                "random entry (pick %u), exit %s, open Dubins, min turn radius %.1f m, straight "
+                "lead-in/out %.0f m outside\n", perim, edges.size(), pick,
+                angle < 0 ? "random" : (std::to_string((int)std::lround(angle)) + " deg from it around the CH").c_str(),
+                rho, lead);
     std::printf("  entry (%.0f, %.0f), exit (%.0f, %.0f): %.0f m apart\n", entry.x, entry.y, exitP.x,
                 exitP.y, std::hypot(exitP.x - entry.x, exitP.y - entry.y));
     // Strictly across the edge (not along it), and the lead clear of the cluster.
@@ -687,14 +722,14 @@ int main(int argc, char* argv[]) {
         leadLine(3, t.poses.back(), +1);
         std::fclose(fp);
         FILE* fw = std::fopen((out + "-pathwp" + sfx).c_str(), "w");
-        std::fprintf(fw, "point,id,x,y,thDeg,legWord,legM,rho,leadM,lengthM,pick\n");
+        std::fprintf(fw, "point,id,x,y,thDeg,legWord,legM,rho,leadM,lengthM,pick,angle\n");
         const char* name[3] = {"entry", "CH", "exit"};
         for (size_t i = 0; i < 3; ++i) {
             const bool hasLeg = i < t.legs.size();
-            std::fprintf(fw, "%s,%d,%.3f,%.3f,%.4f,%s,%.3f,%.3f,%.3f,%.3f,%u\n", name[i],
+            std::fprintf(fw, "%s,%d,%.3f,%.3f,%.4f,%s,%.3f,%.3f,%.3f,%.3f,%u,%.1f\n", name[i],
                          i == 1 ? (int)chN.id : -1, t.poses[i].x, t.poses[i].y,
                          t.poses[i].th * 180 / M_PI, hasLeg ? t.legs[i].Word().c_str() : "-",
-                         hasLeg ? t.legs[i].Length() : 0.0, rho, lead, t.length, pick);
+                         hasLeg ? t.legs[i].Length() : 0.0, rho, lead, t.length, pick, angle);
         }
         std::fclose(fw);
     }

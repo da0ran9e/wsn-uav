@@ -215,24 +215,345 @@ Module path: `Node[<id>].<Layer>` (Application/Phy/Mac/Mobility) for runtime; or
 - [ ] Output files exist: `ls data/results/`
 - [ ] No debug stdout left behind
 
-## 8. Mô tả gốc của người dùng (đã nén + mã hoá)
+## 8. Mô tả gốc của người dùng (nguyên văn, không chỉnh sửa)
 
-Toàn bộ mô tả gốc của người dùng (nguyên văn, theo thời gian, kèm quy tắc làm việc) nằm trong
-`.claude/user-notes.gz.b64` (gzip rồi base64). **Đầu mỗi phiên, giải mã và đọc hết trước khi
-làm gì:**
-
-```bash
-base64 -d .claude/user-notes.gz.b64 | gunzip
-```
+Dưới đây là toàn bộ mô tả và yêu cầu của người dùng, theo thứ tự thời gian, trích thẳng từ
+bản ghi phiên (từ 2026-10-05). Đây là tham chiếu gốc: khi có mâu thuẫn, lời người dùng ở
+đây và lời mới hơn thắng. Dòng in nghiêng phía trên mỗi khối là nhãn ngữ cảnh do Claude
+thêm; nội dung trong khối là lời gốc. Khi có mô tả mới, thêm vào cuối theo cùng cách.
 
 **Quy tắc làm việc hiện hành:** thảo luận và lên kế hoạch kỹ với người dùng trước khi chạy
-bất kỳ chương trình tốn thời gian nào.
+bất kỳ chương trình tốn thời gian nào (xem mục cuối).
 
-Thêm mô tả mới (nguyên văn, vào cuối, cùng cách ghi nhãn), rồi mã hoá lại và kiểm tra giải mã ra đúng:
+*1. 2026-10-05 · uav-sar · A2G-RUN: chuỗi gói liên tục, 7 node thẳng hàng*
 
-```bash
-base64 -d .claude/user-notes.gz.b64 | gunzip > /tmp/notes.md   # sửa /tmp/notes.md
-gzip -9 -n -c /tmp/notes.md | base64 -w 76 > .claude/user-notes.gz.b64
+```text
+tôi cần bạn làm một thử nghiệm sau: với các node đều là chuẩn 802.15.4 mạng mặt đất 7 node cách nhau 300m sắp xếp trên 1 đường thẳng, UAV bay ở độ cao 100m bay với tốc độ 50m/s, phát tuần tự các gói tin liên tục có đánh số (cách nhau khoảng 10ms) vuông góc với mạng mặt đất bay trực tiếp qua node nằm giữa (node thứ 4). môi trường đô thị với hệ số 3.56 hoặc tương tự
+ mục đích là test xem mỗi node có thể nhận được chuỗi packet liên tục là bao nhiêu trước khi bị lỗi (với kịch bản coi như file không thể khôi phục packet lỗi và yêu cầu nhận toàn bộ packet của file đó)
+đọc qua yêu cầu này xem có thông số gì cần chốt lại trước khi triển khai không
+```
+
+*2. 2026-10-05 · uav-sar · bộ tham số A2G (đặc tả người dùng đưa)*
+
+```text
+Đây là bản đặc tả để anh đưa lại cho agent. Nó trả lời cả bốn câu hỏi chặn.
+
+---
+
+## Trả lời bốn câu hỏi
+
+**1. Link budget — lỗi nằm ở chỗ neo suy hao, không phải ở công suất.**
+
+Agent neo mô hình tại **1 m** rồi áp số mũ đô thị suốt từ đó tới 900 m. Sai về vật lý: UAV ở 100 m, node ngay dưới, **không có gì chắn** — đoạn đầu phải là suy hao không gian tự do.
+
+Mô hình đúng là **hai đoạn, neo tại $d_{\rm ref}=H=100$ m**:
+
+$$\beta(d)=\beta_{\rm ref}\left(\frac{d}{100}\right)^{-\alpha},\qquad \beta_{\rm ref}=\left(\frac{\lambda}{4\pi\cdot100}\right)^2=-80{,}05\ \text{dB}$$
+
+Chỉ đổi chỗ neo là link budget đóng ngay: bán kính phủ đi từ 190 m lên **991 m**, cả bảy node đều nghe được.
+
+**2. Số mũ suy hao — agent nói đúng, 3,56 là sai.** Dùng $\alpha \in \{2{,}6;\ 3{,}0;\ 3{,}35\}$, từ đo thực liên kết không–đất của Qiu 2017 (bán đô thị, độ cao thấp). Lấy **3,0 làm chính**, hai giá trị kia để quét độ nhạy.
+
+**3. Nhịp 10 ms — giữ nguyên, bỏ qua MAC.** Agent lập luận đúng: một máy phát duy nhất, không ai tranh chấp, luật 200 ms là hiện tượng tràn hàng đợi MAC chứ không phải vật lý. **Bơm thẳng xuống PHY**, không CSMA, không ACK, không beacon. 10 ms là khe mặc định của IEEE 802.15.4, có nguồn.
+
+**4. Phải có fading bốc lại mỗi gói — agent nói đúng.** Mô hình dùng **Rician $K_c = 2$**. ns-3 không có Rician sẵn, nên dùng **Nakagami $m = 1{,}80$**, là giá trị tương đương theo $m=(K+1)^2/(2K+1)$.
+
+---
+
+## Bộ tham số
+
+| | Giá trị | Nguồn |
+|---|---|---|
+| **Hình học** | | |
+| Độ cao bay $H$ | 100 m | |
+| Tốc độ UAV | 50 m/s, đều, thẳng | theo yêu cầu |
+| Đường bay | từ −2000 m đến +2000 m, vuông góc, qua đúng node 4 | |
+| Node | 7 node thẳng hàng, cách 300 m, lệch 900/600/300/0 m | |
+| **Vô tuyến** | | |
+| Tần số | 2,4 GHz | IEEE 802.15.4 |
+| Băng thông | 2 MHz | IEEE 802.15.4 |
+| Tốc độ bit | 250 kbps | IEEE 802.15.4 |
+| **Công suất phát UAV** | **+10 dBm** | trần pháp lý +20 dBm EIRP (EU) |
+| **Độ nhạy máy thu** | **−100 dBm** | điển hình chip; chuẩn chỉ đòi ≥ −85 |
+| Nền nhiễu | −106 dBm | $-174 + 10\log_{10}(2\text{M}) + 5$ |
+| Hệ số tạp âm | 5 dB | |
+| **Suy hao, đoạn 1** | không gian tự do tới **100 m** → **−80,05 dB** | |
+| **Suy hao, đoạn 2** | $(d/100)^{-\alpha}$, $\alpha = 3{,}0$ (quét 2,6 và 3,35) | Qiu 2017, A2G |
+| **Fading** | **Nakagami $m=1{,}80$**, bốc lại **mỗi gói** | tương đương Rician $K_c=2$ |
+| Che khuất | **tắt** ở bản chạy đầu | bốc một lần mỗi run nên chỉ dịch cửa sổ, không bẻ chuỗi |
+| Ăng-ten | **đẳng hướng hai đầu** | giả thiết của mô hình; dipole có null thiên đỉnh sẽ làm hỏng node 4 |
+| **Gói và thời gian** | | |
+| Khung đầy đủ | 133 B (4 tiền tố + 1 đồng bộ + 1 tiêu đề + 127 tải) | IEEE 802.15.4 |
+| Tải tin hữu ích | 99 B | khung 127 B trừ 28 B tiêu đề, bảo mật, kiểm tra |
+| Thời gian chiếm sóng | 4,256 ms | $133\times8/250000$ |
+| **Chu kỳ gói** | **10 ms** | khe mặc định IEEE 802.15.4 |
+| Số gói mỗi lượt | **8 001** | 4000 m / (50 × 0,01) |
+| **Chạy** | | |
+| Số lượt lặp | **≥ 200** | thống kê cực trị, phương sai lớn |
+| Bỏ qua | MAC, CSMA, ACK, beacon | một máy phát, quảng bá thuần |
+
+---
+
+## Kết quả mong đợi, để đối chiếu
+
+Tôi đã tính sẵn bằng mô hình giải tích. Nếu ns-3 ra khác đáng kể thì có chỗ sai:
+
+**$\alpha = 3{,}0$:**
+
+| Node | Lệch ngang | Cự ly gần nhất | Tổng gói thu | **Chuỗi liên tục dài nhất** |
+|---|---|---|---|---|
+| 1 và 7 | 900 m | 906 m | ≈ 1 362 | **11 ± 2** |
+| 2 và 6 | 600 m | 608 m | ≈ 2 677 | **40 ± 9** |
+| 3 và 5 | 300 m | 316 m | ≈ 3 459 | **208 ± 73** |
+| 4 | 0 | 100 m | ≈ 3 691 | **823 ± 202** |
+
+**$\alpha = 3{,}35$:** chuỗi dài nhất lần lượt **4 / 20 / 151 / 740**.
+
+---
+
+## Hai điểm phải ghi vào báo cáo
+
+**Thời gian chiếm sóng dài hơn thời gian kết hợp của kênh.** Ở 50 m/s, tần số Doppler 400 Hz, thời gian kết hợp ≈ **1,06 ms**, trong khi gói chiếm sóng **4,256 ms**. Nên kênh đổi **trong lòng một gói** — giả thiết fading không đổi trong gói là xấp xỉ, và nó làm kết quả **lạc quan** khoảng hệ số 4. Agent đã phát hiện đúng chỗ này, phải ghi lại.
+
+**Đây là thí nghiệm đô thị.** Nếu phần còn lại của dự án là kịch bản rừng thì con số rút ra ở đây **chỉ dùng cho nhánh đô thị**, không được đem sang.
+```
+
+*3. 2026-10-05 · uav-sar · hình dải gói của node 4*
+
+```text
+tôi muốn một ảnh dùng để minh hoạ, ví dụ với một dải dữ liệu gửi cho node 4, các ô trên dải tượng trưng packet vậy, packet lỗi đánh dấu đỏ lấy trực tiếp từ giả lập
+```
+
+*4. 2026-10-05 · uav-sar · quét độ cao*
+
+```text
+thử với các độ cao khác nhau cho tôi thêm thông tin tương tự nhé
+```
+
+*5. 2026-10-06 · uav-sar · A2G-SWEEP: mạng lớn, quét luống*
+
+```text
+giờ hãy dùng các mô hình này và dựng một mạng sensor cỡ lớn, các node cách nhau 100 m trên một vùng rộng, uav quét theo luống cách nhau khoảng 700m đến 1km uav vẫn phát các gói tin có đánh dấu tuần tự. mục đích để xem các lượt bay lại có bù được gói mất ở các node xa đường bay không. ngoài kết quả phân tích gói tin hãy cho tôi thêm visualize đường bay
+```
+
+*6. 2026-10-06 · uav-sar · G2G-CHAIN: hợp tác tại biên trên một dải node*
+
+```text
+bây giờ hãy xét đến hợp tác tại biên, ví dụ ta có một cluster đủ rộng (uav không thể phủ một lúc hết tất cả) một số node ở đầu này sẽ có những packet mà đầu kia không có. ta dựng một giả lập các node nằm trên một dải và cách nhau 50 - 100m node ở đầu hàng nắm khoảng 100 packet cần gửi đến cuối hàng và phải đi lần lượt qua từng node một (unicast) 
+cần xét đến việc liên kết G2G khác với A2G khi các node cần có lịch làm việc nghiêm ngặt hơn để tránh va chạm cũng như thông lượng có thể ít hơn nhiều kênh truyền cũng khác hơn vì có nhiều tia NLoS hơn 
+mục tiêu là quan sát thời gian các gói tin đi từ đầu đến cuối cluster trên một đường cho trước
+```
+
+*7. 2026-10-06 · uav-sar · câu hỏi về G2G*
+
+```text
+lý do các gói bị lỗi chủ yếu là gì, giải thích thế nào về việc thời gian bị kéo dài nhiều lần
+```
+
+*8. 2026-10-06 · uav-sar · câu hỏi về G2G*
+
+```text
+vậy gói gửi bị hỏng phải được gửi lại và do đó nó chặn các gói khác?
+```
+
+*9. 2026-10-07 · uav-coop · bước 1: lưới lục giác, chọn miền, gen node*
+
+```text
+giờ chúng ta sẽ dùng chính những tham số thử nghiệm đó để bắt đầu 
+tạo project mới và bắt đầu với cơ chế gen node ngẫu nhiên như sau:
+bắt đầu với việc gen ra một lười cell lục giác đều từ toạ độ gốc với tham số kích thước là chiều rộng cell = 100m sau đó chọn ngẫu nhiên một mảng cell liền kề nhau. tiếp đến gen các node ngẫu nhiên trong vùng vừa chọn, với mật độ là tham số spacing khoảng 20-50m 
+cho tôi cả visualize các bước chạy của chương trình, 
+xong bước này tôi sẽ hướng dẫn tiếp
+```
+
+*10. 2026-10-07 · uav-coop · độ lồi, thuộc tính node, CH/CL*
+
+```text
+cần thêm một tham số để điều chỉnh độ lồi của miền này và điều chỉnh cho miền lồi hoàn toàn để tiếp tục thử nghiệm, trường hợp khi lồi sẽ thử nghiệm sau,
+các node được gen ngẫu nhiên sẽ mang ngẫu nhiên 3 thuộc tính ngẫu nhiên: khả năng quan sát, khả năng tính toán, khả năng giao tiếp. mỗi thuộc tính nhận giá trị ngẫu nhiên >=0, khả năng giao tiếp >0. Node có cả 3 tham số này cao nhất được đánh dấu là CH, các node manh nhất của mỗi cell được đánh dấu là CL
+```
+
+*11. 2026-10-07 · uav-coop · R = 100, miền ngẫu nhiên thật, đường Dubins*
+
+```text
+ồ ý tôi rông 100m tức là R=100 ấy nhé
+tôi không muốn vẽ một hình elip trước rồi fill vào mà tôi muốn nó thực sự gen ngẫu nhiên, sau đó dựa trên tham số độ lồi mà fill thêm vào các vùng lõm của cluster cho nó lồi dần ra 
+công việc tiếp theo, xác định 3 node có năng lực tốt nhất cluster (bao gồm cả CH) vẽ một đường dubin đi qua 3 điểm này với bán kính tối thiểu là một tham số cho trước (chưa cần có node UAV ở bước này mới chỉ xác định đường bay)
+```
+
+*12. 2026-10-07 · uav-coop · đường bay mở qua 2 điểm biên và CH*
+
+```text
+ý tôi không phải một đường dubin khép kín, chỉ cần là một đường đi từ ngoài cluster xuyên qua nó thôi, có thể đổi tính huống một chút, chọn ngẫu nhiên 2 điểm nằm ở biên của cluster, vẽ đường dubin đi qua 2 điểm đó và CH
+```
+
+*13. 2026-10-07 · uav-coop · CH xa biên; UAV bay và phát tin*
+
+```text
+làm cách nào để CH xuất hiện đừng quá gần biên mà không ảnh hưởng tới phân phối các node khác.
+công việc tiếp theo tôi muốn chính là đưa UAV vào đường bay này với kịch bản phát tin như trước đó đã tính để xem các node nhận được bao nhiêu packet
+```
+
+*14. 2026-10-07 · uav-coop · routing PECEE elastic clustering*
+
+```text
+xây dựng đường routing sẵn cho các node như sau:
+
+* xác định hop tiếp theo đến CL của cell hiện tại 
+* xác định hop tiếp theo tới mỗi cell liền kề 
+* lưu lại các đường next hop này để sử dụng trong quá trình truyền tin, và lưu lại đường gần nhất tới CH là đường chính 
+
+đây là cơ chế routing elastic clustering của PECEE bạn đã cài trước đó. cài lại và cho tôi xem visualize đường routing đến CH xem đã chuẩn chưa
+```
+
+*15. 2026-10-07 · uav-coop · gateway duy nhất, không node cô lập*
+
+```text
+nên nhớ là các đường qua cell khác cần có 1 node đại diện làm gateway có nghĩa là dữ liệu chỉ có một đường để đi intercell, các cơ chế còn lại có thể flexible để phù hợp với ứng dụng hiện tại
+phần routing này coi như đã được tính toán từ trước nên không được để bất kỳ node nào bị cô lập khỏi mạng coi như được chỉ huy tập trung tại BS
+```
+
+*16. 2026-10-07 · uav-coop · câu hỏi: gói nhận tốt nhất/tệ nhất; manifest nhẹ · kèm ảnh*
+
+```text
+một câu hỏi trước khi đi tiếp: đối với các node nằm ở vị trí tốt nhất nhận được bao nhiêu gói, các vị trí tệ nhất nhận được bao nhiêu gói. ví dụ tôi muốn các node không nhận đủ gửi một manifest những gói nó có hoặc những gói nó đang còn thiếu dần tới CH, thì gói tin manifest này có thể thiết kế như nào cho nhẹ
+```
+
+*17. 2026-10-07 · uav-coop · ý tưởng chia sẻ nội cell và manifest*
+
+```text
+ý tưởng là trong một cell các gói được tính là tài sản chung và tự trao đổi nhanh để nắm bắt tình hình của nhau, nếu cell đó thiếu mảnh nào thì manifest mảnh đó. 
+gói tin manifest sẽ được gửi về hướng CH nhưng không cần phải tới được Ch. Trên đường gói tin đó đi, các cell nghe manifest nếu có thể đáp ứng thì đáp ứng luôn và sửa lại manifest theo điều kiện cell đó hiện tại, dần dần manifest sẽ được đáp ứng ngay cả khi nó chưa tới được CH 
+trước khi phát triển tiếp ý tưởng này, đầu tiên cài đặt ý tưởng chia sẻ nội cell trước, đảm bảo thôg tin lan đều trong cell, node đủ bù cho node thiếu (chưa chạm sang cell bên ngoài)
+```
+
+*18. 2026-10-07 · uav-coop · chia sẻ nội cell: gom về node mạnh (gửi giữa chừng)*
+
+```text
+tôi vừa suy nghĩ lại cơ chế chia sẻ nội cell, ta không nhất thiết phải chia sẻ toàn bộ các node trong cell mà làm như sau: trong cell xác định ra vài node có khả năng mạnh hơn mức trung bình tính cả CL, sau đó các node gần đó tập hợp dữ liệu lại cho các node này đầy đủ dữ liệu là được, trong đó CL sẽ nắm thông tin chung rằng cell hiện tại có bao nhiêu và thiếu bao nhiêu
+```
+
+*19. 2026-10-07 · uav-coop · yêu cầu thời gian nội cell*
+
+```text
+công việc chia sẻ nội cell này cần được hoàn thành cực nhanh cỡ ms đến vài s
+```
+
+*20. 2026-10-07 · uav-coop · trả lời câu hỏi của Claude về chia sẻ nội cell*
+
+```text
+đừng vội cài đặt chia sẻ toàn cell chỉ làm cơ chế hợp tác nội cell trước
+```
+
+*21. 2026-10-07 · uav-coop · bản tóm tắt nội cell về CL*
+
+```text
+hiện tại góc nhìn của ta đang nằm trong 1 cell nhé, giả sử sau khi UAV bay qua, các node trong cell đều nhận được một phần dữ liệu, cần một bản tóm tắt ngắn gọn những gì mình có về CL để CL chuẩn bị đưa ra quyết định manifest
+```
+
+*22. 2026-10-07 · uav-coop · mở thảo luận manifest*
+
+```text
+tiếp theo chúng ta chỉ thảo luận kỹ trước về cơ chế manifest này, sau khi các CL có thông tin nội bộ thì nó cần chuẩn bị một bản tin manifest để gửi tới các cell tiếp theo, vậy các cell nằm xa đường bay nhất là các cell nên chủ động manifest. theo bạn cơ chế nên như nào
+```
+
+*23. 2026-10-07 · uav-coop · thiết kế manifest (MANIFEST-vi.md §0 b)*
+
+```text
+theo tôi như này: 
+khu vực vốn đã lên kế hoạch ký nên các cell vốn đã biết được vị trí của nhau rồi. cell nằm ở biên ngay sau khi tóm tắt nội cell xong( không còn nhận được gói mới từ uav nữa) nó chủ động manifest tới cell tiếp theo. các cell không phải biên thì chỉ chờ mà không chủ động. nếu sau khoảng thời gian đó các cell khác thấy cell biên đáng lẽ phải manifest cho mình thì tự manifest ngược đến nó ( vì đây nằm trong hai trường hợp hoặc là cell biên đã nhận đủ hoặc là cell biên chưa nhận được gói nào nên manifest chưa được trigger) cell nhận được môt manifest ngược sẽ tự hiểu ra tình hình. 
+nội dung gói manifest như bạn đề xuất 
+trong lúc đang manifest các cell cũng không nằm yên mà tiếp tục tiến hành trao đổi dữ liệu nội cell như đã tóm tắt từ trước để tiết kiệm thời gian, dữ liệu mới đến thì nó cũng được truyền theo đường này đến các node quan trọng
+khi manifest đến nếu cell đó có một trong số các gói được manifest thì nó gửi luôn và cắt bới manifest đồng thời dữ liệu đi qua cell đó mà nó thấy thiếu thì nó cũng tự lưu một bản sao cho bản thân 
+về lý thuyết, chỉ các cell ở biên manifest nhưng các cell còn lại đều hưởng lợi 
+nếu manifest đến CH mà CH vẫn không thể đáp ứng, nó có thể đoán được hướng đang có và hướng đang thiếu để manifest tiếp (hướng nào không có manifest đến thì coi như là có đủ) nhưng pha manifest cơ sở coi như dừng lại tại đây khi mà manifest tới CH, cluster vấn tiếp tục chạy manifest tiếp nhưng sẽ gọi la bước manifest thứ cấp, chạy song song với nhiệm vụ nhận diện (tạm thơi chưa bàn)
+với khe thời gian, với mỗi cell các cặp gateway có kênh riêng để giao tiếp intercell, 
+mảnh nhận lưu luôn tại CL và các node mạnh
+```
+
+*24. 2026-10-07 · uav-coop · trả lời đề xuất 1–7 (MANIFEST-vi.md §0 c)*
+
+```text
+trả lời các đề xuất của bạn:
+1. không cần gửi gói thông báo đủ, nếu cell biên đủ thì cell bên trong cũng có khả năng đã đủ tất nhiên cũng không cần manifest ngược nữa. cho nên cell trong cũng dựa trên trạng thái của bản thân đánh giá tình hình, nếu nó đủ cũng có nghĩa là cell biên ít nhiều cũng có được thông tin, nếu nó thiếu thì mới manifest ngược (cell trong ở đây chỉ các cell cận biên nằm ngay cạch cell biên, không phải cell nào cũng chờ
+2 đề xuất 2 tôi đồng ý
+3 đề xuất này tôi sẽ đính chính thêm về thiết kế manifest như sau: các manifest mang thông tin về những cell đi qua có gì ví dụ: có tổng 3 file ABC với các gói lần lượt là 1,2,3,4,5,6,7,8,9 cell biên gửi manifest A4689 tức là nó đang có đủ file A thiếu gói 5 của file B và gói 7 của file C.  cell bên trong nhận được đối chiếu bộ dữ liệu thấy mình có gói 5 thì ngay lập tức gửi cho cell biên và sửa lại nội dung manifest là AB89 cho cell tiếp theo, cell tiếp theo gửi gói 7 trở lại thì nó lưu một bản sao và chuyển tiếp cho cell biên
+tôi đồng ý với đề xuất 4 cần có lập lịch tốt cho gateway
+đề xuất 5 6 7 cũng như ví dụ tôi nêu trên 
+trong khi viết đặc tả, lưu lại nguyên văn đoạn mô tả của thôi không chỉnh sửa để làm bản tham chiếu gốc và bắt đầu cài đặt thử
+```
+
+*25. 2026-10-08 · uav-coop · đính chính (MANIFEST-vi.md §0 d)*
+
+```text
+1. manifest mô tả những gì mình có, không phải những gì mình thiếu, những mảnh nó chưa có thì đều là mảnh thiếu 
+2. chỉ những cell biết phía trước mình có một cell biên khác mới chờ, nếu nó cũng vừa là biên nhưng lại vừa là bước tiếp theo của cell biên khác vậy thì nó cũng chờ, chỉ những cell biên không có biên khác của mình sẽ chủ động gửi manifest
+3. ta sẽ thử bằng thử nghiệm sau 
+4. dữ liệu về CL đi qua các node mạnh thì nó tự lưu lại một bản sao cho mình chứ không chủ động yêu cầu dữ liệu
+```
+
+*26. 2026-10-08 · uav-coop · yêu cầu hình*
+
+```text
+cho tôi xem visualize
+```
+
+*27. 2026-10-08 · uav-coop · yêu cầu hình*
+
+```text
+cho tôi xem phân bổ dữ liệu sau quá trình manifest
+```
+
+*28. 2026-10-08 · uav-coop · so sánh mức cell*
+
+```text
+nếu xét ở mức độ cell thì mỗi cell chênh lệnh nhau bao nhiêu gói, cho tôi xem visualize cũng bản đồ này nhưng thay vì so các node hãy so các cell
+```
+
+*29. 2026-10-08 · uav-coop · tiêu chí; thử kịch bản khác*
+
+```text
+các gói nằm ở node quan trọng là được,
+hãy thử nghiệm với một vài kịch bản khác xem sao
+```
+
+*30. 2026-10-08 · uav-coop · nhiều đường bay, K = 2000 · kèm ảnh*
+
+```text
+giả sử mỗi file có khoảng 2000 gói đi, tôi muốn thử nghiệm nhiều kịch bản đường bay khác nhau, giống 3 trường hợp đầu này
+```
+
+*31. 2026-10-08 · uav-coop · mã giả*
+
+```text
+mô tả lại thuật toán thành pseudo code học thuật vào file mô tả đi
+```
+
+*32. 2026-10-08 · uav-coop · câu hỏi thời gian*
+
+```text
+toàn bộ pha manifest cơ sở diễn ra trong bao lâu sau khi UAV rời đi
+```
+
+*33. 2026-10-08 · uav-coop2 · đóng gói uav-coop, mở giải pháp mới*
+
+```text
+được rồi đóng gói lại, tạo folder mới chuẩn bị cho một giải pháp khác. 
+giải pháp mới này chúng ta cũng bắt đầu với một mạng và đường bay tương tự, uav cũng phát gói như vậy nhưng sẽ thử nghiệm một cơ chế hợp tác biên mới. đầu tiên cho tôi lại tình huống sau khi uav đi qua cluster
+```
+
+*34. 2026-10-09 · uav-coop2 · độ cong đường bay; chỉ gói liền nhau mới thành file*
+
+```text
+thêm một tham số để có thể điều chỉnh độ cong của đường bay bằng cách chọn vị trí 2 điểm ở biên 
+và cho tôi xem nếu file khoảng 1000packet và 2000packet thì có bao nhiêu node nhận đủ file, nên nhớ, các packet liền nhau mới coi là đủ một file (3000 packet rời rạc cũng không ghép được thành một file
+```
+
+*35. 2026-10-09 · quy tắc làm việc*
+
+```text
+tiếp theo tôi và bạn cùng thảo luận, lên kế hoạch thật kỹ trước khi chạy bất cứ chương trình tốn thời gian nào nhé. 
+nếu bạn có thể hãy gom tất cả những mô tả của tôi lại thành một bản trong CLAUDE.md tránh quên khi đổi session (dùng lời gốc của tôi, không chỉnh sửa)
 ```
 
 ---

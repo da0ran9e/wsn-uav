@@ -635,6 +635,24 @@ Kênh phản hồi
 Mỗi cụm bị gắn cờ gửi một báo cáo về BS khoảng vài byte qua LoRa hoặc vệ tinh có giới hạn chu kỳ phát do đó có độ trễ phản hồi khác nhau với mỗi Cluster."
 ```
 
+*39. 2026-10-09 · uav-coop2 · trả lời 1–4; Pha 1 gồm 3 lớp, trọng tâm lớp 3 (định tuyến)*
+
+```text
+1. ta tạm thời cho rằng file sẽ phát một lần mà không phát lại vì UAV chỉ bay qua Cluster chỉ 1 lần 
+2. giả sử "đủ lượng" đã được BS tính trước cho một cluster và bố trí theo đường bay rồi, công việc của cluster là gom cho đủ bộ dữ liệu ấy lại các node quan trọng 
+3. mô hình dữ liệu chỉ là tham khảo chưa cần nhắc đến
+4. chưa có ràng buộc sở hữu, vật cản 
+
+
+quan trọng là chúng ta sẽ tập trung vào pha 1 của giải pháp này trong đó nó được chia thành 3 layer chính:
+
+* Lớp 1: bài toán nhận dạng với câu hỏi nghiên cứu chính là, mỗi node camera cần bao nhiêu dữ liệu để có thể tự tin đánh giá một sự kiện hay nhận dạng một người và dữ liệu nên được tổ chức như nào 
+* Lớp 2: bài toán phân phát dữ liệu với UAV fixedwing, nghiên cứu giải pháp sử dụng UAV để cover hiệu quả trong một khu vực miền không lồi 
+* Lớp 3: (đang xét) bài toán định tuyến, giải quyết các vấn đề về mạng và truyền tin không dây đảm bảo dữ liệu lưu thông hiệu quả ở mạng mặt đất 
+
+Hiện tại ta đang tập trung vào vấn đề của lớp 3 là chính và đây sẽ là đóng góp chính của paper
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

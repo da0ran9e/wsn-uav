@@ -667,6 +667,22 @@ Hiện tại ta đang tập trung vào vấn đề của lớp 3 là chính và 
 Các critical cells (quan trọng) này sau khi UAV bay qua sẽ chủ động yêu cầu các gói thiếu thông qua hàng xóm. Vì vậy, các hàng xóm của cell đó cần sẵn sàng phục vụ và tạo thành một vòng service bao quanh critical cell gọi là circle. Để ổn định lưu lượng mỗi hàng xóm sẽ đảm nhận một phần dữ liệu còn thiếu, tuỳ vào lượng dữ liệu mà nó thiếu Circle có thể điều chỉnh kích thước và vị trí, ví dụ circle 6 hàng xóm hoặc circle 12 ...
 ```
 
+*41. 2026-10-09 · uav-coop2 · đính chính: River/Axe/Banks theo cell, tính trước tại BS, River theo ngưỡng PER, Circle theo phân công của Axe; đường bay đẹp*
+
+```text
+bạn gần hiểu đúng rồi, để tôi đính chính lại:
+River, Axe và Banks đều tính theo đơn vị cell nhé 
+
+1. tất cả yếu tố này đều có thể được tính toán trước bởi BS thậm chí là cell nào sẽ nhận được phần dữ liệu nào, CH sẽ nắm được thông tin này ngay trước giờ bay và gửi một danh sách hoặc bảng tra cho các cell thuộc Axe để chủ động phân phối thông tin
+2. ta thay đổi cách lấy độ rộng của river theo ngưỡng PER của node nhé, như vậy nó cũng có thể tính toán trước 
+3. bạn hiểu ý 3 gần giống ý tôi rồi, Circle chuẩn bị sẵn dữ liệu nhưng khi Critical cell yêu cầu thì đưa, 
+4. vì Axe đã có phân công từng phần dữ liệu, circle cũng dựa vào đây để phân chia (có thể là theo hướng thuận tiện nhất đến với một cell axe)
+5. Ch luôn là một crit cell, các crit cell khác tuỳ vào phân bố của cluster mà chọn ra vài cell vượt trội hẳn so với phần còn lại hoặc so với khu vực quanh nó 
+
+
+thử mô tả lại bằng hình với PER ở Banks khoảng 80% và đường bay tương đối thẳng nhé, từ giờ ta sẽ xét đến các đường bay tương đối đẹp trước
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

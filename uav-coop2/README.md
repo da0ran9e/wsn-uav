@@ -14,9 +14,9 @@ Reused from `uav-coop`, not copied:
 **Status: step 0 — the situation right after the pass** — [`docs/STATE-vi.md`](docs/STATE-vi.md).
 Files count only as runs of consecutive packets, and the path can be bent with
 `uav-coop-deploy --angle` — [`docs/RUNS-vi.md`](docs/RUNS-vi.md).
-Layer 3 (the paper's contribution): the River scheme — problem statement, cell-level
-structure (River, Axe, Banks, critical cells, Circle) and the BS's pre-flight plan in
-pseudocode — [`docs/L3-vi.md`](docs/L3-vi.md); sketches by `tools/concept_cells.py`.
+Layer 3 (the paper's contribution): the River scheme — problem statement and short
+pseudocode (the BS's Axe table, River set-up at each Axe cell) — [`docs/L3-vi.md`](docs/L3-vi.md);
+sketches by `tools/concept_cells.py`.
 
 ## Layout
 ```

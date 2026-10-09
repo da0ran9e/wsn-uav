@@ -702,6 +702,30 @@ giờ chúng ta vừa thử phát biểu lại bài toán tầng 3 này và vừ
 trước tiên là phần đầu, BS thiết lập đường bay, tính toán lộ trình và gửi cho CH bảng thông tin về các mảnh dữ liệu sẽ được phát theo toạ độ đường bay (d_track) để xác định axe và phân công nhiệm vụ
 ```
 
+*44. 2026-10-09 · uav-coop2 · L3-vi.md: không trích lời gốc, mã giả ngắn kiểu conference, tên ký hiệu dễ đọc; trả lời 4 câu; thiết lập Banks bằng đường vuông góc với vector tổng của Axe*
+
+```text
+lần tới không cần trích lời gốc vào đây, chỉ cần nói địa chỉ trên file CLAUDE.md để tham chiếu đến là được 
+các phần pseudo code hơi phức tạp quá, tôi cần nó thật ngắn để có thể đưa vào bài conference mà vẫn bám được vào ý tưởng chính để có thể phân tích hiệu quả. 
+ví dụ như thuật toán của BS chỉ cần hiểu rằng BS sẽ tính ra một bảng cho mỗi Axe cell biết rằng mình sẽ được phục vụ mảnh dữ liệu nào 
+bỏ qua việc BS sẽ tính Banks
+Các ký hiệu viết tắt mà quá thông dụng thì không nên dùng, ví dụ C, M, O, có thể là Cell, Neig, Circ ..
+các phần khác không liên quan thì không nên đưa vào file này tránh loãng thông tin như phần các câu hỏi cần chốt
+về các câu hỏi tôi sẽ trả lời như sau:
+
+1. gói phát ngoài cụm không cần giao nhiệm vụ, tuy nhiên các cell vẫn lưu lại nếu được hỏi sẽ gửi
+2. crit cell nằm trong river vẫn build như thường vì nó cũng chỉ nhận được một đoạn dữ liệu 
+3. river chạm biên thì biên chính là bank
+4. tạm thời chưa xét đến đường bay cong, sẽ bổ sung sau
+
+
+sửa lại bản này vè viết tiếp phần tiếp theo:
+Thiết lập river 
+sau khi Axe đã được thiết lập, thiết lập banks tương ứng bằng cách sau:
+xác định một đường trung trực vuông góc với vector tổng của axe tại <cell Trung tâm>, trên đường trung trực đó xác định 2 điểm nằm cách <cell trung tâm> một khoảng <độ rộng của river> về hai phía hai cell nằm ở 2 vị trí này sẽ là 2 banks nhận phục vụ từ <cell trung tâm>, các bank khác được xác định bằng các đường song song với đường trung trực này.
+thuật toán này chưa được mô tả bằng hình vẽ, hãy thử vẽ hình mô tả nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

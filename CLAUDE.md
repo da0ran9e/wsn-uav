@@ -726,6 +726,13 @@ xác định một đường trung trực vuông góc với vector tổng của 
 thuật toán này chưa được mô tả bằng hình vẽ, hãy thử vẽ hình mô tả nhé
 ```
 
+*45. 2026-10-09 · uav-coop2 · giữ bản mã giả ngắn, thêm bản đầy đủ vừa phải; viết tiếp thuật toán chọn node vượt trội, critical cell và Circle*
+
+```text
+tốt rồi, bản pseudo code này lại hơi ngắn quá, nếu có thể hãy giữ bản này nhưng thêm một bản pseudo code đầy đủ hơn nhưng không quá dài như trước 
+viết tiếp thuật toán xác định các node vượt trội và lập lên các critical cell và circle
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

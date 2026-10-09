@@ -15,7 +15,8 @@ Reused from `uav-coop`, not copied:
 Files count only as runs of consecutive packets, and the path can be bent with
 `uav-coop-deploy --angle` — [`docs/RUNS-vi.md`](docs/RUNS-vi.md).
 Layer 3 (the paper's contribution): the River scheme — problem statement and short
-pseudocode (the BS's Axe table, River set-up at each Axe cell) — [`docs/L3-vi.md`](docs/L3-vi.md);
+and full pseudocode (Axe table at the BS, River set-up at each Axe cell, critical cells,
+Circle) — [`docs/L3-vi.md`](docs/L3-vi.md);
 sketches by `tools/concept_cells.py`.
 
 ## Layout

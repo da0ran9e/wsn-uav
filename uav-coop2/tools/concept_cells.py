@@ -16,9 +16,9 @@ critical cells, Circle.
                  the best within two rings and above mean + 1 sd
   Circle         the 6 neighbours of a critical cell; the Axe is cut into 6 consecutive
                  stretches, one per neighbour (further along the flight -> further along the
-                 Axe); each neighbour fetches its stretch from that stretch's Bank on its side,
-                 along a cell path that avoids the Axe and the critical cell, and hands it over
-                 on request
+                 Axe); each neighbour fetches its stretch from the nearest of that stretch's
+                 Banks, along a cell path that avoids the Axe and the critical cell, and hands
+                 it over on request
 """
 import argparse, csv, math, os
 from collections import deque
@@ -247,7 +247,6 @@ def main():
     circ = ring(cc, 1)
     order = sorted(range(6), key=lambda j: np.dot(np.array(c[circ[j]]), u))
     owner = {g: order[min(5, i * 6 // len(axe))] for i, g in enumerate(axe)}
-    near_side = side[min(banks, key=lambda b: hexdist(b, cc))]
     fig, ax = one()
     col = {h: GREY for h in sel}
     col.update({h: FAINT for h in river})
@@ -259,7 +258,9 @@ def main():
         mine = [g for g in axe if owner[g] == j]
         if not mine:
             continue
-        b = min({pair[(g, near_side)][0] for g in mine}, key=lambda b: (hexdist(b, h), math.dist(c[b], c[h])))
+        # the nearest of this stretch's Banks (either side) to the neighbour
+        b = min({pair[(g, s_)][0] for g in mine for s_ in (0, 1)},
+                key=lambda b: (hexdist(b, h), math.dist(c[b], c[h])))
         used[j] = (mine, b)
         col[b] = matplotlib.colors.to_rgba(CAT[j], .8)
     frame(ax, col, .3)
@@ -271,9 +272,9 @@ def main():
             ax.add_patch(Wedge(c[cc], R * .62, a0, a1, facecolor=CAT[j], edgecolor="#ffffff", lw=.8, zorder=4))
             a0 = a1
     for j, (mine, b) in used.items():
-        g = next(g for g in mine if pair[(g, near_side)][0] == b)
+        g, s_ = next((g, s_) for g in mine for s_ in (0, 1) if pair[(g, s_)][0] == b)
         if g != b:
-            route(ax, pair[(g, near_side)][1], CAT[j], 1.0, "--")
+            route(ax, pair[(g, s_)][1], CAT[j], 1.0, "--")
         route(ax, cellpath(b, circ[j], (S - set(axe) - {cc}) | {b}), CAT[j], 1.6)
         v = np.array(c[cc]) - np.array(c[circ[j]])
         v /= np.linalg.norm(v)

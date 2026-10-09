@@ -12,11 +12,14 @@ Reused from `uav-coop`, not copied:
   α = 3.0, Rician K = 2; packet s carries chunk s mod K), 120 independent missions.
 
 **Status: step 0 — the situation right after the pass** — [`docs/STATE-vi.md`](docs/STATE-vi.md).
+Files count only as runs of consecutive packets, and the path can be bent with
+`uav-coop-deploy --angle` — [`docs/RUNS-vi.md`](docs/RUNS-vi.md).
 
 ## Layout
 ```
 uav-coop2/
 ├── tools/state_report.py   # who holds what after the pass: per node, per cell (zones A/B/C)
-└── docs/                   # STATE-vi.md, figures/, data/
+├── tools/runs_report.py    # whole files from consecutive packets only, across flight paths
+└── docs/                   # STATE-vi.md, RUNS-vi.md, figures/, data/
 ```
 The ns-3 module (linking `uav-coop`) is added with the first C++ of the new scheme.

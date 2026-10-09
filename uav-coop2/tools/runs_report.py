@@ -143,7 +143,7 @@ def report(a, nodes):
                 mid.append(b0 + 50); val.append(v[s].mean())
         A.plot(mid, val, marker="o", ms=3, lw=1.4, color=SERIES[j % len(SERIES)], label=p["path"])
     A.set_xlabel("khoảng cách ngang tới đường bay, m", fontsize=8.5, color=INK2)
-    A.set_ylim(0, 1)
+    A.set_ylim(0, None)
     A.set_title("Tỉ lệ node nhận ≥ 1000 gói liền nhau\ntheo khoảng cách tới đường bay", loc="left",
                 fontsize=10, color=INK)
     A.legend(frameon=False, fontsize=7.5, labelcolor=INK2)

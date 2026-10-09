@@ -132,8 +132,10 @@ Algorithm 3  CRITICAL(Cells, score, κ_g, κ_l, r)
 9: return Crit
 ```
 
-Trong cụm thử, với $\kappa_g=2$, $\kappa_l=1$ và $r=2$, có 7 critical cell: cell của CH, 2 cell
-vượt trội toàn cụm và 4 cell vượt trội trong khu vực của mình.
+Trong cụm thử, với $\kappa_g=2$, $\kappa_l=1$ và $r=2$, có 7 critical cell:
+- cell của CH, CL của nó cũng vượt trội toàn cụm;
+- 4 cell khác vượt trội toàn cụm;
+- 2 cell chỉ vượt trội trong khu vực của mình.
 
 ### Thuật toán 4: Circle (tại CH, cho mỗi critical cell)
 

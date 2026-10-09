@@ -683,6 +683,18 @@ River, Axe và Banks đều tính theo đơn vị cell nhé
 thử mô tả lại bằng hình với PER ở Banks khoảng 80% và đường bay tương đối thẳng nhé, từ giờ ta sẽ xét đến các đường bay tương đối đẹp trước
 ```
 
+*42. 2026-10-09 · uav-coop2 · đính chính: River rộng 3–4 cell (ngưỡng PER theo tham số); Circle lấy từ Bank; mỗi Axe chọn cặp Bank và cell path; Circle cũng theo cell path*
+
+```text
+tôi sẽ đính chính lại, 
+
+ngưỡng PER cho river sẽ điều chỉnh theo tham số sao cho độ rộng của sông cỡ 3-4 cell chiều ngang để đảm bảo cơ chế lan truyền tôi sắp nói sau đây.
+
+circle sẽ lấy data từ node Bank chứ không phải trực tiếp từ Axe, và Axe sẽ bảm bảo bank có đủ dữ liệu vì ngay từ đầu bank chỉ còn thiếu một chút thôi. 
+Mỗi cell Axe chọn it nhất 1 cặp Banks và đường đi (cell paths) tương ứng để phục vụ (hoặc có thể được BS sắp xếp từ trước)
+circle cell cũng cần được phục vụ theo cell path chứ không được gửi lung tung
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

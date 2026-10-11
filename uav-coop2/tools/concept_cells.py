@@ -16,9 +16,9 @@ critical cells, Circle.
                  the best within two rings and above mean + 1 sd
   Circle         the 6 neighbours of a critical cell; the Axe is cut into 6 consecutive
                  stretches, one per neighbour (further along the flight -> further along the
-                 Axe); each neighbour fetches its stretch from the nearest of that stretch's
-                 Banks, along a cell path that avoids the Axe and the critical cell, and hands
-                 it over on request
+                 Axe); each neighbour fetches Seg(a) of every Axe cell a in its stretch from a's
+                 own Bank (the side nearer the neighbour), along shortest cell paths that avoid
+                 only the critical cell, and hands it over on request
 """
 import argparse, csv, math, os
 from collections import deque
@@ -258,11 +258,13 @@ def main():
         mine = [g for g in axe if owner[g] == j]
         if not mine:
             continue
-        # the nearest of this stretch's Banks (either side) to the neighbour
-        b = min({pair[(g, s_)][0] for g in mine for s_ in (0, 1)},
-                key=lambda b: (hexdist(b, h), math.dist(c[b], c[h])))
-        used[j] = (mine, b)
-        col[b] = matplotlib.colors.to_rgba(CAT[j], .8)
+        # each Axe cell's Seg comes from that cell's own Bank, the side nearer the neighbour
+        src = []
+        for g in mine:
+            s_ = min((0, 1), key=lambda s_: (hexdist(pair[(g, s_)][0], h), math.dist(c[pair[(g, s_)][0]], c[h])))
+            src.append((g, s_, pair[(g, s_)][0]))
+            col[pair[(g, s_)][0]] = matplotlib.colors.to_rgba(CAT[j], .8)
+        used[j] = (mine, src)
     frame(ax, col, .3)
     share = [len(used[j][0]) if j in used else 0 for j in range(6)]
     a0 = 90.0
@@ -271,11 +273,12 @@ def main():
             a1 = a0 + 360 * share[j] / len(axe)
             ax.add_patch(Wedge(c[cc], R * .62, a0, a1, facecolor=CAT[j], edgecolor="#ffffff", lw=.8, zorder=4))
             a0 = a1
-    for j, (mine, b) in used.items():
-        g, s_ = next((g, s_) for g in mine for s_ in (0, 1) if pair[(g, s_)][0] == b)
-        if g != b:
-            route(ax, pair[(g, s_)][1], CAT[j], 1.0, "--")
-        route(ax, cellpath(b, circ[j], (S - set(axe) - {cc}) | {b}), CAT[j], 1.6)
+    for j, (mine, src) in used.items():
+        for g, s_, b in src:
+            if g != b:
+                route(ax, pair[(g, s_)][1], CAT[j], 1.0, "--")
+            if b != circ[j]:
+                route(ax, cellpath(b, circ[j], S - {cc}), CAT[j], 1.3)
         v = np.array(c[cc]) - np.array(c[circ[j]])
         v /= np.linalg.norm(v)
         ax.add_patch(FancyArrowPatch(np.array(c[circ[j]]) + v * R * .3, np.array(c[cc]) - v * R * .68,

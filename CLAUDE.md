@@ -745,6 +745,14 @@ các đường axe banks song song có thể sẽ không tối ưu khi ta xét �
 nếu 2 critical cell nằm cạnh nhau thì ai sẽ là circle hay sẽ có một cơ chế hợp nhất circles hay cũng tuỳ vào lượng dữ liệu thiếu hay mở rộng lên 12 circle cells …
 ```
 
+*47. 2026-10-11 · uav-coop2 · ghép Circle để làm câu hỏi phụ; rà soát toàn bộ cơ chế lớp 3 cho sẵn sàng cài đặt thử nghiệm*
+
+```text
+tạm thời chưa triển khai cách ghép circles, để nó là câu hỏi nghiên cứu phụ, 
+
+rà soát lại toang bộ cơ chế đảm bảo nó đủ cho giải pháp tầng 3 của pha 1 sẵn sàng cài đặt thử nghiệm
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

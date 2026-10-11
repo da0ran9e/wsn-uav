@@ -753,6 +753,12 @@ tạm thời chưa triển khai cách ghép circles, để nó là câu hỏi ng
 rà soát lại toang bộ cơ chế đảm bảo nó đủ cho giải pháp tầng 3 của pha 1 sẵn sàng cài đặt thử nghiệm
 ```
 
+*48. 2026-10-11 · uav-coop2 · cài đặt và chạy thử River, báo cáo quy trình, logic và hình từng giai đoạn*
+
+```text
+thử cài đặt thuật toán và chạy thử, báo cáo tôi toàn bộ quy trình và logic tóm tắt + visualize các giai đoạn
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

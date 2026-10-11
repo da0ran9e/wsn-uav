@@ -18,6 +18,9 @@ Layer 3 (the paper's contribution): the River scheme — problem statement and s
 and full pseudocode (Axe table at the BS, River set-up at each Axe cell, critical cells,
 Circle, and after the pass: Axe → Bank fill, Circle fill, critical pull) — [`docs/L3-vi.md`](docs/L3-vi.md);
 sketches by `tools/concept_cells.py`. Readiness review and trial plan — [`docs/TRIAL-vi.md`](docs/TRIAL-vi.md).
+**Trial run (logic level, 120 missions, straight path):** River vs a direct pull — process,
+logic, stage figures and results — [`docs/RIVER-RUN-vi.md`](docs/RIVER-RUN-vi.md)
+(`tools/river_plan.py`, `tools/river_sim.py`, `tools/river_figures.py`).
 
 ## Layout
 ```
@@ -25,6 +28,9 @@ uav-coop2/
 ├── tools/state_report.py   # who holds what after the pass: per node, per cell (zones A/B/C)
 ├── tools/runs_report.py    # whole files from consecutive packets only, across flight paths
 ├── tools/concept_cells.py  # cell-level sketches of the River scheme (no text)
-└── docs/                   # STATE-vi.md, RUNS-vi.md, L3-vi.md, TRIAL-vi.md, figures/, data/
+├── tools/river_plan.py     # the plan: Algorithms 1-4
+├── tools/river_sim.py      # slot-level trial: Algorithms 5-7 and the direct-pull baseline
+├── tools/river_figures.py  # stage figures and tables of the trial
+└── docs/                   # STATE-vi.md, RUNS-vi.md, L3-vi.md, TRIAL-vi.md, RIVER-RUN-vi.md, figures/, data/
 ```
 The ns-3 module (linking `uav-coop`) is added with the first C++ of the new scheme.

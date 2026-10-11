@@ -733,6 +733,18 @@ tốt rồi, bản pseudo code này lại hơi ngắn quá, nếu có thể hãy
 viết tiếp thuật toán xác định các node vượt trội và lập lên các critical cell và circle
 ```
 
+*46. 2026-10-11 · uav-coop2 · câu hỏi: Bank nên thiếu bao nhiêu so với Axe, độ rộng River tối ưu; đường song song với đường bay phức tạp; hai critical cell cạnh nhau*
+
+```text
+một vài vấn đề có thể cần làm rõ, 
+
+giả sử với một cặp banks, lượng dữ liệu mà nó thiếu so với axe tương ứng của nó nên là bao nhiêu để thuận tiện cho việc đẩy dữ liệu từ axe ra. những yếu tố nào ảnh hưởng và ảnh hưởng như nào, liệu có một độ rộng tối ưu cho river không (câu hỏi nghiên cứu phụ, để dành cho nghiên cứu sau, với bài này chỉ cần đưa ra một con số đại khái hợp lý trước)
+
+các đường axe banks song song có thể sẽ không tối ưu khi ta xét đến các đường bay phức tạp hơn (đây cũng là một câu hỏi nghiên cứu phụ) 
+
+nếu 2 critical cell nằm cạnh nhau thì ai sẽ là circle hay sẽ có một cơ chế hợp nhất circles hay cũng tuỳ vào lượng dữ liệu thiếu hay mở rộng lên 12 circle cells …
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

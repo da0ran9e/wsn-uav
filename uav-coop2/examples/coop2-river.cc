@@ -128,7 +128,7 @@ const char* kPhaseName[kPhases] = {"gather", "bankfill", "circlefill", "pull", "
 
 int main(int argc, char* argv[]) {
     std::string nodesCsv, routesCsv, gwCsv, planFile, bits, out = "river-ns3", scheme = "river",
-                                                           prep = "full";
+                                                           prep = "full", trace;
     uint32_t firstRun = 1, runs = 1;
     double limitS = 1800, maxLossDb = 130;
     CommandLine cmd;
@@ -144,6 +144,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("limit", "stop a mission after this many seconds", limitS);
     cmd.AddValue("maxLoss", "SpectrumChannel MaxLossDb", maxLossDb);
     cmd.AddValue("out", "output prefix", out);
+    cmd.AddValue("trace", "prefix: the first mission's hops, CL arrivals, in-cell routes and gateway pairs",
+                 trace);
     cmd.Parse(argc, argv);
     CHECK(scheme == "river" || scheme == "direct");
     CHECK(prep == "full" || prep == "ondemand");
@@ -391,6 +393,34 @@ int main(int argc, char* argv[]) {
         uint32_t weakPairs = 0;
         for (auto& [k, ch] : pairChannel)
             weakPairs += linkQ(gw[k].first, gw[k].second, ch) < 0.5;
+        // all routes now, so that the shadowing draws do not interleave with the fading draws
+        for (const Hex& h : used) route(clOf.at(h));
+        for (auto& [k, ch] : pairChannel) {
+            route(gw[k].first);
+            route(gw[k].second);
+        }
+        FILE* fh = nullptr;   // per-hop trace of the first mission
+        if (!trace.empty() && run == firstRun) {
+            FILE* f = std::fopen((trace + "-routes.csv").c_str(), "w");
+            CHECK(f);
+            std::fprintf(f, "node,next,etx\n");
+            for (const Hex& h : used) {
+                const int cl = clOf.at(h);
+                auto& nx = route(cl);
+                for (int v : members[h])
+                    std::fprintf(f, "%d,%d,%.3f\n", v, v == cl ? -1 : nx.at(v), etxTo[cl].at(v));
+            }
+            std::fclose(f);
+            f = std::fopen((trace + "-pairs.csv").c_str(), "w");
+            CHECK(f);
+            std::fprintf(f, "a,b,channel,q\n");
+            for (auto& [k, ch] : pairChannel)
+                std::fprintf(f, "%d,%d,%d,%.4f\n", gw[k].first, gw[k].second, ch, linkQ(gw[k].first, gw[k].second, ch));
+            std::fclose(f);
+            fh = std::fopen((trace + "-hops.csv").c_str(), "w");
+            CHECK(fh);
+            std::fprintf(fh, "t,phase,from,to\n");
+        }
 
         // ---- protocol state ----------------------------------------------------------
         std::vector<Job> jobs;
@@ -503,6 +533,8 @@ int main(int argc, char* argv[]) {
                     const uint32_t j = r.q.front().first;
                     phaseHops[jobs[j].phase]++;
                     hops++;
+                    if (fh)
+                        std::fprintf(fh, "%.4f,%s,%d,%d\n", now(), kPhaseName[jobs[j].phase], r.node, r.qNext.front());
                     r.q.pop_front();
                     r.qNext.pop_front();
                 } else {
@@ -761,10 +793,19 @@ int main(int argc, char* argv[]) {
                     run, sch.c_str(), Dn, doneAt.size(), plan.crit.size(), simS, wallS, (unsigned long long)hops,
                     (unsigned long long)macFail, weakPairs, pairChannel.size());
         std::fflush(stdout);
+        if (fh) {
+            std::fclose(fh);
+            FILE* f = std::fopen((trace + "-held.csv").c_str(), "w");   // when each packet of D reached each CL
+            CHECK(f);
+            std::fprintf(f, "q,r,s,t\n");
+            for (auto& [c, ts] : at)
+                for (uint32_t s = 0; s < N; ++s)
+                    if (inD[s] && ts[s] >= 0) std::fprintf(f, "%d,%d,%u,%.4f\n", c.q, c.r, s, ts[s]);
+            std::fclose(f);
+        }
         Simulator::Destroy();
     }
     std::fclose(fc);
     std::fclose(fr);
-    (void)kPhaseName;
     return 0;
 }

@@ -780,6 +780,12 @@ trên tầng truyền dùng phương án với MAC đầy đủ của 802.15.4 n
 chạy cả pass
 ```
 
+*52. 2026-10-12 · uav-coop2 · hình từng bước của thử nghiệm ns-3*
+
+```text
+cho tôi visualize của từng bước
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

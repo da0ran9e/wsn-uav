@@ -27,6 +27,8 @@ logic, stage figures and results — [`docs/RIVER-RUN-vi.md`](docs/RIVER-RUN-vi.
 one channel per gateway pair, one transmitter at a time per cell and per gateway pair; in-cell
 routes by least ETX on each run's links. Input plan from `tools/river_export.py`
 (`docs/data/river-plan.txt`); mission 1 of each scheme in `docs/data/river-ns3-r1-*.csv`.
+Step-by-step figures of mission 1 (`--trace`, `tools/river_ns3_figures.py`) —
+[`docs/RIVER-NS3-vi.md`](docs/RIVER-NS3-vi.md).
 
 ## Layout
 ```
@@ -38,8 +40,9 @@ uav-coop2/
 ├── tools/river_sim.py      # slot-level trial: Algorithms 5-7 and the direct-pull baseline
 ├── tools/river_figures.py  # stage figures and tables of the trial
 ├── tools/river_export.py   # the plan as text for the ns-3 trial
+├── tools/river_ns3_figures.py  # step figures of one ns-3 mission (--trace)
 ├── models/river-plan.*     # reads that plan (ns-3 module uav-coop2, links uav-coop)
 ├── examples/coop2-river.cc # the ns-3 trial: River (full / on-demand Circle) and direct pull
-└── docs/                   # STATE-vi.md, RUNS-vi.md, L3-vi.md, TRIAL-vi.md, RIVER-RUN-vi.md, figures/, data/
+└── docs/                   # STATE-vi.md, RUNS-vi.md, L3-vi.md, TRIAL-vi.md, RIVER-RUN-vi.md, RIVER-NS3-vi.md, figures/, data/
 ```
 Build: link `uav-coop2` into `ns3-dev/src` and enable modules `uav-sar;uav-coop;uav-coop2`.

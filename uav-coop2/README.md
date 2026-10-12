@@ -31,6 +31,8 @@ Step-by-step figures of mission 1 (`--trace`, `tools/river_ns3_figures.py`) —
 [`docs/RIVER-NS3-vi.md`](docs/RIVER-NS3-vi.md).
 Variants on mission 1: 3-colour cell grid (`--colours=3`) and a narrower River
 (`docs/data/river-plan-w2.5.txt`), `tools/river_variants_figure.py`, same page.
+Sweeps (colours 3/4/7/13, width 2.5-6.5, 1-16 critical cells) with the hash-based channel and
+`--gwSelect=quality`: `tools/river_sweep_figure.py`, `docs/data/pilot54/`, same page.
 
 ## Layout
 ```
@@ -44,6 +46,7 @@ uav-coop2/
 ├── tools/river_export.py   # the plan as text for the ns-3 trial
 ├── tools/river_ns3_figures.py  # step figures of one ns-3 mission (--trace)
 ├── tools/river_variants_figure.py  # channel plan x River width, one mission
+├── tools/river_sweep_figure.py     # colours / width / critical cells sweeps
 ├── models/river-plan.*     # reads that plan (ns-3 module uav-coop2, links uav-coop)
 ├── examples/coop2-river.cc # the ns-3 trial: River (full / on-demand Circle) and direct pull
 └── docs/                   # STATE-vi.md, RUNS-vi.md, L3-vi.md, TRIAL-vi.md, RIVER-RUN-vi.md, RIVER-NS3-vi.md, figures/, data/

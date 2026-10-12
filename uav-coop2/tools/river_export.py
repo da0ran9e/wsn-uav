@@ -1,7 +1,7 @@
 """Write the River plan (river_plan.py) as a plain-text file for the ns-3 trial (uav-coop2-river).
 
     python3 tools/river_export.py --deploy ../uav-coop/docs/data --path docs/data/path-a180.csv \
-        --width 3.5 --out docs/data/river-plan.txt
+        --width 3.5 [--kg 2 --kl 1] --out docs/data/river-plan.txt
 
 One record per line, cells as "q r":
   N    <packets sent, one per 0.5 m of the path>
@@ -22,10 +22,12 @@ def main():
     ap.add_argument("--deploy", required=True)
     ap.add_argument("--path", required=True)
     ap.add_argument("--width", type=float, default=3.5)
+    ap.add_argument("--kg", type=float, default=2.0, help="critical: global outlier, score > mu + kg sd")
+    ap.add_argument("--kl", type=float, default=1.0, help="critical: local outlier, score > mu + kl sd")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     geo = load(a.deploy, a.path)
-    P = plan(geo, width=a.width)
+    P = plan(geo, width=a.width, kg=a.kg, kl=a.kl)
     cells = lambda cs: f"{len(cs)} " + " ".join(f"{q} {r}" for q, r in cs)
     with open(a.out, "w") as f:
         f.write(f"N {len(geo['uav'])}\n")

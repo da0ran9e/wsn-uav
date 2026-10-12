@@ -1,6 +1,6 @@
 # River trên ns-3 — từng bước của một lượt bay
 
-Lời gốc: CLAUDE.md §8 mục 50–53. Thuật toán: [`L3-vi.md`](L3-vi.md) (Thuật toán 1–7).
+Lời gốc: CLAUDE.md §8 mục 50–54. Thuật toán: [`L3-vi.md`](L3-vi.md) (Thuật toán 1–7).
 
 Trang này cho thấy từng bước của **một** lượt bay (lượt 1) trên ns-3, so ba biến thể. Đây chưa
 phải kết quả thống kê: chiến dịch 120 lượt còn chờ chốt.
@@ -103,6 +103,9 @@ kênh. Mọi số và hình ở đây đã chạy lại với mô hình dùng ch
 
 ## Biến thể: lưới 3 màu và River hẹp hơn (CLAUDE.md §8 mục 53)
 
+> **Đã thay thế** bởi mục "Kiểm chứng" bên dưới. Lần thử này dùng gateway hình học và mô hình
+> kênh cũ, nên che khuất của cùng một cặp node vẫn khác nhau giữa các cấu hình.
+
 ![variants](figures/ns3-variants.png)
 
 **Hai thay đổi được thử:**
@@ -134,3 +137,49 @@ kênh. Mọi số và hình ở đây đã chạy lại với mô hình dùng ch
 - **River hẹp hơn tốn thêm khoảng 6–8 % khung, do Bank → Circle tăng khoảng 13 %.** Khi Bank sát Axe, Bank xa các critical cell hơn nên đường Bank → Circle dài hơn. Axe → Bank vẫn là 0 khung, vì Bank đã có đủ ngay sau khi gom, cả khi cách 1 cell lẫn 2 cell.
 - Thời gian của từng critical cell lúc nhanh lúc chậm theo độ rộng. Ví dụ với 7 màu: (1,−2) mất 12,9 s ở W = 2,5 so với 21,1 s ở W = 3,5, nhưng ô cuối xong như nhau. Một lượt chưa đủ để tách tác động của độ rộng khỏi nhiễu.
 
+
+## Kiểm chứng: số màu, độ rộng River, số critical cell (CLAUDE.md §8 mục 54)
+
+![sweeps](figures/ns3-sweeps.png)
+
+### Hai sửa đổi trước khi so sánh
+
+1. **Kênh không phụ thuộc cấu hình.**
+   - Trước đây che khuất được bốc từ một luồng ngẫu nhiên theo thứ tự liên kết được dùng lần đầu. Hai cấu hình mô phỏng tập cell khác nhau thì cùng một cặp node có che khuất khác nhau.
+   - Nay che khuất và fading lấy từ hash của (lượt bay, cặp id node, khối fading). Đã kiểm tra: 140/140 cặp chung giữa hai kế hoạch có cùng q.
+   - Thống kê vẫn đúng: che khuất có độ lệch chuẩn 7,82 dB; fading có công suất trung bình 1,000 và P(< −10 dB) = 0,096 so với 0,095 của Rayleigh.
+2. **Gateway chọn theo chất lượng liên kết** (`--gwSelect=quality`).
+   - Gateway của `uav-coop` chọn theo hình học. Lượt 1 có 4 cặp gần như chết (q = 0; 0; 0,003; 0,013), và mọi lần chạy bị kẹt đều do đường đi qua một trong các cặp đó.
+   - BS đã tính trước toàn bộ định tuyến (§8 mục 15) và che khuất là tĩnh, nên BS chọn cho mỗi cặp cell **một** cặp gateway có liên kết tốt nhất. Ràng buộc một gateway cho mỗi cặp cell vẫn giữ nguyên.
+   - Kết quả: 0 cặp yếu thay vì 22, và mọi cấu hình đều xong.
+   - Chế độ cũ (`deploy`) vẫn là mặc định và cho lại đúng số trước đây.
+
+### Kết quả lượt 1
+
+Gateway theo chất lượng; River, Circle chuẩn bị sẵn. Số liệu: `docs/data/pilot54/`.
+
+| Tham số | Giá trị | TB critical cell | Critical cell cuối | Khung |
+|---|---|---|---|---|
+| Số màu | 3 / 4 / 7 / 13 | 16,7 / 16,1 / 16,0 / 15,8 s | 33,1 / 31,2 / 31,3 / 31,0 s | 68,4 k (như nhau) |
+| Độ rộng River | 2,5 / 3,5 / 4,5 / 6,5 | 15,1 / 16,0 / 15,3 / 15,6 s | 31,4 / 31,3 / 30,6 / 32,1 s | 72,4 / 68,4 / 69,0 / 69,6 k |
+| Số critical, River | 1 / 4 / 7 / 10 / 16 | 5,7 / 16,6 / 16,0 / 14,5 / 19,4 s | 5,7 / 31,3 / 31,3 / 31,8 / 32,3 s | 1,9 / 58 / 68 / 76 / 161 k |
+| Số critical, kéo thẳng | 1 / 4 / 7 / 10 / 16 | 6,0 / 19,8 / 20,6 / 18,0 / 30,2 s | 6,0 / 31,9 / 35,7 / 36,1 / 56,2 s | 1,2 / 76 / 90 / 101 / 215 k |
+
+### Đọc sơ bộ (một lượt; khác biệt khoảng 1 s chưa tách được khỏi nhiễu)
+
+- **Nhiều màu hơn 7 không cải thiện rõ.**
+  - 3 → 4 màu: critical cell cuối nhanh hơn khoảng 2 s.
+  - 4, 7, 13 màu: cách nhau dưới 0,3 s.
+  - Số khung như nhau ở mọi số màu, vì lịch đi đường không đổi.
+  - Tăng số màu tách cell cùng kênh xa hơn, nhưng lấy bớt kênh của cặp gateway: 13 màu chỉ còn 3 kênh cho 235 cặp. Hai hiệu ứng gần như triệt tiêu nhau.
+- **River rộng hơn không nhanh hơn.**
+  - Thời gian không đổi theo một chiều nào.
+  - Hẹp nhất (2,5) tốn nhiều khung nhất (+6 % so với 3,5), vì Bank sát Axe nên đường Bank → Circle dài hơn.
+  - Từ 3,5 trở lên, số khung gần như phẳng (68–70 k).
+  - Axe → Bank luôn là 0 khung, nên trên đường bay thẳng này độ rộng chỉ đổi đường Bank → Circle.
+- **Số critical cell: lợi thế của River tăng theo số critical cell.**
+  - Với 1 critical cell (chỉ CH, nằm trên Axe), kéo thẳng rẻ hơn: 1,2 k so với 1,9 k khung, thời gian như nhau.
+  - Từ 4 critical cell trở lên, River dùng ít hơn 23–25 % khung.
+  - Critical cell cuối của River giữ khoảng 31–32 s bất kể 4 hay 16 critical cell. Kéo thẳng tăng từ 32 lên 56 s.
+  - Với 16 critical cell, trung bình là 19 s so với 30 s.
+- **Critical cell cuối luôn là (−7,8)**, ô sát biên xa CH. Nó gom xong trong cell lúc 8,6 s, phần còn lại là đường Circle → nó. Chỉ số "critical cell cuối" vì thế gần như chỉ đo ô này. Nên đọc kèm trung bình các critical cell.

@@ -7,20 +7,22 @@
 // Radio: every node has a full IEEE 802.15.4 device (MAC with unslotted CSMA/CA, ACK,
 // retries; ns-3 lr-wpan) on its cell's channel; every gateway of a cell pair has one more
 // device, on that pair's own channel. The PECEE cell grid sets the channels:
-//   --colours=7  cell (q, r) on 11 + (q + 3r) mod 7 (same channel only 3 cells apart),
-//                gateway pairs on 18-26
-//   --colours=3  cell (q, r) on 11 + (q - r) mod 3 (same channel 1 cell apart),
-//                gateway pairs on 14-26
+//   --colours=n  cell (q, r) on 11 + (q + k r) mod n, gateway pairs on 11+n .. 26:
+//                n = 3, k = 2: same channel 2 cells apart     n = 4, k = 2: 2 cells apart
+//                n = 7, k = 3: 3 cells apart                  n = 13, k = 4: 4 cells apart
 //   a gateway pair takes the lowest of its channels not used by a pair within 300 m
 // Each channel number is its own SpectrumChannel (the 802.15.4 channels do not overlap).
 // G2G loss: n = 3.5 from 1 m, static shadowing per pair (sigma 7.8 dB), Rayleigh blocks of
-// 100 ms (uav-coop coop-g2g.h).
+// 100 ms (the statistics of uav-coop coop-g2g.h). Shadowing and fading are drawn from a hash
+// of (mission, node pair, block), so every configuration of a mission sees the same channel.
 // Schedule (PECEE grid, over the MAC): one transmitter at a time per cell and per gateway
 // pair, round robin among the radios with frames; a frame the MAC gives up on waits for the
 // radio's next turn.
 //
-// Routing: a cell path is CL -> gateway -> ... -> CL over the PECEE gateway pairs of uav-coop
-// (one gateway pair per adjacent cell pair); inside a cell, least ETX on the run's links.
+// Routing: a cell path is CL -> gateway -> ... -> CL over one gateway pair per adjacent cell
+// pair (--gwSelect=deploy: those of uav-coop, chosen by geometry; quality: the pair of nodes
+// with the best link in the mission, as the BS would pick knowing the static shadowing);
+// inside a cell, least ETX on the run's links.
 // A cell's data lives at its CL (gathered from its nodes).
 // The pass: the node's reception bitmaps from uav-coop-pass --bits (BITS-rR.bin).
 //
@@ -41,7 +43,6 @@
 #include "ns3/river-plan.h"
 #include "ns3/spectrum-module.h"
 
-#include "../../uav-coop/examples/coop-g2g.h"
 #include "../../uav-coop/models/common/coop-params.h"
 
 #include <algorithm>
@@ -70,6 +71,73 @@ using ns3::uavcoop2::Plan;
     } while (0)
 
 namespace {
+
+// The G2G channel of coop-g2g.h with its draws taken from a hash instead of a stream: the
+// static shadowing of a node pair, and the fade of each of its blocks, depend only on the
+// mission and the deploy ids of the two nodes (reciprocal), never on what else is simulated.
+class PairG2gLoss : public PropagationLossModel {
+  public:
+    static TypeId GetTypeId() {
+        static TypeId tid = TypeId("ns3::uavcoop2::PairG2gLoss")
+                                .SetParent<PropagationLossModel>()
+                                .AddConstructor<PairG2gLoss>();
+        return tid;
+    }
+    uint64_t mission = 0;
+    std::unordered_map<const MobilityModel*, int> id;   // mobility -> deploy node id
+
+    // The static shadowing of nodes ia, ib in a mission, dB (what Link draws for them).
+    static double Shadow(uint64_t mission, int ia, int ib) {
+        return params::kG2gShadowDb * Normal(Mix(Key(mission, ia, ib) ^ 1));
+    }
+
+  private:
+    struct State {
+        uint64_t key = 0;
+        double shadowDb = 0, phase = 0, fadeDb = 0;
+        int64_t block = -1;
+    };
+    static uint64_t Mix(uint64_t x) {   // splitmix64
+        x += 0x9e3779b97f4a7c15ULL;
+        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ULL;
+        x = (x ^ (x >> 27)) * 0x94d049bb133111ebULL;
+        return x ^ (x >> 31);
+    }
+    static double Unit(uint64_t h) { return ((h >> 11) + 0.5) * 0x1.0p-53; }
+    static double Normal(uint64_t h) {
+        return std::sqrt(-2 * std::log(Unit(h))) * std::cos(2 * M_PI * Unit(Mix(h)));
+    }
+    static uint64_t Key(uint64_t mission, int ia, int ib) {
+        return Mix(Mix(mission) ^ ((uint64_t)std::min(ia, ib) << 32 | (uint64_t)std::max(ia, ib)));
+    }
+    State& Link(Ptr<MobilityModel> a, Ptr<MobilityModel> b) const {
+        const int ia = id.at(PeekPointer(a)), ib = id.at(PeekPointer(b));
+        const uint64_t pair = (uint64_t)std::min(ia, ib) << 32 | (uint64_t)std::max(ia, ib);
+        auto it = m_links.find(pair);
+        if (it != m_links.end()) return it->second;
+        State st;
+        st.key = Key(mission, ia, ib);
+        st.shadowDb = Shadow(mission, ia, ib);
+        st.phase = Unit(Mix(st.key ^ 2)) * params::kG2gCoherenceS;
+        return m_links.emplace(pair, st).first->second;
+    }
+    double DoCalcRxPower(double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const override {
+        State& st = Link(a, b);
+        const int64_t blk = (int64_t)std::floor((Simulator::Now().GetSeconds() + st.phase) / params::kG2gCoherenceS);
+        if (blk != st.block) {
+            const double k = params::kG2gRicianK;
+            const uint64_t h = Mix(st.key ^ Mix((uint64_t)blk + 3));
+            const double i = std::sqrt(k / (k + 1)) + std::sqrt(0.5 / (k + 1)) * Normal(h);
+            const double q = std::sqrt(0.5 / (k + 1)) * Normal(Mix(h ^ 0x5bd1e9955bd1e995ULL));
+            st.fadeDb = 10 * std::log10(i * i + q * q);
+            st.block = blk;
+        }
+        return txPowerDbm - st.shadowDb + st.fadeDb;
+    }
+    int64_t DoAssignStreams(int64_t) override { return 0; }
+    mutable std::unordered_map<uint64_t, State> m_links;
+};
+NS_OBJECT_ENSURE_REGISTERED(PairG2gLoss);
 
 constexpr double kT0 = 0.01;          // protocol start (s); the PHYs are set up just before
 constexpr uint32_t kDataBytes = 100;  // MSDU of a data frame (99 B payload + header, capped)
@@ -135,6 +203,7 @@ int main(int argc, char* argv[]) {
     uint32_t firstRun = 1, runs = 1;
     double limitS = 1800, maxLossDb = 130;
     int colours = 7;
+    std::string gwSelect = "deploy";
     CommandLine cmd;
     cmd.AddValue("nodes", "deploy-nodes-sS.csv", nodesCsv);
     cmd.AddValue("routes", "deploy-routes-sS.csv", routesCsv);
@@ -147,14 +216,17 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("prep", "river only: full | ondemand", prep);
     cmd.AddValue("limit", "stop a mission after this many seconds", limitS);
     cmd.AddValue("maxLoss", "SpectrumChannel MaxLossDb", maxLossDb);
-    cmd.AddValue("colours", "cell channels: 7 or 3 colours", colours);
+    cmd.AddValue("colours", "cell channels: 3, 4, 7 or 13 colours", colours);
+    cmd.AddValue("gwSelect", "gateway pair of each cell pair: deploy (uav-coop, by geometry) | quality "
+                 "(the BS picks the best link of the mission)", gwSelect);
     cmd.AddValue("out", "output prefix", out);
     cmd.AddValue("trace", "prefix: the first mission's hops, CL arrivals, in-cell routes and gateway pairs",
                  trace);
     cmd.Parse(argc, argv);
     CHECK(scheme == "river" || scheme == "direct");
     CHECK(prep == "full" || prep == "ondemand");
-    CHECK(colours == 7 || colours == 3);
+    CHECK(colours == 3 || colours == 4 || colours == 7 || colours == 13);
+    CHECK(gwSelect == "deploy" || gwSelect == "quality");
 
     // ---- static inputs ----------------------------------------------------------
     const Plan plan = uavcoop2::ReadPlan(planFile);
@@ -224,12 +296,12 @@ int main(int argc, char* argv[]) {
     for (auto& x : plan.direct) checkPath(x.path);
 
     // Channels from the PECEE cell grid.
-    auto cellChannel = [&](const Hex& h) {
-        return colours == 7 ? 11 + (((h.q + 3 * h.r) % 7) + 7) % 7 : 11 + (((h.q - h.r) % 3) + 3) % 3;
-    };
+    const int colourK = colours == 13 ? 4 : colours == 7 ? 3 : 2;
+    auto cellChannel = [&](const Hex& h) { return 11 + (((h.q + colourK * h.r) % colours) + colours) % colours; };
     const int firstPairChannel = 11 + colours, pairChannels = 26 - firstPairChannel + 1;
     std::map<std::pair<Hex, Hex>, int> pairChannel;   // key with A < B
-    {
+    auto assignPairChannels = [&](bool print) {
+        pairChannel.clear();
         std::vector<std::pair<Hex, Hex>> keys;
         for (auto& [k, v] : gw)
             if (k.first < k.second && used.count(k.first) && used.count(k.second)) keys.push_back(k);
@@ -253,9 +325,20 @@ int main(int argc, char* argv[]) {
             }
             pairChannel[k] = ch;
         }
-        std::printf("channels: cells 11-%d (%d-colour grid), %zu gateway pairs on %d-26, %u pairs share a "
-                    "channel with a pair within 300 m\n", 10 + colours, colours, keys.size(), firstPairChannel, clashes);
-    }
+        if (print)
+            std::printf("channels: cells 11-%d (%d-colour grid), %zu gateway pairs on %d-26, %u pairs share a "
+                        "channel with a pair within 300 m\n", 10 + colours, colours, keys.size(), firstPairChannel,
+                        clashes);
+    };
+    // Mean success probability of link a-b in a mission: Rayleigh around the mean (path loss, the
+    // pair's static shadowing) against the sensitivity.
+    auto linkQ = [&](uint32_t mission, int a, int b) {
+        const double d = std::max(1.0, std::hypot(nodes[a].x - nodes[b].x, nodes[a].y - nodes[b].y));
+        const double meanDbm = params::kTxPowerDbm - params::kFspl1mDb - 10 * params::kG2gExponent * std::log10(d) -
+                               PairG2gLoss::Shadow(mission, a, b);
+        return std::max(1e-6, std::exp(-std::pow(10.0, (params::kRxSensDbm - meanDbm) / 10)));
+    };
+    const auto gwDeploy = gw;
     std::vector<int> nodeIds;
     for (const Hex& h : used)
         for (int v : members[h]) nodeIds.push_back(v);
@@ -270,6 +353,19 @@ int main(int argc, char* argv[]) {
 
     for (uint32_t run = firstRun; run < firstRun + runs; ++run) {
         const auto wall0 = std::chrono::steady_clock::now();
+        // ---- gateway pairs and their channels ---------------------------------------
+        gw = gwDeploy;
+        if (gwSelect == "quality")   // still one gateway pair per cell pair: the best link
+            for (auto& [k, v] : gwDeploy) {
+                if (!(k.first < k.second) || !used.count(k.first) || !used.count(k.second)) continue;
+                std::pair<int, int> best = v;
+                for (int a : members[k.first])
+                    for (int b : members[k.second])
+                        if (linkQ(run, a, b) > linkQ(run, best.first, best.second)) best = {a, b};
+                gw[k] = best;
+                gw[{k.second, k.first}] = {best.second, best.first};
+            }
+        assignPairChannels(run == firstRun);
         // ---- the pass: who received what -----------------------------------------
         const uint32_t rowBytes = (N + 7) / 8;
         std::vector<std::vector<uint8_t>> rx(nodes.size());
@@ -302,11 +398,8 @@ int main(int argc, char* argv[]) {
         pl->SetAttribute("Exponent", DoubleValue(params::kG2gExponent));
         pl->SetAttribute("ReferenceDistance", DoubleValue(1.0));
         pl->SetAttribute("ReferenceLoss", DoubleValue(params::kFspl1mDb));
-        Ptr<CoopG2gLossModel> link = CreateObject<CoopG2gLossModel>();
-        link->SetAttribute("ShadowSigmaDb", DoubleValue(params::kG2gShadowDb));
-        link->SetAttribute("CoherenceTime", DoubleValue(params::kG2gCoherenceS));
-        link->SetAttribute("K", DoubleValue(params::kG2gRicianK));
-        link->AssignStreams(1000 * (int64_t)run);
+        Ptr<PairG2gLoss> link = CreateObject<PairG2gLoss>();
+        link->mission = run;
         pl->SetNext(link);
         auto chanOf = [&](int c) {
             if (!chans.count(c)) {
@@ -330,6 +423,7 @@ int main(int argc, char* argv[]) {
             Ptr<ConstantPositionMobilityModel> mob = CreateObject<ConstantPositionMobilityModel>();
             mob->SetPosition(Vector(nodes[v].x, nodes[v].y, 1.5));
             n->AggregateObject(mob);
+            link->id[PeekPointer(mob)] = v;
             nsNode[v] = n;
             nc.Add(n);
         }
@@ -372,13 +466,6 @@ int main(int argc, char* argv[]) {
         // q = P(Rayleigh-faded RX power > sensitivity), from the mean (path loss, the pair's
         // shadowing); a node forwards toward its CL, or the gateway of the next cell, along
         // the least sum of 1/q. The gateway pairs themselves stay the PECEE ones.
-        auto linkQ = [&](int a, int b) {
-            const double d = std::max(1.0, std::hypot(nodes[a].x - nodes[b].x, nodes[a].y - nodes[b].y));
-            const double meanDbm = params::kTxPowerDbm - params::kFspl1mDb - 10 * params::kG2gExponent * std::log10(d) -
-                                   link->ShadowDb(nsNode[a]->GetObject<MobilityModel>(),
-                                                                nsNode[b]->GetObject<MobilityModel>());
-            return std::max(1e-6, std::exp(-std::pow(10.0, (params::kRxSensDbm - meanDbm) / 10)));
-        };
         std::unordered_map<int, std::unordered_map<int, int>> nextTo;      // target -> node -> next hop
         std::unordered_map<int, std::unordered_map<int, double>> etxTo;    // target -> node -> ETX
         auto route = [&](int target) -> std::unordered_map<int, int>& {
@@ -395,7 +482,7 @@ int main(int argc, char* argv[]) {
                 open.erase(open.begin());
                 for (int v : mem) {
                     if (v == u) continue;
-                    const double dv = du + 1.0 / linkQ(u, v);
+                    const double dv = du + 1.0 / linkQ(run, u, v);
                     if (dv < dist[v]) {
                         open.erase({dist[v], v});
                         dist[v] = dv;
@@ -408,7 +495,7 @@ int main(int argc, char* argv[]) {
         };
         uint32_t weakPairs = 0;
         for (auto& [k, ch] : pairChannel)
-            weakPairs += linkQ(gw[k].first, gw[k].second) < 0.5;
+            weakPairs += linkQ(run, gw[k].first, gw[k].second) < 0.5;
         // all routes now, so that the shadowing draws do not interleave with the fading draws
         for (const Hex& h : used) route(clOf.at(h));
         for (auto& [k, ch] : pairChannel) {
@@ -431,7 +518,7 @@ int main(int argc, char* argv[]) {
             CHECK(f);
             std::fprintf(f, "a,b,channel,q\n");
             for (auto& [k, ch] : pairChannel)
-                std::fprintf(f, "%d,%d,%d,%.4f\n", gw[k].first, gw[k].second, ch, linkQ(gw[k].first, gw[k].second));
+                std::fprintf(f, "%d,%d,%d,%.4f\n", gw[k].first, gw[k].second, ch, linkQ(run, gw[k].first, gw[k].second));
             std::fclose(f);
             fh = std::fopen((trace + "-hops.csv").c_str(), "w");
             CHECK(fh);

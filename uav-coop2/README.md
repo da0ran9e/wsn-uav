@@ -21,6 +21,12 @@ sketches by `tools/concept_cells.py`. Readiness review and trial plan — [`docs
 **Trial run (logic level, 120 missions, straight path):** River vs a direct pull — process,
 logic, stage figures and results — [`docs/RIVER-RUN-vi.md`](docs/RIVER-RUN-vi.md)
 (`tools/river_plan.py`, `tools/river_sim.py`, `tools/river_figures.py`).
+**ns-3 trial (in progress):** `uav-coop2-river` runs Algorithms 5-7 (`--scheme=river
+--prep=full|ondemand`) and the direct pull (`--scheme=direct`) over the full IEEE 802.15.4 MAC
+(CSMA/CA, ACK, retries), with the PECEE cell grid as the schedule: cell channel by 7-colour,
+one channel per gateway pair, one transmitter at a time per cell and per gateway pair; in-cell
+routes by least ETX on each run's links. Input plan from `tools/river_export.py`
+(`docs/data/river-plan.txt`); mission 1 of each scheme in `docs/data/river-ns3-r1-*.csv`.
 
 ## Layout
 ```
@@ -31,6 +37,9 @@ uav-coop2/
 ├── tools/river_plan.py     # the plan: Algorithms 1-4
 ├── tools/river_sim.py      # slot-level trial: Algorithms 5-7 and the direct-pull baseline
 ├── tools/river_figures.py  # stage figures and tables of the trial
+├── tools/river_export.py   # the plan as text for the ns-3 trial
+├── models/river-plan.*     # reads that plan (ns-3 module uav-coop2, links uav-coop)
+├── examples/coop2-river.cc # the ns-3 trial: River (full / on-demand Circle) and direct pull
 └── docs/                   # STATE-vi.md, RUNS-vi.md, L3-vi.md, TRIAL-vi.md, RIVER-RUN-vi.md, figures/, data/
 ```
-The ns-3 module (linking `uav-coop`) is added with the first C++ of the new scheme.
+Build: link `uav-coop2` into `ns3-dev/src` and enable modules `uav-sar;uav-coop;uav-coop2`.

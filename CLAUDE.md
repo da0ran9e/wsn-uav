@@ -772,6 +772,14 @@ cài đặt thực nghiệm với ns3
 tôi chưa hiểu đề xuất “chỉ chuẩn bị phần critical cell thiếu”, vì tất cả các cell đều thiếu, và cần gom đủ dữ liệu trên toàn river, ngay cả một axe cell một mình nó cũng không thể đủ dữ liệu nếu không trao đổi
 ```
 
+*51. 2026-10-12 · uav-coop2 · giữ các biến thể; MAC 802.15.4 đầy đủ + lập lịch lưới cell PECEE, gateway kênh riêng; chạy pass*
+
+```text
+ta có thể giữ các biến thể này để thử xem cái nào hiệu quả hơn, thậm chí là Critical cell hỏi thì circle mới pull dữ liệu 
+trên tầng truyền dùng phương án với MAC đầy đủ của 802.15.4 nhưng phần lập lịch thì override lại với cơ chế lập lịch theo lưới cell đã mô tả của PECEE cho gateway có đường đi riêng qua cell 
+chạy cả pass
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

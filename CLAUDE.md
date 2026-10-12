@@ -759,6 +759,19 @@ rà soát lại toang bộ cơ chế đảm bảo nó đủ cho giải pháp t�
 thử cài đặt thuật toán và chạy thử, báo cáo tôi toàn bộ quy trình và logic tóm tắt + visualize các giai đoạn
 ```
 
+*49. 2026-10-12 · uav-coop2 · không cần so sánh với Manifest*
+
+```text
+không cần so sánh manifest
+```
+
+*50. 2026-10-12 · uav-coop2 · cài đặt thực nghiệm ns-3; hỏi về đề xuất chỉ chuẩn bị phần critical cell thiếu*
+
+```text
+cài đặt thực nghiệm với ns3 
+tôi chưa hiểu đề xuất “chỉ chuẩn bị phần critical cell thiếu”, vì tất cả các cell đều thiếu, và cần gom đủ dữ liệu trên toàn river, ngay cả một axe cell một mình nó cũng không thể đủ dữ liệu nếu không trao đổi
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

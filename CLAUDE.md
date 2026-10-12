@@ -786,6 +786,13 @@ chạy cả pass
 cho tôi visualize của từng bước
 ```
 
+*53. 2026-10-12 · uav-coop2 · thử lưới 3 màu (cùng kênh cách 1 cell); thu hẹp River để so sánh*
+
+```text
+đặt các cell cùng kênh cách nhau 3 cell là tốt nhưng có thể cân nhắc chỉ dùng 3 màu để tách hai cell cùng kênh cách nhau 1 cell là đủ nếu nó tốt hơn cho tốc độ truyền. 
+thử một cách để điều chỉnh độ rộng của river, thu hẹp lại một chút để so sánh hiệu quả
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -7,8 +7,11 @@
 // Radio: every node has a full IEEE 802.15.4 device (MAC with unslotted CSMA/CA, ACK,
 // retries; ns-3 lr-wpan) on its cell's channel; every gateway of a cell pair has one more
 // device, on that pair's own channel. The PECEE cell grid sets the channels:
-//   cell (q, r)  channel 11 + (q + 3r) mod 7   (same channel only 3 cells apart)
-//   gateway pair one of channels 18-26, greedily so that nearby pairs differ
+//   --colours=7  cell (q, r) on 11 + (q + 3r) mod 7 (same channel only 3 cells apart),
+//                gateway pairs on 18-26
+//   --colours=3  cell (q, r) on 11 + (q - r) mod 3 (same channel 1 cell apart),
+//                gateway pairs on 14-26
+//   a gateway pair takes the lowest of its channels not used by a pair within 300 m
 // Each channel number is its own SpectrumChannel (the 802.15.4 channels do not overlap).
 // G2G loss: n = 3.5 from 1 m, static shadowing per pair (sigma 7.8 dB), Rayleigh blocks of
 // 100 ms (uav-coop coop-g2g.h).
@@ -131,6 +134,7 @@ int main(int argc, char* argv[]) {
                                                            prep = "full", trace;
     uint32_t firstRun = 1, runs = 1;
     double limitS = 1800, maxLossDb = 130;
+    int colours = 7;
     CommandLine cmd;
     cmd.AddValue("nodes", "deploy-nodes-sS.csv", nodesCsv);
     cmd.AddValue("routes", "deploy-routes-sS.csv", routesCsv);
@@ -143,12 +147,14 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("prep", "river only: full | ondemand", prep);
     cmd.AddValue("limit", "stop a mission after this many seconds", limitS);
     cmd.AddValue("maxLoss", "SpectrumChannel MaxLossDb", maxLossDb);
+    cmd.AddValue("colours", "cell channels: 7 or 3 colours", colours);
     cmd.AddValue("out", "output prefix", out);
     cmd.AddValue("trace", "prefix: the first mission's hops, CL arrivals, in-cell routes and gateway pairs",
                  trace);
     cmd.Parse(argc, argv);
     CHECK(scheme == "river" || scheme == "direct");
     CHECK(prep == "full" || prep == "ondemand");
+    CHECK(colours == 7 || colours == 3);
 
     // ---- static inputs ----------------------------------------------------------
     const Plan plan = uavcoop2::ReadPlan(planFile);
@@ -218,7 +224,10 @@ int main(int argc, char* argv[]) {
     for (auto& x : plan.direct) checkPath(x.path);
 
     // Channels from the PECEE cell grid.
-    auto cellChannel = [](const Hex& h) { return 11 + (((h.q + 3 * h.r) % 7) + 7) % 7; };
+    auto cellChannel = [&](const Hex& h) {
+        return colours == 7 ? 11 + (((h.q + 3 * h.r) % 7) + 7) % 7 : 11 + (((h.q - h.r) % 3) + 3) % 3;
+    };
+    const int firstPairChannel = 11 + colours, pairChannels = 26 - firstPairChannel + 1;
     std::map<std::pair<Hex, Hex>, int> pairChannel;   // key with A < B
     {
         std::vector<std::pair<Hex, Hex>> keys;
@@ -236,16 +245,16 @@ int main(int argc, char* argv[]) {
                 if (dmin < 300) taken.insert(ch);
             }
             int ch = -1;
-            for (int c = 18; c <= 26 && ch < 0; ++c)
+            for (int c = firstPairChannel; c <= 26 && ch < 0; ++c)
                 if (!taken.count(c)) ch = c;
             if (ch < 0) {
-                ch = 18 + (int)(pairChannel.size() % 9);
+                ch = firstPairChannel + (int)(pairChannel.size() % pairChannels);
                 clashes++;
             }
             pairChannel[k] = ch;
         }
-        std::printf("channels: cells 11-17 (7-colour grid), %zu gateway pairs on 18-26, %u pairs share a "
-                    "channel with a pair within 300 m\n", keys.size(), clashes);
+        std::printf("channels: cells 11-%d (%d-colour grid), %zu gateway pairs on %d-26, %u pairs share a "
+                    "channel with a pair within 300 m\n", 10 + colours, colours, keys.size(), firstPairChannel, clashes);
     }
     std::vector<int> nodeIds;
     for (const Hex& h : used)
@@ -287,17 +296,25 @@ int main(int argc, char* argv[]) {
 
         // ---- ns-3 network ------------------------------------------------------------
         std::map<int, Ptr<SpectrumChannel>> chans;
-        std::map<int, Ptr<CoopG2gLossModel>> linkOf;   // channel -> its loss model
+        // One loss chain for every channel: shadowing and fading belong to the node pair, so
+        // the channel plan does not change which links are weak.
+        Ptr<LogDistancePropagationLossModel> pl = CreateObject<LogDistancePropagationLossModel>();
+        pl->SetAttribute("Exponent", DoubleValue(params::kG2gExponent));
+        pl->SetAttribute("ReferenceDistance", DoubleValue(1.0));
+        pl->SetAttribute("ReferenceLoss", DoubleValue(params::kFspl1mDb));
+        Ptr<CoopG2gLossModel> link = CreateObject<CoopG2gLossModel>();
+        link->SetAttribute("ShadowSigmaDb", DoubleValue(params::kG2gShadowDb));
+        link->SetAttribute("CoherenceTime", DoubleValue(params::kG2gCoherenceS));
+        link->SetAttribute("K", DoubleValue(params::kG2gRicianK));
+        link->AssignStreams(1000 * (int64_t)run);
+        pl->SetNext(link);
         auto chanOf = [&](int c) {
             if (!chans.count(c)) {
-                Ptr<CoopG2gLossModel> link;
-                Ptr<SpectrumChannel> ch = BuildG2gChannel(params::kG2gExponent, params::kG2gShadowDb,
-                                                          params::kG2gCoherenceS, params::kG2gRicianK,
-                                                          params::kFspl1mDb, link);
+                Ptr<SingleModelSpectrumChannel> ch = CreateObject<SingleModelSpectrumChannel>();
+                ch->AddPropagationLossModel(pl);
+                ch->SetPropagationDelayModel(CreateObject<ConstantSpeedPropagationDelayModel>());
                 ch->SetAttribute("MaxLossDb", DoubleValue(maxLossDb));
-                link->AssignStreams(1000 * (int64_t)run + 10 * c);
                 chans[c] = ch;
-                linkOf[c] = link;
             }
             return chans[c];
         };
@@ -355,10 +372,10 @@ int main(int argc, char* argv[]) {
         // q = P(Rayleigh-faded RX power > sensitivity), from the mean (path loss, the pair's
         // shadowing); a node forwards toward its CL, or the gateway of the next cell, along
         // the least sum of 1/q. The gateway pairs themselves stay the PECEE ones.
-        auto linkQ = [&](int a, int b, int channel) {
+        auto linkQ = [&](int a, int b) {
             const double d = std::max(1.0, std::hypot(nodes[a].x - nodes[b].x, nodes[a].y - nodes[b].y));
             const double meanDbm = params::kTxPowerDbm - params::kFspl1mDb - 10 * params::kG2gExponent * std::log10(d) -
-                                   linkOf.at(channel)->ShadowDb(nsNode[a]->GetObject<MobilityModel>(),
+                                   link->ShadowDb(nsNode[a]->GetObject<MobilityModel>(),
                                                                 nsNode[b]->GetObject<MobilityModel>());
             return std::max(1e-6, std::exp(-std::pow(10.0, (params::kRxSensDbm - meanDbm) / 10)));
         };
@@ -368,7 +385,6 @@ int main(int argc, char* argv[]) {
             auto it = nextTo.find(target);
             if (it != nextTo.end()) return it->second;
             const auto& mem = members[nodes[target].cell];
-            const int ch = cellChannel(nodes[target].cell);
             auto& dist = etxTo[target];
             auto& nx = nextTo[target];
             for (int v : mem) dist[v] = 1e18;
@@ -379,7 +395,7 @@ int main(int argc, char* argv[]) {
                 open.erase(open.begin());
                 for (int v : mem) {
                     if (v == u) continue;
-                    const double dv = du + 1.0 / linkQ(u, v, ch);
+                    const double dv = du + 1.0 / linkQ(u, v);
                     if (dv < dist[v]) {
                         open.erase({dist[v], v});
                         dist[v] = dv;
@@ -392,7 +408,7 @@ int main(int argc, char* argv[]) {
         };
         uint32_t weakPairs = 0;
         for (auto& [k, ch] : pairChannel)
-            weakPairs += linkQ(gw[k].first, gw[k].second, ch) < 0.5;
+            weakPairs += linkQ(gw[k].first, gw[k].second) < 0.5;
         // all routes now, so that the shadowing draws do not interleave with the fading draws
         for (const Hex& h : used) route(clOf.at(h));
         for (auto& [k, ch] : pairChannel) {
@@ -415,7 +431,7 @@ int main(int argc, char* argv[]) {
             CHECK(f);
             std::fprintf(f, "a,b,channel,q\n");
             for (auto& [k, ch] : pairChannel)
-                std::fprintf(f, "%d,%d,%d,%.4f\n", gw[k].first, gw[k].second, ch, linkQ(gw[k].first, gw[k].second, ch));
+                std::fprintf(f, "%d,%d,%d,%.4f\n", gw[k].first, gw[k].second, ch, linkQ(gw[k].first, gw[k].second));
             std::fclose(f);
             fh = std::fopen((trace + "-hops.csv").c_str(), "w");
             CHECK(fh);

@@ -29,6 +29,8 @@ routes by least ETX on each run's links. Input plan from `tools/river_export.py`
 (`docs/data/river-plan.txt`); mission 1 of each scheme in `docs/data/river-ns3-r1-*.csv`.
 Step-by-step figures of mission 1 (`--trace`, `tools/river_ns3_figures.py`) —
 [`docs/RIVER-NS3-vi.md`](docs/RIVER-NS3-vi.md).
+Variants on mission 1: 3-colour cell grid (`--colours=3`) and a narrower River
+(`docs/data/river-plan-w2.5.txt`), `tools/river_variants_figure.py`, same page.
 
 ## Layout
 ```
@@ -41,6 +43,7 @@ uav-coop2/
 ├── tools/river_figures.py  # stage figures and tables of the trial
 ├── tools/river_export.py   # the plan as text for the ns-3 trial
 ├── tools/river_ns3_figures.py  # step figures of one ns-3 mission (--trace)
+├── tools/river_variants_figure.py  # channel plan x River width, one mission
 ├── models/river-plan.*     # reads that plan (ns-3 module uav-coop2, links uav-coop)
 ├── examples/coop2-river.cc # the ns-3 trial: River (full / on-demand Circle) and direct pull
 └── docs/                   # STATE-vi.md, RUNS-vi.md, L3-vi.md, TRIAL-vi.md, RIVER-RUN-vi.md, RIVER-NS3-vi.md, figures/, data/

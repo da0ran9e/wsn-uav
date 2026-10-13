@@ -821,6 +821,12 @@ trong lúc chờ chúng ta sẽ bàn một vấn đề nữa, vấn đề ở t�
 không phải là một bản đồ lưới lục giác mà bạn cứ gen giống như cách gen một cluster trước đó nhưng to hơn (chưa cần chọn CH)
 ```
 
+*58. 2026-10-13 · uav-l2 · câu hỏi: hình dạng miền có định trước không*
+
+```text
+hình dạng của nó được bạn xác định từ trước à?
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

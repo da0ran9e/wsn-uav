@@ -1,0 +1,9 @@
+run,scheme,q,r,D,lackCL,lackCell,gatherDoneS,doneS,missing,circle
+1,river-adaptive,6,-3,4580,1178,2,7.45,7.53,0,12
+1,river-adaptive,6,1,4580,1730,701,8.86,39.34,0,12
+1,river-adaptive,6,4,4580,2463,1554,7.47,40.63,0,4
+1,river-adaptive,7,-7,4580,1933,668,10.10,26.24,0,10
+1,river-adaptive,7,-1,4580,1253,299,7.45,33.54,0,12
+1,river-adaptive,9,0,4580,1601,735,6.78,34.67,0,12
+1,river-adaptive,12,-9,4580,2291,1121,7.88,36.29,0,10
+1,river-adaptive,12,-4,4580,2302,108,16.38,18.57,0,6

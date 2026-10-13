@@ -8,7 +8,8 @@ Stages (each writes into WORK; a stage whose outputs exist is skipped, so a run 
   2 deploy    per cluster: uav-coop-deploy (given region and nodes) picks the CH and CLs (the CH at least
               300 m from the cluster's edge; 200, 100, 0 m for a cluster too thin for that); the bearing
               through the CH with the longest in-cluster flight (0-178 deg, step 2) is chosen and the
-              cluster deployed again flying straight across the CH along it (routes, gateways, path)
+              cluster deployed again flying straight across the CH along it (routes, gateways, path);
+              where the Dubins lead-in/out cannot stay outside the cluster, the next-longest bearing
   3 tour      team 1 (one fixed-wing UAV, 50 m/s): BS -> every cluster's straight segment, either way
               round -> BS, the shortest such tour (Held-Karp over segments x direction); transits
               straight (no turn radius). Each cluster's pass starts when the UAV reaches its entry
@@ -77,11 +78,12 @@ def stage_map(a, W_):
           f"{[sum(1 for c in owner.values() if c == i) for i in range(len(med))]}, BS {bs[0]:.0f},{bs[1]:.0f}")
 
 
-def best_bearing(W_, k):
+def bearings(W_, k):
+    """Bearings through the CH, the longest in-cluster flight first."""
     cells = {(int(r["q"]), int(r["r"])) for r in csv.DictReader(open(f"{W_}/c{k}-cells.csv"))}
     ch = next(r for r in csv.DictReader(open(f"{W_}/c{k}-nodes-s35.csv")) if r["isCH"] == "1")
     cx, cy = float(ch["x"]), float(ch["y"])
-    best = None
+    out = []
     for b in range(0, 180, 2):
         th = math.radians(b)
         far = [max([s for s in range(0, 8000, 5)
@@ -89,9 +91,8 @@ def best_bearing(W_, k):
                for sg in (1, -1)]
         inside = sum(5 for s in range(-far[1], far[0], 5)
                      if cell_at(cx + s * math.cos(th), cy + s * math.sin(th)) in cells)
-        if best is None or inside > best[1]:
-            best = (b, inside)
-    return best
+        out.append((b, inside))
+    return sorted(out, key=lambda t: -t[1])
 
 
 def stage_deploy(a, W_, K):
@@ -101,11 +102,12 @@ def stage_deploy(a, W_, K):
             base = [f"{a.bin}/deploy-bin", f"--regionIn=c{k}-cells.csv", f"--nodesIn=c{k}-nodesin.csv",
                     "--spacings=35", "--angle=180", f"--out=c{k}"]
             env = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
-            margin = next(m for m in (300, 200, 100, 0)
-                          if sh(base + [f"--chMargin={m}"], f"c{k}-deploy0.log", env, ok=m > 0))
+            # a random entry only to get the roles: try other entries if a path from it is infeasible
+            margin = next(m for m in (300, 200, 100, 0) for p in range(10)
+                          if sh(base + [f"--chMargin={m}", f"--pick={p}"], f"c{k}-deploy0.log", env, ok=True))
             base.append(f"--chMargin={margin}")
-            b, inside = best_bearing(W_, k)
-            sh(base + [f"--bearing={b}"], f"c{k}-deploy.log", env)
+            b, inside = next((b, i) for b, i in bearings(W_, k)
+                             if sh(base + [f"--bearing={b}"], f"c{k}-deploy.log", env, ok=True))
             json.dump(dict(bearing=b, inside=inside, chMargin=margin), open(f"{W_}/c{k}-bearing.json", "w"))
         out[k] = json.load(open(f"{W_}/c{k}-bearing.json"))
     return out

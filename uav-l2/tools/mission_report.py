@@ -13,6 +13,7 @@ Per map (a mission.py work folder):
               suspects along the shortest closed tour BS -> suspects -> BS (exact, no turn radius), the
               direction with the shorter first leg; HOVER s to verify each; at the true one it flies
               straight back to the BS and the mission ends
+              (also given: the mission end averaged over every suspect being the true one, same tour)
 Writes OUT-summary.csv (one row per map and scheme), OUT-cells.csv (per critical cell) and figures
 FIGS/mission-{maps,river,suspects,timeline}.png, one panel per map.
 """
@@ -95,7 +96,17 @@ def simulate(M, seed):
             if sus[i] == true:
                 break
         end = tt + math.dist(pos, M["bs"]) / V2
-        out[t] = dict(done=done, match=match, rep=rep, dep=dep, visits=visits, end=end, found=visits[-1][1])
+        ends = []   # the mission end had each suspect been the true one (same tour)
+        for j in range(len(sus)):
+            tj, pj = dep, M["bs"]
+            for i in order:
+                tj += math.dist(pj, pts[i]) / V2 + HOVER
+                pj = pts[i]
+                if i == j:
+                    break
+            ends.append(tj + math.dist(pj, M["bs"]) / V2)
+        out[t] = dict(done=done, match=match, rep=rep, dep=dep, visits=visits, end=end, found=visits[-1][1],
+                      endMean=sum(ends) / len(ends))
     return dict(crits=crits, true=true, false=false, sus=sus, pts=pts, order=order, wait=wait, by=out)
 
 
@@ -168,7 +179,7 @@ def main():
     with open(a.out + "-summary.csv", "w", newline="") as f, open(a.out + "-cells.csv", "w", newline="") as g:
         w, w2 = csv.writer(f), csv.writer(g)
         w.writerow(["map", "clusters", "cells", "nodes", "crit", "tour_km", "team1_back_s", "scheme", "last_done_s",
-                    "team2_departs_s", "true_found_s", "mission_end_s", "visits", "frames"])
+                    "team2_departs_s", "true_found_s", "mission_end_s", "mission_end_mean_s", "visits", "frames"])
         w2.writerow(["map", "cluster", "q", "r", "role", "leave_s", "lackCell", "scheme", "doneS", "done_s",
                      "report_s"])
         for M, X in zip(maps, sims):
@@ -178,7 +189,7 @@ def main():
                 w.writerow([M["name"], len(M["cl"]), M["m"]["cells"], M["m"]["nodes"], len(X["crits"]),
                             f"{M['tour']['length'] / 1000:.2f}", f"{M['tour']['back']:.1f}", t,
                             f"{max(Y['done'].values()):.1f}", f"{Y['dep']:.1f}", f"{Y['found']:.1f}", f"{Y['end']:.1f}",
-                            len(Y["visits"]), frames])
+                            f"{Y['endMean']:.1f}", len(Y["visits"]), frames])
                 for k, h in X["crits"]:
                     role = "true" if (k, h) == X["true"] else "false" if (k, h) in X["false"] else ""
                     role += ("+CH" if h == M["cl"][k]["P"]["ch"] else "")
@@ -193,7 +204,8 @@ def main():
         for t in SCHEMES:
             Y = X["by"][t]
             print(f"   {t:5s} last critical done {max(Y['done'].values()):6.1f} s, team 2 leaves {Y['dep']:6.1f} s, "
-                  f"true found {Y['found']:6.1f} s after {len(Y['visits'])} visit(s), mission ends {Y['end']:6.1f} s")
+                  f"true found {Y['found']:6.1f} s after {len(Y['visits'])} visit(s), mission ends {Y['end']:6.1f} s "
+                  f"(any suspect true: {Y['endMean']:6.1f} s)")
     # ---- figure 1: map, clusters, team 1
     fig, axs = panel_axes(n)
     for ax, M in zip(axs, maps):

@@ -82,6 +82,14 @@ def cellpath(src, dst, allowed, c):
     return out[::-1]
 
 
+def detour(b, m, k, S, c):
+    """Cell path b -> m that avoids k; through k only when k cuts m off (k is a cut cell)."""
+    try:
+        return cellpath(b, m, S - {k}, c)
+    except AssertionError:
+        return cellpath(b, m, S, c)
+
+
 def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2):
     c, w, R, S, uav = geo["c"], geo["w"], geo["R"], geo["S"], geo["uav"]
     # Algorithm 1: Axe and Seg (packets sent above each Axe cell; outside the cluster: none)
@@ -138,7 +146,7 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2):
             for a in groups[j]:
                 side = min((0, 1), key=lambda sd_: (hexdist(bank[(a, sd_)], m), math.dist(c[bank[(a, sd_)]], c[m])))
                 b = bank[(a, side)]
-                src.append((a, side, b, cellpath(b, m, S - {k}, c) if b != m else [m]))
+                src.append((a, side, b, detour(b, m, k, S, c) if b != m else [m]))
             tasks.append((m, groups[j], src))
         circle[k] = tasks
     # Adaptive Circle: candidates in rings 1-2, members for each size n, Banks for every candidate
@@ -157,7 +165,7 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2):
             for a in axe:
                 side = min((0, 1), key=lambda sd_: (hexdist(bank[(a, sd_)], m), math.dist(c[bank[(a, sd_)]], c[m])))
                 b = bank[(a, side)]
-                src[(m, a)] = (b, cellpath(b, m, S - {k}, c) if b != m else [m])
+                src[(m, a)] = (b, detour(b, m, k, S, c) if b != m else [m])
         adapt[k] = dict(sets=sets, src=src, link={m: cellpath(k, m, S, c) for m in r1 + r2})
     return dict(axe=axe, seg=seg, u=u, omega=omega, bank=bank, bpath=bpath, river=river, crit=crit, ch=chc,
                 circle=circle, adapt=adapt, width=width)

@@ -815,6 +815,12 @@ sau khi đã kiểm xong hãy thử một tham số nữa, số lượng critica
 trong lúc chờ chúng ta sẽ bàn một vấn đề nữa, vấn đề ở tầng 2 của giải pháp, thiết kế đường bay cho UAV trong một miền không lồi, trước tiên giống như cách bạn đã gen ra cluster trước đó, bây giờ hãy thử dụng mộ bản đồ rộng hơn như thế, có thể chứa được khoảng 4-5 cluster
 ```
 
+*57. 2026-10-13 · uav-l2 · đính chính: một miền sinh như một cluster nhưng to hơn (cỡ 4–5 cluster), chưa chọn CH*
+
+```text
+không phải là một bản đồ lưới lục giác mà bạn cứ gen giống như cách gen một cluster trước đó nhưng to hơn (chưa cần chọn CH)
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

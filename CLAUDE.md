@@ -827,6 +827,12 @@ không phải là một bản đồ lưới lục giác mà bạn cứ gen giố
 hình dạng của nó được bạn xác định từ trước à?
 ```
 
+*59. 2026-10-13 · uav-l2 · câu hỏi: có sinh được miền dài, cong, có khoảng trống không*
+
+```text
+liệu nó có thể gen ra một miền dài, hay cong, hay có khoảng trống không
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -32,6 +32,23 @@ Seed 2–4 cho kết quả tương tự: độ lồi khi vừa mọc 0,70–0,72
 - Ngược lại, cluster 60 cell có độ lồi 0,55–0,82 và có những nhánh dài.
 - Nếu tầng 2 cần một miền lõm mạnh (vịnh sâu, hình chữ L, hai khối nối bằng eo hẹp), cách mọc này chưa tạo ra được, sẽ cần thêm cơ chế.
 
+### Cách mọc này có cho miền dài, cong, có khoảng trống không? (§8 mục 59)
+
+Đo trên 200 seed (`tools/shape_stats.py`). Các miền vừa mọc, chưa lấp:
+
+| | 60 cell (1 cluster) | 300 cell (miền tầng 2) |
+|---|---|---|
+| Độ dài (trục dài / trục ngắn) | trung vị 1,40; p90 1,91; lớn nhất 2,52 | trung vị 1,23; p90 1,51; lớn nhất 2,06 |
+| Độ cong (lệch lớn nhất của trục giữa / chiều dài) | trung vị 0,17; p90 0,25 | trung vị 0,12; p90 0,18 |
+| Số lỗ | trung vị 2 | trung vị 13 |
+| Lỗ lớn nhất | trung vị 1 cell; lớn nhất 7 | trung vị 3 cell (≈ 0,08 km²); lớn nhất 13 |
+
+**Kết luận:** gần như không.
+- Miền càng lớn càng tròn: không seed nào dài quá 2,1 : 1, và độ cong nhỏ.
+- Khoảng trống chỉ là các lỗ nhỏ vài cell, và bước lấp chỗ lõm lấp chúng trước tiên.
+
+Muốn có miền dài, cong hay có khoảng trống lớn thì phải thêm cơ chế vào cách mọc.
+
 Chạy lại:
 ```
 python3 tools/map_gen.py --seed 1 --cells 300 --convexity 0.8 --out docs/data/map-s1 --figs docs/figures

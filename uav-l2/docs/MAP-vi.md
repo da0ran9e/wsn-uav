@@ -1,6 +1,6 @@
 # Tầng 2 — bước 1: miền bay
 
-Lời gốc: CLAUDE.md §8 mục 56–60.
+Lời gốc: CLAUDE.md §8 mục 56–61.
 
 ![steps](figures/map-steps.png)
 
@@ -85,3 +85,32 @@ Chạy lại:
 ```
 python3 tools/map_gen.py --seed 1 --cells 300 --convexity 0.8 --out docs/data/map-s1 --figs docs/figures
 ```
+
+## Chia cluster trên miền có hồ (§8 mục 61)
+
+![partition](figures/partition.png)
+
+Pha 0 (§8 mục 38): chia node mặt đất thành các cluster có chặn trên kích thước. Làm bằng
+`tools/partition.py` trên miền "khối có hồ" (`docs/data/domain-lakes-*`). Chưa chọn CH.
+
+**Cách chia:**
+- Đơn vị là cell. Khoảng cách giữa hai cell là số bước đi qua các cell đất kề nhau, nên hồ phải đi vòng chứ không cắt ngang.
+- Số cluster k = ⌈số cell đất / chặn trên⌉.
+- Chạy k-medoids có sức chứa:
+  1. **Tâm ban đầu:** chọn bằng cách lấy điểm xa nhất dần, xuất phát từ một cell ngẫu nhiên.
+  2. **Gán:** mọi cluster mọc đồng thời từ tâm của mình theo thứ tự khoảng cách. Một cell thuộc về cluster đầu tiên chạm tới nó khi cluster đó còn chỗ, nên mỗi cluster liền mạch ngay từ khi mọc.
+  3. **Cân bằng tải:** cell bị các cluster đầy bao kín được nhập vào cluster kề nhỏ nhất. Sau đó, cluster nào vượt chặn thì đẩy tải dọc một chuỗi cluster kề nhau tới cluster còn chỗ, mỗi mắt xích chuyển một cell biên. Không bao giờ chuyển cell mà làm cluster cũ đứt đôi.
+  4. **Cập nhật tâm:** tâm mới là cell có tổng khoảng cách tới các cell khác trong cluster nhỏ nhất. Lặp lại bước 2–4 tới khi tâm không đổi.
+
+**Kết quả** (miền có 305 cell đất, 6 469 node):
+
+| Chặn trên | k | Cell mỗi cluster | Node mỗi cluster | Bán kính từ tâm (bước) |
+|---|---|---|---|---|
+| 80 cell (2,08 km²) | 4 | 80 / 80 / 80 / 65 | 1 388 – 1 725 | 6 – 12 |
+| 65 cell (1,69 km²) | 5 | 65 / 65 / 65 / 65 / 45 | 972 – 1 388 | 6 – 9 |
+
+- Cả hai cách chia đều đúng chặn trên.
+- Mọi cluster liền một mảnh.
+- Các hồ rơi vào biên giữa các cluster: hồ không có node nên chính nó thành ranh giới tự nhiên.
+
+Chạy lại: `cd tools && python3 partition.py --domain ../docs/data/domain-lakes --caps 80,65 --figs ../docs/figures`.

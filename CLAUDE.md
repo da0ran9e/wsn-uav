@@ -839,6 +839,12 @@ liệu nó có thể gen ra một miền dài, hay cong, hay có khoảng trốn
 thử gen một vài miền dài, cong, hay có khoảng trống (kiểu hồ nước, nhánh sông ...
 ```
 
+*61. 2026-10-13 · uav-l2 · thích miền "khối có hồ"; thử phân cluster trên miền đó · kèm ảnh*
+
+```text
+tôi thích cách bạn gen khối này, thử phân cluster trên hình này
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

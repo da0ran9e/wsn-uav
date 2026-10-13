@@ -869,6 +869,13 @@ với cluster màu vàng, rõ ràng là có thể bay xuyên chỗ gần khoản
 bóc riêng cluster vàng này ra phân tích kỹ từng bước thuật toán
 ```
 
+*66. 2026-10-13 · uav-coop2/uav-l2 · cải tiến: số thành viên Circle theo lượng thiếu của critical cell; bác đề xuất "hỏi Bank gần"*
+
+```text
+vậy ta có thể thử cơ chế với cải tiến như sau: Circle được chọn dựa trên lượng dữ liệu thiếu của Critical cell tương ứng, thiếu nhiều chọn nhiều, thiếu ít chọn ít 
+với đề xuất cải tiến 2 của bạn chưa xét đến việc mỗi cặp banks và axe tương ứng chỉ phục vụ một đoạn dữ liệu, nếu hỏi bank gần thì cho đường ngắn nhưng chưa chắc nó đã có dữ liệu mà ta cần
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

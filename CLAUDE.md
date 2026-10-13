@@ -845,6 +845,12 @@ thử gen một vài miền dài, cong, hay có khoảng trống (kiểu hồ n�
 tôi thích cách bạn gen khối này, thử phân cluster trên hình này
 ```
 
+*62. 2026-10-13 · uav-l2 · lấy các cluster vừa chia để thử nghiệm lại cơ chế trước (River)*
+
+```text
+sau đó lấy các cluster này để thử nghiệm lại cơ chế trước đó
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -183,3 +183,49 @@ Gateway theo chất lượng; River, Circle chuẩn bị sẵn. Số liệu: `do
   - Critical cell cuối của River giữ khoảng 31–32 s bất kể 4 hay 16 critical cell. Kéo thẳng tăng từ 32 lên 56 s.
   - Với 16 critical cell, trung bình là 19 s so với 30 s.
 - **Critical cell cuối luôn là (−7,8)**, ô sát biên xa CH. Nó gom xong trong cell lúc 8,6 s, phần còn lại là đường Circle → nó. Chỉ số "critical cell cuối" vì thế gần như chỉ đo ô này. Nên đọc kèm trung bình các critical cell.
+
+### Kết quả 20 lượt bay (CLAUDE.md §8 mục 55)
+
+- **Thiết lập:** 16 cấu hình × lượt 1–20 = 320 lần chạy, cùng một binary đóng băng, gateway chọn theo chất lượng liên kết.
+- **Hoàn tất:** mọi critical cell xong ở mọi lần chạy, giới hạn 900 s chưa lần nào chạm tới.
+- **Số liệu:** `docs/data/camp54/`, mỗi cấu hình một cặp file `-crit.csv` / `-runs.csv`. Hình `ns3-sweeps.png` ở trên đã vẽ lại từ 20 lượt này.
+
+Cùng một lượt bay, mọi cấu hình thấy cùng một kênh, nên so sánh **ghép cặp theo lượt** là phép
+đo đúng. Nó loại phần chênh lệch giữa các lượt (vạch 95 % trên hình rộng là vì phần này). Bảng
+dưới ghi B − A, trung bình ± khoảng tin cậy 95 %, kèm số lượt B tốt hơn A:
+
+| So sánh (A → B) | TB critical cell | Critical cell cuối | Khung |
+|---|---|---|---|
+| 7 màu → 3 màu | +0,6 ± 0,1 s (0/20) | +1,2 ± 0,3 s (0/20) | 0 |
+| 7 màu → 4 màu | +0,2 ± 0,1 s (1/20) | +0,2 ± 0,1 s (5/20) | 0 |
+| 7 màu → 13 màu | −0,04 s (15/20) | −0,1 ± 0,1 s (13/20) | 0 |
+| River 3,5 → 2,5 | −1,0 ± 0,1 s (20/20) | +0,6 ± 0,3 s (5/20) | +2,2 ± 0,6 k (+3 %) |
+| River 3,5 → 4,5 | −0,5 ± 0,0 s (20/20) | −0,8 ± 0,2 s (20/20) | +0,3 ± 0,2 k |
+| River 3,5 → 6,5 | −0,4 ± 0,1 s (20/20) | −0,5 ± 0,5 s (13/20) | +1,1 ± 0,2 k |
+| Kéo thẳng → River, 1 critical | −0,3 ± 0,1 s | −0,3 ± 0,1 s | +0,8 k (River tốn hơn) |
+| Kéo thẳng → River, 4 critical | −2,5 ± 0,8 s (19/20) | −2,7 ± 1,6 s (16/20) | −14,5 ± 0,9 k (−20 %, 20/20) |
+| Kéo thẳng → River, 7 critical | −4,0 ± 0,5 s (20/20) | −5,2 ± 1,4 s (19/20) | −17,8 ± 0,9 k (−21 %, 20/20) |
+| Kéo thẳng → River, 10 critical | −2,5 ± 0,4 s (20/20) | −4,2 ± 1,3 s (19/20) | −20,3 ± 1,0 k (−21 %, 20/20) |
+| Kéo thẳng → River, 16 critical | −10,6 ± 0,9 s (20/20) | −19,7 ± 2,9 s (20/20) | −45,4 ± 2,1 k (−22 %, 20/20) |
+
+Giá trị tuyệt đối (River, 7 màu, rộng 3,5, 7 critical): TB critical cell 16,4 ± 0,3 s, critical
+cell cuối 31,8 ± 1,4 s, 67,4 ± 0,9 k khung.
+
+**Kết luận cho ba câu hỏi:**
+1. **Lưới nhiều màu hơn 7 có tốt hơn không? Không.**
+   - 13 màu và 7 màu như nhau (chênh 0,04 s).
+   - Ít màu hơn thì chậm hơn một cách nhất quán: 4 màu chậm 0,2 s, 3 màu chậm 0,6–1,2 s, chậm ở cả 20/20 lượt.
+   - Số khung không đổi theo số màu, vì đường đi không phụ thuộc kênh.
+   - Từ 7 màu trở lên, lợi ích của việc tách xa cell cùng kênh bị triệt tiêu vì còn ít kênh cho cặp gateway.
+2. **River càng rộng càng tốt không? Không.**
+   - Độ rộng 3,5 tốn ít khung nhất nhưng có thời gian trung bình chậm nhất.
+   - Mọi độ rộng khác đều nhanh hơn một chút: 2,5 nhanh 1,0 s, 4,5 nhanh 0,5 s, 6,5 nhanh 0,4 s. Không có xu hướng một chiều.
+   - River hẹp (2,5) tốn thêm 3 % khung và critical cell cuối chậm hơn.
+   - Mọi khác biệt ở đây đều nhỏ, dưới 1 s và dưới 3 % khung. Trên đường bay thẳng, độ rộng gần như không quan trọng, vì Axe → Bank luôn là 0 khung.
+3. **Số critical cell: lợi thế của River tăng theo số critical cell.**
+   - Với 1 critical cell (CH nằm trên Axe), kéo thẳng tốn ít khung hơn.
+   - Từ 4 critical cell trở lên, River thắng về khung ở cả 20/20 lượt (−20 đến −22 %) và về thời gian ở 19–20/20 lượt.
+   - Khoảng cách thời gian lớn nhất ở 16 critical cell: TB −10,6 s, critical cell cuối −19,7 s.
+
+**Lưu ý:** đây là 20 lượt. Quy tắc của dự án (§6) là N ≥ 120 cho kết quả công bố. Khoảng tin
+cậy ghép cặp đã hẹp, nhưng số cho bài báo nên chạy lại với 120 lượt ở cấu hình được chọn.

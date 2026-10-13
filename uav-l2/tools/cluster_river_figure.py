@@ -6,7 +6,7 @@
 DATA holds, per cluster k: ck-lattice.csv, ck-nodes-s35.csv, ck-path-s35.csv (uav-coop-deploy --regionIn
 --nodesIn) and its River plan (uav-coop2 river_plan.plan, recomputed here). Draws FIGS/cap80-river.png:
 cells of each cluster (grey), River (light blue), Banks (green), Axe (blue), lakes (hatched), cluster
-borders, flight paths, CH (star) and the other critical cells (rings).
+borders, flight paths, CH (star) and the other critical cells (rings). Output: FIGS/<DATA folder>-river.png.
 """
 import argparse, csv, glob, os, re, sys
 
@@ -85,7 +85,7 @@ def main():
     ax.set_aspect("equal"); ax.set_facecolor(SURF); ax.set_xticks([]); ax.set_yticks([])
     for sp in ax.spines.values():
         sp.set_visible(False)
-    out = os.path.join(a.figs, "cap80-river.png")
+    out = os.path.join(a.figs, os.path.basename(os.path.normpath(a.data)) + "-river.png")
     strip_text(fig)
     fig.savefig(out, facecolor=SURF, bbox_inches="tight", pad_inches=.08)
     print(f"  {out}")

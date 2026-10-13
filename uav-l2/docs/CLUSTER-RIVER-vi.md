@@ -1,6 +1,6 @@
 # River trên các cluster của miền có hồ — lượt 1
 
-Lời gốc: CLAUDE.md §8 mục 61–63. Cơ chế River: [`../../uav-coop2/docs/L3-vi.md`](../../uav-coop2/docs/L3-vi.md);
+Lời gốc: CLAUDE.md §8 mục 61–64. Cơ chế River: [`../../uav-coop2/docs/L3-vi.md`](../../uav-coop2/docs/L3-vi.md);
 cấu hình ns-3 giống [`RIVER-NS3-vi.md`](../../uav-coop2/docs/RIVER-NS3-vi.md): MAC 802.15.4 đầy đủ,
 7 màu, gateway chọn theo chất lượng liên kết.
 
@@ -52,3 +52,36 @@ Dữ liệu: `docs/data/cap80/` (đầu vào triển khai, kế hoạch và kế
   - Chạy lại 3 cấu hình × 2 lượt của đợt 20 lượt bằng binary đã sửa: kết quả giống hệt, nên số liệu cũ vẫn dùng được.
 - **`river_plan.load`:** trước đây đo độ rộng cell bằng cell (0,0) và (1,0); nay dùng một cặp cell kề bất kỳ, vì lưới của cluster có thể không chứa gốc toạ độ.
 - **`coop-deploy`:** với miền đưa từ ngoài vào, mảng `frontierSize` rỗng làm crash khi ghi `growth.csv`; nay điền bằng 0.
+
+## C3 (màu vàng): bay xuyên chỗ gần hồ để River dài hơn (§8 mục 64)
+
+![c3long](figures/cap80-c3long-river.png)
+
+`uav-coop-deploy` có thêm `--bearing=B` (dùng cùng `--angle=180`): bay thẳng qua CH theo hướng B,
+thay vì vào ở một điểm biên ngẫu nhiên.
+- Điểm vào và điểm ra là chỗ đường thẳng rời cluster **xa nhất** về hai phía, nên UAV bay vượt qua hồ được (vật cản mềm, mục 38).
+- Hướng được chọn bằng cách quét 0–178° (bước 2°), lấy hướng có đoạn bay **nằm trong cluster** dài nhất.
+- Chạy mặc định vẫn cho đúng file cũ.
+
+**Đoạn bay trong cluster, hiện tại so với hướng tốt nhất qua CH** (đo bằng hình học):
+
+| Cluster | Hiện tại | Hướng tốt nhất | Tăng |
+|---|---|---|---|
+| C1 | 1 200 m | 1 930 m (10°) | +61 % |
+| C2 | 2 135 m | 2 245 m (58°) | +5 % |
+| C3 | 1 247 m | 2 340 m (76°) | +88 % |
+| C4 | 1 043 m | 1 870 m (74°) | +79 % |
+
+**C3 chạy lại theo hướng 76°, lượt 1** (dữ liệu: `docs/data/cap80-c3long/`):
+
+| C3 | Đường cũ | Hướng 76° |
+|---|---|---|
+| Đoạn bay trong cluster | 1,2 km | 2,3 km |
+| Axe | 9 cell | 17 cell |
+| \|D\| (gói cluster nhận được trong một lượt) | 2 494 | 4 685 (+88 %) |
+| River: TB / cuối | 7,4 / 25,4 s | 28,3 / 37,2 s |
+| Kéo thẳng: TB / cuối | 8,7 / 31,4 s | 36,0 / 50,3 s |
+| Khung River so với kéo thẳng | +1 % | −12 % (89,7 k so với 102,2 k) |
+
+- Đường bay dài hơn cho cluster gần gấp đôi dữ liệu trong một lượt bay. Thời gian gom đủ vì thế dài hơn, vì có nhiều dữ liệu hơn để phân phối.
+- Lợi thế của River tăng rõ: từ hoà về số khung thành tiết kiệm 12 %, và critical cell cuối nhanh hơn 13 s thay vì 6 s.

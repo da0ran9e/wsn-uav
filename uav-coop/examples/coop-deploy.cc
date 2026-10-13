@@ -22,6 +22,7 @@
 // Given region and nodes (uav-l2 clusters): --regionIn=CELLS.csv (columns q,r) replaces steps 1-2's
 // growth and filling; --nodesIn=NODES.csv (columns x,y,q,r,obs,cpu,comm; one --spacings value) replaces
 // the random nodes and capabilities. Roles, path, routes and every other check run as usual.
+// --bearing=B (with --angle=180) flies straight across the CH along bearing B instead of from a random entry.
 
 #include "../models/common/coop-params.h"
 #include "../models/common/coop-rng.h"
@@ -417,6 +418,7 @@ int main(int argc, char* argv[]) {
     uint32_t seed = 1;
     std::string out = "deploy";
     std::string regionIn, nodesIn;
+    double bearing = -1;
     CommandLine cmd(__FILE__);
     cmd.AddValue("radius", "cell corner radius R, m", radius);
     cmd.AddValue("cells", "cells in the random region", cells);
@@ -434,8 +436,12 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("out", "output prefix", out);
     cmd.AddValue("regionIn", "use these cells (CSV q,r) as the region instead of growing one", regionIn);
     cmd.AddValue("nodesIn", "use these nodes (CSV x,y,q,r,obs,cpu,comm) instead of random ones", nodesIn);
+    cmd.AddValue("bearing", "with --angle=180: fly across the CH along this bearing, deg ccw from +x; the entry "
+                 "is where the line last leaves the cluster behind the CH (lakes are flown over); -1 = random "
+                 "entry from --pick", bearing);
     cmd.Parse(argc, argv);
     CHECK(nodesIn.empty() || (!regionIn.empty() && spacings.find(',') == std::string::npos));
+    CHECK(bearing < 0 || angle == 180);
     auto readCsv = [](const std::string& file) {
         std::vector<std::map<std::string, std::string>> rows;
         std::ifstream in(file);
@@ -697,7 +703,8 @@ int main(int argc, char* argv[]) {
         return Point{c.x + best * dx, c.y + best * dy};
     };
     size_t eIn = 0, eOut = 0;
-    const Point entry = onEdge(eIn);
+    const Point entry = bearing < 0 ? onEdge(eIn)
+                                    : onRay(roles[0].nodes[roles[0].ch].pos, (bearing + 180) * M_PI / 180, eIn);
     Point exitP;
     if (angle < 0) exitP = onEdge(eOut);
     else {

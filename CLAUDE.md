@@ -857,6 +857,12 @@ sau đó lấy các cluster này để thử nghiệm lại cơ chế trước �
 các hình bạn cho tôi xem không nên có chữ
 ```
 
+*64. 2026-10-13 · uav-l2 · cluster màu vàng (C3): bay xuyên chỗ gần khoảng trống để River dài hơn*
+
+```text
+với cluster màu vàng, rõ ràng là có thể bay xuyên chỗ gần khoảng trống để cho river dài hơn,
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

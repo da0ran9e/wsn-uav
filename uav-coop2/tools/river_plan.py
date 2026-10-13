@@ -8,6 +8,9 @@ Algorithm 2  Bank_+-(a) and Path_+-(a): perpendiculars to the Axe's sum vector, 
 Algorithm 3  critical cells: the CH's cell, global outliers, local outliers
 Algorithm 4  Circle: Neig(k) ordered along u, the Axe cut into consecutive groups, each
              Seg(a) of a group fetched from a's Bank on the side nearer the member
+Adaptive Circle (CLAUDE.md §8 items 66-67): for every size n up to the cells of rings 1-2, the
+             members (ring 1 first, spread evenly round k, then ring 2) and their groups; the
+             critical cell's CL picks n at run time from its lack
 """
 import csv, math, os
 from collections import deque
@@ -138,5 +141,23 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2):
                 src.append((a, side, b, cellpath(b, m, S - {k}, c) if b != m else [m]))
             tasks.append((m, groups[j], src))
         circle[k] = tasks
+    # Adaptive Circle: candidates in rings 1-2, members for each size n, Banks for every candidate
+    adapt = {}
+    for k in crit:
+        r1 = [g for g in ring(k, 1) if g in S]
+        r2 = [g for g in ring(k, 2) if g in S]
+        spread = lambda rg, n: [rg[i * len(rg) // n] for i in range(n)]
+        sets = {}
+        for n in range(1, len(r1) + len(r2) + 1):
+            mem = spread(r1, n) if n <= len(r1) else r1 + spread(r2, n - len(r1))
+            mem = sorted(mem, key=lambda g: float(np.dot(np.array(c[g]), u)))
+            sets[n] = [(m, (i * len(axe) // n, (i + 1) * len(axe) // n - 1)) for i, m in enumerate(mem)]
+        src = {}
+        for m in r1 + r2:
+            for a in axe:
+                side = min((0, 1), key=lambda sd_: (hexdist(bank[(a, sd_)], m), math.dist(c[bank[(a, sd_)]], c[m])))
+                b = bank[(a, side)]
+                src[(m, a)] = (b, cellpath(b, m, S - {k}, c) if b != m else [m])
+        adapt[k] = dict(sets=sets, src=src, link={m: cellpath(k, m, S, c) for m in r1 + r2})
     return dict(axe=axe, seg=seg, u=u, omega=omega, bank=bank, bpath=bpath, river=river, crit=crit, ch=chc,
-                circle=circle, width=width)
+                circle=circle, adapt=adapt, width=width)

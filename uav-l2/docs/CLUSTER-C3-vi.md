@@ -156,3 +156,45 @@ Dữ liệu đầu vào và kết quả: `docs/data/cap80-c3long/`. Chạy lại
 python3 tools/cluster_steps.py --data docs/data/cap80-c3long --k 3 --bits PASS/pass3b-bits-r1.bin \
     --trace "TRACE/{s}" --figs docs/figures --name c3
 ```
+
+## Circle động theo lượng thiếu (CLAUDE.md §8 mục 66–67), C3 bay 76°, lượt 1
+
+**Cơ chế (`--prep=adaptive`).**
+1. Lúc bắt đầu, mỗi node của critical cell gửi CL một khung tóm tắt (1 khung điều khiển).
+2. Đủ tóm tắt thì CL đếm số gói của D mà không node nào trong cell có, gọi là lack.
+3. CL chọn n = clamp(⌈lack / share⌉, 2, 12) thành viên trong vòng 1–2. Vòng 1 được lấy trước, chia đều quanh cell; sau đó tới vòng 2.
+4. Axe được chia thành n nhóm liên tiếp theo vị trí thành viên dọc u.
+5. CL gửi mỗi thành viên phần thiếu thuộc nhóm của nó. Thành viên lấy gói từ node trong cell mình, không có thì lấy từ Bank của Seg tương ứng (như cặp Bank–Axe gốc, không hỏi Bank gần), rồi chuyển về critical cell.
+
+Yêu cầu đi ngay sau tóm tắt, song song với việc gom nội cell, không chờ gom xong.
+
+Plan: `river_export.py` ghi thêm các dòng CSET / CSRC / CLINK. Các dòng cũ không đổi, nên rf/ro/d cho số hop y hệt bản trước. Dữ liệu ở `docs/data/cap80-c3long/adaptive/`. Hình: `figures/c3-circles.png`, gồm 3 panel: Circle cố định vòng 1 | thích ứng share 200 | n = 12.
+
+| cấu hình | thành viên (4,6) / CH / (8,−2) / (9,−7) | xong cuối (s) | khung | circlefill | pull |
+|---|---|---|---|---|---|
+| direct | – | 50,3 | 102 188 | 0 | 96 994 |
+| River chuẩn bị đủ (rf) | 5 / 6 / 6 / 6 | 36,9 | 89 666 | 66 684 | 12 622 |
+| River theo yêu cầu (ro) | 5 / 6 / 6 / 6 | 44,2 | 80 383 | 61 639 | 12 622 |
+| thích ứng, share 400 | 4 / 2 / 2 / 3 | 47,8 | 84 238 | 64 757 | 13 354 |
+| thích ứng, share 200 | 7 / 4 / 2 / 6 | 39,2 | 75 817 | 56 423 | 13 201 |
+| cố định 6, yêu cầu sớm | 6 / 6 / 6 / 6 | 42,1 | 78 845 | 61 122 | 11 476 |
+| cố định 12, yêu cầu sớm | 11 / 12 / 12 / 12 | **33,0** | **65 540** | 40 322 | 18 479 |
+
+Lack theo cell: (4,6) 1313, CH 636, (8,−2) 1, (9,−7) 1127, trên D = 4685.
+
+Thời điểm từng critical cell xong (s):
+
+| cấu hình | (4,6) | CH | (8,−2) | (9,−7) |
+|---|---|---|---|---|
+| rf | 36,9 | 35,4 | 7,8 | 35,0 |
+| share 400 | 45,6 | 37,7 | 6,0 | 47,8 |
+| share 200 | 39,2 | 37,9 | 6,0 | 34,3 |
+| 12 | 33,0 | 29,3 | 5,9 | 28,1 |
+
+**Đọc kết quả (một lượt, chưa đủ để kết luận):**
+- Trên lượt này, Circle càng nhiều thành viên càng nhanh, và cũng **ít khung hơn**: n = 12 so với rf là −11 % thời gian và −27 % khung.
+- Khung giảm vì mỗi thành viên phụ trách ít Seg hơn và lấy chúng từ Bank thật sự gần nó: circlefill giảm từ 61k xuống 40k. Phần pull tăng (18k), vì thành viên vòng 2 phải đi qua vòng 1.
+- Thu nhỏ Circle khi lack nhỏ (share 400) làm chậm hẳn: CH chỉ có 2 thành viên, mỗi thành viên ôm nửa Axe.
+- Với lượt này, lý do để cắt nhỏ Circle (tiết kiệm tài nguyên) không thể hiện ở số khung.
+- Ở n = 12 các Circle **chồng lên nhau** (CH nằm trong Circle của (9,−7) và ngược lại). Một thành viên phục vụ hai critical cell đã có sẵn gói khi được hỏi lần hai, nên phần lợi có thể đến một phần từ chính việc chồng này. Đây chính là câu hỏi ghép Circle đang để dành.
+- (8,−2) nằm trên Axe, chỉ thiếu 1 gói; mọi cấu hình đều xong ở khoảng 6–8 s.

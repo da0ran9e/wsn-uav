@@ -876,6 +876,12 @@ vậy ta có thể thử cơ chế với cải tiến như sau: Circle được 
 với đề xuất cải tiến 2 của bạn chưa xét đến việc mỗi cặp banks và axe tương ứng chỉ phục vụ một đoạn dữ liệu, nếu hỏi bank gần thì cho đường ngắn nhưng chưa chắc nó đã có dữ liệu mà ta cần
 ```
 
+*67. 2026-10-13 · uav-coop2/uav-l2 · Circle động: CL của critical cell ước lượng thiếu, gửi yêu cầu lập circle tới vài neighbor; nhiều thì 12, ít thì dưới 6, tối thiểu 1–2 (trả lời câu hỏi của Claude)*
+
+```text
+CL của Critical cell ước lượng nhanh lượng dữ liệu còn thiếu của cells rồi gửi các yêu cầu này tới một vài neighbor để yêu cầu lập circle , nhiều thì 12, ít thì dưới 6, thường sẽ hiếm khi có trường hợp rất it, ngay cả khi nó nằm trên axe thì nó cũng cần 1-2 circle để yêu cầu lượng dữ liệu từ các đoạn khác của river
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

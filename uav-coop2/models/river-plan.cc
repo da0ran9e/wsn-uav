@@ -73,6 +73,27 @@ Plan ReadPlan(const std::string& file) {
             x.a = ReadHex(in);
             x.path = ReadPath(in);
             p.direct.push_back(x);
+        } else if (tag == "CSET") {
+            PlanCset x;
+            x.k = ReadHex(in);
+            in >> x.n;
+            x.m = ReadHex(in);
+            in >> x.first >> x.last;
+            p.cset.push_back(x);
+        } else if (tag == "CSRC") {
+            PlanCirc x;
+            x.k = ReadHex(in);
+            x.m = ReadHex(in);
+            x.a = ReadHex(in);
+            x.b = ReadHex(in);
+            x.path = ReadPath(in);
+            p.csrc.push_back(x);
+        } else if (tag == "CLINK") {
+            PlanLink x;
+            x.k = ReadHex(in);
+            x.m = ReadHex(in);
+            x.path = ReadPath(in);
+            p.clink.push_back(x);
         } else {
             Bad(file, line);
         }

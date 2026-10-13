@@ -32,6 +32,10 @@
 //                          what they lack from their members (Alg. 7)
 //   river --prep=ondemand  as above, but a member fetches only what its critical cell asks for,
 //                          after it asks
+//   river --prep=adaptive  Circle sized at run time (CLAUDE.md §8 items 66-67): the critical cell's
+//                          nodes send their CL a summary; the CL counts what no node of the cell
+//                          has, takes n = ceil(lack / share) members (--circleMin..--circleMax, rings
+//                          1-2) and asks each for its group's part; members serve as on demand
 //   direct                 each critical cell asks every Axe cell for what it lacks of Seg(a)
 // Writes OUT-crit.csv (per run and critical cell) and OUT-runs.csv (per run).
 
@@ -47,6 +51,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstring>
 #include <cstdio>
 #include <deque>
@@ -55,6 +60,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -201,7 +207,8 @@ int main(int argc, char* argv[]) {
     std::string nodesCsv, routesCsv, gwCsv, planFile, bits, out = "river-ns3", scheme = "river",
                                                            prep = "full", trace;
     uint32_t firstRun = 1, runs = 1;
-    double limitS = 1800, maxLossDb = 130;
+    double limitS = 1800, maxLossDb = 130, share = 400;
+    uint32_t circleMin = 2, circleMax = 12;
     int colours = 7;
     std::string gwSelect = "deploy";
     CommandLine cmd;
@@ -213,7 +220,10 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("firstRun", "first mission", firstRun);
     cmd.AddValue("runs", "missions", runs);
     cmd.AddValue("scheme", "river | direct", scheme);
-    cmd.AddValue("prep", "river only: full | ondemand", prep);
+    cmd.AddValue("prep", "river only: full | ondemand | adaptive", prep);
+    cmd.AddValue("share", "adaptive: packets of the lack per Circle member", share);
+    cmd.AddValue("circleMin", "adaptive: fewest Circle members", circleMin);
+    cmd.AddValue("circleMax", "adaptive: most Circle members", circleMax);
     cmd.AddValue("limit", "stop a mission after this many seconds", limitS);
     cmd.AddValue("maxLoss", "SpectrumChannel MaxLossDb", maxLossDb);
     cmd.AddValue("colours", "cell channels: 3, 4, 7 or 13 colours", colours);
@@ -224,7 +234,8 @@ int main(int argc, char* argv[]) {
                  trace);
     cmd.Parse(argc, argv);
     CHECK(scheme == "river" || scheme == "direct");
-    CHECK(prep == "full" || prep == "ondemand");
+    CHECK(prep == "full" || prep == "ondemand" || prep == "adaptive");
+    CHECK(share > 0 && 1 <= circleMin && circleMin <= circleMax);
     CHECK(colours == 3 || colours == 4 || colours == 7 || colours == 13);
     CHECK(gwSelect == "deploy" || gwSelect == "quality");
 
@@ -283,6 +294,8 @@ int main(int argc, char* argv[]) {
         used.insert(x.path.begin(), x.path.end());
         used.insert(x.k);
     }
+    for (auto& x : plan.csrc) used.insert(x.path.begin(), x.path.end());
+    for (auto& x : plan.clink) used.insert(x.path.begin(), x.path.end());
     if (scheme == "direct")
         for (auto& x : plan.direct) used.insert(x.path.begin(), x.path.end());
     for (const Hex& h : used) CHECK(clOf.count(h));
@@ -294,6 +307,9 @@ int main(int argc, char* argv[]) {
     for (auto& x : plan.banks) checkPath(x.path);
     for (auto& x : plan.circ) checkPath(x.path);
     for (auto& x : plan.direct) checkPath(x.path);
+    for (auto& x : plan.csrc) checkPath(x.path);
+    for (auto& x : plan.clink) checkPath(x.path);
+    if (prep == "adaptive") CHECK(!plan.cset.empty());
 
     // Channels from the PECEE cell grid.
     const int colourK = colours == 13 ? 4 : colours == 7 ? 3 : 2;
@@ -348,7 +364,7 @@ int main(int argc, char* argv[]) {
     FILE* fc = std::fopen((out + "-crit.csv").c_str(), "w");
     FILE* fr = std::fopen((out + "-runs.csv").c_str(), "w");
     CHECK(fc && fr);
-    std::fprintf(fc, "run,scheme,q,r,D,lackCL,lackCell,gatherDoneS,doneS,missing\n");
+    std::fprintf(fc, "run,scheme,q,r,D,lackCL,lackCell,gatherDoneS,doneS,missing,circle\n");
     std::fprintf(fr, "run,scheme,D,simS,wallS,hops,gather,bankfill,circlefill,pull,control,macFail\n");
 
     for (uint32_t run = firstRun; run < firstRun + runs; ++run) {
@@ -724,7 +740,9 @@ int main(int argc, char* argv[]) {
             for (uint32_t s = 0; s < N; ++s) x[s] |= m[s];
         };
         for (const Hex& k : plan.crit) needOr(k, inD);
-        std::map<Hex, uint32_t> lackCL, lackCell;
+        std::map<Hex, uint32_t> lackCL, lackCell, circleN;
+        std::map<Hex, int> summaryLeft;
+        std::vector<std::function<void()>> atStart;
         for (const Hex& k : plan.crit) {
             uint32_t a = 0, b = 0;
             for (uint32_t s = 0; s < N; ++s) {
@@ -757,7 +775,8 @@ int main(int argc, char* argv[]) {
             }
             // Circle members, and Algorithm 7 at each critical cell.
             std::map<std::pair<Hex, Hex>, std::vector<const uavcoop2::PlanCirc*>> tasks;   // (k, m)
-            for (auto& t : plan.circ) tasks[{t.k, t.m}].push_back(&t);
+            if (prep != "adaptive")
+                for (auto& t : plan.circ) tasks[{t.k, t.m}].push_back(&t);
             for (auto& [km, ts] : tasks) {
                 const Hex k = km.first, m = km.second;
                 std::vector<uint8_t> group(N, 0);
@@ -815,6 +834,81 @@ int main(int argc, char* argv[]) {
                     });
                 });
             }
+            for (auto& [km, ts] : tasks) circleN[km.first]++;
+            if (prep == "adaptive") {
+                std::map<Hex, std::map<uint32_t, std::vector<const uavcoop2::PlanCset*>>> sets;   // k -> n
+                for (auto& x : plan.cset) sets[x.k][x.n].push_back(&x);
+                std::map<std::pair<Hex, Hex>, int> toM, toK;
+                for (auto& x : plan.clink) {
+                    toM[{x.k, x.m}] = addPath(x.path);
+                    toK[{x.k, x.m}] = addPath(rev(x.path));
+                }
+                std::map<std::tuple<Hex, Hex, Hex>, std::tuple<Hex, int, int>> src;   // (k, m, a) -> (b, b->m, m->b)
+                for (auto& x : plan.csrc) src[{x.k, x.m, x.a}] = {x.b, addPath(x.path), addPath(rev(x.path))};
+                // Member m of k: k asks for part; m passes on what it holds, gets the rest from its own
+                // nodes, else from the Bank of the packet's Axe cell.
+                auto serve = [&, toK, src](const Hex& k, const Hex& m, std::vector<uint32_t> part) {
+                    const int back = toK.at({k, m});
+                    for (uint32_t s : part) when(m, s, [&, s, back] { send(back, (int32_t)s, kPull); });
+                    std::vector<uint8_t> fromCell(N, 0);
+                    std::map<Hex, std::vector<uint32_t>> X;   // Axe cell -> from its Bank
+                    for (uint32_t s : part) {
+                        if (hold(m)[s]) continue;
+                        bool inCell = false;
+                        for (int v : members[m]) inCell |= rx[v][s] != 0;
+                        if (inCell) {
+                            fromCell[s] = 1;
+                            continue;
+                        }
+                        for (auto& x : plan.axe)
+                            if (s >= x.first && s <= x.last) X[x.a].push_back(s);
+                    }
+                    gather(m, fromCell);
+                    for (auto& [a, xs] : X) {
+                        const auto [b, fwd, bk] = src.at({k, m, a});
+                        send(bk, -1, kControl, [&, b = b, fwd = fwd, xs = xs] {
+                            for (uint32_t s : xs) when(b, s, [&, s, fwd] { send(fwd, (int32_t)s, kCircleFill); });
+                        });
+                    }
+                };
+                // k's CL, once its nodes' summaries are in: size the Circle from the lack, ask the members.
+                auto decide = [&, sets, serve, toM](const Hex& k) {
+                    std::vector<uint8_t> lk(N, 0);
+                    uint32_t lack = 0;
+                    for (uint32_t s = 0; s < N; ++s) {
+                        if (!inD[s]) continue;
+                        bool any = false;
+                        for (int v : members[k]) any |= rx[v][s] != 0;
+                        lk[s] = !any;
+                        lack += !any;
+                    }
+                    if (lack == 0) return;
+                    const auto& byN = sets.at(k);
+                    uint32_t n = std::clamp((uint32_t)std::ceil(lack / share), circleMin, circleMax);
+                    n = std::min(n, byN.rbegin()->first);
+                    circleN[k] = byN.at(n).size();
+                    for (auto* x : byN.at(n)) {
+                        std::vector<uint32_t> part;
+                        for (uint32_t i = x->first; i <= x->last; ++i)
+                            for (uint32_t s = plan.axe[i].first; s <= plan.axe[i].last; ++s)
+                                if (lk[s]) part.push_back(s);
+                        const Hex m = x->m;
+                        send(toM.at({k, m}), -1, kControl, [&, k, m, part, serve] { serve(k, m, part); });
+                    }
+                };
+                for (const Hex& k : plan.crit) {
+                    atStart.push_back([&, k, decide] {
+                        const int cl = clOf.at(k);
+                        summaryLeft[k] = (int)members[k].size() - 1;
+                        if (summaryLeft[k] == 0) decide(k);
+                        for (int v : members[k])
+                            if (v != cl)
+                                forward(v, newJob(-1, -1, kControl, [&, k, decide] {
+                                            if (--summaryLeft[k] == 0) decide(k);
+                                        }), 0);
+                    });
+                }
+            }
         } else {
             for (auto& x : plan.axe) needOr(x.a, segMask(x.a));
             for (auto& d : plan.direct) {
@@ -870,6 +964,7 @@ int main(int argc, char* argv[]) {
         });
         Simulator::Schedule(Seconds(kT0), [&] {
             for (auto& [c, m] : need) gather(c, m);
+            for (auto& f : atStart) f();
             for (const Hex& k : plan.crit)
                 if (!left[k]) finish(k);
             progress();
@@ -883,9 +978,9 @@ int main(int argc, char* argv[]) {
         for (const Hex& k : plan.crit) {
             uint32_t miss = 0;
             for (uint32_t s = 0; s < N; ++s) miss += inD[s] && !hold(k)[s];
-            std::fprintf(fc, "%u,%s,%d,%d,%u,%u,%u,%.2f,%.2f,%u\n", run, sch.c_str(), k.q, k.r, Dn, lackCL[k],
+            std::fprintf(fc, "%u,%s,%d,%d,%u,%u,%u,%.2f,%.2f,%u,%u\n", run, sch.c_str(), k.q, k.r, Dn, lackCL[k],
                          lackCell[k], gatherDone.count(k) ? gatherDone[k] : -1.0, doneAt.count(k) ? doneAt[k] : -1.0,
-                         miss);
+                         miss, circleN[k]);
         }
         std::fprintf(fr, "%u,%s,%u,%.2f,%.1f,%llu", run, sch.c_str(), Dn, simS, wallS, (unsigned long long)hops);
         for (int p = 0; p < kPhases; ++p) std::fprintf(fr, ",%llu", (unsigned long long)phaseHops[p]);

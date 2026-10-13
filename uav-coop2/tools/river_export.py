@@ -10,6 +10,9 @@ One record per line, cells as "q r":
   CRIT kq kr
   CIRC kq kr mq mr aq ar bq br  n c...       member m of k fetches Seg(a) from Bank b along b -> m
   DIRECT kq kr aq ar  n c...                 direct pull: k -> a path (data goes back along it)
+  CSET kq kr n mq mr first last              adaptive Circle of n members: m serves Axe cells first..last
+  CSRC kq kr mq mr aq ar bq br  n c...       candidate m of k fetches Seg(a) from Bank b along b -> m
+  CLINK kq kr mq mr  n c...                  k -> candidate m
 """
 import argparse, os, sys
 
@@ -46,6 +49,17 @@ def main():
             for x in P["axe"]:
                 if x != k:
                     f.write(f"DIRECT {k[0]} {k[1]} {x[0]} {x[1]} {cells(cellpath(k, x, geo['S'], geo['c']))}\n")
+        for k in P["crit"]:
+            A = P["adapt"][k]
+            for n, mem in A["sets"].items():
+                for m, (g0, g1) in mem:
+                    if g1 < g0:   # more members than Axe cells: this one serves nothing
+                        continue
+                    f.write(f"CSET {k[0]} {k[1]} {n} {m[0]} {m[1]} {g0} {g1}\n")
+            for (m, x), (b, path) in sorted(A["src"].items()):
+                f.write(f"CSRC {k[0]} {k[1]} {m[0]} {m[1]} {x[0]} {x[1]} {b[0]} {b[1]} {cells(path)}\n")
+            for m, path in sorted(A["link"].items()):
+                f.write(f"CLINK {k[0]} {k[1]} {m[0]} {m[1]} {cells(path)}\n")
     print(f"{a.out}: {len(geo['uav'])} packets, Axe {len(P['axe'])}, critical {len(P['crit'])}")
 
 

@@ -31,6 +31,14 @@ struct PlanDirect {
     Hex k, a;
     std::vector<Hex> path;              // k -> a
 };
+struct PlanCset {
+    Hex k, m;
+    uint32_t n = 0, first = 0, last = 0;   // in k's Circle of n members, m serves Axe cells first..last
+};
+struct PlanLink {
+    Hex k, m;
+    std::vector<Hex> path;              // k -> candidate m
+};
 struct Plan {
     uint32_t packets = 0;
     std::vector<PlanAxe> axe;
@@ -38,6 +46,9 @@ struct Plan {
     std::vector<Hex> crit;
     std::vector<PlanCirc> circ;
     std::vector<PlanDirect> direct;
+    std::vector<PlanCset> cset;         // adaptive Circle: members for every size
+    std::vector<PlanCirc> csrc;         // adaptive Circle: Bank of Seg(a) for every candidate
+    std::vector<PlanLink> clink;
 };
 
 // Reads the plan file; aborts with a message on a malformed line.

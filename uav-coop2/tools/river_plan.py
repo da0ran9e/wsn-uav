@@ -47,7 +47,8 @@ def load(deploy, path_csv, step=0.5):
     """Lattice, cells, nodes and the flight path sampled at one point per packet."""
     lat = list(csv.DictReader(open(os.path.join(deploy, "deploy-lattice.csv"))))
     c = {(int(x["q"]), int(x["r"])): (float(x["cx"]), float(x["cy"])) for x in lat}
-    w = math.dist(c[(0, 0)], c[(1, 0)])
+    h0 = next(h for h in c if (h[0] + 1, h[1]) in c)   # any two neighbours (the lattice may miss the origin)
+    w = math.dist(c[h0], c[(h0[0] + 1, h0[1])])
     R = w / math.sqrt(3)
     for h, (x, y) in c.items():
         assert hex_of(x, y, R) == h

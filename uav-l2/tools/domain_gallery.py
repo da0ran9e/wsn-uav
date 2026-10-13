@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection, PolyCollection
 import numpy as np
 
-from map_gen import AREA, W, add_args, centre, corners, generate, hull_cells, outline, holes
+from map_gen import strip_text, AREA, W, add_args, centre, corners, generate, hull_cells, outline, holes
 
 INK, INK2, SURF = "#0b0b0b", "#52514e", "#fcfcfb"
 LAND, WATER, DOT = "#c9dcf3", "#3987e5", "#1c5cab"
@@ -112,6 +112,7 @@ def main():
     fig.suptitle("Miền tầng 2 sinh ngẫu nhiên: mỗi miền mọc Eden 300 cell (≈ 5 cluster); nét đứt = xương sống, "
                  "xanh đậm = hồ/sông", x=.01, ha="left", fontsize=11, color=INK)
     out = os.path.join(a0.figs, "domain-gallery.png")
+    strip_text(fig)
     fig.savefig(out, facecolor=SURF, bbox_inches="tight", pad_inches=.08)
     print(f"  {out}")
 

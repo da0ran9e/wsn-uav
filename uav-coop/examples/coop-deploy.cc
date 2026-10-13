@@ -18,6 +18,10 @@
 // and checks the geometry, the region, the deployment and the path before writing.
 //
 //   uav-coop-deploy --radius=100 --cells=60 --convexity=1 --spacings=20,35,50 --rho=255 --pick=0 --out=deploy
+//
+// Given region and nodes (uav-l2 clusters): --regionIn=CELLS.csv (columns q,r) replaces steps 1-2's
+// growth and filling; --nodesIn=NODES.csv (columns x,y,q,r,obs,cpu,comm; one --spacings value) replaces
+// the random nodes and capabilities. Roles, path, routes and every other check run as usual.
 
 #include "../models/common/coop-params.h"
 #include "../models/common/coop-rng.h"
@@ -34,6 +38,7 @@
 #include <cmath>
 #include <cstdio>
 #include <deque>
+#include <fstream>
 #include <map>
 #include <set>
 #include <sstream>
@@ -411,6 +416,7 @@ int main(int argc, char* argv[]) {
     std::string spacings = "20,35,50";
     uint32_t seed = 1;
     std::string out = "deploy";
+    std::string regionIn, nodesIn;
     CommandLine cmd(__FILE__);
     cmd.AddValue("radius", "cell corner radius R, m", radius);
     cmd.AddValue("cells", "cells in the random region", cells);
@@ -426,7 +432,28 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("spacings", "node spacing(s), m, comma-separated: one node per s^2", spacings);
     cmd.AddValue("seed", "random seed", seed);
     cmd.AddValue("out", "output prefix", out);
+    cmd.AddValue("regionIn", "use these cells (CSV q,r) as the region instead of growing one", regionIn);
+    cmd.AddValue("nodesIn", "use these nodes (CSV x,y,q,r,obs,cpu,comm) instead of random ones", nodesIn);
     cmd.Parse(argc, argv);
+    CHECK(nodesIn.empty() || (!regionIn.empty() && spacings.find(',') == std::string::npos));
+    auto readCsv = [](const std::string& file) {
+        std::vector<std::map<std::string, std::string>> rows;
+        std::ifstream in(file);
+        CHECK(in.good());
+        std::string line, x;
+        std::vector<std::string> head;
+        while (std::getline(in, line)) {
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+            std::vector<std::string> f;
+            std::stringstream ls(line);
+            while (std::getline(ls, x, ',')) f.push_back(x);
+            if (head.empty()) { head = f; continue; }
+            std::map<std::string, std::string> r;
+            for (size_t i = 0; i < head.size() && i < f.size(); ++i) r[head[i]] = f[i];
+            rows.push_back(r);
+        }
+        return rows;
+    };
     CHECK(radius > 0 && cells >= 1 && convexity >= 0 && convexity <= 1 && rho > 0 && chMargin >= 0);
     CHECK(angle == -1 || (angle > 0 && angle < 360));
 
@@ -441,8 +468,17 @@ int main(int argc, char* argv[]) {
     // ---- step 2: a random contiguous region around the origin's cell ---------
     CoopRng rr(seed, kStreamRegion);
     const Hex origin{0, 0};
-    const Region reg = MakeRegion(g, cells, convexity, rr);
-    CheckRegion(g, reg, cells, origin, convexity);
+    Region given;
+    if (!regionIn.empty()) {
+        for (auto& r : readCsv(regionIn)) given.cells.push_back({std::stoi(r.at("q")), std::stoi(r.at("r"))});
+        CHECK(!given.cells.empty() && IsConnected(given.cells));
+        given.nGrown = (uint32_t)given.cells.size();
+        given.frontierSize.assign(given.nGrown, 0);   // not grown: no frontier to record
+        given.rawConvexity = given.convexity = Convexity(g, given.cells);
+        cells = given.nGrown;
+    }
+    const Region reg = regionIn.empty() ? MakeRegion(g, cells, convexity, rr) : given;
+    if (regionIn.empty()) CheckRegion(g, reg, cells, origin, convexity);
     Region grownOnly = reg;
     grownOnly.cells.resize(reg.nGrown);
     const size_t holesRaw = Holes(grownOnly).size();
@@ -525,9 +561,24 @@ int main(int argc, char* argv[]) {
         const double s = std::stod(tok);
         CHECK(s > 0);
         CoopRng rn(seed, kStreamNodes);   // same stream for every spacing: comparable
-        std::vector<SensorNode> nodes = DeployNodes(g, reg, s, rn);
-        CoopRng rc(seed, kStreamCaps);    // own stream: positions do not depend on it
-        AssignCapabilities(nodes, rc);
+        std::vector<SensorNode> nodes;
+        if (nodesIn.empty()) {
+            nodes = DeployNodes(g, reg, s, rn);
+            CoopRng rc(seed, kStreamCaps);    // own stream: positions do not depend on it
+            AssignCapabilities(nodes, rc);
+        } else {
+            for (auto& r : readCsv(nodesIn)) {
+                SensorNode nd;
+                nd.id = (uint32_t)nodes.size();
+                nd.pos = {std::stod(r.at("x")), std::stod(r.at("y"))};
+                nd.cell = {std::stoi(r.at("q")), std::stoi(r.at("r"))};
+                nd.obs = std::stod(r.at("obs"));
+                nd.cpu = std::stod(r.at("cpu"));
+                nd.comm = std::stod(r.at("comm"));
+                CHECK(nd.obs >= 0 && nd.cpu >= 0 && nd.comm > 0);
+                nodes.push_back(nd);
+            }
+        }
         std::vector<double> ed(nodes.size());
         for (size_t i = 0; i < nodes.size(); ++i) ed[i] = EdgeDistance(nodes[i].pos, edges);
         // Without the margin, for comparison: only the CH and its cell's CL may differ.
@@ -547,7 +598,7 @@ int main(int argc, char* argv[]) {
                 CHECK(nodes[i].cell == nodes[ch].cell || nodes[i].cell == nodes[free].cell);
         }
         roles.push_back({s, nodes, ch, free, ed});
-        CHECK(nodes.size() == NodeCount(g, reg, s));
+        CHECK(!nodesIn.empty() || nodes.size() == NodeCount(g, reg, s));
         std::vector<uint32_t> perCell(nFinal, 0);
         for (const SensorNode& nd : nodes) {
             CHECK(sel.count(nd.cell));                     // inside the region

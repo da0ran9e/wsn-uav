@@ -588,7 +588,8 @@ int main(int argc, char* argv[]) {
             radios[ri].qNext.push_back(to);
             request(ri);
         };
-        auto arrive = [&](const Hex& c, int32_t s, const std::function<void()>& done) {
+        // done by value: the waiters it wakes may add jobs and move the vector that held it
+        auto arrive = [&](const Hex& c, int32_t s, std::function<void()> done) {
             if (s >= 0) {
                 auto& h = hold(c);
                 if (!h[s]) {
@@ -613,7 +614,7 @@ int main(int argc, char* argv[]) {
             const bool last = J.path < 0 || idx + 1u >= paths[J.path].size();
             if (last) {
                 if (v == clOf.at(c)) {
-                    arrive(c, J.s, J.done);
+                    arrive(c, J.s, std::function<void()>(J.done));
                     return;
                 }
                 next = route(clOf.at(c)).at(v);

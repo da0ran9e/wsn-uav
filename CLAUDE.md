@@ -851,6 +851,12 @@ tôi thích cách bạn gen khối này, thử phân cluster trên hình này
 sau đó lấy các cluster này để thử nghiệm lại cơ chế trước đó
 ```
 
+*63. 2026-10-13 · quy tắc trình bày · hình gửi cho người dùng không có chữ*
+
+```text
+các hình bạn cho tôi xem không nên có chữ
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

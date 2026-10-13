@@ -111,6 +111,23 @@ def outline(cells):
     return segs
 
 
+def strip_text(fig):
+    """Figures shown to the user carry no text (CLAUDE.md §8 item 63): titles, labels, legends and
+    annotations go; the numbers live in the docs. Scale bars stay (1 km)."""
+    if fig._suptitle is not None:
+        fig._suptitle.remove()
+        fig._suptitle = None
+    for ax in fig.axes:
+        ax.set_title("")
+        ax.set_title("", loc="left")
+        ax.set_xlabel("")
+        ax.set_ylabel("")
+        for t in list(ax.texts):
+            t.remove()
+        if ax.get_legend() is not None:
+            ax.get_legend().remove()
+
+
 def smooth_curve(rng, length_m, bend_deg, wiggle_deg, mid=(0.0, 0.0), n=400):
     """A random smooth curve of the given length centred on mid: heading turns by bend_deg in total
     (constant curvature) plus a sinusoid of amplitude wiggle_deg over one period, random direction/phase."""
@@ -320,6 +337,7 @@ def main():
     fig.suptitle(f"Miền cho tầng 2: sinh như một cluster của uav-coop nhưng mọc {a.cells} cell (một cluster: 60); "
                  "ô xám = bao lồi", x=.01, ha="left", fontsize=11, color=INK)
     out = os.path.join(a.figs, "map-steps.png")
+    strip_text(fig)
     fig.savefig(out, facecolor=SURF, bbox_inches="tight", pad_inches=.08)
     span = (max(xs) - min(xs) + W) / 1000, (max(ys) - min(ys) + 2 * R) / 1000
     print(f"grown {grown} cells, convexity {raw:.2f}, {len(holes(cells[:grown]))} holes; hull {len(hull)} cells; "

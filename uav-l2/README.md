@@ -8,6 +8,9 @@ convexity, uniform nodes), only larger: 300 grown cells, about five clusters' wo
 **Step 1 — the domain** — [`docs/MAP-vi.md`](docs/MAP-vi.md): `tools/map_gen.py`; long, curved
 domains (spine-weighted growth), lakes and rivers (carved after filling): `tools/domain_gallery.py`;
 clusters with a size cap on the lakes domain (phase 0): `tools/partition.py`.
+**River on those clusters** (cap 80, mission 1) — [`docs/CLUSTER-RIVER-vi.md`](docs/CLUSTER-RIVER-vi.md):
+uav-coop-deploy `--regionIn/--nodesIn`, uav-coop-pass, uav-coop2 River plan and ns-3 trial;
+map `tools/cluster_river_figure.py`. Figures carry no text (CLAUDE.md §8 item 63).
 
 ## Layout
 ```
@@ -16,5 +19,6 @@ uav-l2/
 ├── tools/domain_gallery.py  # six example domains: long, C, S, lakes, river, mixed
 ├── tools/shape_stats.py     # elongation, bend, holes of plain Eden regions over seeds
 ├── tools/partition.py       # phase 0: capacitated, connected k-medoids clusters on a domain
+├── tools/cluster_river_figure.py  # River plans of the clusters on one map
 └── docs/              # MAP-vi.md, figures/, data/
 ```

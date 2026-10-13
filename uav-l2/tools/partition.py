@@ -23,7 +23,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection, PolyCollection
 
-from map_gen import AREA, NB, W, cell_at, centre, corners
+from map_gen import strip_text, AREA, NB, W, cell_at, centre, corners
 
 INK, INK2, SURF, WATER = "#0b0b0b", "#52514e", "#fcfcfb", "#3987e5"
 CAT = ["#1c5cab", "#1baf7a", "#eda100", "#e34948", "#8e5ad6", "#0d366b", "#52514e"]
@@ -215,6 +215,7 @@ def main():
                  "có chặn trên, cluster liền mạch; gạch chéo = hồ; chưa chọn CH", x=.01, y=1.05, ha="left",
                  fontsize=11, color=INK)
     out = os.path.join(a.figs, "partition.png")
+    strip_text(fig)
     fig.savefig(out, facecolor=SURF, bbox_inches="tight", pad_inches=.08)
     print(f"  {out}")
 

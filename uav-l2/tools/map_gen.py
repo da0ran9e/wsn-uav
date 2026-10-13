@@ -10,11 +10,22 @@ On the R = 100 m hex lattice:
   2  concavity filling to convexity --convexity: the cells in the convex hull of the region's centres
      that are not in it are filled one at a time, the most enclosed first, ties at random; convexity =
      cells / hull cells. At or below the grown region's own convexity nothing is filled.
-  3  nodes: round(area / spacing^2), uniform over the region; obs, cpu ~ U[0,1), comm ~ U(0,1]. No CH, no CL.
-Writes OUT-cells.csv (q, r, centre, order in which the cell joined, filled?), OUT-nodes.csv and
-FIGS/map-steps.png (growth, filling to several convexities, nodes).
+  3  gaps (optional), carved after the filling so it never closes them:
+     --lakes k --lakeCells m: k lakes, each an Eden blob of m cells grown from a random interior cell
+     through interior cells only (cells whose six neighbours are all land), so a lake never opens to the edge;
+     --river w: a river w cells wide, the cells within w*width/2 of a random smooth curve through the
+     region's centre (it may cut the region in pieces).
+  4  nodes: round(area / spacing^2), uniform over the land; obs, cpu ~ U[0,1), comm ~ U(0,1]. No CH, no CL.
+Long or curved domains (optional, --spine L): the growth is still Eden, but a frontier cell is drawn with
+weight exp(-d^2 / 2 sigma^2) instead of uniformly, d = its distance to a random smooth curve (the spine)
+through the origin: length L km, total turn --bend degrees, plus a sinusoidal wiggle of --wiggle degrees;
+sigma = --width / 2 km. The edge stays ragged; the domain follows the spine.
+Writes OUT-cells.csv (q, r, centre, order in which the cell joined, filled?, type land/lake/river),
+OUT-nodes.csv and FIGS/map-steps.png (growth, filling to several convexities, nodes).
 """
 import argparse, csv, math, os, random
+
+import numpy as np
 
 import matplotlib
 matplotlib.use("Agg")
@@ -23,6 +34,7 @@ from matplotlib.collections import LineCollection, PolyCollection
 
 R = 100.0
 W = R * math.sqrt(3)
+AREA = 3 * math.sqrt(3) / 2 * R * R
 NB = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
 INK, INK2, SURF, GREY = "#0b0b0b", "#52514e", "#fcfcfb", "#e6e5e1"
 GROWN, FILLED = "#1c5cab", "#86b6ef"
@@ -99,19 +111,39 @@ def outline(cells):
     return segs
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--seed", type=int, default=1)
-    ap.add_argument("--cells", type=int, default=300, help="cells grown (a uav-coop cluster: 60)")
-    ap.add_argument("--convexity", type=float, default=0.8, help="target convexity of the saved region")
-    ap.add_argument("--show", default="0.8,1", help="convexities drawn in the filling panels")
-    ap.add_argument("--spacing", type=float, default=35.0, help="one node per spacing^2")
-    ap.add_argument("--out", required=True)
-    ap.add_argument("--figs", required=True)
-    a = ap.parse_args()
-    rng = random.Random(a.seed)
+def smooth_curve(rng, length_m, bend_deg, wiggle_deg, mid=(0.0, 0.0), n=400):
+    """A random smooth curve of the given length centred on mid: heading turns by bend_deg in total
+    (constant curvature) plus a sinusoid of amplitude wiggle_deg over one period, random direction/phase."""
+    s = np.linspace(-0.5, 0.5, n)
+    th0, ph = rng.uniform(0, 2 * math.pi), rng.uniform(0, 2 * math.pi)
+    sign = rng.choice((-1, 1))
+    th = th0 + sign * math.radians(bend_deg) * s + math.radians(wiggle_deg) * np.sin(2 * math.pi * s + ph)
+    ds = length_m / (n - 1)
+    xy = np.cumsum(np.c_[np.cos(th), np.sin(th)] * ds, axis=0)
+    return xy - xy[n // 2] + np.array(mid)
 
-    # 1 Eden growth
+
+def curve_dist(p, poly):
+    a, b = poly[:-1], poly[1:]
+    ab = b - a
+    t = np.clip(((p - a) * ab).sum(1) / (ab * ab).sum(1), 0, 1)
+    return float(np.min(np.hypot(*(a + t[:, None] * ab - p).T)))
+
+
+def generate(a, rng):
+    """Grow, fill, carve and deploy as described above; returns everything the figures need."""
+    spine = smooth_curve(rng, a.spine * 1000, a.bend, a.wiggle) if a.spine > 0 else None
+    weight = {}
+
+    def w(h):
+        if spine is None:
+            return 1.0
+        if h not in weight:
+            d = curve_dist(np.array(centre(h)), spine)
+            weight[h] = max(1e-6, math.exp(-0.5 * (d / (a.width * 500)) ** 2))
+        return weight[h]
+
+    # 1 Eden growth (weighted by the spine when there is one)
     cells, frontier, onf, S = [], [], set(), set()
 
     def add(h):
@@ -124,7 +156,14 @@ def main():
                 frontier.append(n)
     add((0, 0))
     while len(cells) < a.cells:
-        k = rng.randrange(len(frontier))
+        if spine is None:
+            k = rng.randrange(len(frontier))
+        else:
+            ws = [w(h) for h in frontier]
+            x, k = rng.random() * sum(ws), 0
+            while x > ws[k]:
+                x -= ws[k]
+                k += 1
         h = frontier[k]
         frontier[k] = frontier[-1]
         frontier.pop()
@@ -134,7 +173,6 @@ def main():
 
     # 2 concavity filling, recording the order so any convexity can be read off
     hull = hull_cells(cells)
-    raw = grown / len(hull)
     todo = [h for h in hull if h not in S]
     while todo:
         score = [sum((h[0] + dq, h[1] + dr) in S for dq, dr in NB) for h in todo]
@@ -145,11 +183,42 @@ def main():
     upto = lambda kappa: max(grown, math.ceil(kappa * len(hull) - 1e-9))
     final = cells[:upto(a.convexity)]
 
-    # 3 nodes, uniform over the saved region
-    area = 3 * math.sqrt(3) / 2 * R * R
+    # 3 gaps: lakes inside, a river across
+    land = set(final)
+    lakes, river = [], set()
+    for _ in range(a.lakes):
+        lake = []   # interior: land whose six neighbours are land or this lake (so the lake never reaches the edge)
+        interior = lambda h: h in land and all((h[0] + dq, h[1] + dr) in land or (h[0] + dq, h[1] + dr) in lake
+                                               for dq, dr in NB)
+        cand = [h for h in final if interior(h)]
+        if not cand:
+            break
+        lake.append(rng.choice(cand))
+        land.discard(lake[0])
+        fr = [(lake[0][0] + dq, lake[0][1] + dr) for dq, dr in NB]
+        while len(lake) < a.lakeCells:
+            fr = [h for h in fr if interior(h)]
+            if not fr:
+                break
+            h = fr.pop(rng.randrange(len(fr)))
+            lake.append(h)
+            land.discard(h)
+            fr += [(h[0] + dq, h[1] + dr) for dq, dr in NB]
+        lakes.append(lake)
+    if a.river > 0:
+        P = np.array([centre(h) for h in final])
+        span = float(np.hypot(*(P.max(0) - P.min(0))))
+        river_curve = smooth_curve(rng, 2 * span, a.riverBend, a.riverWiggle, mid=tuple(P.mean(0)))
+        river = {h for h in land if curve_dist(np.array(centre(h)), river_curve) <= a.river * W / 2}
+        land -= river
+    else:
+        river_curve = None
+    domain = [h for h in final if h in land]
+
+    # 4 nodes, uniform over the land
     nodes = []
-    for _ in range(round(len(final) * area / a.spacing ** 2)):
-        h = rng.choice(final)
+    for _ in range(round(len(domain) * AREA / a.spacing ** 2)):
+        h = rng.choice(domain)
         cx, cy = centre(h)
         while True:
             x, y = cx + rng.uniform(-W / 2, W / 2), cy + rng.uniform(-R, R)
@@ -157,13 +226,49 @@ def main():
                 break
         obs, cpu, comm = rng.random(), rng.random(), 1 - rng.random()
         nodes.append((len(nodes), x, y, h[0], h[1], obs, cpu, comm))
+    return dict(cells=cells, grown=grown, hull=hull, upto=upto, final=final, domain=domain, lakes=lakes,
+                river=river, river_curve=river_curve, spine=spine, nodes=nodes,
+                lake_set={h for l in lakes for h in l})
+
+
+def add_args(ap):
+    ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--cells", type=int, default=300, help="cells grown (a uav-coop cluster: 60)")
+    ap.add_argument("--convexity", type=float, default=0.8, help="target convexity before carving")
+    ap.add_argument("--spine", type=float, default=0, help="spine length, km (0: plain Eden growth)")
+    ap.add_argument("--bend", type=float, default=0, help="spine: total turn, degrees")
+    ap.add_argument("--wiggle", type=float, default=0, help="spine: sinusoidal wiggle amplitude, degrees")
+    ap.add_argument("--width", type=float, default=1.0, help="spine: domain width scale (2 sigma), km")
+    ap.add_argument("--lakes", type=int, default=0)
+    ap.add_argument("--lakeCells", type=int, default=8)
+    ap.add_argument("--river", type=float, default=0, help="river width, cells (0: none)")
+    ap.add_argument("--riverBend", type=float, default=60, help="river: total turn, degrees")
+    ap.add_argument("--riverWiggle", type=float, default=40, help="river: wiggle amplitude, degrees")
+    ap.add_argument("--spacing", type=float, default=35.0, help="one node per spacing^2")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    add_args(ap)
+    ap.add_argument("--show", default="0.8,1", help="convexities drawn in the filling panels")
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--figs", required=True)
+    a = ap.parse_args()
+    rng = random.Random(a.seed)
+
+    g = generate(a, rng)
+    cells, grown, hull, upto, final, nodes = g["cells"], g["grown"], g["hull"], g["upto"], g["final"], g["nodes"]
+    raw = grown / len(hull)
+    area = AREA
+    gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
 
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     with open(a.out + "-cells.csv", "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["q", "r", "cx", "cy", "order", "filled"])
+        w.writerow(["q", "r", "cx", "cy", "order", "filled", "type"])
         for j, h in enumerate(final):
-            w.writerow([h[0], h[1], f"{centre(h)[0]:.3f}", f"{centre(h)[1]:.3f}", j, int(j >= grown)])
+            w.writerow([h[0], h[1], f"{centre(h)[0]:.3f}", f"{centre(h)[1]:.3f}", j, int(j >= grown),
+                        gaps.get(h, "land")])
     with open(a.out + "-nodes.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["id", "x", "y", "q", "r", "obs", "cpu", "comm"])

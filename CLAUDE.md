@@ -833,6 +833,12 @@ hình dạng của nó được bạn xác định từ trước à?
 liệu nó có thể gen ra một miền dài, hay cong, hay có khoảng trống không
 ```
 
+*60. 2026-10-13 · uav-l2 · sinh thử miền dài, cong, có khoảng trống (hồ, sông)*
+
+```text
+thử gen một vài miền dài, cong, hay có khoảng trống (kiểu hồ nước, nhánh sông ...
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

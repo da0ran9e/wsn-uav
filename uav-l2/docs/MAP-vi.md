@@ -1,6 +1,6 @@
 # Tầng 2 — bước 1: miền bay
 
-Lời gốc: CLAUDE.md §8 mục 56–57.
+Lời gốc: CLAUDE.md §8 mục 56–60.
 
 ![steps](figures/map-steps.png)
 
@@ -48,6 +48,38 @@ Seed 2–4 cho kết quả tương tự: độ lồi khi vừa mọc 0,70–0,72
 - Khoảng trống chỉ là các lỗ nhỏ vài cell, và bước lấp chỗ lõm lấp chúng trước tiên.
 
 Muốn có miền dài, cong hay có khoảng trống lớn thì phải thêm cơ chế vào cách mọc.
+
+## Miền dài, cong, có hồ và sông (§8 mục 60)
+
+![gallery](figures/domain-gallery.png)
+
+Vẫn là mọc Eden 300 cell. Ba cơ chế mới đều sinh ngẫu nhiên và bật bằng tham số của `map_gen.py`:
+
+- **Xương sống** (`--spine L --bend θ --wiggle φ --width w`):
+  - Bốc một đường cong trơn ngẫu nhiên đi qua gốc, dài L km, tổng góc uốn θ, cộng một dao động hình sin biên độ φ.
+  - Mỗi bước Eden chọn cell kề vùng với trọng số exp(−d²/2σ²) thay vì chọn đều. d là khoảng cách tới xương sống, σ = w/2.
+  - Mép miền vẫn răng cưa kiểu Eden, nhưng tổng thể chạy theo xương sống.
+- **Hồ** (`--lakes k --lakeCells m`): khoét k hồ.
+  - Mỗi hồ mọc Eden m cell từ một cell bên trong, và chỉ đi qua các cell bên trong (cả 6 cell kề đều là đất hoặc hồ), nên hồ không bao giờ thông ra biên.
+- **Sông** (`--river w --riverBend --riverWiggle`): khoét các cell cách một đường cong ngẫu nhiên qua tâm miền không quá w·173/2 m. Sông có thể cắt miền thành nhiều mảnh.
+- Hồ và sông được khoét **sau** bước lấp chỗ lõm, nên không bị lấp lại.
+- Khi không bật cơ chế nào, kết quả giống hệt bản cũ (đã kiểm tra trên seed 1).
+
+| Miền (seed) | Đất | Kích thước | Dài : rộng | Độ lồi | Khoảng trống | Mảnh đất |
+|---|---|---|---|---|---|---|
+| Dài, thẳng (1) | 300 cell, 7,8 km² | 5,2 × 5,6 km (chéo) | 4,6 : 1 | 0,86 | 3 cell | 1 |
+| Cong, chữ C (2) | 300 cell | 5,5 × 3,4 km | 2,1 : 1 | 0,58 | 3 cell | 1 |
+| Uốn lượn, chữ S (3) | 300 cell | 4,0 × 4,8 km | 1,4 : 1 | 0,63 | 8 cell | 1 |
+| Khối có 4 hồ × 10 cell (4) | 305 cell | 3,9 × 4,5 km | 1,4 : 1 | 0,71 | 40 cell | 1 |
+| Khối có sông rộng 1 cell (5) | 291 cell | 4,5 × 3,5 km | 1,6 : 1 | 0,75 | 26 cell | 2 |
+| Dải cong, 2 hồ, 1 sông (16) | 266 cell | 4,1 × 4,5 km | 2,4 : 1 | 0,70 | 38 cell | 2 |
+
+So với miền 300 cell mọc đều (dài tối đa 2,1 : 1 trên 200 seed; lỗ lớn nhất 13 cell):
+- xương sống cho miền dài tới 4,6 : 1, hoặc cong hẳn (độ lồi 0,58);
+- hồ và sông tạo khoảng trống lớn, đúng chỗ, và không bị lấp.
+
+Số liệu từng miền: `docs/data/domain-*-{cells,nodes}.csv`.
+Chạy lại hình: `cd tools && python3 domain_gallery.py --data ../docs/data --figs ../docs/figures`.
 
 Chạy lại:
 ```

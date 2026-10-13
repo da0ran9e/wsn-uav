@@ -15,7 +15,7 @@ Per map (a mission.py work folder):
               straight back to the BS and the mission ends
               (also given: the mission end averaged over every suspect being the true one, same tour)
 Writes OUT-summary.csv (one row per map and scheme), OUT-cells.csv (per critical cell) and figures
-FIGS/mission-{maps,river,suspects,timeline}.png, one panel per map.
+FIGS/mission-{maps,pass,river,suspects,timeline}.png, one panel per map.
 """
 import argparse, csv, itertools, json, math, os, random, sys
 
@@ -59,7 +59,19 @@ def load_map(w):
         res = {t: {(int(r["q"]), int(r["r"])): r for r in csv.DictReader(open(f"{w}/r{k}-{t}-crit.csv"))}
                for t in SCHEMES}
         runs = {t: next(csv.DictReader(open(f"{w}/r{k}-{t}-runs.csv"))) for t in SCHEMES}
-        cl[k] = dict(geo=geo, P=plan(geo), res=res, runs=runs)
+        P = plan(geo)
+        N = len(uav)
+        bits = np.unpackbits(np.fromfile(f"{w}/pass{k}-bits-r1.bin", dtype=np.uint8).reshape(len(nodes), -1),
+                             axis=1, bitorder="little")[:, :N].astype(bool)
+        inD = np.zeros(N, bool)
+        for x in P["axe"]:
+            inD[P["seg"][x][0]:P["seg"][x][-1] + 1] = bits[:, P["seg"][x][0]:P["seg"][x][-1] + 1].any(axis=0)
+        cellof = [(int(n["q"]), int(n["r"])) for n in nodes]
+        mem = {}
+        for i, h in enumerate(cellof):
+            mem.setdefault(h, []).append(i)
+        held = {h: float((bits[mem[h]].any(axis=0) & inD).sum() / inD.sum()) for h in sel}
+        cl[k] = dict(geo=geo, P=P, res=res, runs=runs, held=held, D=int(inD.sum()))
     return dict(m=m, tour=tour, water=water, owner=owner, cl=cl, bs=tuple(m["bs"]), name=os.path.basename(w))
 
 
@@ -201,6 +213,14 @@ def main():
         print(f"{M['name']}: {len(M['cl'])} clusters, {M['m']['cells']} cells, {M['m']['nodes']} nodes, "
               f"{len(X['crits'])} critical cells; tour {M['tour']['length'] / 1000:.1f} km, team 1 back at "
               f"{M['tour']['back']:.0f} s; true {X['true']}, false {X['false']}")
+        for l in M["tour"]["legs"]:
+            k = l["cluster"]
+            C = M["cl"][k]
+            last = {t: max(float(r["doneS"]) for r in C["res"][t].values()) for t in SCHEMES}
+            print(f"   C{k}: {len(C['geo']['cells'])} cells, {len(C['geo']['nodes'])} nodes, Axe {len(C['P']['axe'])}, "
+                  f"|D| {C['D']}, {len(C['P']['crit'])} critical; pass {l['enter']:.0f}-{l['leave']:.0f} s; "
+                  f"last critical done after leaving: " + ", ".join(f"{t} {last[t]:.1f} s" for t in SCHEMES)
+                  + "; frames: " + ", ".join(f"{t} {int(C['runs'][t]['hops'])}" for t in SCHEMES))
         for t in SCHEMES:
             Y = X["by"][t]
             print(f"   {t:5s} last critical done {max(Y['done'].values()):6.1f} s, team 2 leaves {Y['dep']:6.1f} s, "
@@ -215,6 +235,23 @@ def main():
         frame(ax, M)
     strip_text(fig)
     fig.savefig(os.path.join(a.figs, "mission-maps.png"), facecolor=SURF, bbox_inches="tight", pad_inches=.06)
+    plt.close(fig)
+    # ---- figure 1b: after the pass, share of its cluster's D held by each cell
+    ramp = matplotlib.colors.LinearSegmentedColormap.from_list("r", ["#f1f0eb", "#86b6ef", "#3987e5", "#0d366b"])
+    fig, axs = panel_axes(n)
+    for ax, M in zip(axs, maps):
+        land(ax, M, {h: ramp(C["held"][h]) for C in M["cl"].values() for h in C["held"]})
+        for C in M["cl"].values():
+            ax.plot(*C["geo"]["path"].T, color=INK, lw=.9, zorder=4)
+        crit_marks(ax, M)
+        frame(ax, M)
+        cr = [C["held"][h] for C in M["cl"].values() for h in C["P"]["crit"]]
+        al = [v for C in M["cl"].values() for v in C["held"].values()]
+        print(f"{M['name']} after the pass: cells hold {np.mean(al):.2f} of D on average (min {min(al):.2f}); "
+              f"critical cells {np.mean(cr):.2f} (min {min(cr):.2f}); |D| per cluster "
+              f"{[C['D'] for k, C in sorted(M['cl'].items())]}")
+    strip_text(fig)
+    fig.savefig(os.path.join(a.figs, "mission-pass.png"), facecolor=SURF, bbox_inches="tight", pad_inches=.06)
     plt.close(fig)
     # ---- figure 2: River of every cluster
     fig, axs = panel_axes(n)

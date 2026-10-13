@@ -11,6 +11,8 @@ clusters with a size cap on the lakes domain (phase 0): `tools/partition.py`.
 **River on those clusters** (cap 80, mission 1) — [`docs/CLUSTER-RIVER-vi.md`](docs/CLUSTER-RIVER-vi.md):
 uav-coop-deploy `--regionIn/--nodesIn`, uav-coop-pass, uav-coop2 River plan and ns-3 trial;
 map `tools/cluster_river_figure.py`. Figures carry no text (CLAUDE.md §8 item 63).
+**C3 step by step** (path along its longest line, Algorithms 1-7 on ns-3) —
+[`docs/CLUSTER-C3-vi.md`](docs/CLUSTER-C3-vi.md), `tools/cluster_steps.py`.
 
 ## Layout
 ```
@@ -20,5 +22,6 @@ uav-l2/
 ├── tools/shape_stats.py     # elongation, bend, holes of plain Eden regions over seeds
 ├── tools/partition.py       # phase 0: capacitated, connected k-medoids clusters on a domain
 ├── tools/cluster_river_figure.py  # River plans of the clusters on one map
+├── tools/cluster_steps.py         # one cluster through every step of River, text-free figures
 └── docs/              # MAP-vi.md, figures/, data/
 ```

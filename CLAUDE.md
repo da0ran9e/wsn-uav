@@ -863,6 +863,12 @@ các hình bạn cho tôi xem không nên có chữ
 với cluster màu vàng, rõ ràng là có thể bay xuyên chỗ gần khoảng trống để cho river dài hơn,
 ```
 
+*65. 2026-10-13 · uav-l2 · bóc riêng cluster vàng (C3) phân tích kỹ từng bước thuật toán*
+
+```text
+bóc riêng cluster vàng này ra phân tích kỹ từng bước thuật toán
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

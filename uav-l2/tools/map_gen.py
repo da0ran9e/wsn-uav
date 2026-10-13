@@ -113,7 +113,7 @@ def outline(cells):
 
 def strip_text(fig):
     """Figures shown to the user carry no text (CLAUDE.md §8 item 63): titles, labels, legends and
-    annotations go; the numbers live in the docs. Scale bars stay (1 km)."""
+    annotations and tick labels go; the numbers live in the docs. Scale bars stay (1 km)."""
     if fig._suptitle is not None:
         fig._suptitle.remove()
         fig._suptitle = None
@@ -122,6 +122,7 @@ def strip_text(fig):
         ax.set_title("", loc="left")
         ax.set_xlabel("")
         ax.set_ylabel("")
+        ax.tick_params(labelbottom=False, labelleft=False, labeltop=False, labelright=False)
         for t in list(ax.texts):
             t.remove()
         if ax.get_legend() is not None:

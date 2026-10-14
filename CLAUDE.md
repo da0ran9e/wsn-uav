@@ -915,6 +915,12 @@ tiếp theo tôi đồng ý với các đề xuất để bạn cài đặt luô
 nhưng có thêm một ràng buộc: sau khi đối sánh, CH cần một khoảng delay cho kênh phải hồi bằng LoRa về BS
 ```
 
+*71. 2026-10-14 · uav-l2 · visualize toàn bộ quá trình chạy giả lập, mọi bước của các cơ chế thuật toán*
+
+```text
+có thể cho tôi thấy được toàn bộ quá trình chạy của giả lập bằng visualize không, toàn bộ các bước chạy của các cơ chế thuật toán
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

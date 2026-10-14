@@ -1,0 +1,40 @@
+<title>Mission Replay</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one operations screen; the map fills it, a lane strip and a slim control rail sit under it. */
+:root{
+  --bg:#eef1ee; --land:#d9dfd8; --land2:#c9d2c8; --edge:#f7f8f6; --water:#c6dbec; --ink:#16201d; --ink2:#5b6863;
+  --data:#1d5fa8; --axe:#1d5fa8; --bank:#3aa37a; --river:#b7d3ee; --t2:#d6403a; --false:#e09a1c;
+  --gather:#3b82d6; --bankfill:#2f9e6e; --circlefill:#e0a019; --pull:#d6403a; --control:#7b8580; --match:#8a59cf;
+  --rail:#ffffff; --track:#d3d9d3; --fill:#1d5fa8;
+  --c1:#3b82d6; --c2:#2f9e6e; --c3:#e0a019; --c4:#8a59cf; --c5:#0e3d6e; --c6:#c45a7a; --c7:#5b6863; --c8:#d6403a;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1517; --land:#212b2e; --land2:#2b373a; --edge:#0f1517; --water:#17304a; --ink:#e7ece9; --ink2:#9aa7a2;
+  --data:#6aa9ee; --axe:#4f93e6; --bank:#4cc08f; --river:#24415f; --t2:#ff6a5f; --false:#f2b23a;
+  --gather:#6aa9ee; --bankfill:#4cc08f; --circlefill:#f2b23a; --pull:#ff6a5f; --control:#7f8c87; --match:#b18af0;
+  --rail:#182124; --track:#2b373a; --fill:#6aa9ee;
+  --c1:#6aa9ee; --c2:#4cc08f; --c3:#f2b23a; --c4:#b18af0; --c5:#8fc1ff; --c6:#e58aa8; --c7:#9aa7a2; --c8:#ff6a5f;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f1517; --land:#212b2e; --land2:#2b373a; --edge:#0f1517; --water:#17304a; --ink:#e7ece9; --ink2:#9aa7a2;
+  --data:#6aa9ee; --axe:#4f93e6; --bank:#4cc08f; --river:#24415f; --t2:#ff6a5f; --false:#f2b23a;
+  --gather:#6aa9ee; --bankfill:#4cc08f; --circlefill:#f2b23a; --pull:#ff6a5f; --control:#7f8c87; --match:#b18af0;
+  --rail:#182124; --track:#2b373a; --fill:#6aa9ee;
+  --c1:#6aa9ee; --c2:#4cc08f; --c3:#f2b23a; --c4:#b18af0; --c5:#8fc1ff; --c6:#e58aa8; --c7:#9aa7a2; --c8:#ff6a5f;
+  color-scheme:dark }
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;gap:8px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;box-sizing:border-box}
+#map{flex:1 1 auto;min-height:260px;width:100%;display:block}
+#lanes{flex:0 0 auto;height:118px;width:100%;display:block}
+.rail{flex:0 0 auto;display:flex;align-items:center;gap:10px;background:var(--rail);border-radius:10px;padding:8px 10px}
+.rail button{flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:0;background:transparent;color:var(--ink);cursor:pointer;display:grid;place-items:center}
+.rail button:hover{background:var(--track)}
+.rail button:focus-visible,#speed:focus-visible,#chap:focus-visible{outline:2px solid var(--data);outline-offset:2px}
+#play{background:var(--ink);color:var(--bg)}
+#play:hover{background:var(--ink2)}
+#chap{flex:1 1 auto;min-width:0;height:28px;display:block;cursor:pointer;border-radius:6px}
+#speed{flex:0 0 90px;width:90px;accent-color:var(--data)}
+@media (max-width:520px){#speed{display:none}#lanes{height:92px}}
+</style>

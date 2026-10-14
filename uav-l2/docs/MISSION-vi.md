@@ -390,12 +390,12 @@ Mọi đội dùng một UAV cánh quay 15 m/s; chưa so năng lượng.
 
 ## Đọc kết quả
 
-1. **Không có pha 1 (B1, B2) chậm gấp 1,7–3,3 lần P, và khoảng cách tăng theo kích thước mạng.**
+1. **Không có pha 1 (B1, B2) chậm gấp 1,6–3,7 lần P, và khoảng cách tăng theo kích thước mạng.**
    - B1 phải thăm trung bình 7–26 critical cell, mỗi cell 83 s xác minh cộng thời gian bay.
    - Multicast chỉ có lợi khi nhóm đủ lớn. B2-500 nhanh hơn B1 (ít điểm dừng hơn), nhưng B2-300 lại chậm hơn B1, vì multicast tốn 10 ms mỗi khung so với 6,88 ms của unicast mà nhóm 300 m lại nhỏ.
-2. **Pha 1 bằng UAV cánh quay (B3, B6) đỡ hơn nhiều nhưng vẫn chậm hơn P 1,5–2,1 lần.**
-   - Rải tệp nhẹ bằng hover tốn 15–50 lần hover, mỗi lần 40–60 s, và bay 15 m/s.
-   - Cánh bằng 50 m/s cộng River làm cùng việc đó trong 4–11 phút cho cả bản đồ.
+2. **Pha 1 bằng UAV cánh quay (B3, B6) đỡ hơn nhiều nhưng vẫn chậm hơn P 1,5–2,5 lần.**
+   - Rải tệp nhẹ bằng hover tốn một lần hover cho mỗi nhóm hoặc mỗi critical cell (B6: 12–52 lần), mỗi lần khoảng 30–50 s, và bay 15 m/s.
+   - Cánh bằng 50 m/s cộng River làm cùng việc đó trong khoảng 3,5–11 phút cho cả bản đồ.
 3. **Không hợp tác tại biên (B4) gần như không nhanh hơn: chỉ bớt 2–16 s, nhưng làm mất cell thật ở 25–62 % lượt.**
    - Sau lượt bay, critical cell thường có khoảng 90 % D nhưng hiếm khi đủ 100 %.
    - Đúng với bài học ở uav-sar: **hợp tác ở đây không mua thời gian, nó mua độ đầy đủ của dữ liệu**, tức khả năng phát hiện.

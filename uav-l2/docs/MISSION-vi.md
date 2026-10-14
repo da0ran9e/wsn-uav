@@ -291,7 +291,7 @@ Thời điểm kết thúc nhiệm vụ, trung bình ± khoảng tin cậy 95 %.
    - Dự báo L3 cũng chỉ ở mức r = 0,67. Ở 2 cluster nó tốt hơn ở 2/10 bản đồ, ở 8 cluster ở 6/10.
 4. **Gộp cả ba:** nhiệm vụ ngắn hơn 19–29 %, mức giảm tăng theo kích thước mạng; tốt hơn ở 10/10 bản đồ mọi kích thước.
    - Ở 8 cluster, có thể bỏ l3first mà không mất gì.
-5. **Kênh LoRa qua CH đáng kể.** Với khe 40 s, một kết quả chờ trung bình khoảng 20 s mới được phát, cộng thêm thời gian xếp hàng nếu CH có nhiều kết quả. Đây là phần trễ lớn thứ hai trước khi đội 2 biết nghi vấn, chỉ sau thời gian chờ đội 1 bay tới cluster.
+5. **Kênh LoRa qua CH đáng kể.** Với khe 40 s, một kết quả chờ trung bình khoảng 20 s mới được phát, cộng thêm thời gian xếp hàng nếu CH có nhiều kết quả. Mức này gấp khoảng bốn lần 5 s đối sánh. Chưa đo riêng phần trễ này so với các phần khác.
 
 ## Giới hạn
 

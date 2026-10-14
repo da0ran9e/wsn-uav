@@ -1,0 +1,8 @@
+run,scheme,q,r,D,lackCL,lackCell,gatherDoneS,doneS,missing,circle
+1,river-full,-2,10,3765,888,69,7.25,9.03,0,5
+1,river-full,-1,8,3765,465,0,2.95,2.95,0,6
+1,river-full,0,2,3765,1465,128,9.63,11.33,0,4
+1,river-full,2,1,3765,1493,481,7.93,14.06,0,5
+1,river-full,2,6,3765,573,0,3.55,3.55,0,6
+1,river-full,5,5,3765,1350,92,9.29,10.38,0,6
+1,river-full,6,1,3765,1828,794,7.47,20.97,0,3

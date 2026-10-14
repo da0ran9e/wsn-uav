@@ -176,9 +176,130 @@ hàng cuối là đội 2. Lưới dọc cách nhau 60 s.
    - Đối sánh thật (lớp 1).
    - Điểm nghi vấn có xác suất (đội 2 có thể ưu tiên theo điểm).
 
-## Hướng phát triển gợi ý (chưa làm)
+## Hướng phát triển (đã làm ở phần sau: mục 70)
 
 - **Cho đội 2 xuất phát sớm:** ngay khi có nghi vấn đầu tiên, hoặc khi các cluster đã báo đủ phần lớn, thay vì chờ mọi critical cell. Theo dòng thời gian, cách này rút được tới vài trăm giây ở bản đồ lớn.
 - **Sắp tour đội 1 sao cho cluster có tầng 3 dài được bay sớm,** để phần River của nó chồng hết lên thời gian bay.
 - **Thăm nghi vấn theo điểm nghi vấn × khoảng cách** thay cho TSP thuần.
 - **Chạy nhiều lượt** (N ≥ 120) trên mỗi kích thước trước khi rút kết luận định lượng.
+
+---
+
+# Phần 2 — Chính sách nhiệm vụ, phản hồi LoRa qua CH, nhiều lượt (CLAUDE.md §8 mục 70)
+
+**Chạy lại:**
+```
+python3 tools/mission.py --clusters N --seed S --work W/kN-sS --bin BIN --jobs 4 --schemes rf
+python3 tools/mission_policy.py --works "W/k*" --draws 100 --figs docs/figures \
+    --out docs/data/mission/policy --example W/k6
+```
+Dữ liệu gọn của 36 bản đồ mới: `docs/data/mission/camp/`. Từng lượt bốc: `policy-draws.csv`. Bảng tổng: `policy-summary.csv`.
+
+## Mô hình mới
+
+**Phản hồi qua CH (ràng buộc mới, mục 70).** Kênh LoRa thuộc về CH:
+- Critical cell đối sánh xong (5 s) thì chuyển kết quả cho CH, mất 0,1 s cho mỗi cell khoảng cách.
+- CH phát với thời gian phát 0,4 s và duty cycle 1 %, nên tối đa **một bản tin mỗi 40 s**. Pha của CH bốc đều trong [0, 40) s.
+- Mỗi bản tin mang mọi kết quả đã về CH tính tới lúc phát, và tới BS sau 0,4 s.
+
+**Điểm nghi vấn.** Báo cáo của nghi vấn thật mang điểm bốc đều trong 0,5–1,0, nghi vấn giả trong 0,2–0,8. Hai khoảng chồng nhau, nên điểm cao nhất không phải lúc nào cũng là thật.
+
+**Tám chính sách**, tổ hợp của ba lựa chọn:
+
+| Lựa chọn | Cũ | Mới |
+|---|---|---|
+| Tour đội 1 | `short`: tour ngắn nhất | `l3first`: tour làm **mọi critical cell xong sớm nhất**, tức cực tiểu max_k(rời_k + L3dự_k), giải chính xác bằng Held–Karp Pareto (thời gian, độ sẵn sàng) |
+| Đội 2 xuất phát | `wait`: chờ mọi báo cáo | `early`: ngay khi **báo cáo nghi vấn đầu tiên** về BS |
+| Thứ tự thăm | `tsp`: theo tour TSP | `score`: chọn nghi vấn có **điểm / (thời gian bay + 30 s)** lớn nhất trong các nghi vấn đã biết |
+
+**Dự báo L3 cho BS.** L3dự = max(15, −52 + 6,92 · maxFar) s, với maxFar là khoảng cách lớn nhất (tính bằng cell) từ một critical cell tới một cell Axe.
+- BS biết maxFar từ kế hoạch River, nên dự báo này dùng được trước khi bay.
+- Hệ số được khớp trên 20 cluster của phần 1 (r = 0,67). Các ứng viên khác yếu hơn: số cell Axe r = 0,32, |D| r = 0,34.
+
+**Cách đội 2 ra quyết định.** Đội 2 quyết định tại BS và sau mỗi lần xác minh. Nếu chưa biết nghi vấn nào còn lại, nó chờ tại chỗ.
+- `early/tsp`: điểm kế tiếp là điểm đầu của tour TSP mở từ vị trí hiện tại, qua các nghi vấn đã biết, về BS.
+- `wait/tsp`: giữ nguyên cách cũ (một tour kín cố định).
+
+**Quy mô.** 4 kích thước × 10 bản đồ = 40 bản đồ, 200 cluster. River chuẩn bị sẵn chạy trên ns-3, mỗi cluster một lượt. Mỗi bản đồ có 100 lượt bốc (nghi vấn, điểm, pha LoRa), so cặp giữa các chính sách.
+- Tầng 3 của một cluster không phụ thuộc lúc UAV tới, nên mọi tour dùng chung một kết quả ns-3.
+- **Đơn vị độc lập là bản đồ (10 mỗi kích thước).** 1 000 lượt bốc chỉ trung bình hoá phần ngẫu nhiên của nghi vấn và LoRa, không thay thế được số bản đồ.
+
+## Kết quả
+
+![policy-end](figures/policy-end.png)
+
+Thời điểm kết thúc nhiệm vụ, trung bình ± khoảng tin cậy 95 %. Bốn nhóm từ trái sang là 2, 4, 6, 8 cluster; lưới ngang cách nhau 300 s. Màu trong mỗi nhóm, từ trái sang:
+
+| # | Màu | Chính sách |
+|---|---|---|
+| 1 | xám | short / wait / tsp (cũ) |
+| 2 | xanh nhạt | short / wait / score |
+| 3 | xanh lá | short / early / tsp |
+| 4 | cam | short / early / score |
+| 5 | tím | l3first / wait / tsp |
+| 6 | xanh vừa | l3first / wait / score |
+| 7 | xanh đậm | l3first / early / tsp |
+| 8 | đỏ | l3first / early / score (đủ ba cải tiến) |
+
+**Kết thúc nhiệm vụ (s)** — trung bình [± 95 %]; thay đổi so với cách cũ, ghép cặp theo lượt bốc; số bản đồ có trung bình tốt hơn:
+
+| Chính sách | 2 cluster | 4 cluster | 6 cluster | 8 cluster |
+|---|---|---|---|---|
+| short / wait / tsp (cũ) | 695 [±9] | 977 [±12] | 1 153 [±14] | 1 358 [±16] |
+| short / wait / score | −53 (10/10) | −53 (10/10) | −71 (10/10) | −77 (10/10) |
+| l3first / wait / tsp | −7 (2/10) | −51 (8/10) | −40 (8/10) | −20 (6/10) |
+| short / early / tsp | −74 (10/10) | −200 (10/10) | −266 (10/10) | −371 (10/10) |
+| short / early / score | −102 (10/10) | −220 (10/10) | −292 (10/10) | **−391** (10/10) |
+| l3first / early / tsp | −103 (10/10) | −202 (10/10) | −279 (10/10) | −367 (10/10) |
+| **l3first / early / score** | **−132** (10/10) | **−228** (10/10) | **−304** (10/10) | −389 (10/10) |
+| → kết thúc | 562 | 749 | 849 | 969 |
+| → giảm | −19 % | −23 % | −26 % | −29 % |
+
+**Các thời điểm trung gian (s)** — trung bình trên các lượt bốc:
+
+| | 2 | 4 | 6 | 8 |
+|---|---|---|---|---|
+| Đội 1 về BS: short / l3first | 211 / 213 | 356 / 380 | 498 / 508 | 647 / 678 |
+| Báo cáo cuối về BS: short / l3first | 239 / 233 | 429 / 377 | 529 / 489 | 661 / 641 |
+| Báo cáo nghi vấn thật về BS (short) | 181 | 276 | 329 | 385 |
+| Đội 2 xuất phát với `early` (l3first) | 131 | 176 | 194 | 232 |
+| Số lần thăm: cũ / đủ ba cải tiến | 2,20 / 1,86 | 2,25 / 2,01 | 2,23 / 1,99 | 2,25 / 2,08 |
+
+![policy-example](figures/policy-example.png)
+
+**Ví dụ: bản đồ 6 cluster, cùng một lượt bốc.** Trái là cách cũ, phải là đủ ba cải tiến.
+- Đỏ: nghi vấn thật. Cam: nghi vấn giả. Cỡ chấm tỉ lệ với điểm nghi vấn.
+- Đường đỏ: đường bay của đội 2.
+
+| | Cách cũ | Đủ ba cải tiến |
+|---|---|---|
+| Đội 2 xuất phát | 531 s | 211 s (báo cáo nghi vấn đầu tiên) |
+| Thấy nghi vấn thật | 1 014 s | 768 s |
+| Kết thúc | 1 413 s | 1 167 s |
+
+## Đọc kết quả
+
+1. **Cho đội 2 đi sớm là cải tiến lớn nhất:** −74 s ở 2 cluster, −371 s ở 8 cluster, tốt hơn ở 78–88 % lượt bốc và ở 10/10 bản đồ mọi kích thước.
+   - Bản đồ càng lớn càng lợi, vì "chờ mọi báo cáo" thực chất là chờ cluster cuối tour. Ở 8 cluster, việc này tốn tới 661 s, trong khi báo cáo nghi vấn đầu tiên về từ khoảng 230 s.
+2. **Thăm theo điểm nghi vấn:**
+   - Đứng riêng thì bớt 53–77 s, tốt hơn ở 10/10 bản đồ, và giảm số lần thăm từ khoảng 2,2 xuống khoảng 2,0.
+   - Kết hợp với đi sớm thì chỉ thêm 20–28 s, vì đi sớm đã buộc đội 2 thăm theo thứ tự báo cáo về.
+3. **Tour ưu tiên cluster tầng 3 dài:**
+   - Chỉ có ích khi đội 2 còn **chờ mọi báo cáo**. Nó làm báo cáo cuối về sớm hơn 6–52 s, đổi lại đội 1 bay dài hơn 2–31 s.
+   - Khi đội 2 đã đi sớm, tour này hết tác dụng. Ở 8 cluster, l3first/early/score (969 s) bằng short/early/score (967 s).
+   - Lý do: với đi sớm, đường găng chuyển sang **lúc báo cáo nghi vấn thật về**, mà nghi vấn thật có thể nằm ở bất kỳ cluster nào. Không còn là lúc cluster chậm nhất xong.
+   - Dự báo L3 cũng chỉ ở mức r = 0,67. Ở 2 cluster nó tốt hơn ở 2/10 bản đồ, ở 8 cluster ở 6/10.
+4. **Gộp cả ba:** nhiệm vụ ngắn hơn 19–29 %, mức giảm tăng theo kích thước mạng; tốt hơn ở 10/10 bản đồ mọi kích thước.
+   - Ở 8 cluster, có thể bỏ l3first mà không mất gì.
+5. **Kênh LoRa qua CH đáng kể.** Với khe 40 s, một kết quả chờ trung bình khoảng 20 s mới được phát, cộng thêm thời gian xếp hàng nếu CH có nhiều kết quả. Đây là phần trễ lớn thứ hai trước khi đội 2 biết nghi vấn, chỉ sau thời gian chờ đội 1 bay tới cluster.
+
+## Giới hạn
+
+- **Số bản đồ:**
+  - 10 bản đồ mỗi kích thước, mỗi cluster 1 lượt ns-3, tức 50 cluster cho kích thước nhỏ nhất (2 cluster × 10 bản đồ, kênh lượt 1).
+  - Dưới quy tắc N ≥ 120, nên số tuyệt đối mới là ước lượng.
+  - Chiều và độ lớn của các thay đổi thì nhất quán: 10/10 bản đồ với đi sớm và với thăm theo điểm.
+- **Phân bố điểm nghi vấn là giả định.** Lợi thế của `score` phụ thuộc trực tiếp vào độ tách giữa điểm của nghi vấn thật và giả.
+- **Các tham số đội 2 cố định:** 15 m/s, 30 s xác minh.
+- **Mô hình LoRa đơn giản:** một CH một kênh, không va chạm giữa các CH, không mất gói.
+- **Đội 1 vẫn bỏ qua bán kính quay ở chặng chuyển tiếp.**

@@ -935,6 +935,15 @@ giả sử ta cần cài một vài baseline cho dự án để so sánh: một 
 - có cả 2 nhưng pha 1 dùng uav rotary wing với tsp (gửi gói nhỏ) pha 2 hoạt động như thường
 ```
 
+*73. 2026-10-14 · uav-l2 · trả lời 4 câu về baseline: tệp lớn để số hợp lý, radio 802.15.4; chưa chốt mô hình tập dấu vết; UAV cánh quay 15 m/s, chưa so năng lượng; B1/B2 UAV chờ đối sánh tại chỗ*
+
+```text
+1. kích thước tạm thời để một con số hợp lý sau khi có mô hình nhận dạng sẽ thay sau, radio thống nhất là 802.15.4
+2. chưa cần tập dấu vết cụ thể sẽ chốt mô hình sau
+3 đúng vậy, nhưng tạm thời chưa so về năng lượng
+4 uav sẽ phải chờ đối sánh nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

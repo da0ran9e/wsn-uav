@@ -194,7 +194,7 @@ def stage_runs(a, W_, K):
 
     with ThreadPoolExecutor(a.jobs) as ex:
         list(ex.map(one, range(1, K + 1)))
-        list(ex.map(river, [(k, t) for k in range(1, K + 1) for t in SCHEMES]))
+        list(ex.map(river, [(k, t) for k in range(1, K + 1) for t in a.schemes.split(",")]))
 
 
 def main():
@@ -204,6 +204,7 @@ def main():
     ap.add_argument("--work", required=True)
     ap.add_argument("--bin", required=True)
     ap.add_argument("--jobs", type=int, default=3)
+    ap.add_argument("--schemes", default=",".join(SCHEMES), help="tags of SCHEMES to run")
     a = ap.parse_args()
     a.bin = os.path.abspath(a.bin)
     os.makedirs(a.work, exist_ok=True)

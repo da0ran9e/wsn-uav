@@ -39,7 +39,7 @@ CAT = ["#1c5cab", "#1baf7a", "#eda100", "#8e5ad6", "#0d366b", "#52514e", "#e3494
 TRUE, FALSE = "#e34948", "#eda100"
 
 
-def load_map(w):
+def load_map(w, schemes=SCHEMES):
     m = json.load(open(f"{w}/map.json"))
     tour = json.load(open(f"{w}/tour.json"))
     rows = list(csv.DictReader(open(f"{w}/domain-cells.csv")))
@@ -57,8 +57,8 @@ def load_map(w):
         uav = np.c_[np.interp(d, seg, path[:, 0]), np.interp(d, seg, path[:, 1])]
         geo = dict(c=c, w=W, R=W / math.sqrt(3), cells=sel, S=set(sel), nodes=nodes, path=path, uav=uav)
         res = {t: {(int(r["q"]), int(r["r"])): r for r in csv.DictReader(open(f"{w}/r{k}-{t}-crit.csv"))}
-               for t in SCHEMES}
-        runs = {t: next(csv.DictReader(open(f"{w}/r{k}-{t}-runs.csv"))) for t in SCHEMES}
+               for t in schemes}
+        runs = {t: next(csv.DictReader(open(f"{w}/r{k}-{t}-runs.csv"))) for t in schemes}
         P = plan(geo)
         N = len(uav)
         bits = np.unpackbits(np.fromfile(f"{w}/pass{k}-bits-r1.bin", dtype=np.uint8).reshape(len(nodes), -1),

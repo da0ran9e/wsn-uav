@@ -898,6 +898,23 @@ sau khi hoàn tất công việc này tôi sẽ chỉnh sửa ý tưởng cho b�
 viết một đoạn ngắn gọn mô tả lại các cơ chế mà bạn đã viết ở mỗi giai đoạn
 ```
 
+*70. 2026-10-14 · uav-l2 · giải thích cách chọn đường bay qua CH; đồng ý cài 4 đề xuất (đội 2 đi sớm, tour đội 1 ưu tiên cluster tầng 3 dài, thăm theo điểm nghi vấn, nhiều lượt); ràng buộc mới: CH cần delay LoRa sau đối sánh*
+
+```text
+giải thích các ý sau chi tiết:
+
+* Đường bay là đường thẳng qua CH theo hướng có đoạn nằm trong cluster dài nhất (quét 0–178°). Nếu đường vào/ra Dubins không khả thi thì lấy hướng dài kế tiếp.
+
+tiếp theo tôi đồng ý với các đề xuất để bạn cài đặt luôn:
+
+* Cho đội 2 xuất phát sớm hơn thay vì chờ mọi báo cáo.
+* Sắp tour đội 1 để cluster có tầng 3 dài được bay trước.
+* Thăm nghi vấn theo điểm nghi vấn thay cho TSP thuần.
+* Chạy nhiều lượt cho mỗi kích thước mạng.
+
+nhưng có thêm một ràng buộc: sau khi đối sánh, CH cần một khoảng delay cho kênh phải hồi bằng LoRa về BS
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

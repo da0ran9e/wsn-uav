@@ -892,6 +892,12 @@ tạm thời chưa cần hỏi gì thêm, báo cáo cho tôi từng công đoạ
 sau khi hoàn tất công việc này tôi sẽ chỉnh sửa ý tưởng cho bạn
 ```
 
+*69. 2026-10-14 · uav-l2 · yêu cầu mô tả ngắn cơ chế từng giai đoạn của giả lập trọn nhiệm vụ*
+
+```text
+viết một đoạn ngắn gọn mô tả lại các cơ chế mà bạn đã viết ở mỗi giai đoạn
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

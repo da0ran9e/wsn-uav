@@ -303,3 +303,111 @@ Thời điểm kết thúc nhiệm vụ, trung bình ± khoảng tin cậy 95 %.
 - **Các tham số đội 2 cố định:** 15 m/s, 30 s xác minh.
 - **Mô hình LoRa đơn giản:** một CH một kênh, không va chạm giữa các CH, không mất gói.
 - **Đội 1 vẫn bỏ qua bán kính quay ở chặng chuyển tiếp.**
+
+---
+
+# Phần 3 — Xác minh có tệp lớn và các baseline (CLAUDE.md §8 mục 72–73)
+
+**Chạy lại:**
+```
+python3 tools/mission_baselines.py --works "W/k*" --draws 100 --figs docs/figures \
+    --out docs/data/mission/base --example W/k4
+```
+- Cùng 40 bản đồ (10 bản đồ mỗi kích thước), cùng kết quả ns-3 của River, cùng 100 lượt bốc nghi vấn và pha LoRa mỗi bản đồ như phần 2.
+- Bảng tổng: `base-summary.csv`. Từng lượt bốc: `base-draws.csv`.
+
+## Xác minh (đội 2, mọi phương án)
+
+UAV cánh quay hover ở 100 m ngay trên cell nghi vấn và thực hiện tuần tự:
+1. Ổn định 5 s.
+2. Gửi **tệp lớn 1 MB** (con số tạm, sẽ thay khi có mô hình nhận dạng) bằng unicast 802.15.4 tới CL.
+3. Cell đối sánh trong 5 s.
+
+**Thời gian truyền unicast** = 10 592 khung × 6,88 ms ≈ **73 s**, nên mỗi lần xác minh mất **83 s** (trước đây 30 s).
+- 6,88 ms mỗi khung gồm: CSMA lùi trung bình 1,12 ms, CCA và quay vòng 0,32 ms, khung 4,26 ms, ACK 0,54 ms, LIFS 0,64 ms.
+- Ở 100 m ngay trên CL còn khoảng 30 dB dự trữ, nên bỏ qua mất gói.
+
+**Multicast:**
+- Phát 1 khung mỗi 10 ms như lượt bay, không ACK, giả định có mã fountain lý tưởng.
+- Nhóm xong khi node nhận kém nhất đủ tệp: số khung / (1 − PER của node đó).
+- PER lấy theo mô hình A2G của mục 2 (Nakagami m = 1,8), tính từ điểm hover tới từng CL:
+
+| Khoảng cách ngang | 0 m | 300 m | 500 m | 800 m |
+|---|---|---|---|---|
+| PER | 0,000 | 0,003 | 0,040 | 0,305 |
+
+- Gửi tệp lớn bằng multicast mất 106 s cho nhóm gần (lâu hơn unicast vì mỗi khung chiếm 10 ms).
+
+**Tệp nhẹ** (B3, B6) = |D| trung bình của bản đồ ≈ 0,41–0,45 MB.
+
+## Các phương án
+
+Mọi đội dùng một UAV cánh quay 15 m/s; chưa so năng lượng.
+
+| Ký hiệu | Mô tả |
+|---|---|
+| **P** | Đề xuất: cánh bằng + River (ns-3) + LoRa qua CH + đội 2 l3first / early / score (phần 2), với xác minh 83 s |
+| **B1** | Không pha 1. Một UAV đi TSP qua mọi critical cell (láng giềng gần nhất + 2-opt); tại mỗi cell unicast tệp lớn rồi chờ đối sánh; về khi gặp cell thật |
+| **B2-r** | Không pha 1. Gom critical cell trong bán kính r quanh một điểm hover (phủ tham lam); multicast tệp lớn mỗi nhóm, chờ đối sánh; về khi nhóm chứa cell thật xong |
+| **B3-r** | Pha 1 bằng UAV cánh quay multicast **tệp nhẹ** trên các nhóm đó; mỗi cell đối sánh, báo qua LoRa ở CH; đội 2 (UAV thứ hai) như P |
+| **B6** | Như B3 nhưng mỗi critical cell một lần hover, unicast tệp nhẹ |
+| **B4-t** | P nhưng **không hợp tác tại biên**: critical cell dùng phần dữ liệu cả cell của nó nhận được sau lượt bay (gom nội cell theo ns-3). Mô hình lớp 1 tạm: cell thật chỉ phát hiện được nếu giữ ≥ t của D, nếu không thì nhiệm vụ thất bại (đội 2 thăm hết nghi vấn giả rồi về) |
+| **B7** | Cận dưới lý tưởng: đội 2 biết trước cell thật, bay thẳng tới lúc t = 0, xác minh rồi về |
+
+## Kết quả
+
+![base-end](figures/base-end.png)
+
+**Thời điểm kết thúc nhiệm vụ** (trung bình ± khoảng tin cậy 95 %, **trục log**). Bốn nhóm là 2, 4, 6, 8 cluster. Màu: P đỏ; B7 đen; B1 xám; B2-300 / B2-500 xanh nhạt / xanh; B3-300 / B3-500 xanh lá nhạt / xanh lá; B6 cam; B4-0,85 / 0,9 / 0,95 tím nhạt dần đậm.
+
+**Thời điểm kết thúc nhiệm vụ (s).** Với B4, trung bình chỉ tính trên các lượt tìm thấy cell thật.
+
+| Phương án | 2 cluster | 4 | 6 | 8 |
+|---|---|---|---|---|
+| **P** | **654** | **845** | **937** | **1 060** |
+| B7 (cận dưới) | 421 | 502 | 562 | 618 |
+| B1 | 1 138 | 2 002 | 2 802 | 3 474 |
+| B2-300 | 1 269 | 2 268 | 3 232 | 3 913 |
+| B2-500 | 1 077 | 1 742 | 2 413 | 3 009 |
+| B3-300 | 1 074 | 1 682 | 2 218 | 2 650 |
+| B3-500 | 992 | 1 424 | 1 825 | 2 232 |
+| B6 | 1 027 | 1 585 | 2 075 | 2 505 |
+| B4-0,85: tỉ lệ thành công / kết thúc | 61 % / 611 | 64 % / 817 | 73 % / 906 | 75 % / 1 052 |
+| B4-0,9 | 53 % / 613 | 51 % / 811 | 63 % / 915 | 66 % / 1 062 |
+| B4-0,95 | 45 % / 609 | 38 % / 834 | 53 % / 910 | 55 % / 1 073 |
+
+Ở mọi kích thước, P nhanh hơn B1, B2 và B3 trên **10/10 bản đồ**.
+
+![base-paths](figures/base-paths.png)
+
+**Đường bay trên bản đồ 4 cluster, cùng một lượt bốc** (chấm đỏ là cell thật):
+
+| Panel | Đường bay |
+|---|---|
+| Trái | B1: TSP qua mọi critical cell, dừng ở cell thật |
+| Giữa | B2-500: các nhóm hover (đĩa 500 m), dừng ở nhóm chứa cell thật |
+| Phải | B3-500: pha 1 đi hết các nhóm để phát tệp nhẹ |
+
+## Đọc kết quả
+
+1. **Không có pha 1 (B1, B2) chậm gấp 1,7–3,3 lần P, và khoảng cách tăng theo kích thước mạng.**
+   - B1 phải thăm trung bình 7–26 critical cell, mỗi cell 83 s xác minh cộng thời gian bay.
+   - Multicast chỉ có lợi khi nhóm đủ lớn. B2-500 nhanh hơn B1 (ít điểm dừng hơn), nhưng B2-300 lại chậm hơn B1, vì multicast tốn 10 ms mỗi khung so với 6,88 ms của unicast mà nhóm 300 m lại nhỏ.
+2. **Pha 1 bằng UAV cánh quay (B3, B6) đỡ hơn nhiều nhưng vẫn chậm hơn P 1,5–2,1 lần.**
+   - Rải tệp nhẹ bằng hover tốn 15–50 lần hover, mỗi lần 40–60 s, và bay 15 m/s.
+   - Cánh bằng 50 m/s cộng River làm cùng việc đó trong 4–11 phút cho cả bản đồ.
+3. **Không hợp tác tại biên (B4) gần như không nhanh hơn: chỉ bớt 2–16 s, nhưng làm mất cell thật ở 25–62 % lượt.**
+   - Sau lượt bay, critical cell thường có khoảng 90 % D nhưng hiếm khi đủ 100 %.
+   - Đúng với bài học ở uav-sar: **hợp tác ở đây không mua thời gian, nó mua độ đầy đủ của dữ liệu**, tức khả năng phát hiện.
+   - Mức thiệt hại cụ thể phụ thuộc mô hình lớp 1, hiện mới là ngưỡng tạm.
+4. **P cách cận dưới B7 khoảng 230–440 s.**
+   - Phần này là thời gian đội 1 bay tới cluster của cell thật, cộng đối sánh, cộng LoRa, cộng các lần thăm nghi vấn giả.
+
+## Giới hạn
+
+- Chưa có mô hình nhận dạng:
+  - Tệp lớn 1 MB và ngưỡng B4 là số tạm.
+  - Mọi phương án giả định đối sánh với tệp lớn luôn đúng.
+- Chưa có baseline quét luống (B5), vì cần quyết định cách River áp dụng cho đường bay nhiều luống.
+- Chưa tính năng lượng; một UAV mỗi đội; không có gió.
+- Unicast giả định không mất gói khi hover ngay trên CL. Multicast giả định mã fountain lý tưởng.

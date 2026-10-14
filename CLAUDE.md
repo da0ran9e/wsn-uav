@@ -921,6 +921,20 @@ nhưng có thêm một ràng buộc: sau khi đối sánh, CH cần một khoả
 có thể cho tôi thấy được toàn bộ quá trình chạy của giả lập bằng visualize không, toàn bộ các bước chạy của các cơ chế thuật toán
 ```
 
+*72. 2026-10-14 · uav-l2 · pha 2 thiếu hover và delay gửi tệp lớn; đề xuất các baseline để so sánh, xin góp ý*
+
+```text
+một điểm nữa là ta chưa cho đội uav 2 ở pha xác minh hover và delay để gửi tệp lớn 
+
+giả sử ta cần cài một vài baseline cho dự án để so sánh: một vài hướng tôi nghĩ tới như sau, bạn có thể góp ý hoặc gợi ý thêm:
+- không có pha 1: chỉ có uav rotary wing cần thăm tất cả các critical cell bằng tsp và unicast(tệp lớn)
+- không có pha 1: cũng là UAV rotary wing nhưng nó gom các critical cell gần nhau thành các cụm phục vụ sử dụng multicast (tệp lớn)
+- có pha 1 nhưng ở pha 1 cũng gộp những critical cell lại thành cụm phục vụ, dùng một uav rotary wing hover để gửi common file bằng multicast (file này nhẹ tương đương trung bình lượng dữ liệu ta phát cho một river) sau đó thực hiện pha 2 như bình thường
+- có cả 2 pha nhưng không hợp tác tại biên, node cell nhận được bao nhiêu dùng bấy nhiêu (có thể dẫn đến false positive tăng hoặc không tìm thấy true positive) 
+- có cả 2 nhưng pha 1 dùng đường bay quét luống dubin
+- có cả 2 nhưng pha 1 dùng uav rotary wing với tsp (gửi gói nhỏ) pha 2 hoạt động như thường
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

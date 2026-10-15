@@ -962,6 +962,12 @@ tuy chưa phải là thực nghiệm chính thức nhưng kết quả này cho t
 bạn chỉ cần cho tôi các keyword hoặc câu ngắn gọn, không cần triển khai hết ý,
 ```
 
+*77. 2026-10-15 · paper · Related Work, chỉ keyword*
+
+```text
+tiếp tục với related work, cũng chỉ keyword thôi
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

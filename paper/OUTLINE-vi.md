@@ -69,6 +69,8 @@ Chi tiết từng đoạn: [`INTRO-vi.md`](INTRO-vi.md).
 
 ## 2. Related Work
 
+Keyword: [`RELATED-vi.md`](RELATED-vi.md).
+
 - **UAV giao và thu dữ liệu cho WSN:**
   - Data ferrying, UAV-aided dissemination.
   - Lập đường bay phủ: quét luống, TSP, Dubins.

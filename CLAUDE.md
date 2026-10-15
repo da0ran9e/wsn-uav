@@ -956,6 +956,12 @@ tuy chưa phải là thực nghiệm chính thức nhưng kết quả này cho t
 đi vào intro, gạch ra một vài ý chính đi
 ```
 
+*76. 2026-10-15 · paper · intro chỉ cần keyword hoặc câu ngắn, không triển khai hết ý*
+
+```text
+bạn chỉ cần cho tôi các keyword hoặc câu ngắn gọn, không cần triển khai hết ý,
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

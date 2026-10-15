@@ -42,6 +42,8 @@ Một UAV cánh bằng chỉ bay qua mỗi cluster **một lần** không thể 
 
 ## 1. Introduction
 
+Chi tiết từng đoạn: [`INTRO-vi.md`](INTRO-vi.md).
+
 - **Động cơ:**
   - Trẻ đi lạc, truy vết sau sự cố.
   - Mạng camera dày nhưng mỗi thiết bị chỉ làm việc riêng của nó.

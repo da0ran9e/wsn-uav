@@ -950,6 +950,12 @@ giả sử ta cần cài một vài baseline cho dự án để so sánh: một 
 tuy chưa phải là thực nghiệm chính thức nhưng kết quả này cho ta một trực giác tốt cho paper, tiếp theo ta tạm gác lại công việc thực nghiệm để dựng một khung paper trước. đầu tiên bạn thử cho tôi một bộ khung paper với các đại ý trước nhé tôi sẽ điều chỉnh dần
 ```
 
+*75. 2026-10-15 · paper · đi vào Introduction, gạch các ý chính*
+
+```text
+đi vào intro, gạch ra một vài ý chính đi
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

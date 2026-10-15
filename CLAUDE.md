@@ -1021,6 +1021,25 @@ How often the fallbacks fired:
 * No cluster so far has needed the next-longest direction. The campaign maps are not all checked yet.
 ```
 
+*83. 2026-10-15 · layer 1 · nghiên cứu sâu có dẫn nguồn: kiểu câu hỏi/đối tượng nhận dạng, đơn vị phát và số bit, số signature, thô→tinh, recall/precision theo tỉ lệ nhận, bit tối thiểu theo ngân sách phản hồi, ngưỡng; theo thiết bị biên phổ biến*
+
+```text
+tiếp theo liên quan đến vấn đề layer 1 của phải pháp. ta cần tìm và nghiên cứu thêm các nguồn và công bố tin cậy cho một số câu hỏi sau, nghiên cứu sâu cho tôi bảng thống kê chi tiết và dẫn nguồn:
+
+1. Node trả lời câu nào: có người / có phải người này / giống ai trong danh sách? Đối tượng nhận dạng là mặt, dáng người, phương tiện hay biển số? (mỗi trường hợp lại yêu cầu một độ chính xác khác nhau, do đó ta lựa chọn một loại phù hợp nhất với thực nghiệm đang có.
+
+4. Đơn vị phát là ảnh thô, embedding float, embedding lượng tử hay mã nhị phân? Số bit mỗi signature là bao nhiêu? 
+5. Một đối tượng cần mấy signature (nhiều góc, nhiều điều kiện sáng)? (liên quan đến số lượng file tối thiểu cho một cluster)
+
+9. Tập có phân lớp thô → tinh được không? 
+10. Đường cong recall và precision theo tỉ lệ tập nhận được là gì, cho từng kiểu biểu diễn?
+
+15. Số bit tối thiểu mỗi signature để tỉ lệ báo nhầm nằm trong ngân sách kênh phản hồi?
+16. Ngưỡng match cố định trước hay node tự chỉnh theo lượng nó nhận được?
+
+các câu hỏi trên thậm chí còn khác nhau dựa trên khả năng xử lý của node biên, do đó hãy khảo sát dựa trên các thiết bị biên phổ biến
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

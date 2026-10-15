@@ -114,6 +114,8 @@ Keyword: [`SYSTEM-vi.md`](SYSTEM-vi.md).
 
 ## 5. River: Planned Ground Cooperation (đóng góp chính)
 
+Keyword: [`RIVER-vi.md`](RIVER-vi.md).
+
 1. **Bảng Axe tại BS:** từ d_track, mỗi cell Axe biết nó sẽ nhận đoạn Seg nào.
 2. **Bank:** đường vuông góc với vector tổng của Axe, cách ±ω (độ rộng River 3,5 cell). Bank ở biên cluster thì chính biên là Bank.
 3. **Critical cell:** gồm cell của CH, ngoại lệ toàn cục, và ngoại lệ cục bộ trong 2 vòng.

@@ -974,6 +974,12 @@ tiếp tục với related work, cũng chỉ keyword thôi
 tiếp tục với từng phần của system model, cũng chỉ keyword
 ```
 
+*79. 2026-10-15 · paper · phần River, chỉ keyword*
+
+```text
+tiếp tục với phần River, cũng chỉ keyword
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

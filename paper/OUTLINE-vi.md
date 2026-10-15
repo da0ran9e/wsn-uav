@@ -109,6 +109,8 @@ Keyword: [`SYSTEM-vi.md`](SYSTEM-vi.md).
 
 ## 4. Mission Overview
 
+Keyword: [`REST-vi.md`](REST-vi.md).
+
 - Ba pha, ba lớp của Pha 1, và lớp 3 nằm ở đâu trong đó.
 - Hình tổng quan: một bản đồ có các cluster, đường bay đội 1, River, nghi vấn và đường bay đội 2. Có thể lấy một khung từ trang replay.
 
@@ -127,6 +129,8 @@ Keyword: [`RIVER-vi.md`](RIVER-vi.md).
 
 ## 6. Mission-Level Policies
 
+Keyword: [`REST-vi.md`](REST-vi.md).
+
 - Chọn hướng bay qua CH để đoạn trong cluster dài nhất.
 - Tour đội 1 (Held–Karp). Tour l3first chỉ có ích khi đội 2 chờ đủ báo cáo.
 - Phản hồi LoRa qua CH, mỗi bản tin một khe 40 s.
@@ -136,6 +140,8 @@ Keyword: [`RIVER-vi.md`](RIVER-vi.md).
   - Xác minh = hover + tệp lớn 1 MB (khoảng 73 s) + đối sánh.
 
 ## 7. Evaluation Setup
+
+Keyword: [`REST-vi.md`](REST-vi.md).
 
 - ns-3.46, lr-wpan có MAC đầy đủ, binary đóng băng.
 - Bản đồ: 2 / 4 / 6 / 8 cluster, 10 bản đồ mỗi kích thước. **[cần chạy]** nâng lên N ≥ 120 cho số chính.
@@ -156,6 +162,8 @@ Keyword: [`RIVER-vi.md`](RIVER-vi.md).
 
 ## 8. Results (các hình dự kiến)
 
+Keyword: [`REST-vi.md`](REST-vi.md).
+
 1. **Lớp 3:**
    - River so với kéo thẳng: thời gian, số khung, phân bố theo cluster.
    - Ảnh hưởng của số critical cell, độ rộng River và số màu kênh. Đã có kết quả 20 lượt (`uav-coop2/docs/RIVER-NS3-vi.md`).
@@ -168,6 +176,8 @@ Keyword: [`RIVER-vi.md`](RIVER-vi.md).
 
 ## 9. Discussion and Limitations
 
+Keyword: [`REST-vi.md`](REST-vi.md).
+
 - Mô hình lớp 1 mới là ngưỡng tạm; tệp lớn 1 MB là số tạm.
 - Đường bay chỉ là đường thẳng. Đường cong và quét luống còn mở.
 - Chưa tính năng lượng; một UAV mỗi đội.
@@ -175,6 +185,8 @@ Keyword: [`RIVER-vi.md`](RIVER-vi.md).
 - Đây là kịch bản đô thị; không đem số sang nhánh rừng.
 
 ## 10. Conclusion
+
+Keyword: [`REST-vi.md`](REST-vi.md).
 
 - Tóm tắt các đóng góp.
 - Hướng tiếp:

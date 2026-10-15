@@ -992,6 +992,35 @@ tiếp tục với phần River, cũng chỉ keyword
 mô tả thêm mô hình các baseline/ablations không?
 ```
 
+*82. 2026-10-15 · uav-l2 · mã giả chọn đường bay qua CH (tóm tắt + chi tiết); nguồn gốc ý tưởng · kèm đoạn giải thích tiếng Anh của Claude*
+
+```text
+ta tiếp tục quay lại các cơ chế chính của các tầng, đầu tiên tôi cần bạn chuẩn bị một bộ pseudo code của cơ chế sau (một đoạn tóm tắt và một đoạn chi tiết), nói cho tôi biết, ý tưởng này của bạn được lấy từ đâu, giải thích ý tưởng gốc và ý tưởng của bạn một cách ngắn gọn :
+How the flight line is chosen in each cluster
+The UAV crosses each cluster on a single straight line through the CH. To pick its direction:
+
+1. Run the deploy once to get the CH. `uav-coop-deploy` runs on the cluster’s own cells and nodes and picks the CH: the strongest node at least 300 m from the cluster edge. For a cluster too thin for that, the margin drops to 200, 100, then 0 m.
+2. Scan directions. From the CH, draw a line in every direction from 0° to 178° in 2° steps (180° is the same line flown the other way). For each line:
+   * Sample a point every 5 m out to 8 km on both sides of the CH and check which cluster cell each point falls in.
+   * On each side, take the farthest point that still lies in the cluster. These two points are where the UAV enters and leaves.
+   * The score is the length of line inside the cluster: the number of 5 m samples that land in this cluster’s cells. Lakes, gaps and other clusters’ cells do not count.
+3. Pick the direction with the longest in-cluster length. The reasons:
+   * The UAV sends one packet per 0.5 m, so the in-cluster length decides how much data D the cluster gets. On C3, switching to the longest line raised D by 88 %.
+   * A longer Axe makes a longer River, so more critical cells sit near it.
+   * The CH is always a critical cell, and on this line it gets data directly.
+   * Entry and exit are the farthest points, so the UAV still flies over lakes and other clusters’ cells in between. Those are soft obstacles.
+4. Run the deploy again on that line. It builds the Dubins path entry → CH → exit with the minimum turn radius, and checks three things:
+   * The path crosses the cluster edge cleanly rather than running along it.
+   * A straight lead-in before the entry, one turn radius long, stays outside the cluster.
+   * A lead-out of the same length after the exit also stays outside the cluster.
+If these fail (for example, a bay of the cluster reaches back near the entry point), it takes the next-longest direction and rebuilds the path. For the first deploy in step 1, if the random entry is not feasible, it tries other entry points.
+
+How often the fallbacks fired:
+
+* Before this campaign, 20 clusters ran (2, 4, 6 and 8-cluster maps). In two of them the CH margin dropped to 200 m.
+* No cluster so far has needed the next-longest direction. The campaign maps are not all checked yet.
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

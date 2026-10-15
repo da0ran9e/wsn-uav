@@ -110,6 +110,7 @@ Keyword: [`SYSTEM-vi.md`](SYSTEM-vi.md).
 ## 4. Mission Overview
 
 Keyword: [`REST-vi.md`](REST-vi.md).
+Chọn đường bay qua mỗi cluster (mã giả ngắn và đầy đủ): [`../uav-l2/docs/FLIGHTLINE-vi.md`](../uav-l2/docs/FLIGHTLINE-vi.md).
 
 - Ba pha, ba lớp của Pha 1, và lớp 3 nằm ở đâu trong đó.
 - Hình tổng quan: một bản đồ có các cluster, đường bay đội 1, River, nghi vấn và đường bay đội 2. Có thể lấy một khung từ trang replay.

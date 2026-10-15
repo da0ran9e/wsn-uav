@@ -1040,6 +1040,13 @@ tiếp theo liên quan đến vấn đề layer 1 của phải pháp. ta cần t
 các câu hỏi trên thậm chí còn khác nhau dựa trên khả năng xử lý của node biên, do đó hãy khảo sát dựa trên các thiết bị biên phổ biến
 ```
 
+*84. 2026-10-15 · uav-l2 · tái cấu trúc mạng trước nhiệm vụ: dựng cluster phục vụ cơ chế (dài hẹp cho River, theo địa hình, đường bay liên tục, sắp theo thứ tự ghé thăm); tự đề xuất, cài đặt, visualize các bước*
+
+```text
+quay lại với phần thực nghiệm ns-3, mở rộng thêm một ý tưởng mới cho layer 2 của giải pháp. Trong bước setup mạng, nếu như ta có thể thực hiện tái cấu trúc mạng trước khi nhiệm vụ bắt đầu, xây dựng các cluster để thuận tiện cho các cơ chế hoạt động hiệu quả, ví dụ: cluster dài và hẹp ngang đảm bảo cơ chế river được tận dụng tốt, cluster theo địa hình, đảm bảo đường bay liên tục, thậm chí ta có thể dự đoán trước thứ tự ghé thăm để xắp xếp các cluster theo yêu cầu (cluster to ghé trước, nhỏ ghé sau, hoặc vùng yếu trước hay vùng đông đúc trước …)
+tự bạn thử đề xuất và cài đặt thêm một thuật toán cho bước này, và cho tôi xem visualize các bước trong khi tôi tiếp tục tìm hiểu thêm các vấn đề layer 1
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -11,6 +11,8 @@ clusters with a size cap on the lakes domain (phase 0): `tools/partition.py`.
 **River on those clusters** (cap 80, mission 1) — [`docs/CLUSTER-RIVER-vi.md`](docs/CLUSTER-RIVER-vi.md):
 uav-coop-deploy `--regionIn/--nodesIn`, uav-coop-pass, uav-coop2 River plan and ns-3 trial;
 map `tools/cluster_river_figure.py`. Figures carry no text (CLAUDE.md §8 item 63).
+**Restructuring the clusters as lanes** (phase 0 for the mission, CLAUDE.md §8 item 84) —
+[`docs/RESTRUCTURE-vi.md`](docs/RESTRUCTURE-vi.md): `tools/restructure.py`, `mission.py --partition=lane`.
 **C3 step by step** (path along its longest line, Algorithms 1-7 on ns-3) —
 [`docs/CLUSTER-C3-vi.md`](docs/CLUSTER-C3-vi.md), `tools/cluster_steps.py`.
 

@@ -4,7 +4,9 @@
 
 Stages (each writes into WORK; a stage whose outputs exist is skipped, so a run can be resumed):
   1 map       map_gen domain with lakes, grown to 80 x CLUSTERS cells, nodes one per 35 m x 35 m;
-              partition.py into clusters of at most 80 cells; the BS 1 km below the domain's lowest cell
+              partition.py into clusters of at most 80 cells (or, --partition=lane, restructure.py lanes
+              --lane cells wide; each cluster then flies along the lanes first); the BS 1 km below the
+              domain's lowest cell
   2 deploy    per cluster: uav-coop-deploy (given region and nodes) picks the CH and CLs (the CH at least
               300 m from the cluster's edge; 200, 100, 0 m for a cluster too thin for that); the bearing
               through the CH with the longest in-cluster flight (0-178 deg, step 2) is chosen and the
@@ -24,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from map_gen import add_args, cell_at, centre, generate
 from partition import partition
+from restructure import lane_partition
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 COOP2 = os.path.join(HERE, "../../uav-coop2/tools")
@@ -55,7 +58,12 @@ def stage_map(a, W_):
         f.write("q,r,cx,cy,type\n")
         for h in g["final"]:
             f.write(f"{h[0]},{h[1]},{centre(h)[0]:.3f},{centre(h)[1]:.3f},{gaps.get(h, 'land')}\n")
-    owner, med, it, over = partition(land, 80, random.Random(a.seed))
+    if a.partition == "lane":
+        owner, th, _, st = lane_partition(land, 80, a.lane)
+        med, over = sorted(set(owner.values())), 0
+        json.dump(dict(bearing=round(math.degrees(th)), lane=a.lane), open(f"{W_}/lane.json", "w"))
+    else:
+        owner, med, it, over = partition(land, 80, random.Random(a.seed))
     nodes = [v for v in g["nodes"] if (v[3], v[4]) in owner]
     with open(f"{W_}/clusters.csv", "w") as f:
         f.write("q,r,cluster\n")
@@ -106,7 +114,11 @@ def stage_deploy(a, W_, K):
             margin = next(m for m in (300, 200, 100, 0) for p in range(10)
                           if sh(base + [f"--chMargin={m}", f"--pick={p}"], f"c{k}-deploy0.log", env, ok=True))
             base.append(f"--chMargin={margin}")
-            b, inside = next((b, i) for b, i in bearings(W_, k)
+            scan = bearings(W_, k)
+            if os.path.exists(f"{W_}/lane.json"):   # lane clusters: fly along the lanes first
+                th = json.load(open(f"{W_}/lane.json"))["bearing"]
+                scan = sorted(scan, key=lambda t: t[0] != th)
+            b, inside = next((b, i) for b, i in scan
                              if sh(base + [f"--bearing={b}"], f"c{k}-deploy.log", env, ok=True))
             json.dump(dict(bearing=b, inside=inside, chMargin=margin), open(f"{W_}/c{k}-bearing.json", "w"))
         out[k] = json.load(open(f"{W_}/c{k}-bearing.json"))
@@ -205,6 +217,9 @@ def main():
     ap.add_argument("--bin", required=True)
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--schemes", default=",".join(SCHEMES), help="tags of SCHEMES to run")
+    ap.add_argument("--partition", default="kmedoids", choices=("kmedoids", "lane"),
+                    help="phase 0: partition.py k-medoids, or restructure.py lanes (CLAUDE.md §8 item 84)")
+    ap.add_argument("--lane", type=float, default=4.5, help="--partition=lane: lane width, cells")
     a = ap.parse_args()
     a.bin = os.path.abspath(a.bin)
     os.makedirs(a.work, exist_ok=True)

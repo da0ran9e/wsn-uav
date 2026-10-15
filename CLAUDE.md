@@ -968,6 +968,12 @@ bạn chỉ cần cho tôi các keyword hoặc câu ngắn gọn, không cần t
 tiếp tục với related work, cũng chỉ keyword thôi
 ```
 
+*78. 2026-10-15 · paper · System Model từng phần, chỉ keyword*
+
+```text
+tiếp tục với từng phần của system model, cũng chỉ keyword
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

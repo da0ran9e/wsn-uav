@@ -82,6 +82,8 @@ Keyword: [`RELATED-vi.md`](RELATED-vi.md).
 
 ## 3. System Model and Problem
 
+Keyword: [`SYSTEM-vi.md`](SYSTEM-vi.md).
+
 - **Mạng mặt đất:**
   - N node không đồng nhất (quan sát, tính toán, giao tiếp).
   - Lưới cell lục giác R = 100 m. Mỗi cell có CL, mỗi cluster có CH.

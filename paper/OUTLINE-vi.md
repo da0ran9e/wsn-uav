@@ -141,6 +141,8 @@ Keyword: [`REST-vi.md`](REST-vi.md).
 
 ## 7. Evaluation Setup
 
+Baseline và ablation: [`BASELINES-vi.md`](BASELINES-vi.md).
+
 Keyword: [`REST-vi.md`](REST-vi.md).
 
 - ns-3.46, lr-wpan có MAC đầy đủ, binary đóng băng.

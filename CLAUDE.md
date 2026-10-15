@@ -986,6 +986,12 @@ tiếp tục với phần River, cũng chỉ keyword
 đưa nốt phần còn lại của system model đi
 ```
 
+*81. 2026-10-15 · paper · mô tả mô hình các baseline / ablation*
+
+```text
+mô tả thêm mô hình các baseline/ablations không?
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

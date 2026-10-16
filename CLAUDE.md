@@ -1047,6 +1047,12 @@ quay lại với phần thực nghiệm ns-3, mở rộng thêm một ý tưởn
 tự bạn thử đề xuất và cài đặt thêm một thuật toán cho bước này, và cho tôi xem visualize các bước trong khi tôi tiếp tục tìm hiểu thêm các vấn đề layer 1
 ```
 
+*85. 2026-10-16 · layer 1 ↔ cơ chế hiện có: phần nào của lớp 1 đang được chạm tới (River cần bao nhiêu dữ liệu, bao nhiêu file, tỉ lệ phán đoán đúng, thời gian xử lý edge, lượng dữ liệu đội 2 cần để xác minh)*
+
+```text
+tạm thời cơ chế đơn giản là như vậy đi, bạn đã chạy thực nghiệm rồi, vậy hãy cho tôi biết những phần nào thuộc vấn đề lớp 1 đang được các cơ chế này chạm tới, ví dụ như river cần nhận được bao nhiêu dữ liệu là đủ để nhận dạng, cần bao nhiêu file phân biệt,… hay khi một Edge nhận đủ dữ liệu được phát thì khi nó đưa ra phán đoán tỉ lệ bao nhiêu phần là đúng (với mỗi file dữ liệu hoặc mỗi bộ file),…thiết bị edge xử lý thông thường mất bao lâu,… đội 2 khi đưa dữ liệu xác minh cần bao nhiêu để cho độ chính xác gần như chắc chắn …
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

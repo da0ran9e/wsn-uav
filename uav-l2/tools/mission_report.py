@@ -71,7 +71,7 @@ def load_map(w, schemes=SCHEMES):
         for i, h in enumerate(cellof):
             mem.setdefault(h, []).append(i)
         held = {h: float((bits[mem[h]].any(axis=0) & inD).sum() / inD.sum()) for h in sel}
-        cl[k] = dict(geo=geo, P=P, res=res, runs=runs, held=held, D=int(inD.sum()))
+        cl[k] = dict(geo=geo, P=P, res=res, runs=runs, held=held, D=int(inD.sum()), bits=bits, inD=inD, mem=mem)
     return dict(m=m, tour=tour, water=water, owner=owner, cl=cl, bs=tuple(m["bs"]), name=os.path.basename(w))
 
 

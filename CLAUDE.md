@@ -1060,6 +1060,12 @@ cho tôi phiên bản animation visualize của giả lập phía trên cho ý t
 liên quan đến layer 1, hãy tạo một bảng danh sách các câu hỏi nghiên cứu và các tham số đang dùng tương ứng
 ```
 
+*87. 2026-10-17 · uav-l2 · tổng hợp animation: giả lập propose, propose với layer 2 (LANE), các baseline/ablation*
+
+```text
+tổng hợp lại cho tôi các animation: từ giả lập propose, propose với layer 2, và các baseline/ablation
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

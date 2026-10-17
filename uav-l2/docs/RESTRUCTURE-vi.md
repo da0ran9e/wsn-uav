@@ -56,6 +56,9 @@ Algorithm LANE(Land, Cap, L, Policy)                      // L: lane width in ce
 
 ## 4. Hình (không chữ)
 
+Animation toàn bộ các bước, trên bản đồ 8 cluster, không chữ: `anim/lane-replay.html` (tạo bởi `tools/restructure_anim.py`; bản đăng: https://claude.ai/artifact/UGFp5srtMjxJFMzwuQFNNY).
+
+
 | File | Nội dung |
 |---|---|
 | `figures/restructure-k4-s2-steps.png`, `…-k8-s4-steps.png` | 6 bước, đọc trái → phải, trên → dưới. (1) Miền, hồ (gạch chéo), node, BS (ô vuông). (2) Quét hướng: bán kính càng dài thì cách cắt càng ít mảnh; chấm đỏ là hướng được chọn. (3) Các luồng ở hướng đã chọn, tô xen kẽ hai sắc. (4) Các mảnh luồng trước khi gộp; mảnh vụn có gạch chéo đen. (5) Cluster LANE: màu đậm là ghé trước, mũi tên đậm là bay trong cluster, mũi tên đứt là bay chuyển tiếp, sao là CH. (6) Cluster k-medoids hiện tại với dây cung dài nhất và tour Held–Karp, cùng cách tô |

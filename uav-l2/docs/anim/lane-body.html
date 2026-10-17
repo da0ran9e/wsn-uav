@@ -1,0 +1,222 @@
+<canvas id="map" aria-label="Lane restructuring map"></canvas>
+<canvas id="lanes" aria-label="Tour timelines, lanes above, k-medoids below"></canvas>
+<div class="rail">
+  <button id="prev" aria-label="Previous step"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="3" width="2.4" height="12"/><path d="M16 3v12L6 9z"/></svg></button>
+  <button id="play" aria-label="Play or pause"><svg id="ico" width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M5 3v12l10-6z"/></svg></button>
+  <button id="next" aria-label="Next step"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M2 3v12l10-6z"/><rect x="13.6" y="3" width="2.4" height="12"/></svg></button>
+  <canvas id="chap" aria-label="Steps" tabindex="0"></canvas>
+  <input id="speed" type="range" min="-2" max="2" step="1" value="0" aria-label="Speed">
+</div>
+<script>
+const DATA = __DATA__;
+(() => {
+const D = DATA, P = D.params, R = P.R, W = P.W;
+// cells: land [x, y, 0, lane, piece, frag, laneCluster, kmCluster, posAlong, coverLane, coverKm]; water [x, y, 1]
+const cells = D.cells.map(c => c[2] ? {x: c[0], y: c[1], lake: 1} :
+  {x: c[0], y: c[1], lake: 0, lane: c[3], piece: c[4], frag: c[5], kl: c[6], kk: c[7], pu: c[8], cvl: c[9], cvk: c[10]});
+const land = cells.filter(c => !c.lake);
+const nodes = D.nodes;
+const TH = D.th;
+// the order cells arrive in during step 1: outward from the domain's centre
+const cx0 = land.reduce((s, c) => s + c.x, 0) / land.length, cy0 = land.reduce((s, c) => s + c.y, 0) / land.length;
+land.forEach(c => c.d0 = Math.hypot(c.x - cx0, c.y - cy0));
+const dMax = Math.max(...land.map(c => c.d0));
+// cut sweep: each lane cell's position along the lanes, normalised
+const puMin = Math.min(...land.map(c => c.pu)), puMax = Math.max(...land.map(c => c.pu));
+// a tour as timed legs; inside legs carry their cluster
+function tour(T, key) {
+  const byRank = {}; for (const [k, c] of Object.entries(T.cl)) byRank[c.rank] = Number(k);
+  let r = 0; const legs = T.legs.map(l => ({a: l[0], b: l[1], t0: l[2], t1: l[3], inside: l[4], k: l[4] ? byRank[r++] : -1}));
+  const legOf = {}; legs.forEach(l => { if (l.inside) legOf[l.k] = l; });
+  // when each cell is reached by its cluster's flight
+  for (const c of land) { const l = legOf[c[key]]; const dx = l.b[0] - l.a[0], dy = l.b[1] - l.a[1], L2 = dx * dx + dy * dy || 1;
+    const f = Math.max(0, Math.min(1, ((c.x - l.a[0]) * dx + (c.y - l.a[1]) * dy) / L2)); c["t_" + key] = l.t0 + f * (l.t1 - l.t0); }
+  return {legs, end: T.end, cl: T.cl};
+}
+const TL = tour(D.lane, "kl"), TK = tour(D.km, "kk");
+const TEND = Math.max(TL.end, TK.end);
+
+// ---------- steps (show seconds at speed 1) ----------
+const FLY = 40;   // tour seconds per show second
+const CH = [{d: 3}, {d: 7}, {d: 2.5}, {d: 3}, {d: 2.5}, {d: 4}, {d: 3}, {d: TL.end / FLY}, {d: 2}, {d: TK.end / FLY}];
+const N = CH.length;
+const starts = []; { let a = 0; for (const c of CH) { starts.push(a); a += c.d; } }
+const TOTAL = starts[N - 1] + CH[N - 1].d;
+
+// ---------- canvas ----------
+const map = document.getElementById("map"), lanes = document.getElementById("lanes"), chap = document.getElementById("chap");
+let col = {};
+const NAMES = ["bg","land","land2","edge","water","ink","ink2","data","axe","bank","river","t2","false","track","fill","c1","c2","c3","c4","c5","c6","c7","c8"];
+function readColors() { const cs = getComputedStyle(document.documentElement); for (const n of NAMES) col[n] = cs.getPropertyValue("--" + n).trim(); }
+readColors(); matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); dirty = true; });
+new MutationObserver(() => { readColors(); dirty = true; }).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+const kc = k => col["c" + ((k % 8) + 1)];
+const xs = cells.map(c => c.x).concat([D.bs[0]]), ys = cells.map(c => c.y).concat([D.bs[1]]);
+const box = [Math.min(...xs) - R * 1.5, Math.max(...xs) + R * 1.5, Math.min(...ys) - R * 1.5, Math.max(...ys) + R * 1.5];
+let sc = 1, ox = 0, oy = 0, dpr = 1, dirty = true;
+function fit() {
+  dpr = window.devicePixelRatio || 1;
+  for (const c of [map, lanes, chap]) { const r = c.getBoundingClientRect(); c.width = Math.max(1, r.width * dpr); c.height = Math.max(1, r.height * dpr); }
+  sc = Math.min(map.width / (box[1] - box[0]), map.height / (box[3] - box[2]));
+  ox = (map.width - sc * (box[1] - box[0])) / 2 - sc * box[0]; oy = (map.height - sc * (box[3] - box[2])) / 2 + sc * box[3];
+  dirty = true; }
+const X = x => ox + sc * x, Y = y => oy - sc * y;
+const g = map.getContext("2d"), gl = lanes.getContext("2d"), gc = chap.getContext("2d");
+function hex(c, s = 1) { g.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (30 + 60 * i);
+  const x = X(c.x + R * s * Math.cos(a)), y = Y(c.y + R * s * Math.sin(a)); i ? g.lineTo(x, y) : g.moveTo(x, y); } g.closePath(); }
+function mix(a, b, t) { const p = s => s.length === 4 ? [1,2,3].map(i => parseInt(s[i] + s[i], 16)) : [1,3,5].map(i => parseInt(s.slice(i, i + 2), 16));
+  const A = p(a), B = p(b); return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",") + ")"; }
+const ease = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
+const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+// cell lookup for borders
+const at = new Map(); cells.forEach((c, i) => at.set(Math.round(c.x) + "," + Math.round(c.y), i));
+const nbr = land.map(c => { const out = []; for (let i = 0; i < 6; i++) { const a1 = Math.PI / 180 * (30 + 60 * i), a2 = Math.PI / 180 * (90 + 60 * i);
+  const nx = c.x + R * (Math.cos(a1) + Math.cos(a2)), ny = c.y + R * (Math.sin(a1) + Math.sin(a2));
+  let best = null, bd = 1e9; for (const o of land) { const d = Math.abs(o.x - nx) + Math.abs(o.y - ny); if (d < bd) { bd = d; best = o; } }
+  out.push(bd < R * 0.5 ? best : null); } return out; });
+function borders(key, alpha) { g.strokeStyle = col.ink; g.globalAlpha = alpha; g.lineWidth = 1.4 * dpr; g.beginPath();
+  land.forEach((c, j) => { for (let i = 0; i < 6; i++) { const n = nbr[j][i]; if (n && n[key] === c[key]) continue;
+    const a1 = Math.PI / 180 * (30 + 60 * i), a2 = Math.PI / 180 * (90 + 60 * i);
+    g.moveTo(X(c.x + R * Math.cos(a1)), Y(c.y + R * Math.sin(a1))); g.lineTo(X(c.x + R * Math.cos(a2)), Y(c.y + R * Math.sin(a2))); } });
+  g.stroke(); g.globalAlpha = 1; }
+function hatch(c) { g.save(); hex(c, 0.92); g.clip(); g.strokeStyle = col.ink; g.lineWidth = 1.1 * dpr; g.beginPath();
+  for (let k = -2; k <= 2; k++) { g.moveTo(X(c.x - R + k * R * 0.5), Y(c.y - R)); g.lineTo(X(c.x + R + k * R * 0.5), Y(c.y + R)); } g.stroke(); g.restore(); }
+function star(x, y, r, fill) { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * 0.45 : r;
+  i ? g.lineTo(x + q * Math.cos(a), y + q * Math.sin(a)) : g.moveTo(x + q * Math.cos(a), y + q * Math.sin(a)); } g.closePath();
+  g.fillStyle = fill; g.fill(); g.lineWidth = 1.2 * dpr; g.strokeStyle = col.ink; g.stroke(); }
+function bs() { const x = X(D.bs[0]), y = Y(D.bs[1]), s = 7 * dpr; g.fillStyle = col.ink; g.fillRect(x - s, y - s, 2 * s, 2 * s); }
+function scalebar() { const x2 = X(box[1] - R), x1 = x2 - sc * 1000, y = Y(box[2] + R * 0.6); g.strokeStyle = col.ink; g.lineWidth = 2 * dpr;
+  g.beginPath(); g.moveTo(x1, y); g.lineTo(x2, y); g.stroke(); }
+function uav(p) { const x = X(p[0]), y = Y(p[1]), r = 7 * dpr; g.fillStyle = col.ink; g.strokeStyle = col.bg; g.lineWidth = 2 * dpr;
+  g.beginPath(); g.moveTo(x, y - r * 1.3); g.lineTo(x + r, y + r); g.lineTo(x - r, y + r); g.closePath(); g.fill(); g.stroke(); }
+function line(a, b, color, w, dash) { g.strokeStyle = color; g.lineWidth = w; g.setLineDash(dash || []); g.beginPath(); g.moveTo(X(a[0]), Y(a[1])); g.lineTo(X(b[0]), Y(b[1])); g.stroke(); g.setLineDash([]); }
+function arrowHead(a, b, color) { const x2 = X(b[0]), y2 = Y(b[1]), an = Math.atan2(y2 - Y(a[1]), x2 - X(a[0])), h = 8 * dpr; g.fillStyle = color;
+  g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - h * Math.cos(an - 0.4), y2 - h * Math.sin(an - 0.4)); g.lineTo(x2 - h * Math.cos(an + 0.4), y2 - h * Math.sin(an + 0.4)); g.closePath(); g.fill(); }
+// lane index of a cell for any bearing (step 2 sweeps it)
+function laneAt(c, th) { const n = [-Math.sin(th), Math.cos(th)]; return Math.floor((c.x * n[0] + c.y * n[1]) / P.L); }
+// the polar cost curve, drawn in the map's upper-left corner as far as bearing bmax
+function polar(bmax, mark) {
+  const r0 = Math.min(map.width, map.height) * 0.13, cx = 18 * dpr + r0, cy = 18 * dpr + r0;
+  const cs = D.scan.map(s => s[1]), lo = Math.min(...cs), hi = Math.max(...cs);
+  g.strokeStyle = col.track; g.lineWidth = 1 * dpr; g.beginPath(); g.arc(cx, cy, r0, 0, 2 * Math.PI); g.stroke();
+  g.beginPath(); g.arc(cx, cy, r0 * 0.5, 0, 2 * Math.PI); g.stroke();
+  const pts = []; for (const [b, c] of D.scan) if (b <= bmax) pts.push([b, r0 * (0.15 + 0.85 * (hi - c) / Math.max(1e-9, hi - lo))]);
+  g.fillStyle = col.river; g.strokeStyle = col.axe; g.lineWidth = 1.6 * dpr;
+  for (const side of [0, 180]) { g.beginPath(); g.moveTo(cx, cy);
+    for (const [b, r] of pts) { const a = -(b + side) * Math.PI / 180; g.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a)); }
+    g.closePath(); g.globalAlpha = 0.6; g.fill(); g.globalAlpha = 1; g.stroke(); }
+  if (mark !== null) { for (const side of [0, Math.PI]) { const a = -(mark + side); g.fillStyle = col.t2;
+    g.beginPath(); g.arc(cx + r0 * Math.cos(a), cy + r0 * Math.sin(a), 4.5 * dpr, 0, 2 * Math.PI); g.fill(); } }
+}
+function flight(T, key, t, alpha) {
+  // flown legs so far, then the UAV
+  for (const l of T.legs) { if (t <= l.t0) break; const f = Math.min(1, (t - l.t0) / Math.max(1e-9, l.t1 - l.t0)), e = lerp(l.a, l.b, f);
+    g.globalAlpha = alpha; line(l.a, e, l.inside ? col.ink : col.ink2, (l.inside ? 2.4 : 1.2) * dpr, l.inside ? null : [5 * dpr, 4 * dpr]);
+    if (f >= 1 && l.inside) arrowHead(l.a, l.b, col.ink); g.globalAlpha = 1; }
+  let p = D.bs; for (const l of T.legs) { if (t < l.t0) break; p = lerp(l.a, l.b, Math.min(1, (t - l.t0) / Math.max(1e-9, l.t1 - l.t0))); }
+  if (t < T.end) uav(p);
+}
+
+// ---------- one frame ----------
+function draw(show) {
+  g.fillStyle = col.bg; g.fillRect(0, 0, map.width, map.height);
+  let ci = 0; while (ci < N - 1 && show >= starts[ci + 1]) ci++;
+  const u = CH[ci].d ? Math.min(1, (show - starts[ci]) / CH[ci].d) : 1;
+  const p = i => ci > i ? 1 : ci < i ? 0 : ease(u * 1.15);
+  const tl = ci >= 7 ? (ci === 7 ? u * TL.end : TL.end) : -1;
+  const tk = ci === 9 ? u * TK.end : -1;
+  const km = ci >= 8, kmFade = ci === 8 ? ease(u) : ci === 9 ? 1 : 0;
+  // water
+  for (const c of cells) if (c.lake && p(0) >= 1) { hex(c, 0.97); g.fillStyle = col.water; g.fill(); }
+  // land, coloured by step
+  const scanTh = ci === 1 ? Math.PI * 178 / 180 * Math.min(1, u * 1.1) : TH;
+  const sweep = puMin + (puMax - puMin) * p(5);
+  for (const c of land) {
+    if (ci === 0 && c.d0 > dMax * p(0)) continue;
+    let fill = col.land;
+    if (ci === 1) fill = laneAt(c, scanTh) % 2 ? col.river : col.land2;
+    else if (ci === 2) fill = mix(col.land, (c.lane % 2 ? col.river : col.land2), p(2));
+    else if (ci === 3 || ci === 4) { fill = mix(c.lane % 2 ? col.river : col.land2, kc(c.piece), ci === 3 ? 0.55 * p(3) : 0.55);
+      if (ci === 4 && c.frag) fill = mix(kc(c.piece), kc(c.kl), p(4)); }
+    else if (ci === 5) fill = c.pu <= sweep ? mix(col.land, kc(c.kl), 0.75) : mix(c.lane % 2 ? col.river : col.land2, kc(c.piece), 0.55);
+    else if (ci === 6) fill = mix(col.land, kc(c.kl), c.cvl ? 0.75 : 0.75 - 0.5 * p(6));
+    else if (ci >= 7) {
+      const laneFill = c.t_kl <= tl ? mix(col.land, kc(c.kl), c.cvl ? 0.85 : 0.3) : mix(col.land, kc(c.kl), 0.18);
+      const kmFill = c.t_kk <= tk ? mix(col.land, kc(c.kk), c.cvk ? 0.85 : 0.3) : mix(col.land, kc(c.kk), 0.18);
+      fill = kmFade > 0 && kmFade < 1 ? mix(laneFill.startsWith("rgb") ? rgbHex(laneFill) : laneFill, rgbHex(kmFill), kmFade) : km ? kmFill : laneFill;
+    }
+    hex(c, 0.96); g.fillStyle = fill; g.fill();
+    if (ci === 3 && c.frag && p(3) > 0.4) hatch(c);
+    if (ci === 4 && c.frag && Math.sin(show * 12) > -0.2 && u < 0.6) hatch(c);
+  }
+  if (ci === 0) { g.fillStyle = col.ink2; g.globalAlpha = 0.5 * p(0); for (const n of nodes) g.fillRect(X(n[0]), Y(n[1]), dpr, dpr); g.globalAlpha = 1; }
+  // cut line sweeping along the lanes
+  if (ci === 5 && u < 1) { const n = [-Math.sin(TH), Math.cos(TH)], uu = [Math.cos(TH), Math.sin(TH)], span = 9000;
+    const a = [sweep * uu[0] - span * n[0], sweep * uu[1] - span * n[1]], b = [sweep * uu[0] + span * n[0], sweep * uu[1] + span * n[1]];
+    line(a, b, col.t2, 2 * dpr, [6 * dpr, 4 * dpr]); }
+  // borders
+  if (ci === 3 || ci === 4) borders("piece", 0.6);
+  if (ci === 5) borders("kl", p(5));
+  if (ci === 6 || ci === 7) borders("kl", 1);
+  if (ci === 8) { borders("kl", 1 - kmFade); borders("kk", kmFade); }
+  if (ci === 9) borders("kk", 1);
+  // CH stars and flight lines
+  const T = km ? TK : TL, showLines = ci >= 6 ? (ci === 6 ? p(6) : 1) : 0;
+  if (showLines > 0) for (const c of Object.values(T.cl)) {
+    const a = c.seg[0], b = lerp(c.seg[0], c.seg[1], showLines);
+    g.globalAlpha = ci >= 7 ? 0.35 : 1; line(a, b, col.t2, 2 * dpr); g.globalAlpha = 1;
+    star(X(c.ch[0]), Y(c.ch[1]), 7 * dpr, col.false); }
+  if (ci === 7 || ci === 8) flight(TL, "kl", tl, ci === 8 ? 1 - kmFade : 1);
+  if (ci === 9) flight(TK, "kk", tk, 1);
+  if (ci === 1) polar(178 * Math.min(1, u * 1.1), u > 0.92 ? TH : null);
+  if (ci === 2) polar(178, TH);
+  if (ci >= 0) bs();
+  scalebar();
+  drawLanes(tl, tk); drawChap(show);
+}
+function rgbHex(s) { if (s[0] === "#") return s; const m = s.match(/\d+/g).map(Number); return "#" + m.slice(0, 3).map(v => v.toString(16).padStart(2, "0")).join(""); }
+
+// two tour rows on one time axis: inside a cluster (thick), transit (thin)
+function drawLanes(tl, tk) {
+  const w = lanes.width, h = lanes.height; gl.fillStyle = col.bg; gl.fillRect(0, 0, w, h);
+  const x = v => 4 * dpr + (w - 8 * dpr) * v / TEND, rh = h / 2;
+  gl.strokeStyle = col.track; gl.lineWidth = 1; for (let s = 0; s < TEND; s += 60) { gl.beginPath(); gl.moveTo(x(s), 0); gl.lineTo(x(s), h); gl.stroke(); }
+  [[TL, "kl", tl], [TK, "kk", tk]].forEach(([T, key, t], r) => {
+    for (const l of T.legs) { const f = l.inside ? 0.62 : 0.18; gl.fillStyle = l.inside ? kc(l.k) : col.ink2;
+      gl.globalAlpha = t >= l.t0 ? 1 : 0.35; gl.fillRect(x(l.t0), r * rh + rh * (1 - f) / 2, Math.max(1.5 * dpr, x(l.t1) - x(l.t0)), rh * f); }
+    gl.globalAlpha = 1;
+    if (t >= 0) { gl.strokeStyle = col.ink; gl.lineWidth = 2 * dpr; gl.beginPath(); gl.moveTo(x(t), r * rh); gl.lineTo(x(t), (r + 1) * rh); gl.stroke(); } });
+}
+function drawChap(show) {
+  const w = chap.width, h = chap.height; gc.clearRect(0, 0, w, h); const gap = 3 * dpr, ww = (w - gap * (N - 1)) / N;
+  CH.forEach((c, i) => { const f = Math.max(0, Math.min(1, (show - starts[i]) / (c.d || 1)));
+    gc.fillStyle = col.track; gc.fillRect(i * (ww + gap), h * 0.3, ww, h * 0.4); gc.fillStyle = col.fill; gc.fillRect(i * (ww + gap), h * 0.3, ww * f, h * 0.4); });
+}
+function seekFromChap(px) { const w = chap.width, gap = 3 * dpr, ww = (w - gap * (N - 1)) / N;
+  const i = Math.max(0, Math.min(N - 1, Math.floor(px / (ww + gap)))); show = starts[i] + CH[i].d * Math.max(0, Math.min(1, (px - i * (ww + gap)) / ww)); dirty = true; }
+
+// ---------- player ----------
+let show = 0, playing = false, last = 0, speed = 1;
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ico = document.getElementById("ico");
+function setPlay(v) { playing = v; ico.innerHTML = v ? '<rect x="4" y="3" width="3.5" height="12"/><rect x="10.5" y="3" width="3.5" height="12"/>' : '<path d="M5 3v12l10-6z"/>'; last = performance.now(); }
+document.getElementById("play").onclick = () => { if (show >= TOTAL) show = 0; setPlay(!playing); };
+const chapIndex = () => { let i = 0; while (i < N - 1 && show >= starts[i + 1] - 1e-6) i++; return i; };
+document.getElementById("next").onclick = () => { const i = chapIndex(); show = i < N - 1 ? starts[i + 1] : TOTAL; dirty = true; };
+document.getElementById("prev").onclick = () => { const i = chapIndex(); show = show - starts[i] > 0.5 || i === 0 ? starts[i] : starts[i - 1]; dirty = true; };
+document.getElementById("speed").oninput = e => { speed = Math.pow(2, Number(e.target.value)); };
+let drag = false; const pick = e => { const r = chap.getBoundingClientRect(); seekFromChap((e.clientX - r.left) * dpr); };
+chap.addEventListener("pointerdown", e => { drag = true; chap.setPointerCapture(e.pointerId); pick(e); });
+chap.addEventListener("pointermove", e => { if (drag) pick(e); });
+chap.addEventListener("pointerup", () => { drag = false; });
+chap.addEventListener("keydown", e => { if (e.key === "ArrowRight") document.getElementById("next").click(); if (e.key === "ArrowLeft") document.getElementById("prev").click(); if (e.key === " ") { e.preventDefault(); document.getElementById("play").click(); } });
+window.addEventListener("resize", fit);
+function loop(now) {
+  if (playing) { show += (now - last) / 1000 * speed; last = now; if (show >= TOTAL) { show = TOTAL; setPlay(false); } dirty = true; }
+  if (dirty) { draw(show); dirty = false; }
+  requestAnimationFrame(loop); }
+fit();
+show = reduce ? starts[6] + CH[6].d : starts[7] + CH[7].d * 0.999;   // open on a filled frame: lane clusters after their tour
+setPlay(false); draw(show); requestAnimationFrame(loop);
+})();
+</script>

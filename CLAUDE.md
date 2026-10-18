@@ -1077,6 +1077,12 @@ chúng ta tiếp tục bàn về Layer 1 với 2 câu hỏi chính, tôi cần b
 * bộ dữ liệu này là signature được trích ra từ một bộ dữ liệu đầy đủ. nếu node nhận được bộ dữ liệu đầy đủ thì có thể chắc chắn câu trả lời độ chính xác gần như tuyệt đối. (signature nhẹ hơn để giúp khoanh vùng nhanh hơn, ví dụ: khoanh vùng tất cả những người mặc áo vàng trong khu vực trước khi nhìn kĩ xem ai mới là người ta thực sự tìm)
 ```
 
+*89. 2026-10-18 · layer 1 · viết lại phát biểu lớp 1 (mục 88) chi tiết hơn cho khớp các công bố*
+
+```text
+vậy bạn thử mô tả lại phải biểu của tôi chi tiết hơn để khớp với các công bố nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

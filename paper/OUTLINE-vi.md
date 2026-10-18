@@ -83,6 +83,7 @@ Keyword: [`RELATED-vi.md`](RELATED-vi.md).
 ## 3. System Model and Problem
 
 Keyword: [`SYSTEM-vi.md`](SYSTEM-vi.md).
+Lớp 1 (đối sánh signature tại nút), phát biểu chi tiết có nguồn: [`L1-STATEMENT-vi.md`](L1-STATEMENT-vi.md).
 
 - **Mạng mặt đất:**
   - N node không đồng nhất (quan sát, tính toán, giao tiếp).

@@ -1083,6 +1083,59 @@ chúng ta tiếp tục bàn về Layer 1 với 2 câu hỏi chính, tôi cần b
 vậy bạn thử mô tả lại phải biểu của tôi chi tiết hơn để khớp với các công bố nhé
 ```
 
+*90. 2026-10-18 · layer 1 · nhận định của người dùng sau nghiên cứu: camera có sẵn gì, signature là ảnh crop JPEG/WebP 1–2 KB theo view, quy trình chấm điểm, bảng rank-1 theo lớp đối tượng, phát biểu có trích dẫn [1]–[6]*
+
+```text
+sau khi nghiên cứu tôi đưa ra nhận định như sau:
+1. Camera đã có sẵn gì
+Mục tiêu và giả định về độ rõ. Mục tiêu thuộc một trong ba lớp: người, xe, động vật. Ta giả định rằng nếu mục tiêu đã đi qua thì camera ghi lại đủ rõ:
+người cao ít nhất khoảng 128 px trong khung hình;
+nếu cần nhận mặt, cần khoảng 250 px trên mỗi mét chiều ngang (theo tiêu chuẩn IEC 62676-4).
+Dữ liệu đã được xử lý sẵn. Mỗi camera chạy hai mô hình:
+một bộ phát hiện tìm ra các đối tượng trong khung hình;
+một mô hình embedding biến mỗi tracklet thành vector.
+Các vector được tính ngay lúc quay và lưu thành chỉ mục. Vì vậy, khi UAV tới, việc so khớp chỉ là tìm kiếm trong cơ sở dữ liệu vector, không phải chạy lại mô hình trên video thô (việc đó mất hàng giờ).
+2. Signature: chân dung số 4–5 KB
+BS tạo signature như thế nào. BS có bộ tham chiếu đầy đủ R của mục tiêu, gồm nhiều ảnh rõ hoặc video. Từ đó BS tạo K = 3–5 file signature, mỗi file là một đại diện cho một view của đối tượng (mã hoá JPEG/WebP)
+chấm chất lượng từng khung hình trong bộ tham chiếu R (độ nét, độ sáng, mức che khuất, mặt có nhìn thẳng không);
+chọn khung tốt nhất cho mỗi view;
+Crop các vật thể cần nhận diện trong tập bộ tham chiếu (chiếc xe, con chó, bộ quần áo, gương mặt …)
+3. Chấm điểm
+
+Quy trình của Node sau khi nhận được ảnh:
+giải mã ảnh;
+đưa ảnh về kích thước đầu vào của mô hình mình;
+tính embedding một lần cho mỗi file nhận được;
+tính cosine giữa mỗi cặp vector embedding 
+tra dữ liệu train để cho ra số điểm 
+Giả sử camera đã quay được mục tiêu, và bạn gửi cho nó một ảnh 1–2 KB. Camera xếp tất cả những người (hoặc xe, con vật) nó đã quay theo mức độ giống ảnh đó. Con số dưới đây trả lời câu hỏi: trong 10 lần thử, bao nhiêu lần cái đứng đầu danh sách đúng là mục tiêu.
+Đối tượng
+Điều kiện thuận lợi
+Ngoài thực địa
+Mặt người
+Gần như 10/10, nếu ảnh gửi đi là mặt rõ, chụp thẳng
+Khoảng 6/10, vì camera thường chỉ ghi được mặt nhỏ và mờ
+Thân người (dáng, quần áo)
+Khoảng 7–8/10
+Có thể dưới 5/10
+Xe
+Khoảng 8–9/10 với ảnh bình thường; với ảnh 1–2 KB chưa có số liệu
+Chưa có số liệu, nhiều khả năng thấp hơn
+Động vật
+Rất dao động: từ 2/10 đến gần 10/10 tùy loài
+Chưa có số liệu
+
+Bản phát biểu kèm trích dẫn, chặt chẽ hơn
+Với ảnh tham chiếu khuôn mặt khoảng 1 KB (112 px, nén WebP/AVIF), độ chính xác xác minh gần như tuyệt đối trên dữ liệu có kiểm soát (EER 0,09% [1]). Với các loại đối tượng khác, chúng tôi chưa tìm thấy nghiên cứu đo trực tiếp ở mức 1–2 KB. Các nghiên cứu đo từng yếu tố riêng lẻ cho thấy tỉ lệ nhận đúng ở vị trí đầu (rank-1) với thân người đạt khoảng 78–83% khi giảm độ phân giải [2] hoặc dùng mô hình nhẹ cỡ thiết bị biên [3], và giảm còn khoảng 54–60% khi có lệch độ phân giải [4], đổi miền camera [5] hoặc ảnh mặt độ phân giải thấp thật [6]. Từ đó chúng tôi ước tính khoảng 60–80% trong điều kiện thuận lợi, và có thể thấp hơn 50% khi các yếu tố bất lợi xảy ra đồng thời.
+Tài liệu tham khảo:
+[1] Hurtik & Sochor, Toward Sub-1 kB Identity-Preserving Face Compression, arXiv:2608.22866, 2026
+[2] Learning Posterior and Prior for Uncertainty Modeling in Person Re-ID, arXiv:2007.08785, phụ lục B
+[3] Li et al., Combined Depth Space based Architecture Search for Person Re-ID, CVPR 2021, supplemental
+[4] Deep High-Resolution Representation Learning for Cross-Resolution Person Re-ID, arXiv:2105.11722
+[5] Sensors 2023, 23(17):7382, Bảng 4
+[6] Luevano et al., Improving Low-Resolution Face Recognition under Limited Data, arXiv:2608.06580, 2026
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

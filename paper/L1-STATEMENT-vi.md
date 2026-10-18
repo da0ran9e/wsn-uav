@@ -88,3 +88,41 @@ Giá trị khởi đầu cho giả lập nằm trong bảng "Tham số đề xu�
 1. Phân bố điểm cặp thật và cặp khác người trên tracklet thật (quyết định τ và δ).
 2. Δ_cam theo hạng camera.
 3. Đường TAR@FAR theo 1–5 view.
+
+## 5. Bản nhận định của người dùng (CLAUDE.md §8 mục 90) và góp ý
+
+Bản của người dùng thay đổi một điểm thiết kế so với §1: **signature là 3–5 ảnh crop đã nén (JPEG/WebP, 1–2 KB mỗi ảnh, mỗi ảnh một view)**, không phải embedding. BS chọn khung tốt nhất cho từng view theo điểm chất lượng ảnh rồi mới crop. Node tự tính embedding của các ảnh này bằng mô hình của chính nó.
+
+**Điểm mạnh nên giữ:**
+- **Không phụ thuộc mô hình.** Mỗi node tự tính embedding nên vấn đề "khác họ mô hình thì không so được" (§1, [R2] mục B) biến mất. Đây là lý do tốt nhất để chọn ảnh thay cho embedding, nên nói thẳng trong paper.
+- **Cỡ 1 KB cho mặt có nguồn trực tiếp.** [1] cho thấy crop mặt 112 px nén WebP/AVIF/HEIF/JPEG XL ở 1 024 B giữ lỗi gần mức ảnh gốc. JPEG thường ổn ở 112 px/1 KB nhưng hỏng ở 512 B hoặc 224 px. JPEG 2000 kém nhất và khuếch đại chênh lệch giữa các nhóm nhân khẩu học.
+- **Chọn khung theo chất lượng** khớp với tài liệu về chất lượng ảnh mặt ([R2]: MagFace, SER‑FIQ).
+
+**Chỗ nên chỉnh hoặc nói rõ:**
+
+1. **Rank‑1 là chỉ số tập đóng.** "Trong 10 lần thử, cái đứng đầu danh sách đúng là mục tiêu" giả định mục tiêu chắc chắn có trong kho của camera. Câu hỏi thật của node là tập mở: mục tiêu có trong kho hay không. Rank‑1 không cho biết tỉ lệ trả YES nhầm khi mục tiêu vắng mặt, mà đây mới là thứ quyết định số nghi vấn giả và số lần đội 2 phải bay ([R1], [R2] mục A). Nên thêm một câu: tỉ lệ báo nhầm được kiểm soát riêng bằng ngưỡng hiệu chỉnh theo FMR; bảng chỉ mô tả khả năng tìm thấy khi mục tiêu có mặt.
+2. **Rank‑1 phụ thuộc cỡ kho.** Market‑1501 có khoảng 750 danh tính trong tập thử. Camera ghi hàng nghìn tracklet sẽ cho rank‑1 thấp hơn số benchmark. Nên ghi cỡ kho của nguồn bên cạnh mỗi số.
+3. **Bước "tra dữ liệu train để cho ra số điểm" là bước hiệu chỉnh.** Nên viết rõ:
+   - Hàm ánh xạ cosine → điểm, riêng cho từng họ mô hình và từng lớp đối tượng, neo theo FMR.
+   - Cách gộp K ảnh: lấy trung bình điểm.
+   - Cách gộp các tracklet: lấy tracklet giống nhất.
+   - Ngưỡng 70–90 % đặt trên thang đã hiệu chỉnh đó.
+4. **Tiền xử lý ở node cũng là một nguồn chênh giữa thiết bị.** Ví dụ căn chỉnh mặt theo điểm mốc, hay cách resize. Nên quy định ảnh mặt gửi đi đã căn chỉnh sẵn ở 112×112, như giao thức của [1].
+5. **Ảnh thân người, xe, động vật ở 1–2 KB chưa có nguồn đo trực tiếp.** Bản của người dùng đã nói đúng điều này. Crop thân người chuẩn là 256×128, lớn gấp khoảng 2,6 lần diện tích crop mặt 112×112. Ở cùng 1–2 KB, crop thân người bị nén mạnh hơn nhiều. Đây là khoảng trống thật, nên nêu như một giới hạn hoặc một thí nghiệm của paper.
+6. **IEC 62676‑4.** Mức 250 px/m (40 px ngang mặt) là mức *Identification* của bản 2014. Bản 2025 đã đổi tên các mức (Outline, Discern, Perceive, Characterize, Validate, Scrutinize), và tôi chưa xác minh được giá trị px/m mới. Nên trích "IEC 62676‑4:2014" hoặc kiểm lại bản 2025. Con số "người cao ≥ 128 px" là quy ước đầu vào của mô hình re‑ID, không phải tiêu chuẩn, nên ghi là giả định.
+7. **Hàng động vật:** cận dưới "2/10" thấp hơn số thấp nhất đã thấy (HappyWhale 34,3 % trong MegaDescriptor [R2]), tức khoảng 3/10. Nếu không có nguồn khác thì nên sửa thành "khoảng 3/10 tới gần 10/10".
+8. **Hàng mặt ngoài thực địa "khoảng 6/10":** khớp TinyFace (rank‑1 68–76 %), nhưng QMUL‑SurvFace chỉ 29,9 % [R2]. Nên ghi khoảng "3–7/10" hoặc nói rõ đang dựa trên kiểu dữ liệu nào.
+9. **Cột "điều kiện thuận lợi"** cần định nghĩa cả hai phía: ảnh gửi đi rõ, *và* camera ghi được mục tiêu đủ rõ (đúng ngưỡng điểm ảnh ở mục 1).
+
+**Kiểm tra trích dẫn:** cả 6 tài liệu đều tồn tại. Thông tin để bổ sung cho danh mục tài liệu:
+
+| # | Thông tin đầy đủ | Ghi chú |
+|---|---|---|
+| [1] | P. Hurtik, J. Sochor (Innovatrics), "Toward Sub‑1 kB Identity‑Preserving Face Compression: A Benchmark of Codecs, a Custom Learned Codec, and Studies of Resolution, Demographic Fairness, Recompression, and Adversarial Robustness", arXiv:2608.22866, 2026 | Dữ liệu: Color FERET (ảnh studio) và một tập ngoài thực địa; matcher ArcFace, LVFace, TopoFR, EdgeFace. EER 0,09 % nên ghi rõ là trên Color FERET |
+| [2] | Y. Zhang, Z. Zheng, B. He, L. Sun, "Learning Posterior and Prior for Uncertainty Modeling in Person Re‑Identification", arXiv:2007.08785, 2020 | Thử trên Market‑1501, DukeMTMC, MARS |
+| [3] | H. Li, G. Wu, W.‑S. Zheng, "Combined Depth Space Based Architecture Search for Person Re‑Identification", CVPR 2021, tr. 6729–6738 | CDNet khoảng 1,8 M tham số |
+| [4] | G. Zhang, Y. Ge, Z. Dong, H. Wang, Y. Zheng, S. Chen, "Deep High‑Resolution Representation Learning for Cross‑Resolution Person Re‑Identification", arXiv:2105.11722, 2021 | Tập MLR‑Market‑1501, MLR‑CUHK03, MLR‑VIPeR, MLR‑DukeMTMC‑reID, CAVIAR |
+| [5] | T. Mamedov, D. Kuplyakov, A. Konushin, "Approaches to Improve the Quality of Person Re‑Identification for Practical Use", Sensors 23(17):7382, 2023 | |
+| [6] | L. S. Luevano, Ü. Öztürk, H. Otroshi Shahreza, A. George, S. Marcel, "Improving Low‑Resolution Face Recognition under Limited Data: How Synthetic Data Generation Can Close the Domain Gap", IJCB 2026, arXiv:2608.06580 | |
+
+Các con số cụ thể bên trong từng bài (78–83 %, 54–60 %, bảng 4 của [5], phụ lục B của [2]) **chưa được đối chiếu** trong phiên này. Nên mở bản gốc kiểm lại trước khi nộp.

@@ -1066,6 +1066,17 @@ liên quan đến layer 1, hãy tạo một bảng danh sách các câu hỏi ng
 tổng hợp lại cho tôi các animation: từ giả lập propose, propose với layer 2, và các baseline/ablation
 ```
 
+*88. 2026-10-18 · layer 1 · tìm nguồn uy tín: đối sánh 3–5 file signature (4–5 KB) với video, ngưỡng yes/no 70–90 %; điểm khác nhau giữa thiết bị; nhận 4/5 file thì giảm bao nhiêu; signature thô để khoanh vùng, bộ đầy đủ để chắc chắn*
+
+```text
+chúng ta tiếp tục bàn về Layer 1 với 2 câu hỏi chính, tôi cần bạn kiểm tra và tìm cho tôi các nguồn, công bố uy tín sát với mô tả hiện tại để đưa vào mô hình hệ thống: khi xét đến các thiết bị IoT thông dụng có thiết kế gần với tham số thử nghiệm:
+
+* giả sử camera ghi lại được một đoạn video mô tả đối tượng cần tìm kiếm (người, xe cộ, động vật...) tương đối rõ nét, UAV gửi cho nó 3-5 file signature tổng dung lượng khoảng 4-5KB. nhiệm vụ của nó là đối chiếu ảnh gốc với bộ ảng nhận diện này để trả lời câu hỏi đơn giản là chấm điểm cho độ trùng khớp, nếu độ trùng khớp trên 70-90% sẽ trả về câu trả lời yes nếu không thì no. 
+* Một câu hỏi là độ chính xác của phép nhận diện này có khác nhau giữa các thiết bị không, ví dụ như cùng một bộ ảnh đối chiếu, một thiết bị cho 70% một thiết bị 75% thì sẽ là hai câu trả lời khác nhau. 
+* nếu một node khác chỉ nhận được 4/5 files signature thì tỉ lệ này giảm đi như nào 
+* bộ dữ liệu này là signature được trích ra từ một bộ dữ liệu đầy đủ. nếu node nhận được bộ dữ liệu đầy đủ thì có thể chắc chắn câu trả lời độ chính xác gần như tuyệt đối. (signature nhẹ hơn để giúp khoanh vùng nhanh hơn, ví dụ: khoanh vùng tất cả những người mặc áo vàng trong khu vực trước khi nhìn kĩ xem ai mới là người ta thực sự tìm)
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

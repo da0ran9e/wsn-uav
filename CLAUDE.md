@@ -1142,6 +1142,43 @@ Tài liệu tham khảo:
 trong thử nghiệm, trung bình mỗi cluster được giao bao nhiêu dữ liệu dọc axe
 ```
 
+*92. 2026-10-19 · layer 1 · cập nhật bài toán: node trả lời mục tiêu có xuất hiện không (ưu tiên không bỏ sót), M crop người, L ảnh signature 50–200 KB nhiều view, so khớp toàn thân ngưỡng thấp, điểm vận hành arXiv 1807.10482*
+
+```text
+phát biểu trước đó là chưa đúng, tôi cệp nhật lại bài toán như sau, đọc và kiểm tra lại:
+1. Mục tiêu
+Một camera biên cần trả lời: một người cụ thể đã xuất hiện trước camera này hay không? Yêu cầu ưu tiên là hạn chế tối đa bỏ sót; báo nhầm được chấp nhận và sẽ được xử lý ở BS
+2. Camera ghi được gì
+Camera đã ghi lại một tập M ảnh crop người cắt ra từ video:
+
+* Kích thước, góc nhìn, ánh sáng và độ nét rất khác nhau.
+* Không chắc có mục tiêu trong đó.
+* Giả sử: mỗi ảnh trong M đều có ít nhất đối tượng nào đó (không có ảnh trống vô nghĩa). Nhiều người trong M có thể mặc quần áo cùng màu với mục tiêu thật.
+
+3. Tập ảnh signature
+Trạm gốc gửi đến node L ảnh của mục tiêu:
+
+* Mỗi ảnh rõ nét, khoảng 50–200 KB.
+* Đủ các góc: trước, nghiêng, sau.
+* Gồm ảnh toàn thân và ảnh mặt nếu có.
+
+4. Node nhận dạng thế nào
+
+1. Chuẩn bị sẵn: M ảnh đã được node chuyển thành vector đặc trưng bằng mô hình của chính nó lúc ghi hình.
+2. Nhận signature: node chạy cùng mô hình đó trên L ảnh signature để có L vector.
+3. So khớp ngoại hình toàn thân: so từng ảnh trong M với L ảnh signature, dùng ngưỡng thấp để không bỏ sót. (Quy trình so khớp bằng điểm số cosine giữa 2 vector có thể không cần trình bày trong paper)
+4. Báo cáo về trạm gốc
+
+5. Điểm vận hành
+Ngưỡng tại node được chọn theo nguyên tắc ưu tiên không bỏ sót. Làm tham chiếu, chúng tôi dùng kết quả đã công bố về xác minh người trong kịch bản mở [1]: mỗi ảnh camera được kiểm tra xem có phải mục tiêu hay không, và người lạ không có trong danh sách theo dõi xuất hiện cùng mục tiêu.
+Trên bộ dữ liệu Market-1501, quay ngoài phố, với 758 người lạ và 14.573 ảnh dùng để thử, mô hình ResNet-50 đạt:
+
+* YES đúng 99,38% khi chấp nhận YES nhầm 10% trên từng ảnh của người lạ;
+* tức là bỏ sót khoảng 0,6%.
+
+https://arxiv.org/pdf/1807.10482
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

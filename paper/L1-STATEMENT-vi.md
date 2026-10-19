@@ -126,3 +126,56 @@ Bản của người dùng thay đổi một điểm thiết kế so với §1: 
 | [6] | L. S. Luevano, Ü. Öztürk, H. Otroshi Shahreza, A. George, S. Marcel, "Improving Low‑Resolution Face Recognition under Limited Data: How Synthetic Data Generation Can Close the Domain Gap", IJCB 2026, arXiv:2608.06580 | |
 
 Các con số cụ thể bên trong từng bài (78–83 %, 54–60 %, bảng 4 của [5], phụ lục B của [2]) **chưa được đối chiếu** trong phiên này. Nên mở bản gốc kiểm lại trước khi nộp.
+
+## 6. Bản cập nhật bài toán (CLAUDE.md §8 mục 92) và kiểm tra
+
+Bản này thay §5. Node trả lời "người này đã xuất hiện trước camera chưa", ưu tiên không bỏ sót; BS lọc báo nhầm.
+
+### 6.1 Đối chiếu điểm vận hành với [7] (đã mở bản gốc, ar5iv)
+
+| Ý trong bản cập nhật | Bài gốc nói gì | Kết luận |
+|---|---|---|
+| Market‑1501, 758 người lạ, 14 573 ảnh thử | Tập thử non‑target: 758 ID, 14 573 ảnh; non‑target huấn luyện 728 ID; danh sách theo dõi 15 người (§4.2) | **Đúng** |
+| ResNet‑50, YES đúng 99,38 % ở YES nhầm 10 % | Bảng 1, **Individual Verification**, Market‑1501, hàng ResNet‑50 [12], cột FTR 10 %: 99,38 | **Đúng**, và đúng giao thức: một mục tiêu, so với tập ảnh của chính mục tiêu đó |
+| YES nhầm tính trên từng ảnh người lạ | FTR = #FNTQ / #NTQ, đếm trên ảnh truy vấn non‑target | **Đúng** |
+| Cách quyết định | Khoảng cách tới tập = khoảng cách nhỏ nhất tới một ảnh mục tiêu trong gallery, so với ngưỡng r | Khớp bước 3 (lấy max cosine trên L ảnh) |
+| "quay ngoài phố" | Market‑1501: 6 camera trước một siêu thị trong khuôn viên Đại học Thanh Hoa | Nên viết "khuôn viên, ngoài trời" |
+
+Các điểm cùng hàng để chọn ngưỡng (Individual Verification, ResNet‑50): FTR 0,1 % → 82,26 %; 1 % → 95,86 %; 5 % → 98,54 %; 10 % → 99,38 %. Mô hình đề xuất của bài (APN): 99,58 % ở 10 %.
+
+### 6.2 Ba điểm làm số 99,38 % lạc quan hơn kịch bản của ta
+
+1. **Mục tiêu có mặt trong tập huấn luyện.** Bài chia đôi ảnh của mỗi người mục tiêu: một nửa để huấn luyện, một nửa để thử (§4.2). Ở kịch bản của ta, mô hình trên node chưa từng thấy mục tiêu. Đây là sai khác lớn nhất; cần nói rõ trong paper, hoặc tìm số ở giao thức mục tiêu không có trong huấn luyện.
+2. **Cùng miền camera, cùng tập.** Gallery và truy vấn cùng 6 camera Market‑1501. Ảnh signature của BS (ảnh rõ, có thể từ nguồn khác) so với crop camera giám sát là bài toán đổi miền; [5] cho thấy mức giảm khi đổi miền.
+3. **Footnote của bài:** tác giả sửa lỗi mã và chạy lại tinh chỉnh bằng PyTorch cho mọi phương pháp. Cần trích đúng phiên bản arXiv (số trong bảng phụ thuộc phiên bản).
+
+### 6.3 Hệ quả cho hệ thống
+
+**a) 10 % YES nhầm trên mỗi ảnh nghĩa là gần như mọi camera đều trả YES.** Xác suất một camera có ít nhất một crop người lạ vượt ngưỡng là 1 − (1 − f)^M:
+
+| M (crop) | f = 10 % | f = 1 % | f = 0,1 % |
+|---|---|---|---|
+| 20 | 0,88 | 0,18 | 0,02 |
+| 100 | ≈ 1 | 0,63 | 0,10 |
+| 500 | ≈ 1 | ≈ 1 | 0,39 |
+
+Vì vậy, báo cáo không thể chỉ là YES/NO; nếu không, BS không phân biệt được camera nào. Đề xuất: node gửi điểm cao nhất và số crop vượt ngưỡng (vài byte, vừa LoRa, S6), BS xếp hạng. Ngưỡng thấp vẫn đúng tinh thần "không bỏ sót", nhưng phải phát biểu ở mức camera chứ không ở mức ảnh. Ngược lại, nếu mục tiêu để lại k crop trong M, xác suất bỏ sót ở mức camera còn nhỏ hơn 0,6 % (nếu xem như độc lập: 0,006^k).
+
+**b) Kích thước signature xung đột với lượng dữ liệu một cluster nhận được.**
+- Một lượt bay trao cho mỗi cluster trung bình khoảng 415 KB (324–549 KB; mục 91).
+- L ảnh × 50–200 KB: với L = 3–6 là 0,15–1,2 MB, tức ngang hoặc vượt D.
+- Mỗi ảnh là một file 500–2 000 khung liền nhau; theo quy tắc mục 34, mất một khung là mất cả ảnh. Theo `l1_files.py`, khi truy vấn ≈ D chỉ khoảng 15 % critical cell có đủ mọi file.
+- Mô hình body re‑ID nhận ảnh khoảng 256×128. Ảnh 50–200 KB bị thu nhỏ về cỡ đó trước khi embed, nên phần dung lượng vượt quá không giúp so khớp toàn thân. Một crop 256×128 JPEG chất lượng cao khoảng 10–20 KB.
+- Đề xuất: (i) gửi ảnh ở đúng độ phân giải đầu vào của mô hình (khoảng 10–20 KB/ảnh, L = 3–6 ⇒ 30–120 KB, cỡ 7–30 % của D); hoặc (ii) giữ 50–200 KB nhưng chấp nhận River là bắt buộc, cần đường bay dài hơn trong cluster (LANE) hoặc nhiều lượt.
+
+**c) Ảnh mặt chưa được dùng.** Bước 3 chỉ so toàn thân. Nếu giữ ảnh mặt trong signature, cần một bước so mặt riêng (chỉ hữu ích khi crop camera đủ lớn, xem §5), hoặc bỏ ảnh mặt để giảm dung lượng.
+
+**d) Thiếu ảnh.** Nếu node chỉ ghép đủ một phần L ảnh (ví dụ thiếu ảnh nhìn sau), độ nhạy giảm theo view bị thiếu (−1 đến −25 điểm, báo cáo thứ hai). Báo cáo nên kèm bitmask các view node có.
+
+**e) Người mặc cùng màu.** Đây chính là nguồn YES nhầm trong 6.3a. Ngưỡng thấp sẽ giữ họ lại; BS hoặc đội 2 loại họ ở bước xác minh.
+
+### 6.4 Tham chiếu bổ sung
+
+| | Tài liệu | Ghi chú |
+|---|---|---|
+| [7] | X. Li, A. Wu, W.-S. Zheng, "Adversarial Open‑World Person Re‑Identification", ECCV 2018, arXiv:1807.10482 | Đã đối chiếu Bảng 1 và §4.1–4.2 |

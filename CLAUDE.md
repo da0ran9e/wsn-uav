@@ -1136,6 +1136,12 @@ Tài liệu tham khảo:
 [6] Luevano et al., Improving Low-Resolution Face Recognition under Limited Data, arXiv:2608.06580, 2026
 ```
 
+*91. 2026-10-19 · uav-l2 · câu hỏi: trung bình mỗi cluster được giao bao nhiêu dữ liệu dọc Axe*
+
+```text
+trong thử nghiệm, trung bình mỗi cluster được giao bao nhiêu dữ liệu dọc axe
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

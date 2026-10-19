@@ -1179,6 +1179,13 @@ Trên bộ dữ liệu Market-1501, quay ngoài phố, với 758 người lạ v
 https://arxiv.org/pdf/1807.10482
 ```
 
+*93. 2026-10-19 · layer 1 · các mức đánh đổi báo nhầm lấy không bỏ sót (open-world re-ID); với khoảng 400 KB mỗi cluster thì L và M nên là bao nhiêu*
+
+```text
+nếu bạn xem qua paper openworld person re id có lẽ có thể tổng hợp được các mức cho việc đánh đổi nhận dạng nhầm lấy độ lợi không bỏ sót 
+theo bạn với mỗi node nhận được khoảng 400KB như trong giả lập, vậy số file L nên để xét khoảng bao nhiêu hoặc số M bao nhiêu là hợp lý
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

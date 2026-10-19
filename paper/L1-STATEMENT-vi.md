@@ -179,3 +179,47 @@ Vì vậy, báo cáo không thể chỉ là YES/NO; nếu không, BS không phâ
 | | Tài liệu | Ghi chú |
 |---|---|---|
 | [7] | X. Li, A. Wu, W.-S. Zheng, "Adversarial Open‑World Person Re‑Identification", ECCV 2018, arXiv:1807.10482 | Đã đối chiếu Bảng 1 và §4.1–4.2 |
+
+## 7. Mức đánh đổi và cỡ L, M (CLAUDE.md §8 mục 93)
+
+### 7.1 Các mức đánh đổi, từ [7] Bảng 1 (Market‑1501, Individual Verification, ResNet‑50)
+
+f là tỉ lệ YES nhầm trên mỗi ảnh người lạ, TTR là tỉ lệ YES đúng trên mỗi ảnh mục tiêu. Hai cột cuối là phép tính của ta (§6.3a), không có trong bài.
+
+| f | TTR | Bỏ sót mỗi ảnh | Crop nhầm kỳ vọng, M = 100 / 1 000 | Bỏ sót mức camera nếu có k = 3 crop mục tiêu độc lập |
+|---|---|---|---|---|
+| 0,1 % | 82,26 % | 17,7 % | 0,1 / 1 | 0,56 % |
+| 1 % | 95,86 % | 4,1 % | 1 / 10 | 0,007 % |
+| 5 % | 98,54 % | 1,5 % | 5 / 50 | ≈ 0 |
+| 10 % | 99,38 % | 0,6 % | 10 / 100 | ≈ 0 |
+| 20 % | 99,58 % | 0,4 % | 20 / 200 | ≈ 0 |
+
+- Điểm gãy nằm ở khoảng f = 1 %. Từ 0,1 % lên 1 % được thêm 13,6 điểm TTR; từ 1 % lên 10 % chỉ được thêm 3,5 điểm nhưng số crop nhầm tăng 10 lần.
+- APN (mô hình của bài) cùng các mức: 84,00 / 96,72 / 98,69 / 99,58 / 99,58 %.
+- Set Verification (danh sách 15 người) thấp hơn hẳn: ResNet‑50 80,00 % ở 1 %, 96,92 % ở 10 %.
+- Cột k = 3 giả sử ba crop của mục tiêu độc lập (ba lần đi qua, ba thời điểm). Crop trong cùng một tracklet tương quan mạnh nên thực tế bỏ sót cao hơn.
+- Mọi số ở đây đều lạc quan vì mục tiêu có trong tập huấn luyện của bài (§6.2).
+
+**Đề xuất:** đặt ngưỡng ở f ≈ 1 % mỗi ảnh; node báo điểm cao nhất và số crop vượt ngưỡng; BS xếp hạng camera theo điểm.
+
+### 7.2 Cỡ L theo D ≈ 400 KB mỗi cluster
+
+D là tổng dữ liệu một cluster nhận dọc Axe (khoảng 4 100 khung × 99 B), không phải lượng một node nhận. Số dưới đây lấy từ `data/mission/l1-files.csv` (200 cluster, 1 304 critical cell, trước River):
+
+| Truy vấn (phát lặp dọc D) | Tổng | Cell có đủ mọi file | Node tốt nhất có đủ mọi file |
+|---|---|---|---|
+| 4 ảnh × 15 KB | 60 KB (15 % D) | 99 % | 48 % |
+| 12 ảnh × 15 KB | 180 KB (43 % D) | 97 % | 0 % |
+| 40 file × 10 KB | ≈ D | 15 % | 0 % |
+
+- Ranh giới: tổng truy vấn khoảng ≤ 45 % D, tức khoảng ≤ 180 KB, để phát được ít nhất 2 bản. Khi đó gom nội cell đã gần đủ, River chỉ phải bù phần nhỏ.
+- **Ảnh 15–20 KB (đúng cỡ đầu vào body re‑ID): L = 6–10.** Ví dụ trước, nghiêng trái, nghiêng phải, sau, 1–2 ảnh trong điều kiện sáng khác, cộng 1–2 crop mặt khoảng 5 KB.
+- **Ảnh 50 KB: L ≤ 3.** **Ảnh 200 KB: L = 1–2**, và đã vượt D nếu L ≥ 3.
+- Chưa đo: file 500–2 000 khung (50–200 KB). Bản đo hiện có chỉ tới 150 khung. Tỉ lệ file nguyên vẹn ở mức cell gần như không đổi từ 50 lên 150 khung (80 % → 78 %), vì mất gói ở cell theo cụm, nên file lớn hơn có lẽ giảm chậm, nhưng phải đo mới nói được. Dữ liệu bit thô của lượt bay không còn trên máy này; muốn đo phải chạy lại pass ns‑3.
+
+### 7.3 M
+
+M không bị D ràng buộc; nó là tham số kịch bản của camera (lưu lượng người qua × thời gian lưu).
+- Nên đếm M theo **tracklet** (một người đi qua một lần), không theo khung hình; một tracklet cho một điểm, khớp với cách [7] đếm trên ảnh.
+- Gợi ý quét M ∈ {100; 1 000; 10 000}: chuông cửa hoặc ngõ nhỏ vài trăm mỗi ngày, mặt tiền cửa hàng vài nghìn.
+- M chỉ quyết định số crop nhầm f·M và vì vậy độ tin của việc xếp hạng ở BS; với f = 1 %, M = 1 000 cho khoảng 10 crop nhầm mỗi camera, nên báo cáo phải là điểm, không phải YES/NO.

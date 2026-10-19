@@ -5,6 +5,8 @@
 
 Algorithm 1  Axe (cells crossed, in flight order) and Seg(a) per packet index
 Algorithm 2  Bank_+-(a) and Path_+-(a): perpendiculars to the Axe's sum vector, +-omega
+             (banks="local", CLAUDE.md §8 item 103: perpendiculars to the flight path where it crosses a,
+             the inner side cut at the local radius of curvature, so curved Axes keep their Banks at omega)
 Algorithm 3  critical cells: the CH's cell, global outliers, local outliers
 Algorithm 4  Circle: Neig(k) ordered along u, the Axe cut into consecutive groups, each
              Seg(a) of a group fetched from a's Bank on the side nearer the member
@@ -90,7 +92,7 @@ def detour(b, m, k, S, c):
         return cellpath(b, m, S, c)
 
 
-def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2):
+def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel"):
     c, w, R, S, uav = geo["c"], geo["w"], geo["R"], geo["S"], geo["uav"]
     # Algorithm 1: Axe and Seg (packets sent above each Axe cell; outside the cluster: none)
     axe, seg = [], {}
@@ -107,20 +109,43 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2):
     u /= np.linalg.norm(u)
     nrm = np.array([-u[1], u[0]])
     omega = width / 2 * w
-    # Algorithm 2: Banks along parallel perpendiculars, cut at the cluster edge
+    # Algorithm 2: Banks along perpendiculars, cut at the cluster edge
     bank, bpath = {}, {}
+    N = len(uav)
+    heading = lambda i, half: uav[min(i + half, N - 1)] - uav[max(i - half, 0)]
     for a in axe:
-        z = np.array(c[a])
+        z, nz, reach = np.array(c[a]), nrm, (omega, omega)
+        if banks == "local":   # from the path's midpoint over a, along the path's normal there
+            m = seg[a][len(seg[a]) // 2]
+            t = heading(m, 20)
+            t /= np.linalg.norm(t)
+            z, nz = uav[m], np.array([-t[1], t[0]])
+            t0, t1 = heading(m - 200, 20), heading(m + 200, 20)   # +-100 m: heading change -> curvature
+            turn = math.atan2(t0[0] * t1[1] - t0[1] * t1[0], float(np.dot(t0, t1)))
+            rc = (min(m + 200, N - 1) - max(m - 200, 0)) * 0.5 / abs(turn) if abs(turn) > 1e-6 else math.inf
+            # normals converge at the centre of curvature, on the side the path turns towards
+            reach = (min(omega, rc), omega) if turn > 0 else (omega, min(omega, rc))
         for side, sg in ((0, 1.0), (1, -1.0)):
             p = [a]
-            for t in np.arange(0, omega + 1e-9, w / 20):
-                h = hex_of(*(z + sg * t * nrm), R)
+            for t in np.arange(0, reach[side] + 1e-9, w / 20):
+                h = hex_of(*(z + sg * t * nz), R)
                 if h not in S:
                     break
                 if h != p[-1]:
                     p.append(h)
             bank[(a, side)], bpath[(a, side)] = p[-1], p
     river = set(axe) | {h for p in bpath.values() for h in p}
+    if banks == "local":   # outside a bend the normals fan out: rays every 10 m along Seg(a) fill the gaps
+        for a in axe:
+            for m in seg[a][::20]:
+                t = heading(m, 20)
+                t /= np.linalg.norm(t)
+                for sg in (1.0, -1.0):
+                    for x in np.arange(0, omega + 1e-9, w / 20):
+                        h = hex_of(*(uav[m] + sg * x * np.array([-t[1], t[0]])), R)
+                        if h not in S:
+                            break
+                        river.add(h)
     # Algorithm 3: critical cells
     sc = {(int(x["q"]), int(x["r"])): float(x["score"]) for x in geo["nodes"] if x["isCL"] == "1"}
     mu, sd = np.mean(list(sc.values())), np.std(list(sc.values()))
@@ -132,10 +157,12 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2):
         if v > mu + kl * sd and v >= max(around):
             crit.add(h)
     crit = sorted(crit)
-    # Algorithm 4: Circles
+    # Algorithm 4: Circles; members ordered along the Axe (sum vector, or with banks="local" the track)
+    along = (lambda g: float(np.dot(np.array(c[g]), u))) if banks != "local" else \
+        (lambda g: int(np.argmin(np.linalg.norm(uav - np.array(c[g]), axis=1))))
     circle = {}
     for k in crit:
-        mem = sorted((g for g in ring(k, 1) if g in S), key=lambda g: float(np.dot(np.array(c[g]), u)))
+        mem = sorted((g for g in ring(k, 1) if g in S), key=along)
         q = len(mem)
         groups = [[] for _ in range(q)]
         for i, a in enumerate(axe):
@@ -158,7 +185,7 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2):
         sets = {}
         for n in range(1, len(r1) + len(r2) + 1):
             mem = spread(r1, n) if n <= len(r1) else r1 + spread(r2, n - len(r1))
-            mem = sorted(mem, key=lambda g: float(np.dot(np.array(c[g]), u)))
+            mem = sorted(mem, key=along)
             sets[n] = [(m, (i * len(axe) // n, (i + 1) * len(axe) // n - 1)) for i, m in enumerate(mem)]
         src = {}
         for m in r1 + r2:
@@ -168,4 +195,4 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2):
                 src[(m, a)] = (b, detour(b, m, k, S, c) if b != m else [m])
         adapt[k] = dict(sets=sets, src=src, link={m: cellpath(k, m, S, c) for m in r1 + r2})
     return dict(axe=axe, seg=seg, u=u, omega=omega, bank=bank, bpath=bpath, river=river, crit=crit, ch=chc,
-                circle=circle, adapt=adapt, width=width)
+                circle=circle, adapt=adapt, width=width, banks=banks)

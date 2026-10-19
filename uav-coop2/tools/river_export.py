@@ -27,10 +27,12 @@ def main():
     ap.add_argument("--width", type=float, default=3.5)
     ap.add_argument("--kg", type=float, default=2.0, help="critical: global outlier, score > mu + kg sd")
     ap.add_argument("--kl", type=float, default=1.0, help="critical: local outlier, score > mu + kl sd")
+    ap.add_argument("--banks", default="parallel", choices=("parallel", "local"),
+                    help="Banks along the sum vector's normal, or the path's local normal (CLAUDE.md §8 item 103)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     geo = load(a.deploy, a.path)
-    P = plan(geo, width=a.width, kg=a.kg, kl=a.kl)
+    P = plan(geo, width=a.width, kg=a.kg, kl=a.kl, banks=a.banks)
     cells = lambda cs: f"{len(cs)} " + " ".join(f"{q} {r}" for q, r in cs)
     with open(a.out, "w") as f:
         f.write(f"N {len(geo['uav'])}\n")

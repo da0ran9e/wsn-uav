@@ -300,3 +300,46 @@ Tham chiếu: [7] Bảng 1/4, Market‑1501, Individual Verification, ResNet‑5
 | MU_X | điểm mục tiêu khi thiếu góc | 3,04 |
 | R | tốc độ embed | 257,6 (Hailo‑8L) / 12,6 (CPU) ảnh/s |
 | T_decode, DIM | giải mã; chiều vector | 5 ms; 2 048 (fp16) |
+
+## 9. Bàn luận điều chỉnh (CLAUDE.md §8 mục 99) — chưa cài, chờ chốt
+
+### 9.1 Đặt mục tiêu báo nhầm ở mức critical cell
+Thay vì chọn f rồi chịu P_cam = 1 − (1 − f)^M, ta chọn trước tỉ lệ báo nhầm mỗi critical cell P_cam ∈ {10; 20; 30; 50 %}, rồi suy ra f = 1 − (1 − P_cam)^(1/M). Bảng dưới tính với ROC hai phân phối chuẩn (§8.5); f < 0,1 % là ngoại suy ra ngoài bảng của [7].
+
+| M | P_cam | f mỗi crop | YES đúng mỗi crop | k để bỏ sót ≤ 1 % | k để ≤ 0,1 % |
+|---|---|---|---|---|---|
+| 10 | 10–50 % | 1,1–6,7 % | 94,9–98,8 % | 2 | 2–3 |
+| 30 | 10–50 % | 0,35–2,3 % | 90,9–96,9 % | 2 | 2–3 |
+| 100 | 10–50 % | 0,10–0,69 % | 85,1–93,5 % | 2–3 | 3–4 |
+| 300 | 10–50 % | 0,035–0,23 % * | 78,8–89,0 % | 3 | 4–5 |
+| 1 000 | 10–50 % | 0,010–0,069 % * | 71,1–82,8 % | 3–4 | 4–6 |
+
+\* ngoại suy. M nên hiểu là **số tracklet trong khung thời gian truy vấn**: BS gửi kèm khoảng thời gian mục tiêu có thể đi qua, nên node chỉ so trong cửa sổ đó, không so toàn bộ bộ nhớ. Đề xuất M ∈ {10; 30; 100; 300}, k ∈ {1…5}. k phải là số lần đi qua độc lập; crop trong cùng tracklet không tính.
+
+### 9.2 Không phát lặp; ngân sách là D
+River giao **toàn bộ D** cho mọi critical cell: 1 168/1 168 hàng của chiến dịch có missing = 0. Vì vậy không cần phát lặp. Chỉ cần L·F ≤ D_k. D nhỏ nhất là 3 268 khung ≈ **323 KB**, trung bình 415 KB. Cái giá: cell sẵn sàng ở thời điểm River xong (trung bình 24 s) thay vì sau bước gom nội cell (khoảng 9 s).
+
+Cỡ ảnh trong re‑ID:
+- Market‑1501: crop 128×64.
+- Mô hình thường nhận 256×128; một số mô hình nhận 384×128 hoặc 384×192.
+- Ảnh RGB 256×128 chưa nén là 98 304 B. Vì vậy ảnh 50–100 KB tương đương ảnh gần như không nén ở đúng cỡ đầu vào.
+- Gửi ảnh lớn hơn thế không giúp, trừ khi node dùng mô hình đầu vào lớn hơn: 384×192 chưa nén là 221 KB.
+
+### 9.3 Hai chế độ L
+
+| Chế độ | L | F | L·F | Vừa D (≥ 323 KB)? | Cần thêm gì |
+|---|---|---|---|---|---|
+| (a) góc toàn thân | 3–6 | 50–100 KB | 150–600 KB | L = 3 với 100 KB; L ≤ 6 với 50 KB | ROC [7] đã có |
+| (b) crop bộ phận: quần áo, mặt, tóc, thú cưng, xe | 10–100 | 3–30 KB | ≤ 320 KB, ví dụ (10; 30), (30; 10), (100; 3) | có | mỗi loại cue một mô hình và một ROC riêng (mặt: ArcFace; xe: VeRi); cách gộp điểm; nguồn số liệu |
+
+Chế độ (b) cho phép node dùng nhiều cue độc lập nên bỏ sót có thể giảm mạnh, nhưng hiện chỉ cue toàn thân có số đo nguồn. Thời gian thiết bị vẫn nhỏ: L = 100 mất 0,39 s với Hailo‑8L, 7,9 s với CPU.
+
+### 9.4 Giả lập so khớp: ba cách
+
+| Cách | Mô tả | Ưu | Nhược |
+|---|---|---|---|
+| A. Xác suất công bố (hiện tại) | Bốc thẳng điểm từ ROC khớp [7] | Bám đúng số đã công bố; nhanh | Tương quan giữa ảnh, góc và người giống nhau phải giả định tay; L chỉ tác động qua quy tắc góc |
+| B. Vector giả định, hiệu chỉnh theo A | Mỗi người một vector gốc trên mặt cầu (d = 128). Người mặc giống nhau gom thành cụm. Crop = vector gốc + độ lệch theo góc + nhiễu camera, rồi chuẩn hoá. Node tính cosine thật trên M × L. Tham số nhiễu chỉnh sao cho đường YES đúng – YES nhầm khớp [7] Bảng 4 | Node "thật sự" tính điểm. Tương quan, góc thiếu, người giống, nhiều ảnh cùng góc tự phát sinh. Mở rộng tự nhiên sang chế độ (b) | Phải hiệu chỉnh; phải kiểm rằng hiệu ứng tự phát sinh (ví dụ 1 → 2 ảnh chỉ thêm khoảng 2 điểm) khớp [7] |
+| C. Vector thật | Trích đặc trưng ResNet‑50 trên Market‑1501 thật | Trung thực nhất | Cần tải bộ dữ liệu, kiểm giấy phép, khoảng 1–2 giờ CPU; chỉ có một miền camera |
+
+**Đề xuất:** B, hiệu chỉnh theo A. Giữ A làm đối chứng. C để kiểm chứng sau nếu cần.

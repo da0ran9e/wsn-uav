@@ -1224,6 +1224,17 @@ ngay cả khi chỉ có CPU thì tốc độ xử lý một ảnh vẫn hoàn th
 viết lại cho tôi một bản mô tả lại bài toán như bản tôi vừa gửi bạn về mô hình nhận diện bao gồm các tham số ta đã chốt
 ```
 
+*99. 2026-10-19 · layer 1 · bàn luận: báo nhầm tại critical cell 10–50 % với bỏ sót gần 0 (tăng k nếu cần); signature không phát lặp, ảnh lớn hơn theo paper re-ID; L = 3–6 góc hoặc 10–100 crop bộ phận; giả lập so khớp bằng xác suất công bố hay vector giả định*
+
+```text
+bàn luận thêm:
+
+* M = 100, 1000, 10000 có thể quá nhiều khiến tỉ lệ bỏ sót trở lên vô nghĩa mà dẫn đến tỉ lệ nhận nhầm trên critical cell tăng gần tới 100%, ta chỉ cần khoảng 10-20-30-50% tỉ lệ báo nhầm tại critical cell trong khi giữ tỉ lệ bỏ sót ở mức chấp nhận được (tiệm cận 0%) tăng k lên một chút nếu cần 
+* ảnh signature không cần phát lặp lại vì mỗi axe cell đã nhận đủ không sợ mất do đó có thể tăng kích thước ảnh signature lên cho hợp lý với công bố của paper Re ID 
+* L có thể là 3-6 ảnh mô tả các góc khác nhau của đối tượng hoặc có thể là 10-100 các crop khác nhau liên quan đến đối tượng như quần áo, mặt, tóc, pet, xe ... tùy thuộc vào kích thước mỗi ảnh được xác định trong tham số mà đưa ra giải thích phù hợp
+* thảo luận thêm về cách giả lập cho việc so khớp ảnh này, ta lấy luôn xác suất đã được công bố gán cho mỗi lần so khớp ảnh hay thực sự gán cho mõi ảnh trong giả lập một bộ vector giả định để cell có thể thử tính điểm
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

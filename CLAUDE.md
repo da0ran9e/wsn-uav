@@ -1212,6 +1212,12 @@ vậy nếu mỗi critical cell ta coi là một thiết bị tương đối m�
 vậy gần như ảnh đến nơi thì ngay lập tức đã có kết quả?
 ```
 
+*97. 2026-10-19 · layer 1 · câu hỏi: chỉ có CPU thì xử lý xong một ảnh trước khi ảnh tiếp theo tới?*
+
+```text
+ngay cả khi chỉ có CPU thì tốc độ xử lý một ảnh vẫn hoàn thành trước khi ảnh tiếp theo được gửi đến?
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -21,6 +21,7 @@ Layer 1, per critical cell (a camera with an index of M person crops, all strang
 A mission fails when the true cell answers NO (team 2 then never verifies the target).
 Draws are shared by every configuration (paired): the true cell, the LoRa phases, each cell's best stranger
 quantile and the k target crops.
+Matching takes match_time(device, L, M) (item 95) instead of the fixed MATCH = 5 s.
 Writes OUT-draws.csv and OUT-summary.csv.
 """
 import argparse, csv, glob, math, os, random
@@ -35,6 +36,17 @@ ND = NormalDist()
 MU, SIGMA = 4.429, 1.299                                   # fit to TTR 82.26/95.86/98.54/99.38/99.58 % at FTR 0.1-20 %
 MU_X = ND.inv_cdf(0.99) + SIGMA * ND.inv_cdf(0.9586 - 0.25)  # cross-view: TTR at FTR 1 % down by 25 points
 PAYLOAD = 99
+# Matching time at a critical cell (CLAUDE.md §8 item 95): the crops are embedded while recording, so on arrival
+# the node decodes and embeds the L signature images and searches its index of M crops.
+DEVICES = {"pi5-hailo8l": 257.56,   # ResNet-50 224x224, batch 8, Pi 5 + Hailo-8L (Hailo community benchmark, 2024)
+           "pi5-cpu": 1 / 0.07908}  # ResNet-50 INT8, ONNX Runtime 1.28, Pi 5 Cortex-A76 (arXiv:2609.16085, Table 2)
+DECODE = 0.005                      # s per signature JPEG of 15-50 kB on the Pi 5 CPU (estimate)
+DIM, BW, MACS = 2048, 8e9, 20e9     # ResNet-50 pooled feature; index fp16 read at 8 GB/s; 20 GMAC/s (estimates)
+
+
+def match_time(device, L, M):
+    search = max(M * DIM * 2 / BW, M * L * DIM / MACS)
+    return L * DECODE + L / DEVICES[device] + search
 GRID = dict(f=(0.001, 0.01, 0.05, 0.10), M=(100, 1000, 10000), k=(1, 3), L=(1, 2, 3, 4, 8), F=(15, 50))
 KMAX = max(GRID["k"])
 
@@ -85,7 +97,7 @@ def one(M, legs, crits, d, f, Mc, k, L, F):
         return dict(ok=0, yes=len(yes), falseYes=nfalse, held=hx, end="", found="", visits="")
     score = {x: posterior(best[x], Mc, min(held[x], 3) / 3, 1 / len(crits)) for x in yes}
     r, _ = run(M, legs, dict(true=d["true"], false=[x for x in yes if x != d["true"]], score=score,
-                             phase=d["phase"]), ("l3first", "early", "score"))
+                             phase=d["phase"]), ("l3first", "early", "score"), match_time(DEVICE, L, Mc))
     return dict(ok=1, yes=len(yes), falseYes=nfalse, held=hx, end=f"{r['end']:.1f}", found=f"{r['found']:.1f}",
                 visits=r["visits"])
 
@@ -95,7 +107,10 @@ def main():
     ap.add_argument("--works", nargs="+", required=True)
     ap.add_argument("--draws", type=int, default=30)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--device", default="pi5-hailo8l", choices=DEVICES)
     a = ap.parse_args()
+    global DEVICE
+    DEVICE = a.device
     works = sorted(w for g in a.works for w in glob.glob(g) if os.path.exists(f"{w}/c1-path-s35.csv"))
     configs = [dict(f=f, M=m, k=k, L=L, F=F) for f in GRID["f"] for m in GRID["M"] for k in GRID["k"]
                for L in GRID["L"] for F in GRID["F"]]

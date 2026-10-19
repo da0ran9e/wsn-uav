@@ -1,0 +1,1 @@
+python3 tools/l1_mission.py --works "/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/W/k[2468]" "/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/W/camp/k*" --draws 30 --device pi5-hailo8l --out docs/data/mission/l1m-hailo8l

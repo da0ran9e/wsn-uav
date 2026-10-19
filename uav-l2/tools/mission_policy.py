@@ -124,7 +124,7 @@ def open_tsp_first(pos, pts, bs):
     return best[0]
 
 
-def run(M, legs, draw, policy):
+def run(M, legs, draw, policy, match=MATCH):
     """One mission. draw: dict(true, false, score, phase). Returns metrics and the trace of team 2."""
     _, dep_kind, order = policy
     bs = M["bs"]
@@ -133,7 +133,7 @@ def run(M, legs, draw, policy):
     arrive = {}   # (k, h) -> time its result reaches the BS
     for k, C in M["cl"].items():
         ch = C["P"]["ch"]
-        atch = {h: leave[k] + float(C["res"]["rf"][h]["doneS"]) + MATCH + HOP * hexdist(h, ch) for h in C["P"]["crit"]}
+        atch = {h: leave[k] + float(C["res"]["rf"][h]["doneS"]) + match + HOP * hexdist(h, ch) for h in C["P"]["crit"]}
         ph = draw["phase"][k]
         for h, t in atch.items():
             n = max(0, math.ceil((t - ph) / GAP))

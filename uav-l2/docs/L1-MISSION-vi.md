@@ -64,3 +64,53 @@ P = tour l3first, đội 2 đi sớm, thăm theo điểm. Lớp 3 giữ nguyên:
 - quét L × F với truy vấn phát lặp.
 
 Thời gian máy chưa biết; mình đề xuất đo trước trên 1 cluster rồi ước lượng cho cả chiến dịch.
+
+## 7. Thời gian đối sánh theo thiết bị critical cell (CLAUDE.md §8 mục 95)
+
+Giả định: critical cell là thiết bị cỡ Raspberry Pi 5 chạy ResNet‑50 (25,6 triệu tham số, khoảng 4,1 GMAC mỗi ảnh 224×224). Crop được embed ngay lúc ghi hình, nên khi UAV tới, node chỉ phải:
+1. giải mã L ảnh signature;
+2. embed L ảnh đó;
+3. tìm trong chỉ mục M vector.
+
+### 7.1 Số đo dùng làm tham số
+
+| Thiết bị | ResNet‑50 | Nguồn |
+|---|---|---|
+| Pi 5 + Hailo‑8L (13 TOPS, PCIe Gen 3 ×1) | **257,6 ảnh/s** (224×224, batch 8) | Hailo Community, "Raspberry Pi 5 with Hailo‑8L Benchmark", 06/2024 |
+| Pi 5 CPU (Cortex‑A76), INT8, ONNX Runtime 1.28 | **79,1 ms/ảnh ⇒ 12,6 ảnh/s** (batch 1) | arXiv:2609.16085, Bảng 2 |
+| Pi 5 CPU, FP32 | 145,0 ms/ảnh ⇒ 6,9 ảnh/s | như trên |
+
+- "Vài trăm ảnh/s" **chỉ đúng khi Pi 5 có NPU** (Hailo‑8L). CPU của Pi 5 chỉ được khoảng 13 ảnh/s.
+- Ảnh re‑ID 256×128 chỉ có 65 % số điểm ảnh của 224×224, nên tốc độ thực có thể cao hơn. Giả lập giữ số đo ở 224×224 cho thận trọng.
+
+### 7.2 Công thức trong giả lập (`l1_mission.py`, `match_time`)
+
+T_match = L · T_decode + L / R + max(M · DIM · 2 B / BW, M · L · DIM / 20 GMAC/s)
+
+- R: tốc độ embed của thiết bị (bảng trên).
+- T_decode = 5 ms mỗi JPEG 15–50 KB [ước tính].
+- DIM = 2 048: vector pooled của ResNet‑50, lưu fp16.
+- BW = 8 GB/s băng thông bộ nhớ hiệu dụng [ước tính].
+
+| T_match, s | M = 100 | 1 000 | 10 000 | 100 000 |
+|---|---|---|---|---|
+| Hailo‑8L, L = 1 | 0,009 | 0,009 | 0,014 | 0,060 |
+| Hailo‑8L, L = 3 | 0,027 | 0,027 | 0,032 | 0,078 |
+| Hailo‑8L, L = 8 | 0,071 | 0,072 | 0,079 | 0,153 |
+| CPU, L = 3 | 0,252 | 0,253 | 0,257 | 0,303 |
+| CPU, L = 8 | 0,673 | 0,674 | 0,681 | 0,755 |
+
+**Nếu chưa có chỉ mục** (phải embed lại M crop khi UAV tới), cộng thêm M / R:
+
+| M | 1 000 | 10 000 | 100 000 |
+|---|---|---|---|
+| Hailo‑8L | 3,9 s | 39 s | 6,5 phút |
+| CPU | 79 s | 13 phút | 2,2 giờ |
+
+Bộ nhớ chỉ mục: 4 KB mỗi crop (fp16), tức 40 MB cho M = 10 000.
+
+### 7.3 Ảnh hưởng tới nhiệm vụ
+
+Chạy lại toàn bộ lưới với Hailo‑8L (`data/mission/l1m-hailo8l-*`; log `logs/2026-10-19_1639-l1-device/`). Kết thúc nhiệm vụ đổi trung bình **−3,8 s** (từ −8,8 đến +2,9 s) so với MATCH = 5 s; tỉ lệ thành công không đổi. Thời gian đối sánh không phải nút cổ chai, miễn là chỉ mục có sẵn. Khe LoRa (40 s) và River lớn hơn nhiều.
+
+Ví dụ (L = 3, F = 15 KB): f = 0,1 %, M = 100, k = 3: kết thúc 758 → 753 s; f = 1 %, M = 1 000, k = 3: 763 → 759 s.

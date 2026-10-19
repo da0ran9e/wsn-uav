@@ -1200,6 +1200,12 @@ ta thậm chí có thể chọn mức thấp nhất của bảng dù chỉ 82,3%
 tập M và kích thước L đều sẽ là tham số của giả lập, bạn hãy nghiên cứu qua một chút rồi dùng các tham số này chạy lại thử nghiệm propose
 ```
 
+*95. 2026-10-19 · layer 1 · critical cell là thiết bị cỡ Raspberry, vài trăm ảnh/giây với model khoảng 25 triệu tham số; tính lại cho chính xác để đưa vào bộ tham số giả lập*
+
+```text
+vậy nếu mỗi critical cell ta coi là một thiết bị tương đối mạnh (cỡ raspberry) có thể được vài trăm ảnh mỗi giây với model khoảng 25 triệu tham số, những con số này hãy giúp tôi tính lại cho chính xác để đưa vào bộ tham số của giả lập
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -343,3 +343,8 @@ Chế độ (b) cho phép node dùng nhiều cue độc lập nên bỏ sót có
 | C. Vector thật | Trích đặc trưng ResNet‑50 trên Market‑1501 thật | Trung thực nhất | Cần tải bộ dữ liệu, kiểm giấy phép, khoảng 1–2 giờ CPU; chỉ có một miền camera |
 
 **Đề xuất:** B, hiệu chỉnh theo A. Giữ A làm đối chứng. C để kiểm chứng sau nếu cần.
+
+### 9.5 Chốt (CLAUDE.md §8 mục 100)
+- **Đã chốt:** M nhỏ, M ∈ {10; 30; 100; 300}, đếm theo tracklet trong khung thời gian truy vấn; P_cam ∈ {10; 20; 30; 50 %}; k ∈ {1…5}; không phát lặp, L·F ≤ D_k; chế độ (a) trước với F = 50–100 KB.
+- **Cách giả lập:** chạy chính bằng A (xác suất công bố); B (vector giả định hiệu chỉnh theo A) là hướng tương lai.
+- **Đính chính cột "f mỗi crop" ở §9.1:** đó là ngưỡng *phải đặt* để giữ P_cam cố định, không phải hệ quả của M. Với ngưỡng cố định, M tăng thì P_cam tăng: f = 1 % cho P_cam = 9,6 / 26 / 63 / 95 % ở M = 10 / 30 / 100 / 300. Muốn giữ P_cam, phải siết ngưỡng khi M tăng; ngưỡng chặt hơn thì YES đúng mỗi crop giảm, nên cần k lớn hơn.

@@ -1235,6 +1235,15 @@ bàn luận thêm:
 * thảo luận thêm về cách giả lập cho việc so khớp ảnh này, ta lấy luôn xác suất đã được công bố gán cho mỗi lần so khớp ảnh hay thực sự gán cho mõi ảnh trong giả lập một bộ vector giả định để cell có thể thử tính điểm
 ```
 
+*100. 2026-10-19 · layer 1 · hỏi: sao M tăng thì báo nhầm mỗi crop giảm; đồng ý M nhỏ; chốt các ý khác theo đề xuất; A là cách giả lập chính, B là hướng tương lai; bàn thêm về crop và tỉ lệ*
+
+```text
+tại sao số crop M tăng thì báo nhầm mỗi crop lại giảm, ý tôi trước đó là khi số crop tăng thì tỉ lệ so nhầm ít nhất một crop sẽ tăng mà chỉ cần nhầm một crop thì critical cell sẽ báo nhầm. M nhỏ thì tôi đồng ý 
+với các ý khác tôi đều chốt theo ý bạn
+phần cách giả lập tôi chọn A làm cách chạy chính B làm hướng tương lai
+ta thảo luận thêm về crop và tỉ lệ
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

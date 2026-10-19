@@ -39,7 +39,8 @@ CAT = ["#1c5cab", "#1baf7a", "#eda100", "#8e5ad6", "#0d366b", "#52514e", "#e3494
 TRUE, FALSE = "#e34948", "#eda100"
 
 
-def load_map(w, schemes=SCHEMES):
+def load_map(w, schemes=SCHEMES, with_bits=True):
+    """with_bits=False: geometry, plan and River results only (no pass bitmaps; bits/inD/held/D left out)."""
     m = json.load(open(f"{w}/map.json"))
     tour = json.load(open(f"{w}/tour.json"))
     rows = list(csv.DictReader(open(f"{w}/domain-cells.csv")))
@@ -60,6 +61,9 @@ def load_map(w, schemes=SCHEMES):
                for t in schemes}
         runs = {t: next(csv.DictReader(open(f"{w}/r{k}-{t}-runs.csv"))) for t in schemes}
         P = plan(geo)
+        if not with_bits:
+            cl[k] = dict(geo=geo, P=P, res=res, runs=runs)
+            continue
         N = len(uav)
         bits = np.unpackbits(np.fromfile(f"{w}/pass{k}-bits-r1.bin", dtype=np.uint8).reshape(len(nodes), -1),
                              axis=1, bitorder="little")[:, :N].astype(bool)

@@ -1251,6 +1251,13 @@ ta lấy ngưỡng báo nhầm từ mức đầu tiên trong paper đã công b�
 rồi ta áp tỉ lệ của ta 10% đến 50% báo nhầm mức cell để nội suy ra M L và k theo tham số đã được công bố
 ```
 
+*102. 2026-10-19 · layer 1 · dùng cả hai hướng báo cáo (YES/NO và số crop vượt ngưỡng); phát biểu lại bài toán với tham số đã chốt; rà soát tham số giả lập chưa có nguồn công bố hay chuẩn*
+
+```text
+tôi nghiêng về cách dùng cả 2 hướng này, phát biểu lại bài toán này với các tham số ta vừa chốt một lần nữa 
+thử xem lại xem còn tham số nào của giả lập đang sử dụng chưa được lấy từ các công bố hay tài liệu chuẩn không
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

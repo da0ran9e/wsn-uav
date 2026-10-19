@@ -386,3 +386,58 @@ Chế độ (b) cho phép node dùng nhiều cue độc lập nên bỏ sót có
 - **k:** bỏ sót ≤ 1 % cần k = 3; bỏ sót ≤ 0,1 % cần k = 4. Bỏ sót không phụ thuộc M vì f cố định.
 - **L:** công bố chỉ có L = 1 và L = 2. Lấy **L = 2** làm điểm vận hành. Ảnh thêm (L = 3–6, góc trước/nghiêng/sau) được phép trong ngân sách L·F ≤ D_k (≥ 323 KB), nhưng **không được cộng thêm TTR** vì không có số công bố. Đây là lựa chọn thận trọng.
 - **Giả lập (cách A):** mỗi crop người lạ YES với xác suất 0,001; mỗi crop mục tiêu YES với xác suất 0,8226 (L ≥ 2) hoặc 0,80 (L = 1); bốc độc lập. Thay cho ROC hai phân phối chuẩn và mức phạt góc ở §8 (bỏ, vì không có công bố).
+
+## 11. Phát biểu chốt (CLAUDE.md §8 mục 101–102) — thay §8
+
+### 1. Mục tiêu
+Camera tại mỗi critical cell trả lời: **một người cụ thể đã xuất hiện trước camera này trong khung thời gian truy vấn hay chưa?** Ưu tiên không bỏ sót; báo nhầm được chấp nhận ở mức đặt trước, BS và đội 2 xử lý phần còn lại. Nghiên cứu không nhằm cải tiến xử lý ảnh, nên dùng một điểm vận hành đã công bố.
+
+### 2. Camera ghi được gì
+- **M lượt đi qua (tracklet)** trong khung thời gian truy vấn mà BS gửi kèm. Mỗi lượt giữ **một crop đại diện** tốt nhất.
+- Nếu mục tiêu có mặt, nó để lại **k** crop từ k lượt đi qua độc lập.
+- Nhiều người có thể mặc giống mục tiêu; điểm vận hành của [7] đã gồm hiện tượng này vì Market‑1501 có nhiều người mặc giống nhau.
+
+### 3. Signature
+- **L = 2** ảnh toàn thân của mục tiêu, khớp gallery multi‑shot của [7]. L = 1 dùng mức single‑shot.
+- Mỗi ảnh **F = 50–100 KB**: ảnh 256×128 gần như không nén (ảnh thô 98 304 B).
+- Ảnh thêm (L = 3–6, nhiều góc) được phép trong ngân sách L·F ≤ D_k (D_k ≥ 323 KB), nhưng không cộng thêm độ chính xác.
+- Không phát lặp: River giao toàn bộ D cho mọi critical cell.
+
+### 4. Node nhận dạng và báo cáo
+1. M crop đã embed sẵn lúc ghi hình (chỉ mục).
+2. Embed L ảnh signature khi ảnh đủ.
+3. Một crop **vượt ngưỡng** nếu khoảng cách nhỏ nhất tới các ảnh signature dưới ngưỡng r của [7].
+4. Báo về BS: **YES/NO** (có ít nhất một crop vượt ngưỡng) và **c = số crop vượt ngưỡng**, vài byte qua CH và LoRa.
+5. BS xếp hạng các cell YES theo xác suất hậu nghiệm tính từ c. Xác suất này chỉ dùng hai số công bố:
+   - cell nhầm: c ~ Binomial(M; 0,001);
+   - cell thật: c ~ Binomial(k; 0,8226) + Binomial(M; 0,001).
+
+   Ví dụ M = 223, k = 3:
+
+   | c | 0 | 1 | 2 | 3 |
+   |---|---|---|---|---|
+   | P(c \| nhầm) | 0,80 | 0,18 | 0,020 | 0,0015 |
+   | P(c \| thật) | 0,004 | 0,063 | 0,30 | 0,51 (c = 4: 0,11) |
+
+   Vì vậy c ≥ 2 gần như chỉ đến từ cell thật.
+
+### 5. Điểm vận hành và tham số suy ra
+| | Giá trị | Nguồn / cách suy |
+|---|---|---|
+| f, YES nhầm mỗi crop | 0,1 % | [7] Bảng 4, mức đầu tiên |
+| TTR, YES đúng mỗi crop | 82,26 % (L = 2); 80,00 % (L = 1) | như trên |
+| P_cam, báo nhầm mức cell | 10; 20; 30; 50 % | lựa chọn thiết kế |
+| M | 105; 223; 356; 693 | ln(1 − P_cam) / ln(1 − f) |
+| k | 3 (bỏ sót 0,56 %); 4 (0,099 %) | (1 − TTR)^k |
+| Nghi vấn nhầm mỗi bản đồ | 3,2; 6,3; 9,5; 15,8 | P_cam × (critical cell − 1) |
+
+### 6. Thiết bị và thời gian
+Như §8.6:
+- Pi 5 + Hailo‑8L, 257,6 ảnh/s.
+- CPU, 12,6 ảnh/s.
+- T_match = 0,03 s (Hailo) hoặc 0,25 s (CPU), với chỉ mục có sẵn.
+
+### 7. Giới hạn
+- [7] có mục tiêu trong tập huấn luyện và cùng 6 camera, nên số liệu lạc quan.
+- k lượt phải độc lập.
+- Dùng một crop mỗi lượt để khớp cách [7] đếm trên ảnh.

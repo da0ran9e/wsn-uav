@@ -1218,6 +1218,12 @@ vậy gần như ảnh đến nơi thì ngay lập tức đã có kết quả?
 ngay cả khi chỉ có CPU thì tốc độ xử lý một ảnh vẫn hoàn thành trước khi ảnh tiếp theo được gửi đến?
 ```
 
+*98. 2026-10-19 · layer 1 · viết lại bài toán nhận diện theo khung mục 92, kèm các tham số đã chốt*
+
+```text
+viết lại cho tôi một bản mô tả lại bài toán như bản tôi vừa gửi bạn về mô hình nhận diện bao gồm các tham số ta đã chốt
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

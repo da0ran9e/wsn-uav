@@ -223,3 +223,80 @@ M không bị D ràng buộc; nó là tham số kịch bản của camera (lưu 
 - Nên đếm M theo **tracklet** (một người đi qua một lần), không theo khung hình; một tracklet cho một điểm, khớp với cách [7] đếm trên ảnh.
 - Gợi ý quét M ∈ {100; 1 000; 10 000}: chuông cửa hoặc ngõ nhỏ vài trăm mỗi ngày, mặt tiền cửa hàng vài nghìn.
 - M chỉ quyết định số crop nhầm f·M và vì vậy độ tin của việc xếp hạng ở BS; với f = 1 %, M = 1 000 cho khoảng 10 crop nhầm mỗi camera, nên báo cáo phải là điểm, không phải YES/NO.
+
+## 8. Bản phát biểu chốt (CLAUDE.md §8 mục 98; khung theo mục 92, tham số theo mục 93–97)
+
+### 1. Mục tiêu
+Mỗi camera biên tại một critical cell trả lời: **một người cụ thể đã xuất hiện trước camera này hay chưa?** Yêu cầu ưu tiên là hạn chế tối đa bỏ sót. Báo nhầm được chấp nhận vì BS xếp hạng các báo cáo và đội 2 xác minh tại chỗ.
+
+### 2. Camera ghi được gì
+- Camera giữ một tập **M crop người** cắt từ video, đếm theo **tracklet**: một người đi qua một lần cho một crop đại diện.
+- Kích thước, góc nhìn, ánh sáng và độ nét của các crop rất khác nhau.
+- Không chắc có mục tiêu trong đó. Nếu có, mục tiêu để lại **k** crop, tức đi qua k lần.
+- Mỗi crop đều chứa một người. Nhiều người có thể mặc cùng màu với mục tiêu.
+- Tham số giả lập: M ∈ {100; 1 000; 10 000}, ứng với ngõ nhỏ hoặc chuông cửa lên tới mặt tiền đông người; k ∈ {1; 3}.
+
+### 3. Tập ảnh signature
+- BS gửi **L ảnh toàn thân** của mục tiêu, mỗi ảnh **F = 15–50 KB**, chọn theo góc **trước → sau → nghiêng**, rồi lặp lại nếu L > 3.
+- Mỗi ảnh là một file F·1000/99 khung (15 KB → 152 khung, 50 KB → 506 khung). Mất một khung là mất cả ảnh (mục 34).
+- **Giới hạn dung lượng:** mỗi cluster nhận trung bình D ≈ 415 KB dọc Axe (324–549 KB). Truy vấn L·F nên ≤ khoảng 180 KB (≈ 45 % D) để UAV phát lặp được ít nhất 2 lần. Khi đó gom nội cell đã cho đủ mọi ảnh ở 97–99 % critical cell.
+- **L hợp lý: 3–6.** L = 3 đủ ba góc. Thêm ảnh cùng góc gần như không giúp ([7] Bảng 4: từ 1 lên 2 ảnh mục tiêu chỉ thêm 0,8–2,3 điểm).
+- Ảnh mặt chưa dùng trong bước so khớp. Nếu gửi thì cần một bước so mặt riêng.
+
+### 4. Node nhận dạng thế nào
+1. **Chuẩn bị sẵn:** M crop đã được embed bằng mô hình của node ngay lúc ghi hình, lưu thành chỉ mục: 2 048 chiều, fp16, 4 KB mỗi crop.
+2. **Nhận signature:** node giải mã và embed từng ảnh signature ngay khi ảnh đó đủ, bằng cùng mô hình.
+3. **So khớp toàn thân:** mỗi crop lấy điểm cao nhất trên các ảnh signature node đang giữ. Crop vượt ngưỡng t thì tính là YES. Điểm của node là điểm crop cao nhất.
+4. **Báo cáo về BS qua CH và LoRa:** vài byte gồm điểm cao nhất, số crop vượt ngưỡng và các góc node đang giữ. BS đổi điểm thành xác suất "đây là camera của mục tiêu" và đội 2 thăm theo thứ tự đó.
+
+### 5. Điểm vận hành
+Tham chiếu: [7] Bảng 1/4, Market‑1501, Individual Verification, ResNet‑50 (758 người lạ, 14 573 ảnh thử). f là tỉ lệ YES nhầm trên mỗi crop người lạ.
+
+| f | YES đúng mỗi crop | Bỏ sót mỗi crop |
+|---|---|---|
+| 0,1 % | 82,3 % | 17,7 % |
+| 1 % | 95,9 % | 4,1 % |
+| 5 % | 98,5 % | 1,5 % |
+| 10 % | 99,4 % | 0,6 % |
+
+- **Trong giả lập:** điểm người lạ ~ N(0; 1), điểm mục tiêu ~ N(4,43; 1,30), khớp vào các điểm trên (sai lệch ≤ 2,6 điểm). Crop mục tiêu có góc mà node không giữ ảnh nào ~ N(3,04; 1,30), tức mất 25 điểm ở f = 1 %. Mức phạt này là giả định.
+- **Ở mức camera:** bỏ sót = (1 − TTR)^k. Ví dụ f = 0,1 %, k = 3 → khoảng 0,6 %.
+- **YES nhầm ở mức camera:** 1 − (1 − f)^M. Ví dụ f = 0,1 %, M = 1 000 → 63 %.
+- Vì vậy node không báo YES/NO trần mà báo điểm để BS xếp hạng. **Mức f = 0,1 % (82,3 %) dùng được khi k ≥ 3.** M lớn không giảm bỏ sót, chỉ làm loãng thứ hạng.
+
+### 6. Thiết bị và thời gian xử lý
+- Critical cell là thiết bị cỡ **Raspberry Pi 5 chạy ResNet‑50** (25,6 triệu tham số):
+
+  | Cấu hình | Tốc độ embed | Nguồn |
+  |---|---|---|
+  | Pi 5 + Hailo‑8L | 257,6 ảnh/s | Hailo Community, 2024 |
+  | Pi 5 CPU INT8 | 12,6 ảnh/s | arXiv:2609.16085 |
+
+- **Thời gian đối sánh:** T_match = L · 5 ms + L / R + tìm kiếm.
+  - L = 3: 0,03 s với Hailo, 0,25 s với CPU.
+  - M = 100 000 thêm chưa tới 0,05 s.
+- **Ảnh tới nhanh hơn cách nào cũng không được:** một ảnh 15 KB cần ít nhất 0,65 s trên 802.15.4 (1,52 s theo nhịp UAV), nên node luôn xử lý xong trước khi ảnh sau tới.
+- **Điều kiện:** chỉ mục phải có sẵn. Nếu phải embed lại M crop thì thêm M / R: 39 s (Hailo) hoặc 13 phút (CPU) với M = 10 000.
+- **Ràng buộc thật khi chỉ có CPU:** lập chỉ mục theo kịp camera (khoảng 13 crop/s), nên phải embed theo tracklet chứ không theo từng khung hình.
+- **Độ trễ từ lúc UAV rời cluster tới lúc có báo cáo** do lớp 3 và LoRa quyết định, không do đối sánh:
+  - River: trung bình 24 s (p90 55 s);
+  - chờ khe LoRa: 0–40 s.
+
+### 7. Giới hạn cần ghi trong paper
+- [7] huấn luyện trên chính các mục tiêu và thử trên cùng 6 camera, nên số liệu lạc quan so với mục tiêu chưa từng thấy và camera khác miền.
+- Crop trong cùng tracklet tương quan mạnh. M và k phải hiểu là số tracklet.
+- Các số ước tính chưa đo trên Pi: giải mã 5 ms, băng thông bộ nhớ 8 GB/s, mức phạt góc −25 điểm.
+
+### Bảng tham số giả lập (`uav-l2/tools/l1_mission.py`)
+
+| Ký hiệu | Ý nghĩa | Giá trị |
+|---|---|---|
+| M | crop (tracklet) mỗi camera | 100; 1 000; 10 000 |
+| k | crop mục tiêu tại camera thật | 1; 3 |
+| L | ảnh signature | 1; 2; 3; 4; 8 (đề xuất 3–6) |
+| F | cỡ mỗi ảnh | 15; 50 KB |
+| f | YES nhầm mỗi crop (ngưỡng t) | 0,1; 1; 5; 10 % |
+| MU, SIGMA | điểm mục tiêu | 4,43; 1,30 |
+| MU_X | điểm mục tiêu khi thiếu góc | 3,04 |
+| R | tốc độ embed | 257,6 (Hailo‑8L) / 12,6 (CPU) ảnh/s |
+| T_decode, DIM | giải mã; chiều vector | 5 ms; 2 048 (fp16) |

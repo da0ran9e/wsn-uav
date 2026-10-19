@@ -225,6 +225,11 @@ thêm; nội dung trong khối là lời gốc. Khi có mô tả mới, thêm v�
 **Quy tắc làm việc hiện hành:** thảo luận và lên kế hoạch kỹ với người dùng trước khi chạy
 bất kỳ chương trình tốn thời gian nào (xem mục cuối).
 
+**Lưu log (mục 94):** mọi lần chạy chương trình đều ghi toàn bộ log (lệnh, stdout/stderr, tham số)
+vào `logs/<YYYY-MM-DD_HHMM>-<tên-ngắn>/`, mỗi session hoặc nhiệm vụ một folder. Cuối session hoặc nhiệm
+vụ, viết `logs/<...>/README.md` mô tả ngắn: mục đích, lệnh đã chạy, đầu vào, đầu ra (đường dẫn), kết quả
+chính và điều còn dang dở. Log văn bản được commit; dữ liệu thô quá lớn thì chỉ ghi đường dẫn và kích thước.
+
 *1. 2026-10-05 · uav-sar · A2G-RUN: chuỗi gói liên tục, 7 node thẳng hàng*
 
 ```text
@@ -1184,6 +1189,15 @@ https://arxiv.org/pdf/1807.10482
 ```text
 nếu bạn xem qua paper openworld person re id có lẽ có thể tổng hợp được các mức cho việc đánh đổi nhận dạng nhầm lấy độ lợi không bỏ sót 
 theo bạn với mỗi node nhận được khoảng 400KB như trong giả lập, vậy số file L nên để xét khoảng bao nhiêu hoặc số M bao nhiêu là hợp lý
+```
+
+*94. 2026-10-19 · quy tắc làm việc + layer 1 · lưu log chạy theo dấu thời gian kèm mô tả; cỡ file trong paper re-ID, file 15–50 KB; chấp nhận mức 82,3 % nếu M, L đủ lớn; M và L là tham số giả lập, chạy lại propose*
+
+```text
+thêm giúp tôi mộ dòng yêu cầu vào CLAUDE.md lưu lại toang bộ  log chạy chương trình vào một folder theo đâu thời gian và kèm theo mô tả ngắn gọn sau mỗi session hoặc nhiệm vụ để tra lại nếu cần 
+trong paper Re ID họ xét file cỡ nào, ta có thể dùng file cỡ 15-50 tuỳ tham số giả lập
+ta thậm chí có thể chọn mức thấp nhất của bảng dù chỉ 82,3% nhưng nếu tập M và L đủ lớn ta cũng có tỉ lệ chung tương đối cao gần như không bỏ sót đúng như bạn nói
+tập M và kích thước L đều sẽ là tham số của giả lập, bạn hãy nghiên cứu qua một chút rồi dùng các tham số này chạy lại thử nghiệm propose
 ```
 
 ---

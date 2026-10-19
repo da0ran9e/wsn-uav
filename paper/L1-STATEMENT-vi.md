@@ -348,3 +348,41 @@ Chế độ (b) cho phép node dùng nhiều cue độc lập nên bỏ sót có
 - **Đã chốt:** M nhỏ, M ∈ {10; 30; 100; 300}, đếm theo tracklet trong khung thời gian truy vấn; P_cam ∈ {10; 20; 30; 50 %}; k ∈ {1…5}; không phát lặp, L·F ≤ D_k; chế độ (a) trước với F = 50–100 KB.
 - **Cách giả lập:** chạy chính bằng A (xác suất công bố); B (vector giả định hiệu chỉnh theo A) là hướng tương lai.
 - **Đính chính cột "f mỗi crop" ở §9.1:** đó là ngưỡng *phải đặt* để giữ P_cam cố định, không phải hệ quả của M. Với ngưỡng cố định, M tăng thì P_cam tăng: f = 1 % cho P_cam = 9,6 / 26 / 63 / 95 % ở M = 10 / 30 / 100 / 300. Muốn giữ P_cam, phải siết ngưỡng khi M tăng; ngưỡng chặt hơn thì YES đúng mỗi crop giảm, nên cần k lớn hơn.
+
+## 10. Điểm vận hành cố định theo công bố (CLAUDE.md §8 mục 101)
+
+**Nguyên tắc:** không tự siết ngưỡng, không đặt theo cảm quan. Dùng đúng mức đầu tiên của [7] Bảng 4 (Market‑1501, Individual Verification, ResNet‑50). Mọi tham số còn lại suy ra từ mức đó.
+
+| | Giá trị công bố | Nguồn |
+|---|---|---|
+| YES nhầm mỗi crop người lạ, f | **0,1 %** | [7] Bảng 4, cột FTR đầu tiên |
+| YES đúng mỗi crop mục tiêu, TTR (gallery 2 ảnh mục tiêu, multi‑shot) | **82,26 %** | như trên |
+| TTR với gallery 1 ảnh (single‑shot) | 80,00 % | như trên |
+
+Ánh xạ sang hệ thống:
+- crop camera = ảnh truy vấn;
+- L ảnh signature = gallery của mục tiêu;
+- node chấp nhận crop nếu khoảng cách nhỏ nhất tới các ảnh signature dưới ngưỡng, đúng quy tắc của [7].
+
+**Câu cho paper (EN):** *Visual matching is not the focus of this work. We therefore adopt a published operating point of an open-world person verification baseline (ResNet-50, Market-1501, individual verification): a true-target rate of 82.26 % at a 0.1 % false-target rate per image [7]. All camera-level quantities below follow from this point.*
+
+### Suy ra M, k, L từ tỉ lệ báo nhầm mức critical cell P_cam ∈ {10; 20; 30; 50 %}
+- **M** (tracklet trong khung thời gian truy vấn) = ln(1 − P_cam) / ln(1 − f).
+- **Bỏ sót mức cell** = (1 − 0,8226)^k, với k crop mục tiêu đến từ các lần đi qua độc lập.
+- **Nghi vấn nhầm mỗi bản đồ** ≈ P_cam × 31,6 (trung bình 32,6 critical cell).
+
+| P_cam | M | Nghi vấn nhầm / bản đồ |
+|---|---|---|
+| 10 % | 105 | 3,2 |
+| 20 % | 223 | 6,3 |
+| 30 % | 356 | 9,5 |
+| 50 % | 693 | 15,8 |
+
+| k | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| Bỏ sót mức cell (L = 2) | 17,7 % | 3,15 % | **0,56 %** | **0,099 %** | 0,018 % |
+| Bỏ sót mức cell (L = 1) | 20 % | 4 % | 0,8 % | 0,16 % | 0,032 % |
+
+- **k:** bỏ sót ≤ 1 % cần k = 3; bỏ sót ≤ 0,1 % cần k = 4. Bỏ sót không phụ thuộc M vì f cố định.
+- **L:** công bố chỉ có L = 1 và L = 2. Lấy **L = 2** làm điểm vận hành. Ảnh thêm (L = 3–6, góc trước/nghiêng/sau) được phép trong ngân sách L·F ≤ D_k (≥ 323 KB), nhưng **không được cộng thêm TTR** vì không có số công bố. Đây là lựa chọn thận trọng.
+- **Giả lập (cách A):** mỗi crop người lạ YES với xác suất 0,001; mỗi crop mục tiêu YES với xác suất 0,8226 (L ≥ 2) hoặc 0,80 (L = 1); bốc độc lập. Thay cho ROC hai phân phối chuẩn và mức phạt góc ở §8 (bỏ, vì không có công bố).

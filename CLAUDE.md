@@ -1244,6 +1244,13 @@ phần cách giả lập tôi chọn A làm cách chạy chính B làm hướng 
 ta thảo luận thêm về crop và tỉ lệ
 ```
 
+*101. 2026-10-19 · layer 1 · ngưỡng lấy đúng mức đầu tiên đã công bố (không tự siết); phát biểu: không tập trung vào xử lý ảnh nên chọn mốc đã công bố; áp 10–50 % báo nhầm mức cell để suy ra M, L, k*
+
+```text
+ta lấy ngưỡng báo nhầm từ mức đầu tiên trong paper đã công bố chứ không tự siết thủ công hay tự đặt theo cảm quan và ta phát biểu rằng nghiên cứu của ta không tập trung vào giải quyết vấn đề của xử lý hình ảnh nên chúng tôi chọn một mốc tham số mà đã được công bố để đảm bảo tỉ lệ bỏ lỡ vừa đủ thấp trong khi báo nhầm không quá nhiều. 
+rồi ta áp tỉ lệ của ta 10% đến 50% báo nhầm mức cell để nội suy ra M L và k theo tham số đã được công bố
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

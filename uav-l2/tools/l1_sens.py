@@ -19,7 +19,8 @@ import numpy as np
 from map_gen import strip_text
 from mission_report import GREY, SURF
 
-METH = [("P+prog-latency-pu-stage", "#1c5cab"), ("P-latency-pu-stage", "#86b6ef"), ("B4-latency-pu-stage", "#eda100")]
+METH = [("P+prog-latency-puq-stage-zero", "#1c5cab"), ("P-latency-puq-stage-zero", "#86b6ef"),
+        ("B4-latency-puq-stage-zero", "#eda100")]
 
 
 def main():
@@ -37,7 +38,7 @@ def main():
         maps = sorted({k[0] for k in D[METH[0][0]]})
         for m in sorted(D):
             per = np.array([np.mean([float(D[m][k]["Tstar"]) for k in D[m] if k[0] == mp]) for mp in maps])
-            d = np.array([np.mean([float(D[m][k]["Tstar"]) - float(D["B4-latency-pu-stage"][k]["Tstar"]) for k in D[m]
+            d = np.array([np.mean([float(D[m][k]["Tstar"]) - float(D[METH[2][0]][k]["Tstar"]) for k in D[m]
                                    if k[0] == mp]) for mp in maps])
             rows.append(dict(run=run, method=m, maps=len(maps), Tstar=round(float(per.mean()), 1),
                              ci=round(float(1.96 * per.std(ddof=1) / math.sqrt(len(maps))), 1),

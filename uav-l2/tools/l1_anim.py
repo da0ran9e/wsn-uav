@@ -1,7 +1,7 @@
 """Export one mission with the layer-1 model, every step, for the animated player docs/anim/l1-replay.html
 (CLAUDE.md §8 item 114).
 
-    python3 tools/l1_anim.py --work KW/k4-s2 --trace TR/k4-s2 --method P+prog-latency-pu-stage-zero --out docs/anim/l1.json
+    python3 tools/l1_anim.py --work KW/k4-s2 --trace TR/k4-s2 --method P+prog-latency-puq-stage-zero --out docs/anim/l1.json
 
 WORK is a mission work folder (any partition) with pass bitmaps and River results; TRACE holds t<k>-hops.csv and
 t<k>-held.csv of the same River runs made with river-bin --trace (results identical). The method is one of
@@ -37,7 +37,7 @@ def main():
     ap = argparse.ArgumentParser()
     for k in ("work", "trace", "out"):
         ap.add_argument("--" + k, required=True)
-    ap.add_argument("--method", default="P+prog-latency-pu-stage-zero")
+    ap.add_argument("--method", default="P+prog-latency-puq-stage-zero")
     ap.add_argument("--draw", type=int, default=-1, help="the draw to show (default: chosen as above)")
     a = ap.parse_args()
     w = a.work
@@ -79,9 +79,8 @@ def main():
             ev = [e for e in info[x] if base == "P+prog" or (e[1] == 1) == (base == "P")]
             reps[x] = [(e[0], e[2]) for e in sorted(ev, key=lambda e: (e[0], e[1]))]
         trace = []
-        out = R.team2(M["bs"], pos, reps, U, prior, star,
-                      next((o for o in a.method.split("-") if o in ("wait", "zero")), "early"),
-                      "pu" if "pu" in a.method else "greedy", "stage" in a.method, trace)
+        dep, rule, stg, beta = R.policy(a.method.split("-")[1:])
+        out = R.team2(M["bs"], pos, reps, U, prior, star, dep, rule, stg, trace, beta)
         return U, star, info, trace, out
 
     if a.draw >= 0:

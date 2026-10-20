@@ -35,7 +35,7 @@ Lời gốc: CLAUDE.md §8 mục 78; lớp 1 và mục tiêu pha 2 cập nhật 
 - critical cell: điểm hai bước (từng khía cạnh, rồi gộp theo độ quan trọng) · báo điểm cao nhất + bitmap manh mối
 - báo hai lần: sau gom nội cell (tự nghe) và sau River · critical cell → CH → LoRa → BS
 - BS: điểm → phân phối điểm xác minh → P(cell là c\*), cell chưa báo theo tiên nghiệm
-- đội 2: thăm mọi critical cell · chọn theo P / (bay + xác minh) · chờ khi P < P_U, đón đầu về tâm xác suất
+- đội 2: cất cánh cùng đội 1 · thăm mọi critical cell · chọn theo P / (bay + xác minh) · đi khi P ≥ β·P_U (β = 1/4; P_U = xác suất c\* chưa báo), không thì đón đầu về tâm xác suất
 - xác minh = ổn định + bộ tham chiếu đầy đủ 1 MB + đối sánh ≈ 78 s · **pha 2 hoàn thành khi xác minh xong c\*** (cell có điểm xác minh cao nhất)
 
 ## G. Bài toán

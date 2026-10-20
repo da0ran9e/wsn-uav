@@ -17,7 +17,7 @@ Kết quả: `uav-l2/docs/L1-MISSION2-vi.md`.
 - lớp 1: 12 manh mối (mặt, dáng, bộ phận), r và w do BS đặt · phát xen kẽ · điểm hai bước
 - lớp 3: River cửa sổ 400 kB quanh CH (ns‑3)
 - phản hồi: **báo hai lần** (sau gom nội cell, sau River) · CH → LoRa (một bản tin / 40 s)
-- pha 2: BS tính P(c\*) · đội 2 **cất cánh cùng đội 1** · đi xác minh khi P ≥ P_U, không thì **đón đầu** về tâm xác suất · chọn theo P / (bay + xác minh) · thăm hết
+- pha 2: BS tính P(c\*) · đội 2 **cất cánh cùng đội 1** · đi xác minh khi P ≥ P_U / 4 (P_U: xác suất c\* nằm trong các cell chưa báo), không thì **đón đầu** về tâm xác suất · chọn theo P / (bay + xác minh) · thăm hết
 
 ## Ablation của P\* (mỗi cái đổi một phần)
 | Tên | Đổi gì |
@@ -26,8 +26,10 @@ Kết quả: `uav-l2/docs/L1-MISSION2-vi.md`.
 | chỉ báo sau River | bỏ báo cáo lần 1 |
 | **không hợp tác (B4)** | bỏ River: cell chỉ dùng manh mối tự nghe được |
 | tour l3first / tour ngắn nhất | thay tour theo độ trễ |
-| đội 2 tham lam | quy tắc cũ: đi ngay ở báo cáo đầu, không chờ P_U, không đón đầu |
-| chờ P_U không đón đầu | chờ tại chỗ |
+| ngưỡng chờ β | β = 0 (đi ngay, vẫn đón đầu) · 1/2 · 1 thay cho 1/4 |
+| ngưỡng theo thời gian | P_U chỉ tính các cell sẽ báo trong lúc đội 2 bận với cell này (không tham số) |
+| đội 2 tham lam | quy tắc cũ: đi ngay ở báo cáo đầu, không chờ, không đón đầu |
+| chờ không đón đầu | chờ tại chỗ |
 | xếp nhóm | phát theo khía cạnh thay xen kẽ (với và không có River) |
 | trọng số đều | bỏ độ quan trọng |
 | P cũ | River, báo một lần, tour l3first, tham lam (phương án của vòng trước) |

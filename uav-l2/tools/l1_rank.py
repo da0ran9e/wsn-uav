@@ -30,10 +30,11 @@ Methods (name = base + options):
             report when it comes (both through the CH's LoRa)
   options   -grouped (broadcast order by aspect), -equal (no importance: every clue weight 1), -wait, -zero (team 2
             leaves with team 1, at t = 0, and stages towards the critical cells' centre until reports come), -pu,
-            -stage, -short / -latency (team 1's tour; default l3first)
+            -puh, -puq, -put, -stage, -short / -latency (team 1's tour; default l3first)
   B1 (no phase 1: TSP over every critical cell with the large file), B2-r (groups, multicast large file), B3-r
   (rotary multicast of the clue set to groups, then LoRa, team 2), B6 (rotary unicast of the clue set to each
-  critical cell, then LoRa, team 2), B7 (oracle: straight to c*); B3 and B6 take the team-2 options -pu, -stage, -zero
+  critical cell, then LoRa, team 2), B7 (oracle: straight to c*); B3 and B6 take the team-2 options (-pu..., -stage,
+  -zero)
 Writes OUT-draws.csv (map, set, draw, method: Tstar, Tall, rank, dep, starIn, ...), OUT-cells.csv (per critical
 cell: held clue weight river/direct) and OUT-summary.csv.
 """
@@ -119,6 +120,13 @@ def lora(M, ready, phase):
         at = t + HOP * hexdist(h, M["cl"][k]["P"]["ch"])
         out[(k, h)] = phase[k] + max(0, math.ceil((at - phase[k]) / GAP)) * GAP + AIR
     return out
+
+
+def policy(opts):
+    """Team 2's options from a method's parts: (departure, waiting rule, staging, beta)."""
+    rule = "put" if "put" in opts else "pu" if any(o in BETA for o in opts) else "greedy"
+    return (next((o for o in opts if o in ("wait", "zero")), "early"), rule, "stage" in opts,
+            next((BETA[o] for o in opts if o in BETA), 1.0))
 
 
 def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage=False, trace=None, beta=1.0):
@@ -240,10 +248,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
                 kind = "river" if base == "P" else "direct"
                 a_, p_ = ready(kind, tk), posts(kind, order, wC)
                 reps = {x: [(a_[x], p_[x])] for x in crits}
-            out[meth] = team2(bs, pos, reps, U, prior, star, next((o for o in opts if o in ("wait", "zero")), "early"),
-                              "put" if "put" in opts else "pu" if any(o.startswith("pu") for o in opts) else "greedy",
-                              "stage" in opts,
-                              beta=next((BETA[o] for o in opts if o in BETA), 1.0))
+            dep, rule, stg, beta = policy(opts)
+            out[meth] = team2(bs, pos, reps, U, prior, star, dep, rule, stg, beta=beta)
         elif meth == "B1":
             out[meth] = fly_all(bs, [(pos[x], [x]) for x in crits], lambda s: VERIFY, lambda s: star in s[1]) + (0.0, 0.0)
         elif meth == "B7":
@@ -263,8 +269,9 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
                         rd[b] = t + tm
                     p = hp
                 a_, p_ = lora(M, rd, phase), posts("full", "", C)
-                out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star,
-                                  "zero" if "zero" in opts else "early", "pu" if "pu" in opts else "greedy", "stage" in opts)
+                dep, rule, stg, beta = policy(opts)
+                out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg,
+                                  beta=beta)
         elif base == "B6":
             t, p, rd = 0.0, bs, {}
             for i in tsp_order(bs, [pos[x] for x in crits]):
@@ -273,8 +280,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
                 rd[x] = t + tm
                 p = pos[x]
             a_, p_ = lora(M, rd, phase), posts("full", "", C)
-            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star,
-                              "zero" if "zero" in opts else "early", "pu" if "pu" in opts else "greedy", "stage" in opts)
+            dep, rule, stg, beta = policy(opts)
+            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg, beta=beta)
         else:
             raise SystemExit(f"unknown method {meth}")
     w = np.array([c["w"] for c in C])

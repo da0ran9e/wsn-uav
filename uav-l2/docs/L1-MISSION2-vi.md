@@ -28,7 +28,7 @@ __SUMMARY__
 6. **River cửa sổ (lớp 3).** River chỉ chuyển cửa sổ 400 kB quanh CH tới mọi critical cell (ns‑3, MAC 802.15.4, lưới 7 màu).
 7. **Đối sánh và báo cáo hai lần.** Cell tính điểm hai bước (mục 2.4 của `paper/L1-MODEL-vi.md`) và báo hai lần qua CH và LoRa: ngay sau khi gom nội cell (phần tự nghe được), rồi sau River (đủ bộ). Mỗi báo cáo gồm điểm cao nhất và bitmap manh mối.
 8. **BS.** Mỗi báo cáo thành một phân phối chuẩn của điểm xác minh; từ đó tính P(cell là c\*) cho mọi cell, kể cả cell chưa báo (tiên nghiệm) và cell đã xác minh.
-9. **Đội 2 (pha 2).** Xuất phát ở báo cáo đầu tiên. Chọn cell đã biết có P / (bay + xác minh) lớn nhất, như quy tắc cũ. Chỉ bay đi xác minh khi P của cell đó ≥ P_U, xác suất c\* nằm trong số cell chưa báo; nếu không thì **đón đầu**: bay về tâm có trọng số P của các cell chưa thăm và chờ báo cáo kế tiếp. Thăm hết mọi cell; **pha 2 hoàn thành khi xác minh xong c\***.
+9. **Đội 2 (pha 2).** **Cất cánh cùng đội 1** (t = 0) và bay về tâm các critical cell trong lúc chưa có báo cáo nào. Khi đã có báo cáo, chọn cell đã biết có P / (bay + xác minh) lớn nhất, như quy tắc cũ. Chỉ bay đi xác minh khi P của cell đó ≥ β · P_U, với P_U là xác suất c\* nằm trong số cell chưa báo và **β = 1/4** (chọn ở mục 5.1). Nếu không thì **đón đầu**: bay về tâm có trọng số P của các cell chưa thăm và chờ báo cáo kế tiếp. Thăm hết mọi cell; **pha 2 hoàn thành khi xác minh xong c\***.
 
 ### 2.2 Bốn ý tưởng thêm sau vòng 1
 - **Điểm hai bước theo khía cạnh** (lớp 1). Gộp một bước làm lệch tỉ trọng khi cell chỉ giữ một phần manh mối.
@@ -88,7 +88,33 @@ Chênh so với P vòng 1, k2 / k4 / k6 / k8 (số bản đồ tốt hơn P trê
 
 Ba ý tưởng cộng được với nhau. Ý thứ tư (điểm hai bước) sửa mô hình, nên dùng cho mọi vòng sau.
 
-__ROUND2__
+## 5. Vòng 2: chiến dịch 40 bản đồ
+
+Chiến dịch ns‑3 mới (`logs/2026-10-20_1934-campaign2/`): River cửa sổ 400 kB cho cluster có sẵn (KW, 40 bản đồ), baseline subCH (SW, 40) và MEANDER (MW, 40). LANE bỏ khỏi chiến dịch để tiết kiệm khoảng 2,5 giờ máy, vì ở vòng 1 nó thua cả k‑medoids lẫn MEANDER.
+
+### 5.1 Ngưỡng chờ của đội 2 (`data/l1rank/rule-*.csv`)
+
+Trên ba bản đồ chung, quy tắc chờ P ≥ P_U (β = 1) làm MEANDER và LANE (nhiều cluster) chậm hơn cả đi ngay. Lý do: P_U là xác suất c\* nằm trong *toàn bộ* các cell chưa báo, mà khi còn nhiều cluster chưa bay thì P_U lớn, nên đội 2 đứng chờ quá lâu. Vì vậy tôi thử ngưỡng P ≥ β · P_U với β = 1, 1/2, 1/4, 0 (β = 0: đi ngay, vẫn đón đầu), và một quy tắc không tham số theo thời gian: P_U chỉ tính các cell sẽ báo về trong lúc đội 2 bận bay và xác minh cell này (BS biết lịch báo của từng cluster từ kế hoạch bay).
+
+Chọn trên cả 40 bản đồ cluster có sẵn (River đầy đủ D, 50 lượt), không chọn trên 3 bản đồ, để tránh khớp quá. T\* trung bình (s):
+
+| Quy tắc | k2 / k4 / k6 / k8 | Cả 40 | Chênh so với β = 1 | Bản đồ tốt hơn β = 1 |
+|---|---|---|---|---|
+| β = 1 (P ≥ P_U) | 422 / 583 / 748 / 826 | 645 | | |
+| β = 1/2 | 415 / 568 / 720 / 789 | 623 | −22 | 38/40 |
+| **β = 1/4** | **418 / 560 / 695 / 754** | **607** | **−38** | **35/40** |
+| theo thời gian | 420 / 575 / 723 / 774 | 623 | −22 | 30/40 |
+| β = 0 (đi ngay, đón đầu) | 424 / 598 / 727 / 789 | 634 | −11 | 21/40 |
+| không hợp tác, β = 1/4 | 444 / 609 / 752 / 814 | 655 | +10 | 14/40 |
+
+- **Chọn β = 1/4 cho P\*.** Nó tốt nhất ở mọi cỡ trừ k2, và lợi tăng theo cỡ bản đồ (k8: −72 s so với β = 1).
+- Đường cong theo β có đáy: β = 0 làm đội 2 xác minh nhiều cell sai (c\* được xác minh đầu tiên chỉ ở 10–35 % lượt, so với 39–44 % ở β = 1/4); β = 1 làm đội 2 chờ quá lâu.
+- Quy tắc theo thời gian không cần tham số và tốt hơn β = 1, nhưng thua β = 1/4 (623 so với 607 s). Tôi chưa tách được lý do.
+- Phân rã T\* của P\*: báo cáo đầu tiên của c\* về BS lúc 147 / 223 / 280 / 345 s; phần còn lại, 271 / 337 / 416 / 410 s, là đội 2 bay và xác minh (gồm 1–1,5 cell sai trước c\*). **Phần sau báo cáo chiếm 54–65 % T\***, nên pha 2 vẫn là chỗ có nhiều dư địa nhất.
+
+__E1__
+
+__E2__
 
 ## 6. Độ nhạy theo tham số lớp 1 (`data/l1rank/sens-*.csv`, `figures/l1-sens.png`)
 
@@ -110,4 +136,26 @@ Cluster có sẵn, River đầy đủ D, 40 bản đồ × 50 lượt, mỗi l�
 - Báo cáo hai lần luôn giúp khoảng 10 s.
 - Hình `figures/l1-sens.png`: trái là T\* (trung bình ± khoảng tin cậy 95 % trên 40 bản đồ), phải là hạng TB của c\*. Mỗi cụm là một lần chạy, theo thứ tự bảng. Trong cụm: xanh đậm là đề xuất, xanh nhạt là chỉ báo sau River, vàng là không hợp tác.
 
-__STEPS__
+## 7. Một nhiệm vụ từng bước (bản đồ k4‑s2, P\*)
+
+Hình: `figures/l1-steps-k4-s2.png` (cluster có sẵn), `figures/l1-steps-mw-k4-s2.png` (MEANDER, cùng bản đồ). Hình động: `anim/l1-replay.html` (cluster có sẵn, cùng lượt bốc với hình tĩnh). Hình không có chữ. Mỗi hình gồm sáu bản đồ (đọc trái sang phải, trên xuống dưới) và một dòng thời gian:
+
+1. **Cluster và đường bay.** Cluster tô màu nhạt, CH là ngôi sao, critical cell là vòng trắng, đường bay đen, tour đội 1 nét đứt. BS là ô vuông đen; thước dưới góc phải dài 1 km.
+2. **Ngay sau lượt bay.** Mỗi cell tô theo phần cửa sổ manh mối của cluster mà node trong cell nghe được (đậm là nhiều). Quanh mỗi critical cell là vòng 12 manh mối theo thứ tự phát: đỏ là mặt, xanh là dáng, vàng là bộ phận; xám là manh mối chưa giữ được.
+3. **Sau River.** Vòng manh mối vẽ lại; cell thuộc River tô xanh nhạt.
+4. **Lớp 1.** Critical cell tô theo điểm xác minh U (nhạt đến đậm); c\* tô đỏ.
+5. **BS biết gì lúc đội 2 cam kết lần đầu.** Đĩa vàng có diện tích theo P(c\*) của cell đã báo; vòng trắng là cell chưa báo.
+6. **Pha 2.** Đường đội 2 tới lúc xác minh xong c\*: nét đứt là đón đầu, nét liền là bay đi xác minh. Cell đã xác minh tô xám, c\* tô đỏ.
+7. **Dòng thời gian** (vạch lưới 60 s). Hàng trên cùng (xám) là đội 1, từ lúc cất cánh tới lúc về BS. Mỗi hàng tiếp theo là một cluster theo thứ tự tour: lượt bay (xanh đậm), River (xanh lá), báo cáo về BS (chấm mờ là báo phần tự nghe, chấm đậm là báo sau River, chấm đỏ to là c\*). Hàng dưới cùng là đội 2: đón đầu (xám đậm), bay (hồng), xác minh cell sai (đen), xác minh c\* (đỏ). Vạch đỏ đứt là T\*.
+
+**Diễn biến, cluster có sẵn (lượt bốc 0):**
+- Đội 1 bay bốn cluster theo tour độ trễ: C2 (rời cluster lúc 76 s), C4 (131 s), C3 (216 s), C1 (289 s), rồi về BS lúc 372 s.
+- Sau lượt bay, mỗi critical cell tự giữ được 3–12 trong 12 manh mối. River xong 18–60 s sau khi đội 1 rời cluster. Sau River, mọi critical cell ở C2, C3, C4 giữ đủ 12 manh mối. Ở C1 chỉ giữ 10, vì Axe của C1 chỉ có 3 735 gói, ít hơn 4 036 gói của bộ manh mối, nên hai manh mối cuối không nằm trong cửa sổ.
+- Đội 2 cất cánh lúc 0 s và đón đầu về tâm các critical cell. Lúc 96 s, báo cáo đầu tiên (C2) về BS. BS cho cell 237 của C2 xác suất 27 % là c\*; 20 cell chưa báo chia nhau 73 %. Vì 27 % ≥ 73 %/4, đội 2 đi xác minh cell 237.
+- Cell 237 chỉ đứng thứ ba theo điểm xác minh. Lượt sai này tốn 104 s bay và 78 s xác minh.
+- c\* là cell 336 ở C3. Cả hai báo cáo của nó (tự nghe và sau River) về BS trong cùng một bản tin LoRa lúc 264 s, vì ở cell này River xong chỉ 0,7 s sau lần gom nội cell, trước khe LoRa kế tiếp của CH. Khi đội 2 xác minh xong cell 237 (279 s), BS cho cell 336 xác suất 48 %.
+- Đội 2 bay 202 s sang phía tây và xác minh xong c\* lúc **559 s** (lần thăm thứ 2). Bay thẳng từ BS tới c\* rồi xác minh (B7) chỉ mất khoảng 250 s.
+
+**Diễn biến, MEANDER (lượt bốc 5, cùng bản đồ):** sáu cluster cong theo địa hình. Mọi critical cell ở bốn cluster lớn giữ đủ 12 manh mối sau River; hai cluster nhỏ nhất (C5, C6) chỉ giữ 7, vì Axe của chúng ngắn. Đội 2 đón đầu tới 118 s, đi xác minh cell 336 (thứ hai theo điểm, sai), rồi bay 196 s sang phía đông tới c\* (cell 92). T\* = **568 s**, cũng ở lần thăm thứ 2.
+
+Cả hai lượt cho thấy cùng một kiểu tốn thời gian: lần cam kết đầu tiên rơi vào một cell điểm cao nhưng sai ở xa c\*. Phần lớn T\* nằm sau lúc báo cáo của c\* về BS (mục 5.1).

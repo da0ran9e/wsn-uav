@@ -1304,6 +1304,16 @@ thời gian đối sánh mỗi cặp ảnh là bao nhiêu và với toàn bộ k
 trích lại các nguồn đã sử dụng
 ```
 
+*110. 2026-10-20 · layer 1 · số công bố chỉ để tham khảo cho giả lập; mô hình hệ thống cần phương pháp tổng quát: bắt đầu từ vector/chỉ số cosine của mỗi ảnh (ảnh tham chiếu = 1), node so sánh và sắp xếp theo thứ tự ưu tiên; phát triển ý tưởng*
+
+```text
+được rồi, các con số đã lấy từ công bố chỉ la tham khảo cho giả lập tuy nhiên để đưa vào mô tả trong mô hình hệ thống cần một phương pháp tổng quát hơn, dùng các con số này phụ thuộc vào kịch bản của công bố đó chưa chắc khớp với kịch bản của ta. 
+hãy thử nghĩ đến ý tưởng sau: 
+ta không bắt đầu từ xác suất khớp nữa mà bắt đầu từ vector của mỗi ảnh. trong thực nghiệm ta sẽ cho mỗi ảnh dữ liệu và tham chiếu đều được gán một chỉ số cosine ( với ảnh tham chiếu thì bằng 1 ) 
+trong thực nghiệm ta sẽ để các node so sánh các chỉ số này sắp xếp theo thứ tự ưu tiên …
+phát triển tiếp ý tưởng này
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

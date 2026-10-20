@@ -1,12 +1,12 @@
 # Axe cong: Bank theo pháp tuyến cục bộ, và MEANDER (cluster bám địa hình, bay đường cong)
 
-Lời gốc: CLAUDE.md §8 mục 103 (Phần 1–2), mục 104 (Phần 3).
+Lời gốc: CLAUDE.md §8 mục 103 (Phần 1–2), mục 104 (Phần 3), mục 106 (Phần 4).
 Mã:
 - `uav-coop2/tools/river_plan.py` (`banks="local"`, `reentry`), `river_export.py --banks --reentry`
 - `uav-l2/tools/curve_banks.py`, `curve_ns3.py`, `meander.py`
 - `uav-l2/tools/meander_mission.py`, `meander_compare.py` (Phần 3)
 
-Log: `logs/2026-10-19_1838-curve-banks/`, `logs/2026-10-20_0222-meander-ns3/` (Phần 3).
+Log: `logs/2026-10-19_1838-curve-banks/`, `logs/2026-10-20_0222-meander-ns3/` (Phần 3), `logs/2026-10-20_0331-fixes/` (Phần 4).
 
 ## Phần 1. Bank cho Axe không thẳng
 
@@ -225,4 +225,75 @@ Animation từng bước của nhiệm vụ MEANDER trên bản đồ 4 cluster:
   - Nếu lớp 1 chỉ cần L ảnh × F kB (khoảng 400 kB), BS có thể chỉ giao phần đó cho mỗi cluster.
   - Khi đó cluster dài không còn bị phạt theo bình phương. Hướng này cần chốt cùng mô hình lớp 1.
 - **Hướng sửa 3: đổi tiêu chí chia cụm.** Dùng lại k‑medoids, nhưng chọn đường bay cong qua CH bám địa hình trong cluster gọn, thay vì luồng kín miền.
+
+## Phần 4. Ba hướng sửa của §3.4 (mục 106), chạy ns‑3
+
+### 4.1 Cài đặt
+| Hướng | Cài đặt | Tham số |
+|---|---|---|
+| 1. Giới hạn chiều dài Axe | `meander.partition_meander(span=…)`: mỗi mảnh luồng cắt thành số khúc lớn nhất giữa ⌈cell/80⌉ và ⌈độ dài theo s / (span·W)⌉ (`meander_mission.py --span`) | span = 12 cell (khoảng 2,1 km) |
+| 2. Chỉ giao phần lớp 1 cần | `river_plan.plan(window=Q)`: chỉ giữ Q gói Axe liên tiếp, đặt quanh chỗ UAV bay qua CH; Axe cell ngoài cửa sổ không còn là nguồn. Cluster nhận ít hơn Q thì giữ toàn bộ D, đếm là "thiếu" (`--windowKB`) | Q = 400 kB = 4 041 gói (khoảng 2,0 km Axe) |
+| 3. k‑medoids + đường cong | `meander_mission.py --partition kmedoids`: cluster gọn của k‑medoids, mỗi cluster có xương sống và s riêng (`meander.coords`), bay theo đường tâm uốn qua CH | như MEANDER |
+
+- **Bản đồ:** cùng 3 bản đồ (k4‑s2, k6‑s4, k8‑s4) và cùng binary.
+- **k‑medoids đường thẳng chạy lại:** tour và mọi critical cell khớp từng số với kết quả cũ trên cả 3 bản đồ.
+- **Cửa sổ:** chỉ chạy lại River, dùng lại bitmap lượt bay.
+- **Khối lượng:** 199 lượt River, không lỗi.
+- **Nhiệm vụ:** chính sách P, 100 lần bốc mỗi bản đồ.
+
+### 4.2 Kết quả (`data/meander/fixes-{summary,cells,draws}.csv`)
+
+**Kết thúc nhiệm vụ P (s), trung bình 100 lần bốc, k4 / k6 / k8:**
+
+| Cách chia | Đầy đủ D | Cửa sổ 400 kB | Cluster thiếu < 400 kB |
+|---|---|---|---|
+| k‑medoids, đường thẳng (P gốc) | 734 / 866 / 906 | **725 / 867 / 899** | 1/4, 2/6, 4/8 |
+| k‑medoids + đường cong (hướng 3) | 772 / 929 / 965 | 740 / 915 / 955 | 0/4, 2/6, 2/8 |
+| LANE | 764 / 1078 / 1044 | 760 / 1072 / 1034 | 6/7, 4/9, 6/11 |
+| MEANDER | 867 / 999 / 1106 | 831 / 986 / 1062 | 2/6, 6/11, 3/11 |
+| MEANDER, span 12 (hướng 1) | 788 / 969 / 1096 | 788 / 968 / 1079 | 7/9, 8/12, 10/15 |
+
+Khoảng tin cậy 95 % của mỗi số khoảng ±32 đến ±75 s.
+
+**Tác dụng của cửa sổ.** Chênh ghép cặp (cùng critical cell, cùng lần bốc), k4 / k6 / k8:
+- k‑medoids: −9 / +2 / −7 s.
+- k‑medoids + đường cong: −32 / −14 / −10 s.
+- LANE: −5 / −6 / −10 s.
+- MEANDER: −36 / −13 / −44 s.
+- MEANDER span: 0 / −1 / −18 s.
+
+Thời gian critical cell chậm nhất của mỗi cluster:
+
+| Cách chia | Đầy đủ D, TB / tối đa (s) | Cửa sổ, TB / tối đa (s) | Cluster quá 60 s (đầy đủ → cửa sổ) |
+|---|---|---|---|
+| MEANDER | 54 / 192 | 32 / 111 | 36 % → 18 % |
+| k‑medoids + đường cong | 46 / 108 | 30 / 56 | 28 % → 0 % |
+| k‑medoids | 34 / 71 | 31 / 60 | 6 % → 0 % |
+
+**Đọc kết quả:**
+- **Hướng 2 (cửa sổ) là sửa đúng chỗ.**
+  - River nhanh hơn ở mọi cách chia, mạnh nhất ở cluster Axe dài (MEANDER k8: chậm nhất 192 → 111 s).
+  - Thời điểm kết thúc nhiệm vụ chỉ sớm hơn 0–44 s: khe LoRa 40 s và đội 2 nuốt phần lớn phần lợi. Với k‑medoids, cluster vốn gọn, nên lợi chỉ vài giây.
+- **Hướng 1 (span) làm River nhanh** (MEANDER k4: TB 41 → 6 s) và kéo MEANDER lại gần (−79 / −31 / −9 s).
+  - Nhưng nó cắt thêm cluster (9 / 12 / 15), nên tour dài hơn; MEANDER span vẫn chậm hơn k‑medoids 54–190 s.
+  - Phần lớn cluster thiếu dữ liệu cho lớp 1: 7/9, 8/12, 10/15 dưới 400 kB.
+  - Span đo theo s (dọc xương sống), nên ở luồng xa xương sống tại khúc cong, đường bay vẫn dài: k8 còn 2 cluster có Axe 21–24 cell, chậm tới 164 s. Nên đo span trên chính đường tâm luồng.
+- **Hướng 3 (k‑medoids + đường cong) thua đường thẳng:** +38 / +63 / +59 s, còn +15 / +48 / +56 s sau khi áp cửa sổ.
+  - Đường theo xương sống riêng của cluster dài hơn đường thẳng qua CH, nên tour dài hơn (k4: 409 so với 327 s) và D lớn hơn.
+  - Cửa sổ xoá được phần phạt River, nhưng không xoá được quãng bay thêm.
+  - Cái được là ít cluster thiếu dữ liệu hơn (0/4, 2/6, 2/8 so với 1/4, 2/6, 4/8).
+- **Tốt nhất trên cả 3 bản đồ: k‑medoids đường thẳng + cửa sổ (725 / 867 / 899 s).** Nhưng hơn P gốc chỉ vài giây, trong biên sai số.
+  - Kết luận của Phần 3 không đổi: cluster gọn và đường bay ngắn quyết định thời gian nhiệm vụ.
+  - Tái cấu trúc theo luồng (LANE, MEANDER) chưa bù được quãng bay thêm.
+
+**Phát hiện phụ quan trọng cho lớp 1–2:** với Q = 400 kB, ngay cả k‑medoids cũng có 1/4, 2/6, 4/8 cluster nhận dưới Q. Lý do: Q cần khoảng 2,0 km Axe (một gói mỗi 0,5 m). Nếu lớp 1 thật sự cần 400 kB mỗi critical cell, lớp 2 phải bảo đảm mỗi cluster có ít nhất khoảng 2 km đường bay trên cell của nó, hoặc giảm Q (L ảnh × F kB).
+
+**Mức tin cậy:** 3 bản đồ, mỗi cluster một lượt; số thăm dò, N < 120. Chênh giữa P gốc và P + cửa sổ nằm trong biên sai số. k‑medoids sớm hơn mọi cách chia theo luồng trên cả 3 bản đồ (30–212 s), cùng chiều ở mọi cặp.
+
+Hình (không chữ):
+- `figures/fixes-results.png`: năm ô.
+  - Bốn ô đầu là River xong TB, thời điểm mọi critical cell đủ dữ liệu, kết thúc nhiệm vụ (± CI 95 %), và D TB (kB), mỗi ô ba cụm k4 / k6 / k8.
+  - Ô cuối: mỗi điểm là một cluster; trục ngang là chiều dài Axe của toàn D, trục dọc là critical cell chậm nhất.
+  - Màu theo cách chia: xanh dương tròn k‑medoids, vàng thoi k‑medoids + đường cong, cam vuông LANE, xanh lục tam giác MEANDER, hồng tam giác ngược MEANDER span. Điểm đặc là đầy đủ D, điểm rỗng là cửa sổ.
+- `figures/fixes-maps.png`: hàng k4 / k6 / k8, cột k‑medoids, k‑medoids + đường cong, LANE, MEANDER, MEANDER span. Critical cell tô theo thời gian River của bản đầy đủ D.
 

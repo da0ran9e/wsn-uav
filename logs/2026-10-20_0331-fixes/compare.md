@@ -1,0 +1,45 @@
+# compare
+
+- Bắt đầu: 2026-10-20 04:59:10, chạy 66 s, mã thoát 0
+- Thư mục: `/home/user/wsn-uav/uav-l2`
+
+**Lệnh**
+
+```bash
+python3 tools/meander_compare.py --set kmedoids '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MK/k*' --set kmedoids+w '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MKw/k*' --set kmedoidsCurve '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/KC/k*' --set kmedoidsCurve+w '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/KCw/k*' --set lane '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/ML/k*' --set lane+w '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MLw/k*' --set meander '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MM/k*' --set meander+w '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MMw/k*' --set meanderSpan '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MC/k*' --set meanderSpan+w '/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MCw/k*' --draws 100 --windowKB 400 --tag fixes --out docs/data/meander/fixes --figs docs/figures
+```
+
+**Kết quả**
+
+```text
+k4 kmedoids  clusters 4 crits 27 pathKm 11.15 team1 326.6 Dmean 4191.0 DkBmean 414.9 sentKBmean 414.9 short 1 doneMean 24.45 doneP90 46.31 doneMax 59.99 L3mean 44.33 missing 0 ready 313.8 endMean 734.0 endCI 32.4 endP90 914.9 foundMean 523.4 visits 2.17
+k4 kmedoids+w clusters 4 crits 27 pathKm 11.15 team1 326.6 Dmean 3964.5 DkBmean 392.5 sentKBmean 414.9 short 1 doneMean 21.58 doneP90 46.2 doneMax 59.57 L3mean 40.26 missing 0 ready 310.4 endMean 724.8 endCI 32.9 endP90 911.8 foundMean 514.2 visits 2.14
+k4 kmedoidsCurve clusters 4 crits 27 pathKm 13.25 team1 408.8 Dmean 5247.5 DkBmean 519.5 sentKBmean 519.5 short 0 doneMean 44.49 doneP90 77.33 doneMax 83.57 L3mean 64.36 missing 0 ready 421.5 endMean 772.0 endCI 32.1 endP90 1011.7 foundMean 561.4 visits 2.08
+k4 kmedoidsCurve+w clusters 4 crits 27 pathKm 13.25 team1 408.8 Dmean 4041.0 DkBmean 400.1 sentKBmean 519.5 short 0 doneMean 18.96 doneP90 42.89 doneMax 55.7 L3mean 38.82 missing 0 ready 383.9 endMean 740.0 endCI 31.6 endP90 946.4 foundMean 529.4 visits 2.09
+k4 lane      clusters 7 crits 34 pathKm 17.62 team1 564.4 Dmean 3154.7 DkBmean 312.3 sentKBmean 312.3 short 6 doneMean 21.86 doneP90 61.7 doneMax 104.78 L3mean 26.77 missing 0 ready 489.3 endMean 764.4 endCI 34.5 endP90 996.3 foundMean 553.9 visits 2.03
+k4 lane+w    clusters 7 crits 34 pathKm 17.62 team1 564.4 Dmean 3002.6 DkBmean 297.3 sentKBmean 312.3 short 6 doneMean 15.5 doneP90 34.84 doneMax 69.25 L3mean 21.69 missing 0 ready 489.3 endMean 759.7 endCI 34.4 endP90 1001.3 foundMean 549.3 visits 2.05
+k4 meander   clusters 6 crits 26 pathKm 17.04 team1 482.7 Dmean 4599.7 DkBmean 455.4 sentKBmean 455.4 short 2 doneMean 41.37 doneP90 74.8 doneMax 114.97 L3mean 51.39 missing 0 ready 454.5 endMean 867.1 endCI 41.1 endP90 1118.2 foundMean 667.8 visits 2.35
+k4 meander+w clusters 6 crits 26 pathKm 17.04 team1 482.7 Dmean 3523.0 DkBmean 348.8 sentKBmean 455.4 short 2 doneMean 14.0 doneP90 38.05 doneMax 64.38 L3mean 29.71 missing 0 ready 454.5 endMean 830.7 endCI 41.4 endP90 1096.0 foundMean 631.5 visits 2.32
+k4 meanderSpan clusters 9 crits 29 pathKm 18.76 team1 548.8 Dmean 3246.6 DkBmean 321.4 sentKBmean 321.4 short 7 doneMean 6.35 doneP90 16.42 doneMax 27.23 L3mean 10.29 missing 0 ready 489.0 endMean 788.4 endCI 42.6 endP90 1027.0 foundMean 580.0 visits 2.13
+k4 meanderSpan+w clusters 9 crits 29 pathKm 18.76 team1 548.8 Dmean 3241.4 DkBmean 320.9 sentKBmean 321.4 short 7 doneMean 6.26 doneP90 16.39 doneMax 26.7 L3mean 10.24 missing 0 ready 489.0 endMean 788.4 endCI 42.6 endP90 1027.0 foundMean 580.0 visits 2.13
+k6 kmedoids  clusters 6 crits 45 pathKm 16.22 team1 559.9 Dmean 4211.2 DkBmean 416.9 sentKBmean 416.9 short 2 doneMean 17.92 doneP90 31.9 doneMax 71.28 L3mean 32.66 missing 0 ready 482.0 endMean 865.8 endCI 47.5 endP90 1166.3 foundMean 606.0 visits 1.79
+k6 kmedoids+w clusters 6 crits 45 pathKm 16.22 team1 559.9 Dmean 3944.2 DkBmean 390.5 sentKBmean 416.9 short 2 doneMean 14.94 doneP90 31.04 doneMax 56.38 L3mean 28.77 missing 0 ready 480.4 endMean 867.3 endCI 47.7 endP90 1166.3 foundMean 607.6 visits 1.83
+k6 kmedoidsCurve clusters 6 crits 45 pathKm 17.8 team1 569.4 Dmean 4788.0 DkBmean 474.0 sentKBmean 474.0 short 2 doneMean 27.68 doneP90 63.66 doneMax 108.37 L3mean 46.73 missing 0 ready 529.3 endMean 929.0 endCI 56.1 endP90 1236.9 foundMean 669.3 visits 1.96
+k6 kmedoidsCurve+w clusters 6 crits 45 pathKm 17.8 team1 569.4 Dmean 3978.5 DkBmean 393.9 sentKBmean 474.0 short 2 doneMean 15.93 doneP90 32.98 doneMax 44.82 L3mean 31.61 missing 0 ready 529.3 endMean 915.4 endCI 54.4 endP90 1233.7 foundMean 655.6 visits 1.96
+k6 lane      clusters 9 crits 47 pathKm 25.58 team1 785.7 Dmean 3920.0 DkBmean 388.1 sentKBmean 388.1 short 4 doneMean 27.59 doneP90 64.38 doneMax 112.72 L3mean 42.23 missing 0 ready 684.0 endMean 1077.8 endCI 47.3 endP90 1379.3 foundMean 799.1 visits 2.08
+k6 lane+w    clusters 9 crits 47 pathKm 25.58 team1 785.7 Dmean 3632.9 DkBmean 359.7 sentKBmean 388.1 short 4 doneMean 20.34 doneP90 42.15 doneMax 80.76 L3mean 35.49 missing 0 ready 684.0 endMean 1072.3 endCI 47.0 endP90 1359.8 foundMean 793.6 visits 2.11
+k6 meander   clusters 11 crits 51 pathKm 25.38 team1 769.7 Dmean 3659.5 DkBmean 362.3 sentKBmean 361.0 short 6 doneMean 17.88 doneP90 46.56 doneMax 67.4 L3mean 30.6 missing 0 ready 690.0 endMean 999.1 endCI 50.5 endP90 1329.7 foundMean 724.0 visits 2.35
+k6 meander+w clusters 11 crits 51 pathKm 25.38 team1 769.7 Dmean 3278.2 DkBmean 324.5 sentKBmean 361.0 short 6 doneMean 12.0 doneP90 28.85 doneMax 46.61 L3mean 21.37 missing 0 ready 690.0 endMean 985.9 endCI 48.9 endP90 1299.8 foundMean 710.8 visits 2.32
+k6 meanderSpan clusters 12 crits 52 pathKm 26.11 team1 776.4 Dmean 3415.6 DkBmean 338.1 sentKBmean 336.7 short 8 doneMean 11.53 doneP90 33.72 doneMax 65.29 L3mean 20.45 missing 0 ready 696.7 endMean 968.5 endCI 50.5 endP90 1307.0 foundMean 686.8 visits 2.1
+k6 meanderSpan+w clusters 12 crits 52 pathKm 26.11 team1 776.4 Dmean 3229.3 DkBmean 319.7 sentKBmean 336.7 short 8 doneMean 9.43 doneP90 26.1 doneMax 46.61 L3mean 16.66 missing 0 ready 696.7 endMean 967.5 endCI 50.4 endP90 1307.0 foundMean 685.8 visits 2.11
+k8 kmedoids  clusters 8 crits 52 pathKm 20.85 team1 679.7 Dmean 4159.2 DkBmean 411.8 sentKBmean 411.8 short 4 doneMean 15.82 doneP90 35.85 doneMax 46.13 L3mean 29.37 missing 0 ready 567.0 endMean 906.0 endCI 53.0 endP90 1256.0 foundMean 622.1 visits 1.94
+k8 kmedoids+w clusters 8 crits 52 pathKm 20.85 team1 679.7 Dmean 3965.6 DkBmean 392.6 sentKBmean 411.8 short 4 doneMean 13.93 doneP90 28.55 doneMax 46.13 L3mean 26.95 missing 0 ready 567.0 endMean 899.1 endCI 52.7 endP90 1256.0 foundMean 615.2 visits 1.91
+k8 kmedoidsCurve clusters 8 crits 52 pathKm 23.43 team1 692.0 Dmean 4564.5 DkBmean 451.9 sentKBmean 451.9 short 2 doneMean 22.37 doneP90 45.55 doneMax 57.88 L3mean 35.11 missing 0 ready 612.3 endMean 964.9 endCI 62.0 endP90 1367.6 foundMean 681.0 visits 2.08
+k8 kmedoidsCurve+w clusters 8 crits 52 pathKm 23.43 team1 692.0 Dmean 3816.6 DkBmean 377.8 sentKBmean 451.9 short 2 doneMean 13.33 doneP90 29.33 doneMax 37.32 L3mean 25.16 missing 0 ready 604.5 endMean 955.3 endCI 61.6 endP90 1358.0 foundMean 671.4 visits 2.09
+k8 lane      clusters 11 crits 63 pathKm 31.72 team1 933.8 Dmean 4095.3 DkBmean 405.4 sentKBmean 405.4 short 6 doneMean 33.9 doneP90 86.0 doneMax 138.8 L3mean 47.8 missing 0 ready 884.0 endMean 1044.0 endCI 68.1 endP90 1488.9 foundMean 766.6 visits 2.16
+k8 lane+w    clusters 11 crits 63 pathKm 31.72 team1 933.8 Dmean 3764.7 DkBmean 372.7 sentKBmean 405.4 short 6 doneMean 22.77 doneP90 42.61 doneMax 77.08 L3mean 37.98 missing 0 ready 856.0 endMean 1033.9 endCI 66.7 endP90 1486.8 foundMean 756.6 visits 2.16
+k8 meander   clusters 11 crits 60 pathKm 32.24 team1 929.1 Dmean 4861.7 DkBmean 481.3 sentKBmean 481.3 short 3 doneMean 65.91 doneP90 163.67 doneMax 191.78 L3mean 80.07 missing 0 ready 823.3 endMean 1105.7 endCI 72.1 endP90 1577.4 foundMean 822.0 visits 2.07
+k8 meander+w clusters 11 crits 60 pathKm 32.24 team1 929.1 Dmean 3738.9 DkBmean 370.2 sentKBmean 481.3 short 3 doneMean 28.54 doneP90 76.27 doneMax 111.17 L3mean 44.92 missing 0 ready 823.3 endMean 1061.8 endCI 74.9 endP90 1556.4 foundMean 778.0 visits 2.09
+k8 meanderSpan clusters 15 crits 66 pathKm 33.88 team1 985.5 Dmean 3600.3 DkBmean 356.4 sentKBmean 356.4 short 10 doneMean 23.25 doneP90 66.38 doneMax 163.84 L3mean 28.16 missing 0 ready 876.8 endMean 1096.4 endCI 68.6 endP90 1513.8 foundMean 801.4 visits 2.07
+k8 meanderSpan+w clusters 15 crits 66 pathKm 33.88 team1 985.5 Dmean 3359.9 DkBmean 332.6 sentKBmean 356.4 short 10 doneMean 13.42 doneP90 37.95 doneMax 66.85 L3mean 19.2 missing 0 ready 876.8 endMean 1078.9 endCI 72.4 endP90 1513.8 foundMean 783.9 visits 2.07
+```

@@ -1,54 +1,63 @@
 # Baseline và ablation — keyword
 
-Lời gốc: CLAUDE.md §8 mục 81. Mã: `uav-l2/tools/mission_baselines.py`, `mission_policy.py`, `uav-coop2/examples/coop2-river.cc`.
+Lời gốc: CLAUDE.md §8 mục 81; cập nhật theo mục 110–114 (mô hình lớp 1 mới, pha 2 hoàn thành khi xác minh xong c\*).
+Mã: `uav-l2/tools/l1_rank.py` (mọi phương án), `uav-l2/tools/subch.py`, `uav-l2/tools/mission.py --partition subch`, `uav-l2/tools/meander_mission.py`, `uav-coop2/examples/coop2-river.cc`.
+Kết quả: `uav-l2/docs/L1-MISSION2-vi.md`.
 
 ## Chung cho mọi phương án
-- cùng bản đồ · cùng kênh (hash theo cặp node) · cùng lượt bốc nghi vấn, điểm nghi vấn, pha LoRa → **so cặp**
+- cùng bản đồ · cùng kho ảnh của từng camera (gắn theo cell, nên giống nhau dù cách chia khác) · cùng nhiễu đối sánh · cùng pha LoRa → **so cặp**
+- **chỉ số chính: T\*** = lúc đội 2 xác minh xong c\*, cell có điểm xác minh cao nhất trong các critical cell của phương án đó · phụ: hạng của c\* trong thứ tự thăm, T_all (thăm hết rồi về BS)
 - radio: 802.15.4 · unicast 6,88 ms/khung (CSMA + ACK) · broadcast 10 ms/khung, không ACK
 - multicast: fountain lý tưởng · xong khi node kém nhất đủ: khung / (1 − PER_max) · PER theo A2G (m = 1,8)
-- xác minh (đội 2): ổn định 5 s + tệp lớn 1 MB unicast (≈ 73 s) + đối sánh 5 s ≈ 83 s
+- xác minh (đội 2): ổn định 5 s + bộ tham chiếu đầy đủ 1 MB unicast (≈ 72,9 s) + đối sánh ≈ 0,2 s ≈ 78,1 s
 - UAV cánh quay 15 m/s · một UAV mỗi đội · chưa tính năng lượng
 
-## Phương án đề xuất (P)
-- cánh bằng 50 m/s · một lượt qua mỗi cluster · đường thẳng qua CH (hướng dài nhất)
-- River (ns-3) → đối sánh → CH → LoRa (một bản tin / 40 s) → BS
-- đội 2: đi sớm · chọn theo điểm / thời gian · tour đội 1 l3first
+## Phương án đề xuất (P\*)
+- lớp 2: cluster ≤ 80 cell · đường thẳng qua CH (hướng dài nhất) · tour đội 1 theo **độ trễ có trọng số** (Σ số critical cell × lúc rời cluster)
+- lớp 1: 12 manh mối (mặt, dáng, bộ phận), r và w do BS đặt · phát xen kẽ · điểm hai bước
+- lớp 3: River cửa sổ 400 kB quanh CH (ns‑3)
+- phản hồi: **báo hai lần** (sau gom nội cell, sau River) · CH → LoRa (một bản tin / 40 s)
+- pha 2: BS tính P(c\*) · đội 2 **cất cánh cùng đội 1** · đi xác minh khi P ≥ P_U, không thì **đón đầu** về tâm xác suất · chọn theo P / (bay + xác minh) · thăm hết
+
+## Ablation của P\* (mỗi cái đổi một phần)
+| Tên | Đổi gì |
+|---|---|
+| đi ở báo cáo đầu | đội 2 cất cánh khi có báo cáo đầu tiên thay vì t = 0 |
+| chỉ báo sau River | bỏ báo cáo lần 1 |
+| **không hợp tác (B4)** | bỏ River: cell chỉ dùng manh mối tự nghe được |
+| tour l3first / tour ngắn nhất | thay tour theo độ trễ |
+| đội 2 tham lam | quy tắc cũ: đi ngay ở báo cáo đầu, không chờ P_U, không đón đầu |
+| chờ P_U không đón đầu | chờ tại chỗ |
+| xếp nhóm | phát theo khía cạnh thay xen kẽ (với và không có River) |
+| trọng số đều | bỏ độ quan trọng |
+| P cũ | River, báo một lần, tour l3first, tham lam (phương án của vòng trước) |
+
+## Ablation và baseline lớp 2 (cách chia cluster, cùng chính sách P\*)
+| Tên | Cluster | Ghi chú |
+|---|---|---|
+| **cluster có sẵn** | k‑medoids ≤ 80 cell | trước đây là P; nay là ablation "không tái cấu trúc" (mục 114) |
+| **MEANDER** | luồng cong theo địa hình, Bank cục bộ | tái cấu trúc của lớp 2 (mục 103–106) |
+| **subCH** | cluster có sẵn cắt quanh các critical cell cách nhau ≥ 6 cell (gộp mảnh < 20 cell); mỗi cluster con bay qua CH của nó | baseline mới (mục 114) |
+| LANE | luồng thẳng 4,5 cell | chỉ còn 3 bản đồ (vòng 1); bỏ khỏi chiến dịch 40 bản đồ |
 
 ## Baseline — bỏ hoặc thay pha 1
 | | Pha 1 | Giao gì | Mô hình | Cô lập điều gì |
 |---|---|---|---|---|
-| **B1** | không | tệp lớn | 1 UAV cánh quay · TSP (NN + 2-opt) qua mọi critical cell · unicast · chờ đối sánh · dừng ở cell thật | giá trị của cả pha 1 |
-| **B2-r** | không | tệp lớn | gom critical cell trong bán kính r (phủ tham lam) · hover tâm nhóm · multicast · chờ đối sánh | multicast thay cho pha 1 |
-| **B3-r** | cánh quay | tệp nhẹ (≈ \|D\| trung bình) | hover multicast theo nhóm r → đối sánh → LoRa → đội 2 như P | cánh bằng + River vs cánh quay hover |
-| **B6** | cánh quay | tệp nhẹ | hover từng critical cell · unicast → LoRa → đội 2 như P | như B3, nhóm cỡ 1 |
-| **B5** | cánh bằng quét luống | như P | Dubins quét luống, khoảng luống 700 m–1 km · **chưa làm** (cần River cho nhiều luống) | đường bay (lớp 2) |
+| **B1** | không | bộ tham chiếu đầy đủ | 1 UAV cánh quay · TSP (NN + 2‑opt) qua mọi critical cell từ t = 0 · unicast · chờ đối sánh | giá trị của cả pha 1 |
+| **B2‑r** | không | bộ tham chiếu đầy đủ | gom critical cell trong bán kính r (phủ tham lam) · hover tâm nhóm · multicast | multicast thay cho pha 1 |
+| **B3‑r** | cánh quay | bộ manh mối (400 kB) | hover multicast theo nhóm r → đối sánh → LoRa → đội 2 như P\* | cánh bằng + River vs cánh quay hover |
+| **B6** | cánh quay | bộ manh mối | hover từng critical cell · unicast → LoRa → đội 2 như P\* | như B3, nhóm cỡ 1 |
+| **B7** | — | — | đội 2 biết trước c\*, bay thẳng lúc t = 0, xác minh | cận dưới |
+| B5 | cánh bằng quét luống | | chưa làm (cần River cho nhiều luống) | đường bay (lớp 2) |
 
-## Baseline — bỏ hợp tác / cận dưới
-| | Mô hình | Cô lập điều gì |
-|---|---|---|
-| **B4-t** | như P nhưng không River · critical cell dùng phần cả cell nhận được (gom nội cell) · phát hiện nếu giữ ≥ t của D (t = 0,85 / 0,9 / 0,95, ngưỡng tạm) · không thì thất bại | giá trị của hợp tác (lớp 3) |
-| **B7** | đội 2 biết trước cell thật · bay thẳng lúc t = 0 · xác minh · về | cận dưới, để chuẩn hoá |
+## Ablation lớp 1 (ngoài nhiệm vụ, `paper/L1-MODEL-vi.md` §4)
+- đủ / thiếu manh mối · nửa luồng xen kẽ / xếp nhóm · thiếu mặt · chỉ bộ phận · trọng số đều
+- độ nhạy: D (64 / 128 / 256) · tỉ lệ người mặc giống (0 / 2 / 5 %) · M (105 / 223 / 693)
 
-## Ablation lớp 3 (ns-3, trong cluster)
-- **kéo thẳng:** critical cell hỏi thẳng từng cell Axe · không Bank, không Circle
-- **Circle chuẩn bị sẵn / theo yêu cầu:** thành viên lấy trước hoặc chỉ khi được hỏi
-- **Circle động:** số thành viên theo lượng thiếu (tới 12, vòng 1–2) · cố định 12
-- **số màu kênh:** 3 / 4 / 7 / 13
-- **độ rộng River:** 2,5 / 3,5 / 4,5 / 6,5 cell
-- **số critical cell:** 1 / 4 / 10 / 16 (đổi ngưỡng kg, kl)
-- **chọn gateway:** theo hình học / theo chất lượng liên kết
-
-## Ablation chính sách (tầng nhiệm vụ, 2 × 2 × 2)
-- **tour đội 1:** ngắn nhất · l3first (dự báo L3 từ maxFar)
-- **đội 2 xuất phát:** chờ đủ báo cáo · đi sớm
-- **thứ tự thăm:** TSP · điểm / thời gian
-
-## Chỉ số
-- thời gian critical cell cuối đủ D · số khung MAC
-- kết thúc nhiệm vụ · tỉ lệ tìm thấy cell thật · số lần thăm
-- so cặp: chênh trung bình, tỉ lệ lượt / bản đồ tốt hơn
+## Ablation lớp 3 (ns‑3, trong cluster; giữ từ trước)
+- kéo thẳng · Circle chuẩn bị sẵn / theo yêu cầu / động · số màu kênh · độ rộng River · số critical cell · chọn gateway
 
 ## Còn thiếu / cần chốt
-- B5 (quét luống): cách áp River cho nhiều luống
-- mô hình lớp 1 thay ngưỡng t của B4 · kích thước tệp lớn
-- B8 (cánh bằng bay qua từng critical cell) — đã đề xuất, chưa chốt
+- B5 (quét luống)
+- tham số lớp 1 cần neo vào số đo thật (trước hết D), kích thước tệp lớn
+- N: 10 bản đồ mỗi cỡ, dưới quy tắc N ≥ 120

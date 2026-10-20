@@ -41,4 +41,73 @@ __SUMMARY__
 - `figures/l1-steps-<bản đồ>.png`: một nhiệm vụ qua các bước 1–9 (mục 5).
 - `anim/l1-replay.html`: hình động cùng nhiệm vụ (mục 5).
 
-__RESULTS__
+## 3. Vòng 1: mô hình lớp 1 trong nhiệm vụ cũ (`data/l1rank/r1-*.csv`)
+
+Chạy trên dữ liệu ns‑3 có sẵn, 100 lượt bốc mỗi bản đồ. Ở vòng này điểm còn gộp một bước, và đội 2 theo quy tắc cũ: đi ở báo cáo đầu, chọn theo P / thời gian, tour l3first.
+
+**39 bản đồ cluster có sẵn**, T\* trung bình (s), k2 / k4 / k6 / k8:
+
+| Phương án | T\* | Chênh so với P |
+|---|---|---|
+| P (River, đi sớm) | 515 / 711 / 792 / 871 | |
+| Không hợp tác (B4) | 537 / 752 / 902 / 936 | +22 / +42 / +110 / +64 |
+| P, chờ đủ báo cáo | 591 / 825 / 1 003 / 1 196 | +75 / +115 / +210 / +324 |
+| P, trọng số đều (bỏ độ quan trọng) | 820 / 1 343 / 1 818 / 2 235 | +304 / +632 / +1 025 / +1 364 |
+| P, xếp nhóm thay xen kẽ | 513 / 708 / 787 / 872 | −2 / −3 / −5 / +1 |
+| B4, xếp nhóm thay xen kẽ | 626 / 960 / 1 211 / 1 323 | +110 / +249 / +418 / +451 |
+| B1 (không pha 1) | 912 / 1 699 / 2 498 / 3 083 | |
+| B7 (cận dưới lý tưởng) | 244 / 287 / 314 / 347 | |
+
+**Ba bản đồ chung, mọi cách chia lớp 2** (k4‑s2 / k6‑s4 / k8‑s4, River cửa sổ):
+
+| Cách chia | T\* của P (s) | Tour đội 1 (s) | Critical cell giữ đủ 12 manh mối sau River |
+|---|---|---|---|
+| k‑medoids (cluster có sẵn) | **653 / 807 / 740** | 327 / 560 / 680 | 60 % |
+| k‑medoids + đường cong | 681 / 757 / 792 | 409 / 569 / 692 | 77 % |
+| MEANDER | 704 / 923 / 951 | 483 / 770 / 929 | 69 % |
+| LANE | 851 / 926 / 888 | 564 / 786 / 934 | 44 % |
+| MEANDER, span 12 | 758 / 933 / 1 075 | 549 / 776 / 986 | 38 % |
+
+**Rút ra từ vòng 1:**
+- River có ích dưới mô hình mới: không hợp tác chậm hơn ở 33/39 bản đồ. River không làm báo cáo về sớm hơn (ngược lại, muộn hơn), nhưng làm thứ hạng đúng hơn.
+- **Xen kẽ chỉ quan trọng khi không hợp tác.** Có River thì cell nhận trọn bộ, thứ tự không đổi gì.
+- Bỏ độ quan trọng làm thứ hạng hỏng hẳn. Kết quả này một phần là do cách đặt mô hình: điểm xác minh được định nghĩa bằng chính các độ quan trọng đó.
+- Tách thời gian ở k8: báo cáo của c\* về BS lúc trung bình 374 s, nhưng c\* xác minh xong lúc 871 s. Bay thẳng từ BS rồi xác minh chỉ mất 347 s (B7). Phần hở là đội 2 xác minh trung bình 2,3 cell sai trước c\*: đi ngay ở báo cáo đầu thì phải nhận các cell điểm thấp.
+- Lớp 2: cluster có sẵn vẫn nhanh nhất trên cả 3 bản đồ, vì tour đội 1 ngắn hơn 150–250 s. MEANDER cho nhiều critical cell giữ đủ manh mối hơn (69 % so với 60 %), nhưng không bù được tour dài.
+
+## 4. Vòng 1b: bốn ý tưởng (`data/l1rank/r1b-*.csv`, 39 bản đồ × 50 lượt, vẫn điểm một bước)
+
+Chênh so với P vòng 1, k2 / k4 / k6 / k8 (số bản đồ tốt hơn P trên 39):
+
+| Thêm vào P | Chênh (s) | Bản đồ tốt hơn |
+|---|---|---|
+| tour theo độ trễ | 0 / +6 / −22 / −27 | 9 |
+| chờ P_U + đón đầu | −23 / −62 / −15 / +7 | 27 |
+| báo cáo hai lần | −12 / −33 / −6 / −12 | 31 |
+| cả ba | **−29 / −77 / −37 / −12** | **32** |
+
+Ba ý tưởng cộng được với nhau. Ý thứ tư (điểm hai bước) sửa mô hình, nên dùng cho mọi vòng sau.
+
+__ROUND2__
+
+## 6. Độ nhạy theo tham số lớp 1 (`data/l1rank/sens-*.csv`, `figures/l1-sens.png`)
+
+Cluster có sẵn, River đầy đủ D, 40 bản đồ × 50 lượt, mỗi lần đổi một tham số (cỡ bản đồ gộp chung). Chính sách đề xuất ở đây chưa gồm cất cánh từ t = 0.
+
+| Thay đổi | Đề xuất (s) | Chỉ báo sau River (s) | Không hợp tác (s) | Đề xuất − không hợp tác | Bản đồ đề xuất tốt hơn | Hạng TB của c\* (đề xuất) |
+|---|---|---|---|---|---|---|
+| gốc (D = 128, 2 % mặc giống, M = 223) | 675 | 686 | 729 | −54 | 38/40 | 2,04 |
+| D = 64 (đối sánh nhiễu hơn) | 832 | 841 | 935 | −104 | 37/40 | 2,84 |
+| D = 256 (đối sánh sạch hơn) | 595 | 605 | 637 | −42 | 35/40 | 1,66 |
+| không ai mặc giống | 679 | 689 | 743 | −64 | 38/40 | 2,05 |
+| 5 % mặc giống | 662 | 671 | 720 | −58 | 38/40 | 1,98 |
+| M = 105 | 658 | 668 | 714 | −56 | 36/40 | 1,90 |
+| M = 693 | 682 | 692 | 753 | −70 | 37/40 | 2,08 |
+
+- Kết luận chính (River tốt hơn không hợp tác) đứng vững ở mọi biến thể, 35–38/40 bản đồ.
+- Ưu thế của River tăng khi đối sánh nhiễu (D = 64: −104 s): điểm càng kém tin cậy thì thiếu manh mối càng hại.
+- **Số chiều hiệu dụng D quyết định mức T\*** (595–832 s). Đây là tham số cần neo vào số đo thật của mô hình embedding.
+- Báo cáo hai lần luôn giúp khoảng 10 s.
+- Hình `figures/l1-sens.png`: trái là T\* (trung bình ± khoảng tin cậy 95 % trên 40 bản đồ), phải là hạng TB của c\*. Mỗi cụm là một lần chạy, theo thứ tự bảng. Trong cụm: xanh đậm là đề xuất, xanh nhạt là chỉ báo sau River, vàng là không hợp tác.
+
+__STEPS__

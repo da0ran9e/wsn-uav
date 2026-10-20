@@ -21,7 +21,9 @@ named <map> (k4-s1, ...) or k<K>. Per map and draw (paired: the same draw on the
             and decides at the BS, after each verification and, while waiting, at each new report:
               greedy   the known unvisited cell with the largest P(c*) / (flight + verification)
               pu       the same cell, but only if its P(c*) is at least P_U, the probability that c* has not
-                       reported yet; otherwise it waits for the next report
+                       reported yet (-puh: P_U / 2, -puq: P_U / 4); otherwise it waits for the next report
+              put      as pu, but P_U counts only the cells whose first report reaches the BS while team 2 would be
+                       busy flying to and verifying this one (the BS knows when each cluster reports from the plan)
               stage    while waiting it flies towards the P(c*)-weighted centre of the cells not visited yet
 Methods (name = base + options):
   P         River reports;  B4  direct reports only (no cooperation);  P+prog  the direct report first, the River
@@ -31,7 +33,7 @@ Methods (name = base + options):
             -stage, -short / -latency (team 1's tour; default l3first)
   B1 (no phase 1: TSP over every critical cell with the large file), B2-r (groups, multicast large file), B3-r
   (rotary multicast of the clue set to groups, then LoRa, team 2), B6 (rotary unicast of the clue set to each
-  critical cell, then LoRa, team 2), B7 (oracle: straight to c*); B3 and B6 take the team-2 options -pu, -stage
+  critical cell, then LoRa, team 2), B7 (oracle: straight to c*); B3 and B6 take the team-2 options -pu, -stage, -zero
 Writes OUT-draws.csv (map, set, draw, method: Tstar, Tall, rank, dep, starIn, ...), OUT-cells.csv (per critical
 cell: held clue weight river/direct) and OUT-summary.csv.
 """
@@ -53,6 +55,7 @@ V2, WINDOW = 15.0, math.ceil(400 * 1000 / 99)   # the River window of mission.py
 DEVICE, REF_IMAGES = "pi5-hailo8l", 20          # the large file: the full reference set, ~20 images in 1 MB
 VERIFY = SETTLE + frames(BIG) * UC_FRAME + match_time(DEVICE, REF_IMAGES, L.M)
 METHODS = "P,B4,P-grouped,B4-grouped,P-equal,P-wait,B1,B2-300,B2-500,B3-300,B3-500,B6,B7"
+BETA = {"pu": 1.0, "puh": 0.5, "puq": 0.25}      # -pu: go at P >= P_U; -puh / -puq: at P >= P_U / 2, P_U / 4
 
 
 def complete(w):
@@ -118,7 +121,7 @@ def lora(M, ready, phase):
     return out
 
 
-def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage=False, trace=None):
+def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage=False, trace=None, beta=1.0):
     """Team 2 visiting every cell. reports {cell: [(arrival at the BS, (mu, sd)), ...]} in time order.
     Returns Tstar, Tall, rank of c*, departure, c*'s first report at the BS. trace (a list), when given, gets
     ("p", t, {cell: P(c*)}) at every decision and the moves ("fly", t0, t1, a, b, cell), ("verify", t0, t1, cell),
@@ -140,7 +143,12 @@ def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage
             pk, pu = L.p_best([post(c) for c in known], (prior, n_un), [U[v] for v in seen])
             i = max(range(len(known)), key=lambda i: (pk[i] / (math.dist(p, pos[known[i]]) / V2 + VERIFY),
                                                      -math.dist(p, pos[known[i]])))
-            go = rule == "greedy" or n_un == 0 or pk[i] >= n_un * pu
+            if rule == "put":   # only the cells whose first report comes while team 2 would be busy with this one
+                busy = t + math.dist(p, pos[known[i]]) / V2 + VERIFY
+                n_win = sum(1 for c in left if t < first[c] <= busy)
+                go = pk[i] >= n_win * pu
+            else:
+                go = rule == "greedy" or n_un == 0 or pk[i] >= beta * n_un * pu
             if trace is not None:
                 trace.append(("p", t, {c: pk[j] for j, c in enumerate(known)} | {"unreported": pu}))
         if go:
@@ -233,7 +241,9 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
                 a_, p_ = ready(kind, tk), posts(kind, order, wC)
                 reps = {x: [(a_[x], p_[x])] for x in crits}
             out[meth] = team2(bs, pos, reps, U, prior, star, next((o for o in opts if o in ("wait", "zero")), "early"),
-                              "pu" if "pu" in opts else "greedy", "stage" in opts)
+                              "put" if "put" in opts else "pu" if any(o.startswith("pu") for o in opts) else "greedy",
+                              "stage" in opts,
+                              beta=next((BETA[o] for o in opts if o in BETA), 1.0))
         elif meth == "B1":
             out[meth] = fly_all(bs, [(pos[x], [x]) for x in crits], lambda s: VERIFY, lambda s: star in s[1]) + (0.0, 0.0)
         elif meth == "B7":
@@ -253,8 +263,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
                         rd[b] = t + tm
                     p = hp
                 a_, p_ = lora(M, rd, phase), posts("full", "", C)
-                out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, "early",
-                                  "pu" if "pu" in opts else "greedy", "stage" in opts)
+                out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star,
+                                  "zero" if "zero" in opts else "early", "pu" if "pu" in opts else "greedy", "stage" in opts)
         elif base == "B6":
             t, p, rd = 0.0, bs, {}
             for i in tsp_order(bs, [pos[x] for x in crits]):
@@ -263,8 +273,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
                 rd[x] = t + tm
                 p = pos[x]
             a_, p_ = lora(M, rd, phase), posts("full", "", C)
-            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, "early",
-                              "pu" if "pu" in opts else "greedy", "stage" in opts)
+            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star,
+                              "zero" if "zero" in opts else "early", "pu" if "pu" in opts else "greedy", "stage" in opts)
         else:
             raise SystemExit(f"unknown method {meth}")
     w = np.array([c["w"] for c in C])

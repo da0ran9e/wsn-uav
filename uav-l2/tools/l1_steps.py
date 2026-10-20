@@ -9,7 +9,7 @@ Panels (left to right, top to bottom):
     cell its 12 clues in broadcast order (face red, body blue, part amber; grey: not held)
   3 after River: the clue rings again (every clue the cell holds at the end), River cells light blue
   4 layer 1: critical cells coloured by their verified score (light -> dark blue), c* red
-  5 what the BS knows when team 2 leaves: discs sized by P(c*) of the reported cells
+  5 what the BS knows when team 2 first leaves for a verification: discs sized by P(c*) of the reported cells
   6 phase 2: team 2's path until c* is verified (dashed: staging while waiting, solid: flights), verified cells
     grey, c* red
   7 (bottom row) timeline: team 1 (grey), each cluster's pass (blue) and River (green), reports at the BS (dots:
@@ -109,9 +109,10 @@ def main():
     # 5 the BS at team 2's departure
     ax = axs[4]
     base(ax, D, [land(c) for c in cells])
-    snap = next((p for t, p in D["psnap"] if t >= D["dep"] - 1e-6), D["psnap"][0][1])
+    t1 = next(m[1] for m in D["team2"] if m[0] == "fly")      # team 2 commits to its first verification
+    snap = [p for t, p in D["psnap"] if t <= t1 + 1e-6][-1]
     for c, v in crit.items():
-        known = any(r[0] <= D["dep"] + 1e-6 for r in v["reports"])
+        known = any(r[0] <= t1 + 1e-6 for r in v["reports"])
         pc = snap.get(str(c))
         if known and pc is not None:
             ax.scatter(cells[c][0], cells[c][1], s=30 + 2500 * pc, color="#e09a1c", alpha=.8, edgecolor=INK, lw=.6, zorder=6)

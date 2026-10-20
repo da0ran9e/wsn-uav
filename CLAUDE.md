@@ -1298,6 +1298,12 @@ quay lại giải thích giúp tôi cách tính M và bỏ sót cell, báo nhầ
 thời gian đối sánh mỗi cặp ảnh là bao nhiêu và với toàn bộ kho là bao nhiêu
 ```
 
+*109. 2026-10-20 · layer 1 · trích lại các nguồn đã dùng (cho phần M, bỏ sót, báo nhầm và thời gian đối sánh)*
+
+```text
+trích lại các nguồn đã sử dụng
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

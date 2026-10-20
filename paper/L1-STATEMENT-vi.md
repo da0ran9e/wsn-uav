@@ -501,6 +501,21 @@ Công thức của `uav-l2/tools/l1_mission.py` (mục 95):
 | Nếu chưa có chỉ mục: embed lại M crop (M = 223 / 10⁴ / 10⁶) | 0,9 s / 39 s / 65 phút | 18 s / 13 phút / 22 giờ |
 
 - Chi phí chính là embed L ảnh signature. Phần so với kho gần như bằng 0 khi chỉ mục có sẵn.
-- 10⁶ crop cần khoảng 4 GB chỉ mục, sát giới hạn RAM của Pi 5 (4–8 GB). Lớn hơn thế phải đọc từ thẻ nhớ hoặc NVMe, chậm hơn; phần này chưa mô hình hoá.
+- 10⁶ crop cần khoảng 4 GB chỉ mục; Pi 5 có các bản RAM 2 / 4 / 8 / 16 GB, nên với bản 4–8 GB phần này đã sát giới hạn. Lớn hơn thế phải đọc từ thẻ nhớ hoặc NVMe, chậm hơn; phần này chưa mô hình hoá.
+- 257,6 ảnh/s của Hailo‑8L đo với batch 8. Một nguồn khác cho 133 ảnh/s (Hailo Model Explorer qua blog Dataroot Labs, không ghi batch); với tốc độ đó, embed một ảnh mất 7,5 ms thay vì 3,9 ms, T_match với L = 2 khoảng 25 ms thay vì 18 ms. Kết luận không đổi.
 - So với River (TB khoảng 24 s) và khe LoRa (0–40 s), đối sánh không phải nút thắt.
 - Các so sánh nhiệm vụ (mission_policy, CURVE‑vi.md) vẫn dùng hằng số MATCH = 5 s, là giá trị giữ chỗ dư so với 0,02–0,17 s tính ở đây.
+
+## 14. Nguồn dùng cho §10–13 (CLAUDE.md §8 mục 109)
+
+| | Tài liệu | Dùng cho | Đã đối chiếu |
+|---|---|---|---|
+| [7] | X. Li, A. Wu, W.‑S. Zheng, "Adversarial Open‑World Person Re‑Identification", ECCV 2018, arXiv:1807.10482 | f = 0,1 %, TTR = 82,26 % (multi‑shot, 2 ảnh mục tiêu): Bảng 1 và Bảng 4, Market‑1501, Individual Verification, ResNet‑50, cột FTR 0,1 %. TTR = 80,00 % (single‑shot): Bảng 4. 99,38 % tại FTR 10 %: Bảng 1 và Bảng 4 | ar5iv, 20/10/2026 |
+| [8] | L. Zheng et al., "Scalable Person Re‑identification: A Benchmark", ICCV 2015 | Bộ dữ liệu Market‑1501 mà [7] dùng | qua [7] |
+| [9] | K. He, X. Zhang, S. Ren, J. Sun, "Deep Residual Learning for Image Recognition", CVPR 2016 | ResNet‑50: 25,6 triệu tham số, vector đặc trưng 2 048 chiều | kiến thức chuẩn |
+| [10] | Hailo Community, "Raspberry Pi 5 with Hailo‑8L Benchmark", 06/2024, https://community.hailo.ai/t/raspberry-pi-5-with-hailo-8l-benchmark/746 | ResNet‑50 v1, 224×224, **batch 8**: 257,56 ảnh/s | kết quả tìm kiếm, 20/10/2026; benchmark cộng đồng, chưa bình duyệt |
+| [11] | Y. Shin, "Is INT8 Portable? A Cross‑Platform Measurement Study of Quantized Inference on Embedded and Automotive Accelerators", arXiv:2609.16085, 09/2026 | Pi 5 Cortex‑A76, ResNet‑50 INT8 QDQ, ONNX Runtime 1.28.0, batch 1: **79,08 ms** (FP32 144,95 ms), Bảng 2 | arXiv HTML, 20/10/2026; bản tiền in |
+| [12] | Dataroot Labs, "AI Kit on a Raspberry Pi 5: setup and running Computer Vision Pipelines", https://datarootlabs.com/blog/hailo-ai-kit-raspberry-pi-5-setup-and-computer-vision-pipelines | ResNet‑50 v1 trên AI Kit khoảng 133 ảnh/s (trích Hailo Model Explorer, không ghi batch); chỉ dùng để chỉ ra độ lệch so với [10] | kết quả tìm kiếm; blog |
+
+**Không có nguồn, là ước tính:** giải mã 5 ms mỗi ảnh signature; băng thông bộ nhớ 8 GB/s; 20 GMAC/s. **Tự suy ra** (xác suất cơ bản): P_cam = 1 − (1 − f)^M, M = ln(1 − P_cam)/ln(1 − f), P_miss = (1 − TTR)^k(1 − f)^M, phân phối nhị thức của c.
+

@@ -1338,6 +1338,18 @@ cách tính điểm tôi có một đề suất khác, với mỗi ảnh tham ch
 mọi điểm đều được thăm trong pha 2 nhưng ta sẽ đánh dấu điểm cao nhất được thăm vào thời điểm nào khi đánh giá
 ```
 
+*114. 2026-10-20 · layer 1 + uav-l2 · độ quan trọng do BS chấm cho từng manh mối; pha 2 hoàn thành khi xác minh xong cell điểm cao nhất; viết bài toán lớp 1 tổng quát cho system model (paper hướng mạng, dễ hiểu); cài với lớp 2 và 3 đã có; rồi các baseline (cluster có sẵn cũng là baseline/ablation; thêm baseline chia cluster to thành cluster nhỏ có subCH là critical cell xa nhau); mỗi vòng trích hình/số, vòng cuối báo cáo từng bước kèm hình; tự quyết, không hỏi lại*
+
+```text
+độ quan trọng chỉ gán cho manh mối do BS chấm
+pha 2 hoàn thành khi xác minh xong cell có điểm cao nhất 
+nếu bạn đã hiểu, lên kế hoạch cho phương án, viết lại bài toán này dưới dạng tổng quát giống như ta đang viết mô tả cho system models của bài báo (nên nhớ paper theo hướng mạng nên không cần đi quá sâu xa vào các khía cạnh khác, tuy nhiên vẫn cần mô tả dễ hiểu cho cả những người trong và ngoài ngành cùng đọc vì đây là bài toán layer1 đầu tiên của giải pháp) sau đó cài đặt thử với giải pháp layer 2 và 3 đã có 
+sau khi hoàn thành nếu thấy ổn có thể cài đặt tiếp các baseline trong đó trường hợp coi cluster có sẵn ta thử nghiệm trước đó cho propose cũng sẽ coi là baseline/ablation 
+thêm một baseline nữa nếu có thể đó là: đối với trường hợp cluster có sẵn, phân các cluster to thành các cluster nhỏ hơn với các critical cell nằm tương đối xa nhau là subCH sau đó đường bay phục vụ tập cluster nhỏ này như các trường hợp khác
+sau mỗi vòng thử nghiệm trích ra một vài visualize hoặc con số để phát triển ý tưởng thêm nếu có ở vòng cuối cùng sau khi mọi thứ được cho là rất tốt hãy báo cáo từng bước kèm visualize chi tiết
+đọc suy nghĩ và tự quyết định cách làm trong nhiệm vụ này không cần hỏi lại cho đến khi hoàn thành mục tiêu
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

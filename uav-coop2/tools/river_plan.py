@@ -92,7 +92,7 @@ def detour(b, m, k, S, c):
         return cellpath(b, m, S, c)
 
 
-def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel"):
+def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False):
     c, w, R, S, uav = geo["c"], geo["w"], geo["R"], geo["S"], geo["uav"]
     # Algorithm 1: Axe and Seg (packets sent above each Axe cell; outside the cluster: none)
     axe, seg = [], {}
@@ -104,7 +104,12 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel"):
             axe.append(h); seg[h] = []
         seg[h].append(s)
     for a in axe:   # straight path: one interval per Axe cell
-        assert seg[a][-1] - seg[a][0] + 1 == len(seg[a]), a
+        runs = np.split(np.array(seg[a]), np.where(np.diff(seg[a]) > 1)[0] + 1)
+        assert reentry or len(runs) == 1, a
+        # reentry: a curved path crosses the cell again; Seg(a) is its longest visit, the rest are left
+        # unassigned like the packets sent outside the cluster
+        seg[a] = [int(s) for s in max(runs, key=len)]
+    axe.sort(key=lambda a: seg[a][0])
     u = np.array(c[axe[-1]]) - np.array(c[axe[0]])
     u /= np.linalg.norm(u)
     nrm = np.array([-u[1], u[0]])
@@ -112,7 +117,7 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel"):
     # Algorithm 2: Banks along perpendiculars, cut at the cluster edge
     bank, bpath = {}, {}
     N = len(uav)
-    heading = lambda i, half: uav[min(i + half, N - 1)] - uav[max(i - half, 0)]
+    heading = lambda i, half: uav[min(max(i, 0) + half, N - 1)] - uav[max(min(i, N - 1) - half, 0)]
     for a in axe:
         z, nz, reach = np.array(c[a]), nrm, (omega, omega)
         if banks == "local":   # from the path's midpoint over a, along the path's normal there

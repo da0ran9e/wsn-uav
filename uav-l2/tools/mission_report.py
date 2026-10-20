@@ -60,7 +60,7 @@ def load_map(w, schemes=SCHEMES, with_bits=True):
         res = {t: {(int(r["q"]), int(r["r"])): r for r in csv.DictReader(open(f"{w}/r{k}-{t}-crit.csv"))}
                for t in schemes}
         runs = {t: next(csv.DictReader(open(f"{w}/r{k}-{t}-runs.csv"))) for t in schemes}
-        P = plan(geo)
+        P = plan(geo, reentry=True)   # a straight path never re-enters a cell: the same plan
         if not with_bits:
             cl[k] = dict(geo=geo, P=P, res=res, runs=runs)
             continue

@@ -191,7 +191,8 @@ def stage_runs(a, W_, K):
                 if not os.path.exists(f"{W_}/d{k}/{dst}"):
                     os.symlink(f"../{src}", f"{W_}/d{k}/{dst}")
             sh([sys.executable, f"{COOP2}/river_export.py", f"--deploy=d{k}", f"--path=c{k}-path-s35.csv",
-                f"--banks={getattr(a, 'banks', 'parallel')}", f"--out=plan{k}.txt"], f"plan{k}.log")
+                f"--banks={getattr(a, 'banks', 'parallel')}", *(["--reentry"] if getattr(a, "reentry", False) else []),
+                f"--out=plan{k}.txt"], f"plan{k}.log")
         return k
 
     def river(job):

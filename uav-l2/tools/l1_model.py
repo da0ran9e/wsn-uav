@@ -66,8 +66,9 @@ def layout(C, seq, payload=99):
     return start, end, p
 
 
-def stores(rng, n, m=M):
+def stores(rng, n, m=None):
     """n cameras x m crops x aspects: stranger aspect similarities, look-alikes on 'part'."""
+    m = M if m is None else m
     a = np.empty((n, m, len(ASPECTS)))
     for t, asp in enumerate(ASPECTS):
         a[..., t] = rng.normal(*STRANGER[asp], (n, m))
@@ -76,8 +77,9 @@ def stores(rng, n, m=M):
     return np.clip(a, -1, 1)
 
 
-def matches(rng, a, C, dim=DIM):
+def matches(rng, a, C, dim=None):
     """m_ij for every camera, crop and clue: (n, m, L)."""
+    dim = DIM if dim is None else dim
     r = np.array([c["r"] for c in C])
     at = a[..., [c["t"] for c in C]]
     e = rng.standard_normal(at.shape) * np.sqrt((1 - at ** 2) * (1 - r ** 2) / dim)
@@ -131,14 +133,15 @@ _CAL, _POOL = {}, {}
 GRID = np.linspace(0.25, 0.80, 551)   # verified scores live in about 0.35-0.65
 
 
-def calib(C, held, n=2000, seed=114, m=M, truth=None):
+def calib(C, held, n=2000, seed=114, m=None, truth=None):
     """BS-side calibration for a held mask: U ~ alpha + beta S, residual sd, and prior samples of U.
     C: the weights the cells score with; truth: the weights of the verified score (default C). One simulated
     pool of n cameras serves every mask."""
     truth = C if truth is None else truth
-    key = (tuple(int(x) for x in held), m, tuple(c["w"] for c in C), tuple(c["w"] for c in truth))
+    m = M if m is None else m
+    key = (tuple(int(x) for x in held), m, DIM, RHO, tuple(c["w"] for c in C), tuple(c["w"] for c in truth))
     if key not in _CAL:
-        pk = (n, seed, m, tuple(c["r"] for c in C))
+        pk = (n, seed, m, DIM, RHO, tuple(c["r"] for c in C))
         if pk not in _POOL:
             rng = np.random.default_rng(seed)
             a = stores(rng, n, m)

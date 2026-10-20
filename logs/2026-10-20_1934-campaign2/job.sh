@@ -9,6 +9,9 @@ set -u
 S=/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad
 L=/home/user/wsn-uav/logs/2026-10-20_1934-campaign2
 set_=$1; m=$2; K=${m#k}; K=${K%%-*}; seed=${m##*-s}
+# LANE dropped at 19:12 to save about 2.5 h of machine time: on k4-s2 / k6-s4 / k8-s4 it trailed k-medoids and
+# MEANDER (round 1); its three maps stay in LW through the links to MLw
+[ "$set_" = LW ] && { echo "$set_ $m skipped $(date +%H:%M:%S)" >> $L/done.txt; exit 0; }
 B="--bin $S/BIN --jobs 2 --schemes rf"
 case $set_ in
   KF) cmd="python3 tools/mission.py --clusters $K --seed $seed --work $S/KF/$m $B" ;;

@@ -1,0 +1,257 @@
+<canvas id="map" aria-label="Mission map"></canvas>
+<canvas id="lanes" aria-label="Mission timeline"></canvas>
+<div class="rail">
+  <button id="prev" aria-label="Previous step"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="3" width="2.4" height="12"/><path d="M16 3v12L6 9z"/></svg></button>
+  <button id="play" aria-label="Play or pause"><svg id="ico" width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M5 3v12l10-6z"/></svg></button>
+  <button id="next" aria-label="Next step"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M2 3v12l10-6z"/><rect x="13.6" y="3" width="2.4" height="12"/></svg></button>
+  <canvas id="chap" aria-label="Steps" tabindex="0"></canvas>
+  <input id="speed" type="range" min="-2" max="2" step="1" value="0" aria-label="Speed">
+</div>
+<script>
+const DATA = __DATA__;
+(() => {
+const D = DATA, P = D.params, R = P.R, W = R * Math.sqrt(3);
+const cells = D.cells.map(c => ({x: c[0], y: c[1], lake: c[2], k: c[3]}));
+const key = (q, r) => q + "," + r;
+const at = new Map();
+cells.forEach((c, i) => { const r = Math.round(c.y / (1.5 * R)), q = Math.round(c.x / W - r / 2); at.set(key(q, r), i); });
+function cellAt(x, y) {
+  let q = (Math.sqrt(3) / 3 * x - y / 3) / R, r = (2 / 3 * y) / R, s = -q - r;
+  let rq = Math.round(q), rr = Math.round(r), rs = Math.round(s);
+  const dq = Math.abs(rq - q), dr = Math.abs(rr - r), ds = Math.abs(rs - s);
+  if (dq > dr && dq > ds) rq = -rr - rs; else if (dr > ds) rr = -rq - rs;
+  const i = at.get(key(rq, rr)); return i === undefined ? -1 : i;
+}
+const nodes = D.nodes.map(n => ({x: n[0], y: n[1], k: n[2], role: n[3], o: Math.random()}));
+const CL = D.clusters, K = Object.keys(CL).map(Number).sort((a, b) => a - b);
+const legs = D.legs.map(l => ({k: l[0], s: l[1], e: l[2], t0: l[3], t1: l[4]}));
+const NCL = D.clue.length, ORD = D.order;
+const crit = {};   // cell -> {k, direct mask, riverAt (s after leave), reports, U, star}
+for (const k of K) { const c = CL[k];
+  c.flowsByBin = new Map(); for (const f of c.flows) { if (!c.flowsByBin.has(f[0])) c.flowsByBin.set(f[0], []); c.flowsByBin.get(f[0]).push(f); }
+  c.lastDone = Math.max(...Object.values(c.crit).map(v => v.doneS));
+  for (const [cell, v] of Object.entries(c.crit)) crit[cell] = Object.assign({k: k, cl: c}, v, D.crit[cell]); }
+// team 2 as timed moves; verifications per cell
+const t2 = D.team2.map(m => ({kind: m[0], t0: m[1], t1: m[2], a: m[3], b: m[4], cell: m[5]}));
+{ let pos = D.bs; for (const m of t2) { if (m.kind === "verify") { m.a = pos; m.b = pos; } else pos = m.b; } }
+const verified = {}; for (const m of t2) if (m.kind === "verify") verified[m.cell] = m.t1;
+const psnap = D.psnap;
+const END = Math.min(D.Tall, D.Tstar + 400);
+// ---------- chapters (show seconds at speed 1) ----------
+const CH = [{n: "map", d: 3}, {n: "roles", d: 3}, {n: "clues", d: 5}, {n: "tour", d: 4}, {n: "plan", d: 4}, {n: "mission", d: 0}];
+const rate = t => {
+  for (const l of legs) { const c = CL[l.k]; if (t >= l.t0 && t <= l.t1) return 7; if (t > l.t1 && t <= l.t1 + c.lastDone + 1) return 3.5; }
+  if (t2.some(m => m.kind === "verify" && t >= m.t0 && t <= m.t1)) return 14;
+  return 22; };
+const warp = [[0, 0]]; { let s = 0; for (let t = 0; t < END + 20; t += 0.5) { s += 0.5 / rate(t); warp.push([t + 0.5, s]); } }
+const MI = CH.length - 1; CH[MI].d = warp[warp.length - 1][1];
+const starts = []; { let a = 0; for (const c of CH) { starts.push(a); a += c.d; } }
+const TOTAL = starts[MI] + CH[MI].d;
+function missionTime(s) {
+  let lo = 0, hi = warp.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (warp[m][1] <= s) lo = m; else hi = m; }
+  const a = warp[lo], b = warp[hi]; return a[0] + (b[0] - a[0]) * Math.min(1, Math.max(0, (s - a[1]) / Math.max(1e-9, b[1] - a[1]))); }
+// ---------- canvas ----------
+const map = document.getElementById("map"), lanes = document.getElementById("lanes"), chap = document.getElementById("chap");
+let col = {};
+const NAMES = ["bg","land","land2","edge","water","ink","ink2","data","axe","bank","river","t2","false","gather","bankfill","circlefill","pull","control","match","track","fill","face","body","part","star","c1","c2","c3","c4","c5","c6","c7","c8"];
+function readColors() { const cs = getComputedStyle(document.documentElement); for (const n of NAMES) col[n] = cs.getPropertyValue("--" + n).trim(); }
+readColors(); matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); dirty = true; });
+new MutationObserver(() => { readColors(); dirty = true; }).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+const kc = k => col["c" + (((k - 1) % 8) + 1)];
+const ASP = () => [col.face, col.body, col.part];
+const PH = () => [col.gather, col.bankfill, col.circlefill, col.pull, col.control];
+const xs = cells.map(c => c.x).concat([D.bs[0]]), ys = cells.map(c => c.y).concat([D.bs[1]]);
+const box = [Math.min(...xs) - R * 1.5, Math.max(...xs) + R * 1.5, Math.min(...ys) - R * 1.5, Math.max(...ys) + R * 1.5];
+let sc = 1, ox = 0, oy = 0, dpr = 1;
+function fit() {
+  dpr = window.devicePixelRatio || 1;
+  for (const c of [map, lanes, chap]) { const r = c.getBoundingClientRect(); c.width = Math.max(1, r.width * dpr); c.height = Math.max(1, r.height * dpr); }
+  const w = map.width, h = map.height;
+  sc = Math.min(w / (box[1] - box[0]), h / (box[3] - box[2]));
+  ox = (w - sc * (box[1] - box[0])) / 2 - sc * box[0]; oy = (h - sc * (box[3] - box[2])) / 2 + sc * box[3];
+  dirty = true; }
+const X = x => ox + sc * x, Y = y => oy - sc * y;
+const g = map.getContext("2d"), gl = lanes.getContext("2d"), gc = chap.getContext("2d");
+function hex(c, s = 1) { g.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (30 + 60 * i);
+  const x = X(c.x + R * s * Math.cos(a)), y = Y(c.y + R * s * Math.sin(a)); i ? g.lineTo(x, y) : g.moveTo(x, y); } g.closePath(); }
+function mix(a, b, t) { const p = s => s.length === 4 ? [1,2,3].map(i => parseInt(s[i] + s[i], 16)) : [1,3,5].map(i => parseInt(s.slice(i, i + 2), 16));
+  const A = p(a), B = p(b); return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",") + ")"; }
+const ease = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
+const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+function star(x, y, r, fill, stroke) { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * 0.45 : r;
+  i ? g.lineTo(x + q * Math.cos(a), y + q * Math.sin(a)) : g.moveTo(x + q * Math.cos(a), y + q * Math.sin(a)); } g.closePath(); g.fillStyle = fill; g.fill(); g.lineWidth = 1.2 * dpr; g.strokeStyle = stroke; g.stroke(); }
+function arrow(a, b, color, w) { const x1 = X(a[0]), y1 = Y(a[1]), x2 = X(b[0]), y2 = Y(b[1]); g.strokeStyle = color; g.fillStyle = color; g.lineWidth = w;
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); const an = Math.atan2(y2 - y1, x2 - x1), h = 9 * dpr;
+  g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - h * Math.cos(an - 0.4), y2 - h * Math.sin(an - 0.4)); g.lineTo(x2 - h * Math.cos(an + 0.4), y2 - h * Math.sin(an + 0.4)); g.closePath(); g.fill(); }
+function borders(alpha) { g.strokeStyle = col.ink; g.globalAlpha = alpha; g.lineWidth = 1.4 * dpr; g.beginPath();
+  for (const c of cells) { if (c.lake || !c.k) continue; for (let i = 0; i < 6; i++) {
+    const a1 = Math.PI / 180 * (30 + 60 * i), a2 = Math.PI / 180 * (90 + 60 * i);
+    const mx = c.x + R * (Math.cos(a1) + Math.cos(a2)), my = c.y + R * (Math.sin(a1) + Math.sin(a2));
+    const n = cellAt(mx, my); if (n < 0 || cells[n].lake || cells[n].k !== c.k) {
+      g.moveTo(X(c.x + R * Math.cos(a1)), Y(c.y + R * Math.sin(a1))); g.lineTo(X(c.x + R * Math.cos(a2)), Y(c.y + R * Math.sin(a2))); } } }
+  g.stroke(); g.globalAlpha = 1; }
+function bs() { const x = X(D.bs[0]), y = Y(D.bs[1]), s = 7 * dpr; g.fillStyle = col.ink; g.fillRect(x - s, y - s, 2 * s, 2 * s); }
+function scalebar() { const x2 = X(box[1] - R), x1 = x2 - sc * 1000, y = Y(box[2] + R * 0.6); g.strokeStyle = col.ink; g.lineWidth = 2 * dpr;
+  g.beginPath(); g.moveTo(x1, y); g.lineTo(x2, y); g.stroke(); }
+function uav(p, color, kind) { const x = X(p[0]), y = Y(p[1]), r = 7 * dpr; g.fillStyle = color; g.strokeStyle = col.bg; g.lineWidth = 2 * dpr;
+  g.beginPath(); if (kind === 1) { g.moveTo(x, y - r * 1.3); g.lineTo(x + r, y + r); g.lineTo(x - r, y + r); g.closePath(); } else g.arc(x, y, r, 0, 2 * Math.PI);
+  g.fill(); g.stroke(); }
+// the clue stream: a strip in the top-left corner of the map
+function clueStrip(q, held) {   // held: null (the stream) or a mask to grey out the clues not held
+  const tot = D.clue.reduce((a, c) => a + c[1], 0), w = Math.min(map.width * 0.42, 520 * dpr), x0 = 14 * dpr, y0 = 14 * dpr, h = 34 * dpr;
+  let x = x0, n = 0;
+  for (const j of ORD) { const c = D.clue[j], ww = w * c[1] / tot; if (n++ >= Math.ceil(q * NCL)) break;
+    const hh = h * (0.3 + 0.7 * c[2] / 4); g.fillStyle = mix(col.bg, ASP()[c[0]], 0.35 + 0.65 * (c[3] - 0.75) / 0.25);
+    g.globalAlpha = held && !held[j] ? 0.2 : 1; g.fillRect(x + 1, y0 + h - hh, ww - 2, hh); g.globalAlpha = 1; x += ww; } }
+// the clue ring of a critical cell: one arc per clue, in broadcast order, coloured when held
+function clueRing(cx, cy, r, has, alpha) {
+  const n = NCL, gap = 0.08;
+  for (let i = 0; i < n; i++) { const j = ORD[i], a0 = -Math.PI / 2 + 2 * Math.PI * i / n + gap / 2, a1 = a0 + 2 * Math.PI / n - gap;
+    g.strokeStyle = has[j] ? ASP()[D.clue[j][0]] : col.track; g.lineWidth = 3.2 * dpr; g.globalAlpha = alpha;
+    g.beginPath(); g.arc(cx, cy, r, a0, a1); g.stroke(); g.globalAlpha = 1; } }
+function held(c, t) { // clues the cell holds at time t (own reception after gathering, River completions)
+  const L = c.cl.leave, out = new Array(NCL).fill(false); if (t < L) return out;
+  for (let j = 0; j < NCL; j++) { if (c.direct[j] && t >= L + c.gatherS) out[j] = true; if (c.riverAt[j] >= 0 && t >= L + c.riverAt[j]) out[j] = true; }
+  return out; }
+function pAt(t) { let s = null; for (const p of psnap) { if (p[0] <= t) s = p[1]; else break; } return s; }
+
+function draw(show) {
+  g.fillStyle = col.bg; g.fillRect(0, 0, map.width, map.height);
+  let ci = 0; while (ci < MI && show >= starts[ci + 1]) ci++;
+  const u = CH[ci].d ? (show - starts[ci]) / CH[ci].d : 1;
+  const p = i => ci > i ? 1 : ci < i ? 0 : ease(u * 1.15);
+  const mt = ci === MI ? missionTime(show - starts[MI]) : -1;
+  // cells: land by cluster colour, lakes
+  for (const c of cells) { let fill = col.land;
+    if (c.lake) fill = col.water; else if (c.k) fill = mix(col.land, kc(c.k), ci === 0 ? 0.45 * p(0) : ci < 4 ? 0.18 : 0);
+    hex(c, 0.96); g.fillStyle = fill; g.fill(); }
+  if (ci >= 4) for (const k of K) { const c = CL[k], q = p(4);
+    const paint = (list, color, from) => { for (const i of list) { if (q < from) return; hex(cells[i], 0.96); g.fillStyle = mix(col.land, color, Math.min(1, (q - from) * 4) * (ci === MI ? 0.5 : 1)); g.fill(); } };
+    paint(c.river, col.river, 0.25); paint(c.bank, col.bank, 0.12); paint(c.axe, col.axe, 0); }
+  if (ci === MI) for (const k of K) { const c = CL[k];   // share of the clue window each cell heard, as the UAV passes
+    if (mt < c.enter) continue; const S = P.samplesPass; const j = Math.min(S, Math.floor((mt - c.enter) / (c.leave - c.enter) * S));
+    for (const [cell, arr] of Object.entries(c.passShare)) { if (j < 1) break; const v = arr[Math.min(S, j) - 1];
+      hex(cells[cell], 0.96); g.fillStyle = mix(col.land, col.data, 0.12 + 0.55 * v * v); g.globalAlpha = 0.8; g.fill(); g.globalAlpha = 1; } }
+  borders(ci === 0 ? p(0) : 1);
+  if (ci >= 1 && ci < MI) { g.fillStyle = col.ink2; for (const n of nodes) { if (n.role === 0) continue; const r = 1.6 * dpr; g.globalAlpha = 0.5; g.fillRect(X(n.x) - r, Y(n.y) - r, 2 * r, 2 * r); } g.globalAlpha = 1; }
+  // critical cells (rings) and CH
+  if (ci >= 1 && ci < MI) { const q = ci === 1 ? u : 1;
+    for (const [cell, c] of Object.entries(crit)) { const cc = cells[cell];
+      clueRing(X(cc.x), Y(cc.y), 9 * dpr, new Array(NCL).fill(ci === 2 && u > 0.6), q); }
+    for (const k of K) star(X(CL[k].ch[0]), Y(CL[k].ch[1]), 10 * dpr * Math.min(1, p(1) * 2), col.bg, col.ink); }
+  if (ci === 2) clueStrip(Math.min(1, u * 1.6), null);
+  // flight lines and tour
+  if (ci === 3 || ci === 4) { const q = ci === 3 ? u * 1.1 : 1; let pos = D.bs;
+    legs.forEach((l, i) => { const a = i / legs.length, b = (i + 1) / legs.length; if (q <= a) { pos = l.e; return; }
+      const f = Math.min(1, (q - a) / (b - a)); g.setLineDash([4 * dpr, 4 * dpr]); g.strokeStyle = col.ink2; g.lineWidth = 1.2 * dpr; g.beginPath();
+      g.moveTo(X(pos[0]), Y(pos[1])); const m = lerp(pos, l.s, Math.min(1, f * 2)); g.lineTo(X(m[0]), Y(m[1])); g.stroke(); g.setLineDash([]);
+      if (f > 0.5) { const path = CL[l.k].path, n = path.length; const rev = Math.hypot(path[0][0] - l.s[0], path[0][1] - l.s[1]) > Math.hypot(path[n - 1][0] - l.s[0], path[n - 1][1] - l.s[1]);
+        const pts = rev ? path.slice().reverse() : path, upto = Math.max(2, Math.floor(n * Math.min(1, (f - 0.5) * 2)));
+        g.strokeStyle = col.ink; g.lineWidth = 2.4 * dpr; g.beginPath(); pts.slice(0, upto).forEach((pt, i2) => i2 ? g.lineTo(X(pt[0]), Y(pt[1])) : g.moveTo(X(pt[0]), Y(pt[1]))); g.stroke(); }
+      pos = l.e; });
+    if (q >= 1) { g.setLineDash([4 * dpr, 4 * dpr]); g.strokeStyle = col.ink2; g.beginPath(); g.moveTo(X(pos[0]), Y(pos[1])); g.lineTo(X(D.bs[0]), Y(D.bs[1])); g.stroke(); g.setLineDash([]); } }
+  if (ci === MI) mission(mt);
+  bs(); scalebar();
+  drawLanes(ci === MI ? mt : -1); drawChap(show);
+}
+
+function mission(t) {
+  for (const l of legs) { const path = CL[l.k].path; g.strokeStyle = col.ink2; g.globalAlpha = 0.35; g.lineWidth = 1.2 * dpr; g.beginPath();
+    path.forEach((pt, i) => i ? g.lineTo(X(pt[0]), Y(pt[1])) : g.moveTo(X(pt[0]), Y(pt[1]))); g.stroke(); g.globalAlpha = 1; }
+  // River flows of this moment
+  const ph = PH();
+  for (const k of K) { const c = CL[k]; if (t < c.leave || t > c.leave + c.lastDone + 1) continue;
+    const b0 = Math.floor((t - c.leave) / P.binRiver);
+    for (let b = b0 - 3; b <= b0; b++) { const fs = c.flowsByBin.get(b); if (!fs) continue; const fade = 1 - (b0 - b) / 4;
+      for (const f of fs) { const A = cells[f[1]], B = cells[f[2]]; g.globalAlpha = 0.8 * fade;
+        if (f[1] === f[2]) { g.fillStyle = ph[f[3]]; g.beginPath(); g.arc(X(A.x), Y(A.y), Math.min(9, 1.5 + Math.sqrt(f[4])) * dpr, 0, 2 * Math.PI); g.fill(); }
+        else { g.strokeStyle = ph[f[3]]; g.lineWidth = Math.min(6, 1 + Math.sqrt(f[4])) * dpr; g.beginPath(); g.moveTo(X(A.x), Y(A.y)); g.lineTo(X(B.x), Y(B.y)); g.stroke(); } } }
+    g.globalAlpha = 1; }
+  // LoRa sends: CH -> BS
+  for (const k of K) { const c = CL[k];
+    for (const s of c.lora.sends) { if (t < s || t > s + 3) continue; const f = (t - s) / 3, a = c.ch, b = D.bs;
+      g.setLineDash([3 * dpr, 5 * dpr]); g.strokeStyle = col.match; g.lineWidth = 1.6 * dpr; g.beginPath(); g.moveTo(X(a[0]), Y(a[1])); const e = lerp(a, b, f); g.lineTo(X(e[0]), Y(e[1])); g.stroke(); g.setLineDash([]);
+      g.beginPath(); g.arc(X(e[0]), Y(e[1]), 4 * dpr, 0, 2 * Math.PI); g.fillStyle = col.match; g.fill(); }
+    if (t >= c.leave) { const w = ((t - c.lora.phase) % P.gap + P.gap) % P.gap / P.gap; g.strokeStyle = col.match; g.lineWidth = 2 * dpr; g.globalAlpha = 0.6;
+      g.beginPath(); g.arc(X(c.ch[0]), Y(c.ch[1]), 15 * dpr, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * w); g.stroke(); g.globalAlpha = 1; }
+    star(X(c.ch[0]), Y(c.ch[1]), 10 * dpr, col.bg, col.ink); }
+  // critical cells: clue ring, then the BS's P(c*) as a disc once a report is in, then the verdict
+  const snap = pAt(t);
+  for (const [cell, c] of Object.entries(crit)) { const cc = cells[cell], x = X(cc.x), y = Y(cc.y);
+    const rep = c.reports.filter(r => r[0] <= t), v = verified[cell];
+    if (rep.length && snap) { const pc = snap[cell];
+      if (pc !== undefined && (v === undefined || t < v)) { g.beginPath(); g.arc(x, y, (5 + 26 * Math.sqrt(pc)) * dpr, 0, 2 * Math.PI); g.fillStyle = col.false; g.globalAlpha = 0.75; g.fill(); g.globalAlpha = 1; } }
+    if (v !== undefined && t >= v) { g.beginPath(); g.arc(x, y, (c.star ? 16 : 8) * dpr, 0, 2 * Math.PI); g.fillStyle = c.star ? col.star : col.ink2; g.globalAlpha = c.star ? 1 : 0.55; g.fill(); g.globalAlpha = 1; }
+    clueRing(x, y, 11 * dpr, held(c, t), 1); }
+  // team 2
+  if (t >= D.dep) { let pos = D.bs; g.lineWidth = 2.4 * dpr;
+    for (const m of t2) { if (t < m.t0) break; const f = Math.min(1, (t - m.t0) / Math.max(1e-6, m.t1 - m.t0)); const e = lerp(m.a, m.b, f);
+      if (m.kind !== "verify") { g.strokeStyle = col.t2; g.setLineDash(m.kind === "stage" ? [3 * dpr, 4 * dpr] : []); g.beginPath(); g.moveTo(X(pos[0]), Y(pos[1])); g.lineTo(X(e[0]), Y(e[1])); g.stroke(); g.setLineDash([]); }
+      pos = e; }
+    const h = t2.find(m => m.kind === "verify" && t >= m.t0 && t <= m.t1);
+    if (h) { g.strokeStyle = col.t2; g.lineWidth = 2 * dpr; g.beginPath(); g.arc(X(pos[0]), Y(pos[1]), (16 + 4 * Math.sin(t * 3)) * dpr, 0, 2 * Math.PI); g.stroke(); }
+    uav(pos, col.t2, 0); }
+  if (t >= D.Tstar) { const cc = cells[D.star]; g.strokeStyle = col.star; g.lineWidth = 3 * dpr; g.beginPath(); g.arc(X(cc.x), Y(cc.y), (24 + 3 * Math.sin(t * 2)) * dpr, 0, 2 * Math.PI); g.stroke(); }
+  // team 1
+  let p1 = D.bs, prev = D.bs, pt = 0;
+  for (const l of legs) { if (t < l.t0) { p1 = lerp(prev, l.s, (t - pt) / (l.t0 - pt)); prev = null; break; }
+    if (t <= l.t1) { const path = CL[l.k].path, n = path.length; const rev = Math.hypot(path[0][0] - l.s[0], path[0][1] - l.s[1]) > Math.hypot(path[n - 1][0] - l.s[0], path[n - 1][1] - l.s[1]);
+      const f = (t - l.t0) / (l.t1 - l.t0), i = Math.min(n - 1, Math.floor(f * (n - 1))); p1 = path[rev ? n - 1 - i : i]; prev = null;
+      g.strokeStyle = col.data; g.globalAlpha = 0.25; g.lineWidth = 1.5 * dpr; for (let r = 1; r <= 3; r++) { g.beginPath(); g.arc(X(p1[0]), Y(p1[1]), sc * (180 * r + (t * 300) % 180), 0, 2 * Math.PI); g.stroke(); } g.globalAlpha = 1; break; }
+    prev = l.e; pt = l.t1; }
+  if (prev) p1 = t < D.back ? lerp(prev, D.bs, (t - pt) / (D.back - pt)) : D.bs;
+  if (t < D.back) uav(p1, col.ink, 1);
+}
+
+function drawLanes(t) {
+  const w = lanes.width, h = lanes.height; gl.fillStyle = col.bg; gl.fillRect(0, 0, w, h);
+  gl.globalAlpha = t >= 0 ? 1 : 0.3;
+  const rows = legs.length + 2, rh = h / rows, x = v => 4 * dpr + (w - 8 * dpr) * v / END;
+  const bar = (r, a, b, color, f = 0.62) => { gl.fillStyle = color; gl.fillRect(x(a), r * rh + rh * (1 - f) / 2, Math.max(1.5 * dpr, x(b) - x(a)), rh * f); };
+  gl.strokeStyle = col.track; gl.lineWidth = 1; for (let s = 0; s < END; s += 60) { gl.beginPath(); gl.moveTo(x(s), 0); gl.lineTo(x(s), h); gl.stroke(); }
+  bar(0, 0, D.back, col.ink2, 0.3);
+  legs.forEach((l, i) => { const c = CL[l.k], r = i + 1; bar(r, l.t0, l.t1, col.axe); bar(r, l.t1, l.t1 + c.lastDone, col.bank, 0.4);
+    for (const s of c.lora.sends) bar(r, s, s + 1.2, col.match, 0.9);
+    for (const [cell, cc] of Object.entries(crit)) { if (cc.k !== l.k) continue;
+      for (const rp of cc.reports) { gl.fillStyle = rp[1] ? col.ink : col.ink2; gl.globalAlpha = (t >= 0 ? 1 : 0.3) * (rp[1] ? 1 : 0.5);
+        gl.beginPath(); gl.arc(x(rp[0]), r * rh + rh / 2, (cc.star ? 4.5 : 2.6) * dpr, 0, 2 * Math.PI); gl.fill(); }
+      gl.globalAlpha = t >= 0 ? 1 : 0.3; } });
+  const r2 = legs.length + 1;
+  for (const m of t2) bar(r2, m.t0, m.t1, m.kind === "verify" ? (m.cell === D.star ? col.star : col.ink) : m.kind === "stage" ? col.ink2 : col.t2, m.kind === "verify" ? 0.75 : 0.4);
+  gl.globalAlpha = 1;
+  gl.strokeStyle = col.star; gl.lineWidth = 2 * dpr; gl.setLineDash([4 * dpr, 3 * dpr]); gl.beginPath(); gl.moveTo(x(D.Tstar), 0); gl.lineTo(x(D.Tstar), h); gl.stroke(); gl.setLineDash([]);
+  if (t >= 0) { gl.strokeStyle = col.ink; gl.lineWidth = 2 * dpr; gl.beginPath(); gl.moveTo(x(t), 0); gl.lineTo(x(t), h); gl.stroke(); }
+}
+function drawChap(show) {
+  const w = chap.width, h = chap.height; gc.clearRect(0, 0, w, h); const gap = 3 * dpr, n = CH.length;
+  const unit = (w - gap * (n - 1)) * 0.4 / (n - 1), mw = w - gap * (n - 1) - unit * (n - 1);
+  let x = 0; CH.forEach((c, i) => { const ww = i < n - 1 ? unit : mw; const f = Math.max(0, Math.min(1, (show - starts[i]) / (c.d || 1)));
+    gc.fillStyle = col.track; gc.fillRect(x, h * 0.3, ww, h * 0.4); gc.fillStyle = col.fill; gc.fillRect(x, h * 0.3, ww * f, h * 0.4); x += ww + gap; });
+}
+function seekFromChap(px) { const w = chap.width, gap = 3 * dpr, n = CH.length, unit = (w - gap * (n - 1)) * 0.4 / (n - 1), mw = w - gap * (n - 1) - unit * (n - 1); let x = 0;
+  for (let i = 0; i < n; i++) { const ww = i < n - 1 ? unit : mw; if (px <= x + ww + gap / 2 || i === n - 1) { show = starts[i] + CH[i].d * Math.max(0, Math.min(1, (px - x) / ww)); dirty = true; return; } x += ww + gap; } }
+// ---------- player ----------
+let show = 0, playing = false, last = 0, dirty = true, speed = 1;
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ico = document.getElementById("ico");
+function setPlay(v) { playing = v; ico.innerHTML = v ? '<rect x="4" y="3" width="3.5" height="12"/><rect x="10.5" y="3" width="3.5" height="12"/>' : '<path d="M5 3v12l10-6z"/>'; last = performance.now(); }
+document.getElementById("play").onclick = () => { if (show >= TOTAL) show = 0; setPlay(!playing); };
+const chapIndex = () => { let i = 0; while (i < MI && show >= starts[i + 1] - 1e-6) i++; return i; };
+document.getElementById("next").onclick = () => { const i = chapIndex(); show = i < MI ? starts[i + 1] : TOTAL; dirty = true; };
+document.getElementById("prev").onclick = () => { const i = chapIndex(); show = show - starts[i] > 0.5 || i === 0 ? starts[i] : starts[i - 1]; dirty = true; };
+document.getElementById("speed").oninput = e => { speed = Math.pow(2, Number(e.target.value)); };
+let drag = false; const pick = e => { const r = chap.getBoundingClientRect(); seekFromChap((e.clientX - r.left) * dpr); };
+chap.addEventListener("pointerdown", e => { drag = true; chap.setPointerCapture(e.pointerId); pick(e); });
+chap.addEventListener("pointermove", e => { if (drag) pick(e); });
+chap.addEventListener("pointerup", () => { drag = false; });
+chap.addEventListener("keydown", e => { if (e.key === "ArrowRight") document.getElementById("next").click(); if (e.key === "ArrowLeft") document.getElementById("prev").click(); if (e.key === " ") { e.preventDefault(); document.getElementById("play").click(); } });
+window.addEventListener("resize", fit);
+function loop(now) {
+  if (playing) { show += (now - last) / 1000 * speed; last = now; if (show >= TOTAL) { show = TOTAL; setPlay(false); } dirty = true; }
+  if (dirty) { draw(show); dirty = false; }
+  requestAnimationFrame(loop); }
+fit();
+show = reduce ? starts[MI] + CH[MI].d * 0.4 : starts[4] + CH[4].d;
+setPlay(false); draw(show); requestAnimationFrame(loop);
+})();
+</script>

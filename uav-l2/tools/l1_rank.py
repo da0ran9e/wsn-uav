@@ -29,8 +29,8 @@ Methods (name = base + options):
   options   -grouped (broadcast order by aspect), -equal (no importance: every clue weight 1), -wait, -pu, -stage,
             -short / -latency (team 1's tour; default l3first)
   B1 (no phase 1: TSP over every critical cell with the large file), B2-r (groups, multicast large file), B3-r
-  (rotary multicast of the clue set to groups, then LoRa, team 2 greedy), B6 (rotary unicast of the clue set to
-  each critical cell), B7 (oracle: straight to c*)
+  (rotary multicast of the clue set to groups, then LoRa, team 2), B6 (rotary unicast of the clue set to each
+  critical cell, then LoRa, team 2), B7 (oracle: straight to c*); B3 and B6 take the team-2 options -pu, -stage
 Writes OUT-draws.csv (map, set, draw, method: Tstar, Tall, rank, dep, starIn, ...), OUT-cells.csv (per critical
 cell: held clue weight river/direct) and OUT-summary.csv.
 """
@@ -117,9 +117,11 @@ def lora(M, ready, phase):
     return out
 
 
-def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage=False):
+def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage=False, trace=None):
     """Team 2 visiting every cell. reports {cell: [(arrival at the BS, (mu, sd)), ...]} in time order.
-    Returns Tstar, Tall, rank of c*, departure, c*'s first report at the BS."""
+    Returns Tstar, Tall, rank of c*, departure, c*'s first report at the BS. trace (a list), when given, gets
+    ("p", t, {cell: P(c*)}) at every decision and the moves ("fly", t0, t1, a, b, cell), ("verify", t0, t1, cell),
+    ("stage", t0, t1, a, b), ("back", t0, t1, a, b)."""
     cells = list(pos)
     first = {c: reports[c][0][0] for c in cells}
     events = sorted({t for c in cells for t, _ in reports[c]})
@@ -138,8 +140,13 @@ def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage
             i = max(range(len(known)), key=lambda i: (pk[i] / (math.dist(p, pos[known[i]]) / V2 + VERIFY),
                                                      -math.dist(p, pos[known[i]])))
             go = rule == "greedy" or n_un == 0 or pk[i] >= n_un * pu
+            if trace is not None:
+                trace.append(("p", t, {c: pk[j] for j, c in enumerate(known)} | {"unreported": pu}))
         if go:
             c = known[i]
+            if trace is not None:
+                t1 = t + math.dist(p, pos[c]) / V2
+                trace += [("fly", t, t1, p, pos[c], c), ("verify", t1, t1 + VERIFY, c)]
             t += math.dist(p, pos[c]) / V2 + VERIFY
             p = pos[c]
             seen.append(c)
@@ -155,8 +162,13 @@ def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage
                 goal = tuple(sum(w[c] * pos[c][a] for c in w) / tot for a in (0, 1))
                 d = math.dist(p, goal)
                 f = min(1.0, V2 * (nxt - t) / d) if d > 0 else 0.0
-                p = (p[0] + f * (goal[0] - p[0]), p[1] + f * (goal[1] - p[1]))
+                q = (p[0] + f * (goal[0] - p[0]), p[1] + f * (goal[1] - p[1]))
+                if trace is not None:
+                    trace.append(("stage", t, t + f * d / V2, p, q))
+                p = q
         t = nxt
+    if trace is not None:
+        trace.append(("back", t, t + math.dist(p, bs) / V2, p, bs))
     return Ts, t + math.dist(p, bs) / V2, rank, dep, first[star]
 
 
@@ -239,8 +251,9 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
                         rd[b] = t + tm
                     p = hp
                 a_, p_ = lora(M, rd, phase), posts("full", "", C)
-                out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star)
-        elif meth == "B6":
+                out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, "early",
+                                  "pu" if "pu" in opts else "greedy", "stage" in opts)
+        elif base == "B6":
             t, p, rd = 0.0, bs, {}
             for i in tsp_order(bs, [pos[x] for x in crits]):
                 x = crits[i]
@@ -248,7 +261,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
                 rd[x] = t + tm
                 p = pos[x]
             a_, p_ = lora(M, rd, phase), posts("full", "", C)
-            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star)
+            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, "early",
+                              "pu" if "pu" in opts else "greedy", "stage" in opts)
         else:
             raise SystemExit(f"unknown method {meth}")
     w = np.array([c["w"] for c in C])
@@ -262,7 +276,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
 
 def one_work(job):
     """All draws on one work folder (run in a worker process)."""
-    sname, w, ndraws, methods = job
+    sname, w, ndraws, methods, par = job
+    L.DIM, L.RHO, L.M = par["dim"], par["rho"], par["m"]
     C = L.clues()
     Cq = [dict(c, w=1.0) for c in C]
     seqs = {"interleaved": L.order(C, "interleaved"), "grouped": L.order(C, "grouped")}
@@ -295,11 +310,15 @@ def main():
     ap.add_argument("--draws", type=int, default=100)
     ap.add_argument("--methods", default=METHODS)
     ap.add_argument("--jobs", type=int, default=4)
+    ap.add_argument("--dim", type=int, default=L.DIM, help="layer 1: effective embedding dimension")
+    ap.add_argument("--rho", type=float, default=L.RHO, help="layer 1: share of look-alike crops")
+    ap.add_argument("--m", type=int, default=L.M, help="layer 1: crops per store")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     methods = a.methods.split(",")
-    jobs = [(sname, w, a.draws, methods) for sname, globs in a.set
+    par = dict(dim=a.dim, rho=a.rho, m=a.m)
+    jobs = [(sname, w, a.draws, methods, par) for sname, globs in a.set
             for w in sorted(w for g in globs.split(",") for w in glob.glob(g) if complete(w))]
     with Pool(a.jobs) as pool:
         got = pool.map(one_work, jobs, chunksize=1)

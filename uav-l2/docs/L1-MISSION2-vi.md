@@ -1,10 +1,40 @@
 # Nhiệm vụ trọn vẹn với mô hình lớp 1 mới: đề xuất, ablation, baseline
 
 Lời gốc: CLAUDE.md §8 mục 110–114. Mô hình lớp 1 (bản cho System Model): `paper/L1-MODEL-vi.md`.
-Mã: `tools/l1_model.py` (mô hình điểm), `tools/l1_rank.py` (cả nhiệm vụ), `tools/l1_compare.py` (bảng, hình), `tools/subch.py` (baseline subCH), `tools/tour_heur.py` (tour khi có nhiều cluster), `tools/l1_anim.py` + `anim/l1-head.html`, `anim/l1-body.html` (hình động), `tools/l1_steps.py` (hình từng bước).
-Log: `logs/2026-10-20_1834-l1-mission/`, `logs/2026-10-20_1934-campaign2/`.
+Mã: `tools/l1_model.py` (mô hình điểm), `tools/l1_rank.py` (cả nhiệm vụ), `tools/l1_compare.py` (bảng, hình), `tools/subch.py` (baseline subCH), `tools/tour_heur.py` (tour khi có nhiều cluster), `tools/l1_anim.py` + `anim/l1-head.html`, `anim/l1-body.html` (hình động), `tools/l1_steps.py` (hình từng bước), `tools/l1_state.py` (trạng thái đội 2).
+Log: `logs/2026-10-20_1834-l1-mission/`, `logs/2026-10-20_1846-campaign2/`.
 
-__SUMMARY__
+## Tóm tắt
+
+**Cấu hình cuối (P\*):**
+- Cluster có sẵn (k‑medoids ≤ 80 cell), đường thẳng qua CH; tour đội 1 theo độ trễ có trọng số.
+- Bộ 12 manh mối phát xen kẽ; River cửa sổ 400 kB.
+- Mỗi critical cell báo hai lần qua CH và LoRa.
+- Đội 2 cất cánh cùng đội 1, đón đầu, và đi xác minh khi P ≥ P_U/4.
+
+**Kết quả** (40 bản đồ × 100 lượt, ghép cặp; số thăm dò vì chỉ có 10 bản đồ mỗi cỡ, dưới quy tắc N ≥ 120):
+
+| Phương án | T\* k2 / k4 / k6 / k8 (s) | So với P\* |
+|---|---|---|
+| **P\*** | **408 / 566 / 675 / 769** | |
+| không hợp tác (B4) | 434 / 622 / 734 / 838 | chậm hơn trên 39/40 bản đồ |
+| P của vòng trước | 513 / 678 / 783 / 867 | chậm hơn trên 40/40 |
+| cánh quay tốt nhất (B3‑500) | 783 / 1 267 / 1 795 / 2 123 | gấp 1,9–2,8 lần |
+| không pha 1 (B1) | 897 / 1 699 / 2 498 / 3 083 | gấp 2,2–4,0 lần |
+| cận dưới, biết trước c\* (B7) | 245 / 287 / 314 / 347 | |
+| subCH (baseline lớp 2) | 423 / 617 / 717 / 830 | chậm hơn trên 32/40 |
+| MEANDER (lớp 2 đề xuất) | 470 / 642 / 792 / 919 | chậm hơn trên 40/40 |
+
+1. **Hợp tác (River) rút T\* 26–68 s nhờ xếp hạng đúng hơn, không phải nhờ báo sớm hơn.** Lợi lớn hơn khi đối sánh nhiễu: 92 s khi D = 64, 34 s khi D = 256.
+2. **Đòn bẩy lớn nhất là pha 2:** đón đầu, cất cánh lúc 0, ngưỡng β = 1/4. 55–64 % T\* nằm sau lúc báo cáo của c\* về BS.
+3. **Lớp 2:** cả hai cách tái cấu trúc (MEANDER, subCH) đều chậm hơn cluster có sẵn. Thêm cluster làm tour đội 1 dài hơn và tăng số critical cell. Cluster có sẵn hiện là lựa chọn tốt nhất.
+4. **Hai ý tưởng thử sau vòng 2:**
+   - Cận trên "đủ 12 manh mối" chỉ nhanh hơn 0–7 s, nên không đáng sửa Axe ngắn ở k‑medoids.
+   - Đổi hướng giữa đường nhanh hơn 5–15 s, trên 36/40 bản đồ.
+5. **Hướng tiếp (chưa cài):**
+   - Xác minh hai bước.
+   - Cell báo thêm độ tự tin.
+   - Lớp 2 nhắm vào tour: ít cluster, Axe ≥ 2 km, đường bay liên tục.
 
 ## 1. Cách làm: ba vòng
 
@@ -12,7 +42,7 @@ __SUMMARY__
 |---|---|---|
 | 1 | Cài mô hình lớp 1 vào nhiệm vụ. So P cũ, không hợp tác, thứ tự phát, độ quan trọng, các baseline. | Có sẵn: 39 bản đồ cluster có sẵn (k‑medoids, River đầy đủ D); 3 bản đồ cho mọi cách chia lớp 2. |
 | 1b | Thử bốn ý tưởng rút ra từ vòng 1 (mục 2.2), từng cái và tổ hợp. | Như vòng 1. |
-| 2 | Chạy ns‑3 mới cho đủ 40 bản đồ: River cửa sổ cho cluster có sẵn, baseline subCH, MEANDER (lớp 2 đề xuất). So mọi phương án với chính sách tốt nhất. | 40 bản đồ × 3 cách chia. |
+| 2 | Chạy ns‑3 mới cho đủ 40 bản đồ: River cửa sổ cho cluster có sẵn, baseline subCH, MEANDER (lớp 2 đề xuất). Chọn ngưỡng chờ của đội 2, so mọi phương án với chính sách tốt nhất, thử thêm hai ý tưởng (mục 5.3–5.4). | 40 bản đồ × 3 cách chia. |
 | 3 | Độ nhạy theo tham số lớp 1, chọn cấu hình cuối, báo cáo từng bước. | Như vòng 2. |
 
 Đơn vị độc lập là **bản đồ**: 10 bản đồ mỗi cỡ (2, 4, 6, 8 cluster). Mỗi bản đồ chạy 100 lượt bốc (kho ảnh, nhiễu đối sánh, pha LoRa), ghép cặp giữa mọi phương án: cùng bản đồ, cùng lượt bốc thì cùng một "thế giới". Khoảng tin cậy 95 % tính trên trung bình của từng bản đồ (phân phối t, 9 bậc tự do). Mười bản đồ mỗi cỡ là dưới quy tắc N ≥ 120, nên mọi số ở đây là số thăm dò. Bằng chứng chính là chiều chênh lệch nhất quán qua các bản đồ (đếm số bản đồ thắng).
@@ -38,8 +68,11 @@ __SUMMARY__
 
 ### 2.3 Hình
 - `figures/l1-model.png`: mô hình lớp 1 (mô tả trong `paper/L1-MODEL-vi.md` §4).
-- `figures/l1-steps-<bản đồ>.png`: một nhiệm vụ qua các bước 1–9 (mục 5).
-- `anim/l1-replay.html`: hình động cùng nhiệm vụ (mục 5).
+- `figures/l1-e1-abl-tstar.png`, `l1-e1-base-tstar.png`, `l1-e1-breakdown.png`: E1 (mục 5.2).
+- `figures/l1-e2-tstar.png`, `l1-e2-breakdown.png`: E2, ba cách chia (mục 5.5).
+- `figures/l1-sens.png`: độ nhạy (mục 6).
+- `figures/l1-steps-k4-s2.png`, `l1-steps-mw-k4-s2.png`, `l1-steps-sw-k4-s2.png`: một nhiệm vụ qua các bước 1–9 (mục 7).
+- `anim/l1-replay.html`: hình động của nhiệm vụ k‑medoids (mục 7).
 
 ## 3. Vòng 1: mô hình lớp 1 trong nhiệm vụ cũ (`data/l1rank/r1-*.csv`)
 
@@ -90,7 +123,7 @@ Ba ý tưởng cộng được với nhau. Ý thứ tư (điểm hai bước) s�
 
 ## 5. Vòng 2: chiến dịch 40 bản đồ
 
-Chiến dịch ns‑3 mới (`logs/2026-10-20_1934-campaign2/`): River cửa sổ 400 kB cho cluster có sẵn (KW, 40 bản đồ), baseline subCH (SW, 40) và MEANDER (MW, 40). LANE bỏ khỏi chiến dịch để tiết kiệm khoảng 2,5 giờ máy, vì ở vòng 1 nó thua cả k‑medoids lẫn MEANDER.
+Chiến dịch ns‑3 mới (`logs/2026-10-20_1846-campaign2/`): River cửa sổ 400 kB cho cluster có sẵn (KW, 40 bản đồ), baseline subCH (SW, 40) và MEANDER (MW, 40). LANE bỏ khỏi chiến dịch để tiết kiệm khoảng 2,5 giờ máy, vì ở vòng 1 nó thua cả k‑medoids lẫn MEANDER.
 
 ### 5.1 Ngưỡng chờ của đội 2 (`data/l1rank/rule-*.csv`)
 
@@ -227,15 +260,16 @@ T\* (s), k2 / k4 / k6 / k8, và số bản đồ (trên 40) mà cách chia đó 
 |---|---|---|---|---|---|---|
 | **k‑medoids (cluster có sẵn, ablation)** | **408 / 566 / 675 / 769** | 434 / 622 / 734 / 838 | 403 / 554 / 662 / 754 | 897 / 1 699 / 2 498 / 3 083 | 245 / 287 / 314 / 347 | |
 | subCH (baseline) | 423 / 617 / 717 / 830 | 447 / 659 / 783 / 875 | 411 / 599 / 704 / 813 | 838 / 1 641 / 2 342 / 2 866 | 243 / 289 / 312 / 346 | 8 |
-__MWROW__
+| MEANDER (lớp 2 đề xuất) | 470 / 642 / 792 / 919 | 495 / 679 / 840 / 965 | 464 / 628 / 778 / 902 | 1 049 / 1 839 / 2 876 / 3 500 | 243 / 286 / 316 / 349 | 0 |
 
-| | k‑medoids | subCH | __MWHEAD__ |
+| | k‑medoids | subCH | MEANDER |
 |---|---|---|---|
-| số cluster TB (k2 / k4 / k6 / k8) | 2 / 4 / 6 / 8 | 2,7 / 6,4 / 8,3 / 11,5 | __MWCL__ |
-| tour đội 1 (s) | 213 / 369 / 512 / 682 | 232 / 480 / 632 / 807 | __MWT1__ |
-| báo cáo đầu của c\* về BS (s) | 147 / 221 / 280 / 344 | 155 / 240 / 302 / 366 | __MWSI__ |
-| hạng TB của c\* | 1,93 / 2,21 / 2,37 / 2,33 | 1,98 / 2,46 / 2,48 / 2,55 | __MWRK__ |
-| trọng số manh mối giữ sau River (đủ 12) | 97 % (56 %) | 84 % (20 %) | __MWW__ |
+| số cluster TB (k2 / k4 / k6 / k8) | 2 / 4 / 6 / 8 | 2,7 / 6,4 / 8,3 / 11,5 | 3,3 / 6,2 / 9,0 / 12,1 |
+| số critical cell TB | 13,5 / 26,9 / 39,9 / 50,1 | 12,2 / 25,0 / 37,4 / 46,7 | 16,5 / 30,6 / 47,3 / 59,0 |
+| tour đội 1 (s) | 213 / 369 / 512 / 682 | 232 / 480 / 632 / 807 | 285 / 529 / 738 / 950 |
+| báo cáo đầu của c\* về BS (s) | 147 / 221 / 280 / 344 | 155 / 240 / 302 / 366 | 178 / 285 / 366 / 459 |
+| hạng TB của c\* | 1,93 / 2,21 / 2,37 / 2,33 | 1,98 / 2,46 / 2,48 / 2,55 | 2,19 / 2,43 / 2,55 / 2,58 |
+| trọng số manh mối giữ sau River (đủ 12) | 97 % (56 %) | 84 % (20 %) | 91 % (64 %) |
 
 **subCH (baseline mục 114) chậm hơn cluster có sẵn 15–61 s; nó chỉ nhanh hơn trên 8/40 bản đồ.** Hai nguyên nhân, đều thấy trong bảng:
 1. **Nhiều cluster hơn:** tour đội 1 dài thêm 19–125 s, và báo cáo của c\* về muộn hơn 8–22 s.
@@ -243,11 +277,18 @@ __MWROW__
 
 Trong subCH, hợp tác vẫn giúp 24–66 s so với không hợp tác. B1 nhanh hơn một chút khi chia subCH, vì có ít critical cell hơn để thăm.
 
-__MWTEXT__
+**MEANDER (lớp 2 đề xuất, mục 103–106) chậm hơn cluster có sẵn trên cả 40/40 bản đồ: trung bình 101 s (từ 9 đến 273 s tùy bản đồ; 62 / 76 / 117 / 150 s theo cỡ).** Nó cho nhiều critical cell giữ đủ 12 manh mối hơn (64 % so với 56 %), nhưng:
+1. **Tour đội 1 dài hơn nhiều** (thêm 72–268 s). MEANDER chia miền thành nhiều cluster hơn (3,3–12,1), mỗi cluster một đường cong, và đội 1 phải nối các đường đó.
+2. **Báo cáo của c\* về muộn hơn** 31–115 s, vì tour dài hơn nên cluster chứa c\* được bay muộn hơn.
+3. **Nhiều critical cell hơn** (16,5–59,0 so với 13,5–50,1), nên c\* khó nổi bật hơn: hạng TB 2,19–2,58 so với 1,93–2,37.
+
+Trong MEANDER, hợp tác vẫn giúp 25–48 s so với không hợp tác.
+
+**Kết luận lớp 2.** Với một UAV cánh bằng bay lần lượt từng cluster, T\* bị chi phối bởi tour đội 1 và số critical cell. Hai cách tái cấu trúc đã thử đều làm xấu hai đại lượng này: MEANDER thêm cluster để bám địa hình, subCH thêm cluster để tách critical cell. Vì thế cluster có sẵn (k‑medoids, đường thẳng qua CH) vẫn nhanh nhất. Kết quả này khớp với vòng 1 trên 3 bản đồ. **Ý tưởng tiếp (chưa cài):** một thiết kế lớp 2 nhắm vào T\* cần ít cluster, mỗi Axe ≥ 2 km (đủ cho bộ manh mối) và một tour ngắn nối các Axe. Ví dụ, chọn một đường bay liên tục cho cả miền trước, rồi mới chia cluster dọc theo nó.
 
 Hình (không chữ):
 - `figures/l1-e2-tstar.png`: bốn nhóm k2, k4, k6, k8, mỗi chấm là trung bình ± khoảng tin cậy 95 % trên 10 bản đồ. Chấm tròn là P\*, vuông là không hợp tác, tam giác là B7. Màu: xanh dương là k‑medoids, tím là subCH, xanh lá là MEANDER (nhạt hơn cho không hợp tác).
-- `figures/l1-e2-breakdown.png`: như `l1-e1-breakdown.png`, cho từng cách chia (cùng thứ tự và màu).
+- `figures/l1-e2-breakdown.png`: như `l1-e1-breakdown.png`. Trong mỗi nhóm, trái sang phải: P\* của k‑medoids, subCH, MEANDER; không hợp tác của ba cách chia (màu nhạt); B7 của ba cách chia.
 - `figures/l1-steps-sw-k4-s2.png`: một nhiệm vụ subCH trên bản đồ k4‑s2 (mục 7).
 
 ## 6. Độ nhạy theo tham số lớp 1 (`data/l1rank/sens-*.csv`, `figures/l1-sens.png`)

@@ -22,4 +22,14 @@
 
 **Đầu ra:** scratchpad `KW`, `SW`, `MW`, mỗi bản đồ một thư mục (map, cluster, đường bay, bitmap lượt bay, kết quả River), khoảng 80–120 MB mỗi bộ, không commit. Log từng job: `KW/`, `SW/`, `MW/`.
 
-__STATS__
+**Kết quả chính:** chạy 18:46–23:45, toàn bộ mã thoát 0.
+
+| Bộ | Job | Lượt River | Lượt còn critical cell chưa đủ | Thời gian mô phỏng River, TB / lớn nhất | Tổng thời gian job |
+|---|---|---|---|---|---|
+| KW | 37 | 182 | 0 | 33,1 / 172,2 s | 10 479 s |
+| SW | 40 | 289 | 0 | 17,0 / 139,8 s | 13 264 s |
+| MW | 37 | 278 | 0 | 28,8 / 128,1 s | 11 158 s |
+
+Cộng với ba bản đồ liên kết, mỗi bộ đủ 40 bản đồ. Phân tích cấp nhiệm vụ: `uav-l2/docs/L1-MISSION2-vi.md` mục 5.
+
+**Dang dở:** 10 bản đồ mỗi cỡ là dưới quy tắc N ≥ 120.

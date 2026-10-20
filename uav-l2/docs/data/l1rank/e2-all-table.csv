@@ -79,3 +79,43 @@ subch B7,subch,B7,k2,10,1000,243.3,9.1,309.4,1.0,1.0,0.0,234.3,12.2,2.7,nan,-164
 subch B7,subch,B7,k4,10,1000,289.0,8.7,366.9,1.0,1.0,0.0,457.0,25.0,6.4,nan,-276.7,10
 subch B7,subch,B7,k6,10,1000,312.3,11.9,413.9,1.0,1.0,0.0,608.4,37.4,8.3,nan,-362.8,10
 subch B7,subch,B7,k8,10,1000,346.0,11.2,450.3,1.0,1.0,0.0,786.5,46.7,11.5,nan,-423.3,10
+meander P*,meander,P+prog-latency-puq-stage-zero,k2,10,1000,470.1,39.1,778.2,2.19,0.431,177.6,285.4,16.5,3.3,2871.9,62.0,0
+meander P*,meander,P+prog-latency-puq-stage-zero,k4,10,1000,642.2,25.5,1046.4,2.43,0.387,284.9,529.2,30.6,6.2,5972.2,76.5,0
+meander P*,meander,P+prog-latency-puq-stage-zero,k6,10,1000,791.9,36.5,1255.5,2.55,0.377,366.3,738.4,47.3,9.0,9847.9,116.9,0
+meander P*,meander,P+prog-latency-puq-stage-zero,k8,10,1000,919.3,43.0,1425.7,2.58,0.406,459.4,950.4,59.0,12.1,13111.4,149.9,0
+meander leave at first report,meander,P+prog-latency-puq-stage,k2,10,1000,534.5,35.1,845.5,2.19,0.427,177.6,285.4,16.5,3.3,2934.4,126.5,0
+meander leave at first report,meander,P+prog-latency-puq-stage,k4,10,1000,678.8,30.3,1095.5,2.4,0.393,284.9,529.2,30.6,6.2,6003.4,113.1,0
+meander leave at first report,meander,P+prog-latency-puq-stage,k6,10,1000,815.3,38.6,1276.4,2.55,0.377,366.3,738.4,47.3,9.0,9859.2,140.2,0
+meander leave at first report,meander,P+prog-latency-puq-stage,k8,10,1000,932.3,40.0,1437.1,2.58,0.407,459.4,950.4,59.0,12.1,13114.9,163.0,0
+meander River report only,meander,P-latency-puq-stage-zero,k2,10,1000,478.5,39.4,773.0,2.2,0.423,186.5,285.4,16.5,3.3,2880.9,70.5,0
+meander River report only,meander,P-latency-puq-stage-zero,k4,10,1000,649.6,28.0,1055.6,2.42,0.393,295.9,529.2,30.6,6.2,5983.3,83.9,0
+meander River report only,meander,P-latency-puq-stage-zero,k6,10,1000,804.7,34.9,1280.0,2.55,0.382,378.6,738.4,47.3,9.0,9863.3,129.7,0
+meander River report only,meander,P-latency-puq-stage-zero,k8,10,1000,934.7,45.0,1450.7,2.59,0.403,470.9,950.4,59.0,12.1,13126.3,165.4,0
+meander B4,meander,B4-latency-puq-stage-zero,k2,10,1000,495.1,47.1,845.8,2.37,0.411,177.6,285.4,16.5,3.3,2849.1,87.1,0
+meander B4,meander,B4-latency-puq-stage-zero,k4,10,1000,679.3,26.3,1148.4,2.61,0.383,284.9,529.2,30.6,6.2,5965.8,113.6,0
+meander B4,meander,B4-latency-puq-stage-zero,k6,10,1000,840.2,33.6,1447.6,2.78,0.395,366.3,738.4,47.3,9.0,9762.3,165.1,0
+meander B4,meander,B4-latency-puq-stage-zero,k8,10,1000,965.0,37.9,1563.5,2.76,0.397,459.4,950.4,59.0,12.1,13034.9,195.6,0
+meander beta 0,meander,P+prog-latency-stage-zero,k2,10,1000,494.6,40.6,790.6,2.58,0.255,177.6,285.4,16.5,3.3,2833.9,86.6,0
+meander beta 0,meander,P+prog-latency-stage-zero,k4,10,1000,664.7,22.8,1023.0,3.15,0.147,284.9,529.2,30.6,6.2,5846.4,98.9,0
+meander beta 0,meander,P+prog-latency-stage-zero,k6,10,1000,797.7,22.0,1205.4,3.69,0.098,366.3,738.4,47.3,9.0,9577.3,122.6,0
+meander beta 0,meander,P+prog-latency-stage-zero,k8,10,1000,908.0,54.9,1323.9,4.16,0.08,459.4,950.4,59.0,12.1,12657.3,138.6,0
+meander beta 1,meander,P+prog-latency-pu-stage-zero,k2,10,1000,492.3,45.2,820.9,2.07,0.536,177.6,285.4,16.5,3.3,2914.1,84.2,0
+meander beta 1,meander,P+prog-latency-pu-stage-zero,k4,10,1000,691.4,27.9,1158.1,2.23,0.493,284.9,529.2,30.6,6.2,6058.0,125.7,0
+meander beta 1,meander,P+prog-latency-pu-stage-zero,k6,10,1000,869.5,38.7,1438.6,2.31,0.501,366.3,738.4,47.3,9.0,9964.8,194.5,0
+meander beta 1,meander,P+prog-latency-pu-stage-zero,k8,10,1000,1029.9,43.0,1600.4,2.32,0.545,459.4,950.4,59.0,12.1,13267.1,260.6,0
+meander P* redirect,meander,P+prog-latency-puq-stage-zero-redir,k2,10,1000,464.0,38.3,779.1,2.12,0.477,177.6,285.4,16.5,3.3,2879.7,56.0,0
+meander P* redirect,meander,P+prog-latency-puq-stage-zero-redir,k4,10,1000,627.9,30.5,1038.0,2.31,0.424,284.9,529.2,30.6,6.2,5984.6,62.2,1
+meander P* redirect,meander,P+prog-latency-puq-stage-zero-redir,k6,10,1000,778.4,42.8,1284.3,2.44,0.424,366.3,738.4,47.3,9.0,9863.4,103.3,0
+meander P* redirect,meander,P+prog-latency-puq-stage-zero-redir,k8,10,1000,901.5,48.6,1408.5,2.47,0.45,459.4,950.4,59.0,12.1,13128.6,132.2,1
+meander P old,meander,P,k2,10,1000,570.7,43.3,879.2,2.55,0.201,190.6,284.7,16.5,3.3,2919.0,162.6,0
+meander P old,meander,P,k4,10,1000,716.7,28.3,1071.4,3.14,0.115,308.8,522.5,30.6,6.2,5901.8,150.9,0
+meander P old,meander,P,k6,10,1000,856.7,36.7,1267.2,3.57,0.069,395.3,707.8,47.3,9.0,9646.8,181.7,0
+meander P old,meander,P,k8,10,1000,1012.9,63.1,1423.8,4.12,0.051,531.5,926.6,59.0,12.1,12768.4,243.5,0
+meander B1,meander,B1,k2,10,1000,1049.3,106.7,1856.2,8.78,0.071,0.0,284.7,16.5,3.3,2050.0,641.3,0
+meander B1,meander,B1,k4,10,1000,1839.2,111.4,3225.7,15.64,0.031,0.0,522.5,30.6,6.2,3670.6,1273.5,0
+meander B1,meander,B1,k6,10,1000,2875.6,153.5,5043.9,24.71,0.021,0.0,707.8,47.3,9.0,5557.7,2200.5,0
+meander B1,meander,B1,k8,10,1000,3500.0,266.3,6174.4,30.06,0.016,0.0,926.6,59.0,12.1,6935.4,2730.7,0
+meander B7,meander,B7,k2,10,1000,242.8,9.1,306.0,1.0,1.0,0.0,284.7,16.5,3.3,nan,-165.2,10
+meander B7,meander,B7,k4,10,1000,285.6,9.9,358.5,1.0,1.0,0.0,522.5,30.6,6.2,nan,-280.1,10
+meander B7,meander,B7,k6,10,1000,316.5,13.0,413.9,1.0,1.0,0.0,707.8,47.3,9.0,nan,-358.6,10
+meander B7,meander,B7,k8,10,1000,349.4,10.2,459.2,1.0,1.0,0.0,926.6,59.0,12.1,nan,-420.0,10

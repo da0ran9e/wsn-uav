@@ -24,8 +24,8 @@ Báo cáo đầy đủ: `uav-l2/docs/L1-MISSION2-vi.md`. Dữ liệu ns‑3 củ
 | `state.md` | 21:40 | `l1_state.py`: đội 2 đang làm gì lúc báo cáo của c\* về BS. |
 | `redir.sh`, `redir.md` | 21:45 | Đội 2 đổi hướng giữa đường (`-redir`), 40 bản đồ × 100 lượt. |
 | `trace-subch.md` | 21:52 | River có trace trên subCH k4‑s2 (`river_trace.sh`, kết quả trùng lần chạy gốc), hình từng bước subCH. |
-| `e2.sh`, `e2-subch.md`, `e2-meander.md` | | **E2:** subCH (SW) và MEANDER (MW), 40 bản đồ × 100 lượt, ghép cặp với E1. |
-| `e2-figs.sh`, `e2-figs.md` | | Bảng và hình E2. |
+| `e2.sh`, `e2-subch.md`, `e2-meander.md` | 22:10, 23:45 | **E2:** subCH (SW) và MEANDER (MW), 40 bản đồ × 100 lượt, ghép cặp với E1. |
+| `e2-figs.sh`, `e2-figs-subch.md`, `e2-figs.md` | 22:15, 23:50 | Bảng và hình E2 (lần đầu chỉ có subCH, lần cuối đủ ba cách chia). |
 
 **Đầu vào:** các thư mục nhiệm vụ trong scratchpad (`/tmp/claude-0/.../scratchpad/`): `KF` (k‑medoids, River đầy đủ D), `KW` (River cửa sổ 400 kB), `SW` (subCH), `MW` (MEANDER), `TR` (trace River cho hình động). Mỗi bộ khoảng 80–120 MB, không commit.
 
@@ -41,7 +41,10 @@ Báo cáo đầy đủ: `uav-l2/docs/L1-MISSION2-vi.md`. Dữ liệu ns‑3 củ
 - Baseline cánh quay tốt nhất (B3‑500) chậm hơn 1,9–2,8 lần, B1 chậm hơn 2,2–4,0 lần. Cận dưới B7: 245–347 s.
 - Cận trên "đủ 12 manh mối" chỉ nhanh hơn 0–7 s. Đổi hướng giữa đường nhanh hơn 5–15 s (36/40 bản đồ).
 
-__E2__
+**Kết quả chính (E2, P\*, T\* k2 / k4 / k6 / k8):**
+- k‑medoids (cluster có sẵn) 408 / 566 / 675 / 769 s, nhanh nhất.
+- subCH 423 / 617 / 717 / 830 s: chậm hơn trên 32/40 bản đồ (nhiều cluster hơn nên tour dài hơn, Axe ngắn hơn bộ manh mối).
+- MEANDER 470 / 642 / 792 / 919 s: chậm hơn trên 40/40 bản đồ, trung bình 101 s (tour đội 1 dài thêm 72–268 s, nhiều critical cell hơn).
 
 **Dang dở:**
 - Mọi số là số thăm dò: 10 bản đồ mỗi cỡ, dưới quy tắc N ≥ 120.

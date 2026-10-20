@@ -7,7 +7,7 @@
 #   LW  LANE 4.5 (layer 2), window 400 kB
 set -u
 S=/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad
-L=/home/user/wsn-uav/logs/2026-10-20_1934-campaign2
+L=/home/user/wsn-uav/logs/2026-10-20_1846-campaign2
 set_=$1; m=$2; K=${m#k}; K=${K%%-*}; seed=${m##*-s}
 # LANE dropped at 19:12 to save about 2.5 h of machine time: on k4-s2 / k6-s4 / k8-s4 it trailed k-medoids and
 # MEANDER (round 1); its three maps stay in LW through the links to MLw

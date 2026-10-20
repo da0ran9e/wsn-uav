@@ -1331,6 +1331,13 @@ node chỉ báo điểm cao nhất nhưng cách tính điểm
 chưa chốt tôi nghĩ là thứ tự thăm như hiện tại là đủ ổn
 ```
 
+*113. 2026-10-20 · layer 1 · cách tính điểm: mỗi ảnh tham chiếu thêm chỉ số độ quan trọng (mặt cao, màu quần áo thấp), kết hợp với độ trùng khớp cho một hoặc một tập manh mối; UAV phát xen kẽ ảnh quan trọng và ảnh dễ nhận diện; pha 2 thăm hết nhưng đánh giá bằng thời điểm thăm điểm cao nhất*
+
+```text
+cách tính điểm tôi có một đề suất khác, với mỗi ảnh tham chiếu L sẽ có thêm một chỉ số độ quan trọng, ví dụ khuôn mặt có độ quan trọng cao, hoặc màu sắc quần áo có độ trùng khớp tuy cao nhưng lại ít quan trọng hơn … kết hợp cả 2 chỉ số này để đánh giá điểm cho một hoặc một tập manh mối khi đó uav cần đưa các ảnh có tầm nhìn quan trọng và  độ nhận diện xen kẽ nhau cho hiệu quả
+mọi điểm đều được thăm trong pha 2 nhưng ta sẽ đánh dấu điểm cao nhất được thăm vào thời điểm nào khi đánh giá
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -114,7 +114,15 @@ Thay cho §2–4 ở các điểm sau:
 - **Node chỉ báo một số: điểm cao nhất.** Cách tính điểm từ M ảnh và L ảnh tham chiếu **chưa chốt**.
 - **Đội 2 thăm tất cả các điểm** đã báo về, theo thứ tự như hiện tại: điểm chia cho (thời gian bay + hover), rồi về BS.
 
+**Bổ sung sau mục 113:**
+- **Mỗi ảnh tham chiếu j mang hai chỉ số:** độ nhận diện r_j (gần 1) và độ quan trọng w_j. Ví dụ: mặt có w cao; màu quần áo dễ khớp nhưng w thấp.
+- **Điểm của một manh mối hoặc một tập manh mối** kết hợp cả hai chỉ số. Công thức chưa chốt.
+- **Thứ tự phát của UAV:** xen kẽ ảnh quan trọng và ảnh dễ nhận diện.
+- **Đánh giá pha 2:** đội 2 vẫn thăm mọi điểm. Đại lượng chính là thời điểm điểm cao nhất được thăm.
+
 **Còn mở:**
-1. Cách tính điểm của node.
-2. Đại lượng dùng để đánh giá pha 2 khi mọi điểm đều được thăm.
+1. Công thức kết hợp. Đề xuất: S_i = Σ_j w_j·r_j·v_ij / W, với W = tổng w_j của cả bộ L; node báo max_i S_i. Chia cho W của cả bộ nên cell thiếu manh mối có điểm thấp hơn.
+2. Mỗi ảnh kho mang một giá trị khớp, hay một giá trị cho mỗi loại manh mối (mặt, quần áo, ...).
+3. w_j do BS gán theo loại manh mối, hay suy ra từ độ phân biệt của loại đó.
+4. "Điểm cao nhất" tính theo điểm khi cell có đủ bộ L (cùng một cell ở mọi phương án) hay theo điểm đã báo. "Được thăm" là lúc tới nơi hay lúc xác minh xong.
 

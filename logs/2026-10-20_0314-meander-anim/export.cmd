@@ -1,0 +1,1 @@
+python3 tools/meander_anim.py --work /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MM/k4 --clusters 4 --seed 2 --trace /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MM/k4/tr --out docs/anim/meander.json

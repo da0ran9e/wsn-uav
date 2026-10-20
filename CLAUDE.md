@@ -1271,6 +1271,12 @@ trong phần giả lập hiện tại ta đang xây các bank bằng các path s
 thử chạy trên bản đồ 4-8 clusters xem
 ```
 
+*105. 2026-10-20 · uav-l2 · mô tả chi tiết kèm visualize từng bước (ưu tiên animation) cho thử nghiệm MEANDER ns-3 (mục 104)*
+
+```text
+cho tôi mô tả chi tiết kèm visualize từng bước (animation càng tốt)
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

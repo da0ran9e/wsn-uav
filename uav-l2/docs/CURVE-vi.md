@@ -214,6 +214,8 @@ Không critical cell nào thiếu dữ liệu ở giới hạn 900 s.
 - Quy tắc N ≥ 120 chưa đạt, chưa dùng được cho paper.
 - Tuy vậy, chiều chênh lệch giống nhau trên cả ba bản đồ, và cỡ chênh (130–200 s) lớn hơn khoảng tin cậy.
 
+Animation từng bước của nhiệm vụ MEANDER trên bản đồ 4 cluster: `anim/meander-replay.html` (mô tả trong `ANIM-vi.md`), hình tĩnh `figures/meander-anim-steps.png`.
+
 ### 3.4 Ý nghĩa và hướng sửa (chưa làm, cần bàn)
 - **Hàm mục tiêu của tái cấu trúc lớp 2 đang sai.**
   - LANE và MEANDER tối ưu "độ phủ River" (critical cell gần Axe). Nhưng thời gian nhiệm vụ do **tổng quãng bay** và **chiều dài Axe / D mỗi cluster** quyết định.

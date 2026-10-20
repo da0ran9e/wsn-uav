@@ -104,3 +104,17 @@ Hạng trung bình của cell thật ở dòng thứ ba (thiết bị lệch, 2 
 3. **Lưới kịch bản:** d′, ρ, μ_L, τ và khoảng a_c, M, k. Đề xuất trình bày kết quả theo d′ ∈ {3; 4; 5}, ρ ∈ {0; 1; 2 %}.
 4. **Nối vào giả lập nhiệm vụ:** thay bước bốc nghi vấn trong `mission_policy.py` bằng bảng xếp hạng này. Mỗi lần bốc sinh điểm cho mọi critical cell, đội 2 thăm theo hạng và dừng ở cell thật. Từ đó có trực tiếp thời gian nhiệm vụ, số lần thăm giả và tỉ lệ bỏ sót theo ngân sách B.
 5. **Mức vector** (góc nhìn, tương quan crop, signature thiếu): để sau khi mức điểm đã chốt.
+
+## 7. Đã chốt sau thảo luận (CLAUDE.md §8 mục 111–112)
+
+Thay cho §2–4 ở các điểm sau:
+- **Không mô hình hoá ảnh của mục tiêu.** Không có "cell thật", không còn hạng R\* của cell thật.
+- **Mỗi critical cell có kho M ảnh**, mỗi ảnh mang một giá trị khớp ngẫu nhiên theo một phân phối.
+- **L là ảnh tham chiếu.** Giá trị của chúng gần bằng 1 nhưng không bằng 1.
+- **Node chỉ báo một số: điểm cao nhất.** Cách tính điểm từ M ảnh và L ảnh tham chiếu **chưa chốt**.
+- **Đội 2 thăm tất cả các điểm** đã báo về, theo thứ tự như hiện tại: điểm chia cho (thời gian bay + hover), rồi về BS.
+
+**Còn mở:**
+1. Cách tính điểm của node.
+2. Đại lượng dùng để đánh giá pha 2 khi mọi điểm đều được thăm.
+

@@ -1322,6 +1322,15 @@ trước tiên tôi nghĩ lại: trong kho mỗi node  có tập M ảnh, mỗi 
 theo một phân phố nào đó và các ảnh L cũng là ngẫu nhiên như điểm cao hơn, sau khi so khớp, các node báo điểm về BS và đội UAV 2 cần đi thăm theo thứ tự ưu tiên (tất cả các điểm)
 ```
 
+*112. 2026-10-20 · layer 1 · chốt: không bàn ảnh mục tiêu nữa; UAV pha 2 thăm tất cả các điểm; L là ảnh tham chiếu, điểm gần bằng 1 (không bằng 1); node chỉ báo điểm cao nhất, cách tính điểm chưa chốt; thứ tự thăm như hiện tại là đủ*
+
+```text
+không bàn đến ảnh mục tiêu nữa uav pha 2 giờ phải đi thăm tất cả các điểm và L là ảnh tham
+chiếu, không phải điểm bằng 1 mà gần bằng 1
+node chỉ báo điểm cao nhất nhưng cách tính điểm
+chưa chốt tôi nghĩ là thứ tự thăm như hiện tại là đủ ổn
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -191,7 +191,7 @@ def stage_runs(a, W_, K):
                 if not os.path.exists(f"{W_}/d{k}/{dst}"):
                     os.symlink(f"../{src}", f"{W_}/d{k}/{dst}")
             sh([sys.executable, f"{COOP2}/river_export.py", f"--deploy=d{k}", f"--path=c{k}-path-s35.csv",
-                f"--out=plan{k}.txt"], f"plan{k}.log")
+                f"--banks={getattr(a, 'banks', 'parallel')}", f"--out=plan{k}.txt"], f"plan{k}.log")
         return k
 
     def river(job):
@@ -220,6 +220,8 @@ def main():
     ap.add_argument("--partition", default="kmedoids", choices=("kmedoids", "lane"),
                     help="phase 0: partition.py k-medoids, or restructure.py lanes (CLAUDE.md §8 item 84)")
     ap.add_argument("--lane", type=float, default=4.5, help="--partition=lane: lane width, cells")
+    ap.add_argument("--banks", default="parallel", choices=("parallel", "local"),
+                    help="River Banks: the sum vector's normal, or the path's local normal (CLAUDE.md §8 item 103)")
     a = ap.parse_args()
     a.bin = os.path.abspath(a.bin)
     os.makedirs(a.work, exist_ok=True)

@@ -11,7 +11,8 @@ maps, named k<K>. Per map and set:
   mission   policy P (l3first, early departure, score order) over DRAWS draws of the suspects (mission_policy
             draws, seed 7919 K): the end time; the sets have different critical cells, so draws are not paired
 Writes OUT-summary.csv, OUT-cells.csv (per critical cell), OUT-draws.csv and figures FIGS/meander-ns3-maps.png
-(rows maps, columns sets) and FIGS/meander-ns3-results.png (no text, CLAUDE.md §8 item 63).
+(rows maps, columns sets) and FIGS/meander-ns3-results.png: River done mean, ready, mission end, D (kB) per
+map, and a scatter of each cluster's Axe length against its slowest critical cell (no text, CLAUDE.md §8 item 63).
 """
 import argparse, csv, glob, json, math, os
 
@@ -47,8 +48,8 @@ def measure(M, n):
         D.append(int(C["runs"]["rf"]["D"]))
         L3.append(max(done.values()))
         ready = max(ready, leave[k] + max(done.values()))
-        cells += [dict(cluster=k, q=h[0], r=h[1], ch=int(h == C["P"]["ch"]), D=D[-1], doneS=done[h], missing=miss[h],
-                       ready=round(leave[k] + done[h], 1)) for h in C["P"]["crit"]]
+        cells += [dict(cluster=k, q=h[0], r=h[1], ch=int(h == C["P"]["ch"]), axe=len(C["P"]["axe"]), D=D[-1],
+                       doneS=done[h], missing=miss[h], ready=round(leave[k] + done[h], 1)) for h in C["P"]["crit"]]
     path = sum(float(np.sum(np.linalg.norm(np.diff(C["geo"]["path"], axis=0), axis=1))) for C in M["cl"].values())
     K = int(M["name"].lstrip("k"))
     ends = [run(M, legs, d, POLICY)[0] for d in draws(M, n, 7919 * K)]
@@ -124,7 +125,20 @@ def main():
     plt.close(fig)
     # ---- results: one panel per measure (no shared axis), maps along x, one marker per set
     keys = [("doneMean", None), ("ready", None), ("endMean", "endCI"), ("DkBmean", None)]
-    fig, axs = plt.subplots(1, len(keys), figsize=(4.2 * len(keys), 3.8), dpi=150, facecolor=SURF)
+    fig, axs = plt.subplots(1, len(keys) + 1, figsize=(4.2 * (len(keys) + 1), 3.8), dpi=150, facecolor=SURF)
+    ax = axs[-1]   # per cluster: Axe length (cells) against its slowest critical cell (s)
+    for s in sets:
+        cl = {}
+        for c in cells:
+            if c["set"] == s:
+                key = (c["map"], c["cluster"])
+                cl[key] = (c["axe"], max(cl.get(key, (0, 0))[1], c["doneS"]))
+        x, y = np.array(list(cl.values())).T
+        ax.scatter(x, y, s=34, marker=MARK[s], color=COL[s], edgecolors=SURF, lw=.8, alpha=.9)
+    ax.set_xlim(0, None); ax.set_ylim(0, None)
+    ax.grid(color=GREY, lw=.6); ax.set_axisbelow(True); ax.set_facecolor(SURF)
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
     for ax, (k, ci) in zip(axs, keys):
         for j, s in enumerate(sets):
             rs = [next(r for r in summ if r["map"] == m and r["set"] == s) for m in maps]

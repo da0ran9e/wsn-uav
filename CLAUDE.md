@@ -1286,6 +1286,12 @@ có thể lưu log dang .md cho dễ đọc
 ba hướng của bạn tôi đồng ý cả
 ```
 
+*107. 2026-10-20 · layer 1 · giải thích lại cách tính M, bỏ sót mức cell và báo nhầm (paper/L1-STATEMENT-vi.md §10–11)*
+
+```text
+quay lại giải thích giúp tôi cách tính M và bỏ sót cell, báo nhầm
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

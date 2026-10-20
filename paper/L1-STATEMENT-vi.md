@@ -441,3 +441,43 @@ Như §8.6:
 - [7] có mục tiêu trong tập huấn luyện và cùng 6 camera, nên số liệu lạc quan.
 - k lượt phải độc lập.
 - Dùng một crop mỗi lượt để khớp cách [7] đếm trên ảnh.
+
+## 12. Giải thích cách tính M, bỏ sót và báo nhầm (CLAUDE.md §8 mục 107)
+
+**Hai số công bố, tính trên từng crop** ([7] Bảng 4, mức đầu tiên):
+- f = 0,1 %: một crop người lạ bị nhận nhầm là mục tiêu.
+- TTR = 82,26 %: một crop của mục tiêu được nhận đúng (L = 2).
+
+Mỗi crop được coi là một phép thử độc lập.
+
+**Báo nhầm mức cell.** Cell không có mục tiêu báo YES khi ít nhất một trong M crop người lạ vượt ngưỡng:
+
+  P_cam = 1 − (1 − f)^M
+
+Ngưỡng cố định thì M càng lớn, P_cam càng lớn: M = 10 / 30 / 100 / 300 / 1 000 cho P_cam = 1 / 3 / 9,5 / 26 / 63 %.
+
+**Tính M.** Đảo công thức trên: chọn trước P_cam rồi suy ra M = ln(1 − P_cam) / ln(1 − f) ≈ −ln(1 − P_cam) / f.
+- Ví dụ P_cam = 20 %: M = ln 0,8 / ln 0,999 = −0,2231 / −0,0010005 = 223.
+- Bốn mức: 10 / 20 / 30 / 50 % → M = 105 / 223 / 356 / 693.
+- M là số lượt đi qua (một crop mỗi lượt) mà camera được phép so trong khung thời gian truy vấn. BS chọn độ dài khung thời gian để số lượt khoảng M.
+
+**Bỏ sót mức cell.** Cell có mục tiêu (k crop từ k lượt độc lập) chỉ trả NO khi cả k crop mục tiêu đều trượt, và đồng thời không crop người lạ nào vượt ngưỡng:
+
+  P_miss = (1 − TTR)^k × (1 − f)^M ≤ (1 − TTR)^k = 0,1774^k
+
+- Theo k = 1…5, cận trên là 17,7 / 3,15 / 0,56 / 0,099 / 0,018 %. Với M = 223, số đúng là 14,2 / 2,5 / 0,45 / 0,079 / 0,014 %.
+- Tài liệu dùng cận trên, thận trọng hơn. Nó không phụ thuộc M vì ngưỡng cố định.
+- k = 3 cho bỏ sót ≤ 1 %, k = 4 cho ≤ 0,1 %.
+
+**Mức bản đồ.**
+- Số nghi vấn nhầm ≈ P_cam × (số critical cell − 1) = 3,2 / 6,3 / 9,5 / 15,8 (trung bình 32,6 critical cell).
+- Nhiệm vụ thất bại khi cell thật trả NO, với xác suất P_miss.
+
+**Số đếm c dùng để xếp hạng** (M = 223, k = 3):
+- Cell nhầm: c ~ Bin(M; f), P(c ≥ 2) = 2,1 %.
+- Cell thật: c ~ Bin(k; TTR) + Bin(M; f), P(c ≥ 2) = 93 %.
+- Trung bình mỗi bản đồ có khoảng 0,7 cell nhầm đạt c ≥ 2.
+
+**Giả định cần nói rõ:**
+- Các crop độc lập với nhau, và k lượt của mục tiêu là k lần đi qua khác nhau.
+- [7] lạc quan: mục tiêu có trong tập huấn luyện, và camera là cùng một bộ 6 camera.

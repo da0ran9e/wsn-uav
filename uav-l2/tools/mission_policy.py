@@ -38,6 +38,7 @@ import numpy as np
 
 from map_gen import strip_text
 from mission_report import (AXE, BANK, FALSE, GREY, INK, INK2, SURF, TRUE, crit_marks, frame, land, load_map)
+from tour_heur import order_segments
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
 from river_plan import hexdist  # noqa: E402
@@ -71,6 +72,20 @@ def tour(M, kind):
     Lh = {k: l3hat(M["cl"][k]) for k in ks}
     st = lambda k, d: seg[k][0] if d == 0 else seg[k][1]
     en = lambda k, d: seg[k][1] if d == 0 else seg[k][0]
+    if kind == "latency" or K > 12:
+        # latency (CLAUDE.md §8 item 114): least sum_k n_k leave_k, n_k the critical cells of cluster k, i.e. the
+        # mean time a critical cell is left behind; exact Held-Karp up to 12 segments, else tour_heur (as for short
+        # and l3first beyond 12 segments)
+        n = {k: len(M["cl"][k]["P"]["crit"]) for k in ks} if kind == "latency" else None
+        order = latency_order(bs, seg, n) if kind == "latency" and K <= 12 else order_segments(bs, seg, n)
+        legs, t, pos = [], 0.0, bs
+        for k, d in order:
+            t += math.dist(pos, st(k, d)) / V1
+            t0 = t
+            t += seg[k][2] / V1
+            legs.append((k, st(k, d), en(k, d), t0, t))
+            pos = en(k, d)
+        return legs, t + math.dist(pos, bs) / V1
     # Pareto Held-Karp: (mask, i, d) -> list of (time at leaving i, readiness so far, previous state, index)
     best = {}
     for i, k in enumerate(ks):
@@ -115,6 +130,42 @@ def tour(M, kind):
         legs.append((k, st(k, d), en(k, d), t0, t))
         pos = en(k, d)
     return legs, t + math.dist(pos, bs) / V1
+
+
+def latency_order(bs, seg, n):
+    """Exact Held-Karp for the least sum_k n_k * (metres flown until leaving segment k): a leg adds its length
+    times the weight of the segments not yet left, so the value of a state does not depend on how it was reached."""
+    ks = sorted(seg)
+    K = len(ks)
+    st = lambda k, d: seg[k][0] if d == 0 else seg[k][1]
+    en = lambda k, d: seg[k][1] if d == 0 else seg[k][0]
+    W = sum(n.values())
+    best = {}
+    for i, k in enumerate(ks):
+        for d in (0, 1):
+            best[(1 << i, i, d)] = ((math.dist(bs, st(k, d)) + seg[k][2]) * W, None)
+    for mask in range(1, 1 << K):
+        left = W - sum(n[ks[j]] for j in range(K) if mask >> j & 1)
+        for i in range(K):
+            for d in (0, 1):
+                if (mask, i, d) not in best:
+                    continue
+                v0 = best[(mask, i, d)][0]
+                for j in range(K):
+                    if mask >> j & 1:
+                        continue
+                    for e in (0, 1):
+                        v = v0 + (math.dist(en(ks[i], d), st(ks[j], e)) + seg[ks[j]][2]) * left
+                        key = (mask | 1 << j, j, e)
+                        if key not in best or v < best[key][0]:
+                            best[key] = (v, (mask, i, d))
+    full = (1 << K) - 1
+    s = min(((full, i, d) for i in range(K) for d in (0, 1)), key=lambda x: best[x][0])
+    order = []
+    while s:
+        order.append((ks[s[1]], s[2]))
+        s = best[s][1]
+    return order[::-1]
 
 
 def open_tsp_first(pos, pts, bs):

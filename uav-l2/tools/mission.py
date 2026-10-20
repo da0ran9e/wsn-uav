@@ -27,6 +27,8 @@ from concurrent.futures import ThreadPoolExecutor
 from map_gen import add_args, cell_at, centre, generate
 from partition import partition
 from restructure import lane_partition
+from subch import subch_partition
+from tour_heur import order_segments
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 COOP2 = os.path.join(HERE, "../../uav-coop2/tools")
@@ -62,6 +64,12 @@ def stage_map(a, W_):
         owner, th, _, st = lane_partition(land, 80, a.lane)
         med, over = sorted(set(owner.values())), 0
         json.dump(dict(bearing=round(math.degrees(th)), lane=a.lane), open(f"{W_}/lane.json", "w"))
+    elif a.partition == "subch":   # baseline (item 114): the k-medoids clusters of --src split around critical cells
+        owner, seeds = subch_partition(a.src, a.dmin, a.minsize)
+        assert set(owner) == land, "the subCH partition must cover the same land cells"
+        med, over = sorted(set(owner.values())), 0
+        json.dump(dict(src=a.src, dmin=a.dmin, minsize=a.minsize,
+                       seeds={k: v for k, v in seeds.items()}), open(f"{W_}/subch.json", "w"))
     else:
         owner, med, it, over = partition(land, 80, random.Random(a.seed))
     nodes = [v for v in g["nodes"] if (v[3], v[4]) in owner]
@@ -111,7 +119,8 @@ def stage_deploy(a, W_, K):
                     "--spacings=35", "--angle=180", f"--out=c{k}"]
             env = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
             # a random entry only to get the roles: try other entries if a path from it is infeasible
-            margin = next(m for m in (300, 200, 100, 0) for p in range(10)
+            margins = (0, 100, 200, 300) if a.partition == "subch" else (300, 200, 100, 0)   # subCH: the strongest node
+            margin = next(m for m in margins for p in range(10)
                           if sh(base + [f"--chMargin={m}", f"--pick={p}"], f"c{k}-deploy0.log", env, ok=True))
             base.append(f"--chMargin={margin}")
             scan = bearings(W_, k)
@@ -137,6 +146,8 @@ def stage_tour(a, W_, K):
     ks = list(range(1, K + 1))
     end = lambda k, d: seg[k][1] if d == 0 else seg[k][0]     # d = 0: fly entry -> exit
     start = lambda k, d: seg[k][0] if d == 0 else seg[k][1]
+    if K > 13:   # too many segments for Held-Karp (tour_heur)
+        return write_tour(W_, bs, seg, order_segments(bs, seg))
     best = {}   # Held-Karp: (visited mask, last cluster, its direction) -> (transit metres, previous state)
     for i, k in enumerate(ks):
         for d in (0, 1):
@@ -163,6 +174,12 @@ def stage_tour(a, W_, K):
         order.append((ks[s[1]], s[2]))
         s = best[s][1]
     order.reverse()
+    return write_tour(W_, bs, seg, order)
+
+
+def write_tour(W_, bs, seg, order):
+    end = lambda k, d: seg[k][1] if d == 0 else seg[k][0]
+    start = lambda k, d: seg[k][0] if d == 0 else seg[k][1]
     t, pos, legs = 0.0, bs, []
     for k, d in order:
         t += math.dist(pos, start(k, d)) / V1
@@ -171,7 +188,7 @@ def stage_tour(a, W_, K):
         legs.append(dict(cluster=k, reversed=d, enter=t0, leave=t, start=start(k, d), end=end(k, d)))
         pos = end(k, d)
     t += math.dist(pos, bs) / V1
-    tour = dict(legs=legs, back=t, length=t * V1, inside=sum(seg[k][2] for k in ks))
+    tour = dict(legs=legs, back=t, length=t * V1, inside=sum(v[2] for v in seg.values()))
     json.dump(tour, open(f"{W_}/tour.json", "w"), indent=1)
     print(f"tour: {tour['length'] / 1000:.1f} km, {t:.0f} s, order {[(l['cluster'], l['reversed']) for l in legs]}")
     return tour
@@ -219,8 +236,12 @@ def main():
     ap.add_argument("--bin", required=True)
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--schemes", default=",".join(SCHEMES), help="tags of SCHEMES to run")
-    ap.add_argument("--partition", default="kmedoids", choices=("kmedoids", "lane"),
-                    help="phase 0: partition.py k-medoids, or restructure.py lanes (CLAUDE.md §8 item 84)")
+    ap.add_argument("--partition", default="kmedoids", choices=("kmedoids", "lane", "subch"),
+                    help="phase 0: partition.py k-medoids, or restructure.py lanes (CLAUDE.md §8 item 84), or the "
+                         "k-medoids clusters of --src split around critical cells far apart (subch.py, item 114)")
+    ap.add_argument("--src", default="", help="--partition=subch: the k-medoids work folder of the same map")
+    ap.add_argument("--dmin", type=float, default=6, help="--partition=subch: seeds at least this many cells apart")
+    ap.add_argument("--minsize", type=int, default=20, help="--partition=subch: smaller sub-clusters are merged")
     ap.add_argument("--lane", type=float, default=4.5, help="--partition=lane: lane width, cells")
     ap.add_argument("--banks", default="parallel", choices=("parallel", "local"),
                     help="River Banks: the sum vector's normal, or the path's local normal (CLAUDE.md §8 item 103)")
@@ -228,6 +249,7 @@ def main():
                     help="each cluster needs only this much of D, around the CH (river_export.py; item 106)")
     a = ap.parse_args()
     a.bin = os.path.abspath(a.bin)
+    a.src = os.path.abspath(a.src) if a.src else ""
     os.makedirs(a.work, exist_ok=True)
     W_ = os.path.abspath(a.work)
     os.chdir(W_)

@@ -1,3 +1,14 @@
+# meander
+
+**Lệnh**
+
+```bash
+python3 tools/meander.py --campaign --out docs/data/meander/maps
+```
+
+**Kết quả**
+
+```text
 w1.0 K4 b90 s1: skipped ((-2, -9))
 w1.0 K4 b90 s2 done
 w1.0 K4 b90 s3 done
@@ -89,3 +100,4 @@ paired, meander - lane, cover: mean, maps better
   width 0.6 bend 90: +0.082, 10/10
   width 0.6 bend 180: +0.020, 6/9
   width 0.6 bend 270: -0.005, 6/10
+```

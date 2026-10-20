@@ -6,7 +6,7 @@
 - `uav-l2/tools/l1_mission.py`: new `match_time()`, `DEVICES` and `--device`.
 - `uav-l2/tools/mission_policy.py`: `run()` takes a `match=` argument.
 
-**Command:** `run.cmd`. Log: `run.log`. 240 configurations × 1 200 missions; ran in about 10 min; no ns-3 run.
+**Command:** `run.md`. Log: `run.md`. 240 configurations × 1 200 missions; ran in about 10 min; no ns-3 run.
 
 **Inputs:** the geometry rebuilt by `regeom.py` (scratchpad `W/`, see `logs/2026-10-19_1500-l1-propose/`) and the saved River results.
 

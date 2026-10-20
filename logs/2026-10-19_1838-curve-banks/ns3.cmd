@@ -1,1 +1,0 @@
-python3 tools/curve_ns3.py --scratch /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/CURV --bin /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/BIN --angles 100,70 --jobs 3 --out docs/data/curve/ns3.csv

@@ -229,6 +229,8 @@ bất kỳ chương trình tốn thời gian nào (xem mục cuối).
 vào `logs/<YYYY-MM-DD_HHMM>-<tên-ngắn>/`, mỗi session hoặc nhiệm vụ một folder. Cuối session hoặc nhiệm
 vụ, viết `logs/<...>/README.md` mô tả ngắn: mục đích, lệnh đã chạy, đầu vào, đầu ra (đường dẫn), kết quả
 chính và điều còn dang dở. Log văn bản được commit; dữ liệu thô quá lớn thì chỉ ghi đường dẫn và kích thước.
+Log viết dạng `.md` cho dễ đọc (mục 106): mỗi bước một file `<bước>.md` có khối lệnh và khối kết quả; chạy qua
+`python3 tools/runlog.py logs/<...>/<bước>.md "<lệnh>" [--cwd DIR]` để tự ghi (`.gitignore` bỏ qua `*.log`).
 
 *1. 2026-10-05 · uav-sar · A2G-RUN: chuỗi gói liên tục, 7 node thẳng hàng*
 
@@ -1275,6 +1277,13 @@ thử chạy trên bản đồ 4-8 clusters xem
 
 ```text
 cho tôi mô tả chi tiết kèm visualize từng bước (animation càng tốt)
+```
+
+*106. 2026-10-20 · quy tắc làm việc + uav-l2 · lưu log dạng .md; đồng ý cả ba hướng sửa ở CURVE-vi.md §3.4 (giới hạn chiều dài Axe, chỉ giao phần dữ liệu lớp 1 cần, k-medoids với đường bay cong)*
+
+```text
+có thể lưu log dang .md cho dễ đọc
+ba hướng của bạn tôi đồng ý cả
 ```
 
 ---

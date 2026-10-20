@@ -1,3 +1,24 @@
+# run
+
+**Lệnh**
+
+```bash
+# from uav-l2/; MEANDER first, then LANE (mission.py --partition lane), River prepared only, 3 jobs
+set -e
+for ks in "4 2" "6 4" "8 4"; do set -- $ks
+  echo "== meander k$1 seed $2 $(date +%H:%M:%S)"
+  python3 tools/meander_mission.py --clusters $1 --seed $2 --work /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MM/k$1 --bin /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/BIN --jobs 3 --banks local
+done
+for ks in "4 2" "6 4" "8 4"; do set -- $ks
+  echo "== lane k$1 seed $2 $(date +%H:%M:%S)"
+  python3 tools/mission.py --clusters $1 --seed $2 --work /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/ML/k$1 --bin /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/BIN --jobs 3 --schemes rf --partition lane --lane 4.5
+done
+echo "== done $(date +%H:%M:%S)"
+```
+
+**Kết quả**
+
+```text
 == meander k4 seed 2 02:28:28
 curves: C1 2.48 km, CH 75 m off, k*rho 0.85, C2 2.73 km, CH 120 m off, k*rho 0.92, C3 2.89 km, CH 78 m off, k*rho 1.00, C4 3.29 km, CH 47 m off, k*rho 0.98, C5 1.09 km, CH 35 m off, k*rho 0.96, C6 1.51 km, CH 370 m off, k*rho 0.57
 tour: 24.1 km, 483 s, order [(6, 0), (5, 0), (3, 1), (2, 1), (1, 0), (4, 1)]
@@ -75,3 +96,4 @@ tour: 44.0 km, 880 s, order [(11, 0), (7, 1), (5, 0), (3, 1), (2, 0), (1, 1), (4
   run 1 river-full: D 5196, 6/6 critical done, sim 138.8 s, wall 176 s, 364160 hops, 16987 MAC give-ups, 0/170 gateway pairs with q < 0.5
   run 1 river-full: D 3119, 4/4 critical done, sim 27.7 s, wall 8 s, 37942 hops, 1501 MAC give-ups, 0/41 gateway pairs with q < 0.5
 == done 02:56:57
+```

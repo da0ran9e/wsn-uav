@@ -1,3 +1,10 @@
+# regeom-all
+
+**Lệnh:** xem README.md của thư mục này.
+
+**Kết quả**
+
+```text
 map: 147 land cells, 3118 nodes, 2 clusters [80, 67], BS 173,-2500
 k2: 2 clusters rebuilt and checked
 map: 465 land cells, 9862 nodes, 6 clusters [80, 80, 80, 80, 78, 67], BS -130,-4000
@@ -76,3 +83,4 @@ map: 600 land cells, 12725 nodes, 8 clusters [80, 77, 76, 80, 78, 67, 76, 66], B
 k8-s8: 8 clusters rebuilt and checked
 map: 578 land cells, 12259 nodes, 8 clusters [79, 50, 80, 68, 80, 76, 75, 70], BS -520,-4000
 k8-s9: 8 clusters rebuilt and checked
+```

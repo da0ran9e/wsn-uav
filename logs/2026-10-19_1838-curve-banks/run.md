@@ -1,3 +1,14 @@
+# run
+
+**Lệnh**
+
+```bash
+python3 tools/curve_banks.py --works /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/W/k4 /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/W/k6 /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/W/k8 --bin /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/BIN --scratch /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/CURV --out docs/data/curve/banks --figs docs/figures
+```
+
+**Kết quả**
+
+```text
 k4: 4 clusters
 k6: 6 clusters
 /home/user/wsn-uav/uav-l2/tools/curve_banks.py:64: RuntimeWarning: Mean of empty slice
@@ -16,3 +27,4 @@ angle banks  n  coverage  pathCoverage  spill  offset  river/band
    70 parallel  17  0.776  0.776  0.085  0.633  0.850
    70 local     17  0.976  0.825  0.172  0.876  1.181
    70 failed 1
+```

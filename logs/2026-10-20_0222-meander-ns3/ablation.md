@@ -1,3 +1,22 @@
+# ablation
+
+**Lệnh**
+
+```bash
+# from uav-l2/; MEANDER with parallel Banks: copies of MM/k* without plans and River results (pass bitmaps reused)
+set -e
+for ks in "4 2" "6 4" "8 4"; do set -- $ks
+  rm -rf /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MMp/k$1; mkdir -p /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MMp; cp -a /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MM/k$1 /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MMp/k$1
+  rm -f /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MMp/k$1/plan*.txt /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MMp/k$1/plan*.log /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MMp/k$1/r*-rf-* /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MMp/k$1/r*-rf.log
+  echo "== meander parallel k$1 $(date +%H:%M:%S)"
+  python3 tools/meander_mission.py --clusters $1 --seed $2 --work /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/MMp/k$1 --bin /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/BIN --jobs 3 --banks parallel
+done
+echo "== done $(date +%H:%M:%S)"
+```
+
+**Kết quả**
+
+```text
 == meander parallel k4 02:57:32
 curves: C1 2.48 km, CH 75 m off, k*rho 0.85, C2 2.73 km, CH 120 m off, k*rho 0.92, C3 2.89 km, CH 78 m off, k*rho 1.00, C4 3.29 km, CH 47 m off, k*rho 0.98, C5 1.09 km, CH 35 m off, k*rho 0.96, C6 1.51 km, CH 370 m off, k*rho 0.57
   run 1 river-full: D 4655, 3/3 critical done, sim 35.7 s, wall 25 s, 96452 hops, 3916 MAC give-ups, 0/61 gateway pairs with q < 0.5
@@ -33,3 +52,4 @@ curves: C1 1.65 km, CH 167 m off, k*rho 0.84, C2 1.12 km, CH 73 m off, k*rho 0.6
   run 1 river-full: D 5522, 6/6 critical done, sim 165.0 s, wall 147 s, 424646 hops, 16271 MAC give-ups, 0/85 gateway pairs with q < 0.5
   run 1 river-full: D 6940, 7/7 critical done, sim 174.5 s, wall 260 s, 618288 hops, 19153 MAC give-ups, 0/145 gateway pairs with q < 0.5
 == done 03:10:00
+```

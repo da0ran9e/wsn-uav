@@ -1,3 +1,14 @@
+# ns3
+
+**Lệnh**
+
+```bash
+python3 tools/curve_ns3.py --scratch /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/CURV --bin /tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/BIN --angles 100,70 --jobs 3 --out docs/data/curve/ns3.csv
+```
+
+**Kết quả**
+
+```text
 k4-c1-a100 [('parallel', np.float64(5.51), np.float64(12.69)), ('local', np.float64(5.49), np.float64(12.72))]
 k4-c1-a70 [('parallel', np.float64(5.9), np.float64(13.91)), ('local', np.float64(5.76), np.float64(13.92))]
 k4-c2-a100 [('parallel', np.float64(7.79), np.float64(20.65)), ('local', np.float64(8.29), np.float64(24.69))]
@@ -36,3 +47,4 @@ k8-c7-a70 [('parallel', np.float64(3.51), np.float64(12.29)), ('local', np.float
 k8-c8-a70 [('parallel', np.float64(3.46), np.float64(10.74)), ('local', np.float64(3.42), np.float64(10.62))]
 doneMean: parallel 9.0 s, local 9.1 s, paired change +0.1 s, local better in 18/36
 doneMax: parallel 21.1 s, local 21.5 s, paired change +0.4 s, local better in 12/36
+```

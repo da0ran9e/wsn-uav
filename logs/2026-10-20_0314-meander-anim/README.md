@@ -3,10 +3,10 @@
 **Mục đích:** mô tả chi tiết và visualize từng bước của thử nghiệm MEANDER ns-3 (mục 104): animation và hình tĩnh, không chữ trên bản đồ.
 
 **Lệnh:**
-- `trace.cmd` / `trace.log`: chạy lại River (chuẩn bị đầy đủ) có `--trace` cho 6 cluster MEANDER của bản đồ k4.
+- `trace.md`: chạy lại River (chuẩn bị đầy đủ) có `--trace` cho 6 cluster MEANDER của bản đồ k4.
   - Cùng binary và cùng plan với `logs/2026-10-20_0222-meander-ns3/`.
   - Kết quả critical cell trùng khớp 6/6.
-- `export.cmd` / `export.log`: `uav-l2/tools/meander_anim.py` xuất dữ liệu cho player.
+- `export.md`: `uav-l2/tools/meander_anim.py` xuất dữ liệu cho player.
   - Gồm các bước MEANDER, đường cong gốc và đường đã uốn qua CH, lượt phát, luồng River theo pha, LoRa, đội 2.
   - Lượt bốc là lượt đầu tiên cần 2 lần thăm.
 - Ghép trang: `meander-head.html` + `meander-body.html`, chèn `meander.json`.

@@ -3,13 +3,13 @@
 **Mục đích:** chạy MEANDER (luồng cong bám địa hình, mục 103) qua toàn bộ nhiệm vụ ns-3 trên ba bản đồ nhiệm vụ gốc. So với k‑medoids (đề xuất gốc) và LANE 4,5 (đề xuất lớp 2 cũ, mục 84, chưa từng chạy ns-3).
 
 **Lệnh (chạy từ `uav-l2/`):**
-- `geom-k{4,6,8}.cmd/.log`: các giai đoạn hình học của `meander_mission.py --geometry` (bản đồ, deploy, đường cong qua CH). Chạy lại sau hai lần sửa đường cong; log là lần cuối.
-- `run.cmd` / `run.log`: MEANDER k4, k6, k8, rồi LANE k4, k6, k8 (`mission.py --partition lane`).
+- `geom-k{4,6,8}.md`: các giai đoạn hình học của `meander_mission.py --geometry` (bản đồ, deploy, đường cong qua CH). Chạy lại sau hai lần sửa đường cong; log là lần cuối.
+- `run.md`: MEANDER k4, k6, k8, rồi LANE k4, k6, k8 (`mission.py --partition lane`).
   - Lượt bay + River chuẩn bị, 3 job, 02:28–02:57.
-- `ablation.cmd` / `ablation.log`: MEANDER với Bank song song. Copy thư mục MEANDER, xoá plan và kết quả River, dùng lại bitmap lượt bay.
-- `compare.cmd` / `compare.log`: `meander_compare.py`, ba cách chia, 100 lần bốc nghi vấn mỗi bản đồ.
-- `ablation-compare.cmd` / `.log`: so Bank cục bộ với Bank song song.
-- `bendfig.cmd` / `.log`: hình uốn đường qua CH.
+- `ablation.md`: MEANDER với Bank song song. Copy thư mục MEANDER, xoá plan và kết quả River, dùng lại bitmap lượt bay.
+- `compare.md`: `meander_compare.py`, ba cách chia, 100 lần bốc nghi vấn mỗi bản đồ.
+- `ablation-compare.md`: so Bank cục bộ với Bank song song.
+- `bendfig.md`: hình uốn đường qua CH.
 
 **Đầu vào:**
 - Bản đồ `restructure.domain(K, seed)`, seed 2/4/4, giống `mission.py`.

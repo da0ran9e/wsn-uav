@@ -14,12 +14,13 @@ Lời gốc: CLAUDE.md §8 mục 80. [ta] = số thăm dò (cần chạy lại, 
 - **hướng bay qua CH:** quét 0–178° · đoạn trong cluster dài nhất · dự phòng hướng kế tiếp
 - **tour đội 1:** Held–Karp · đường thẳng giữa các cluster · biến thể l3first (ưu tiên cluster tầng 3 dài)
 - **LoRa qua CH:** gom kết quả · một bản tin / 40 s
-- **đội 2:** đi sớm (nghi vấn đầu tiên) · chọn theo điểm / thời gian · xác minh = hover + tệp lớn + đối sánh
+- **báo cáo:** mỗi critical cell báo hai lần (sau gom nội cell, sau River) · điểm cao nhất + bitmap manh mối
+- **đội 2:** cất cánh cùng đội 1 · đón đầu về tâm xác suất · đi khi P ≥ P_U/4 · chọn theo P / (bay + xác minh) · xác minh = hover + tệp lớn + đối sánh · chỉ số: lúc xác minh xong c\*
 
 ## 7. Evaluation Setup
 - ns-3.46 · lr-wpan MAC đầy đủ · binary đóng băng
 - bản đồ có hồ · 2 / 4 / 6 / 8 cluster · 10 bản đồ mỗi cỡ [ta] → N ≥ 120
-- chỉ số: thời gian critical cell cuối đủ D · số khung · kết thúc nhiệm vụ · tỉ lệ tìm thấy · số lần thăm
+- chỉ số: thời gian critical cell cuối đủ D · số khung · T\* (xác minh xong c\*) · phân vị 90 · hạng của c\*
 - baseline:
   - kéo thẳng (ablation lớp 3)
   - B1 (không pha 1, unicast) · B2 (không pha 1, multicast)
@@ -27,15 +28,17 @@ Lời gốc: CLAUDE.md §8 mục 80. [ta] = số thăm dò (cần chạy lại, 
   - B4 (không hợp tác)
   - B5 (quét luống, chưa làm)
   - B7 (cận dưới lý tưởng)
+  - lớp 2: cluster có sẵn (ablation) · MEANDER · subCH (baseline)
 - bảng tham số (kênh, MAC, UAV, LoRa, tệp)
 
 ## 8. Results
 1. **lớp 3:** River vs kéo thẳng · thời gian, số khung · theo cluster [ta: −5…−18 % khung]
 2. **độ nhạy:** số màu kênh · độ rộng River · số critical cell [ta, 20 lượt]
-3. **hợp tác vs không hợp tác:** thời gian ≈ nhau · tỉ lệ tìm thấy khác hẳn [ta: mất 25–62 %] · theo ngưỡng lớp 1
-4. **nhiệm vụ vs baseline:** theo cỡ mạng [ta: P nhanh hơn 1,5–3,7 lần] · khoảng cách tới cận dưới
-5. **ablation chính sách:** đi sớm (lớn nhất) · theo điểm · l3first (chỉ khi chờ đủ)
-6. **minh hoạ:** dòng thời gian một nhiệm vụ
+3. **hợp tác vs không hợp tác:** T\* nhanh hơn nhờ xếp hạng đúng hơn [ta: −26…−68 s, 39/40 bản đồ; p90 −75…−234 s] · theo D của lớp 1
+4. **nhiệm vụ vs baseline:** theo cỡ mạng [ta: nhanh hơn 1,9–2,8 lần cánh quay tốt nhất, 2,2–4,0 lần khi không pha 1] · khoảng cách tới cận dưới
+5. **ablation chính sách:** đón đầu (lớn nhất) · cất cánh lúc 0 · ngưỡng β · báo hai lần · tour theo độ trễ
+6. **lớp 2:** cluster có sẵn vs MEANDER vs subCH
+7. **minh hoạ:** hình từng bước một nhiệm vụ
 
 ## 9. Discussion and Limitations
 - hợp tác mua **độ đầy đủ**, không mua thời gian

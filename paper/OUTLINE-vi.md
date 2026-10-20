@@ -2,7 +2,7 @@
 
 Lời gốc: CLAUDE.md §8 mục 74, cùng tầm nhìn ở mục 38–39. Bản này chỉ ghi ý chính để anh/chị chỉnh dần. Paper viết bằng tiếng Anh, nên tên mục ghi bằng tiếng Anh.
 
-**Quy ước cho mọi số liệu trong bản này:** đều là số thăm dò, chạy một lượt ns-3 cho mỗi cluster trên 40 bản đồ (`uav-l2/docs/MISSION-vi.md`). Chưa số nào đủ để công bố (quy tắc N ≥ 120). Những chỗ cần chạy lại được đánh dấu **[cần chạy]**.
+**Quy ước cho mọi số liệu trong bản này:** đều là số thăm dò, chạy một lượt ns-3 cho mỗi cluster trên 40 bản đồ. Số cấp nhiệm vụ dùng mô hình lớp 1 mới (`paper/L1-MODEL-vi.md`) và lấy từ `uav-l2/docs/L1-MISSION2-vi.md` (cập nhật 2026-10-20, CLAUDE.md §8 mục 114). Chưa số nào đủ để công bố (quy tắc N ≥ 120). Những chỗ cần chạy lại được đánh dấu **[cần chạy]**.
 
 ---
 
@@ -14,12 +14,12 @@ Lời gốc: CLAUDE.md §8 mục 74, cùng tầm nhìn ở mục 38–39. Bản 
 
 ## Thông điệp chính (một câu)
 
-Một UAV cánh bằng chỉ bay qua mỗi cluster **một lần** không thể giao trọn bộ truy vấn cho các node xử lý quan trọng. Một cơ chế hợp tác mặt đất được lập kế hoạch trước (River) lấp được phần thiếu trong vài chục giây. Nhờ vậy cả nhiệm vụ tìm kiếm nhanh hơn rõ rệt so với các cách giao bằng UAV cánh quay. Và so với việc không hợp tác, River giữ được khả năng phát hiện.
+Một UAV cánh bằng chỉ bay qua mỗi cluster **một lần** không thể giao trọn bộ truy vấn cho các node xử lý quan trọng. Một cơ chế hợp tác mặt đất được lập kế hoạch trước (River) lấp được phần thiếu trong vài chục giây. Nhờ vậy các cell xếp hạng nghi vấn đúng hơn, và cả nhiệm vụ tìm kiếm nhanh hơn rõ rệt so với các cách giao bằng UAV cánh quay.
 
 **Cách nói cần giữ (bài học uav-sar, CLAUDE.md §6):**
-- Hợp tác mặt đất **không** làm nhiệm vụ nhanh hơn so với "dùng ngay những gì nhận được". Số thăm dò chỉ bớt được 2–16 s.
-- Thứ hợp tác mua được là **độ đầy đủ dữ liệu**, tức khả năng phát hiện. Không hợp tác thì mất cell thật ở 25–62 % lượt.
-- Lợi thế về **thời gian** đến từ kiến trúc nhiệm vụ: cánh bằng một lượt, cộng hợp tác, cộng đội 2 đi sớm. Không nên quy nó cho riêng River.
+- Phần lớn lợi thế về **thời gian** đến từ kiến trúc nhiệm vụ: cánh bằng một lượt, đội 2 cất cánh cùng đội 1, đón đầu, ngưỡng chờ. Không nên quy nó cho riêng River.
+- Với mô hình lớp 1 mới, hợp tác rút T\* thêm 26–68 s so với "dùng ngay những gì nhận được" (39/40 bản đồ; phân vị 90 rút 75–234 s). Cơ chế là **xếp hạng đúng hơn**, không phải báo cáo sớm hơn. Mức lợi phụ thuộc mô hình lớp 1: −34 s khi đối sánh sạch (D = 256), −92 s khi nhiễu (D = 64).
+- Số liệu ở mô hình lớp 1 cũ ("chỉ bớt 2–16 s", "mất cell thật ở 25–62 % lượt") không còn dùng.
 
 ## Abstract (khung 6 câu)
 
@@ -33,10 +33,10 @@ Một UAV cánh bằng chỉ bay qua mỗi cluster **một lần** không thể 
 
    River chạy trên 802.15.4 với lịch lưới cell PECEE.
 5. **Đánh giá:** ns-3 trên 200 cluster (40 bản đồ, 2–8 cluster mỗi bản đồ).
-6. **Kết quả [cần chạy]:**
-   - Nhiệm vụ đầu-cuối nhanh hơn 1,5–3,7 lần các baseline dùng UAV cánh quay.
+6. **Kết quả [cần chạy ở N ≥ 120]:**
+   - Thời điểm xác minh xong cell nghi vấn cao nhất (T\*) sớm hơn 1,9–2,8 lần baseline cánh quay tốt nhất, và 2,2–4,0 lần khi không có pha 1.
+   - Hợp tác rút T\* 26–68 s so với không hợp tác (39/40 bản đồ).
    - River ít khung hơn kéo thẳng 5–18 %.
-   - Không hợp tác thì mất cell thật ở 25–62 % lượt.
 
 ---
 
@@ -106,7 +106,7 @@ Lớp 1 (đối sánh signature tại nút), phát biểu chi tiết có nguồn
 - **Phản hồi:** LoRa qua CH, duty cycle 1 %.
 - **Bài toán:**
   - (a) Lớp 3: tối thiểu thời gian để mọi critical cell có đủ D, đồng thời ít khung.
-  - (b) Cấp nhiệm vụ: tối thiểu thời điểm xác minh được nghi vấn thật và đội 2 về BS.
+  - (b) Cấp nhiệm vụ: tối thiểu T\*, thời điểm đội 2 xác minh xong c\*, critical cell có điểm xác minh cao nhất (mục 114).
 
 ## 4. Mission Overview
 
@@ -134,12 +134,14 @@ Keyword: [`RIVER-vi.md`](RIVER-vi.md).
 Keyword: [`REST-vi.md`](REST-vi.md).
 
 - Chọn hướng bay qua CH để đoạn trong cluster dài nhất.
-- Tour đội 1 (Held–Karp). Tour l3first chỉ có ích khi đội 2 chờ đủ báo cáo.
+- Tour đội 1: Held–Karp tới 12 cluster, heuristic khi nhiều hơn.
 - Phản hồi LoRa qua CH, mỗi bản tin một khe 40 s.
+- Mỗi critical cell báo hai lần: sau gom nội cell (phần tự nghe) và sau River.
+- Tour đội 1 theo độ trễ có trọng số: Σ số critical cell × lúc rời cluster.
 - Đội 2:
-  - Đi ngay khi có báo cáo nghi vấn đầu tiên.
-  - Chọn nghi vấn theo điểm / thời gian.
-  - Xác minh = hover + tệp lớn 1 MB (khoảng 73 s) + đối sánh.
+  - Cất cánh cùng đội 1; khi chưa đủ chắc thì đón đầu về tâm xác suất.
+  - BS tính P(cell là c\*); chọn cell theo P / (bay + xác minh); đi khi P ≥ P_U/4.
+  - Xác minh = hover + tệp lớn 1 MB (khoảng 73 s) + đối sánh; thăm hết, nhưng chỉ số là lúc xác minh xong c\*.
 
 ## 7. Evaluation Setup
 
@@ -150,11 +152,8 @@ Keyword: [`REST-vi.md`](REST-vi.md).
 - ns-3.46, lr-wpan có MAC đầy đủ, binary đóng băng.
 - Bản đồ: 2 / 4 / 6 / 8 cluster, 10 bản đồ mỗi kích thước. **[cần chạy]** nâng lên N ≥ 120 cho số chính.
 - **Chỉ số:**
-  - Thời gian tới khi critical cell cuối có đủ D.
-  - Số khung MAC.
-  - Thời điểm kết thúc nhiệm vụ.
-  - Xác suất tìm thấy cell thật.
-  - Số lần thăm nghi vấn.
+  - Lớp 3: thời gian tới khi critical cell cuối có đủ dữ liệu; số khung MAC.
+  - Nhiệm vụ: T\* (chính), phân vị 90 của T\*, hạng của c\* trong lượt thăm của đội 2.
 - **Baseline:**
   - Kéo thẳng (ablation lớp 3).
   - B1: không pha 1, unicast.
@@ -163,6 +162,7 @@ Keyword: [`REST-vi.md`](REST-vi.md).
   - B4: không hợp tác.
   - B5: quét luống, **[cần chạy, chờ quyết định thiết kế]**.
   - B7: cận dưới lý tưởng.
+  - Lớp 2: cluster có sẵn (ablation), MEANDER (đề xuất), subCH (baseline: cắt cluster quanh các critical cell xa nhau).
 
 ## 8. Results (các hình dự kiến)
 
@@ -171,18 +171,17 @@ Keyword: [`REST-vi.md`](REST-vi.md).
 1. **Lớp 3:**
    - River so với kéo thẳng: thời gian, số khung, phân bố theo cluster.
    - Ảnh hưởng của số critical cell, độ rộng River và số màu kênh. Đã có kết quả 20 lượt (`uav-coop2/docs/RIVER-NS3-vi.md`).
-2. **Hợp tác so với không hợp tác (B4):**
-   - Thời gian gần như bằng nhau, nhưng tỉ lệ tìm thấy khác hẳn.
-   - Hình: tỉ lệ thành công theo ngưỡng phát hiện. **[cần mô hình lớp 1]**
-3. **Nhiệm vụ đầu-cuối so với các baseline:** thời điểm kết thúc theo kích thước mạng (`base-end.png`).
-4. **Ablation chính sách:** đi sớm, thăm theo điểm, l3first (`policy-end.png`).
-5. **Một nhiệm vụ minh hoạ:** dòng thời gian (`mission-timeline.png`), hoặc các khung lấy từ trang replay.
+2. **Hợp tác so với không hợp tác (B4):** T\* và phân vị 90; hạng của c\*; phân rã T\* thành "báo cáo của c\* về BS" và "phần sau" (`l1-e1-breakdown.png`).
+3. **Nhiệm vụ đầu-cuối so với các baseline:** T\* theo kích thước mạng (`l1-e1-base-tstar.png`).
+4. **Ablation chính sách:** cất cánh lúc 0, đón đầu, ngưỡng β, báo hai lần, tour (`l1-e1-abl-tstar.png`); độ nhạy theo tham số lớp 1 (`l1-sens.png`).
+5. **Lớp 2:** cluster có sẵn, MEANDER, subCH (`l1-e2-tstar.png`).
+6. **Một nhiệm vụ minh hoạ:** hình từng bước (`l1-steps-k4-s2.png`) và các khung lấy từ trang replay.
 
 ## 9. Discussion and Limitations
 
 Keyword: [`REST-vi.md`](REST-vi.md).
 
-- Mô hình lớp 1 mới là ngưỡng tạm; tệp lớn 1 MB là số tạm.
+- Mô hình lớp 1 là mô hình điểm tổng quát với tham số giả định; số chiều hiệu dụng D quyết định mức T\* và cần neo vào số đo thật. Tệp lớn 1 MB là số tạm.
 - Đường bay chỉ là đường thẳng. Đường cong và quét luống còn mở.
 - Chưa tính năng lượng; một UAV mỗi đội.
 - Fading giả định không đổi trong một gói, nên kết quả A2G lạc quan (mục 2).

@@ -112,29 +112,132 @@ Chọn trên cả 40 bản đồ cluster có sẵn (River đầy đủ D, 50 lư
 - Quy tắc theo thời gian không cần tham số và tốt hơn β = 1, nhưng thua β = 1/4 (623 so với 607 s). Tôi chưa tách được lý do.
 - Phân rã T\* của P\*: báo cáo đầu tiên của c\* về BS lúc 147 / 223 / 280 / 345 s; phần còn lại, 271 / 337 / 416 / 410 s, là đội 2 bay và xác minh (gồm 1–1,5 cell sai trước c\*). **Phần sau báo cáo chiếm 54–65 % T\***, nên pha 2 vẫn là chỗ có nhiều dư địa nhất.
 
-__E1__
+### 5.2 E1: cluster có sẵn, River cửa sổ (`data/l1rank/e1-*.csv`)
+
+40 bản đồ × 100 lượt, ghép cặp. Cột cuối: số bản đồ (trên 40) mà biến thể nhanh hơn P\*.
+
+| Phương án | T\* k2 / k4 / k6 / k8 (s) | Chênh so với P\* (s) | Bản đồ nhanh hơn P\* |
+|---|---|---|---|
+| **P\*** | **408 / 566 / 675 / 769** | | |
+| *Pha 2* | | | |
+| đi ở báo cáo đầu (không cất cánh lúc 0) | 482 / 624 / 716 / 796 | +74 / +58 / +41 / +27 | 0 |
+| không đón đầu (chờ tại chỗ) | 503 / 680 / 802 / 905 | +95 / +114 / +127 / +136 | 0 |
+| β = 0 (đi ngay) | 420 / 600 / 708 / 813 | +12 / +34 / +33 / +43 | 4 |
+| β = 1/2 | 409 / 576 / 699 / 801 | +1 / +11 / +24 / +32 | 8 |
+| β = 1 | 416 / 591 / 731 / 839 | +8 / +26 / +56 / +70 | 3 |
+| ngưỡng theo thời gian | 414 / 583 / 702 / 788 | +6 / +17 / +27 / +19 | 4 |
+| đội 2 cũ (đi ở báo cáo đầu, tham lam, không đón đầu) | 499 / 660 / 748 / 837 | +91 / +94 / +74 / +68 | 0 |
+| *Phản hồi và hợp tác* | | | |
+| chỉ báo sau River | 416 / 576 / 681 / 776 | +8 / +10 / +6 / +6 | 6 |
+| **không hợp tác (B4)** | 434 / 622 / 734 / 838 | **+26 / +56 / +59 / +68** | **1** |
+| *Tour đội 1 (lớp 2)* | | | |
+| l3first | 408 / 568 / 695 / 796 | +0 / +2 / +20 / +27 | 5 |
+| ngắn nhất | 430 / 588 / 701 / 794 | +22 / +22 / +26 / +24 | 4 |
+| *Lớp 1* | | | |
+| xếp nhóm thay xen kẽ | 410 / 570 / 675 / 766 | +2 / +4 / −0 / −4 | 20 |
+| không hợp tác, xếp nhóm | 492 / 776 / 1 027 / 1 155 | +83 / +211 / +352 / +385 | 0 |
+| trọng số đều | 730 / 1 239 / 1 837 / 2 358 | +322 / +674 / +1 162 / +1 588 | 0 |
+| *Vòng trước* | | | |
+| P cũ (River, báo một lần, l3first, đội 2 cũ) | 513 / 678 / 783 / 867 | +105 / +112 / +108 / +98 | 0 |
+| P cũ, chờ đủ báo cáo | 578 / 814 / 993 / 1 189 | +170 / +248 / +318 / +420 | 0 |
+| *Baseline* | | *Gấp P\** | |
+| B1 (không pha 1, TSP, tệp lớn) | 897 / 1 699 / 2 498 / 3 083 | 2,2 / 3,0 / 3,7 / 4,0 | 0 |
+| B2‑300 (không pha 1, multicast) | 1 064 / 2 008 / 2 922 / 3 518 | 2,6 / 3,5 / 4,3 / 4,6 | 0 |
+| B2‑500 | 826 / 1 446 / 2 135 / 2 563 | 2,0 / 2,6 / 3,2 / 3,3 | 0 |
+| B3‑300 (cánh quay multicast bộ manh mối) | 913 / 1 577 / 2 252 / 2 628 | 2,2 / 2,8 / 3,3 / 3,4 | 0 |
+| B3‑500 | 783 / 1 267 / 1 795 / 2 123 | 1,9 / 2,2 / 2,7 / 2,8 | 0 |
+| B6 (cánh quay unicast bộ manh mối) | 855 / 1 457 / 2 094 / 2 488 | 2,1 / 2,6 / 3,1 / 3,2 | 0 |
+| B7 (cận dưới: biết trước c\*) | 245 / 287 / 314 / 347 | 0,6 / 0,5 / 0,5 / 0,5 | 40 |
+
+Thêm (từ `data/l1rank/e1-all-table.csv`, `e1-cells.csv`):
+
+| | k2 | k4 | k6 | k8 |
+|---|---|---|---|---|
+| Hạng TB của c\* trong lượt thăm: P\* / không hợp tác | 1,93 / 2,11 | 2,21 / 2,53 | 2,37 / 2,67 | 2,33 / 2,65 |
+| c\* được thăm đầu tiên: P\* / không hợp tác | 47 / 44 % | 40 / 39 % | 40 / 38 % | 45 / 42 % |
+| T\* phân vị 90: P\* / không hợp tác (s) | 653 / 728 | 923 / 1 117 | 1 088 / 1 322 | 1 243 / 1 470 |
+| Báo cáo đầu của c\* về BS (s), như nhau ở cả hai | 147 | 221 | 280 | 344 |
+
+**Rút ra từ E1:**
+1. **P\* nhanh hơn P cũ 98–112 s (11–20 %) trên cả 40/40 bản đồ.** Phần lớn đến từ pha 2: đón đầu (95–136 s), cất cánh lúc 0 (27–74 s) và ngưỡng β = 1/4 (8–70 s so với β = 1). Các phần này đo riêng từng cái; chúng không cộng thẳng được.
+2. **Hợp tác (River) nhanh hơn không hợp tác 26–68 s, trên 39/40 bản đồ; ở phân vị 90 nhanh hơn 75–234 s.** Cơ chế là xếp hạng đúng hơn, không phải báo sớm hơn: báo cáo đầu của c\* về BS cùng lúc ở cả hai, nhưng với River c\* đứng hạng 1,93–2,37 thay vì 2,11–2,67, nên đội 2 xác minh ít cell sai hơn. Đây là số thăm dò (10 bản đồ mỗi cỡ, dưới N ≥ 120).
+3. **Báo hai lần giúp ít: 6–10 s.** Báo cáo đầu về sớm hơn 6–16 s, nhưng phần sau báo cáo gần như không đổi.
+4. **Tour theo độ trễ** tốt hơn l3first ở k6/k8 (20–27 s), ngang ở k2/k4, và tốt hơn tour ngắn nhất 22–26 s ở mọi cỡ.
+5. **Lớp 1:** có River thì thứ tự phát không còn quan trọng (xếp nhóm ≈ xen kẽ, 20/40). Không hợp tác thì phát xen kẽ rất quan trọng: xếp nhóm làm chậm 58–317 s so với không hợp tác phát xen kẽ. Bỏ độ quan trọng làm thứ hạng hỏng hẳn (gấp 1,8–3,1 lần).
+6. **Baseline:** cánh quay tốt nhất (B3‑500) chậm hơn P\* 1,9–2,8 lần, B1 chậm hơn 2,2–4,0 lần. Khoảng cách tăng theo cỡ bản đồ vì UAV cánh quay phải dừng ở từng nhóm critical cell.
+7. **Còn cách cận dưới B7 163–423 s.** Phần lớn nằm sau lúc c\* báo về (261–426 s): bay tới c\*, xác minh, và trung bình 0,9–1,4 cell sai trước c\*.
+8. **River cửa sổ chưa giao đủ ở mọi cluster.** Critical cell giữ 97 % trọng số manh mối sau River (77 % nếu chỉ tự nghe), nhưng chỉ 56 % giữ đủ cả 12 manh mối. Nguyên nhân: 90/200 cluster (45 %) có Axe ngắn hơn bộ manh mối (4 036 gói, tức khoảng 2 km bay). Trong các cluster đó không critical cell nào đủ 12; trong các cluster còn lại thì 100 % đủ.
+
+Hình (không chữ):
+- `figures/l1-e1-abl-tstar.png`: bốn nhóm k2, k4, k6, k8; mỗi chấm là trung bình ± khoảng tin cậy 95 % trên 10 bản đồ. Trái sang phải: P\* (xanh đậm), đi ở báo cáo đầu (xanh nhạt), chỉ báo sau River (xanh vừa), không hợp tác (vàng cam), tour l3first (xanh lá), tour ngắn nhất (xanh lá nhạt), β = 0 (tím), β = 1 (tím nhạt), không đón đầu (hồng), đội 2 cũ (đỏ), P cũ (xám).
+- `figures/l1-e1-base-tstar.png`, trục log: P\* (xanh đậm), không hợp tác (vàng cam), B3‑300 (tím), B3‑500 (tím nhạt), B6 (hồng), B2‑300 (xám), B2‑500 (xám nhạt), B1 (đen), B7 (xanh lá).
+- `figures/l1-e1-breakdown.png`: mỗi cột là T\*, phần nhạt là lúc báo cáo đầu của c\* về BS, phần đậm là phần còn lại tới khi xác minh xong c\*. Trong mỗi nhóm: P\*, chỉ báo sau River, không hợp tác, đội 2 cũ, P cũ (màu như hình đầu).
+
+### 5.3 Thử một ý tưởng sau E1: có nên lo Axe ngắn? (`data/l1rank/allclues-*.csv`)
+
+Phát hiện 8 gợi ý một sửa đổi ở ranh giới lớp 1 và lớp 2. Với cluster có Axe ngắn, BS có thể soạn bộ manh mối riêng (bỏ manh mối có giá trị trên mỗi gói thấp nhất cho vừa Axe), hoặc lớp 2 có thể dựng cluster có Axe ≥ 2 km. Trước khi làm, tôi đo cận trên của mọi sửa đổi kiểu này. Giả sử báo cáo sau River của *mọi* critical cell giữ đủ 12 manh mối, còn thời điểm River giữ nguyên. Chạy trên cùng 40 bản đồ × 100 lượt:
+
+| | k2 | k4 | k6 | k8 |
+|---|---|---|---|---|
+| P\* (s) | 408 | 566 | 675 | 769 |
+| cận trên "đủ 12 manh mối" (s) | 408 | 566 | 671 | 763 |
+| bản đồ nhanh hơn | 3/10 | 5/10 | 6/10 | 7/10 |
+
+**Lợi tối đa chỉ 0–7 s.** Axe ngắn nhất vẫn có 3 268 gói (trung vị 3 861), nên manh mối bị cắt chỉ là 1–3 ảnh ở cuối thứ tự phát (dáng và bộ phận, không bao giờ là mặt). Critical cell ở các cluster này vẫn giữ trung bình 93 % trọng số (thấp nhất 83 %), và điểm hai bước chịu được phần thiếu đó. Kết luận: **độ đầy đủ không còn là nút thắt; chỗ đáng làm tiếp là pha 2** (mục 5.1 và điểm 7 của E1). Tôi không cài sửa đổi Axe ngắn.
+
+### 5.4 Đội 2 đang làm gì khi c\* báo về? (`tools/l1_state.py`, `data/l1rank/state.csv`, `redir-*.csv`)
+
+Mục 5.1 cho thấy phần lớn T\* nằm sau lúc báo cáo đầu của c\* về BS. Để biết phần đó đi đâu, tôi ghi lại trạng thái đội 2 ở đúng thời điểm ấy (P\*, 40 bản đồ × 100 lượt):
+
+| | k2 | k4 | k6 | k8 |
+|---|---|---|---|---|
+| đang chờ hoặc đón đầu | 67 % | 58 % | 61 % | 65 % |
+| đang bay tới cell khác | 13 % | 21 % | 23 % | 22 % |
+| đang xác minh cell khác | 20 % | 21 % | 16 % | 13 % |
+| từ lúc c\* báo về tới lúc đội 2 hướng về c\* (TB) | 114 s | 166 s | 204 s | 217 s |
+| số cell khác được xác minh sau lúc c\* báo về (TB) | 0,72 | 0,91 | 0,99 | 0,97 |
+
+- Khoảng hai phần ba số lượt, khi c\* báo về thì đội 2 đang rảnh và đi ngay. Phần còn lại của những lượt "đang rảnh", và phần lớn độ trễ, là do **xếp hạng chưa chắc**: báo cáo đầu của c\* chưa đủ nổi trội, nên đội 2 xác minh cell khác trước.
+- 13–23 % số lượt đội 2 đang bay dở tới cell khác. Trường hợp này đóng góp 22–71 s vào độ trễ trung bình.
+
+Từ đó tôi thử cho UAV cánh quay **đổi hướng giữa đường**: khi có báo cáo mới lúc đang bay, đội 2 quyết định lại từ vị trí hiện tại (có thể giữ hay đổi đích; xác minh đang làm thì không bỏ dở):
+
+| | k2 | k4 | k6 | k8 | Bản đồ nhanh hơn |
+|---|---|---|---|---|---|
+| P\* (s) | 408 | 566 | 675 | 769 | |
+| P\* + đổi hướng (s) | 403 | 554 | 662 | 754 | 36/40 |
+| không hợp tác (s) | 434 | 622 | 734 | 838 | |
+| không hợp tác + đổi hướng (s) | 431 | 611 | 720 | 825 | |
+
+**Đổi hướng giúp đều nhưng ít: 5–15 s, trên 36/40 bản đồ.** Nó cộng được với hợp tác, và khoảng cách giữa hai bên giữ nguyên (P\* + đổi hướng vẫn nhanh hơn không hợp tác + đổi hướng 28–71 s). Tôi giữ nó là một tùy chọn (`-redir`) và đưa vào E2. Không đổi định nghĩa P\* để E1 và E2 dùng chung một chuẩn.
+
+**Hướng phát triển tiếp (chưa cài):** phần trễ lớn nhất còn lại là xếp hạng chưa chắc, chứ không phải đội 2 đã lỡ cam kết. Hai hướng khả dĩ:
+- **Xác minh hai bước.** Đội 2 gửi trước một phần nhỏ của bộ tham chiếu đầy đủ, rồi bỏ dở nếu điểm thấp. Mỗi lần sai hiện tốn đủ 78 s.
+- **Cell báo thêm độ tự tin**, ví dụ khoảng cách giữa điểm cao nhất và điểm thứ hai, để BS phân biệt cell nổi trội thật với cell may mắn.
+
+
 
 __E2__
 
 ## 6. Độ nhạy theo tham số lớp 1 (`data/l1rank/sens-*.csv`, `figures/l1-sens.png`)
 
-Cluster có sẵn, River đầy đủ D, 40 bản đồ × 50 lượt, mỗi lần đổi một tham số (cỡ bản đồ gộp chung). Chính sách đề xuất ở đây chưa gồm cất cánh từ t = 0.
+Chạy lại ở cuối với P\* cuối cùng. Cluster có sẵn, River cửa sổ (như E1), 40 bản đồ × 50 lượt, mỗi lần đổi một tham số; cỡ bản đồ gộp chung. Lần chạy đầu lúc 19:16 dùng chính sách cũ hơn; kết luận không đổi.
 
-| Thay đổi | Đề xuất (s) | Chỉ báo sau River (s) | Không hợp tác (s) | Đề xuất − không hợp tác | Bản đồ đề xuất tốt hơn | Hạng TB của c\* (đề xuất) |
+| Thay đổi | P\* (s) | Chỉ báo sau River (s) | Không hợp tác (s) | P\* − không hợp tác | Bản đồ P\* nhanh hơn | Hạng TB của c\* (P\*) |
 |---|---|---|---|---|---|---|
-| gốc (D = 128, 2 % mặc giống, M = 223) | 675 | 686 | 729 | −54 | 38/40 | 2,04 |
-| D = 64 (đối sánh nhiễu hơn) | 832 | 841 | 935 | −104 | 37/40 | 2,84 |
-| D = 256 (đối sánh sạch hơn) | 595 | 605 | 637 | −42 | 35/40 | 1,66 |
-| không ai mặc giống | 679 | 689 | 743 | −64 | 38/40 | 2,05 |
-| 5 % mặc giống | 662 | 671 | 720 | −58 | 38/40 | 1,98 |
-| M = 105 | 658 | 668 | 714 | −56 | 36/40 | 1,90 |
-| M = 693 | 682 | 692 | 753 | −70 | 37/40 | 2,08 |
+| gốc (D = 128, 2 % mặc giống, M = 223) | 605 | 613 | 654 | −50 | 38/40 | 2,21 |
+| D = 64 (đối sánh nhiễu hơn) | 747 | 755 | 840 | −92 | 37/40 | 2,97 |
+| D = 256 (đối sánh sạch hơn) | 536 | 546 | 570 | −34 | 34/40 | 1,86 |
+| không ai mặc giống | 610 | 617 | 661 | −51 | 38/40 | 2,23 |
+| 5 % mặc giống | 591 | 602 | 643 | −52 | 37/40 | 2,16 |
+| M = 105 | 589 | 598 | 642 | −53 | 37/40 | 2,08 |
+| M = 693 | 615 | 623 | 677 | −62 | 36/40 | 2,29 |
 
-- Kết luận chính (River tốt hơn không hợp tác) đứng vững ở mọi biến thể, 35–38/40 bản đồ.
-- Ưu thế của River tăng khi đối sánh nhiễu (D = 64: −104 s): điểm càng kém tin cậy thì thiếu manh mối càng hại.
-- **Số chiều hiệu dụng D quyết định mức T\*** (595–832 s). Đây là tham số cần neo vào số đo thật của mô hình embedding.
-- Báo cáo hai lần luôn giúp khoảng 10 s.
-- Hình `figures/l1-sens.png`: trái là T\* (trung bình ± khoảng tin cậy 95 % trên 40 bản đồ), phải là hạng TB của c\*. Mỗi cụm là một lần chạy, theo thứ tự bảng. Trong cụm: xanh đậm là đề xuất, xanh nhạt là chỉ báo sau River, vàng là không hợp tác.
+- Kết luận chính (hợp tác nhanh hơn không hợp tác) đứng vững ở mọi biến thể: 34–38/40 bản đồ.
+- Ưu thế của hợp tác tăng khi đối sánh nhiễu (D = 64: −92 s) và giảm khi đối sánh sạch (D = 256: −34 s). Điểm càng kém tin cậy thì thiếu manh mối càng hại.
+- **Số chiều hiệu dụng D quyết định mức T\*** (536–747 s). Đây là tham số cần neo vào số đo thật của mô hình embedding.
+- Báo cáo hai lần luôn giúp 7–10 s.
+- Hình `figures/l1-sens.png`: trái là T\* (trung bình ± khoảng tin cậy 95 % trên 40 bản đồ), phải là hạng TB của c\*. Mỗi cụm là một lần chạy, theo thứ tự bảng. Trong cụm: xanh đậm là P\*, xanh nhạt là chỉ báo sau River, vàng cam là không hợp tác.
 
 ## 7. Một nhiệm vụ từng bước (bản đồ k4‑s2, P\*)
 

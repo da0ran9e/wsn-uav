@@ -31,6 +31,9 @@ Methods (name = base + options):
   options   -grouped (broadcast order by aspect), -equal (no importance: every clue weight 1), -wait, -zero (team 2
             leaves with team 1, at t = 0, and stages towards the critical cells' centre until reports come), -pu,
             -puh, -puq, -put, -stage, -short / -latency (team 1's tour; default l3first)
+            -redir (team 2 may change its target in flight when a report comes; P, B4, P+prog)
+            P+prog only: -allclues (upper bound: the River report holds all 12 clues, as if every Axe were long
+            enough for the clue set)
   B1 (no phase 1: TSP over every critical cell with the large file), B2-r (groups, multicast large file), B3-r
   (rotary multicast of the clue set to groups, then LoRa, team 2), B6 (rotary unicast of the clue set to each
   critical cell, then LoRa, team 2), B7 (oracle: straight to c*); B3 and B6 take the team-2 options (-pu..., -stage,
@@ -129,11 +132,13 @@ def policy(opts):
             next((BETA[o] for o in opts if o in BETA), 1.0))
 
 
-def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage=False, trace=None, beta=1.0):
+def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage=False, trace=None, beta=1.0,
+          redirect=False):
     """Team 2 visiting every cell. reports {cell: [(arrival at the BS, (mu, sd)), ...]} in time order.
     Returns Tstar, Tall, rank of c*, departure, c*'s first report at the BS. trace (a list), when given, gets
     ("p", t, {cell: P(c*)}) at every decision and the moves ("fly", t0, t1, a, b, cell), ("verify", t0, t1, cell),
-    ("stage", t0, t1, a, b), ("back", t0, t1, a, b)."""
+    ("stage", t0, t1, a, b), ("back", t0, t1, a, b). redirect: a flight is cut at each report that reaches the BS
+    before team 2 arrives, and team 2 decides again from where it is (it may keep its target or change it)."""
     cells = list(pos)
     first = {c: reports[c][0][0] for c in cells}
     events = sorted({t for c in cells for t, _ in reports[c]})
@@ -161,8 +166,16 @@ def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage
                 trace.append(("p", t, {c: pk[j] for j, c in enumerate(known)} | {"unreported": pu}))
         if go:
             c = known[i]
+            t1 = t + math.dist(p, pos[c]) / V2
+            nxt = min((e for e in events if e > t), default=math.inf)
+            if redirect and nxt < t1:                 # a report comes in flight: fly until then, decide again
+                f = (nxt - t) / (t1 - t)
+                q = (p[0] + f * (pos[c][0] - p[0]), p[1] + f * (pos[c][1] - p[1]))
+                if trace is not None:
+                    trace.append(("fly", t, nxt, p, q, c))
+                p, t = q, nxt
+                continue
             if trace is not None:
-                t1 = t + math.dist(p, pos[c]) / V2
                 trace += [("fly", t, t1, p, pos[c], c), ("verify", t1, t1 + VERIFY, c)]
             t += math.dist(p, pos[c]) / V2 + VERIFY
             p = pos[c]
@@ -202,8 +215,9 @@ def fly_all(bs, stops, cost, star_in):
     return Ts, t + math.dist(p, bs) / V2, rank
 
 
-def missions(M, tours, hold, d, phase, C, Cq, methods):
-    """The requested methods on one draw. Returns {method: (Tstar, Tall, rank, dep, starIn)} and per-cell rows."""
+def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
+    """The requested methods on one draw. Returns {method: (Tstar, Tall, rank, dep, starIn)} and per-cell rows.
+    traces (a dict), when given, gets team 2's trace (see team2) of each P / B4 / P+prog method."""
     bs = M["bs"]
     crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
     pos = {x: tuple(M["cl"][x[0]]["geo"]["c"][x[1]]) for x in crits}
@@ -242,14 +256,15 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
             tk = next((o for o in opts if o in ("short", "latency")), "l3first")
             if base == "P+prog":
                 ad, ar = ready("direct", tk), ready("river", tk)
-                pd_, pr_ = posts("direct", order, wC), posts("river", order, wC)
+                pd_, pr_ = posts("direct", order, wC), posts("full" if "allclues" in opts else "river", order, wC)
                 reps = {x: [(t, v) for t, _, v in sorted([(ad[x], 0, pd_[x]), (ar[x], 1, pr_[x])])] for x in crits}
             else:
                 kind = "river" if base == "P" else "direct"
                 a_, p_ = ready(kind, tk), posts(kind, order, wC)
                 reps = {x: [(a_[x], p_[x])] for x in crits}
             dep, rule, stg, beta = policy(opts)
-            out[meth] = team2(bs, pos, reps, U, prior, star, dep, rule, stg, beta=beta)
+            tr = None if traces is None else traces.setdefault(meth, [])
+            out[meth] = team2(bs, pos, reps, U, prior, star, dep, rule, stg, tr, beta, "redir" in opts)
         elif meth == "B1":
             out[meth] = fly_all(bs, [(pos[x], [x]) for x in crits], lambda s: VERIFY, lambda s: star in s[1]) + (0.0, 0.0)
         elif meth == "B7":

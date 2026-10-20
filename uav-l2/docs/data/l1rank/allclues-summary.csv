@@ -1,0 +1,9 @@
+set,size,method,maps,n,Tstar,ci,p90,Tall,rank,first
+kmedoids,2,P+prog-latency-puq-stage-zero,10,1000,408.0,13.2,652.8,2436.5,1.93,0.466
+kmedoids,2,P+prog-latency-puq-stage-zero-allclues,10,1000,407.8,13.2,654.8,2434.9,1.93,0.469
+kmedoids,4,P+prog-latency-puq-stage-zero,10,1000,565.7,19.9,923.4,5314.7,2.21,0.402
+kmedoids,4,P+prog-latency-puq-stage-zero-allclues,10,1000,565.6,19.7,909.5,5322.3,2.21,0.399
+kmedoids,6,P+prog-latency-puq-stage-zero,10,1000,675.1,25.9,1087.8,8526.4,2.37,0.398
+kmedoids,6,P+prog-latency-puq-stage-zero-allclues,10,1000,671.1,25.8,1079.3,8542.8,2.34,0.395
+kmedoids,8,P+prog-latency-puq-stage-zero,10,1000,769.4,29.9,1243.3,11412.0,2.33,0.449
+kmedoids,8,P+prog-latency-puq-stage-zero-allclues,10,1000,762.6,29.3,1214.9,11413.7,2.31,0.446

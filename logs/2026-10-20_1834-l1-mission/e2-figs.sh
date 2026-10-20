@@ -3,13 +3,13 @@
 #   e2-all        every partition x method against P* on pre-existing clusters (table only)
 #   l1-e2-tstar   P*, no cooperation and the oracle per partition;  l1-e2-breakdown  P* per partition
 D=docs/data/l1rank; P=P+prog-latency-puq-stage-zero
-DR="$D/e1-draws.csv $D/e2-subch-draws.csv"
+DR="$D/e1-draws.csv $D/redir-draws.csv $D/e2-subch-draws.csv"
 [ -f $D/e2-meander-draws.csv ] && DR="$DR $D/e2-meander-draws.csv"
 ROWS=()
 for s in kmedoids subch meander; do
   for m in "P*=$P" "leave at first report=P+prog-latency-puq-stage" "River report only=P-latency-puq-stage-zero" \
            "B4=B4-latency-puq-stage-zero" "beta 0=P+prog-latency-stage-zero" "beta 1=P+prog-latency-pu-stage-zero" \
-           "P old=P" "B1=B1" "B7=B7"; do
+           "P* redirect=$P-redir" "P old=P" "B1=B1" "B7=B7"; do
     ROWS+=(--row "$s ${m%%=*}=$s:${m#*=}")
   done
 done

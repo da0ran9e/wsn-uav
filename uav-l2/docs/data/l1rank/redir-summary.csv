@@ -1,0 +1,13 @@
+set,size,method,maps,n,Tstar,ci,p90,Tall,rank,first
+kmedoids,2,P+prog-latency-puq-stage-zero,10,1000,408.0,13.2,652.8,2436.5,1.93,0.466
+kmedoids,2,P+prog-latency-puq-stage-zero-redir,10,1000,403.2,13.2,671.1,2444.8,1.86,0.528
+kmedoids,2,B4-latency-puq-stage-zero-redir,10,1000,431.4,15.4,727.0,2435.2,2.06,0.484
+kmedoids,4,P+prog-latency-puq-stage-zero,10,1000,565.7,19.9,923.4,5314.7,2.21,0.402
+kmedoids,4,P+prog-latency-puq-stage-zero-redir,10,1000,554.4,19.9,915.1,5328.7,2.1,0.47
+kmedoids,4,B4-latency-puq-stage-zero-redir,10,1000,610.6,24.8,1120.5,5251.2,2.44,0.442
+kmedoids,6,P+prog-latency-puq-stage-zero,10,1000,675.1,25.9,1087.8,8526.4,2.37,0.398
+kmedoids,6,P+prog-latency-puq-stage-zero-redir,10,1000,662.2,25.9,1112.1,8537.8,2.26,0.448
+kmedoids,6,B4-latency-puq-stage-zero-redir,10,1000,719.5,30.4,1327.7,8470.2,2.56,0.427
+kmedoids,8,P+prog-latency-puq-stage-zero,10,1000,769.4,29.9,1243.3,11412.0,2.33,0.449
+kmedoids,8,P+prog-latency-puq-stage-zero-redir,10,1000,754.4,29.8,1243.0,11424.1,2.22,0.499
+kmedoids,8,B4-latency-puq-stage-zero-redir,10,1000,825.0,37.2,1473.3,11332.7,2.55,0.475

@@ -80,7 +80,7 @@ def main():
             reps[x] = [(e[0], e[2]) for e in sorted(ev, key=lambda e: (e[0], e[1]))]
         trace = []
         dep, rule, stg, beta = R.policy(a.method.split("-")[1:])
-        out = R.team2(M["bs"], pos, reps, U, prior, star, dep, rule, stg, trace, beta)
+        out = R.team2(M["bs"], pos, reps, U, prior, star, dep, rule, stg, trace, beta, "redir" in a.method.split("-"))
         return U, star, info, trace, out
 
     if a.draw >= 0:

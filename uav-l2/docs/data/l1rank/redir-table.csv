@@ -1,0 +1,17 @@
+row,set,method,size,maps,draws,Tstar,ci,p90,rank,first,starIn,team1,crits,clusters,Tall,dRef,betterMaps
+P*,kmedoids,P+prog-latency-puq-stage-zero,k2,10,1000,408.0,14.5,652.8,1.93,0.466,147.2,212.8,13.5,2.0,2436.5,0.0,0
+P*,kmedoids,P+prog-latency-puq-stage-zero,k4,10,1000,565.7,24.3,923.4,2.21,0.402,221.2,369.2,26.9,4.0,5314.7,0.0,0
+P*,kmedoids,P+prog-latency-puq-stage-zero,k6,10,1000,675.1,28.3,1087.8,2.37,0.398,280.2,512.4,39.9,6.0,8526.4,0.0,0
+P*,kmedoids,P+prog-latency-puq-stage-zero,k8,10,1000,769.4,43.3,1243.3,2.33,0.449,343.8,681.9,50.1,8.0,11412.0,0.0,0
+P* redirect,kmedoids,P+prog-latency-puq-stage-zero-redir,k2,10,1000,403.2,13.5,671.1,1.86,0.528,147.2,212.8,13.5,2.0,2444.8,-4.8,7
+P* redirect,kmedoids,P+prog-latency-puq-stage-zero-redir,k4,10,1000,554.4,26.0,915.1,2.1,0.47,221.2,369.2,26.9,4.0,5328.7,-11.3,9
+P* redirect,kmedoids,P+prog-latency-puq-stage-zero-redir,k6,10,1000,662.2,30.9,1112.1,2.26,0.448,280.2,512.4,39.9,6.0,8537.8,-12.9,10
+P* redirect,kmedoids,P+prog-latency-puq-stage-zero-redir,k8,10,1000,754.4,45.2,1243.0,2.22,0.499,343.8,681.9,50.1,8.0,11424.1,-15.0,10
+B4,kmedoids,B4-latency-puq-stage-zero,k2,10,1000,433.6,18.2,728.2,2.11,0.444,147.2,212.8,13.5,2.0,2429.9,25.6,0
+B4,kmedoids,B4-latency-puq-stage-zero,k4,10,1000,621.7,41.5,1117.3,2.53,0.386,221.2,369.2,26.9,4.0,5242.7,56.0,0
+B4,kmedoids,B4-latency-puq-stage-zero,k6,10,1000,734.5,41.6,1322.4,2.67,0.383,280.2,512.4,39.9,6.0,8462.4,59.4,0
+B4,kmedoids,B4-latency-puq-stage-zero,k8,10,1000,837.6,57.5,1470.2,2.65,0.424,343.8,681.9,50.1,8.0,11322.5,68.2,1
+B4 redirect,kmedoids,B4-latency-puq-stage-zero-redir,k2,10,1000,431.4,18.6,727.0,2.06,0.484,147.2,212.8,13.5,2.0,2435.2,23.4,0
+B4 redirect,kmedoids,B4-latency-puq-stage-zero-redir,k4,10,1000,610.6,42.3,1120.5,2.44,0.442,221.2,369.2,26.9,4.0,5251.2,44.9,1
+B4 redirect,kmedoids,B4-latency-puq-stage-zero-redir,k6,10,1000,719.5,43.8,1327.7,2.56,0.427,280.2,512.4,39.9,6.0,8470.2,44.5,0
+B4 redirect,kmedoids,B4-latency-puq-stage-zero-redir,k8,10,1000,825.0,58.7,1473.3,2.55,0.475,343.8,681.9,50.1,8.0,11332.7,55.6,1

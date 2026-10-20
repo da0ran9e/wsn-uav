@@ -8,7 +8,8 @@ per row and size, the mean over maps of each map's mean over draws, with a 95 % 
 every draw; the mean rank of c* in team 2's visits and the share of draws where c* was visited first; the paired
 change against --ref (same map, same draw) and how many maps it beats --ref on.
 Writes OUT-table.csv and FIGS/TAG-tstar.png: one group per size (k2, k4, k6, k8), one marker per row in the
-order given (mean and interval over maps); colours from --colour NAME=#hex (default grey).
+order given (mean and interval over maps); colours from --colour NAME=#hex (default grey), markers from
+--marker NAME=o; with --breakdown also FIGS/TAG-breakdown.png (see --help).
 """
 import argparse, csv, math, os
 from collections import defaultdict
@@ -35,6 +36,9 @@ def main():
     ap.add_argument("--figs", default="")
     ap.add_argument("--tag", default="l1")
     ap.add_argument("--log", action="store_true", help="log scale for the figure")
+    ap.add_argument("--breakdown", action="store_true",
+                    help="also FIGS/TAG-breakdown.png: per row and size, c*'s first report at the BS (light) and the "
+                         "time from it to c*'s verification (full colour), stacked")
     a = ap.parse_args()
     D = defaultdict(dict)          # (set, method) -> {(map, draw): row}
     for f in a.draws:
@@ -112,6 +116,30 @@ def main():
         ax.spines[sp].set_visible(False)
     strip_text(fig)
     fig.savefig(os.path.join(a.figs, f"{a.tag}-tstar.png"), facecolor=SURF, bbox_inches="tight", pad_inches=.06)
+    plt.close(fig)
+    if not a.breakdown:
+        return
+    # where the time goes: c*'s first report at the BS (light) and the rest until c* is verified (row colour)
+    fig, ax = plt.subplots(figsize=(12, 4.5), dpi=150, facecolor=SURF)
+    bw = min(0.8 / n, 0.12)
+    for i, (name, key) in enumerate(rows):
+        for j, sz in enumerate(sizes):
+            t = next((t for t in table if t["row"] == name and t["size"] == sz), None)
+            if t is None:
+                continue
+            x = j + (i - (n - 1) / 2) * bw
+            c = col.get(name, "#52514e")
+            ax.bar(x, t["starIn"], width=bw * .9, color=matplotlib.colors.to_rgba(c, .3), edgecolor="none")
+            ax.bar(x, t["Tstar"] - t["starIn"], bottom=t["starIn"], width=bw * .9, color=c, edgecolor="none")
+    ax.set_xticks(range(len(sizes)))
+    ax.set_ylim(0, None)
+    ax.grid(axis="y", color=GREY, lw=.6)
+    ax.set_axisbelow(True)
+    ax.set_facecolor(SURF)
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
+    strip_text(fig)
+    fig.savefig(os.path.join(a.figs, f"{a.tag}-breakdown.png"), facecolor=SURF, bbox_inches="tight", pad_inches=.06)
     plt.close(fig)
 
 

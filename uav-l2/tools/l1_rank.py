@@ -26,8 +26,9 @@ named <map> (k4-s1, ...) or k<K>. Per map and draw (paired: the same draw on the
 Methods (name = base + options):
   P         River reports;  B4  direct reports only (no cooperation);  P+prog  the direct report first, the River
             report when it comes (both through the CH's LoRa)
-  options   -grouped (broadcast order by aspect), -equal (no importance: every clue weight 1), -wait, -pu, -stage,
-            -short / -latency (team 1's tour; default l3first)
+  options   -grouped (broadcast order by aspect), -equal (no importance: every clue weight 1), -wait, -zero (team 2
+            leaves with team 1, at t = 0, and stages towards the critical cells' centre until reports come), -pu,
+            -stage, -short / -latency (team 1's tour; default l3first)
   B1 (no phase 1: TSP over every critical cell with the large file), B2-r (groups, multicast large file), B3-r
   (rotary multicast of the clue set to groups, then LoRa, team 2), B6 (rotary unicast of the clue set to each
   critical cell, then LoRa, team 2), B7 (oracle: straight to c*); B3 and B6 take the team-2 options -pu, -stage
@@ -125,7 +126,7 @@ def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage
     cells = list(pos)
     first = {c: reports[c][0][0] for c in cells}
     events = sorted({t for c in cells for t, _ in reports[c]})
-    t = min(first.values()) if depart == "early" else max(r[-1][0] for r in reports.values())
+    t = {"early": min(first.values()), "zero": 0.0}.get(depart, max(r[-1][0] for r in reports.values()))
     dep, p, seen, left, Ts, rank = t, bs, [], set(cells), None, None
 
     def post(c):
@@ -155,8 +156,9 @@ def team2(bs, pos, reports, U, prior, star, depart="early", rule="greedy", stage
                 Ts, rank = t, len(seen)
             continue
         nxt = min(e for e in events if e > t)
-        if stage and known:
-            w = {c: pk[j] for j, c in enumerate(known)} | {c: pu for c in left if c not in known}
+        if stage:
+            w = ({c: pk[j] for j, c in enumerate(known)} | {c: pu for c in left if c not in known}) if known else \
+                {c: 1.0 for c in left}
             tot = sum(w.values())
             if tot > 0:
                 goal = tuple(sum(w[c] * pos[c][a] for c in w) / tot for a in (0, 1))
@@ -230,7 +232,7 @@ def missions(M, tours, hold, d, phase, C, Cq, methods):
                 kind = "river" if base == "P" else "direct"
                 a_, p_ = ready(kind, tk), posts(kind, order, wC)
                 reps = {x: [(a_[x], p_[x])] for x in crits}
-            out[meth] = team2(bs, pos, reps, U, prior, star, "wait" if "wait" in opts else "early",
+            out[meth] = team2(bs, pos, reps, U, prior, star, next((o for o in opts if o in ("wait", "zero")), "early"),
                               "pu" if "pu" in opts else "greedy", "stage" in opts)
         elif meth == "B1":
             out[meth] = fly_all(bs, [(pos[x], [x]) for x in crits], lambda s: VERIFY, lambda s: star in s[1]) + (0.0, 0.0)

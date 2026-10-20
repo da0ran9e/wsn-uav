@@ -1,6 +1,6 @@
 # System Model — keyword
 
-Lời gốc: CLAUDE.md §8 mục 78. Số trong ngoặc là giá trị đang dùng trong mô phỏng.
+Lời gốc: CLAUDE.md §8 mục 78; lớp 1 và mục tiêu pha 2 cập nhật theo mục 110–114. Số trong ngoặc là giá trị đang dùng trong mô phỏng.
 
 ## A. Mạng mặt đất
 - N node không đồng nhất · 3 năng lực: quan sát, tính toán, giao tiếp
@@ -19,11 +19,12 @@ Lời gốc: CLAUDE.md §8 mục 78. Số trong ngoặc là giá trị đang dù
 - **G2G:** n = 3,5 · che khuất σ = 7,8 dB (tĩnh) · Rayleigh theo khối 100 ms
 - **LoRa:** airtime 0,4 s · duty cycle 1 % → một bản tin / 40 s
 
-## D. Dữ liệu truy vấn
+## D. Dữ liệu truy vấn (lớp 1: `L1-MODEL-vi.md`, mục 110–114)
 - UAV phát liên tục · một gói 99 B / 10 ms (0,5 m)
-- D = tập gói cluster nhận được trong lượt bay
+- bộ manh mối: L = 12 ảnh (2 mặt, 4 dáng, 6 bộ phận) · mỗi ảnh: độ nhận diện r ≈ 1, độ quan trọng w do BS chấm · Q ≈ 400 kB (4 036 gói)
+- thứ tự phát xen kẽ khía cạnh · một bản sao trên cửa sổ Q gói Axe quanh CH, lặp lại hai bên
 - Seg(a) = đoạn gói phát trên cell Axe a · BS tính trước từ d_track
-- yêu cầu: critical cell có đủ D (lớp 1 sẽ thay bằng "đủ lượng")
+- yêu cầu: mọi critical cell có đủ bộ manh mối (cửa sổ Q)
 
 ## E. Đội bay
 - **Đội 1:** cánh bằng · 50 m/s · 100 m · bay qua mỗi cluster một lần · đường thẳng qua CH
@@ -31,16 +32,18 @@ Lời gốc: CLAUDE.md §8 mục 78. Số trong ngoặc là giá trị đang dù
 - tour đội 1 tính trước tại BS
 
 ## F. Phản hồi và xác minh
-- critical cell → CH → LoRa → BS
-- nghi vấn: 1 thật + 2–3 giả · điểm nghi vấn
-- đội 2 xuất phát khi có nghi vấn đầu tiên · xác minh xong cell thật thì về BS
+- critical cell: điểm hai bước (từng khía cạnh, rồi gộp theo độ quan trọng) · báo điểm cao nhất + bitmap manh mối
+- báo hai lần: sau gom nội cell (tự nghe) và sau River · critical cell → CH → LoRa → BS
+- BS: điểm → phân phối điểm xác minh → P(cell là c\*), cell chưa báo theo tiên nghiệm
+- đội 2: thăm mọi critical cell · chọn theo P / (bay + xác minh) · chờ khi P < P_U, đón đầu về tâm xác suất
+- xác minh = ổn định + bộ tham chiếu đầy đủ 1 MB + đối sánh ≈ 78 s · **pha 2 hoàn thành khi xác minh xong c\*** (cell có điểm xác minh cao nhất)
 
 ## G. Bài toán
 - **Lớp 3:** min thời gian tới khi mọi critical cell có đủ D · phụ: số khung
-- **Nhiệm vụ:** min thời điểm đội 2 xác minh cell thật và về BS
+- **Nhiệm vụ:** min T\*, thời điểm đội 2 xác minh xong c\* (mục 114)
 - ràng buộc: một lượt bay · một gateway mỗi cặp cell · lịch lưới · duty cycle LoRa
 
 ## H. Giả định / ngoài phạm vi
 - chưa xét năng lượng, bộ nhớ, quyền sở hữu, vật cản cứng
 - fading không đổi trong một gói (A2G lạc quan)
-- lớp 1 (nhận dạng) là hộp đen · đô thị
+- lớp 1: mô hình điểm từ cosine của từng ảnh (`L1-MODEL-vi.md`), tham số kịch bản giả định · không mô hình ảnh mục tiêu · đô thị

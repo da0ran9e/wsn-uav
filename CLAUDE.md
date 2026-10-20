@@ -1292,6 +1292,12 @@ ba hướng của bạn tôi đồng ý cả
 quay lại giải thích giúp tôi cách tính M và bỏ sót cell, báo nhầm
 ```
 
+*108. 2026-10-20 · layer 1 · câu hỏi: thời gian đối sánh mỗi cặp ảnh và với toàn bộ kho*
+
+```text
+thời gian đối sánh mỗi cặp ảnh là bao nhiêu và với toàn bộ kho là bao nhiêu
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

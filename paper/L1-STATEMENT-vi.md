@@ -481,3 +481,26 @@ Ngưỡng cố định thì M càng lớn, P_cam càng lớn: M = 10 / 30 / 100 
 **Giả định cần nói rõ:**
 - Các crop độc lập với nhau, và k lượt của mục tiêu là k lần đi qua khác nhau.
 - [7] lạc quan: mục tiêu có trong tập huấn luyện, và camera là cùng một bộ 6 camera.
+
+## 13. Thời gian đối sánh: mỗi cặp ảnh và cả kho (CLAUDE.md §8 mục 108)
+
+Công thức của `uav-l2/tools/l1_mission.py` (mục 95):
+
+  T_match = L × (giải mã + embed) + tìm kiếm,  tìm kiếm = max(M × 4 KB / 8 GB/s, M × L × 2 048 / 20 GMAC/s)
+
+- Tốc độ embed có nguồn công bố: Hailo‑8L 257,6 ảnh/s; CPU 12,6 ảnh/s.
+- Ba số còn lại là ước tính, chưa đo trên Pi: giải mã 5 ms, băng thông 8 GB/s, 20 GMAC/s.
+
+| Bước | Hailo‑8L | CPU |
+|---|---|---|
+| Một cặp (cosine hai vector 2 048 chiều fp16) | 0,1 µs tính, 0,5 µs đọc vector: khoảng 0,5 µs | như Hailo (chạy trên CPU) |
+| Chuẩn bị một ảnh signature (giải mã + embed, một lần) | 8,9 ms | 84 ms |
+| Cả kho trong khung truy vấn, L = 2, M = 105 / 223 / 356 / 693 (446 cặp khi M = 223) | tìm 0,05–0,36 ms; tổng 17,8–18,1 ms | tổng 168–169 ms |
+| L = 1 / 3 / 6 (M = 223) | 9 / 27 / 53 ms | 84 / 252 / 505 ms |
+| Cả bộ nhớ camera, M = 10⁴ / 10⁵ / 10⁶ (chỉ mục 41 MB / 410 MB / 4,1 GB) | 23 ms / 69 ms / 0,53 s | 0,17 / 0,22 / 0,68 s |
+| Nếu chưa có chỉ mục: embed lại M crop (M = 223 / 10⁴ / 10⁶) | 0,9 s / 39 s / 65 phút | 18 s / 13 phút / 22 giờ |
+
+- Chi phí chính là embed L ảnh signature. Phần so với kho gần như bằng 0 khi chỉ mục có sẵn.
+- 10⁶ crop cần khoảng 4 GB chỉ mục, sát giới hạn RAM của Pi 5 (4–8 GB). Lớn hơn thế phải đọc từ thẻ nhớ hoặc NVMe, chậm hơn; phần này chưa mô hình hoá.
+- So với River (TB khoảng 24 s) và khe LoRa (0–40 s), đối sánh không phải nút thắt.
+- Các so sánh nhiệm vụ (mission_policy, CURVE‑vi.md) vẫn dùng hằng số MATCH = 5 s, là giá trị giữ chỗ dư so với 0,02–0,17 s tính ở đây.

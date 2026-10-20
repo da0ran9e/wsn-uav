@@ -1314,6 +1314,14 @@ trong thực nghiệm ta sẽ để các node so sánh các chỉ số này sắ
 phát triển tiếp ý tưởng này
 ```
 
+*111. 2026-10-20 · layer 1 · đừng vội thử, thảo luận ngắn trước: mỗi node có M ảnh, mỗi ảnh một giá trị khớp ngẫu nhiên theo một phân phối; ảnh L cũng ngẫu nhiên với điểm cao hơn; node báo điểm về BS, đội 2 thăm theo thứ tự ưu tiên (tất cả các điểm)*
+
+```text
+đừng vội thử, ta cùng thảo luận về ý tưởng ngắn ngọn trước
+trước tiên tôi nghĩ lại: trong kho mỗi node  có tập M ảnh, mỗi ảnh mang một giá trị khớp ngẫu nhiên
+theo một phân phố nào đó và các ảnh L cũng là ngẫu nhiên như điểm cao hơn, sau khi so khớp, các node báo điểm về BS và đội UAV 2 cần đi thăm theo thứ tự ưu tiên (tất cả các điểm)
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

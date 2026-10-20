@@ -14,7 +14,7 @@ One record per line, cells as "q r":
   CSRC kq kr mq mr aq ar bq br  n c...       candidate m of k fetches Seg(a) from Bank b along b -> m
   CLINK kq kr mq mr  n c...                  k -> candidate m
 """
-import argparse, os, sys
+import argparse, math, os, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from river_plan import load, plan, cellpath  # noqa: E402
@@ -31,10 +31,13 @@ def main():
                     help="Banks along the sum vector's normal, or the path's local normal (CLAUDE.md §8 item 103)")
     ap.add_argument("--reentry", action="store_true",
                     help="a curved path may cross an Axe cell again: Seg(a) is its longest visit")
+    ap.add_argument("--windowKB", type=float, default=0,
+                    help="the cluster needs only this much of D (99 B packets), around where the UAV passes the CH")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     geo = load(a.deploy, a.path)
-    P = plan(geo, width=a.width, kg=a.kg, kl=a.kl, banks=a.banks, reentry=a.reentry)
+    P = plan(geo, width=a.width, kg=a.kg, kl=a.kl, banks=a.banks, reentry=a.reentry,
+             window=math.ceil(a.windowKB * 1000 / 99))
     cells = lambda cs: f"{len(cs)} " + " ".join(f"{q} {r}" for q, r in cs)
     with open(a.out, "w") as f:
         f.write(f"N {len(geo['uav'])}\n")

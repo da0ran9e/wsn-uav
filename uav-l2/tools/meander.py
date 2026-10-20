@@ -94,9 +94,9 @@ def coords(land):
     return main, spine, s, n
 
 
-def partition_meander(land, L, cap=CAP):
+def partition_meander(land, L, cap=CAP, span=0):
     """Steps 1-4, each land piece (cut off by a river or a lake) with its own spine. Returns owner, lane,
-    s, n, spines and the stages."""
+    s, n, spines and the stages. span > 0: chunks also at most span cells long along s (item 106)."""
     s, n, lane, ps, spines = {}, {}, {}, [], []
     for i, part in enumerate(sorted(pieces(list(land)), key=len, reverse=True)):
         _, spine, sp, np_ = coords(set(part))
@@ -130,6 +130,8 @@ def partition_meander(land, L, cap=CAP):
     for i in sorted(set(piece.values())):               # step 4b: equal chunks along s
         p = sorted((h for h in piece if piece[h] == i), key=lambda h: s[h])
         m = math.ceil(len(p) / cap)
+        if span:
+            m = max(m, math.ceil((s[p[-1]] - s[p[0]]) / (span * W)))
         ids = list(range(k, k + m))
         for j in range(m):
             for h in p[j * len(p) // m:(j + 1) * len(p) // m]:

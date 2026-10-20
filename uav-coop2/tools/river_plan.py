@@ -92,7 +92,7 @@ def detour(b, m, k, S, c):
         return cellpath(b, m, S, c)
 
 
-def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False):
+def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, window=0):
     c, w, R, S, uav = geo["c"], geo["w"], geo["R"], geo["S"], geo["uav"]
     # Algorithm 1: Axe and Seg (packets sent above each Axe cell; outside the cluster: none)
     axe, seg = [], {}
@@ -110,6 +110,16 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False):
         # unassigned like the packets sent outside the cluster
         seg[a] = [int(s) for s in max(runs, key=len)]
     axe.sort(key=lambda a: seg[a][0])
+    if window:   # the cluster needs only `window` packets: the Axe packets around where the UAV passes the CH
+        chn = next(x for x in geo["nodes"] if x["isCH"] == "1")
+        c0 = int(np.argmin(np.linalg.norm(uav - [float(chn["x"]), float(chn["y"])], axis=1)))
+        allp = sorted(s for a in axe for s in seg[a])
+        if len(allp) > window:
+            i = min(max(int(np.searchsorted(allp, c0)) - window // 2, 0), len(allp) - window)
+            lo, hi = allp[i], allp[i + window - 1]
+            seg = {a: [s for s in seg[a] if lo <= s <= hi] for a in axe}
+            axe = [a for a in axe if seg[a]]
+            seg = {a: seg[a] for a in axe}
     u = np.array(c[axe[-1]]) - np.array(c[axe[0]])
     u /= np.linalg.norm(u)
     nrm = np.array([-u[1], u[0]])

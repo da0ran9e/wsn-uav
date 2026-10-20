@@ -192,6 +192,7 @@ def stage_runs(a, W_, K):
                     os.symlink(f"../{src}", f"{W_}/d{k}/{dst}")
             sh([sys.executable, f"{COOP2}/river_export.py", f"--deploy=d{k}", f"--path=c{k}-path-s35.csv",
                 f"--banks={getattr(a, 'banks', 'parallel')}", *(["--reentry"] if getattr(a, "reentry", False) else []),
+                *([f"--windowKB={a.windowKB:g}"] if getattr(a, "windowKB", 0) else []),
                 f"--out=plan{k}.txt"], f"plan{k}.log")
         return k
 
@@ -223,6 +224,8 @@ def main():
     ap.add_argument("--lane", type=float, default=4.5, help="--partition=lane: lane width, cells")
     ap.add_argument("--banks", default="parallel", choices=("parallel", "local"),
                     help="River Banks: the sum vector's normal, or the path's local normal (CLAUDE.md §8 item 103)")
+    ap.add_argument("--windowKB", type=float, default=0,
+                    help="each cluster needs only this much of D, around the CH (river_export.py; item 106)")
     a = ap.parse_args()
     a.bin = os.path.abspath(a.bin)
     os.makedirs(a.work, exist_ok=True)

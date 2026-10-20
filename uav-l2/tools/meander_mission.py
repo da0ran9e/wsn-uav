@@ -3,7 +3,11 @@
     python3 tools/meander_mission.py --clusters 4 --seed 2 --work WORK --bin BIN [--jobs 3] [--banks local]
 
 The map is the one of mission.py --clusters K --seed S (restructure.domain), partitioned by MEANDER
-(meander.partition_meander, lanes 4.5 cells) instead of k-medoids. Stages (resumable like mission.py):
+(meander.partition_meander, lanes 4.5 cells) instead of k-medoids. Options (CLAUDE.md §8 item 106):
+  --span C          MEANDER clusters at most C cells long along s (a shorter Axe)
+  --partition kmedoids   mission.py's compact clusters, each flown along its own spine (meander.coords)
+  --windowKB Q      each cluster's River moves only Q kB of D, around where the UAV passes the CH
+Stages (resumable like mission.py):
   1 map      domain-cells.csv, clusters.csv, c{k}-cells.csv, c{k}-nodesin.csv, map.json (mission.py layout)
   2 deploy   per cluster uav-coop-deploy, only for the roles (CH, CLs), routes and gateways (CH margin
              300/200/100/0 m, entries 0-9, as mission.py); its straight path is kept as c{k}-path-deploy.csv
@@ -24,9 +28,26 @@ import argparse, csv, json, math, os
 import numpy as np
 
 from map_gen import centre
-from meander import RHO, curvature, flight_curve, partition_meander
+from meander import RHO, coords, curvature, flight_curve, partition_meander
+import mission
 from mission import sh, stage_runs, stage_tour
 from restructure import domain
+
+
+def stage_map_kmedoids(a, W_):
+    """mission.py's map and k-medoids clusters; each cluster gets its own spine and s (meander.coords)."""
+    if os.path.exists(f"{W_}/coords.csv"):
+        return
+    mission.stage_map(a, W_)
+    owner = {(int(r["q"]), int(r["r"])): int(r["cluster"]) for r in csv.DictReader(open(f"{W_}/clusters.csv"))}
+    with open(f"{W_}/coords.csv", "w") as f:
+        f.write("q,r,s,n,lane\n")
+        for k in sorted(set(owner.values())):
+            mine = {h for h in owner if owner[h] == k}
+            main, _, s, n = coords(mine)
+            assert main == mine, f"cluster {k} is in pieces"
+            for h in sorted(mine):
+                f.write(f"{h[0]},{h[1]},{s[h]:.3f},{n[h]:.3f},0\n")
 
 
 def stage_map(a, W_):
@@ -34,7 +55,7 @@ def stage_map(a, W_):
         return
     g = domain(a.clusters, a.seed)
     land = set(g["domain"])
-    owner, lane, s, n, _, _ = partition_meander(land, a.lane)
+    owner, lane, s, n, _, _ = partition_meander(land, a.lane, span=a.span)
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
         f.write("q,r,cx,cy,type\n")
@@ -60,7 +81,8 @@ def stage_map(a, W_):
     xs, ys = [centre(h)[0] for h in land], [centre(h)[1] for h in land]
     bs = ((min(xs) + max(xs)) / 2, min(ys) - 1000.0)
     K = len(set(owner.values()))
-    json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="meander", lane=a.lane),
+    json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="meander", lane=a.lane,
+                   span=a.span),
               open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {len(nodes)} nodes, {K} clusters "
           f"{[sum(1 for c in owner.values() if c == i) for i in range(K)]}, BS {bs[0]:.0f},{bs[1]:.0f}")
@@ -200,6 +222,11 @@ def main():
     ap.add_argument("--schemes", default="rf", help="tags of mission.SCHEMES to run")
     ap.add_argument("--lane", type=float, default=4.5, help="MEANDER lane width, cells")
     ap.add_argument("--banks", default="local", choices=("parallel", "local"))
+    ap.add_argument("--partition", default="meander", choices=("meander", "kmedoids"),
+                    help="kmedoids: mission.py's compact clusters, each flown along its own spine (item 106)")
+    ap.add_argument("--span", type=float, default=0, help="MEANDER: clusters at most this many cells long along s")
+    ap.add_argument("--windowKB", type=float, default=0,
+                    help="each cluster needs only this much of D, around the CH (river_export.py)")
     ap.add_argument("--geometry", action="store_true", help="stop after stage 3 (no ns-3 pass or River)")
     ap.add_argument("--bendFig", nargs=2, metavar=("PNG", "WORK:K,..."),
                     help="only draw bend_figure for clusters K of finished works")
@@ -212,7 +239,7 @@ def main():
     os.makedirs(a.work, exist_ok=True)
     W_ = os.path.abspath(a.work)
     os.chdir(W_)
-    stage_map(a, W_)
+    (stage_map_kmedoids if a.partition == "kmedoids" else stage_map)(a, W_)
     K = json.load(open("map.json"))["clusters"]
     stage_deploy(a, W_, K)
     cv = stage_curve(a, W_, K)

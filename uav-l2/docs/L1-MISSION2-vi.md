@@ -217,7 +217,38 @@ Từ đó tôi thử cho UAV cánh quay **đổi hướng giữa đường**: kh
 
 
 
-__E2__
+### 5.5 E2: ba cách chia cluster (`data/l1rank/e2-*.csv`)
+
+Cùng 40 bản đồ, cùng lượt bốc, ghép cặp với E1. Mỗi camera gắn theo cell, nên cell nào là critical cell ở cả hai cách chia thì giữ cùng kho ảnh và cùng điểm xác minh. c\* là critical cell có điểm xác minh cao nhất *của chính cách chia đó*; trung bình mỗi bản đồ có 29,1 critical cell chung giữa k‑medoids và subCH, 3,5 chỉ có ở k‑medoids, 1,3 chỉ có ở subCH.
+
+T\* (s), k2 / k4 / k6 / k8, và số bản đồ (trên 40) mà cách chia đó nhanh hơn k‑medoids với cùng chính sách:
+
+| Cách chia | P\* | Không hợp tác | P\* + đổi hướng | B1 | B7 | Bản đồ P\* nhanh hơn k‑medoids |
+|---|---|---|---|---|---|---|
+| **k‑medoids (cluster có sẵn, ablation)** | **408 / 566 / 675 / 769** | 434 / 622 / 734 / 838 | 403 / 554 / 662 / 754 | 897 / 1 699 / 2 498 / 3 083 | 245 / 287 / 314 / 347 | |
+| subCH (baseline) | 423 / 617 / 717 / 830 | 447 / 659 / 783 / 875 | 411 / 599 / 704 / 813 | 838 / 1 641 / 2 342 / 2 866 | 243 / 289 / 312 / 346 | 8 |
+__MWROW__
+
+| | k‑medoids | subCH | __MWHEAD__ |
+|---|---|---|---|
+| số cluster TB (k2 / k4 / k6 / k8) | 2 / 4 / 6 / 8 | 2,7 / 6,4 / 8,3 / 11,5 | __MWCL__ |
+| tour đội 1 (s) | 213 / 369 / 512 / 682 | 232 / 480 / 632 / 807 | __MWT1__ |
+| báo cáo đầu của c\* về BS (s) | 147 / 221 / 280 / 344 | 155 / 240 / 302 / 366 | __MWSI__ |
+| hạng TB của c\* | 1,93 / 2,21 / 2,37 / 2,33 | 1,98 / 2,46 / 2,48 / 2,55 | __MWRK__ |
+| trọng số manh mối giữ sau River (đủ 12) | 97 % (56 %) | 84 % (20 %) | __MWW__ |
+
+**subCH (baseline mục 114) chậm hơn cluster có sẵn 15–61 s; nó chỉ nhanh hơn trên 8/40 bản đồ.** Hai nguyên nhân, đều thấy trong bảng:
+1. **Nhiều cluster hơn:** tour đội 1 dài thêm 19–125 s, và báo cáo của c\* về muộn hơn 8–22 s.
+2. **Cluster con có Axe ngắn hơn bộ manh mối:** sau River critical cell chỉ giữ 84 % trọng số (20 % đủ cả 12), so với 97 % (56 %) ở cluster có sẵn. Xếp hạng vì thế kém hơn (hạng của c\* 1,98–2,55 so với 1,93–2,37). Khác với k‑medoids (mục 5.3), ở đây phần bị cắt đủ lớn để gây hại.
+
+Trong subCH, hợp tác vẫn giúp 24–66 s so với không hợp tác. B1 nhanh hơn một chút khi chia subCH, vì có ít critical cell hơn để thăm.
+
+__MWTEXT__
+
+Hình (không chữ):
+- `figures/l1-e2-tstar.png`: bốn nhóm k2, k4, k6, k8, mỗi chấm là trung bình ± khoảng tin cậy 95 % trên 10 bản đồ. Chấm tròn là P\*, vuông là không hợp tác, tam giác là B7. Màu: xanh dương là k‑medoids, tím là subCH, xanh lá là MEANDER (nhạt hơn cho không hợp tác).
+- `figures/l1-e2-breakdown.png`: như `l1-e1-breakdown.png`, cho từng cách chia (cùng thứ tự và màu).
+- `figures/l1-steps-sw-k4-s2.png`: một nhiệm vụ subCH trên bản đồ k4‑s2 (mục 7).
 
 ## 6. Độ nhạy theo tham số lớp 1 (`data/l1rank/sens-*.csv`, `figures/l1-sens.png`)
 
@@ -241,7 +272,7 @@ Chạy lại ở cuối với P\* cuối cùng. Cluster có sẵn, River cửa s
 
 ## 7. Một nhiệm vụ từng bước (bản đồ k4‑s2, P\*)
 
-Hình: `figures/l1-steps-k4-s2.png` (cluster có sẵn), `figures/l1-steps-mw-k4-s2.png` (MEANDER, cùng bản đồ). Hình động: `anim/l1-replay.html` (cluster có sẵn, cùng lượt bốc với hình tĩnh). Hình không có chữ. Mỗi hình gồm sáu bản đồ (đọc trái sang phải, trên xuống dưới) và một dòng thời gian:
+Hình: `figures/l1-steps-k4-s2.png` (cluster có sẵn), `figures/l1-steps-mw-k4-s2.png` (MEANDER), `figures/l1-steps-sw-k4-s2.png` (subCH), cùng bản đồ. Hình động: `anim/l1-replay.html` (cluster có sẵn, cùng lượt bốc với hình tĩnh). Hình không có chữ. Mỗi hình gồm sáu bản đồ (đọc trái sang phải, trên xuống dưới) và một dòng thời gian:
 
 1. **Cluster và đường bay.** Cluster tô màu nhạt, CH là ngôi sao, critical cell là vòng trắng, đường bay đen, tour đội 1 nét đứt. BS là ô vuông đen; thước dưới góc phải dài 1 km.
 2. **Ngay sau lượt bay.** Mỗi cell tô theo phần cửa sổ manh mối của cluster mà node trong cell nghe được (đậm là nhiều). Quanh mỗi critical cell là vòng 12 manh mối theo thứ tự phát: đỏ là mặt, xanh là dáng, vàng là bộ phận; xám là manh mối chưa giữ được.
@@ -261,4 +292,6 @@ Hình: `figures/l1-steps-k4-s2.png` (cluster có sẵn), `figures/l1-steps-mw-k4
 
 **Diễn biến, MEANDER (lượt bốc 5, cùng bản đồ):** sáu cluster cong theo địa hình. Mọi critical cell ở bốn cluster lớn giữ đủ 12 manh mối sau River; hai cluster nhỏ nhất (C5, C6) chỉ giữ 7, vì Axe của chúng ngắn. Đội 2 đón đầu tới 118 s, đi xác minh cell 336 (thứ hai theo điểm, sai), rồi bay 196 s sang phía đông tới c\* (cell 92). T\* = **568 s**, cũng ở lần thăm thứ 2.
 
-Cả hai lượt cho thấy cùng một kiểu tốn thời gian: lần cam kết đầu tiên rơi vào một cell điểm cao nhưng sai ở xa c\*. Phần lớn T\* nằm sau lúc báo cáo của c\* về BS (mục 5.1).
+**Diễn biến, subCH (lượt bốc 0, cùng bản đồ; `figures/l1-steps-sw-k4-s2.png`):** bốn cluster bị cắt thành sáu cluster con quanh các critical cell xa nhau, nên đội 1 bay sáu đường và về BS lúc 424 s (k‑medoids: 372 s). Axe của mọi cluster con đều ngắn hơn bộ manh mối (D = 1 945–3 886 gói), nên sau River critical cell chỉ giữ 5–11 manh mối, không cell nào đủ 12. Ở lượt bốc này c\* vẫn là cell 336. Báo cáo của nó về BS sớm hơn (238 s so với 264 s), nhưng đội 2 vẫn cam kết đầu tiên vào cell 237 lúc 96 s, nên T\* = **560 s**, gần như bằng k‑medoids. Trên 40 bản đồ thì subCH chậm hơn (mục 5.5).
+
+Cả ba lượt cho thấy cùng một kiểu tốn thời gian: lần cam kết đầu tiên rơi vào một cell điểm cao nhưng sai ở xa c\*. Phần lớn T\* nằm sau lúc báo cáo của c\* về BS (mục 5.1).

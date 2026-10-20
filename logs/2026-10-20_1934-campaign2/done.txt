@@ -68,3 +68,13 @@ SW k8-s10 exit 0 21:32:51
 SW k8-s1 exit 0 21:34:29
 SW k8-s11 exit 0 21:48:39
 SW k8-s2 exit 0 21:48:59
+SW k8-s4 exit 0 21:57:01
+SW k8-s5 exit 0 21:57:15
+SW k8-s6 exit 0 22:02:59
+SW k8-s7 exit 0 22:04:07
+SW k8-s8 exit 0 22:08:33
+SW k8-s9 exit 0 22:09:57
+MW k2-s3 exit 0 22:11:57
+MW k2-s10 exit 0 22:13:05
+MW k2-s11 exit 0 22:14:11
+MW k2-s20 exit 0 22:15:51

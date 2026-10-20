@@ -1,0 +1,78 @@
+map: 147 land cells, 3118 nodes, 2 clusters [80, 67], BS 173,-2500
+k2: 2 clusters rebuilt and checked
+map: 465 land cells, 9862 nodes, 6 clusters [80, 80, 80, 80, 78, 67], BS -130,-4000
+k6: 6 clusters rebuilt and checked
+map: 595 land cells, 12619 nodes, 8 clusters [80, 80, 74, 78, 70, 72, 68, 73], BS -217,-4450
+k8: 8 clusters rebuilt and checked
+map: 155 land cells, 3287 nodes, 2 clusters [80, 75], BS -87,-2500
+k2-s10: 2 clusters rebuilt and checked
+map: 156 land cells, 3309 nodes, 2 clusters [76, 80], BS -433,-2500
+k2-s11: 2 clusters rebuilt and checked
+map: 155 land cells, 3287 nodes, 2 clusters [80, 75], BS -260,-2950
+k2-s20: 2 clusters rebuilt and checked
+map: 158 land cells, 3351 nodes, 2 clusters [80, 78], BS 43,-2200
+k2-s23: 2 clusters rebuilt and checked
+map: 156 land cells, 3309 nodes, 2 clusters [80, 76], BS -87,-2500
+k2-s25: 2 clusters rebuilt and checked
+map: 152 land cells, 3224 nodes, 2 clusters [80, 72], BS -43,-2650
+k2-s4: 2 clusters rebuilt and checked
+map: 149 land cells, 3160 nodes, 2 clusters [78, 71], BS -433,-2200
+k2-s5: 2 clusters rebuilt and checked
+map: 141 land cells, 2990 nodes, 2 clusters [76, 65], BS 173,-2200
+k2-s8: 2 clusters rebuilt and checked
+map: 148 land cells, 3139 nodes, 2 clusters [68, 80], BS 130,-2800
+k2-s9: 2 clusters rebuilt and checked
+map: 318 land cells, 6744 nodes, 4 clusters [80, 80, 78, 80], BS 130,-2950
+k4-s1: 4 clusters rebuilt and checked
+map: 308 land cells, 6532 nodes, 4 clusters [80, 68, 80, 80], BS -390,-2800
+k4-s11: 4 clusters rebuilt and checked
+map: 298 land cells, 6320 nodes, 4 clusters [80, 80, 61, 77], BS 87,-3400
+k4-s12: 4 clusters rebuilt and checked
+map: 312 land cells, 6617 nodes, 4 clusters [80, 73, 80, 79], BS 476,-3100
+k4-s13: 4 clusters rebuilt and checked
+map: 312 land cells, 6617 nodes, 4 clusters [80, 80, 72, 80], BS -87,-2950
+k4-s16: 4 clusters rebuilt and checked
+map: 312 land cells, 6617 nodes, 4 clusters [73, 79, 80, 80], BS -217,-3250
+k4-s20: 4 clusters rebuilt and checked
+map: 305 land cells, 6469 nodes, 4 clusters [65, 80, 80, 80], BS -43,-3100
+k4-s21: 4 clusters rebuilt and checked
+map: 306 land cells, 6490 nodes, 4 clusters [75, 80, 74, 77], BS -433,-2950
+k4-s5: 4 clusters rebuilt and checked
+map: 312 land cells, 6617 nodes, 4 clusters [80, 80, 80, 72], BS -173,-3250
+k4-s9: 4 clusters rebuilt and checked
+map: 453 land cells, 9608 nodes, 6 clusters [80, 80, 80, 80, 80, 53], BS -433,-3250
+k6-s11: 6 clusters rebuilt and checked
+map: 432 land cells, 9162 nodes, 6 clusters [80, 79, 72, 51, 80, 70], BS 260,-3700
+k6-s12: 6 clusters rebuilt and checked
+map: 450 land cells, 9544 nodes, 6 clusters [80, 80, 80, 80, 62, 68], BS 520,-3100
+k6-s13: 6 clusters rebuilt and checked
+map: 452 land cells, 9586 nodes, 6 clusters [80, 56, 76, 80, 80, 80], BS -390,-3100
+k6-s15: 6 clusters rebuilt and checked
+map: 451 land cells, 9565 nodes, 6 clusters [80, 80, 80, 56, 80, 75], BS -346,-2950
+k6-s16: 6 clusters rebuilt and checked
+map: 428 land cells, 9077 nodes, 6 clusters [80, 47, 76, 75, 80, 70], BS -43,-3550
+k6-s17: 6 clusters rebuilt and checked
+map: 468 land cells, 9926 nodes, 6 clusters [75, 80, 80, 73, 80, 80], BS 0,-3400
+k6-s2: 6 clusters rebuilt and checked
+map: 462 land cells, 9798 nodes, 6 clusters [80, 80, 80, 80, 80, 62], BS -43,-3700
+k6-s20: 6 clusters rebuilt and checked
+map: 446 land cells, 9459 nodes, 6 clusters [80, 80, 80, 75, 62, 69], BS -303,-3700
+k6-s9: 6 clusters rebuilt and checked
+map: 617 land cells, 13086 nodes, 8 clusters [78, 72, 70, 78, 80, 80, 79, 80], BS 173,-3550
+k8-s1: 8 clusters rebuilt and checked
+map: 632 land cells, 13404 nodes, 8 clusters [77, 80, 80, 80, 80, 79, 80, 76], BS 303,-3700
+k8-s10: 8 clusters rebuilt and checked
+map: 627 land cells, 13298 nodes, 8 clusters [80, 80, 80, 79, 80, 80, 80, 68], BS -390,-4000
+k8-s11: 8 clusters rebuilt and checked
+map: 596 land cells, 12640 nodes, 8 clusters [80, 80, 49, 80, 75, 78, 80, 74], BS 0,-3850
+k8-s2: 8 clusters rebuilt and checked
+map: 620 land cells, 13149 nodes, 8 clusters [80, 79, 80, 80, 80, 71, 74, 76], BS -130,-3700
+k8-s5: 8 clusters rebuilt and checked
+map: 609 land cells, 12916 nodes, 8 clusters [80, 78, 80, 80, 80, 80, 80, 51], BS 0,-3700
+k8-s6: 8 clusters rebuilt and checked
+map: 636 land cells, 13489 nodes, 8 clusters [80, 80, 80, 80, 76, 80, 80, 80], BS 217,-3100
+k8-s7: 8 clusters rebuilt and checked
+map: 600 land cells, 12725 nodes, 8 clusters [80, 77, 76, 80, 78, 67, 76, 66], BS 87,-3850
+k8-s8: 8 clusters rebuilt and checked
+map: 578 land cells, 12259 nodes, 8 clusters [79, 50, 80, 68, 80, 76, 75, 70], BS -520,-4000
+k8-s9: 8 clusters rebuilt and checked

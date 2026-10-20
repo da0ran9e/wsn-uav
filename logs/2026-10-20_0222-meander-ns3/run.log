@@ -1,0 +1,77 @@
+== meander k4 seed 2 02:28:28
+curves: C1 2.48 km, CH 75 m off, k*rho 0.85, C2 2.73 km, CH 120 m off, k*rho 0.92, C3 2.89 km, CH 78 m off, k*rho 1.00, C4 3.29 km, CH 47 m off, k*rho 0.98, C5 1.09 km, CH 35 m off, k*rho 0.96, C6 1.51 km, CH 370 m off, k*rho 0.57
+tour: 24.1 km, 483 s, order [(6, 0), (5, 0), (3, 1), (2, 1), (1, 0), (4, 1)]
+  run 1 river-full: D 4655, 3/3 critical done, sim 39.8 s, wall 26 s, 104033 hops, 3581 MAC give-ups, 0/60 gateway pairs with q < 0.5
+  run 1 river-full: D 5706, 7/7 critical done, sim 70.1 s, wall 66 s, 168572 hops, 5757 MAC give-ups, 0/139 gateway pairs with q < 0.5
+  run 1 river-full: D 2697, 4/4 critical done, sim 4.6 s, wall 1 s, 2300 hops, 60 MAC give-ups, 0/77 gateway pairs with q < 0.5
+  run 1 river-full: D 2277, 2/2 critical done, sim 1.6 s, wall 0 s, 806 hops, 22 MAC give-ups, 0/24 gateway pairs with q < 0.5
+  run 1 river-full: D 5427, 4/4 critical done, sim 77.3 s, wall 76 s, 195068 hops, 7664 MAC give-ups, 0/131 gateway pairs with q < 0.5
+  run 1 river-full: D 6836, 6/6 critical done, sim 115.0 s, wall 180 s, 367602 hops, 12394 MAC give-ups, 0/172 gateway pairs with q < 0.5
+== meander k6 seed 4 02:32:54
+curves: C1 1.39 km, CH 169 m off, k*rho 0.74, C2 1.26 km, CH 135 m off, k*rho 0.98, C3 1.37 km, CH 64 m off, k*rho 0.98, C4 1.98 km, CH 49 m off, k*rho 0.95, C5 1.15 km, CH 96 m off, k*rho 0.93, C6 2.29 km, CH 94 m off, k*rho 0.95, C7 2.58 km, CH 109 m off, k*rho 1.00, C8 2.41 km, CH 25 m off, k*rho 0.37, C9 1.18 km, CH 56 m off, k*rho 0.99, C10 1.85 km, CH 43 m off, k*rho 0.93, C11 2.32 km, CH 9 m off, k*rho 0.47
+tour: 36.7 km, 735 s, order [(9, 0), (10, 0), (8, 1), (7, 0), (5, 1), (2, 0), (1, 1), (3, 0), (4, 1), (6, 0), (11, 1)]
+  run 1 river-full: D 1764, 2/2 critical done, sim 6.2 s, wall 0 s, 2157 hops, 68 MAC give-ups, 0/34 gateway pairs with q < 0.5
+  run 1 river-full: D 2602, 4/4 critical done, sim 5.5 s, wall 1 s, 3675 hops, 92 MAC give-ups, 0/38 gateway pairs with q < 0.5
+  run 1 river-full: D 2860, 4/4 critical done, sim 4.8 s, wall 1 s, 3320 hops, 70 MAC give-ups, 0/36 gateway pairs with q < 0.5
+  run 1 river-full: D 2635, 5/5 critical done, sim 8.7 s, wall 2 s, 6534 hops, 237 MAC give-ups, 0/74 gateway pairs with q < 0.5
+  run 1 river-full: D 4325, 4/4 critical done, sim 31.7 s, wall 11 s, 39218 hops, 1214 MAC give-ups, 0/76 gateway pairs with q < 0.5
+  run 1 river-full: D 4888, 7/7 critical done, sim 48.7 s, wall 55 s, 134914 hops, 3920 MAC give-ups, 0/136 gateway pairs with q < 0.5
+  run 1 river-full: D 2549, 4/4 critical done, sim 15.6 s, wall 5 s, 15703 hops, 587 MAC give-ups, 0/85 gateway pairs with q < 0.5
+  run 1 river-full: D 4133, 6/6 critical done, sim 36.2 s, wall 22 s, 72509 hops, 2719 MAC give-ups, 0/109 gateway pairs with q < 0.5
+  run 1 river-full: D 5391, 5/5 critical done, sim 67.4 s, wall 84 s, 206455 hops, 7340 MAC give-ups, 0/156 gateway pairs with q < 0.5
+  run 1 river-full: D 5663, 5/5 critical done, sim 65.3 s, wall 91 s, 218579 hops, 7088 MAC give-ups, 0/155 gateway pairs with q < 0.5
+  run 1 river-full: D 3445, 5/5 critical done, sim 46.6 s, wall 19 s, 90692 hops, 2914 MAC give-ups, 0/59 gateway pairs with q < 0.5
+== meander k8 seed 4 02:35:39
+curves: C1 1.65 km, CH 167 m off, k*rho 0.84, C2 1.12 km, CH 73 m off, k*rho 0.62, C3 2.65 km, CH 82 m off, k*rho 0.96, C4 2.22 km, CH 17 m off, k*rho 0.89, C5 1.82 km, CH 302 m off, k*rho 0.99, C6 3.10 km, CH 34 m off, k*rho 0.91, C7 2.97 km, CH 68 m off, k*rho 0.94, C8 2.77 km, CH 34 m off, k*rho 0.98, C9 2.16 km, CH 5 m off, k*rho 0.93, C10 3.28 km, CH 35 m off, k*rho 0.87, C11 2.88 km, CH 109 m off, k*rho 0.46
+tour: 44.7 km, 893 s, order [(11, 0), (8, 1), (6, 0), (5, 1), (3, 0), (1, 1), (2, 1), (4, 0), (7, 1), (9, 0), (10, 1)]
+  run 1 river-full: D 2595, 3/3 critical done, sim 2.4 s, wall 1 s, 1329 hops, 98 MAC give-ups, 0/66 gateway pairs with q < 0.5
+  run 1 river-full: D 2939, 6/6 critical done, sim 20.2 s, wall 8 s, 25825 hops, 748 MAC give-ups, 0/77 gateway pairs with q < 0.5
+  run 1 river-full: D 3266, 4/4 critical done, sim 27.7 s, wall 15 s, 62662 hops, 2023 MAC give-ups, 0/60 gateway pairs with q < 0.5
+  run 1 river-full: D 4813, 5/5 critical done, sim 40.7 s, wall 29 s, 71776 hops, 2191 MAC give-ups, 0/140 gateway pairs with q < 0.5
+  run 1 river-full: D 6007, 5/5 critical done, sim 54.5 s, wall 76 s, 203815 hops, 5576 MAC give-ups, 0/133 gateway pairs with q < 0.5
+  run 1 river-full: D 5296, 5/5 critical done, sim 70.5 s, wall 59 s, 172119 hops, 6979 MAC give-ups, 0/110 gateway pairs with q < 0.5
+  run 1 river-full: D 4706, 5/5 critical done, sim 16.7 s, wall 14 s, 35274 hops, 1083 MAC give-ups, 0/124 gateway pairs with q < 0.5
+  run 1 river-full: D 5699, 7/7 critical done, sim 107.0 s, wall 125 s, 317419 hops, 10660 MAC give-ups, 0/140 gateway pairs with q < 0.5
+  run 1 river-full: D 5696, 7/7 critical done, sim 185.6 s, wall 171 s, 469722 hops, 17557 MAC give-ups, 0/138 gateway pairs with q < 0.5
+  run 1 river-full: D 5522, 6/6 critical done, sim 163.8 s, wall 139 s, 422644 hops, 15325 MAC give-ups, 0/89 gateway pairs with q < 0.5
+  run 1 river-full: D 6940, 7/7 critical done, sim 191.8 s, wall 235 s, 600253 hops, 18262 MAC give-ups, 0/145 gateway pairs with q < 0.5
+== lane k4 seed 2 02:43:43
+map: 308 land cells, 6532 nodes, 7 clusters [20, 41, 42, 50, 51, 80, 24], BS -87,-2800
+bearings: C1 126 deg (1155 m inside), C2 126 deg (1410 m inside), C3 126 deg (1300 m inside), C4 126 deg (1820 m inside), C5 126 deg (1855 m inside), C6 126 deg (2550 m inside), C7 126 deg (925 m inside)
+tour: 26.2 km, 523 s, order [(6, 0), (7, 1), (5, 0), (3, 1), (1, 1), (2, 0), (4, 1)]
+  run 1 river-full: D 2321, 2/2 critical done, sim 0.8 s, wall 0 s, 545 hops, 24 MAC give-ups, 0/32 gateway pairs with q < 0.5
+  run 1 river-full: D 2597, 6/6 critical done, sim 16.0 s, wall 7 s, 23356 hops, 846 MAC give-ups, 0/59 gateway pairs with q < 0.5
+  run 1 river-full: D 2821, 4/4 critical done, sim 18.1 s, wall 7 s, 24629 hops, 694 MAC give-ups, 0/86 gateway pairs with q < 0.5
+  run 1 river-full: D 3720, 4/4 critical done, sim 18.6 s, wall 10 s, 26537 hops, 704 MAC give-ups, 0/117 gateway pairs with q < 0.5
+  run 1 river-full: D 1861, 4/4 critical done, sim 0.9 s, wall 0 s, 785 hops, 40 MAC give-ups, 0/45 gateway pairs with q < 0.5
+  run 1 river-full: D 3657, 7/7 critical done, sim 28.2 s, wall 33 s, 99484 hops, 3297 MAC give-ups, 0/101 gateway pairs with q < 0.5
+  run 1 river-full: D 5106, 7/7 critical done, sim 104.8 s, wall 202 s, 449812 hops, 13907 MAC give-ups, 0/154 gateway pairs with q < 0.5
+== lane k6 seed 4 02:48:23
+map: 465 land cells, 9862 nodes, 9 clusters [36, 46, 47, 63, 64, 60, 61, 44, 44], BS -130,-4000
+bearings: C1 62 deg (1170 m inside), C2 62 deg (2405 m inside), C3 62 deg (2200 m inside), C4 62 deg (1850 m inside), C5 62 deg (2630 m inside), C6 62 deg (1985 m inside), C7 62 deg (2060 m inside), C8 62 deg (2075 m inside), C9 62 deg (1225 m inside)
+tour: 36.2 km, 724 s, order [(4, 0), (6, 1), (8, 0), (9, 0), (7, 1), (5, 0), (3, 1), (1, 0), (2, 1)]
+  run 1 river-full: D 2353, 3/3 critical done, sim 8.8 s, wall 3 s, 13616 hops, 418 MAC give-ups, 0/46 gateway pairs with q < 0.5
+  run 1 river-full: D 4812, 4/4 critical done, sim 52.9 s, wall 34 s, 122399 hops, 4792 MAC give-ups, 0/83 gateway pairs with q < 0.5
+  run 1 river-full: D 3706, 6/6 critical done, sim 38.9 s, wall 32 s, 75927 hops, 3416 MAC give-ups, 0/142 gateway pairs with q < 0.5
+  run 1 river-full: D 4403, 6/6 critical done, sim 49.6 s, wall 38 s, 108105 hops, 4007 MAC give-ups, 0/101 gateway pairs with q < 0.5
+  run 1 river-full: D 3987, 5/5 critical done, sim 17.1 s, wall 8 s, 20622 hops, 663 MAC give-ups, 0/140 gateway pairs with q < 0.5
+  run 1 river-full: D 4160, 5/5 critical done, sim 29.5 s, wall 20 s, 65993 hops, 2048 MAC give-ups, 0/92 gateway pairs with q < 0.5
+  run 1 river-full: D 2445, 6/6 critical done, sim 18.2 s, wall 9 s, 28353 hops, 839 MAC give-ups, 0/79 gateway pairs with q < 0.5
+  run 1 river-full: D 4145, 6/6 critical done, sim 52.5 s, wall 55 s, 142034 hops, 5312 MAC give-ups, 0/128 gateway pairs with q < 0.5
+  run 1 river-full: D 5269, 6/6 critical done, sim 112.7 s, wall 115 s, 275596 hops, 10751 MAC give-ups, 0/133 gateway pairs with q < 0.5
+== lane k8 seed 4 02:52:15
+map: 595 land cells, 12619 nodes, 11 clusters [64, 78, 47, 49, 59, 59, 50, 50, 55, 56, 28], BS -217,-4450
+bearings: C1 120 deg (1555 m inside), C2 120 deg (2595 m inside), C3 120 deg (2420 m inside), C4 120 deg (1900 m inside), C5 120 deg (2560 m inside), C6 120 deg (2250 m inside), C7 120 deg (1940 m inside), C8 120 deg (1720 m inside), C9 120 deg (1900 m inside), C10 120 deg (2075 m inside), C11 120 deg (1555 m inside)
+tour: 44.0 km, 880 s, order [(11, 0), (7, 1), (5, 0), (3, 1), (2, 0), (1, 1), (4, 0), (6, 1), (8, 0), (10, 1), (9, 1)]
+  run 1 river-full: D 4850, 4/4 critical done, sim 48.9 s, wall 28 s, 102672 hops, 3507 MAC give-ups, 0/81 gateway pairs with q < 0.5
+  run 1 river-full: D 3118, 7/7 critical done, sim 32.1 s, wall 31 s, 86609 hops, 2543 MAC give-ups, 0/120 gateway pairs with q < 0.5
+  run 1 river-full: D 3811, 6/6 critical done, sim 28.6 s, wall 15 s, 49480 hops, 1314 MAC give-ups, 0/110 gateway pairs with q < 0.5
+  run 1 river-full: D 4504, 5/5 critical done, sim 40.4 s, wall 46 s, 113786 hops, 3323 MAC give-ups, 0/139 gateway pairs with q < 0.5
+  run 1 river-full: D 3884, 5/5 critical done, sim 37.1 s, wall 28 s, 82665 hops, 3522 MAC give-ups, 0/102 gateway pairs with q < 0.5
+  run 1 river-full: D 3464, 5/5 critical done, sim 18.6 s, wall 11 s, 28712 hops, 1282 MAC give-ups, 0/106 gateway pairs with q < 0.5
+  run 1 river-full: D 3811, 6/6 critical done, sim 20.4 s, wall 14 s, 34725 hops, 1121 MAC give-ups, 0/126 gateway pairs with q < 0.5
+  run 1 river-full: D 5134, 8/8 critical done, sim 88.0 s, wall 138 s, 359302 hops, 11779 MAC give-ups, 0/121 gateway pairs with q < 0.5
+  run 1 river-full: D 4157, 7/7 critical done, sim 45.2 s, wall 34 s, 94511 hops, 4296 MAC give-ups, 0/115 gateway pairs with q < 0.5
+  run 1 river-full: D 5196, 6/6 critical done, sim 138.8 s, wall 176 s, 364160 hops, 16987 MAC give-ups, 0/170 gateway pairs with q < 0.5
+  run 1 river-full: D 3119, 4/4 critical done, sim 27.7 s, wall 8 s, 37942 hops, 1501 MAC give-ups, 0/41 gateway pairs with q < 0.5
+== done 02:56:57

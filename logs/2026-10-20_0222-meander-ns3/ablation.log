@@ -1,0 +1,35 @@
+== meander parallel k4 02:57:32
+curves: C1 2.48 km, CH 75 m off, k*rho 0.85, C2 2.73 km, CH 120 m off, k*rho 0.92, C3 2.89 km, CH 78 m off, k*rho 1.00, C4 3.29 km, CH 47 m off, k*rho 0.98, C5 1.09 km, CH 35 m off, k*rho 0.96, C6 1.51 km, CH 370 m off, k*rho 0.57
+  run 1 river-full: D 4655, 3/3 critical done, sim 35.7 s, wall 25 s, 96452 hops, 3916 MAC give-ups, 0/61 gateway pairs with q < 0.5
+  run 1 river-full: D 5706, 7/7 critical done, sim 77.6 s, wall 72 s, 178237 hops, 5978 MAC give-ups, 0/138 gateway pairs with q < 0.5
+  run 1 river-full: D 2697, 4/4 critical done, sim 4.6 s, wall 1 s, 2459 hops, 72 MAC give-ups, 0/80 gateway pairs with q < 0.5
+  run 1 river-full: D 2277, 2/2 critical done, sim 1.6 s, wall 0 s, 820 hops, 28 MAC give-ups, 0/26 gateway pairs with q < 0.5
+  run 1 river-full: D 5427, 4/4 critical done, sim 67.2 s, wall 79 s, 183205 hops, 7343 MAC give-ups, 0/138 gateway pairs with q < 0.5
+  run 1 river-full: D 6836, 6/6 critical done, sim 127.8 s, wall 188 s, 385473 hops, 12551 MAC give-ups, 0/172 gateway pairs with q < 0.5
+== meander parallel k6 03:01:06
+curves: C1 1.39 km, CH 169 m off, k*rho 0.74, C2 1.26 km, CH 135 m off, k*rho 0.98, C3 1.37 km, CH 64 m off, k*rho 0.98, C4 1.98 km, CH 49 m off, k*rho 0.95, C5 1.15 km, CH 96 m off, k*rho 0.93, C6 2.29 km, CH 94 m off, k*rho 0.95, C7 2.58 km, CH 109 m off, k*rho 1.00, C8 2.41 km, CH 25 m off, k*rho 0.37, C9 1.18 km, CH 56 m off, k*rho 0.99, C10 1.85 km, CH 43 m off, k*rho 0.93, C11 2.32 km, CH 9 m off, k*rho 0.47
+  run 1 river-full: D 1764, 2/2 critical done, sim 6.2 s, wall 0 s, 2185 hops, 71 MAC give-ups, 0/34 gateway pairs with q < 0.5
+  run 1 river-full: D 2602, 4/4 critical done, sim 5.5 s, wall 1 s, 3894 hops, 71 MAC give-ups, 0/38 gateway pairs with q < 0.5
+  run 1 river-full: D 2860, 4/4 critical done, sim 4.8 s, wall 1 s, 3318 hops, 71 MAC give-ups, 0/36 gateway pairs with q < 0.5
+  run 1 river-full: D 2635, 5/5 critical done, sim 8.1 s, wall 2 s, 5786 hops, 176 MAC give-ups, 0/74 gateway pairs with q < 0.5
+  run 1 river-full: D 4325, 4/4 critical done, sim 25.9 s, wall 9 s, 32424 hops, 832 MAC give-ups, 0/74 gateway pairs with q < 0.5
+  run 1 river-full: D 4888, 7/7 critical done, sim 34.8 s, wall 56 s, 126814 hops, 3974 MAC give-ups, 0/137 gateway pairs with q < 0.5
+  run 1 river-full: D 2549, 4/4 critical done, sim 12.4 s, wall 3 s, 11297 hops, 312 MAC give-ups, 0/88 gateway pairs with q < 0.5
+  run 1 river-full: D 4133, 6/6 critical done, sim 27.1 s, wall 26 s, 77343 hops, 2976 MAC give-ups, 0/109 gateway pairs with q < 0.5
+  run 1 river-full: D 5391, 5/5 critical done, sim 72.1 s, wall 90 s, 208086 hops, 8022 MAC give-ups, 0/156 gateway pairs with q < 0.5
+  run 1 river-full: D 5663, 5/5 critical done, sim 71.5 s, wall 90 s, 220050 hops, 7440 MAC give-ups, 0/155 gateway pairs with q < 0.5
+  run 1 river-full: D 3445, 5/5 critical done, sim 45.7 s, wall 21 s, 93297 hops, 3068 MAC give-ups, 0/59 gateway pairs with q < 0.5
+== meander parallel k8 03:02:56
+curves: C1 1.65 km, CH 167 m off, k*rho 0.84, C2 1.12 km, CH 73 m off, k*rho 0.62, C3 2.65 km, CH 82 m off, k*rho 0.96, C4 2.22 km, CH 17 m off, k*rho 0.89, C5 1.82 km, CH 302 m off, k*rho 0.99, C6 3.10 km, CH 34 m off, k*rho 0.91, C7 2.97 km, CH 68 m off, k*rho 0.94, C8 2.77 km, CH 34 m off, k*rho 0.98, C9 2.16 km, CH 5 m off, k*rho 0.93, C10 3.28 km, CH 35 m off, k*rho 0.87, C11 2.88 km, CH 109 m off, k*rho 0.46
+  run 1 river-full: D 2595, 3/3 critical done, sim 2.4 s, wall 0 s, 1364 hops, 51 MAC give-ups, 0/68 gateway pairs with q < 0.5
+  run 1 river-full: D 2939, 6/6 critical done, sim 13.6 s, wall 7 s, 21280 hops, 609 MAC give-ups, 0/77 gateway pairs with q < 0.5
+  run 1 river-full: D 3266, 4/4 critical done, sim 23.7 s, wall 15 s, 57910 hops, 1724 MAC give-ups, 0/60 gateway pairs with q < 0.5
+  run 1 river-full: D 4813, 5/5 critical done, sim 40.8 s, wall 31 s, 71846 hops, 2123 MAC give-ups, 0/140 gateway pairs with q < 0.5
+  run 1 river-full: D 6007, 5/5 critical done, sim 49.5 s, wall 84 s, 201228 hops, 6076 MAC give-ups, 0/133 gateway pairs with q < 0.5
+  run 1 river-full: D 5296, 5/5 critical done, sim 70.2 s, wall 65 s, 181587 hops, 6449 MAC give-ups, 0/110 gateway pairs with q < 0.5
+  run 1 river-full: D 5699, 7/7 critical done, sim 105.7 s, wall 130 s, 312767 hops, 10107 MAC give-ups, 0/140 gateway pairs with q < 0.5
+  run 1 river-full: D 4706, 5/5 critical done, sim 16.9 s, wall 15 s, 35995 hops, 1009 MAC give-ups, 0/127 gateway pairs with q < 0.5
+  run 1 river-full: D 5696, 7/7 critical done, sim 187.3 s, wall 183 s, 478986 hops, 18849 MAC give-ups, 0/138 gateway pairs with q < 0.5
+  run 1 river-full: D 5522, 6/6 critical done, sim 165.0 s, wall 147 s, 424646 hops, 16271 MAC give-ups, 0/85 gateway pairs with q < 0.5
+  run 1 river-full: D 6940, 7/7 critical done, sim 174.5 s, wall 260 s, 618288 hops, 19153 MAC give-ups, 0/145 gateway pairs with q < 0.5
+== done 03:10:00

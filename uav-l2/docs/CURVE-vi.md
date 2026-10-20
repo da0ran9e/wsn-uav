@@ -1,11 +1,12 @@
 # Axe cong: Bank theo pháp tuyến cục bộ, và MEANDER (cluster bám địa hình, bay đường cong)
 
-Lời gốc: CLAUDE.md §8 mục 103.
+Lời gốc: CLAUDE.md §8 mục 103 (Phần 1–2), mục 104 (Phần 3).
 Mã:
-- `uav-coop2/tools/river_plan.py` (`banks="local"`), `river_export.py --banks`
+- `uav-coop2/tools/river_plan.py` (`banks="local"`, `reentry`), `river_export.py --banks --reentry`
 - `uav-l2/tools/curve_banks.py`, `curve_ns3.py`, `meander.py`
+- `uav-l2/tools/meander_mission.py`, `meander_compare.py` (Phần 3)
 
-Log: `logs/2026-10-19_1838-curve-banks/`.
+Log: `logs/2026-10-19_1838-curve-banks/`, `logs/2026-10-20_0222-meander-ns3/` (Phần 3).
 
 ## Phần 1. Bank cho Axe không thẳng
 
@@ -127,3 +128,99 @@ So từng cặp phủ River, MEANDER − LANE, trên cùng bản đồ:
 - **Cluster ghép ngang luồng** (từ mảnh vụn) có đường bay ngắn, cắt ngang luồng (thấy trong ô 7). Nên cho bay theo trục chính của cluster.
 - **Chuyển tiếp giữa các cluster vẫn là đoạn thẳng**, chưa tính vòng rẽ chữ U.
 - Bank cục bộ (Phần 1) là cách dựng River hợp với MEANDER, nhưng ns‑3 chưa cho thấy lợi về thời gian.
+
+## Phần 3. MEANDER trong cả nhiệm vụ, chạy ns‑3 (bản đồ 4, 6, 8 cluster)
+
+### 3.1 Cách chạy
+- **Bản đồ:** đúng ba bản đồ nhiệm vụ gốc k4‑s2, k6‑s4, k8‑s4 (khối có hồ). Đã kiểm tra trùng từng cell và node với bản k‑medoids đã lưu.
+- **Ba cách chia cluster** trên cùng bản đồ:
+  - **k‑medoids**: đề xuất gốc, đường thẳng qua CH theo hướng dài nhất. Dùng lại kết quả ns‑3 đã có, vốn chạy bằng đúng các binary hiện tại (deploy và river dựng ngày 13/10, kết quả commit sau đó).
+  - **LANE 4,5**: `mission.py --partition lane`, đường thẳng dọc luồng. Lần đầu chạy ns‑3.
+  - **MEANDER**: `meander_mission.py`, luồng cong theo địa hình, Bank cục bộ.
+- **Mỗi cluster:**
+  - Deploy để lấy CH, CL, tuyến và gateway. Biên an toàn của CH hạ dần 300 → 200 → 100 m nếu cluster mỏng.
+  - Lượt bay ns‑3, rồi River chuẩn bị đầy đủ (MAC 802.15.4, 7 màu), mỗi cluster một lượt.
+- **Nhiệm vụ:** chính sách P (tour l3first, đội 2 đi sớm, thăm theo điểm nghi vấn), 100 lần bốc nghi vấn mỗi bản đồ. Các cách chia có critical cell khác nhau nên các lần bốc không ghép cặp được.
+
+### 3.2 Hai chỗ phải sửa để MEANDER chạy được trong ns‑3
+1. **Đường bay phải đi qua CH.** `uav-coop-pass` kiểm tra điều này: CH luôn là critical cell và nghe UAV trực tiếp. Đường MEANDER là đường tâm luồng nên thường lệch CH 5–370 m (trung vị khoảng 70 m). Cách uốn:
+   - Đẩy một "bướu" Gauss về phía CH: v = CH − điểm gần nhất, σ = √(2|v|ρ). Riêng bướu chỉ làm cong tối đa 1/(2ρ).
+   - Làm trơn, giữ CH và hai đầu cố định, đến khi độ cong ≤ 1/ρ.
+   - Nếu không đạt sau 2000 vòng thì nới σ (×1,5; 2; 3; 4; 6). Lý do: với CH bị ghim, làm trơn Laplace hội tụ về hai đoạn thẳng gãy tại CH.
+   - **Kết quả:** 28/28 cluster khả thi; 27 đạt ngay với σ, 1 cần σ×3 (k8, CH lệch 302 m).
+   - Lỗi đã gặp: lấy mẫu lại từng nửa đường tạo đoạn 0,2 m sát CH và làm phình độ cong giả. Đã sửa bằng bước chia đều.
+2. **Đường cong có thể đi qua một cell hai lần.** `river_plan` vốn khẳng định Seg(a) là một khoảng liên tục (giả định đường thẳng).
+   - Thêm tuỳ chọn `reentry`: Seg(a) là lượt đi qua dài nhất; các gói của lượt ngắn để trống, như gói phát ngoài cluster.
+   - Đường thẳng không bao giờ chạm tới nhánh này, nên kết quả cũ không đổi.
+   - Thực tế chỉ 1 gói trên 28 cluster bị bỏ.
+
+Thêm một lỗi chỉ số trong nhánh `banks="local"`: khi một Axe cell nằm sát cuối đường, chỉ số vượt mảng. Lỗi này không lộ với đường deploy vì đường đó có đoạn ra 255 m ngoài cluster. Đã kẹp chỉ số.
+
+Hình `figures/meander-bend-ch.png` (không chữ):
+- Ba cluster: lệch nhỏ (k6‑C7), lệch 370 m ở cluster hình chữ L (k4‑C6), và lệch 302 m ở cluster chữ U quanh hồ (k8‑C5).
+- Đường đứt: đường MEANDER gốc. Đường liền: đường đã uốn qua CH (sao trắng), kể cả đoạn vào và ra.
+- Ở hai ca sau, ràng buộc qua CH kéo đường lệch hẳn khỏi trục luồng.
+
+### 3.3 Kết quả (`data/meander/ns3-summary.csv`, `ns3-cells.csv`, `ns3-draws.csv`)
+
+| Bản đồ | Cách | Cluster | Critical cell | Đường bay qua cluster (km) | Tour đội 1 (s) | D TB/cluster (kB) | River xong, TB / chậm nhất (s) | Mọi critical cell đủ D (s) | Kết thúc nhiệm vụ P, TB [95 % CI] (s) | p90 (s) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| k4 | k‑medoids | 4 | 27 | 11,2 | **327** | 415 | 24 / 60 | **314** | **734** [±32] | 915 |
+| | LANE | 7 | 34 | 17,6 | 564 | 312 | 22 / 105 | 489 | 764 [±35] | 996 |
+| | MEANDER | 6 | 26 | 17,0 | 483 | 455 | 41 / 115 | 455 | 867 [±41] | 1118 |
+| k6 | k‑medoids | 6 | 45 | 16,2 | **560** | 417 | 18 / 71 | **482** | **866** [±48] | 1166 |
+| | LANE | 9 | 47 | 25,6 | 786 | 388 | 28 / 113 | 684 | 1078 [±47] | 1379 |
+| | MEANDER | 11 | 51 | 25,4 | 770 | 362 | 18 / 67 | 690 | 999 [±51] | 1330 |
+| k8 | k‑medoids | 8 | 52 | 20,9 | **680** | 412 | 16 / 46 | **567** | **906** [±53] | 1256 |
+| | LANE | 11 | 63 | 31,7 | 934 | 405 | 34 / 139 | 884 | 1044 [±68] | 1489 |
+| | MEANDER | 11 | 60 | 32,2 | 929 | 481 | 66 / 192 | 823 | 1106 [±72] | 1577 |
+
+Không critical cell nào thiếu dữ liệu ở giới hạn 900 s.
+
+**Đọc kết quả:**
+- **k‑medoids kết thúc sớm nhất trên cả ba bản đồ**, sớm hơn MEANDER 133–200 s và sớm hơn LANE 30–212 s.
+- **Nguyên nhân thứ nhất: đội 1 bay nhiều hơn.**
+  - Cả LANE và MEANDER phủ kín miền bằng luồng, nên đường bay qua cluster dài hơn 50–60 % (17–32 km so với 11–21 km). Tour đội 1 dài hơn 155–255 s.
+  - Số cluster cũng tăng (6–11 so với 4–8). Lý do: hồ cắt luồng thành mảnh, và cluster bị chặn ở 80 cell.
+- **Nguyên nhân thứ hai: River chậm hơn ở cluster có Axe dài.**
+  - Tính trên 73 cluster của cả ba cách, thời gian của critical cell chậm nhất tương quan với chiều dài Axe (Spearman 0,73), và mạnh hơn nữa với D (0,84).
+
+    | Axe (cell) | Cluster | Critical chậm nhất, TB / trung vị (s) |
+    |---|---|---|
+    | ≤ 12 | 25 | 19 / 18 |
+    | 13–15 | 18 | 37 / 30 |
+    | 16–19 | 16 | 54 / 45 |
+    | ≥ 20 | 14 | 88 / 70 |
+
+  - 36 % cluster MEANDER có Axe ≥ 20 cell (tới 27). Con số này ở LANE là 15 %, ở k‑medoids là 0 % (tối đa 18).
+  - Mỗi critical cell phải gom **toàn bộ D**, mà D tỉ lệ với chiều dài Axe. Dữ liệu lại phải chảy dọc cả dòng sông, nên khối lượng truyền tăng gần như bình phương chiều dài. Cụ thể: k8‑C10 MEANDER có Axe 27 cell, D 6 940 gói, 600 nghìn chặng, xong sau 192 s. Cluster k‑medoids lớn nhất cùng bản đồ: Axe 17, 68 nghìn chặng, 27 s.
+- **Cái MEANDER làm đúng:**
+  - Critical cell nằm sát Axe: trung bình 0,8 cell, 94 % trong vòng 2 cell, xa nhất 4. Ở k‑medoids là 2,0 cell, 63 % và xa nhất 9; LANE 1,1 cell, 90 % và 6.
+  - D trung bình lớn nhất (k4, k8). Nghĩa là mỗi cluster nhận nhiều dữ liệu hơn cho lớp 1.
+  - Nhưng ns‑3 cho thấy khoảng cách tới Axe không phải nút thắt. Nút thắt là chiều dài dòng sông và lượng D phải gom.
+- **Bank cục bộ không phải nguyên nhân.** Kiểm tra lại bằng MEANDER với Bank song song, cùng bitmap lượt bay (`works/meanderParallel`):
+
+  | Bản đồ | River xong TB (cục bộ / song song) | Kết thúc nhiệm vụ |
+  |---|---|---|
+  | k4 | 41,4 / 41,1 s | 867 / 875 s |
+  | k6 | 17,9 / 18,8 s | 999 / 997 s |
+  | k8 | 65,9 / 61,5 s | 1106 / 1103 s |
+
+  Khớp với Phần 1.4.
+- **LANE**, đề xuất lớp 2 cũ (mục 84), giờ mới có số ns‑3 lần đầu. Nó cũng không thắng k‑medoids: tour dài hơn, D nhỏ hơn ở k4 (312 kB), River chậm hơn ở k6, k8.
+
+**Mức tin cậy:**
+- Đây là số thăm dò: 3 bản đồ, mỗi cluster một lượt bay và một lượt River. Chỉ phần nghi vấn được bốc 100 lần.
+- Quy tắc N ≥ 120 chưa đạt, chưa dùng được cho paper.
+- Tuy vậy, chiều chênh lệch giống nhau trên cả ba bản đồ, và cỡ chênh (130–200 s) lớn hơn khoảng tin cậy.
+
+### 3.4 Ý nghĩa và hướng sửa (chưa làm, cần bàn)
+- **Hàm mục tiêu của tái cấu trúc lớp 2 đang sai.**
+  - LANE và MEANDER tối ưu "độ phủ River" (critical cell gần Axe). Nhưng thời gian nhiệm vụ do **tổng quãng bay** và **chiều dài Axe / D mỗi cluster** quyết định.
+  - k‑medoids thắng vì cluster gọn: đường xuyên ngắn, Axe ≤ 18 cell, và đội 1 không phải quét kín miền.
+- **Hướng sửa 1: giới hạn chiều dài Axe.** Cắt luồng thành đoạn ≤ 12–15 cell thay vì chỉ chặn 80 cell. Cái giá là nhiều cluster hơn và tour dài hơn.
+- **Hướng sửa 2: không bắt critical cell gom toàn bộ D.**
+  - Nếu lớp 1 chỉ cần L ảnh × F kB (khoảng 400 kB), BS có thể chỉ giao phần đó cho mỗi cluster.
+  - Khi đó cluster dài không còn bị phạt theo bình phương. Hướng này cần chốt cùng mô hình lớp 1.
+- **Hướng sửa 3: đổi tiêu chí chia cụm.** Dùng lại k‑medoids, nhưng chọn đường bay cong qua CH bám địa hình trong cluster gọn, thay vì luồng kín miền.
+

@@ -1369,6 +1369,17 @@ thực ra ta chưa nhắc đến tính động học của uav, nó bay nhanh h�
 khi cân bằng các chỉ số của layer 2 đề xuất như độ rộng của cluster, số file cần thiết cho một cluster. phương án này không tệ hơn phương án cluster có sẵn
 ```
 
+*118. 2026-10-21 · uav-l2 + layer 1 · so sánh lớp 2 phải công bằng về kích thước miền, số cluster, kích thước mỗi cluster; trong lúc chờ giả lập, viết lại mô hình lớp 1 kiểu paper: tổng quát, đủ khái niệm, ký hiệu thống nhất có giải thích, công thức đầy đủ, dẫn nguồn cho công thức và tham số*
+
+```text
+khi so sánh ta phải đảm bảo công bằng về kích thước miền, số lượng cluster kích thước mỗi cluster ...
+trong lúc chờ giả lập, ta sửa lại phần mô hình layer 1 bạn đã viết:
+
+* bài viết của bạn bỏ qua nhiều khái niệm chưa được nhắc tới, tôi muốn bạn viết một cách tổng quát hơn, giống như đang viết paper chứ không phải chỉ viết cho tôi. 
+* ký hiệu đang dùng cũng nên thống nhất và giải thích một lượt 
+* các công thức viết rõ ràng dạng đầy đủ, và đưa ra các nguồn bạn đang tham khảo cho các công thức và tham số ấy
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

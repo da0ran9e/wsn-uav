@@ -126,6 +126,24 @@ T\* của P\* (s), k2 / k4 / k6 / k8:
 
 __ADJ__
 
+## 7. Tính công bằng của phép so sánh (mục 118)
+
+Mục 118 yêu cầu các cách chia phải giống nhau về kích thước miền, số cluster và cỡ mỗi cluster. Miền đã giống nhau: cả bốn cách chia dùng chung 40 bản đồ. Hai điều kiện còn lại thì chưa. Số cell mỗi cluster, k2 / k4 / k6 / k8 (đo trên `clusters.csv` của các thư mục làm việc):
+
+| Cách chia | Cluster | Cell mỗi cluster (TB) | Nhỏ nhất – lớn nhất | Hệ số biến thiên |
+|---|---|---|---|---|
+| k‑medoids | 2 / 4 / 6 / 8 | 76 / 77 / 75 / 76 | 47–80 | 0,06–0,11 |
+| MEANDER gốc | 3,3 / 6,2 / 9,0 / 12,1 | 46 / 50 / 50 / 50 | 20–80 | 0,31–0,34 |
+| MEANDER luồng 7,5, gộp < 1/2 | 2,9 / 5,1 / 7,2 / 9,7 | 52 / 61 / 63 / 63 | 34–89 | 0,16–0,21 |
+| subCH | 2,7 / 6,4 / 8,3 / 11,5 | 56 / 48 / 54 / 53 | 20–80 | 0,38–0,44 |
+
+Như vậy mọi so sánh lớp 2 ở §1–6 đều lệch: MEANDER và subCH có nhiều cluster nhỏ hơn và cỡ không đều. Các số đó chỉ dùng để chẩn đoán, không đưa vào bài báo.
+
+Đề xuất, chờ người dùng duyệt trước khi chạy ns‑3:
+- **MEANDER‑K.** Giữ cách dựng luồng (rộng 6 cell: một cluster 76 cell trong luồng rộng 6 cell dài khoảng 1,9 km, vừa đủ cho bộ manh mối). Các luồng được nối thành một chuỗi luống duy nhất, bay qua hồ. Chuỗi cell theo thứ tự luống được cắt thành **đúng K đoạn liên tiếp**, mỗi đoạn khoảng (số cell)/K. Mảnh bị hồ cắt rời được nhập sang đoạn kề, rồi cân lại số cell. Đường bay, CH, River và động học giữ như MEANDER hiện tại, để chỉ một yếu tố thay đổi: cách chia.
+- **subCH‑K.** Chạy k‑medoids với K/2 cluster lớn, rồi tách mỗi cluster thành 2 cluster con quanh hai critical cell xa nhau. Kết quả là K cluster, mỗi cluster khoảng 76 cell.
+- Kiểm tra trước bằng hình học (`--geometry`, vài phút): số cluster đúng bằng K, hệ số biến thiên cỡ cluster ≤ 0,11 như k‑medoids. Sau đó mới chạy ns‑3 (khoảng 1,5–2 giờ cho 40 bản đồ mỗi cách chia).
+
 ## Hình (không chữ)
 - `figures/l2-diag.png`: ba ô, mỗi ô bốn nhóm k2–k8; trong nhóm: k‑medoids (xanh dương), MEANDER (xanh lá), subCH (tím).
   - (1) Tour đội 1 xếp chồng: bay trong cluster (đậm), bay nối (vừa), bay về (nhạt).

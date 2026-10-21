@@ -1356,6 +1356,12 @@ sau mỗi vòng thử nghiệm trích ra một vài visualize hoặc con số đ
 nếu lớp 2 đề xuất chưa thắng thì cần xem lại về số lượng cluster, đường bay, số lượng dữ liệu thu được, độ thấm dữ liệu. theo cảm quan thì đường bay kiểu luống theo đễ xuất sẽ phải nhanh hơn đường bay ngẫu nhiên qua cluster có sẵn và dữ liệu cũng đầy đủ hơn
 ```
 
+*116. 2026-10-21 · uav-l2 · trước khi thiết kế lại (SWATH), thử vài cách điều chỉnh MEANDER hiện tại xem có tốt hơn không*
+
+```text
+thử một vài cách điều chỉnh xem hướng đề xuất có tốt hơn không trước
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

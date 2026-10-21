@@ -94,9 +94,10 @@ def coords(land):
     return main, spine, s, n
 
 
-def partition_meander(land, L, cap=CAP, span=0):
+def partition_meander(land, L, cap=CAP, span=0, frag_share=0.25):
     """Steps 1-4, each land piece (cut off by a river or a lake) with its own spine. Returns owner, lane,
-    s, n, spines and the stages. span > 0: chunks also at most span cells long along s (item 106)."""
+    s, n, spines and the stages. span > 0: chunks also at most span cells long along s (item 106). frag_share: pieces
+    under frag_share * cap cells are fragments, merged into a touching piece (item 116 tries 0.5)."""
     s, n, lane, ps, spines = {}, {}, {}, [], []
     for i, part in enumerate(sorted(pieces(list(land)), key=len, reverse=True)):
         _, spine, sp, np_ = coords(set(part))
@@ -105,7 +106,7 @@ def partition_meander(land, L, cap=CAP, span=0):
         for off in (0, 1 / 3, 2 / 3):                   # step 3
             ln = {h: 1000 * i + int(math.floor(np_[h] / (L * W) + off)) for h in part}
             pp = [p for l in sorted(set(ln.values())) for p in pieces([h for h in part if ln[h] == l])]
-            cost = sum(math.ceil(len(p) / cap) for p in pp) + sum(len(p) < cap / 4 for p in pp)
+            cost = sum(math.ceil(len(p) / cap) for p in pp) + sum(len(p) < cap * frag_share for p in pp)
             if best is None or cost < best[0]:
                 best = (cost, ln, pp)
         lane.update(best[1])
@@ -115,7 +116,7 @@ def partition_meander(land, L, cap=CAP, span=0):
     cut, frag = dict(piece), set()
     size = lambda own, i: sum(1 for c in own.values() if c == i)
     while True:                                         # step 4a: fragments join a touching piece
-        small = [i for i in set(piece.values()) if size(piece, i) < cap / 4
+        small = [i for i in set(piece.values()) if size(piece, i) < cap * frag_share
                  and touching(piece, [h for h in piece if piece[h] == i])]
         if not small:
             break
@@ -239,10 +240,10 @@ def curve_eval(owner, lane, s, n, nodes, bs):
     return rows, dict(path=path, inside=sum(r["inside"] for r in rows), **best)
 
 
-def run(K, seed, bend, L=4.5, g=None, width=1.0):
+def run(K, seed, bend, L=4.5, g=None, width=1.0, frag_share=0.25):
     g = g or domain(K, seed, bend, width)
     R = run_map(K, seed, L, "short", g=g)               # k-medoids and LANE on the same land
-    owner, lane, s, n, spines, st = partition_meander(R["land"], L)
+    owner, lane, s, n, spines, st = partition_meander(R["land"], L, frag_share=frag_share)
     rows, ev = curve_eval(owner, lane, s, n, R["nodes"], R["bs"])
     return dict(R=R, owner=owner, lane=lane, s=s, n=n, spines=spines, st=st, rows=rows, ev=ev)
 

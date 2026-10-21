@@ -56,6 +56,38 @@ def l3hat(C):
     return max(15.0, -52.0 + 6.92 * far)
 
 
+SEAM_GAP, SEAM_DEG = 1000.0, 30.0
+
+
+def seams(M):
+    """Seamless junctions (CLAUDE.md §8 item 116): {(k, d, k2, e): metres} for the legs on which team 1 flies
+    straight on from the core of one cluster's path (its lead-out dropped) into the core of the next (its lead-in
+    dropped): the cores at most SEAM_GAP apart, the exit heading, the gap and the entry heading within SEAM_DEG of
+    each other. The value replaces the straight transit between the two full paths, gap - lead-out - lead-in, so
+    it is negative when the cores touch (each leg's own length still counts its leads)."""
+    core = {}
+    for k, C in M["cl"].items():
+        p, part = C["geo"]["path"], C["geo"]["part"]
+        i0, i1 = int(np.argmax(part >= 1)), len(part) - 1 - int(np.argmax(part[::-1] <= 2))
+        lin, lout = float(np.linalg.norm(np.diff(p[:i0 + 1], axis=0), axis=1).sum()), \
+            float(np.linalg.norm(np.diff(p[i1:], axis=0), axis=1).sum())
+        a, b = p[i0], p[i1]
+        ha, hb = p[min(i0 + 25, i1)] - a, b - p[max(i1 - 25, i0)]
+        # direction 0: enters at a heading ha, leaves at b heading hb, leads lin / lout; direction 1 reversed
+        core[(k, 0)] = (a, ha, b, hb, lin, lout)
+        core[(k, 1)] = (b, -hb, a, -ha, lout, lin)
+    ang = lambda u, v: math.degrees(math.acos(max(-1.0, min(1.0, float(np.dot(u, v) / (np.linalg.norm(u) * np.linalg.norm(v) + 1e-9))))))
+    out = {}
+    for (k, d), (_, _, x, hx, _, lo) in core.items():
+        for (k2, e), (y, hy, _, _, li, _) in core.items():
+            g = y - x
+            gap = float(np.linalg.norm(g))
+            if k2 == k or gap > SEAM_GAP or ang(hx, hy) > SEAM_DEG or (gap > 50 and (ang(hx, g) > SEAM_DEG or ang(g, hy) > SEAM_DEG)):
+                continue
+            out[(k, d, k2, e)] = gap - lo - li
+    return out
+
+
 def segments(M):
     seg = {}
     for k, C in M["cl"].items():
@@ -72,15 +104,17 @@ def tour(M, kind):
     Lh = {k: l3hat(M["cl"][k]) for k in ks}
     st = lambda k, d: seg[k][0] if d == 0 else seg[k][1]
     en = lambda k, d: seg[k][1] if d == 0 else seg[k][0]
-    if kind == "latency" or K > 12:
+    if kind in ("latency", "seam") or K > 12:
         # latency (CLAUDE.md §8 item 114): least sum_k n_k leave_k, n_k the critical cells of cluster k, i.e. the
         # mean time a critical cell is left behind; exact Held-Karp up to 12 segments, else tour_heur (as for short
-        # and l3first beyond 12 segments)
-        n = {k: len(M["cl"][k]["P"]["crit"]) for k in ks} if kind == "latency" else None
-        order = latency_order(bs, seg, n) if kind == "latency" and K <= 12 else order_segments(bs, seg, n)
-        legs, t, pos = [], 0.0, bs
+        # and l3first beyond 12 segments). seam (item 116): latency with the seamless junctions of seams()
+        n = {k: len(M["cl"][k]["P"]["crit"]) for k in ks} if kind in ("latency", "seam") else None
+        link = seams(M) if kind == "seam" else {}
+        order = latency_order(bs, seg, n, link) if n and K <= 12 else order_segments(bs, seg, n, link)
+        legs, t, pos, prev = [], 0.0, bs, None
         for k, d in order:
-            t += math.dist(pos, st(k, d)) / V1
+            t += link.get((*prev, k, d), math.dist(pos, st(k, d))) / V1 if prev else math.dist(pos, st(k, d)) / V1
+            prev = (k, d)
             t0 = t
             t += seg[k][2] / V1
             legs.append((k, st(k, d), en(k, d), t0, t))
@@ -132,9 +166,11 @@ def tour(M, kind):
     return legs, t + math.dist(pos, bs) / V1
 
 
-def latency_order(bs, seg, n):
+def latency_order(bs, seg, n, link=None):
     """Exact Held-Karp for the least sum_k n_k * (metres flown until leaving segment k): a leg adds its length
-    times the weight of the segments not yet left, so the value of a state does not depend on how it was reached."""
+    times the weight of the segments not yet left, so the value of a state does not depend on how it was reached.
+    link: transits that replace the straight one (seams)."""
+    link = link or {}
     ks = sorted(seg)
     K = len(ks)
     st = lambda k, d: seg[k][0] if d == 0 else seg[k][1]
@@ -155,7 +191,8 @@ def latency_order(bs, seg, n):
                     if mask >> j & 1:
                         continue
                     for e in (0, 1):
-                        v = v0 + (math.dist(en(ks[i], d), st(ks[j], e)) + seg[ks[j]][2]) * left
+                        gap = link.get((ks[i], d, ks[j], e), math.dist(en(ks[i], d), st(ks[j], e)))
+                        v = v0 + (gap + seg[ks[j]][2]) * left
                         key = (mask | 1 << j, j, e)
                         if key not in best or v < best[key][0]:
                             best[key] = (v, (mask, i, d))

@@ -46,7 +46,7 @@ def main():
     C = L.clues()
     seqs = {"interleaved": L.order(C, "interleaved"), "grouped": L.order(C, "grouped")}
     order = "grouped" if "grouped" in a.method else "interleaved"
-    tk = next((o for o in a.method.split("-") if o in ("short", "latency")), "l3first")
+    tk = next((o for o in a.method.split("-") if o in ("short", "latency", "seam")), "l3first")
     legs, back = tour(M, tk)
     tours = {tk: (legs, back), "l3first": tour(M, "l3first")}
     hold = R.holdings(M, C, seqs)

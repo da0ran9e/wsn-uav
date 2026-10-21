@@ -9,6 +9,8 @@ from the ns-3 mission folders already run (no new simulation):
             heard >= 50 % / >= 90 %; from its own reception (any complete copy of a clue): the clue weight it
             holds (mean, and cells with >= 50 %), cells holding every clue
   River     when the last critical cell of the map has its River data (leave + doneS, latency tour)
+  river     share of a cluster's cells inside its River (plan)
+--geometry: folders of meander_mission.py --geometry (no ns-3): clusters, critical cells, tour, Axe, river only.
 
     python3 tools/l2_diag.py --set kmedoids "KW/k*" --set meander "MW/k*" --set subch "SW/k*" \
         --out docs/data/l2diag/diag --figs docs/figures --map k6-s4
@@ -47,13 +49,17 @@ def diag(M, C, seqs, Q):
             transit += l[3] - prev
             prev = l[4]
         out[kind] = dict(back=back, pass_=sum(l[4] - l[3] for l in legs), transit=transit, ret=back - legs[-1][4])
+    axe = [len({s for x in cl["P"]["axe"] for s in cl["P"]["seg"][x]}) for cl in M["cl"].values()]
+    out.update(axeMean=float(np.mean(axe)), axeFull=float(np.mean([a >= Q for a in axe])),
+               river=float(np.mean([len(cl["P"]["river"]) / len(cl["geo"]["cells"]) for cl in M["cl"].values()])))
+    if "bits" not in next(iter(M["cl"].values())):      # geometry only (meander_mission --geometry)
+        return out
     legs, _ = tour(M, "latency")
     leave = {l[0]: l[4] for l in legs}
-    axe, D, held, allclue, clueW = [], [], [], [], []
+    D, held, allclue, clueW = [], [], [], []
     w = np.array([c["w"] for c in C])
     for k, cl in M["cl"].items():
         P = cl["P"]
-        axe.append(len({s for x in P["axe"] for s in P["seg"][x]}))
         D.append(cl["D"])
         held += [cl["held"][h] for h in cl["geo"]["cells"] if h in cl["held"]]
         # every cell with nodes, as if it were critical: clues held from its own reception
@@ -63,7 +69,7 @@ def diag(M, C, seqs, Q):
         allclue += [bool(hold[(k, h)]["interleaved"][1].all()) for h in cells]
         clueW += [float(w[hold[(k, h)]["interleaved"][1]].sum() / w.sum()) for h in cells]
     held = np.array(held)
-    out.update(axeMean=float(np.mean(axe)), axeFull=float(np.mean([a >= Q for a in axe])), Dmean=float(np.mean(D)),
+    out.update(Dmean=float(np.mean(D)),
                Dsum=float(np.sum(D)), reach=float(held.mean()), reach50=float(np.mean(held >= .5)),
                reach90=float(np.mean(held >= .9)), allDirect=float(np.mean(allclue)),
                clueW=float(np.mean(clueW)), clueW50=float(np.mean(np.array(clueW) >= .5)),
@@ -157,14 +163,16 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--figs", default="")
     ap.add_argument("--map", default="", help="also draw this map once per partition")
+    ap.add_argument("--geometry", action="store_true", help="work folders stopped before the tour: clusters, critical
+                    cells, tour, Axe and River share only")
     a = ap.parse_args()
     C = L.clues()
     seqs = {"interleaved": L.order(C, "interleaved")}
     Q = L.layout(C, seqs["interleaved"])[2]
     rows, keep = [], []
     for sname, g in a.set:
-        for w in sorted(w for w in glob.glob(g) if R.complete(w)):
-            M = load_map(w, schemes=("rf",))
+        for w in sorted(w for w in glob.glob(g) if R.complete(w) or a.geometry and os.path.exists(f"{w}/map.json")):
+            M = load_map(w, schemes=() if a.geometry else ("rf",))
             name = R.mapname(w)
             rows.append(flat(name, sname, diag(M, C, seqs, Q)))
             if name == a.map:

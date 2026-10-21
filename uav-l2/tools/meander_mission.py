@@ -5,6 +5,7 @@
 The map is the one of mission.py --clusters K --seed S (restructure.domain), partitioned by MEANDER
 (meander.partition_meander, lanes 4.5 cells) instead of k-medoids. Options (CLAUDE.md §8 item 106):
   --span C          MEANDER clusters at most C cells long along s (a shorter Axe)
+  --lane L, --frag F   lane width (cells) and fragment threshold (x 80 cells) of MEANDER (item 116)
   --partition kmedoids   mission.py's compact clusters, each flown along its own spine (meander.coords)
   --windowKB Q      each cluster's River moves only Q kB of D, around where the UAV passes the CH
 Stages (resumable like mission.py):
@@ -55,7 +56,7 @@ def stage_map(a, W_):
         return
     g = domain(a.clusters, a.seed)
     land = set(g["domain"])
-    owner, lane, s, n, _, _ = partition_meander(land, a.lane, span=a.span)
+    owner, lane, s, n, _, _ = partition_meander(land, a.lane, span=a.span, frag_share=a.frag)
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
         f.write("q,r,cx,cy,type\n")
@@ -221,6 +222,7 @@ def main():
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--schemes", default="rf", help="tags of mission.SCHEMES to run")
     ap.add_argument("--lane", type=float, default=4.5, help="MEANDER lane width, cells")
+    ap.add_argument("--frag", type=float, default=0.25, help="MEANDER: pieces under FRAG x 80 cells are merged (item 116)")
     ap.add_argument("--banks", default="local", choices=("parallel", "local"))
     ap.add_argument("--partition", default="meander", choices=("meander", "kmedoids"),
                     help="kmedoids: mission.py's compact clusters, each flown along its own spine (item 106)")

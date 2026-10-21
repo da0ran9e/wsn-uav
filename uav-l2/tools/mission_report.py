@@ -40,9 +40,10 @@ TRUE, FALSE = "#e34948", "#eda100"
 
 
 def load_map(w, schemes=SCHEMES, with_bits=True):
-    """with_bits=False: geometry, plan and River results only (no pass bitmaps; bits/inD/held/D left out)."""
+    """with_bits=False: geometry, plan and River results only (no pass bitmaps; bits/inD/held/D left out).
+    schemes=(): geometry and plan only, for a work folder stopped before the tour (meander_mission --geometry)."""
     m = json.load(open(f"{w}/map.json"))
-    tour = json.load(open(f"{w}/tour.json"))
+    tour = json.load(open(f"{w}/tour.json")) if schemes else None
     rows = list(csv.DictReader(open(f"{w}/domain-cells.csv")))
     water = [(int(r["q"]), int(r["r"])) for r in rows if r["type"] != "land"]
     owner = {(int(r["q"]), int(r["r"])): int(r["cluster"]) for r in csv.DictReader(open(f"{w}/clusters.csv"))}
@@ -52,16 +53,18 @@ def load_map(w, schemes=SCHEMES, with_bits=True):
         c = {(int(x["q"]), int(x["r"])): (float(x["cx"]), float(x["cy"])) for x in lat}
         sel = sorted((int(x["q"]), int(x["r"])) for x in lat if x["selected"] == "1")
         nodes = list(csv.DictReader(open(f"{w}/c{k}-nodes-s35.csv")))
-        path = np.array([[float(q["x"]), float(q["y"])] for q in csv.DictReader(open(f"{w}/c{k}-path-s35.csv"))])
+        prow = list(csv.DictReader(open(f"{w}/c{k}-path-s35.csv")))
+        path = np.array([[float(q["x"]), float(q["y"])] for q in prow])
+        part = np.array([int(q["part"]) for q in prow])   # 0 lead-in, 1 entry -> CH, 2 CH -> exit, 3 lead-out
         seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
         d = np.arange(0, seg[-1], 0.5)
         uav = np.c_[np.interp(d, seg, path[:, 0]), np.interp(d, seg, path[:, 1])]
-        geo = dict(c=c, w=W, R=W / math.sqrt(3), cells=sel, S=set(sel), nodes=nodes, path=path, uav=uav)
+        geo = dict(c=c, w=W, R=W / math.sqrt(3), cells=sel, S=set(sel), nodes=nodes, path=path, part=part, uav=uav)
         res = {t: {(int(r["q"]), int(r["r"])): r for r in csv.DictReader(open(f"{w}/r{k}-{t}-crit.csv"))}
                for t in schemes}
         runs = {t: next(csv.DictReader(open(f"{w}/r{k}-{t}-runs.csv"))) for t in schemes}
         P = plan(geo, reentry=True)   # a straight path never re-enters a cell: the same plan
-        if not with_bits:
+        if not with_bits or not schemes:
             cl[k] = dict(geo=geo, P=P, res=res, runs=runs)
             continue
         N = len(uav)

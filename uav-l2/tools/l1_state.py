@@ -31,7 +31,7 @@ def main():
     for w in sorted(w for w in glob.glob(a.work) if R.complete(w)):
         M = load_map(w, schemes=("rf",))
         M["name"] = R.mapname(w)
-        tk = next((o for o in a.method.split("-") if o in ("short", "latency")), "l3first")
+        tk = next((o for o in a.method.split("-") if o in ("short", "latency", "seam")), "l3first")
         tours = {tk: tour(M, tk), "l3first": tour(M, "l3first")}
         hold = R.holdings(M, C, seqs)
         prng = np.random.default_rng(int.from_bytes(hashlib.sha256(M["name"].encode()).digest()[:4], "little"))

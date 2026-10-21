@@ -1386,6 +1386,12 @@ trong lúc chờ giả lập, ta sửa lại phần mô hình layer 1 bạn đã
 nghiên cứu này đã gần hoàn thành, tôi muốn bạn giúp tôi tổng hợp một bản tài liệu tổng quan nghiên cứu này tổng hợp tất cả thông tin có ích và liên quan đến tiến độ hiện tại (phiên bản đang chốt cho paper). mục đích của tài liệu này để làm mốc tham chiếu, tham khảo dành cho bất cứ ai cũng có thể theo dõi được nghiên cứu ngay cả những sinh viên chưa được làm quen với đề tài. yêu cầu trình bày có cấu trúc rõ ràng, chú thích các từ khoá, thuật ngữ quan trọng khó hiểu.
 ```
 
+*120. 2026-10-21 · uav-l2 · mô phỏng tìm ngưỡng bão hoà của cơ chế đề xuất: thay đổi kích thước cụm, giới hạn cell trong cụm, độ rộng ngang, độ dài cụm; tự đánh giá và điều chỉnh để tìm điểm tối ưu*
+
+```text
+chuẩn bị một mô phỏng xác định ngưỡng bão hoà của cơ chế đề xuất trước, thay đổi các tham số như kích thước cụm, giới hạn cell trong cụm, độ rông ngang của cụm độ dài cụm…tự bạn đánh giá và điều chỉnh để tìm một điểm tối ưu
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -80,6 +80,52 @@ Cảm quan "đường luống nhanh hơn và dữ liệu đầy đủ hơn" đú
 
 Vì vậy chưa thể kết luận ý tưởng luống là sai. Thứ thua là *cách hiện thực* hiện tại. Một phương án luống đúng nghĩa (một đường bay liền, bay qua hồ, cluster là các đoạn liên tiếp trên đường bay) chưa được thử.
 
+## 6. Thử điều chỉnh MEANDER (mục 116) và thêm động học (mục 117)
+
+Log: `logs/2026-10-21_0110-l2-adjust/`. Dữ liệu: `data/l2diag/{seam,screen,geo1,geo2,geo3,kin,adj}-*.csv`.
+
+### 6.1 Bay nối liền giữa hai cluster liền nhau
+Nếu hai cluster liền nhau thẳng hàng (hai đầu lõi đường bay cách nhau ≤ 1 km, lệch hướng ≤ 30°), đội 1 bay thẳng sang và bỏ đường ra của cluster trước cùng đường vào của cluster sau (`mission_policy.seams`, tour `seam`). Tour mới vẫn dùng chung dữ liệu ns‑3 cũ, vì lượt bay và River của từng cluster không phụ thuộc thứ tự bay.
+
+**Không có lợi:** T\* của MEANDER k8 chỉ đổi từ 919 s xuống 916 s; k‑medoids gần như không đổi. Trên 37 bản đồ chỉ có 32 cặp cluster cùng luồng vừa gần (< 400 m) vừa thẳng hướng (< 30°), vì mỗi cluster có đường cong riêng được uốn qua CH của nó.
+
+### 6.2 Độ rộng luồng và gộp mảnh vụn (hình học thật, `meander_mission.py --geometry`, không ns‑3)
+
+Tour độ trễ của đội 1 (s, nối thẳng), k2 / k4 / k6 / k8:
+
+| Cấu hình | Cluster | Critical cell | Tour | Cluster đủ chỗ cho bộ manh mối | Cell trong River |
+|---|---|---|---|---|---|
+| k‑medoids | 2 / 4 / 6 / 8 | 13,5 / 26,9 / 39,9 / 50,1 | 213 / 369 / 512 / 682 | 50–63 % | 61 % |
+| MEANDER gốc (luồng 4,5 cell, gộp < 1/4) | 3,3 / 6,2 / 9,0 / 12,1 | 16,5 / 30,6 / 47,3 / 59,0 | 285 / 529 / 738 / 950 | 35–62 % | 75–85 % |
+| luồng 6 | 3,1 / 5,4 / 7,9 / 10,3 | 15,7 / 30,3 / 44,8 / 56,4 | 271 / 476 / 655 / 847 | 42–62 % | 74–77 % |
+| luồng 7,5 | 3,1 / 5,4 / 7,6 / 10,3 | 15,8 / 29,3 / 43,7 / 56,2 | 254 / 458 / 628 / 776 | 33–51 % | 68–72 % |
+| luồng 9 | 3,0 / 5,3 / 7,3 / 9,5 | 16,2 / 29,7 / 44,2 / 53,7 | 253 / 452 / 571 / 756 | 32–42 % | 63–70 % |
+| luồng 6, gộp < 1/2 | 2,8 / 5,0 / 7,4 / 9,9 | 15,0 / 28,5 / 44,8 / 54,9 | 247 / 449 / 620 / 811 | 37–54 % | 68–74 % |
+| **luồng 7,5, gộp < 1/2** | 2,9 / 5,1 / 7,2 / 9,7 | 15,5 / 29,5 / 42,8 / 55,5 | **247 / 436 / 584 / 753** | 40–61 % | 66–69 % |
+| luồng 9, gộp < 1/2 | 2,9 / 5,2 / 7,1 / 9,4 | 15,9 / 29,4 / 43,8 / 53,9 | 251 / 433 / 563 / 745 | 35–41 % | 62–69 % |
+
+- Luồng rộng hơn và gộp mảnh vụn mạnh hơn rút tour MEANDER 38–197 s, nhưng **vẫn dài hơn k‑medoids 34–72 s**. MEANDER vẫn có nhiều cluster và critical cell hơn.
+- **Đánh đổi độ rộng cluster với số file.** Với trần 80 cell, một cluster rộng L cell dài khoảng 12 km / L dọc đường bay. Bộ 12 manh mối cần khoảng 2 km Axe, nên điểm cân bằng là L ≈ 6. Luồng rộng hơn rút đường bay nhưng Axe ngắn hơn bộ manh mối. Trên thực tế, hồ và đường cong làm Axe trung bình chỉ khoảng 4 000–4 300 gói ở mọi độ rộng, nên luồng 6 cell không đủ chỗ hơn luồng 7,5.
+- Chọn **luồng 7,5, gộp < 1/2** để chạy ns‑3 (`MG/L7.5f0.5`, 40 bản đồ).
+
+### 6.3 Động học đội 1 (mục 117)
+Mô hình cũ cho đội 1 bay đều 50 m/s, với quãng nối giữa các cluster là đường thẳng, nên mọi chỗ đổi hướng không tốn gì. Mô hình mới:
+- Quãng nối (kể cả cất cánh từ BS và bay về) là **đường Dubins ngắn nhất**, bán kính quay 255 m ở 50 m/s (nghiêng 45°). Mã: `tools/dubins.py`, `mission_policy.kin_links`, tour `kin`.
+- Trong cluster tốc độ giữ nguyên: đường thẳng của k‑medoids, và đường cong của MEANDER vốn đã được làm trơn với độ cong ≤ 1/255 m.
+- Nhờ đó dữ liệu ns‑3 cũ vẫn dùng được.
+
+T\* của P\* (s), k2 / k4 / k6 / k8:
+
+| Cách chia | Nối thẳng | Nối Dubins | Tour đội 1, nối Dubins |
+|---|---|---|---|
+| k‑medoids | 408 / 566 / 675 / 769 | 420 / 586 / 716 / 824 | 232 / 435 / 617 / 814 |
+| MEANDER gốc | 470 / 642 / 792 / 919 | 487 / 679 / 845 / 987 | 340 / 610 / 849 / 1 121 |
+| subCH | 423 / 617 / 717 / 830 | 433 / 633 / 762 / 890 | 269 / 561 / 753 / 979 |
+
+**Động học làm mọi cách chia chậm đi, và làm MEANDER chậm thêm nhiều nhất:** khoảng cách tới k‑medoids nới từ 62–150 s lên 67–163 s. Mỗi chỗ nối giữa hai cluster là một lần quay, và MEANDER có nhiều cluster hơn. Một đường luống thẳng và liền (SWATH, mục 5) thì chỉ phải quay ở cuối mỗi luồng, nên đây mới là trường hợp động học có lợi cho đường luống.
+
+__ADJ__
+
 ## Hình (không chữ)
 - `figures/l2-diag.png`: ba ô, mỗi ô bốn nhóm k2–k8; trong nhóm: k‑medoids (xanh dương), MEANDER (xanh lá), subCH (tím).
   - (1) Tour đội 1 xếp chồng: bay trong cluster (đậm), bay nối (vừa), bay về (nhạt).

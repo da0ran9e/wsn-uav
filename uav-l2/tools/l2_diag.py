@@ -163,8 +163,8 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--figs", default="")
     ap.add_argument("--map", default="", help="also draw this map once per partition")
-    ap.add_argument("--geometry", action="store_true", help="work folders stopped before the tour: clusters, critical
-                    cells, tour, Axe and River share only")
+    ap.add_argument("--geometry", action="store_true",
+                    help="work folders stopped before the tour: clusters, critical cells, tour, Axe and River share only")
     a = ap.parse_args()
     C = L.clues()
     seqs = {"interleaved": L.order(C, "interleaved")}

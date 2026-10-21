@@ -1,0 +1,279 @@
+<title>Tổng quan nghiên cứu River</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a hydrographic field manual. Sticky contents rail on the left, one reading column, tables and figures as plates. */
+:root {
+  --bg: #f4f7f8;          /* cool survey paper */
+  --surface: #ffffff;
+  --fg: #15232c;
+  --muted: #586873;
+  --line: #d6e0e5;
+  --accent: #0d5b82;      /* river channel */
+  --accent-soft: #e4f0f6;
+  --axe: #0b3a57;
+  --river: #3f8fbe;
+  --bank: #9ccbe6;
+  --land: #e3e8ea;
+  --plate: #fcfcfa;
+  --code-bg: #eef3f5;
+  --font-display: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Literata", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d151a; --surface: #131e25; --fg: #e2e9ed; --muted: #98a9b4; --line: #26343d;
+    --accent: #72bce4; --accent-soft: #16303f; --axe: #cfe8f6; --river: #5aa6d2; --bank: #2f6f95;
+    --land: #1e2a31; --plate: #f2f3f0; --code-bg: #18252d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d151a; --surface: #131e25; --fg: #e2e9ed; --muted: #98a9b4; --line: #26343d;
+  --accent: #72bce4; --accent-soft: #16303f; --axe: #cfe8f6; --river: #5aa6d2; --bank: #2f6f95;
+  --land: #1e2a31; --plate: #f2f3f0; --code-bg: #18252d; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+/* header band */
+.masthead { border-bottom: 1px solid var(--line); background: var(--surface); }
+.masthead-inner {
+  max-width: 1180px; margin: 0 auto;
+  padding-block: 40px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 18px;
+}
+.eyebrow { font-family: var(--font-display); font-size: 12.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0; }
+.masthead h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 4.4vw, 46px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.masthead .lede { font-size: clamp(17px, 2vw, 20px); color: var(--muted); margin: 0; max-width: 46em; text-wrap: balance; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; font-family: var(--font-display); font-size: 13px; }
+.chips li { border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; color: var(--muted); background: var(--bg); }
+.chips li strong { color: var(--fg); font-weight: 600; }
+.hexband { width: 100%; height: auto; max-width: 100%; display: block; }
+.hexband .h-land { fill: var(--land); }
+.hexband .h-bank { fill: var(--bank); }
+.hexband .h-river { fill: var(--river); }
+.hexband .h-axe { fill: var(--axe); }
+.hexband .h-crit { fill: none; stroke: var(--fg); stroke-width: 1.6; }
+.hexband .h-path { stroke: var(--fg); stroke-width: 1.6; fill: none; stroke-dasharray: 0; }
+.hexband polygon { stroke: var(--surface); stroke-width: 1.2; }
+
+/* page grid */
+.page {
+  max-width: 1180px; margin: 0 auto;
+  padding-block: 28px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 48px; align-items: start;
+}
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); max-height: calc(100vh - 40px); overflow-y: auto; font-family: var(--font-display); font-size: 14px; }
+.rail summary { font-weight: 600; font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); cursor: default; list-style: none; padding: 4px 0 10px; }
+.rail summary::-webkit-details-marker { display: none; }
+.rail ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
+.rail li a { display: block; padding: 5px 0 5px 14px; margin-left: -2px; border-left: 2px solid transparent; color: var(--muted); text-decoration: none; line-height: 1.35; }
+.rail li a:hover { color: var(--fg); }
+.rail li a.on { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+
+main { min-width: 0; max-width: 760px; }
+main > :first-child { margin-top: 0; }
+main h2 {
+  font-family: var(--font-display); font-weight: 700; font-size: 27px; line-height: 1.2;
+  margin: 64px 0 18px; padding-top: 18px; border-top: 1px solid var(--line); text-wrap: balance; letter-spacing: -0.005em;
+}
+main h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 1.3; margin: 36px 0 12px; text-wrap: balance; }
+main h4 { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin: 26px 0 8px; }
+main p, main li { max-width: 68ch; }
+main ul, main ol { padding-left: 1.3em; }
+main li { margin: 4px 0; }
+main li > ul, main li > ol { margin: 4px 0; }
+main strong { font-weight: 600; }
+main hr { border: 0; height: 0; margin: 0; }
+code { font-family: var(--font-mono); font-size: .84em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.5; }
+pre code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; }
+pre.mermaid { background: var(--surface); text-align: center; font-family: var(--font-display); }
+
+.note { margin: 0 0 24px; padding: 14px 18px; background: var(--accent-soft); border-radius: 6px; font-size: 16px; }
+.note p { margin: 0 0 6px; }
+.note ul { margin: 0; }
+
+.table-wrap { overflow-x: auto; margin: 16px 0 22px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-family: var(--font-display); font-size: 14px; line-height: 1.45; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+th { font-weight: 600; font-size: 12.5px; letter-spacing: .03em; color: var(--muted); background: var(--bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td strong { font-weight: 600; }
+td:first-child { min-width: 9em; }
+
+.math { overflow-x: auto; margin: 14px 0 18px; padding: 6px 0; font-size: 17px; }
+
+figure { margin: 26px 0 30px; }
+figure .plate { background: var(--plate); border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+figure img { display: block; width: 100%; height: auto; max-width: 100%; }
+figcaption { margin-top: 10px; font-family: var(--font-display); font-size: 14px; color: var(--muted); line-height: 1.5; }
+figcaption strong { color: var(--fg); font-weight: 600; display: block; margin-bottom: 2px; }
+figcaption ul, figcaption ol { margin: 4px 0 0; padding-left: 1.2em; }
+figcaption li { margin: 2px 0; max-width: none; }
+
+/* glossary terms in running text */
+main a[href^="#g-"] { color: inherit; text-decoration: underline dotted var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+main a[href^="#g-"]:hover { color: var(--accent); }
+.tip {
+  position: absolute; z-index: 20; max-width: min(340px, calc(100vw - 32px));
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / .14); padding: 12px 14px; font-family: var(--font-display); font-size: 14px; line-height: 1.5;
+}
+.tip .t { font-weight: 700; font-size: 15px; }
+.tip .en { color: var(--muted); font-size: 12.5px; margin-left: 6px; }
+.tip p { margin: 6px 0 8px; }
+.tip a { font-size: 13px; }
+:target { scroll-margin-top: 16px; }
+tr:has(a:target) td { background: var(--accent-soft); }
+
+@media (max-width: 980px) {
+  .page { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .rail { position: static; max-height: none; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 10px 14px; }
+  .rail summary { cursor: pointer; padding: 2px 0; }
+  .rail summary::after { content: " +"; }
+  .rail[open] summary::after { content: " −"; }
+  .rail[open] summary { padding-bottom: 10px; }
+  main { max-width: none; }
+}
+@media (max-width: 520px) {
+  body { font-size: 16px; }
+  main h2 { font-size: 23px; margin-top: 48px; }
+  .masthead-inner { padding-block: 28px 20px; }
+}
+</style>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <p class="eyebrow">Tài liệu tham chiếu nghiên cứu · bản đang chốt cho paper</p>
+    <h1>Tổng quan nghiên cứu River</h1>
+    <p class="lede">Giao truy vấn tìm kiếm tới mạng camera IoT bằng một lượt bay UAV cánh bằng, và hợp tác mặt đất có lập kế hoạch để lấp phần dữ liệu còn thiếu.</p>
+    <ul class="chips">
+      <li>Phiên bản <strong>21‑10‑2026</strong></li>
+      <li>Lời gốc: <strong>CLAUDE.md §8, mục 1–119</strong></li>
+      <li>Mọi số liệu: <strong>thăm dò, N &lt; 120</strong></li>
+    </ul>
+    <svg class="hexband" id="hexband" viewBox="0 0 1148 132" aria-hidden="true"></svg>
+  </div>
+</header>
+
+<div class="page">
+  <details class="rail" id="rail" open>
+    <summary>Mục lục</summary>
+    <ol>
+{{NAV}}
+    </ol>
+  </details>
+  <main id="doc">
+{{BODY}}
+  </main>
+</div>
+
+<script>
+window.MathJax = { tex: { inlineMath: [], displayMath: [["$$", "$$"]] }, svg: { fontCache: "global" }, options: { enableMenu: false } };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js" async></script>
+<script>
+(function () {
+  // hex band: a strip of cells under a flight line, coloured Axe / River / Bank / land like the concept figures
+  var svg = document.getElementById("hexband");
+  if (svg) {
+    var ns = "http://www.w3.org/2000/svg", R = 13, w = Math.sqrt(3) * R, rows = 6, W = 1148;
+    var cols = Math.ceil(W / w) + 1, x0 = 470, y0 = 150, x1 = 690, y1 = -18;
+    var dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
+    var crit = [[12, 1], [26, 2], [31, 4], [44, 3]];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var cx = c * w + (r % 2 ? w / 2 : 0), cy = R + 3 + r * 1.5 * R;
+        var d = Math.abs(dy * cx - dx * cy + x1 * y0 - y1 * x0) / len / (w * 1.15);
+        var cls = d < 0.55 ? "h-axe" : d < 1.4 ? "h-river" : d < 2.0 ? "h-bank" : "h-land";
+        var pts = [];
+        for (var k = 0; k < 6; k++) { var a = Math.PI / 6 + k * Math.PI / 3; pts.push((cx + R * Math.cos(a)).toFixed(1) + "," + (cy + R * Math.sin(a)).toFixed(1)); }
+        var p = document.createElementNS(ns, "polygon");
+        p.setAttribute("points", pts.join(" ")); p.setAttribute("class", cls); svg.appendChild(p);
+        for (var q = 0; q < crit.length; q++) if (crit[q][0] === c && crit[q][1] === r) {
+          var o = document.createElementNS(ns, "circle");
+          o.setAttribute("cx", cx); o.setAttribute("cy", cy); o.setAttribute("r", R * 0.45); o.setAttribute("class", "h-crit"); svg.appendChild(o);
+        }
+      }
+    }
+    var line = document.createElementNS(ns, "line");
+    line.setAttribute("x1", x0); line.setAttribute("y1", y0); line.setAttribute("x2", x1); line.setAttribute("y2", y1);
+    line.setAttribute("class", "h-path"); svg.appendChild(line);
+  }
+
+  // contents rail: closed by default on narrow screens, current section highlighted
+  var rail = document.getElementById("rail");
+  var narrow = window.matchMedia("(max-width: 980px)");
+  function syncRail() { if (narrow.matches) rail.removeAttribute("open"); else rail.setAttribute("open", ""); }
+  syncRail();
+  if (narrow.addEventListener) narrow.addEventListener("change", syncRail);
+  rail.querySelector("summary").addEventListener("click", function (e) { if (!narrow.matches) e.preventDefault(); });
+  rail.addEventListener("click", function (e) { if (e.target.closest("a") && narrow.matches) rail.removeAttribute("open"); });
+  var links = Array.prototype.slice.call(rail.querySelectorAll("a"));
+  var heads = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  function mark() {
+    var y = window.scrollY + 120, cur = 0;
+    for (var i = 0; i < heads.length; i++) if (heads[i] && heads[i].offsetTop <= y) cur = i;
+    links.forEach(function (a, i) { a.classList.toggle("on", i === cur); });
+  }
+  window.addEventListener("scroll", mark, { passive: true }); mark();
+
+  // glossary tips: every link to #g-… shows that row of the glossary
+  var gloss = {};
+  document.querySelectorAll('main td a[id^="g-"]').forEach(function (a) {
+    var cells = a.closest("tr").children;
+    gloss[a.id] = { t: cells[0].textContent.trim(), en: cells[1].textContent.trim(), d: cells[2].innerHTML };
+  });
+  var tip = document.createElement("div");
+  tip.className = "tip"; tip.setAttribute("role", "tooltip"); tip.id = "gloss-tip"; tip.hidden = true;
+  document.body.appendChild(tip);
+  var owner = null, hideTimer = null;
+  function show(a) {
+    var g = gloss[a.getAttribute("href").slice(1)];
+    if (!g) return;
+    clearTimeout(hideTimer);
+    owner = a;
+    var en = g.en && g.en !== "—" && g.en.toLowerCase() !== g.t.toLowerCase() ? '<span class="en">' + g.en + "</span>" : "";
+    tip.innerHTML = '<div><span class="t">' + g.t + "</span>" + en + "</div><p>" + g.d + '</p><a href="' + a.getAttribute("href") + '">Xem trong bảng thuật ngữ</a>';
+    tip.hidden = false;
+    var r = a.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+    var left = Math.min(Math.max(16, r.left + window.scrollX), window.scrollX + document.documentElement.clientWidth - tw - 16);
+    var top = r.bottom + window.scrollY + 8;
+    if (r.bottom + th + 16 > window.innerHeight && r.top > th + 16) top = r.top + window.scrollY - th - 8;
+    tip.style.left = left + "px"; tip.style.top = top + "px";
+    a.setAttribute("aria-describedby", "gloss-tip");
+  }
+  function hide() { tip.hidden = true; if (owner) owner.removeAttribute("aria-describedby"); owner = null; }
+  function later() { clearTimeout(hideTimer); hideTimer = setTimeout(hide, 180); }
+  document.querySelectorAll('main a[href^="#g-"]').forEach(function (a) {
+    a.addEventListener("mouseenter", function () { show(a); });
+    a.addEventListener("mouseleave", later);
+    a.addEventListener("focus", function () { show(a); });
+    a.addEventListener("blur", later);
+    a.addEventListener("click", function (e) {
+      if (window.matchMedia("(hover: none)").matches && owner !== a) { e.preventDefault(); show(a); }
+    });
+  });
+  tip.addEventListener("mouseenter", function () { clearTimeout(hideTimer); });
+  tip.addEventListener("mouseleave", later);
+  tip.addEventListener("click", function (e) { if (e.target.closest("a")) hide(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
+  document.addEventListener("click", function (e) { if (!tip.hidden && !tip.contains(e.target) && e.target !== owner) hide(); });
+  window.addEventListener("resize", hide);
+})();
+</script>

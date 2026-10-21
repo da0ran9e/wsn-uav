@@ -1380,6 +1380,12 @@ trong lúc chờ giả lập, ta sửa lại phần mô hình layer 1 bạn đã
 * các công thức viết rõ ràng dạng đầy đủ, và đưa ra các nguồn bạn đang tham khảo cho các công thức và tham số ấy
 ```
 
+*119. 2026-10-21 · tổng quan · tài liệu tổng quan toàn bộ nghiên cứu (bản đang chốt cho paper) làm mốc tham chiếu, ai cũng theo dõi được kể cả sinh viên mới; cấu trúc rõ, chú thích từ khoá và thuật ngữ khó*
+
+```text
+nghiên cứu này đã gần hoàn thành, tôi muốn bạn giúp tôi tổng hợp một bản tài liệu tổng quan nghiên cứu này tổng hợp tất cả thông tin có ích và liên quan đến tiến độ hiện tại (phiên bản đang chốt cho paper). mục đích của tài liệu này để làm mốc tham chiếu, tham khảo dành cho bất cứ ai cũng có thể theo dõi được nghiên cứu ngay cả những sinh viên chưa được làm quen với đề tài. yêu cầu trình bày có cấu trúc rõ ràng, chú thích các từ khoá, thuật ngữ quan trọng khó hiểu.
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -1362,6 +1362,13 @@ nếu lớp 2 đề xuất chưa thắng thì cần xem lại về số lượng
 thử một vài cách điều chỉnh xem hướng đề xuất có tốt hơn không trước
 ```
 
+*117. 2026-10-21 · uav-l2 · thiếu động học UAV (bay thẳng nhanh hơn, phải giảm tốc khi bay cong hoặc lượn); cân bằng các chỉ số của lớp 2 đề xuất (độ rộng cluster, số file cần cho một cluster) thì phương án này không tệ hơn cluster có sẵn*
+
+```text
+thực ra ta chưa nhắc đến tính động học của uav, nó bay nhanh hơn khi bay thẳng, cần giảm tốc khi bay cong hoặc lượn, 
+khi cân bằng các chỉ số của layer 2 đề xuất như độ rộng của cluster, số file cần thiết cho một cluster. phương án này không tệ hơn phương án cluster có sẵn
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

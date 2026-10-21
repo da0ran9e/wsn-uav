@@ -38,6 +38,7 @@ import numpy as np
 
 from map_gen import strip_text
 from mission_report import (AXE, BANK, FALSE, GREY, INK, INK2, SURF, TRUE, crit_marks, frame, land, load_map)
+import dubins
 from tour_heur import order_segments
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
@@ -57,6 +58,7 @@ def l3hat(C):
 
 
 SEAM_GAP, SEAM_DEG = 1000.0, 30.0
+R_TURN = V1 * V1 / 9.80665   # fixed wing at 50 m/s, 45 degree bank: 255 m (meander.RHO)
 
 
 def seams(M):
@@ -88,6 +90,29 @@ def seams(M):
     return out
 
 
+def kin_links(M):
+    """Team 1's transits flown, not drawn (CLAUDE.md §8 item 117): {(k, d, k2, e): metres} the shortest Dubins path
+    (radius R_TURN at V1) from the end pose of cluster k's path flown in direction d to the start pose of k2's in
+    direction e; (None, None, k, e) from the BS (any heading) and (k, d, None, None) back to it."""
+    pose = {}
+    for k, C in M["cl"].items():
+        p = C["geo"]["path"]
+        h0 = math.atan2(*(p[1] - p[0])[::-1])
+        h1 = math.atan2(*(p[-1] - p[-2])[::-1])
+        pose[(k, 0)] = ((p[0][0], p[0][1], h0), (p[-1][0], p[-1][1], h1))
+        pose[(k, 1)] = ((p[-1][0], p[-1][1], h1 + math.pi), (p[0][0], p[0][1], h0 + math.pi))
+    bs = M["bs"]
+    out = {}
+    for a, (_, end) in pose.items():
+        out[(*a, None, None)] = dubins.free_end(end, bs, R_TURN)
+        for b, (start, _) in pose.items():
+            if a[0] != b[0]:
+                out[(*a, *b)] = dubins.length(end, start, R_TURN)
+    for b, (start, _) in pose.items():
+        out[(None, None, *b)] = dubins.free_start(bs, start, R_TURN)
+    return out
+
+
 def segments(M):
     seg = {}
     for k, C in M["cl"].items():
@@ -104,22 +129,23 @@ def tour(M, kind):
     Lh = {k: l3hat(M["cl"][k]) for k in ks}
     st = lambda k, d: seg[k][0] if d == 0 else seg[k][1]
     en = lambda k, d: seg[k][1] if d == 0 else seg[k][0]
-    if kind in ("latency", "seam") or K > 12:
+    if kind in ("latency", "seam", "kin") or K > 12:
         # latency (CLAUDE.md §8 item 114): least sum_k n_k leave_k, n_k the critical cells of cluster k, i.e. the
         # mean time a critical cell is left behind; exact Held-Karp up to 12 segments, else tour_heur (as for short
-        # and l3first beyond 12 segments). seam (item 116): latency with the seamless junctions of seams()
-        n = {k: len(M["cl"][k]["P"]["crit"]) for k in ks} if kind in ("latency", "seam") else None
-        link = seams(M) if kind == "seam" else {}
+        # and l3first beyond 12 segments). seam (item 116): latency with the seamless junctions of seams();
+        # kin (item 117): latency with every transit a Dubins path (kin_links)
+        n = {k: len(M["cl"][k]["P"]["crit"]) for k in ks} if kind in ("latency", "seam", "kin") else None
+        link = seams(M) if kind == "seam" else kin_links(M) if kind == "kin" else {}
         order = latency_order(bs, seg, n, link) if n and K <= 12 else order_segments(bs, seg, n, link)
         legs, t, pos, prev = [], 0.0, bs, None
         for k, d in order:
-            t += link.get((*prev, k, d), math.dist(pos, st(k, d))) / V1 if prev else math.dist(pos, st(k, d)) / V1
+            t += link.get((*prev, k, d) if prev else (None, None, k, d), math.dist(pos, st(k, d))) / V1
             prev = (k, d)
             t0 = t
             t += seg[k][2] / V1
             legs.append((k, st(k, d), en(k, d), t0, t))
             pos = en(k, d)
-        return legs, t + math.dist(pos, bs) / V1
+        return legs, t + link.get((*prev, None, None), math.dist(pos, bs)) / V1
     # Pareto Held-Karp: (mask, i, d) -> list of (time at leaving i, readiness so far, previous state, index)
     best = {}
     for i, k in enumerate(ks):
@@ -179,7 +205,7 @@ def latency_order(bs, seg, n, link=None):
     best = {}
     for i, k in enumerate(ks):
         for d in (0, 1):
-            best[(1 << i, i, d)] = ((math.dist(bs, st(k, d)) + seg[k][2]) * W, None)
+            best[(1 << i, i, d)] = ((link.get((None, None, k, d), math.dist(bs, st(k, d))) + seg[k][2]) * W, None)
     for mask in range(1, 1 << K):
         left = W - sum(n[ks[j]] for j in range(K) if mask >> j & 1)
         for i in range(K):

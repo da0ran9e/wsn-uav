@@ -11,13 +11,14 @@ def directions(bs, seg, ks, weight=None, link=None):
     """Best directions for the order ks: (cost, [direction per segment]); direction 0 flies start -> end.
     cost: transit metres (weight None), or the latency sum_k weight_k * leave_k in metres of flight (each leg's
     length times the weight of the clusters not yet left, the one being flown included; no return leg).
-    link {(k, d, k2, e): metres}: transits that replace the straight one (mission_policy.seams)."""
+    link {(k, d, k2, e): metres}: transits that replace the straight one (mission_policy.seams, kin_links); keys
+    (None, None, k, e) from the BS and (k, d, None, None) back to it."""
     ends = lambda k, d: (seg[k][0], seg[k][1]) if d == 0 else (seg[k][1], seg[k][0])
     rem = [sum(weight[k] for k in ks[i:]) for i in range(len(ks))] if weight else None
 
     def gap(p, i, e):   # p: the (segment, direction) flown before, None for the BS
         if p is None:
-            return math.dist(bs, ends(ks[i], e)[0])
+            return (link or {}).get((None, None, ks[i], e), math.dist(bs, ends(ks[i], e)[0]))
         return (link or {}).get((p[0], p[1], ks[i], e), math.dist(ends(*p)[1], ends(ks[i], e)[0]))
     leg = lambda i, p, e: (gap(p, i, e) + (seg[ks[i]][2] if weight else 0)) * (rem[i] if weight else 1)
     best = [(leg(0, None, d), [d]) for d in (0, 1)]
@@ -27,7 +28,7 @@ def directions(bs, seg, ks, weight=None, link=None):
             c, p = min((best[d][0] + leg(i, (ks[i - 1], d), e), best[d][1]) for d in (0, 1))
             nb.append((c, p + [e]))
         best = nb
-    back = (lambda d: 0.0) if weight else (lambda d: math.dist(ends(ks[-1], d)[1], bs))
+    back = (lambda d: 0.0) if weight else (lambda d: (link or {}).get((ks[-1], d, None, None), math.dist(ends(ks[-1], d)[1], bs)))
     return min((best[d][0] + back(d), best[d][1]) for d in (0, 1))
 
 

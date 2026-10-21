@@ -31,7 +31,8 @@ Methods (name = base + options):
   options   -grouped (broadcast order by aspect), -equal (no importance: every clue weight 1), -wait, -zero (team 2
             leaves with team 1, at t = 0, and stages towards the critical cells' centre until reports come), -pu,
             -puh, -puq, -put, -stage, -short / -latency / -seam (team 1's tour; default l3first; seam = latency
-            with seamless junctions, mission_policy.seams)
+            with seamless junctions, mission_policy.seams;
+            kin = latency with Dubins transits, mission_policy.kin_links)
             -redir (team 2 may change its target in flight when a report comes; P, B4, P+prog)
             P+prog only: -allclues (upper bound: the River report holds all 12 clues, as if every Axe were long
             enough for the clue set)
@@ -254,7 +255,7 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
         if base in ("P", "B4", "P+prog"):
             order = "grouped" if "grouped" in opts else "interleaved"
             wC = Cq if "equal" in opts else C
-            tk = next((o for o in opts if o in ("short", "latency", "seam")), "l3first")
+            tk = next((o for o in opts if o in ("short", "latency", "seam", "kin")), "l3first")
             if base == "P+prog":
                 ad, ar = ready("direct", tk), ready("river", tk)
                 pd_, pr_ = posts("direct", order, wC), posts("full" if "allclues" in opts else "river", order, wC)
@@ -318,7 +319,7 @@ def one_work(job):
     seqs = {"interleaved": L.order(C, "interleaved"), "grouped": L.order(C, "grouped")}
     M = load_map(w, schemes=("rf",))
     M["name"] = mapname(w)
-    kinds = {o for m in methods for o in m.split("-") if o in ("short", "latency", "seam")} | {"l3first"}
+    kinds = {o for m in methods for o in m.split("-") if o in ("short", "latency", "seam", "kin")} | {"l3first"}
     tours = {k: tour(M, k) for k in kinds}
     hold = holdings(M, C, seqs)
     seedm = int.from_bytes(hashlib.sha256(M["name"].encode()).digest()[:4], "little")
@@ -328,7 +329,7 @@ def one_work(job):
         phase = {k: float(prng.uniform(0, GAP)) for k in sorted(M["cl"])}
         out, rows, nc = missions(M, tours, hold, d, phase, C, Cq, methods)
         for meth, (Ts, Ta, rank, dep, sin) in out.items():
-            tk = next((o for o in meth.split("-") if o in ("short", "latency", "seam")), "l3first")
+            tk = next((o for o in meth.split("-") if o in ("short", "latency", "seam", "kin")), "l3first")
             draws.append(dict(map=M["name"], size=len(M["cl"]), set=sname, draw=d, method=meth, crits=nc,
                               team1=round(tours[tk][1], 1), Tstar=round(Ts, 1), Tall=round(Ta, 1), rank=rank,
                               dep=round(dep, 1), starIn=round(sin, 1)))

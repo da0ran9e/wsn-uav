@@ -9,7 +9,8 @@ Writes:
                cell, MAC give-ups per 1000 frames, share of critical cells holding a full clue set (Q packets)
   crit.csv     per critical cell: its offsets from the CH along the flight and from the flight line, what it lacked
                and when it finished
-  domain.csv   a DX x DY km rectangle flown in lanes of the shape's width along DX, the BS 1 km below its middle;
+  domain.csv   for each DY (--dy, a list), a DX x DY km rectangle flown in lanes of the shape's width along DX, the
+               BS 1 km below its middle;
                lane ends joined by Dubins turns (radius 255 m); each cluster's critical cells ready at (the UAV
                leaves the cluster) + (their finish times on that shape): team 1's tour, and the mean and the last
                time a critical cell is ready
@@ -29,7 +30,7 @@ V1, RHO = 50.0, 50.0 ** 2 / 9.80665
 
 def strips(pattern):
     out = []
-    for w in sorted(glob.glob(pattern)):
+    for w in sorted(sum((glob.glob(p) for p in pattern.split()), [])):   # several globs: space-separated
         if not os.path.exists(f"{w}/strip.json") or not os.path.exists(f"{w}/c1-bearing.json"):
             continue
         s = json.load(open(f"{w}/strip.json"))
@@ -93,7 +94,7 @@ def domain(shape_rows, dx, dy):
             prev = (x1, y, hd)
         back = t + dubins.free_end(prev, bs, RHO) / V1
         # finish times of this shape's critical cells, pooled over its strips
-        out.append(dict(width=s["width"], length=s["length"], window=s["window"], lanes=lanes, clusters=len(legs),
+        out.append(dict(dy=dy, width=s["width"], length=s["length"], window=s["window"], lanes=lanes, clusters=len(legs),
                         tour=round(back, 1), lastLeave=round(legs[-1], 1),
                         readyMean=round(st.mean(legs) + s["doneMean"], 1), readyLast=round(legs[-1] + s["doneMax"], 1),
                         critTotal=round(len(legs) * s["crit"] * (dx * 1000 / per) / (s["length"] * 1000), 1)))
@@ -130,6 +131,8 @@ def figures(shape_rows, rows, dom, figs):
                for c in r["crit"] if c["done"] >= 0]
         if pts:
             ax.scatter(*zip(*pts), s=10, color=col, alpha=.7)
+    ax.set_xticks(range(0, 1601, 200))
+    ax.set_yticks(range(0, 61, 10))
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     ax.grid(color=SOFT, lw=.6)
@@ -140,7 +143,8 @@ def figures(shape_rows, rows, dom, figs):
     fig, ax = plt.subplots(1, 2, figsize=(12, 4.2))
     cl = plt.cm.cividis(np.linspace(0.1, 0.9, len(Ls)))
     for l, col in zip(Ls, cl):
-        d = sorted((x for x in dom if x["window"] == "crit" and x["length"] == l), key=lambda x: x["width"])
+        d = sorted((x for x in dom if x["window"] == "crit" and x["length"] == l and x["dy"] == dom[0]["dy"]),
+                   key=lambda x: x["width"])
         ax[0].plot([x["width"] for x in d], [x["readyMean"] for x in d], "-o", color=col, ms=4)
         ax[1].plot([x["width"] for x in d], [x["readyLast"] for x in d], "-o", color=col, ms=4)
     for a in ax:
@@ -158,11 +162,11 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--figs")
     ap.add_argument("--dx", type=float, default=6.0, help="domain km along the lanes")
-    ap.add_argument("--dy", type=float, default=4.0, help="domain km across the lanes")
+    ap.add_argument("--dy", default="4", help="domain km across the lanes; a comma-separated list for several")
     a = ap.parse_args()
     rows = strips(a.strips)
     sh = shapes(rows)
-    dom = domain(sh, a.dx, a.dy)
+    dom = [d for dy in a.dy.split(",") for d in domain(sh, a.dx, float(dy))]
     os.makedirs(a.out, exist_ok=True)
     for name, data in (("shapes", sh), ("domain", dom)):
         with open(f"{a.out}/{name}.csv", "w", newline="") as f:

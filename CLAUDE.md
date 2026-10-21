@@ -1350,6 +1350,12 @@ sau mỗi vòng thử nghiệm trích ra một vài visualize hoặc con số đ
 đọc suy nghĩ và tự quyết định cách làm trong nhiệm vụ này không cần hỏi lại cho đến khi hoàn thành mục tiêu
 ```
 
+*115. 2026-10-21 · uav-l2 · lớp 2 đề xuất (MEANDER) chưa thắng: xem lại số cluster, đường bay, lượng dữ liệu thu được, độ thấm dữ liệu; cảm quan: đường bay kiểu luống phải nhanh hơn đường bay ngẫu nhiên qua cluster có sẵn và dữ liệu đầy đủ hơn*
+
+```text
+nếu lớp 2 đề xuất chưa thắng thì cần xem lại về số lượng cluster, đường bay, số lượng dữ liệu thu được, độ thấm dữ liệu. theo cảm quan thì đường bay kiểu luống theo đễ xuất sẽ phải nhanh hơn đường bay ngẫu nhiên qua cluster có sẵn và dữ liệu cũng đầy đủ hơn
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -13,7 +13,9 @@
   - Lần khởi động đầu bay chéo theo hướng dài nhất qua CH. Tôi dừng, xoá, và cho bay dọc trục (`lane.json`, bearing 0).
   - Dải 10 × 4 km: River chạy 25 phút mới mô phỏng được 80 s (7/14 critical cell xong). Tôi dừng bằng tay; log ở `pilot-w10-l4-stopped.md`.
 - `w6-l4-crit.md`, `crit-pilot.sh` → `crit-pilot.md`: cửa sổ theo từng critical cell (rfc) trên cùng lượt phát.
-- `sweep.sh`: chiến dịch đề xuất, **chưa chạy, chờ người dùng duyệt**.
+- `sweep.sh` → `sweep.md`: chạy sau khi người dùng đồng ý (mục 121). 75 dải: W 3–10 cell × L 1,5–6 km × seed 1–3; cửa sổ theo critical cell ở mọi dải, cửa sổ quanh CH với L ≤ 3 km. Chạy 19:10–21:38 (8 898 s), 75/75 thoát 0.
+- `probe-w14-l4.md`: dải thử 14 cell × 4 km, seed 1, để tìm ngưỡng theo bề ngang.
+- Phân tích: `uav-l2/tools/sat_report.py` → `uav-l2/docs/data/sat/{shapes,crit,domain}.csv`, hình `uav-l2/docs/figures/sat-*.png`; báo cáo `uav-l2/docs/SAT-vi.md`.
 
 **Kết quả chạy thử** (seed 1; `uav-l2/docs/data/sat/pilot.csv`, `pilot-crit.csv`):
 
@@ -28,4 +30,6 @@
 - **Cửa sổ theo critical cell gỡ được giới hạn chiều dài.**
 - **Còn lại giới hạn bề ngang:** critical cell cách đường bay hơn khoảng 900 m (ngoài tầm A2G) phải nhận gần hết qua River.
 
-**Dang dở:** chiến dịch `sweep.sh` (W 3–10 cell × L 1,5–6 km × 3 seed, ước tính 2,5–3 giờ), phân tích điểm tối ưu cấp miền, và kiểm chứng cấp nhiệm vụ.
+**Kết quả chiến dịch:** xem `uav-l2/docs/SAT-vi.md`. Cửa sổ quanh CH bão hoà ở khoảng 2 km chiều dài. Cửa sổ theo critical cell gỡ giới hạn chiều dài. Bề ngang: phẳng tới khoảng 600 m từ đường bay, rồi tăng dần. Điểm tối ưu cấp miền: luồng 8–10 cell, cụm 2–3 km.
+
+**Dang dở:** kết quả dải thử 14 cell; kiểm chứng cấp nhiệm vụ trên 40 bản đồ (MEANDER‑K và k‑medoids với cửa sổ theo critical cell), chờ duyệt.

@@ -19,3 +19,23 @@ k4-s5 exit 0 04:32:51
 k4-s21 exit 0 04:34:01
 k4-s9 exit 0 04:38:18
 k6-s11 exit 0 04:43:19
+k6-s12 exit 0 04:44:33
+k6-s13 exit 0 04:46:49
+k6-s15 exit 0 04:50:53
+k6-s16 exit 0 04:54:13
+k6-s17 exit 0 04:58:06
+k6-s2 exit 0 05:02:14
+k6-s20 exit 0 05:03:46
+k6-s4 exit 0 05:05:59
+k6-s9 exit 0 05:09:23
+k8-s1 exit 0 05:12:31
+k8-s10 exit 0 05:16:19
+k8-s11 exit 0 05:19:35
+k8-s4 exit 0 05:25:16
+k8-s2 exit 0 05:25:42
+k8-s5 exit 0 05:31:22
+k8-s6 exit 0 05:34:45
+k8-s7 exit 0 05:41:03
+k8-s8 exit 0 05:41:16
+k8-s9 exit 0 05:53:03
+all done 05:53:03

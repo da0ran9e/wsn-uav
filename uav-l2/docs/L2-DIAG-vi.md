@@ -124,7 +124,24 @@ T\* của P\* (s), k2 / k4 / k6 / k8:
 
 **Động học làm mọi cách chia chậm đi, và làm MEANDER chậm thêm nhiều nhất:** khoảng cách tới k‑medoids nới từ 62–150 s lên 67–163 s. Mỗi chỗ nối giữa hai cluster là một lần quay, và MEANDER có nhiều cluster hơn. Một đường luống thẳng và liền (SWATH, mục 5) thì chỉ phải quay ở cuối mỗi luồng, nên đây mới là trường hợp động học có lợi cho đường luống.
 
-__ADJ__
+### 6.4 MEANDER đã chỉnh qua ns‑3 (luồng 7,5 cell, gộp < 1/2)
+
+40 bản đồ × 100 lượt bốc, ghép cặp theo bản đồ (`data/l2diag/adj-*.csv`). T\* (s), k2 / k4 / k6 / k8. Cột "thắng" là số bản đồ (trên 10) mà cách chia đó có T\* trung bình thấp hơn k‑medoids, với cùng kiểu nối.
+
+| Cách chia | P\*, nối thẳng | thắng | P\*, nối Dubins | thắng |
+|---|---|---|---|---|
+| k‑medoids | 408 / 566 / 675 / 769 | — | 420 / 586 / 716 / 824 | — |
+| MEANDER gốc | 470 / 642 / 792 / 919 | 0 / 0 / 0 / 0 | 487 / 679 / 845 / 987 | 1 / 0 / 0 / 0 |
+| MEANDER đã chỉnh | 464 / 608 / 722 / 860 | 1 / 1 / 1 / 1 | 479 / 634 / 770 / 921 | 1 / 1 / 0 / 2 |
+
+- Điều chỉnh rút khoảng cách tới k‑medoids khoảng một nửa: với nối Dubins, từ +67 / +93 / +129 / +163 s xuống +59 / +48 / +54 / +97 s.
+- **k‑medoids vẫn thắng ở mọi cỡ.** MEANDER đã chỉnh chỉ thắng 0–2 bản đồ trên 10 ở mỗi cỡ.
+- Cận dưới B7 (biết trước c\*) gần như bằng nhau ở hai cách chia (244 / 287 / 316 / 345 s so với 245 / 287 / 314 / 347 s). Nghĩa là nếu biết trước c\* thì hai cách chia xác minh được nó gần như cùng lúc. Phần chênh vì vậy nằm ở khâu xếp hạng và thăm:
+  - tour đội 1 dài hơn (247 / 436 / 584 / 753 so với 213 / 369 / 512 / 682 s), nên các báo cáo về muộn hơn;
+  - đội 2 phải chọn giữa nhiều critical cell hơn (15,5 / 29,5 / 42,8 / 55,5 so với 13,5 / 26,9 / 39,9 / 50,1).
+- Không hợp tác (B4) và P\* đổi hướng giữa đường cũng vậy: k‑medoids nhanh hơn MEANDER đã chỉnh ở mọi cỡ (B4: 434 / 622 / 734 / 838 so với 489 / 670 / 767 / 922 s).
+
+So sánh này vẫn chưa công bằng theo mục 118: MEANDER đã chỉnh có 2,9 / 5,1 / 7,2 / 9,7 cluster, không phải K (§7).
 
 ## 7. Tính công bằng của phép so sánh (mục 118)
 

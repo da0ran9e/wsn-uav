@@ -1392,6 +1392,12 @@ nghiên cứu này đã gần hoàn thành, tôi muốn bạn giúp tôi tổng 
 chuẩn bị một mô phỏng xác định ngưỡng bão hoà của cơ chế đề xuất trước, thay đổi các tham số như kích thước cụm, giới hạn cell trong cụm, độ rông ngang của cụm độ dài cụm…tự bạn đánh giá và điều chỉnh để tìm một điểm tối ưu
 ```
 
+*121. 2026-10-21 · uav-l2 · đồng ý chạy chiến dịch quét hình dạng cụm (W 3–10 cell × L 1,5–6 km × 3 seed, River cửa sổ theo từng critical cell; cửa sổ quanh CH với L ≤ 3 km)*
+
+```text
+chạy đi
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

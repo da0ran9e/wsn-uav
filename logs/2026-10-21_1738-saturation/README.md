@@ -32,4 +32,6 @@
 
 **Kết quả chiến dịch:** xem `uav-l2/docs/SAT-vi.md`. Cửa sổ quanh CH bão hoà ở khoảng 2 km chiều dài. Cửa sổ theo critical cell gỡ giới hạn chiều dài. Bề ngang: phẳng tới khoảng 600 m từ đường bay, rồi tăng dần. Điểm tối ưu cấp miền: luồng 8–10 cell, cụm 2–3 km.
 
-**Dang dở:** kết quả dải thử 14 cell; kiểm chứng cấp nhiệm vụ trên 40 bản đồ (MEANDER‑K và k‑medoids với cửa sổ theo critical cell), chờ duyệt.
+**Dải thử 14 cell × 4 km** (21:11–22:05, 3 221 s): critical cell cuối 67 s, 20,1 nghìn khung mỗi critical cell; ngưỡng bề ngang ở khoảng 8–10 cell.
+
+**Dang dở:** kiểm chứng cấp nhiệm vụ trên 40 bản đồ (MEANDER‑K và k‑medoids với cửa sổ theo critical cell), chờ duyệt.

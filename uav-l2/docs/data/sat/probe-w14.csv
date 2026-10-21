@@ -1,0 +1,2 @@
+width,length,seed,cells,nodes,bearing,inside,chMargin,rfc_crit,rfc_D,rfc_doneMean,rfc_doneMax,rfc_gatherMax,rfc_missing,rfc_hops,rfc_macFail,rfc_wallS
+14.0,4.0,1,400,8484,0,4100,300,26,8215,21.05,66.67,35.12,0,522488,19053,2603.4

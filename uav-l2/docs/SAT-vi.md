@@ -2,15 +2,15 @@
 
 Lời gốc: CLAUDE.md §8 mục 120–121.
 Mã: `tools/sat_strip.py` (một cụm dạng dải qua ns‑3), `tools/sat_report.py` (bảng, hình, chi phí cấp miền); River cửa sổ theo từng critical cell: `uav-coop2/tools/river_plan.py`, `river_export.py --windowAt crit`, `uav-coop2/examples/coop2-river.cc`.
-Log: `logs/2026-10-21_1738-saturation/`. Dữ liệu: `docs/data/sat/{strips,shapes,crit,domain}.csv`.
+Log: `logs/2026-10-21_1738-saturation/`. Dữ liệu: `docs/data/sat/{strips,shapes,crit,domain}.csv`; dải thử 14 cell: `docs/data/sat/probe-w14{,-crit}.csv`.
 
 ## Tóm tắt
 
 1. **River hiện tại (một cửa sổ 400 kB quanh CH) bão hoà theo chiều dài ở khoảng 2 km.** Đó đúng là độ dài của cửa sổ dọc đường bay. Từ 2 lên 3 km, critical cell cuối xong chậm hơn 2,7–4,8 lần (13–33 s thành 53–102 s), và số khung trên mỗi critical cell tăng 2–7 lần.
 2. **Điều chỉnh: mỗi critical cell một cửa sổ, là bản sao bộ manh mối gần nó nhất.** Cách này gỡ giới hạn chiều dài. Ở 6 km, critical cell cuối vẫn xong trong 19–32 s.
 3. **Cận dưới của chiều dài là khoảng 2 km.** Cụm dài 1,5 km không chứa trọn một bản bộ manh mối, nên không critical cell nào nhận đủ.
-4. **Bề ngang: thời gian River tăng dần, chưa gãy tới 10 cell.** Critical cell cách đường bay trong 600 m xong trong 7–10 s; xa hơn thì 15–39 s. Từ 6 lên 10 cell, critical cell cuối chậm thêm 5–18 s, còn số khung trên mỗi critical cell tăng 1,6–2,7 lần.
-5. **Điểm tối ưu cấp miền:** luồng càng rộng thì tour đội 1 càng ngắn, và khoản lợi này lớn hơn nhiều so với River chậm thêm. Trong lưới đã thử, tốt nhất là **luồng rộng 8–10 cell, cụm dài 2–4 km**, tức khoảng 110–260 cell mỗi cụm. Bề ngang nên chọn để miền chia thành ít luồng nhất.
+4. **Bề ngang: ngưỡng bão hoà ở khoảng 8–10 cell.** Critical cell cách đường bay trong 600 m xong trong 7–10 s; xa hơn thì 15–39 s. Tải mạng trên mỗi cell tăng chậm tới 8 cell (227 → 385 khung), rồi tăng 1,6 lần ở 10 cell và thêm 2,1 lần ở 14 cell. Ở 14 cell, critical cell cuối xong sau 67 s, so với 38 s ở 10 cell.
+5. **Điểm tối ưu cấp miền:** luồng càng rộng thì tour đội 1 càng ngắn, và khoản lợi về thời gian này lớn hơn River chậm thêm, kể cả ở 14 cell. Nhưng từ khoảng 10 cell trở lên, tải mạng tăng gấp đôi trong khi thời gian chỉ lợi thêm ít. Điểm tối ưu đề xuất là **luồng rộng 8–10 cell, cụm dài 2–3 km**, tức khoảng 110–190 cell mỗi cụm. Bề ngang chọn trong khoảng đó sao cho miền chia thành ít luồng nhất.
 
 Mọi số ở đây là số thăm dò: 3 seed cho mỗi hình dạng.
 
@@ -83,7 +83,19 @@ Thời gian xong theo khoảng cách tới đường bay (cửa sổ theo critic
 - Vì đường bay phải qua CH, mà CH có thể lệch trục tới (nửa bề rộng − 300 m), dải càng rộng càng có critical cell xa đường bay. Ở W = 10, có critical cell cách đường bay tới 1,25 km.
 - Theo bề ngang, chi phí tăng dần chứ không gãy hẳn. Ở L = 4 km, W = 3 → 10 cell: critical cell cuối xong 18 → 38 s, khung mỗi critical cell 2,8 → 10 nghìn. Tỉ lệ MAC bỏ cuộc giữ ở 26–42 trên 1 000 khung ở mọi hình dạng, nên chưa có dấu hiệu nghẽn MAC.
 
-**Dải thử rộng 14 cell × 4 km (400 cell, 26 critical cell):** đang chạy; kết quả sẽ thêm vào đây.
+**Dải thử rộng 14 cell × 4 km** (400 cell, 26 critical cell, một seed; `logs/2026-10-21_1738-saturation/probe-w14-l4.md`). So với các dải cùng dài 4 km:
+
+| Bề ngang (cell) | 3 | 4,5 | 6 | 8 | 10 | 14 |
+|---|---|---|---|---|---|---|
+| Critical cell xong, trung bình (s) | 6 | 6 | 8 | 10 | 15 | 21 |
+| Critical cell cuối xong (s) | 18 | 15 | 20 | 29 | 38 | **67** |
+| Khung trên mỗi critical cell (nghìn) | 2,8 | 3,1 | 4,5 | 6,0 | 10,0 | **20,1** |
+| Khung trên mỗi cell của cụm (tải mạng) | 227 | 259 | 317 | 385 | 618 | **1 306** |
+| MAC bỏ cuộc trên 1 000 khung | 35 | 28 | 39 | 31 | 38 | 37 |
+
+- **Ngưỡng bão hoà theo bề ngang nằm ở khoảng 8–10 cell.** Tới 8 cell, tải mạng trên mỗi cell tăng chậm (227 → 385 khung). Từ 8 lên 10 cell, nó tăng 1,6 lần; từ 10 lên 14 cell, tăng thêm 2,1 lần. Critical cell cuối cũng chậm hẳn (38 → 67 s).
+- Gom trong cell cũng chậm đi (lâu nhất 35 s, so với 10–20 s ở các dải hẹp hơn). Nguyên nhân là nhiều luồng River đi qua cùng các cell.
+- MAC chưa nghẽn: tỉ lệ bỏ cuộc vẫn như cũ. Thứ tăng là số chặng mỗi gói phải đi, vì critical cell nằm xa đường bay tới 1,2–1,6 km.
 
 ## 5. Điểm tối ưu cấp miền
 
@@ -104,7 +116,7 @@ Thời gian xong theo khoảng cách tới đường bay (cửa sổ theo critic
 | 8 km | 16 / 1 188 | 11 / 878 | 8 / 683 | 6 / 559 | **5 / 501** |
 
 - **Tour đội 1 chi phối:** bớt một luồng là bớt 4–6 km bay và một lần quay đầu, tức 100–150 s. Thời gian xong trung bình của River ở cụm rộng 10 cell chỉ hơn cụm rộng 6 cell 4–7 s.
-- **Vì vậy, chọn bề ngang sao cho miền chia thành ít luồng nhất.** Trong khoảng đã đo (≤ 10 cell), River chưa đắt tới mức đổi được kết luận này. Ví dụ DY = 4 km: 8 cell tốt hơn 10 cell, vì cả hai đều cần 3 luồng nhưng luồng 10 cell quay đầu xa hơn.
+- **Vì vậy, chọn bề ngang sao cho miền chia thành ít luồng nhất.** Xét riêng thời gian, ngay cả 14 cell vẫn có lợi khi nó bớt được một luồng (DY = 4 km: 283 s so với 334 s ở 8 cell). Nhưng tải mạng của 14 cell gấp 3,4 lần của 8 cell, và critical cell cuối chậm hơn gấp đôi. Vì vậy tôi giới hạn bề ngang ở 8–10 cell. Ví dụ DY = 4 km: 8 cell tốt hơn 10 cell, vì cả hai đều cần 3 luồng nhưng luồng 10 cell quay đầu xa hơn.
 - **Chiều dài: 2–4 km.** Ngắn hơn 2 km thì thiếu bộ manh mối. Dài hơn không làm River chậm, nhưng cụm lớn hơn, nhiều critical cell hơn trên một CH.
 - **Điểm tối ưu đề xuất:** luồng rộng **8–10 cell** (1,4–1,7 km), cụm dài **2–3 km**, khoảng **110–190 cell** mỗi cụm, với River **cửa sổ theo từng critical cell**. Chặn trên 80 cell hiện nay là quá nhỏ cho cụm dạng luồng.
 

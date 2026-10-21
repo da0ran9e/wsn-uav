@@ -39,6 +39,10 @@ struct PlanLink {
     Hex k, m;
     std::vector<Hex> path;              // k -> candidate m
 };
+struct PlanNeed {
+    Hex k;
+    uint32_t first = 0, last = 0;       // k needs only the Axe packets first..last (its own window)
+};
 struct Plan {
     uint32_t packets = 0;
     std::vector<PlanAxe> axe;
@@ -49,6 +53,7 @@ struct Plan {
     std::vector<PlanCset> cset;         // adaptive Circle: members for every size
     std::vector<PlanCirc> csrc;         // adaptive Circle: Bank of Seg(a) for every candidate
     std::vector<PlanLink> clink;
+    std::vector<PlanNeed> need;         // none: every critical cell needs all of D
 };
 
 // Reads the plan file; aborts with a message on a malformed line.

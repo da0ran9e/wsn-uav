@@ -11,8 +11,11 @@ Stages, each skipped when its outputs exist (mission.py does the deploy, the pas
   2 deploy  mission.stage_deploy: CH (300 m from the edge, less for a thin strip), CLs, critical cells, routes,
             gateways; the flight crosses the CH along the strip (bearing 0, via lane.json as for lane clusters;
             the longest bearing would cut the strip on a diagonal)
-  3 runs    mission.stage_runs: uav-coop-pass, then River, prepared Circle (rf; --schemes rf,d adds the direct
-            pull), the River window --windowKB (400 kB: the clue set) around the CH
+  3 runs    uav-coop-pass, then River with prepared Circles and a window of --windowKB (400 kB: the clue set):
+            rf    one window around the CH for the whole cluster (mission.stage_runs, as in the mission so far)
+            rfc   a window around each critical cell: the copy of the clue set nearest to it (river_export.py
+                  --windowAt crit; the UAV repeats the clue set, so any 400 kB run of the stream is a full copy)
+            d     the direct pull, window around the CH
 """
 import argparse, csv, glob, json, math, os, random, statistics as st, sys
 from types import SimpleNamespace
@@ -56,7 +59,7 @@ def summarise(W_):
     pr = next(csv.DictReader(open(f"{W_}/pass1-runs.csv"))) if os.path.exists(f"{W_}/pass1-runs.csv") else {}
     row = dict(width=s["width"], length=s["length"], seed=s["seed"], cells=s["cells"], nodes=s["nodes"],
                bearing=b["bearing"], inside=b["inside"], chMargin=b["chMargin"])
-    for tag in ("rf", "d"):
+    for tag in ("rf", "rfc", "d"):
         f = f"{W_}/r1-{tag}-runs.csv"
         if not os.path.exists(f) or len(open(f).readlines()) < 2:
             continue
@@ -82,6 +85,7 @@ def main():
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--schemes", default="rf")
     ap.add_argument("--windowKB", type=float, default=400)
+    ap.add_argument("--limit", type=float, default=900, help="rfc: River simulated seconds at most")
     ap.add_argument("--summary", help="glob of strip work folders: write one row per folder to --out")
     ap.add_argument("--out")
     a = ap.parse_args()
@@ -102,8 +106,33 @@ def main():
                         banks="parallel", reentry=False, windowKB=a.windowKB)
     b = mission.stage_deploy(m, W_, 1)[1]
     print(f"bearing {b['bearing']} deg, {b['inside']} m inside, CH margin {b['chMargin']} m", flush=True)
-    mission.stage_runs(m, W_, 1)
+    tags = a.schemes.split(",")
+    if [t for t in tags if t != "rfc"]:
+        m.schemes = ",".join(t for t in tags if t != "rfc")
+        mission.stage_runs(m, W_, 1)
+    if "rfc" in tags:
+        river_crit(a, W_)
     print(json.dumps(summarise(W_)))
+
+
+def river_crit(a, W_):
+    """The pass (if not there yet), then the River with a window around each critical cell."""
+    if not os.path.exists("pass1-bits-r1.bin"):
+        mission.sh([f"{a.bin}/pass-bin", "--nodes=c1-nodes-s35.csv", "--path=c1-path-s35.csv", "--firstRun=1",
+                    "--runs=1", "--bits", "--out=pass1"], "pass1.log", dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/pass-lib"))
+    if not os.path.exists("plan1-crit.txt"):
+        os.makedirs("d1", exist_ok=True)
+        for src, dst in (("c1-lattice.csv", "deploy-lattice.csv"), ("c1-nodes-s35.csv", "deploy-nodes-s35.csv")):
+            if not os.path.exists(f"d1/{dst}"):
+                os.symlink(f"../{src}", f"d1/{dst}")
+        mission.sh([sys.executable, f"{mission.COOP2}/river_export.py", "--deploy=d1", "--path=c1-path-s35.csv",
+                    "--banks=parallel", f"--windowKB={a.windowKB:g}", "--windowAt=crit", "--out=plan1-crit.txt"],
+                   "plan1-crit.log")
+    if not os.path.exists("r1-rfc-runs.csv") or len(open("r1-rfc-runs.csv").readlines()) < 2:
+        mission.sh([f"{a.bin}/river-bin", "--nodes=c1-nodes-s35.csv", "--routes=c1-routes-s35.csv",
+                    "--gateways=c1-gateways-s35.csv", "--plan=plan1-crit.txt", "--bits=pass1-bits", "--firstRun=1",
+                    "--runs=1", f"--limit={a.limit:g}", "--gwSelect=quality", "--colours=7", "--scheme=river",
+                    "--prep=full", "--out=r1-rfc"], "r1-rfc.log", dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib"))
 
 
 if __name__ == "__main__":

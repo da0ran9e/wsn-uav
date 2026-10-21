@@ -59,6 +59,11 @@ Plan ReadPlan(const std::string& file) {
             p.banks.push_back(x);
         } else if (tag == "CRIT") {
             p.crit.push_back(ReadHex(in));
+        } else if (tag == "NEED") {
+            PlanNeed x;
+            x.k = ReadHex(in);
+            in >> x.first >> x.last;
+            p.need.push_back(x);
         } else if (tag == "CIRC") {
             PlanCirc x;
             x.k = ReadHex(in);

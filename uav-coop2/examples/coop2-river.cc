@@ -739,14 +739,19 @@ int main(int argc, char* argv[]) {
             if (x.empty()) x.assign(N, 0);
             for (uint32_t s = 0; s < N; ++s) x[s] |= m[s];
         };
-        for (const Hex& k : plan.crit) needOr(k, inD);
+        // what each critical cell needs: all of D, or with NEED records only its own window (item 120)
+        std::map<Hex, std::vector<uint8_t>> needK;
+        for (const Hex& k : plan.crit) needK[k] = inD;
+        for (auto& x : plan.need)
+            for (uint32_t s = 0; s < N; ++s) needK.at(x.k)[s] = inD[s] && s >= x.first && s <= x.last;
+        for (const Hex& k : plan.crit) needOr(k, needK[k]);
         std::map<Hex, uint32_t> lackCL, lackCell, circleN;
         std::map<Hex, int> summaryLeft;
         std::vector<std::function<void()>> atStart;
         for (const Hex& k : plan.crit) {
             uint32_t a = 0, b = 0;
             for (uint32_t s = 0; s < N; ++s) {
-                if (!inD[s]) continue;
+                if (!needK[k][s]) continue;
                 a += !rx[clOf.at(k)][s];
                 bool any = false;
                 for (int v : members[k]) any |= rx[v][s];
@@ -782,7 +787,7 @@ int main(int argc, char* argv[]) {
                 std::vector<uint8_t> group(N, 0);
                 for (auto* t : ts) {
                     auto sm = segMask(t->a);
-                    for (uint32_t s = 0; s < N; ++s) group[s] |= sm[s];
+                    for (uint32_t s = 0; s < N; ++s) group[s] |= sm[s] && needK[k][s];
                 }
                 std::vector<std::pair<int, int>> src;   // per task: (b -> m path, m -> b path)
                 for (auto* t : ts) src.push_back({addPath(t->path), addPath(rev(t->path))});
@@ -798,12 +803,12 @@ int main(int argc, char* argv[]) {
                 if (prep == "full") {
                     // Algorithm 6, ahead: m fetches its whole share once it has gathered its own.
                     needOr(m, group);
-                    afterGather(m, [&, ts, m, fetch] {
+                    afterGather(m, [&, ts, m, group, fetch] {
                         for (size_t i = 0; i < ts.size(); ++i) {
                             auto sm = segMask(ts[i]->a);
                             std::vector<uint32_t> X;
                             for (uint32_t s = 0; s < N; ++s)
-                                if (sm[s] && !hold(m)[s]) X.push_back(s);
+                                if (sm[s] && group[s] && !hold(m)[s]) X.push_back(s);
                             fetch(i, X);
                         }
                     });
@@ -876,7 +881,7 @@ int main(int argc, char* argv[]) {
                     std::vector<uint8_t> lk(N, 0);
                     uint32_t lack = 0;
                     for (uint32_t s = 0; s < N; ++s) {
-                        if (!inD[s]) continue;
+                        if (!needK[k][s]) continue;
                         bool any = false;
                         for (int v : members[k]) any |= rx[v][s] != 0;
                         lk[s] = !any;
@@ -918,7 +923,7 @@ int main(int argc, char* argv[]) {
                     auto sm = segMask(a);
                     std::vector<uint32_t> part;
                     for (uint32_t s = 0; s < N; ++s)
-                        if (sm[s] && !hold(k)[s]) part.push_back(s);
+                        if (sm[s] && needK[k][s] && !hold(k)[s]) part.push_back(s);
                     send(toA, -1, kControl, [&, a, part, toK] {
                         for (uint32_t s : part) when(a, s, [&, s, toK] { send(toK, (int32_t)s, kPull); });
                     });
@@ -934,7 +939,7 @@ int main(int argc, char* argv[]) {
         };
         for (const Hex& k : plan.crit) {
             for (uint32_t s = 0; s < N; ++s)
-                if (inD[s] && !hold(k)[s]) {
+                if (needK[k][s] && !hold(k)[s]) {
                     left[k]++;
                     when(k, s, [&, k] {
                         if (--left[k] == 0) finish(k);
@@ -976,9 +981,12 @@ int main(int argc, char* argv[]) {
             std::chrono::duration<double>(std::chrono::steady_clock::now() - wall0).count();
         const std::string sch = scheme == "river" ? "river-" + prep : scheme;
         for (const Hex& k : plan.crit) {
-            uint32_t miss = 0;
-            for (uint32_t s = 0; s < N; ++s) miss += inD[s] && !hold(k)[s];
-            std::fprintf(fc, "%u,%s,%d,%d,%u,%u,%u,%.2f,%.2f,%u,%u\n", run, sch.c_str(), k.q, k.r, Dn, lackCL[k],
+            uint32_t miss = 0, Dk = 0;
+            for (uint32_t s = 0; s < N; ++s) {
+                miss += needK[k][s] && !hold(k)[s];
+                Dk += needK[k][s];
+            }
+            std::fprintf(fc, "%u,%s,%d,%d,%u,%u,%u,%.2f,%.2f,%u,%u\n", run, sch.c_str(), k.q, k.r, Dk, lackCL[k],
                          lackCell[k], gatherDone.count(k) ? gatherDone[k] : -1.0, doneAt.count(k) ? doneAt[k] : -1.0,
                          miss, circleN[k]);
         }

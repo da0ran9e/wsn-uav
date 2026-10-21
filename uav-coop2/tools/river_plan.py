@@ -92,7 +92,7 @@ def detour(b, m, k, S, c):
         return cellpath(b, m, S, c)
 
 
-def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, window=0):
+def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, window=0, window_at="ch"):
     c, w, R, S, uav = geo["c"], geo["w"], geo["R"], geo["S"], geo["uav"]
     # Algorithm 1: Axe and Seg (packets sent above each Axe cell; outside the cluster: none)
     axe, seg = [], {}
@@ -110,16 +110,25 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, w
         # unassigned like the packets sent outside the cluster
         seg[a] = [int(s) for s in max(runs, key=len)]
     axe.sort(key=lambda a: seg[a][0])
-    if window:   # the cluster needs only `window` packets: the Axe packets around where the UAV passes the CH
-        chn = next(x for x in geo["nodes"] if x["isCH"] == "1")
-        c0 = int(np.argmin(np.linalg.norm(uav - [float(chn["x"]), float(chn["y"])], axis=1)))
-        allp = sorted(s for a in axe for s in seg[a])
-        if len(allp) > window:
-            i = min(max(int(np.searchsorted(allp, c0)) - window // 2, 0), len(allp) - window)
-            lo, hi = allp[i], allp[i + window - 1]
-            seg = {a: [s for s in seg[a] if lo <= s <= hi] for a in axe}
-            axe = [a for a in axe if seg[a]]
-            seg = {a: seg[a] for a in axe}
+    allp = sorted(s for a in axe for s in seg[a])
+
+    def around(x, y):   # `window` consecutive Axe packets around where the UAV passes closest to (x, y)
+        c0 = int(np.argmin(np.linalg.norm(uav - [x, y], axis=1)))
+        i = min(max(int(np.searchsorted(allp, c0)) - window // 2, 0), len(allp) - window)
+        return allp[i], allp[i + window - 1]
+    need = {}
+    if window and len(allp) > window:
+        if window_at == "ch":   # the cluster needs only the `window` Axe packets around where the UAV passes the CH
+            chn = next(x for x in geo["nodes"] if x["isCH"] == "1")
+            wins = [around(float(chn["x"]), float(chn["y"]))]
+        else:   # "crit" (item 120): every critical cell needs the copy of the clue set nearest to it
+            cl = {(int(x["q"]), int(x["r"])): x for x in geo["nodes"] if x["isCL"] == "1"}
+            need = {h: around(*c[h]) for h in cl}   # cut down to the critical cells below
+            wins = list(need.values())
+        keep = lambda s: any(lo <= s <= hi for lo, hi in wins)
+        seg = {a: [s for s in seg[a] if keep(s)] for a in axe}
+        axe = [a for a in axe if seg[a]]
+        seg = {a: seg[a] for a in axe}
     u = np.array(c[axe[-1]]) - np.array(c[axe[0]])
     u /= np.linalg.norm(u)
     nrm = np.array([-u[1], u[0]])
@@ -172,6 +181,14 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, w
         if v > mu + kl * sd and v >= max(around):
             crit.add(h)
     crit = sorted(crit)
+    need = {k: need[k] for k in crit} if need else {}
+    if need:   # only the critical cells' own windows, and only the Axe cells they cover, stay in the plan
+        keep = lambda s: any(lo <= s <= hi for lo, hi in need.values())
+        seg = {a: [s for s in seg[a] if keep(s)] for a in axe}
+        axe = [a for a in axe if seg[a]]
+        seg = {a: seg[a] for a in axe}
+        bank = {x: v for x, v in bank.items() if x[0] in seg}
+        bpath = {x: v for x, v in bpath.items() if x[0] in seg}
     # Algorithm 4: Circles; members ordered along the Axe (sum vector, or with banks="local" the track)
     along = (lambda g: float(np.dot(np.array(c[g]), u))) if banks != "local" else \
         (lambda g: int(np.argmin(np.linalg.norm(uav - np.array(c[g]), axis=1))))
@@ -180,8 +197,9 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, w
         mem = sorted((g for g in ring(k, 1) if g in S), key=along)
         q = len(mem)
         groups = [[] for _ in range(q)]
-        for i, a in enumerate(axe):
-            groups[min(q - 1, i * q // len(axe))].append(a)
+        axk = [a for a in axe if not need or seg[a][-1] >= need[k][0] and seg[a][0] <= need[k][1]]
+        for i, a in enumerate(axk):
+            groups[min(q - 1, i * q // len(axk))].append(a)
         tasks = []
         for j, m in enumerate(mem):
             src = []
@@ -210,4 +228,4 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, w
                 src[(m, a)] = (b, detour(b, m, k, S, c) if b != m else [m])
         adapt[k] = dict(sets=sets, src=src, link={m: cellpath(k, m, S, c) for m in r1 + r2})
     return dict(axe=axe, seg=seg, u=u, omega=omega, bank=bank, bpath=bpath, river=river, crit=crit, ch=chc,
-                circle=circle, adapt=adapt, width=width, banks=banks)
+                circle=circle, adapt=adapt, width=width, banks=banks, need=need)

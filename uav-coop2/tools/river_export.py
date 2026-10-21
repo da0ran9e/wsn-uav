@@ -8,6 +8,7 @@ One record per line, cells as "q r":
   AXE  aq ar first last                      Seg(a) = [first, last]
   BANK aq ar side bq br  n c1q c1r ... cnq cnr    Path_side(a): a -> Bank
   CRIT kq kr
+  NEED kq kr first last                      --windowAt crit: k needs only the Axe packets first..last
   CIRC kq kr mq mr aq ar bq br  n c...       member m of k fetches Seg(a) from Bank b along b -> m
   DIRECT kq kr aq ar  n c...                 direct pull: k -> a path (data goes back along it)
   CSET kq kr n mq mr first last              adaptive Circle of n members: m serves Axe cells first..last
@@ -33,11 +34,13 @@ def main():
                     help="a curved path may cross an Axe cell again: Seg(a) is its longest visit")
     ap.add_argument("--windowKB", type=float, default=0,
                     help="the cluster needs only this much of D (99 B packets), around where the UAV passes the CH")
+    ap.add_argument("--windowAt", default="ch", choices=("ch", "crit"),
+                    help="the window around the CH for the whole cluster, or around each critical cell (item 120)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     geo = load(a.deploy, a.path)
     P = plan(geo, width=a.width, kg=a.kg, kl=a.kl, banks=a.banks, reentry=a.reentry,
-             window=math.ceil(a.windowKB * 1000 / 99))
+             window=math.ceil(a.windowKB * 1000 / 99), window_at=a.windowAt)
     cells = lambda cs: f"{len(cs)} " + " ".join(f"{q} {r}" for q, r in cs)
     with open(a.out, "w") as f:
         f.write(f"N {len(geo['uav'])}\n")
@@ -48,6 +51,8 @@ def main():
             f.write(f"BANK {x[0]} {x[1]} {side} {b[0]} {b[1]} {cells(P['bpath'][(x, side)])}\n")
         for k in P["crit"]:
             f.write(f"CRIT {k[0]} {k[1]}\n")
+        for k, (lo, hi) in sorted(P["need"].items()):
+            f.write(f"NEED {k[0]} {k[1]} {lo} {hi}\n")
         for k in P["crit"]:
             for m, G, src in P["circle"][k]:
                 for x, side, b, path in src:

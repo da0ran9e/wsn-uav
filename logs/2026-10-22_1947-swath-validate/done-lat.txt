@@ -1,0 +1,17 @@
+SWL k8-s1 exit 0 20:39:54
+SWL k8-s11 exit 0 20:40:49
+SWL k8-s8 exit 0 20:45:33
+SWL k8-s10 exit 0 20:46:32
+SWL k6-s13 exit 0 20:50:21
+SWL k6-s20 exit 0 20:51:42
+SWL k6-s11 exit 0 20:54:47
+SWL k6-s9 exit 0 20:56:47
+SWL k4-s21 exit 0 20:59:15
+SWL k4-s13 exit 0 21:00:25
+SWL k4-s20 exit 0 21:03:04
+SWL k2-s9 exit 0 21:04:41
+SWL k4-s2 exit 0 21:04:53
+SWL k2-s4 exit 0 21:06:59
+SWL k2-s10 exit 0 21:07:44
+SWL k2-s23 exit 0 21:09:12
+all done 21:09:12

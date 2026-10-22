@@ -30,7 +30,7 @@ from matplotlib.collections import LineCollection, PolyCollection
 import numpy as np
 
 from map_gen import NB, W, add_args, cell_at, centre, corners, generate, strip_text
-from partition import pieces
+from partition import pieces, rebalance
 from restructure import CAP, OMEGA, borders, ch_proxy, frame, run_map, touching, water
 
 RHO = 50.0 * 50.0 / 9.80665           # minimum turn radius, m (coop-params.h)
@@ -94,10 +94,12 @@ def coords(land):
     return main, spine, s, n
 
 
-def partition_meander(land, L, cap=CAP, span=0, frag_share=0.25):
+def partition_meander(land, L, cap=CAP, span=0, frag_share=0.25, count=0):
     """Steps 1-4, each land piece (cut off by a river or a lake) with its own spine. Returns owner, lane,
     s, n, spines and the stages. span > 0: chunks also at most span cells long along s (item 106). frag_share: pieces
-    under frag_share * cap cells are fragments, merged into a touching piece (item 116 tries 0.5)."""
+    under frag_share * cap cells are fragments, merged into a touching piece (item 116 tries 0.5). count > 0
+    (MEANDER-K, item 118): exactly count clusters; while there are more pieces the smallest touching one joins its
+    neighbour, then the chunks go to the pieces by D'Hondt (each next chunk to the piece with the largest ones)."""
     s, n, lane, ps, spines = {}, {}, {}, [], []
     for i, part in enumerate(sorted(pieces(list(land)), key=len, reverse=True)):
         _, spine, sp, np_ = coords(set(part))
@@ -127,11 +129,23 @@ def partition_meander(land, L, cap=CAP, span=0, frag_share=0.25):
         frag |= set(mine)
         for h in mine:
             piece[h] = j
+    if count:
+        while len(set(piece.values())) > count:
+            nbs = {i: touching(piece, [h for h in piece if piece[h] == i]) for i in set(piece.values())}
+            i = min((i for i in nbs if nbs[i]), key=lambda i: (size(piece, i), i))
+            j = max(nbs[i], key=lambda j: (nbs[i][j], -j))
+            for h in [h for h in piece if piece[h] == i]:
+                piece[h] = j
+        sz = {i: size(piece, i) for i in set(piece.values())}
+        chunks = {i: 1 for i in sz}
+        for _ in range(count - len(sz)):
+            i = max(sz, key=lambda i: (sz[i] / chunks[i], -i))
+            chunks[i] += 1
     owner, k = {}, 0
     for i in sorted(set(piece.values())):               # step 4b: equal chunks along s
         p = sorted((h for h in piece if piece[h] == i), key=lambda h: s[h])
-        m = math.ceil(len(p) / cap)
-        if span:
+        m = chunks[i] if count else math.ceil(len(p) / cap)
+        if span and not count:
             m = max(m, math.ceil((s[p[-1]] - s[p[0]]) / (span * W)))
         ids = list(range(k, k + m))
         for j in range(m):
@@ -147,6 +161,8 @@ def partition_meander(land, L, cap=CAP, span=0, frag_share=0.25):
                         owner[h] = j
     ids = {c: i for i, c in enumerate(sorted(set(owner.values())))}
     owner = {h: ids[c] for h, c in owner.items()}
+    if count:   # MEANDER-K: the cap of k-medoids, pushed along chains of touching clusters (partition.rebalance)
+        rebalance(owner, [sum(1 for c in owner.values() if c == i) for i in range(len(ids))], cap, land)
     return owner, lane, s, n, spines, dict(cut=cut, frag=frag, main=main)
 
 

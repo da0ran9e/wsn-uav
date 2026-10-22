@@ -1470,6 +1470,30 @@ tôi đồng ý với 1 2 3 nhưng ảnh tạm cũng commit vì cloud này sẽ 
 các ảnh thì tạo dạng không có chữ để dễ sử dụng
 ```
 
+*132. 2026-10-22 · quy tắc làm việc · kiểm tra môi trường và lên danh sách việc đang chờ*
+
+```text
+được, kiểm tra một lượt đi và lên cho tôi danh sách các công việc đang chờ, chúng ta sẽ bắt đầu sau đó
+```
+
+*133. 2026-10-22 · paper · cần gấp số liệu metrics; xét lại propose (cải tiến được không) và baseline/ablation (đủ chưa) trước khi chạy*
+
+```text
+các việc tra cứu tài liệu để sau, hiện tại tôi đang cần gấp các số liệu cho metrics đưa vào bài báo càng sớm càng tốt. vậy 
+trước khi chạy bạn hãy xác định xem giải pháp propose đã ổn chưa, có thể cải tiến thêm không
+
+các baselines/ablations đã đủ chưa
+```
+
+*134. 2026-10-22 · paper · trả lời bốn câu hỏi chọn của Claude (chép nguyên lựa chọn)*
+
+```text
+Lớp 2 trong bài báo trình bày thế nào? → Chạy MEANDER-K trước
+Thêm những baseline nào? → River vs kéo thẳng, Cánh bằng bay vòng, B5 quét luống (mức mô hình), Flooding/Trickle trên ns-3
+Cải tiến nào đưa vào P* trước khi chạy số cuối? → Cửa sổ theo critical cell, Đổi hướng giữa đường
+Số bản đồ cho số liệu công bố? → sẽ quyết sau
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

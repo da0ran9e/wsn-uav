@@ -65,13 +65,15 @@ def stage_map(a, W_):
         med, over = sorted(set(owner.values())), 0
         json.dump(dict(bearing=round(math.degrees(th)), lane=a.lane), open(f"{W_}/lane.json", "w"))
     elif a.partition == "subch":   # baseline (item 114): the k-medoids clusters of --src split around critical cells
-        owner, seeds = subch_partition(a.src, a.dmin, a.minsize)
+        owner, seeds = subch_partition(a.src, a.dmin, a.minsize, pairs=getattr(a, "pairs", False))
         assert set(owner) == land, "the subCH partition must cover the same land cells"
         med, over = sorted(set(owner.values())), 0
         json.dump(dict(src=a.src, dmin=a.dmin, minsize=a.minsize,
                        seeds={k: v for k, v in seeds.items()}), open(f"{W_}/subch.json", "w"))
     else:
-        owner, med, it, over = partition(land, 80, random.Random(a.seed))
+        count = getattr(a, "count", 0)   # subCH-K's source (item 118): exactly COUNT clusters, the cap raised to fit
+        owner, med, it, over = partition(land, math.ceil(len(land) / count) if count else 80, random.Random(a.seed))
+        assert not count or len(med) == count, f"k-medoids gave {len(med)} clusters, not {count}"
     nodes = [v for v in g["nodes"] if (v[3], v[4]) in owner]
     with open(f"{W_}/clusters.csv", "w") as f:
         f.write("q,r,cluster\n")
@@ -194,6 +196,14 @@ def write_tour(W_, bs, seg, order):
     return tour
 
 
+def deploy_links(W_, k):
+    """d{k}/ in the layout river_export.py and river_plan.load expect."""
+    os.makedirs(f"{W_}/d{k}", exist_ok=True)
+    for src, dst in ((f"c{k}-lattice.csv", "deploy-lattice.csv"), (f"c{k}-nodes-s35.csv", "deploy-nodes-s35.csv")):
+        if not os.path.exists(f"{W_}/d{k}/{dst}"):
+            os.symlink(f"../{src}", f"{W_}/d{k}/{dst}")
+
+
 def stage_runs(a, W_, K):
     passenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/pass-lib")
     rivenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
@@ -203,13 +213,11 @@ def stage_runs(a, W_, K):
             sh([f"{a.bin}/pass-bin", f"--nodes=c{k}-nodes-s35.csv", f"--path=c{k}-path-s35.csv", "--firstRun=1",
                 "--runs=1", "--bits", f"--out=pass{k}"], f"pass{k}.log", passenv)
         if not os.path.exists(f"{W_}/plan{k}.txt"):
-            os.makedirs(f"{W_}/d{k}", exist_ok=True)
-            for src, dst in ((f"c{k}-lattice.csv", "deploy-lattice.csv"), (f"c{k}-nodes-s35.csv", "deploy-nodes-s35.csv")):
-                if not os.path.exists(f"{W_}/d{k}/{dst}"):
-                    os.symlink(f"../{src}", f"{W_}/d{k}/{dst}")
+            deploy_links(W_, k)
             sh([sys.executable, f"{COOP2}/river_export.py", f"--deploy=d{k}", f"--path=c{k}-path-s35.csv",
                 f"--banks={getattr(a, 'banks', 'parallel')}", *(["--reentry"] if getattr(a, "reentry", False) else []),
                 *([f"--windowKB={a.windowKB:g}"] if getattr(a, "windowKB", 0) else []),
+                *([f"--windowAt={a.windowAt}"] if getattr(a, "windowAt", "ch") != "ch" else []),
                 f"--out=plan{k}.txt"], f"plan{k}.log")
         return k
 
@@ -242,11 +250,17 @@ def main():
     ap.add_argument("--src", default="", help="--partition=subch: the k-medoids work folder of the same map")
     ap.add_argument("--dmin", type=float, default=6, help="--partition=subch: seeds at least this many cells apart")
     ap.add_argument("--minsize", type=int, default=20, help="--partition=subch: smaller sub-clusters are merged")
+    ap.add_argument("--pairs", action="store_true", help="--partition=subch: subCH-K (item 118), every --src cluster "
+                    "split into exactly two of equal size around its two critical cells farthest apart")
+    ap.add_argument("--count", type=int, default=0, help="k-medoids: exactly this many clusters (subCH-K's source)")
+    ap.add_argument("--geometry", action="store_true", help="stop after the tour (no ns-3 pass or River)")
     ap.add_argument("--lane", type=float, default=4.5, help="--partition=lane: lane width, cells")
     ap.add_argument("--banks", default="parallel", choices=("parallel", "local"),
                     help="River Banks: the sum vector's normal, or the path's local normal (CLAUDE.md §8 item 103)")
     ap.add_argument("--windowKB", type=float, default=0,
                     help="each cluster needs only this much of D, around the CH (river_export.py; item 106)")
+    ap.add_argument("--windowAt", default="ch", choices=("ch", "crit"),
+                    help="the window around the CH, or one around each critical cell (river_export.py; item 120)")
     a = ap.parse_args()
     a.bin = os.path.abspath(a.bin)
     a.src = os.path.abspath(a.src) if a.src else ""
@@ -258,6 +272,10 @@ def main():
     b = stage_deploy(a, W_, K)
     print("bearings: " + ", ".join(f"C{k} {v['bearing']} deg ({v['inside']} m inside)" for k, v in b.items()))
     stage_tour(a, W_, K)
+    if a.geometry:
+        for k in range(1, K + 1):
+            deploy_links(W_, k)
+        return
     stage_runs(a, W_, K)
 
 

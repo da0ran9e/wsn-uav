@@ -32,7 +32,8 @@ from map_gen import centre
 from meander import RHO, coords, curvature, flight_curve, partition_meander
 import mission
 from mission import sh, stage_runs, stage_tour
-from restructure import domain
+from partition import pieces
+from restructure import CAP, domain
 
 
 def stage_map_kmedoids(a, W_):
@@ -56,7 +57,23 @@ def stage_map(a, W_):
         return
     g = domain(a.clusters, a.seed)
     land = set(g["domain"])
-    owner, lane, s, n, _, _ = partition_meander(land, a.lane, span=a.span, frag_share=a.frag)
+    cv = None
+    if a.meanderK:   # item 118: k-medoids' cluster count; the lane width (6 first) with the most even sizes
+        best = None
+        for L in (6, 5.5, 6.5, 5, 7, 4.5, 7.5, 8):
+            for frag in (0.25, 0.5):
+                r = partition_meander(land, L, frag_share=frag, count=math.ceil(len(land) / CAP))
+                sz = np.bincount(list(r[0].values()))
+                whole = all(len(pieces([h for h in r[0] if r[0][h] == c])) == 1 for c in range(len(sz)))
+                cvi = float(sz.std() / sz.mean()) if whole else math.inf
+                if best is None or cvi < best[0]:
+                    best = (cvi, L, frag, r)
+            if best[0] <= 0.11:
+                break
+        cv, a.lane, a.frag, (owner, lane, s, n, _, _) = best
+        assert cv < math.inf, "MEANDER-K: no lane width gives connected clusters"
+    else:
+        owner, lane, s, n, _, _ = partition_meander(land, a.lane, span=a.span, frag_share=a.frag)
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
         f.write("q,r,cx,cy,type\n")
@@ -83,7 +100,7 @@ def stage_map(a, W_):
     bs = ((min(xs) + max(xs)) / 2, min(ys) - 1000.0)
     K = len(set(owner.values()))
     json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="meander", lane=a.lane,
-                   span=a.span),
+                   span=a.span, meanderK=int(a.meanderK), frag=a.frag, cv=cv),
               open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {len(nodes)} nodes, {K} clusters "
           f"{[sum(1 for c in owner.values() if c == i) for i in range(K)]}, BS {bs[0]:.0f},{bs[1]:.0f}")
@@ -229,6 +246,10 @@ def main():
     ap.add_argument("--span", type=float, default=0, help="MEANDER: clusters at most this many cells long along s")
     ap.add_argument("--windowKB", type=float, default=0,
                     help="each cluster needs only this much of D, around the CH (river_export.py)")
+    ap.add_argument("--windowAt", default="ch", choices=("ch", "crit"),
+                    help="the window around the CH, or one around each critical cell (river_export.py; item 120)")
+    ap.add_argument("--meanderK", action="store_true",
+                    help="MEANDER-K (item 118): exactly ceil(cells / 80) clusters, as k-medoids; lane width searched")
     ap.add_argument("--geometry", action="store_true", help="stop after stage 3 (no ns-3 pass or River)")
     ap.add_argument("--bendFig", nargs=2, metavar=("PNG", "WORK:K,..."),
                     help="only draw bend_figure for clusters K of finished works")

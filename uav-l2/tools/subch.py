@@ -13,7 +13,7 @@ Per cluster:
 The new clusters are then deployed and flown like any cluster (mission.py --partition subch): straight across their
 CH, which uav-coop-deploy picks as the strongest node (the strongest critical cell of the sub-cluster).
 """
-import csv, json, os, sys
+import csv, heapq, json, os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
 from river_plan import NB, hexdist, load, plan  # noqa: E402
@@ -58,15 +58,47 @@ def split(cells, crit, ch, dmin, minsize):
     return {v: ids[li] for v, li in lab.items()}, [s for n, s in enumerate(seeds) if n in ids]
 
 
-def subch_partition(src, dmin=6, minsize=20):
-    """{cell: new cluster index (0-based)}, and the seeds per original cluster."""
+def split2(cells, crit, ch):
+    """subCH-K (item 118): exactly two connected halves of equal size, grown from the two critical cells farthest
+    apart (the CH and the cell farthest from it if the cluster has one critical cell); the smaller half takes the
+    next unclaimed cell next to it, nearest its seed first."""
+    crit = sorted(set(crit) | {ch})
+    seeds = list(max(((x, y) for x in crit for y in crit), key=lambda p: (hexdist(*p), p)))
+    if seeds[0] == seeds[1]:
+        seeds[1] = max(sorted(cells), key=lambda c: hexdist(c, ch))
+    lab, size, heap = {seeds[0]: 0, seeds[1]: 1}, [1, 1], [[], []]
+
+    def push(v, i):
+        for d in NB:
+            g = (v[0] + d[0], v[1] + d[1])
+            if g in cells and g not in lab:
+                heapq.heappush(heap[i], (hexdist(g, seeds[i]), g))
+
+    push(seeds[0], 0)
+    push(seeds[1], 1)
+    while len(lab) < len(cells):
+        for i in sorted((0, 1), key=lambda i: size[i]):
+            while heap[i] and heap[i][0][1] in lab:
+                heapq.heappop(heap[i])
+            if heap[i]:
+                v = heapq.heappop(heap[i])[1]
+                lab[v], size[i] = i, size[i] + 1
+                push(v, i)
+                break
+        else:
+            raise AssertionError("cluster not connected")
+    return lab, seeds
+
+
+def subch_partition(src, dmin=6, minsize=20, pairs=False):
+    """{cell: new cluster index (0-based)}, and the seeds per original cluster. pairs: split2 (subCH-K)."""
     K = json.load(open(f"{src}/map.json"))["clusters"]
     owner, seeds, base = {}, {}, 0
     for k in range(1, K + 1):
         cells = {(int(r["q"]), int(r["r"])) for r in csv.DictReader(open(f"{src}/c{k}-cells.csv"))}
         geo = load(f"{src}/d{k}", f"{src}/c{k}-path-s35.csv")
         P = plan(geo, reentry=True)
-        lab, sd = split(cells, P["crit"], P["ch"], dmin, minsize)
+        lab, sd = split2(cells, P["crit"], P["ch"]) if pairs else split(cells, P["crit"], P["ch"], dmin, minsize)
         for v, li in lab.items():
             owner[v] = base + li
         seeds[k] = sd

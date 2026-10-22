@@ -84,10 +84,15 @@ def holdings(M, C, seqs):
         P, uav, bits, inD = cl["P"], cl["geo"]["uav"], cl["bits"], cl["inD"]
         allp = np.array(sorted(s for a in P["axe"] for s in P["seg"][a]))
         chn = next(x for x in cl["geo"]["nodes"] if x["isCH"] == "1")
-        c0 = int(np.argmin(np.linalg.norm(uav - [float(chn["x"]), float(chn["y"])], axis=1)))
         n = len(allp)
-        i0 = min(max(int(np.searchsorted(allp, c0)) - WINDOW // 2, 0), n - WINDOW) if n > WINDOW else 0
+
+        def start(x, y):   # river_plan.plan's window: WINDOW Axe packets around where the UAV passes closest to (x, y)
+            c0 = int(np.argmin(np.linalg.norm(uav - [x, y], axis=1)))
+            return min(max(int(np.searchsorted(allp, c0)) - WINDOW // 2, 0), n - WINDOW) if n > WINDOW else 0
+        i0 = start(float(chn["x"]), float(chn["y"]))
         for h in P["crit"]:
+            if M.get("windowAt") == "crit":   # mission.py --windowAt crit (item 120): each cell its own window
+                i0 = start(*cl["geo"]["c"][h])
             heard = bits[cl["mem"][h]].any(axis=0)[allp]          # the cell's own reception, per Axe packet
             got = inD[allp]                                        # D: heard by some node of the cluster
             res = {}
@@ -243,26 +248,28 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             cache[key] = out
         return cache[key]
 
-    def ready(kind, tk):
+    def ready(kind, tk, scheme="rf"):
         leave = {l[0]: l[4] for l in tours[tk][0]}
         col = "doneS" if kind == "river" else "gatherDoneS"
-        return lora(M, {x: leave[x[0]] + float(res[x[0]]["res"]["rf"][x[1]][col]) + tm for x in crits}, phase)
+        return lora(M, {x: leave[x[0]] + float(res[x[0]]["res"][scheme][x[1]][col]) + tm for x in crits}, phase)
 
     out = {}
     light = sum(math.ceil(c["kB"] * 1000 / 99) for c in C)
     for meth in methods:
         base, *opts = meth.split("-")
-        if base in ("P", "B4", "P+prog"):
+        if base in ("P", "B4", "P+prog", "Pd", "Pd+prog"):
+            sch = "d" if base.startswith("Pd") else "rf"
+            base = base.replace("Pd", "P")
             order = "grouped" if "grouped" in opts else "interleaved"
             wC = Cq if "equal" in opts else C
             tk = next((o for o in opts if o in ("short", "latency", "seam", "kin")), "l3first")
             if base == "P+prog":
-                ad, ar = ready("direct", tk), ready("river", tk)
+                ad, ar = ready("direct", tk), ready("river", tk, sch)
                 pd_, pr_ = posts("direct", order, wC), posts("full" if "allclues" in opts else "river", order, wC)
                 reps = {x: [(t, v) for t, _, v in sorted([(ad[x], 0, pd_[x]), (ar[x], 1, pr_[x])])] for x in crits}
             else:
                 kind = "river" if base == "P" else "direct"
-                a_, p_ = ready(kind, tk), posts(kind, order, wC)
+                a_, p_ = ready(kind, tk, sch), posts(kind, order, wC)
                 reps = {x: [(a_[x], p_[x])] for x in crits}
             dep, rule, stg, beta = policy(opts)
             tr = None if traces is None else traces.setdefault(meth, [])
@@ -317,8 +324,13 @@ def one_work(job):
     C = L.clues()
     Cq = [dict(c, w=1.0) for c in C]
     seqs = {"interleaved": L.order(C, "interleaved"), "grouped": L.order(C, "grouped")}
-    M = load_map(w, schemes=("rf",))
+    K = json.load(open(f"{w}/map.json"))["clusters"]
+    if not all(os.path.exists(f"{w}/r{k}-d-crit.csv") for k in range(1, K + 1)):   # no direct-pull River run
+        methods = [m for m in methods if not m.startswith("Pd")]
+    M = load_map(w, schemes=("rf", "d") if any(m.startswith("Pd") for m in methods) else ("rf",))
     M["name"] = mapname(w)
+    M["windowAt"] = "crit" if any(l.startswith("NEED") for k in range(1, K + 1) for l in open(f"{w}/plan{k}.txt")) \
+        else "ch"
     kinds = {o for m in methods for o in m.split("-") if o in ("short", "latency", "seam", "kin")} | {"l3first"}
     tours = {k: tour(M, k) for k in kinds}
     hold = holdings(M, C, seqs)
@@ -371,6 +383,8 @@ def main():
             R = [r for r in draws if r["set"] == sname and r["size"] == size]
             for meth in methods:
                 X = [r for r in R if r["method"] == meth]
+                if not X:   # a Pd method on a set without direct-pull runs
+                    continue
                 ts = np.array([r["Tstar"] for r in X])
                 summ.append(dict(set=sname, size=size, method=meth, maps=len({r["map"] for r in X}), n=len(X),
                                  Tstar=round(ts.mean(), 1), ci=round(1.96 * ts.std(ddof=1) / math.sqrt(len(ts)), 1),

@@ -47,3 +47,37 @@ CT3 k2-s9 exit 0 22:16:47
 CT3 k2-s4 exit 0 22:17:45
 CT3 k2-s10 exit 0 22:18:27
 CT3 k2-s23 exit 0 22:19:15
+CT4 k8-s1 exit 0 22:23:31
+CT4 k8-s11 exit 0 22:24:07
+CT4 k8-s8 exit 0 22:26:39
+CT4 k8-s10 exit 0 22:27:07
+CT4 k6-s13 exit 0 22:29:07
+CT4 k6-s20 exit 0 22:30:49
+CT4 k6-s11 exit 0 22:32:05
+CT4 k6-s9 exit 0 22:34:27
+CT4 k4-s21 exit 0 22:35:49
+CT4 k4-s13 exit 0 22:37:10
+CT4 k4-s20 exit 0 22:39:21
+CT4 k4-s2 exit 0 22:39:33
+CT4 k2-s9 exit 0 22:40:28
+CT4 k2-s4 exit 0 22:40:50
+CT4 k2-s10 exit 0 22:42:13
+CT4 k2-s23 exit 0 22:42:19
+all done 34 22:42:19
+CT5 k8-s1 exit 0 22:46:30
+CT5 k8-s11 exit 0 22:47:55
+CT5 k8-s8 exit 0 22:50:06
+CT5 k8-s10 exit 0 22:51:44
+CT5 k6-s13 exit 0 22:53:02
+CT5 k6-s20 exit 0 22:55:34
+CT5 k6-s11 exit 0 22:55:45
+CT5 k4-s21 exit 0 22:58:50
+CT5 k6-s9 exit 0 22:59:11
+CT5 k4-s13 exit 0 23:01:05
+CT5 k4-s20 exit 0 23:02:47
+CT5 k4-s2 exit 0 23:03:27
+CT5 k2-s9 exit 0 23:03:59
+CT5 k2-s4 exit 0 23:04:54
+CT5 k2-s10 exit 0 23:05:37
+CT5 k2-s23 exit 0 23:06:22
+all done 5 23:06:22

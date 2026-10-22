@@ -1,0 +1,13 @@
+set,size,method,maps,n,Tstar,ci,p90,Tall,rank,first
+swathL,2,P+prog-skin-puq-stage-zero-redir,4,400,466.3,19.8,721.1,2359.7,1.96,0.443
+swathL,2,B4-skin-puq-stage-zero-redir,4,400,492.9,22.5,818.7,2357.2,2.13,0.38
+swathL,2,B7,4,400,242.9,4.9,325.1,,1.0,1.0
+swathL,4,P+prog-skin-puq-stage-zero-redir,4,400,559.0,28.5,854.7,4965.0,2.01,0.46
+swathL,4,B4-skin-puq-stage-zero-redir,4,400,587.6,34.2,936.7,4935.3,2.17,0.453
+swathL,4,B7,4,400,293.2,6.7,376.6,,1.0,1.0
+swathL,6,P+prog-skin-puq-stage-zero-redir,4,400,667.5,40.3,1010.1,8474.2,2.11,0.487
+swathL,6,B4-skin-puq-stage-zero-redir,4,400,713.1,45.4,1156.4,8420.6,2.32,0.46
+swathL,6,B7,4,400,312.7,6.7,398.3,,1.0,1.0
+swathL,8,P+prog-skin-puq-stage-zero-redir,4,400,748.0,40.5,1237.5,10439.2,2.11,0.485
+swathL,8,B4-skin-puq-stage-zero-redir,4,400,775.9,43.8,1305.6,10419.0,2.21,0.485
+swathL,8,B7,4,400,346.1,8.6,470.4,,1.0,1.0

@@ -1,0 +1,52 @@
+map                   chordT1               chordT2               chordT3               chordT4               chordT5              kmedoids                 swath                swathL
+k2-s4         376 (p90   701)       392 (p90   703)       378 (p90   701)       376 (p90   701)       378 (p90   701)       392 (p90   703)       497 (p90   752)       473 (p90   712)
+k2-s9         408 (p90   733)       408 (p90   733)       397 (p90   733)       408 (p90   733)       397 (p90   733)       409 (p90   755)       444 (p90   650)       443 (p90   654)
+k2-s10        393 (p90   625)       389 (p90   617)       392 (p90   637)       393 (p90   625)       392 (p90   637)       394 (p90   617)       419 (p90   636)       434 (p90   711)
+k2-s23        416 (p90   713)       429 (p90   715)       415 (p90   705)       416 (p90   713)       415 (p90   705)       447 (p90   749)       512 (p90   881)       515 (p90   782)
+k4-s2         521 (p90   709)       524 (p90   802)       521 (p90   709)       521 (p90   709)       521 (p90   709)       535 (p90   802)       569 (p90   837)       563 (p90   780)
+k4-s13        556 (p90   922)       563 (p90   922)       556 (p90   906)       556 (p90   922)       556 (p90   906)       565 (p90   865)       563 (p90   779)       564 (p90   770)
+k4-s20        545 (p90   926)       564 (p90   898)       538 (p90   926)       545 (p90   926)       538 (p90   926)       572 (p90   926)       605 (p90   912)       578 (p90   914)
+k4-s21        501 (p90   764)       538 (p90   872)       506 (p90   806)       501 (p90   764)       498 (p90   787)       547 (p90   886)       542 (p90   805)       531 (p90   854)
+k6-s9         647 (p90  1073)       664 (p90  1002)       640 (p90   964)       647 (p90  1073)       641 (p90  1053)       725 (p90  1131)       719 (p90  1065)       678 (p90   905)
+k6-s11        684 (p90  1040)       686 (p90  1132)       648 (p90   947)       684 (p90  1040)       648 (p90   947)       713 (p90  1120)       672 (p90  1059)       699 (p90  1030)
+k6-s13        634 (p90   991)       630 (p90   991)       607 (p90   949)       634 (p90   991)       607 (p90   949)       653 (p90  1041)       593 (p90   948)       626 (p90   949)
+k6-s20        697 (p90  1103)       719 (p90  1121)       697 (p90  1113)       697 (p90  1103)       697 (p90  1113)       714 (p90  1186)       708 (p90  1167)       667 (p90  1112)
+k8-s1         740 (p90  1207)       759 (p90  1226)       707 (p90  1196)       740 (p90  1207)       707 (p90  1196)       767 (p90  1228)       778 (p90  1247)       726 (p90  1046)
+k8-s8         771 (p90  1204)       775 (p90  1204)       769 (p90  1205)       771 (p90  1204)       769 (p90  1205)       822 (p90  1309)       741 (p90  1165)       741 (p90  1165)
+k8-s10        791 (p90  1236)       805 (p90  1239)       766 (p90  1238)       791 (p90  1236)       766 (p90  1238)       810 (p90  1239)       797 (p90  1393)       797 (p90  1393)
+k8-s11        691 (p90  1146)       770 (p90  1123)       691 (p90  1146)       691 (p90  1146)       690 (p90  1146)       767 (p90  1128)       771 (p90  1299)       728 (p90  1150)
+chordT1 - kmedoids, k2: 4 maps; T* -12 s (better on 4), p90 -13 s; team1 -38 s, ready mean -12 s, ready last -14 s, River frames +50 k
+chordT1 - kmedoids, k4: 4 maps; T* -24 s (better on 4), p90 -39 s; team1 -48 s, ready mean -29 s, ready last -63 s, River frames +177 k
+chordT1 - kmedoids, k6: 4 maps; T* -36 s (better on 4), p90 -68 s; team1 -88 s, ready mean -46 s, ready last -71 s, River frames +132 k
+chordT1 - kmedoids, k8: 4 maps; T* -43 s (better on 4), p90 -28 s; team1 -80 s, ready mean -54 s, ready last -97 s, River frames +61 k
+chordT1 - kmedoids, all: 16 maps; T* -29 s (better on 16), p90 -37 s; team1 -64 s, ready mean -35 s, ready last -61 s, River frames +105 k
+chordT2 - kmedoids, k2: 4 maps; T* -6 s (better on 3), p90 -14 s; team1 -19 s, ready mean -6 s, ready last -5 s, River frames +28 k
+chordT2 - kmedoids, k4: 4 maps; T* -8 s (better on 4), p90 +4 s; team1 -1 s, ready mean -14 s, ready last -21 s, River frames +97 k
+chordT2 - kmedoids, k6: 4 maps; T* -26 s (better on 3), p90 -58 s; team1 -35 s, ready mean -26 s, ready last -35 s, River frames +87 k
+chordT2 - kmedoids, k8: 4 maps; T* -14 s (better on 3), p90 -28 s; team1 -26 s, ready mean -34 s, ready last -54 s, River frames +41 k
+chordT2 - kmedoids, all: 16 maps; T* -14 s (better on 13), p90 -24 s; team1 -20 s, ready mean -20 s, ready last -29 s, River frames +63 k
+chordT3 - kmedoids, k2: 4 maps; T* -15 s (better on 4), p90 -12 s; team1 -30 s, ready mean -13 s, ready last -4 s, River frames +97 k
+chordT3 - kmedoids, k4: 4 maps; T* -24 s (better on 4), p90 -33 s; team1 -79 s, ready mean -35 s, ready last -69 s, River frames +184 k
+chordT3 - kmedoids, k6: 4 maps; T* -53 s (better on 4), p90 -126 s; team1 -102 s, ready mean -54 s, ready last -98 s, River frames +141 k
+chordT3 - kmedoids, k8: 4 maps; T* -58 s (better on 4), p90 -29 s; team1 -120 s, ready mean -67 s, ready last -124 s, River frames +91 k
+chordT3 - kmedoids, all: 16 maps; T* -38 s (better on 16), p90 -50 s; team1 -83 s, ready mean -43 s, ready last -74 s, River frames +128 k
+chordT4 - kmedoids, k2: 4 maps; T* -12 s (better on 4), p90 -13 s; team1 -38 s, ready mean -12 s, ready last -14 s, River frames +50 k
+chordT4 - kmedoids, k4: 4 maps; T* -24 s (better on 4), p90 -39 s; team1 -48 s, ready mean -29 s, ready last -63 s, River frames +177 k
+chordT4 - kmedoids, k6: 4 maps; T* -36 s (better on 4), p90 -68 s; team1 -88 s, ready mean -46 s, ready last -71 s, River frames +132 k
+chordT4 - kmedoids, k8: 4 maps; T* -43 s (better on 4), p90 -28 s; team1 -80 s, ready mean -54 s, ready last -97 s, River frames +61 k
+chordT4 - kmedoids, all: 16 maps; T* -29 s (better on 16), p90 -37 s; team1 -64 s, ready mean -35 s, ready last -61 s, River frames +105 k
+chordT5 - kmedoids, k2: 4 maps; T* -15 s (better on 4), p90 -12 s; team1 -30 s, ready mean -13 s, ready last -4 s, River frames +97 k
+chordT5 - kmedoids, k4: 4 maps; T* -26 s (better on 4), p90 -38 s; team1 -80 s, ready mean -37 s, ready last -81 s, River frames +133 k
+chordT5 - kmedoids, k6: 4 maps; T* -53 s (better on 4), p90 -104 s; team1 -93 s, ready mean -57 s, ready last -97 s, River frames +154 k
+chordT5 - kmedoids, k8: 4 maps; T* -58 s (better on 4), p90 -29 s; team1 -130 s, ready mean -68 s, ready last -130 s, River frames +85 k
+chordT5 - kmedoids, all: 16 maps; T* -38 s (better on 16), p90 -46 s; team1 -84 s, ready mean -44 s, ready last -78 s, River frames +117 k
+swath - kmedoids, k2: 4 maps; T* +57 s (better on 0), p90 +24 s; team1 +77 s, ready mean +60 s, ready last +70 s, River frames +36 k
+swath - kmedoids, k4: 4 maps; T* +15 s (better on 2), p90 -36 s; team1 +2 s, ready mean +28 s, ready last +12 s, River frames +40 k
+swath - kmedoids, k6: 4 maps; T* -28 s (better on 4), p90 -60 s; team1 +4 s, ready mean +8 s, ready last -4 s, River frames +60 k
+swath - kmedoids, k8: 4 maps; T* -20 s (better on 2), p90 +50 s; team1 +5 s, ready mean +8 s, ready last +17 s, River frames +18 k
+swath - kmedoids, all: 16 maps; T* +6 s (better on 8), p90 -6 s; team1 +22 s, ready mean +26 s, ready last +24 s, River frames +38 k
+swathL - kmedoids, k2: 4 maps; T* +56 s (better on 0), p90 +9 s; team1 +90 s, ready mean +55 s, ready last +67 s, River frames +45 k
+swathL - kmedoids, k4: 4 maps; T* +4 s (better on 2), p90 -40 s; team1 +33 s, ready mean +26 s, ready last +53 s, River frames +110 k
+swathL - kmedoids, k6: 4 maps; T* -33 s (better on 4), p90 -120 s; team1 +29 s, ready mean +3 s, ready last -8 s, River frames +118 k
+swathL - kmedoids, k8: 4 maps; T* -44 s (better on 4), p90 -38 s; team1 +15 s, ready mean -9 s, ready last -3 s, River frames +102 k
+swathL - kmedoids, all: 16 maps; T* -4 s (better on 10), p90 -47 s; team1 +42 s, ready mean +19 s, ready last +27 s, River frames +94 k

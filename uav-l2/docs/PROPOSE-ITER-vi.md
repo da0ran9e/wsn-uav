@@ -31,6 +31,7 @@ Axe chỉ gồm gói phát khi UAV ở đúng trên cell của cụm. Gói phát
 | SWATH-L | SWATH-K, hướng luống chọn để các cell mạnh được bay qua sớm | T\* −4 s (10/16), p90 −47 s; k6 −33 s (4/4), k8 −44 s (4/4), k2 +56 s (0/4); khung River +94 k |
 | **CHORD-T1** (60 % / 80 %) | giữ cụm k-medoids và đường thẳng qua CH, nhưng chọn hướng của mọi cụm cùng với thứ tự tour (§3.1) | **T\* −29 s (16/16)**, p90 −37 s; tour −64 s; khung River +105 k |
 | CHORD-T2 (70 % / 90 %) | như trên, ràng buộc chặt hơn | T\* −14 s (13/16), p90 −24 s; tour −20 s; khung River +63 k |
+| CHORD-T3 (60 % / 70 %) | như trên, ràng buộc lỏng hơn | T\* −38 s (16/16), p90 −50 s; tour −83 s; khung River +128 k |
 
 ### 3.1 CHORD-T
 
@@ -52,6 +53,29 @@ Với một UAV cánh bằng, đường thẳng dài nhất qua CH của mỗi c
 - **Đánh đổi:** đường ngắn hơn nên D giảm (3 850–4 500 gói so với 4 200–7 200). Chỉ 84 % critical cell giữ đủ 12 manh mối sau River, so với 100 % ở k-medoids; trọng số manh mối vẫn đạt 99,5 %. River phải kéo xa hơn: khung tăng, tương quan với D giảm (−0,66) và với critical cell xa đường bay hơn (+0,54).
 - **Lớp 2 cần lớp 3.** Lợi của hợp tác (T\* không hợp tác trừ T\* của P\*): k-medoids +19 s, CHORD-T1 **+50 s**, CHORD-T2 +20 s. Không hợp tác thì CHORD-T1 gần như không hơn k-medoids (+2 s). BS được phép chọn đường bay ngắn và nối tour tốt hơn chính vì River lấp phần dữ liệu thiếu.
 
+### 3.2 Núm điều chỉnh của CHORD-T
+
+Ràng buộc có tác dụng là **CLUE**: đoạn trong cụm tối thiểu, tính theo phần của một bản bộ manh mối (2,02 km). FRAC không đổi gì: 50 % / 80 % cho đúng các hướng và kết quả của 60 % / 80 %.
+
+| CLUE | ΔT\* (bản đồ tốt hơn) | ΔT\* p90 | Δ tour đội 1 | critical cell đủ 12 manh mối | trọng số manh mối | Δ khung River |
+|---|---|---|---|---|---|---|
+| k-medoids (đường dài nhất) | 0 | 0 | 0 | 100 % | 100 % | 0 |
+| 90 % | −14 s (13/16) | −24 s | −20 s | 100 % | 100 % | +63 k |
+| 80 % | −29 s (16/16) | −37 s | −64 s | 84 % | 99,5 % | +105 k |
+| 70 % | −38 s (16/16) | −50 s | −83 s | 63 % | 97,8 % | +128 k |
+| 60 % | −38 s (16/16) | −46 s | −84 s | 59 % | 97,3 % | +117 k |
+
+Hình: `figures/chordT-tradeoff-16maps.png` (đánh đổi theo CLUE), `figures/l2-variants-16maps.png` (mọi phương án theo cỡ bản đồ), `figures/chordT-k6-s9-kmedoids-vs-chordT1.png` (đường bay).
+
 ## 4. Kết luận và đề xuất
 
-(điền sau khi có CHORD-T)
+1. **Lớp 2 đề xuất: CHORD-T.** Giữ cụm k-medoids và đường thẳng qua CH, nhưng BS chọn hướng đường bay của mọi cụm cùng với thứ tự tour. Trên 16 bản đồ ghép cặp nó nhanh hơn bản trước ở mọi bản đồ, và lợi tăng theo cỡ bản đồ. Nó không đổi cụm, nên công bằng về số cụm và cỡ cụm (mục 118) là hiển nhiên.
+2. **Núm CLUE:** T\* bão hoà ở 70 % (−38 s); 60 % không nhanh hơn mà thiếu manh mối nhiều hơn. Đề xuất mặc định **CLUE = 80 %** (−29 s, 16/16; giữ 99,5 % trọng số manh mối, 84 % critical cell đủ 12 manh mối). Quy tắc chọn: CLUE nhỏ nhất mà vẫn giữ ≥ 99 % trọng số manh mối. 70 % để làm điểm "nhanh nhất" trong phần độ nhạy. Cần người dùng chốt.
+3. **SWATH-K / SWATH-L** (đường luống liền) không hơn trung bình và kém rõ ở bản đồ nhỏ; giữ làm phương án lớp 2 thay thế trong phần thảo luận. MEANDER-K bỏ.
+4. **Câu chuyện lớp 2 + lớp 3:** với CHORD-T, hợp tác mặt đất có giá trị gấp khoảng 2,6 lần (+50 s so với +19 s). Không hợp tác thì CHORD-T gần như không hơn k-medoids. Lớp 2 chỉ chọn được đường ngắn và nối tour tốt vì River lấp phần dữ liệu thiếu.
+5. **Cái giá:** River tốn thêm khung (+105 k mỗi bản đồ ở CLUE 80 %), vì Axe ngắn hơn và critical cell xa đường bay hơn. Phải báo cáo cùng với T\*.
+6. **Sửa mô hình giữ lại cho mọi phương án:** critical cell theo lân cận thật, Axe gồm gói sát mép cụm, cửa sổ theo critical cell, đổi hướng giữa đường.
+
+**Cấu hình P\* đề xuất cho chiến dịch:** `mission.py --windowKB 400 --windowAt crit --critRing domain --axeNear --chordTour 0.6,0.8`; `l1_rank.py` phương án `P+prog-kin-puq-stage-zero-redir`.
+
+**Việc tiếp theo (chờ duyệt):** chốt CLUE; chốt N; rồi chạy chiến dịch với các baseline: B1–B7 sẵn có, kéo thẳng (`Pd+prog`), không hợp tác (B4), k-medoids đường dài nhất (ablation lớp 2), SWATH-K, subCH-K, cánh bằng bay vòng (Python, chưa viết), B5 = SWATH luồng hẹp + không hợp tác, Trickle (ns-3, chưa viết).

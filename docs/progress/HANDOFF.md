@@ -7,7 +7,8 @@
 - **Chốt propose lớp 2 (mục 135–136):** báo cáo `uav-l2/docs/PROPOSE-ITER-vi.md`; SWATH-K: `uav-l2/docs/SWATH-vi.md`; log `logs/2026-10-22_1947-swath-validate/`. Kết quả chính trên 16 bản đồ ghép cặp: **CHORD-T** (giữ cụm k-medoids, chọn hướng đường bay qua CH cùng thứ tự tour, `mission.py --chordTour 0.6,0.8`) nhanh hơn k-medoids 29 s trên 16/16 bản đồ (CLUE 70 %: 38 s; bão hoà); SWATH-K không hơn trung bình. Với CHORD-T, lợi của hợp tác là +50 s so với +19 s. Cấu hình P\* đề xuất: `--windowKB 400 --windowAt crit --critRing domain --axeNear --chordTour 0.6,0.8`, phương án `P+prog-kin-puq-stage-zero-redir`. CLUE chờ người dùng chốt.
 - **Bẫy mới:** `l1_rank.py` sinh thế giới ngẫu nhiên theo tên thư mục; muốn so ghép cặp thì thư mục làm việc phải mang đúng tên bản đồ (`SET/k8-s10`), không thêm tiền tố.
 - **Sửa mô hình mới (tùy chọn, mặc định tắt để tái tạo số cũ):** `--critRing domain`, `--axeNear`, `--windowAt crit`. Cấu hình đang dùng để chốt propose bật cả ba.
-- **Chưa chạy:** chiến dịch 40 bản đồ, baseline mới (kéo thẳng cấp nhiệm vụ đã có mã: phương án `Pd+prog`; cánh bằng bay vòng; B5 = SWATH luồng hẹp + không hợp tác; Trickle). Người dùng chưa chốt N.
+- **Lớp 3 dưới CHORD-T (16 bản đồ, kiểm tra sơ bộ):** kéo thẳng cho cùng T\* với River (+0,5 s, River tốt hơn 9/16), nhưng River ít hơn 11 % khung và critical cell cuối có cửa sổ sớm hơn 2 s (64/80 cụm). Không hợp tác chậm hơn 49,8 s (15/16). Bài báo nên đặt lợi của River vào chi phí mạng và thời gian xong, không vào T\* (`PROPOSE-ITER-vi.md` §3.4). Độ nhạy D = 64 / 256: CHORD-T vẫn −30 / −29 s.
+- **Chưa chạy:** chiến dịch 40 bản đồ, baseline mới (cánh bằng bay vòng; B5 = SWATH luồng hẹp + không hợp tác; Trickle). Kéo thẳng cấp nhiệm vụ có mã (phương án `Pd+prog`), mới chạy trên 16 bản đồ. Người dùng chưa chốt N và CLUE.
 
 ---
 

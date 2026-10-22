@@ -1404,6 +1404,12 @@ chạy đi
 tạo một bản tài liệu tổng hợp tương tự như trên nhưng tập trung duy nhất và chi tiết vào Layer 3 và cơ chế River, các hình vẽ từng bước và pseudo code mô tả từng phần
 ```
 
+*123. 2026-10-22 · tổng quan · bản tương tự cho lớp 2: mô tả nhanh cơ chế phân vùng đề xuất*
+
+```text
+Làm một bản Layer 2, mô tả nhanh về cơ chế phân vùng đề xuất tương tự như này
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

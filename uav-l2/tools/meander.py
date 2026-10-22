@@ -267,7 +267,8 @@ def polys(ax, hs, col, **kw):
     ax.add_collection(PolyCollection([corners(h) for h in hs], facecolors=col, edgecolors=SURF, linewidths=.3, **kw))
 
 
-def step_figure(M, path):
+def step_figure(M, path, split=None):
+    """The 8 steps on one figure; split: also each pair of neighbouring steps, split-12.png … split-78.png."""
     R, g, land = M["R"], M["R"]["g"], M["R"]["land"]
     main = sorted(M["st"]["main"])
     xs, ys = [centre(h)[0] for h in land], [centre(h)[1] for h in land]
@@ -326,6 +327,12 @@ def step_figure(M, path):
         frame(ax, land)
     strip_text(fig)
     fig.savefig(path, facecolor=SURF, bbox_inches="tight", pad_inches=.05)
+    if split:
+        from matplotlib.transforms import Bbox
+        rd = fig.canvas.get_renderer()
+        for i in range(0, 8, 2):
+            box = Bbox.union([ax.get_tightbbox(rd) for ax in axs[i:i + 2]]).transformed(fig.dpi_scale_trans.inverted())
+            fig.savefig(f"{split}-{i + 1}{i + 2}.png", facecolor=SURF, bbox_inches=box.padded(.05), dpi=200)
     plt.close(fig)
 
 
@@ -366,16 +373,21 @@ def main():
     ap.add_argument("--seed", type=int, default=3)
     ap.add_argument("--bend", type=float, default=220)
     ap.add_argument("--lane", type=float, default=4.5)
+    ap.add_argument("--frag", type=float, default=0.25, help="pieces under frag x cap cells are merged (item 116: 0.5)")
     ap.add_argument("--figs")
+    ap.add_argument("--split", action="store_true", help="also the steps in pairs, one figure each")
     ap.add_argument("--width", type=float, default=1.0, help="domain width scale, km (spine length 1.1 K / width)")
     ap.add_argument("--campaign", action="store_true", help="width 1 / 0.6 x K 4 / 6 x bend 90 / 180 / 270 x 5 seeds")
     ap.add_argument("--out")
     a = ap.parse_args()
     if not a.campaign:
-        M = run(a.clusters, a.seed, a.bend, a.lane, width=a.width)
+        M = run(a.clusters, a.seed, a.bend, a.lane, width=a.width, frag_share=a.frag)
         tag = f"k{a.clusters}-s{a.seed}-b{int(a.bend)}-w{a.width:g}"
+        if (a.lane, a.frag) != (4.5, 0.25):
+            tag += f"-L{a.lane:g}f{a.frag:g}"
         if a.figs:
-            step_figure(M, os.path.join(a.figs, f"meander-{tag}-steps.png"))
+            step_figure(M, os.path.join(a.figs, f"meander-{tag}-steps.png"),
+                        os.path.join(a.figs, f"meander-{tag}-step") if a.split else None)
             compare_figure(M, os.path.join(a.figs, f"meander-{tag}-compare.png"))
         for name, v in summarise(M).items():
             print(name, {k: round(x, 3) for k, x in v.items()})

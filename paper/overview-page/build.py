@@ -2,13 +2,15 @@
 glossary tips on every #g-… link, MathJax for the $$…$$ formulas and the figures copied to fig/.
 
     pip install markdown
-    python3 paper/overview-page/build.py . <out_dir> [--doc overview|river-l3]
+    python3 paper/overview-page/build.py . <out_dir> [--doc overview|river-l3|l2]
 
   overview  paper/OVERVIEW-vi.md (CLAUDE.md §8 item 119) -> <out_dir>/river-overview.html,
             republished to https://claude.ai/artifact/BTcAwySMrwES5tHsLdCKw2
   river-l3  paper/RIVER-L3-vi.md (item 122) -> <out_dir>/river-l3.html,
             republished to https://claude.ai/artifact/WpB2R7G7pVpo4QUwjW4DXB
-Both write the figures to <out_dir>/fig/*.png.
+  l2        paper/L2-PARTITION-vi.md (item 123) -> <out_dir>/l2-partition.html,
+            republished to https://claude.ai/artifact/4RMXn44sBxd4YLig4NBhqb
+All write the figures to <out_dir>/fig/*.png.
 """
 import html as H
 import os
@@ -35,6 +37,13 @@ DOCS = {
              "và hình từng bước, cài đặt ns‑3 và kết quả.",
         chips=[("Phiên bản", "22‑10‑2026"), ("Lời gốc:", "CLAUDE.md §8, mục 14–122"),
                ("Mọi số liệu:", "thăm dò, N &lt; 120")]),
+    "l2": dict(
+        src="L2-PARTITION-vi.md", out="l2-partition.html", figures=10, title="Lớp 2: phân vùng MEANDER",
+        eyebrow="Tài liệu tham chiếu · lớp 2 của Pha 1, mô tả nhanh",
+        lede="Chọn đường bay trước, rồi chia cluster theo đường bay: luồng cong bám địa hình, đường bay cong mượt "
+             "qua CH, so với cluster có sẵn.",
+        chips=[("Phiên bản", "22‑10‑2026"), ("Lời gốc:", "CLAUDE.md §8, mục 56–123"),
+               ("Tình trạng:", "chưa thắng cluster có sẵn; chờ so công bằng")]),
 }
 repo, out = sys.argv[1], sys.argv[2]
 doc = DOCS[sys.argv[sys.argv.index("--doc") + 1] if "--doc" in sys.argv else "overview"]

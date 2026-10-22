@@ -1,10 +1,14 @@
-"""Build the web page of paper/OVERVIEW-vi.md (CLAUDE.md §8 item 119): markdown -> HTML body inside template.html,
-with a contents rail, glossary tips on every #g-… link, MathJax for the $$…$$ formulas and the figures copied to fig/.
+"""Build the web page of a reference document: markdown -> HTML body inside template.html, with a contents rail,
+glossary tips on every #g-… link, MathJax for the $$…$$ formulas and the figures copied to fig/.
 
     pip install markdown
-    python3 paper/overview-page/build.py . <out_dir>    # writes <out_dir>/river-overview.html and <out_dir>/fig/*.png
+    python3 paper/overview-page/build.py . <out_dir> [--doc overview|river-l3]
 
-Republish <out_dir>/river-overview.html with the fig/*.png files to https://claude.ai/artifact/BTcAwySMrwES5tHsLdCKw2.
+  overview  paper/OVERVIEW-vi.md (CLAUDE.md §8 item 119) -> <out_dir>/river-overview.html,
+            republished to https://claude.ai/artifact/BTcAwySMrwES5tHsLdCKw2
+  river-l3  paper/RIVER-L3-vi.md (item 122) -> <out_dir>/river-l3.html,
+            republished to https://claude.ai/artifact/WpB2R7G7pVpo4QUwjW4DXB
+Both write the figures to <out_dir>/fig/*.png.
 """
 import html as H
 import os
@@ -16,8 +20,25 @@ import unicodedata
 import markdown
 from markdown.extensions.toc import TocExtension
 
+DOCS = {
+    "overview": dict(
+        src="OVERVIEW-vi.md", out="river-overview.html", figures=5, title="Tổng quan nghiên cứu River",
+        eyebrow="Tài liệu tham chiếu nghiên cứu · bản đang chốt cho paper",
+        lede="Giao truy vấn tìm kiếm tới mạng camera IoT bằng một lượt bay UAV cánh bằng, và hợp tác mặt đất có "
+             "lập kế hoạch để lấp phần dữ liệu còn thiếu.",
+        chips=[("Phiên bản", "21‑10‑2026"), ("Lời gốc:", "CLAUDE.md §8, mục 1–119"),
+               ("Mọi số liệu:", "thăm dò, N &lt; 120")]),
+    "river-l3": dict(
+        src="RIVER-L3-vi.md", out="river-l3.html", figures=21, title="River: lớp 3 chi tiết",
+        eyebrow="Tài liệu tham chiếu · lớp 3 của Pha 1",
+        lede="Hợp tác mặt đất có lập kế hoạch sau một lượt bay UAV: bài toán, khái niệm, từng thuật toán với mã giả "
+             "và hình từng bước, cài đặt ns‑3 và kết quả.",
+        chips=[("Phiên bản", "22‑10‑2026"), ("Lời gốc:", "CLAUDE.md §8, mục 14–122"),
+               ("Mọi số liệu:", "thăm dò, N &lt; 120")]),
+}
 repo, out = sys.argv[1], sys.argv[2]
-src = os.path.join(repo, "paper", "OVERVIEW-vi.md")
+doc = DOCS[sys.argv[sys.argv.index("--doc") + 1] if "--doc" in sys.argv else "overview"]
+src = os.path.join(repo, "paper", doc["src"])
 text = open(src, encoding="utf-8").read()
 
 
@@ -74,7 +95,7 @@ body = re.sub(r'<p><img alt="([^"]*)" src="([^"]+)" ?/?></p>', figure, body)
 body = re.sub(r'(<figure><div class="plate">.*?</div>)\s*<p><em>(.*?)</em></p>\s*(<[ou]l>.*?</[ou]l>)?',
               lambda m: f'{m.group(1)}<figcaption><strong>{m.group(2)}</strong>{m.group(3) or ""}</figcaption></figure>',
               body, flags=re.S)
-assert body.count("<figure>") == body.count("</figure>") == 5, body.count("<figure>")
+assert body.count("<figure>") == body.count("</figure>") == doc["figures"], body.count("<figure>")
 
 # version and scope bullets are already in the page header
 body, n = re.subn(r"\A\s*<ul>.*?</ul>\s*(?=<blockquote>)", "", body, flags=re.S)
@@ -87,6 +108,9 @@ toc = re.findall(r'<h2 id="([^"]+)">(.*?)</h2>', body)
 nav = "\n".join(f'<li><a href="#{i}">{re.sub(r"<[^>]+>", "", t)}</a></li>' for i, t in toc)
 
 tpl = open(os.path.join(os.path.dirname(__file__), "template.html"), encoding="utf-8").read()
+chips = "\n".join(f"      <li>{k} <strong>{v}</strong></li>" for k, v in doc["chips"])
+for k, v in (("TITLE", doc["title"]), ("EYEBROW", doc["eyebrow"]), ("LEDE", doc["lede"]), ("CHIPS", chips)):
+    tpl = tpl.replace("{{%s}}" % k, v)
 page = tpl.replace("{{NAV}}", nav).replace("{{BODY}}", body)
-open(os.path.join(out, "river-overview.html"), "w", encoding="utf-8").write(page)
+open(os.path.join(out, doc["out"]), "w", encoding="utf-8").write(page)
 print(len(page), "bytes;", len(toc), "sections;", len(maths), "formulas")

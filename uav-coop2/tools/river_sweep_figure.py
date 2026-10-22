@@ -23,6 +23,7 @@ def main():
     ap.add_argument("--runs", required=True)
     ap.add_argument("--figs", required=True)
     ap.add_argument("--name", default="ns3-sweeps.png")
+    ap.add_argument("--plain", action="store_true", help="no text on the figure (CLAUDE.md §8 item 63)")
     a = ap.parse_args()
     per = {}   # key -> run -> dict(times, frames)
     for f in glob.glob(os.path.join(a.runs, "c*-w*-k*-*-crit.csv")):
@@ -83,6 +84,17 @@ def main():
     fig.suptitle(f"Quét tham số trên ns-3 — trung bình {nm} lượt bay (vạch: khoảng tin cậy 95 %); "
                  "gateway chọn theo chất lượng liên kết",
                  x=.01, ha="left", fontsize=11, color=INK)
+    if a.plain:
+        fig.suptitle("")
+        for ax in fig.axes:
+            ax.set_title("", loc="left")
+            ax.set_xlabel("")
+            ax.set_ylabel("")
+            ax.tick_params(labelbottom=False, labelleft=False)
+            for t in list(ax.texts):
+                t.remove()
+            if ax.get_legend() is not None:
+                ax.get_legend().remove()
     out = os.path.join(a.figs, a.name)
     fig.savefig(out, facecolor=SURF, bbox_inches="tight", pad_inches=.08)
     print(f"  {out}")

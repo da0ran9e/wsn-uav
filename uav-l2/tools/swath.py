@@ -6,9 +6,10 @@ into K clusters along it, so team 1 flies a single continuous line and turns onl
   2  route: each lane flown along its centre line (clipped into its cells) from its first cell to its last,
      alternately both ways; one lane's end joined to the next lane's start by the shortest Dubins path of the fixed
      wing's minimum radius RHO (dubins.path_csc); lakes and gaps are flown over (soft obstacles)
-  3  th and off: the shortest route, BS -> route -> BS included (Dubins at both ends), among those on which every
-     cluster's stretch carries at least one copy of the clue set over the cluster's own cells (CLUE packets, the
-     longest visit of each cell counted, as river_plan's Axe); if none, the fewest clusters short of it
+  3  th and off: the shortest route, BS -> route -> BS included (Dubins at both ends). (Asking instead that every
+     cluster's stretch carry a copy of the clue set over its own cells was tried on k4-s2, k6-s9, k8-s10: no route
+     does on the lake maps, and the fewest short clusters cost up to 6 km more; River's Axe takes the packets sent
+     next to the cluster instead, river_plan near / mission.py --axeNear)
   4  chain: the land cells in route order (lane by lane, along the flight); cut into K consecutive runs of about
      N / K cells, repaired into connected clusters (cut)
 Each cluster is then flown along its own stretch of the route (swath_mission.py).
@@ -153,21 +154,14 @@ def swath(land, bs, K=None, L=6.0):
     """Steps 1-4. Returns {cell: cluster}, the route, and the route coordinates of the cuts: cluster k flies its
     stretch [cuts[k], cuts[k + 1]] of the route (the cuts of the chain before the repair)."""
     K = K or math.ceil(len(land) / CAP)
-    best = None
-    for tot, deg, off, r in routes(land, bs, L):
-        chain = [h for _, cs in r["lanes"] for h in cs]
-        owner = cut(chain, K)
-        pos, N = r["pos"], len(chain)
-        b = [i * K // N for i in range(N)]
-        cuts = [0.0] + [(pos[chain[i - 1]] + pos[chain[i]]) / 2 for i in range(1, N) if b[i] != b[i - 1]] + \
-            [float(r["s"][-1])]
-        ax = axe_packets(r, owner, cuts)
-        short = sum(a < CLUE for a in ax)
-        if best is None or short < best[0]:
-            best = (short, owner, r, cuts, dict(total=tot, deg=deg, off=off, axe=ax, short=short))
-        if short == 0:
-            break
-    return best[1:]
+    tot, deg, off, r = routes(land, bs, L)[0]
+    chain = [h for _, cs in r["lanes"] for h in cs]
+    owner = cut(chain, K)
+    pos, N = r["pos"], len(chain)
+    b = [i * K // N for i in range(N)]
+    cuts = [0.0] + [(pos[chain[i - 1]] + pos[chain[i]]) / 2 for i in range(1, N) if b[i] != b[i - 1]] + [float(r["s"][-1])]
+    ax = axe_packets(r, owner, cuts)
+    return owner, r, cuts, dict(total=tot, deg=deg, off=off, axe=ax, short=sum(a < CLUE for a in ax))
 
 
 def main():

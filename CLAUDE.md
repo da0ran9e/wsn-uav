@@ -1448,6 +1448,12 @@ commit file insight này vào repo được không
 Viết bản handoff vào src/wsn-uav/docs/progress/HANDOFF.md: mục tiêu đang làm, đã xong gì, đang dở gì, lỗi/bẫy đã gặp, file đã sửa, lệnh build/test và kết quả gần nhất, bước tiếp theo.
 ```
 
+*130. 2026-10-22 · quy tắc làm việc · fetch nhánh từ cloud khác báo "couldn't find remote ref" (thiếu tiền tố `claude/` trong tên nhánh)*
+
+```text
+tôi chạy trên một cloud khác và Tôi đã chạy git fetch origin document-review-xslwgg và nhận lỗi couldn't find remote ref.
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

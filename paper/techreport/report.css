@@ -1,0 +1,71 @@
+/* A4 technical report: serif text, sans headings, one accent (the Axe blue of the figures). */
+:root {
+  --ink: #1b2124; --ink2: #5a6266; --rule: #c9cfd3; --soft: #f3f4f1; --accent: #1d5fa8; --accent2: #e8eff7;
+  --serif: "Source Serif 4", "Liberation Serif", "DejaVu Serif", serif;
+  --sans: "IBM Plex Sans", "Liberation Sans", "DejaVu Sans", sans-serif;
+  --mono: "JetBrains Mono", "DejaVu Sans Mono", monospace;
+}
+@page { size: A4; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; color: var(--ink); background: #fff; font: 10.2pt/1.5 var(--serif); font-optical-sizing: auto;
+  hyphens: auto; text-rendering: optimizeLegibility; }
+
+/* cover */
+.cover { break-after: page; padding-top: 22mm; }
+.cover .kind { font: 600 8.5pt var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 6mm; }
+.cover h1 { font: 600 25pt/1.15 var(--sans); margin: 0 0 4mm; text-wrap: balance; letter-spacing: -.01em; }
+.cover .sub { font-size: 13pt; line-height: 1.4; color: var(--ink2); margin: 0 0 12mm; max-width: 140mm; }
+.cover dl { display: grid; grid-template-columns: 34mm 1fr; gap: 1.6mm 6mm; margin: 0 0 14mm; padding: 5mm 0;
+  border-top: 1.2pt solid var(--ink); border-bottom: .6pt solid var(--rule); font-size: 9.5pt; }
+.cover dt { font: 600 8pt/1.6 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); }
+.cover dd { margin: 0; }
+.cover nav p { font: 600 8pt var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); margin: 0 0 2mm; }
+.cover nav ol { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 10mm; font-size: 10pt; }
+.cover nav li { padding: 1.2mm 0; border-bottom: .5pt solid var(--rule); break-inside: avoid; }
+.cover nav a { color: var(--ink); text-decoration: none; }
+
+/* headings */
+h2 { font: 600 15pt/1.25 var(--sans); margin: 9mm 0 4mm; padding-bottom: 2mm; border-bottom: 1.2pt solid var(--ink);
+  break-after: avoid; }
+main > h2:first-child { margin-top: 0; }
+h2.appendix { break-before: page; margin-top: 0; }
+h3 { font: 600 11.5pt/1.3 var(--sans); margin: 6mm 0 2mm; color: var(--accent); break-after: avoid; }
+h4 { font: 600 10pt var(--sans); margin: 4mm 0 1.5mm; break-after: avoid; }
+p { margin: 0 0 2.4mm; text-align: justify; orphans: 3; widows: 3; }
+ul, ol { margin: 0 0 2.6mm; padding-left: 5.5mm; }
+li { margin: .5mm 0; }
+li > ul, li > ol { margin: .5mm 0 0; }
+strong, b { font-weight: 600; }
+code { font: 8.6pt var(--mono); background: var(--soft); padding: 0 .6mm; border-radius: 1mm; }
+a { color: var(--accent); }
+hr { display: none; }
+
+/* notes */
+aside.note { margin: 3mm 0 4mm; padding: 3mm 4mm; background: var(--accent2); border-left: 1.6pt solid var(--accent);
+  font-size: 9.4pt; break-inside: avoid; }
+aside.note p:last-child, aside.note ul:last-child { margin-bottom: 0; }
+
+/* figures */
+figure { margin: 4mm 0 5mm; break-inside: avoid; }
+figure .row { display: flex; gap: 3mm; align-items: flex-start; margin: 0 auto; }
+figure .row img { flex: 1 1 0; min-width: 0; width: 100%; height: auto; display: block; }
+figcaption { font-size: 8.8pt; line-height: 1.42; color: var(--ink); margin-top: 2mm; padding-top: 1.6mm;
+  border-top: .5pt solid var(--rule); }
+figcaption b { font-family: var(--sans); font-weight: 600; color: var(--accent); }
+figcaption ul { margin: 1mm 0 0; padding-left: 4.5mm; }
+
+/* tables */
+.tab { margin: 3mm 0 4.5mm; break-inside: avoid; }
+.tcap { font-size: 8.8pt; margin: 0 0 1.4mm; text-align: left; }
+.tcap b { font-family: var(--sans); color: var(--accent); }
+table { border-collapse: collapse; width: 100%; font-size: 8.9pt; line-height: 1.38; }
+th { font: 600 8.2pt var(--sans); text-align: left; border-top: 1pt solid var(--ink); border-bottom: .6pt solid var(--ink);
+  padding: 1.4mm 2mm; vertical-align: bottom; }
+td { padding: 1.2mm 2mm; border-bottom: .4pt solid var(--rule); vertical-align: top; }
+tr:last-child td { border-bottom: 1pt solid var(--ink); }
+
+/* algorithms */
+.algo { margin: 3mm 0 4mm; border-top: 1.1pt solid var(--ink); border-bottom: 1.1pt solid var(--ink); break-inside: avoid; }
+.algo .ahead { font: 600 8.8pt var(--mono); padding: 1.3mm 0; border-bottom: .6pt solid var(--ink); }
+.algo pre { margin: 0; padding: 1.4mm 0 1.6mm; font: 8.1pt/1.5 var(--mono); white-space: pre-wrap; }
+pre { font: 8.1pt/1.5 var(--mono); white-space: pre-wrap; }

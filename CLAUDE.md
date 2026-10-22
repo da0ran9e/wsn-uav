@@ -1416,6 +1416,20 @@ Làm một bản Layer 2, mô tả nhanh về cơ chế phân vùng đề xuất
 không cần lặp lại nội dung cũ nữa, tập trung trình bày ngắn gọn vào layer 3 và 2, sửa lại cả 2 bản này cho tôi hai tệp riêng biệt
 ```
 
+*125. 2026-10-22 · lớp 3 · báo cáo kỹ thuật lớp 3, nội dung tương tự, có hình mô tả các bước thuật toán như trong visualize*
+
+```text
+tạo lại một bản layer 3 dạng technical report nội dung tương tự nhưng phải có các hình vẽ mô tả các bước thuật toán như trong visualize
+```
+
+*126. 2026-10-22 · lớp 3 · hình gợi ý cho báo cáo kỹ thuật: giới thiệu bài toán và lớp 1 (5 ảnh: A2G‑RUN, A2G‑SWEEP, G2G‑CHAIN, bảng định tuyến, lưới kênh ns‑3), cơ chế River (10 ảnh); thêm ảnh chụp từ visualize · kèm ảnh*
+
+```text
+một vài hình bạn có thể sử dụng cho giới thiệu bài toán, giới thiệu qua về layer 1:
+về cơ chế river:
+có thể thêm một vài hình chụp từ visualize
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

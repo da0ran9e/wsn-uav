@@ -232,6 +232,13 @@ chính và điều còn dang dở. Log văn bản được commit; dữ liệu t
 Log viết dạng `.md` cho dễ đọc (mục 106): mỗi bước một file `<bước>.md` có khối lệnh và khối kết quả; chạy qua
 `python3 tools/runlog.py logs/<...>/<bước>.md "<lệnh>" [--cwd DIR]` để tự ghi (`.gitignore` bỏ qua `*.log`).
 
+**Lưu ảnh (mục 131):** mọi ảnh sinh ra từ bản build, visualize hay chương trình giả lập đều commit vào
+`docs/figures/` của module tương ứng (kể cả ảnh tạm, vì container bị xoá khi session dừng). Ảnh tạo không có
+chữ (mục 63) để dễ dùng lại; bản có nhãn trục cho paper lưu riêng. Tên file mô tả nội dung (ví dụ
+`c3-step4-circle-window.png`, không dùng `out1.png`). Mỗi thư mục `figures/` có `INDEX.md`, mỗi ảnh một dòng:
+tên file, mô tả trực quan một câu, lệnh hoặc script sinh ra, tham số chính (bản đồ, seed, binary), ngày, commit.
+Chỉ áp dụng cho ảnh mới; ảnh cũ không đổi tên hay xoá.
+
 *1. 2026-10-05 · uav-sar · A2G-RUN: chuỗi gói liên tục, 7 node thẳng hàng*
 
 ```text
@@ -1452,6 +1459,15 @@ Viết bản handoff vào src/wsn-uav/docs/progress/HANDOFF.md: mục tiêu đan
 
 ```text
 tôi chạy trên một cloud khác và Tôi đã chạy git fetch origin document-review-xslwgg và nhận lỗi couldn't find remote ref.
+```
+
+*131. 2026-10-22 · quy tắc làm việc · lưu ảnh sinh ra kèm tên và mô tả để dùng lại; ảnh tạm cũng commit; ảnh không chữ*
+
+```text
+thêm một quy tắc nhỏ nữa là từ giờ, các file ảnh được gen ra từ các bản build hay visualize hay chương trình giả lập hãy lưu lại kèm tên và mô tả trực quan để dùng lại khi cần,
+bạn có thể đọc qua docs/insights để xem có thể cải tiến gì cho quy tăc trước khi chúng ta làm việc
+tôi đồng ý với 1 2 3 nhưng ảnh tạm cũng commit vì cloud này sẽ wiped sau khi sessipn tạm dừng sẽ mất file
+các ảnh thì tạo dạng không có chữ để dễ sử dụng
 ```
 
 ---

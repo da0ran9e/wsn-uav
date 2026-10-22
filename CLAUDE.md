@@ -1442,6 +1442,12 @@ Từ các công việc chúng ta đã làm trên Layer 2, tôi cần một techn
 commit file insight này vào repo được không
 ```
 
+*129. 2026-10-22 · quy tắc làm việc · bản handoff `src/wsn-uav/docs/progress/HANDOFF.md` (trong repo này: `docs/progress/HANDOFF.md`)*
+
+```text
+Viết bản handoff vào src/wsn-uav/docs/progress/HANDOFF.md: mục tiêu đang làm, đã xong gì, đang dở gì, lỗi/bẫy đã gặp, file đã sửa, lệnh build/test và kết quả gần nhất, bước tiếp theo.
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -6,9 +6,9 @@ glossary tips on every #g-… link, MathJax for the $$…$$ formulas and the fig
 
   overview  paper/OVERVIEW-vi.md (CLAUDE.md §8 item 119) -> <out_dir>/river-overview.html,
             republished to https://claude.ai/artifact/BTcAwySMrwES5tHsLdCKw2
-  river-l3  paper/RIVER-L3-vi.md (item 122) -> <out_dir>/river-l3.html,
+  river-l3  paper/RIVER-L3-vi.md (items 122, 124) -> <out_dir>/river-l3.html,
             republished to https://claude.ai/artifact/WpB2R7G7pVpo4QUwjW4DXB
-  l2        paper/L2-PARTITION-vi.md (item 123) -> <out_dir>/l2-partition.html,
+  l2        paper/L2-PARTITION-vi.md (items 123, 124) -> <out_dir>/l2-partition.html,
             republished to https://claude.ai/artifact/4RMXn44sBxd4YLig4NBhqb
 All write the figures to <out_dir>/fig/*.png.
 """
@@ -31,19 +31,16 @@ DOCS = {
         chips=[("Phiên bản", "21‑10‑2026"), ("Lời gốc:", "CLAUDE.md §8, mục 1–119"),
                ("Mọi số liệu:", "thăm dò, N &lt; 120")]),
     "river-l3": dict(
-        src="RIVER-L3-vi.md", out="river-l3.html", figures=21, title="River: lớp 3 chi tiết",
-        eyebrow="Tài liệu tham chiếu · lớp 3 của Pha 1",
-        lede="Hợp tác mặt đất có lập kế hoạch sau một lượt bay UAV: bài toán, khái niệm, từng thuật toán với mã giả "
-             "và hình từng bước, cài đặt ns‑3 và kết quả.",
-        chips=[("Phiên bản", "22‑10‑2026"), ("Lời gốc:", "CLAUDE.md §8, mục 14–122"),
-               ("Mọi số liệu:", "thăm dò, N &lt; 120")]),
+        src="RIVER-L3-vi.md", out="river-l3.html", figures=13, title="River: cơ chế lớp 3",
+        eyebrow="Lớp 3 của Pha 1 · bản rút gọn",
+        lede="Hợp tác mặt đất sau một lượt bay UAV: từng thuật toán với mã giả ngắn, mã giả đầy đủ và hình từng bước.",
+        chips=[("Phiên bản", "22‑10‑2026"), ("Mọi số liệu:", "thăm dò, N &lt; 120")]),
     "l2": dict(
-        src="L2-PARTITION-vi.md", out="l2-partition.html", figures=10, title="Lớp 2: phân vùng MEANDER",
-        eyebrow="Tài liệu tham chiếu · lớp 2 của Pha 1, mô tả nhanh",
-        lede="Chọn đường bay trước, rồi chia cluster theo đường bay: luồng cong bám địa hình, đường bay cong mượt "
-             "qua CH, so với cluster có sẵn.",
-        chips=[("Phiên bản", "22‑10‑2026"), ("Lời gốc:", "CLAUDE.md §8, mục 56–123"),
-               ("Tình trạng:", "chưa thắng cluster có sẵn; chờ so công bằng")]),
+        src="L2-PARTITION-vi.md", out="l2-partition.html", figures=6, title="Lớp 2: phân vùng MEANDER",
+        eyebrow="Lớp 2 của Pha 1 · bản rút gọn",
+        lede="Chọn đường bay trước, rồi chia cluster theo đường bay: luồng cong bám địa hình, từng bước với mã giả "
+             "và hình.",
+        chips=[("Phiên bản", "22‑10‑2026"), ("Tình trạng:", "chưa thắng cluster có sẵn; chờ so công bằng")]),
 }
 repo, out = sys.argv[1], sys.argv[2]
 doc = DOCS[sys.argv[sys.argv.index("--doc") + 1] if "--doc" in sys.argv else "overview"]

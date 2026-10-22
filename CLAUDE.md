@@ -1410,6 +1410,12 @@ tạo một bản tài liệu tổng hợp tương tự như trên nhưng tập 
 Làm một bản Layer 2, mô tả nhanh về cơ chế phân vùng đề xuất tương tự như này
 ```
 
+*124. 2026-10-22 · tổng quan · bỏ phần lặp nội dung cũ; trình bày ngắn gọn riêng lớp 3 và lớp 2; sửa cả hai bản thành hai tệp riêng*
+
+```text
+không cần lặp lại nội dung cũ nữa, tập trung trình bày ngắn gọn vào layer 3 và 2, sửa lại cả 2 bản này cho tôi hai tệp riêng biệt
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

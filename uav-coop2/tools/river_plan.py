@@ -92,7 +92,12 @@ def detour(b, m, k, S, c):
         return cellpath(b, m, S, c)
 
 
-def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, window=0, window_at="ch"):
+def load_around(path):
+    """{cell: score of its strongest node} for every cell of the domain (mission.py --critRing domain)."""
+    return {(int(x["q"]), int(x["r"])): float(x["score"]) for x in csv.DictReader(open(path))}
+
+
+def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, window=0, window_at="ch", domain_sc=None):
     c, w, R, S, uav = geo["c"], geo["w"], geo["R"], geo["S"], geo["uav"]
     # Algorithm 1: Axe and Seg (packets sent above each Axe cell; outside the cluster: none)
     axe, seg = [], {}
@@ -176,9 +181,10 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, w
     chn = next(x for x in geo["nodes"] if x["isCH"] == "1")
     chc = (int(chn["q"]), int(chn["r"]))
     crit = {chc} | {h for h, v in sc.items() if v > mu + kg * sd}
-    for h, v in sc.items():
-        around = [sc[g] for k in range(1, r + 1) for g in ring(h, k) if g in sc]
-        if v > mu + kl * sd and v >= max(around):
+    ref = sc if domain_sc is None else {**domain_sc, **sc}   # domain_sc: the local test over the cell's real
+    for h, v in sc.items():                                  # neighbourhood, other clusters' cells too (item 135)
+        near = [ref[g] for k in range(1, r + 1) for g in ring(h, k) if g in ref]
+        if v > mu + kl * sd and v >= max(near):
             crit.add(h)
     crit = sorted(crit)
     need = {k: need[k] for k in crit} if need else {}

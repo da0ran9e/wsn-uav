@@ -16,7 +16,7 @@ CH, which uav-coop-deploy picks as the strongest node (the strongest critical ce
 import csv, heapq, json, os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
-from river_plan import NB, hexdist, load, plan  # noqa: E402
+from river_plan import NB, hexdist, load, load_around, plan  # noqa: E402
 
 
 def split(cells, crit, ch, dmin, minsize):
@@ -97,7 +97,8 @@ def subch_partition(src, dmin=6, minsize=20, pairs=False):
     for k in range(1, K + 1):
         cells = {(int(r["q"]), int(r["r"])) for r in csv.DictReader(open(f"{src}/c{k}-cells.csv"))}
         geo = load(f"{src}/d{k}", f"{src}/c{k}-path-s35.csv")
-        P = plan(geo, reentry=True)
+        P = plan(geo, reentry=True, domain_sc=load_around(f"{src}/domain-cl.csv") if os.path.exists(f"{src}/domain-cl.csv")
+                 else None)
         lab, sd = split2(cells, P["crit"], P["ch"]) if pairs else split(cells, P["crit"], P["ch"], dmin, minsize)
         for v, li in lab.items():
             owner[v] = base + li

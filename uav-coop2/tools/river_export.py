@@ -18,7 +18,7 @@ One record per line, cells as "q r":
 import argparse, math, os, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from river_plan import load, plan, cellpath  # noqa: E402
+from river_plan import cellpath, load, load_around, plan  # noqa: E402
 
 
 def main():
@@ -36,11 +36,14 @@ def main():
                     help="the cluster needs only this much of D (99 B packets), around where the UAV passes the CH")
     ap.add_argument("--windowAt", default="ch", choices=("ch", "crit"),
                     help="the window around the CH for the whole cluster, or around each critical cell (item 120)")
+    ap.add_argument("--around", default="", help="CSV q,r,score of every domain cell: critical cells' local test "
+                    "over the real neighbourhood (CLAUDE.md §8 item 135)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     geo = load(a.deploy, a.path)
     P = plan(geo, width=a.width, kg=a.kg, kl=a.kl, banks=a.banks, reentry=a.reentry,
-             window=math.ceil(a.windowKB * 1000 / 99), window_at=a.windowAt)
+             window=math.ceil(a.windowKB * 1000 / 99), window_at=a.windowAt,
+             domain_sc=load_around(a.around) if a.around else None)
     cells = lambda cs: f"{len(cs)} " + " ".join(f"{q} {r}" for q, r in cs)
     with open(a.out, "w") as f:
         f.write(f"N {len(geo['uav'])}\n")

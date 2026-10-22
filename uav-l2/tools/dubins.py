@@ -57,6 +57,48 @@ def length(p0, p1, r):
     return best * r
 
 
+def path_csc(p0, p1, r, step=2.0):
+    """Points every <= step m along the shortest turn-straight-turn word (LSL, RSR, LSR, RSL) from p0 to p1, and its
+    length; for SWATH-K's turns between lanes at least 2r apart, where a CSC word is the shortest path."""
+    def centre(p, side):   # side +1: left circle, -1: right
+        return (p[0] - side * r * math.sin(p[2]), p[1] + side * r * math.cos(p[2]))
+
+    best = None
+    for s0, s1 in ((1, 1), (-1, -1), (1, -1), (-1, 1)):
+        c0, c1 = centre(p0, s0), centre(p1, s1)
+        dx, dy = c1[0] - c0[0], c1[1] - c0[1]
+        D, phi = math.hypot(dx, dy), math.atan2(dy, dx)
+        if s0 == s1:
+            th = phi
+        elif D < 2 * r:
+            continue
+        else:
+            th = phi + s0 * math.asin(2 * r / D)
+        t0 = (c0[0] + s0 * r * math.sin(th), c0[1] - s0 * r * math.cos(th))
+        t1 = (c1[0] + s1 * r * math.sin(th), c1[1] - s1 * r * math.cos(th))
+        sl = (t1[0] - t0[0]) * math.cos(th) + (t1[1] - t0[1]) * math.sin(th)
+        if sl < -1e-6:
+            continue
+        a0, a1 = _mod(s0 * (th - p0[2])), _mod(s1 * (p1[2] - th))
+        L = r * (a0 + a1) + max(sl, 0.0)
+        if best is None or L < best[0]:
+            best = (L, s0, s1, c0, c1, th, a0, a1, t0, t1)
+    L, s0, s1, c0, c1, th, a0, a1, t0, t1 = best
+    pts = []
+
+    def arc(c, side, h0, sweep):
+        n = max(1, math.ceil(sweep * r / step))
+        for i in range(n + 1):
+            h = h0 + side * sweep * i / n
+            pts.append((c[0] + side * r * math.sin(h), c[1] - side * r * math.cos(h)))
+
+    arc(c0, s0, p0[2], a0)
+    n = max(1, math.ceil(math.dist(t0, t1) / step))
+    pts += [(t0[0] + (t1[0] - t0[0]) * i / n, t0[1] + (t1[1] - t0[1]) * i / n) for i in range(1, n + 1)]
+    arc(c1, s1, th, a1)
+    return pts, L
+
+
 def free_start(q, p1, r, n=72):
     """Shortest path from point q, any heading (the BS: team 1 takes off towards its first leg), to pose p1."""
     return min(length((q[0], q[1], TAU * i / n), p1, r) for i in range(n))

@@ -417,7 +417,7 @@ int main(int argc, char* argv[]) {
     std::string spacings = "20,35,50";
     uint32_t seed = 1;
     std::string out = "deploy";
-    std::string regionIn, nodesIn;
+    std::string regionIn, nodesIn, chCells;
     double bearing = -1;
     CommandLine cmd(__FILE__);
     cmd.AddValue("radius", "cell corner radius R, m", radius);
@@ -435,6 +435,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("seed", "random seed", seed);
     cmd.AddValue("out", "output prefix", out);
     cmd.AddValue("regionIn", "use these cells (CSV q,r) as the region instead of growing one", regionIn);
+    cmd.AddValue("chCells", "the CH only from nodes in these cells (CSV q,r), e.g. under a planned flight line "
+                 "(uav-l2 SWATH-K); default: any cell", chCells);
     cmd.AddValue("nodesIn", "use these nodes (CSV x,y,q,r,obs,cpu,comm) instead of random ones", nodesIn);
     cmd.AddValue("bearing", "with --angle=180: fly across the CH along this bearing, deg ccw from +x; the entry "
                  "is where the line last leaves the cluster behind the CH (lakes are flown over); -1 = random "
@@ -591,12 +593,19 @@ int main(int argc, char* argv[]) {
         std::vector<SensorNode> freeRoles = nodes;
         const size_t free = AssignRoles(freeRoles, ed, 0.0);
         CheckRoles(freeRoles, free, ed, 0.0);
-        const size_t ch = AssignRoles(nodes, ed, chMargin);
+        std::vector<double> edCh = ed;   // --chCells: nodes elsewhere are never far enough in to be the CH
+        if (!chCells.empty()) {
+            std::set<std::pair<int, int>> keep;
+            for (auto& r : readCsv(chCells)) keep.insert({std::stoi(r.at("q")), std::stoi(r.at("r"))});
+            for (size_t i = 0; i < nodes.size(); ++i)
+                if (!keep.count({nodes[i].cell.q, nodes[i].cell.r})) edCh[i] = -1.0;
+        }
+        const size_t ch = AssignRoles(nodes, edCh, chMargin);
         if (ch == nodes.size()) {
             std::fprintf(stderr, "no node is %.0f m from the edge: lower --chMargin\n", chMargin);
             return 1;
         }
-        CheckRoles(nodes, ch, ed, chMargin);
+        CheckRoles(nodes, ch, edCh, chMargin);
         for (size_t i = 0; i < nodes.size(); ++i) {
             CHECK(nodes[i].pos.x == freeRoles[i].pos.x && nodes[i].pos.y == freeRoles[i].pos.y);
             CHECK(nodes[i].Score() == freeRoles[i].Score());

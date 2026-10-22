@@ -262,7 +262,7 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             base = base.replace("Pd", "P")
             order = "grouped" if "grouped" in opts else "interleaved"
             wC = Cq if "equal" in opts else C
-            tk = next((o for o in opts if o in ("short", "latency", "seam", "kin")), "l3first")
+            tk = next((o for o in opts if o in ("short", "latency", "seam", "kin", "skin")), "l3first")
             if base == "P+prog":
                 ad, ar = ready("direct", tk), ready("river", tk, sch)
                 pd_, pr_ = posts("direct", order, wC), posts("full" if "allclues" in opts else "river", order, wC)
@@ -331,7 +331,7 @@ def one_work(job):
     M["name"] = mapname(w)
     M["windowAt"] = "crit" if any(l.startswith("NEED") for k in range(1, K + 1) for l in open(f"{w}/plan{k}.txt")) \
         else "ch"
-    kinds = {o for m in methods for o in m.split("-") if o in ("short", "latency", "seam", "kin")} | {"l3first"}
+    kinds = {o for m in methods for o in m.split("-") if o in ("short", "latency", "seam", "kin", "skin")} | {"l3first"}
     tours = {k: tour(M, k) for k in kinds}
     hold = holdings(M, C, seqs)
     seedm = int.from_bytes(hashlib.sha256(M["name"].encode()).digest()[:4], "little")
@@ -341,7 +341,7 @@ def one_work(job):
         phase = {k: float(prng.uniform(0, GAP)) for k in sorted(M["cl"])}
         out, rows, nc = missions(M, tours, hold, d, phase, C, Cq, methods)
         for meth, (Ts, Ta, rank, dep, sin) in out.items():
-            tk = next((o for o in meth.split("-") if o in ("short", "latency", "seam", "kin")), "l3first")
+            tk = next((o for o in meth.split("-") if o in ("short", "latency", "seam", "kin", "skin")), "l3first")
             draws.append(dict(map=M["name"], size=len(M["cl"]), set=sname, draw=d, method=meth, crits=nc,
                               team1=round(tours[tk][1], 1), Tstar=round(Ts, 1), Tall=round(Ta, 1), rank=rank,
                               dep=round(dep, 1), starIn=round(sin, 1)))

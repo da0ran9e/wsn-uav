@@ -29,7 +29,7 @@ import numpy as np
 from map_gen import W, cell_at, centre, corners, strip_text
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
-from river_plan import plan  # noqa: E402
+from river_plan import load_around, plan  # noqa: E402
 
 MATCH, LORA, AIR, V2, HOVER = 5.0, 30.0, 0.4, 15.0, 30.0
 SCHEMES = ("rf", "ad12", "d")
@@ -48,6 +48,7 @@ def load_map(w, schemes=SCHEMES, with_bits=True):
     water = [(int(r["q"]), int(r["r"])) for r in rows if r["type"] != "land"]
     owner = {(int(r["q"]), int(r["r"])): int(r["cluster"]) for r in csv.DictReader(open(f"{w}/clusters.csv"))}
     cl = {}
+    around = load_around(f"{w}/domain-cl.csv") if os.path.exists(f"{w}/domain-cl.csv") else None   # item 135
     for k in range(1, m["clusters"] + 1):
         lat = list(csv.DictReader(open(f"{w}/c{k}-lattice.csv")))
         c = {(int(x["q"]), int(x["r"])): (float(x["cx"]), float(x["cy"])) for x in lat}
@@ -63,7 +64,7 @@ def load_map(w, schemes=SCHEMES, with_bits=True):
         res = {t: {(int(r["q"]), int(r["r"])): r for r in csv.DictReader(open(f"{w}/r{k}-{t}-crit.csv"))}
                for t in schemes}
         runs = {t: next(csv.DictReader(open(f"{w}/r{k}-{t}-runs.csv"))) for t in schemes}
-        P = plan(geo, reentry=True)   # a straight path never re-enters a cell: the same plan
+        P = plan(geo, reentry=True, domain_sc=around)   # a straight path never re-enters a cell: the same plan
         if not with_bits or not schemes:
             cl[k] = dict(geo=geo, P=P, res=res, runs=runs)
             continue

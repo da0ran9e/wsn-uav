@@ -129,13 +129,15 @@ def tour(M, kind):
     Lh = {k: l3hat(M["cl"][k]) for k in ks}
     st = lambda k, d: seg[k][0] if d == 0 else seg[k][1]
     en = lambda k, d: seg[k][1] if d == 0 else seg[k][0]
-    if kind in ("latency", "seam", "kin") or K > 12:
+    if kind in ("latency", "seam", "kin", "skin") or K > 12:
         # latency (CLAUDE.md §8 item 114): least sum_k n_k leave_k, n_k the critical cells of cluster k, i.e. the
         # mean time a critical cell is left behind; exact Held-Karp up to 12 segments, else tour_heur (as for short
         # and l3first beyond 12 segments). seam (item 116): latency with the seamless junctions of seams();
-        # kin (item 117): latency with every transit a Dubins path (kin_links)
-        n = {k: len(M["cl"][k]["P"]["crit"]) for k in ks} if kind in ("latency", "seam", "kin") else None
-        link = seams(M) if kind == "seam" else kin_links(M) if kind == "kin" else {}
+        # kin (item 117): latency with every transit a Dubins path (kin_links); skin (item 135): kin, but seamless
+        # where one cluster's line runs straight on into the next (seams), as along a SWATH-K lane
+        n = {k: len(M["cl"][k]["P"]["crit"]) for k in ks} if kind in ("latency", "seam", "kin", "skin") else None
+        link = seams(M) if kind == "seam" else kin_links(M) if kind == "kin" else \
+            {**kin_links(M), **seams(M)} if kind == "skin" else {}
         order = latency_order(bs, seg, n, link) if n and K <= 12 else order_segments(bs, seg, n, link)
         legs, t, pos, prev = [], 0.0, bs, None
         for k, d in order:

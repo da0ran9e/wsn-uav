@@ -1494,6 +1494,14 @@ Cải tiến nào đưa vào P* trước khi chạy số cuối? → Cửa sổ 
 Số bản đồ cho số liệu công bố? → sẽ quyết sau
 ```
 
+*135. 2026-10-22 · uav-l2 · chưa chạy chiến dịch; chốt phiên bản propose tốt nhất trước: chạy trên một bản đồ ngẫu nhiên, tìm điểm chưa hợp lý, cải tiến thực tế, lặp vài lần; phải chỉ ra ưu điểm lớp 2 so với bản trước (cluster có sẵn, đường thẳng qua CH)*
+
+```text
+không, đừng chạy nhiều như thế, việc của ta bây giờ là chốt ra phiên bản tốt nhất cho propose trước 
+thử chạy nó trên một bản đồ ngẫu nhiên, xem các điểm chưa hợp lý, cải tiến nếu thấy nó có thể mang hiệu quả tốt hơn nhưng phải phù hợp và mang tính thực tế, trước đó đã tìm ra một điểm tương đối tối ưu cho các tham số bạn có thể xem qua lịch sử. bây giờ bạn cũng làm như thế lặp lại vài lần cho đến khi có một bản propose tương đối tốt, so sánh với phiên bản trước đó (các cluster ngẫu nhiên và đường bay thẳng qua CH) phải chỉ ra được ưu điểm của cải tiến layer 2 
+sau khi đã chốt chặt chẽ thì mới bắt đầu chạy các mô phỏng và baselines để lấy số liệu
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

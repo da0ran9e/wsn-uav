@@ -246,6 +246,8 @@ def main():
     ap.add_argument("--span", type=float, default=0, help="MEANDER: clusters at most this many cells long along s")
     ap.add_argument("--windowKB", type=float, default=0,
                     help="each cluster needs only this much of D, around the CH (river_export.py)")
+    ap.add_argument("--critRing", default="cluster", choices=("cluster", "domain"),
+                    help="critical cells' local test over the cluster's cells, or the real neighbourhood (item 135)")
     ap.add_argument("--windowAt", default="ch", choices=("ch", "crit"),
                     help="the window around the CH, or one around each critical cell (river_export.py; item 120)")
     ap.add_argument("--meanderK", action="store_true",

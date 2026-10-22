@@ -204,7 +204,20 @@ def deploy_links(W_, k):
             os.symlink(f"../{src}", f"{W_}/d{k}/{dst}")
 
 
+def domain_scores(W_, K):
+    """domain-cl.csv: every cell's strongest node over all clusters (river_plan.load_around; item 135)."""
+    best = {}
+    for k in range(1, K + 1):
+        for x in csv.DictReader(open(f"{W_}/c{k}-nodes-s35.csv")):
+            h = (int(x["q"]), int(x["r"]))
+            best[h] = max(best.get(h, -1.0), float(x["score"]))
+    with open(f"{W_}/domain-cl.csv", "w") as f:
+        f.write("q,r,score\n" + "".join(f"{q},{r},{v:.6g}\n" for (q, r), v in sorted(best.items())))
+
+
 def stage_runs(a, W_, K):
+    if getattr(a, "critRing", "cluster") == "domain" and not os.path.exists(f"{W_}/domain-cl.csv"):
+        domain_scores(W_, K)
     passenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/pass-lib")
     rivenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
 
@@ -218,6 +231,7 @@ def stage_runs(a, W_, K):
                 f"--banks={getattr(a, 'banks', 'parallel')}", *(["--reentry"] if getattr(a, "reentry", False) else []),
                 *([f"--windowKB={a.windowKB:g}"] if getattr(a, "windowKB", 0) else []),
                 *([f"--windowAt={a.windowAt}"] if getattr(a, "windowAt", "ch") != "ch" else []),
+                *(["--around=domain-cl.csv"] if os.path.exists(f"{W_}/domain-cl.csv") else []),
                 f"--out=plan{k}.txt"], f"plan{k}.log")
         return k
 
@@ -259,6 +273,8 @@ def main():
                     help="River Banks: the sum vector's normal, or the path's local normal (CLAUDE.md §8 item 103)")
     ap.add_argument("--windowKB", type=float, default=0,
                     help="each cluster needs only this much of D, around the CH (river_export.py; item 106)")
+    ap.add_argument("--critRing", default="cluster", choices=("cluster", "domain"),
+                    help="critical cells' local test over the cluster's cells, or the real neighbourhood (item 135)")
     ap.add_argument("--windowAt", default="ch", choices=("ch", "crit"),
                     help="the window around the CH, or one around each critical cell (river_export.py; item 120)")
     a = ap.parse_args()

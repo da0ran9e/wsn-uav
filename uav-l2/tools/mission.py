@@ -28,7 +28,9 @@ from map_gen import add_args, cell_at, centre, generate
 from partition import partition
 from restructure import lane_partition
 from subch import subch_partition
+from river_plan import load, load_around, plan  # noqa: E402 (subch puts uav-coop2/tools on the path)
 from tour_heur import order_segments
+from chord_tour import choose
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 COOP2 = os.path.join(HERE, "../../uav-coop2/tools")
@@ -134,6 +136,62 @@ def stage_deploy(a, W_, K):
             json.dump(dict(bearing=b, inside=inside, chMargin=margin), open(f"{W_}/c{k}-bearing.json", "w"))
         out[k] = json.load(open(f"{W_}/c{k}-bearing.json"))
     return out
+
+
+def stage_chord(a, W_, K):
+    """--chordTour FRAC,CLUE (CHORD-T, item 136): the bearings of all clusters re-chosen jointly with team 1's tour
+    (chord_tour.choose); every candidate deployed for real (its Dubins lead-in / lead-out must be feasible) into
+    cand/, the chosen ones copied over the cluster's deploy files."""
+    if os.path.exists(f"{W_}/chord.json"):
+        return
+    frac, clue = (float(x) for x in a.chordTour.split(","))
+    env = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
+    os.makedirs(f"{W_}/cand", exist_ok=True)
+    if getattr(a, "critRing", "cluster") == "domain" and not os.path.exists(f"{W_}/domain-cl.csv"):
+        domain_scores(W_, K)
+    around = load_around(f"{W_}/domain-cl.csv") if os.path.exists(f"{W_}/domain-cl.csv") else None
+    cands, n, files = {}, {}, {}
+    for k in range(1, K + 1):
+        deploy_links(W_, k)
+        n[k] = len(plan(load(f"{W_}/d{k}", f"{W_}/c{k}-path-s35.csv"), reentry=True, domain_sc=around)["crit"])
+        bj = json.load(open(f"{W_}/c{k}-bearing.json"))
+        scan = bearings(W_, k)
+        top = scan[0][1]
+        pick = [(bj["bearing"], bj["inside"])]
+        for b, ins in scan:
+            if ins >= frac * top and ins >= clue * math.ceil(400 * 1000 / 99) * 0.5 and \
+                    all(min(abs(b - p), 180 - abs(b - p)) >= 10 for p, _ in pick) and len(pick) < 6:
+                pick.append((b, ins))
+        cands[k], files[k] = [], []
+        for b, ins in pick:
+            pre = f"c{k}" if b == bj["bearing"] else f"cand/c{k}b{b}"
+            if pre != f"c{k}" and not sh([f"{a.bin}/deploy-bin", f"--regionIn=c{k}-cells.csv", f"--nodesIn=c{k}-nodesin.csv",
+                                          "--spacings=35", "--angle=180", f"--chMargin={bj['chMargin']}", f"--bearing={b}",
+                                          f"--out={pre}"], f"{pre}-deploy.log", env, ok=True):
+                continue
+            p = list(csv.DictReader(open(f"{W_}/{pre}-path-s35.csv")))
+            xy = [(float(r["x"]), float(r["y"])) for r in p]
+            h0, h1 = math.radians(float(p[0]["thDeg"])), math.radians(float(p[-1]["thDeg"]))
+            cands[k].append(dict(L=sum(math.dist(u, v) for u, v in zip(xy, xy[1:])),
+                                 poses=[((*xy[0], h0), (*xy[-1], h1)), ((*xy[-1], h1 + math.pi), (*xy[0], h0 + math.pi))]))
+            files[k].append((b, ins, pre))
+    picks, order = choose(tuple(json.load(open(f"{W_}/map.json"))["bs"]), cands, n)
+    for k, c in picks.items():
+        b, ins, pre = files[k][c]
+        if pre != f"c{k}":
+            for f in os.listdir(W_):   # the old line's pass, plan and River results must not be reused
+                if f.startswith((f"pass{k}-", f"plan{k}.", f"r{k}-")):
+                    os.remove(f"{W_}/{f}")
+            for f in os.listdir(f"{W_}/cand"):
+                if f.startswith(f"c{k}b{b}-") and f.endswith(".csv"):
+                    os.replace(f"{W_}/cand/{f}", f"{W_}/c{k}-{f[len(f'c{k}b{b}-'):]}")
+            bj = json.load(open(f"{W_}/c{k}-bearing.json"))
+            json.dump(dict(bj, bearing=b, inside=ins, longest=bj["bearing"]), open(f"{W_}/c{k}-bearing.json", "w"))
+    if os.path.exists(f"{W_}/tour.json"):
+        os.remove(f"{W_}/tour.json")
+    json.dump(dict(frac=frac, clue=clue, picks={k: files[k][c][0] for k, c in picks.items()},
+                   candidates={k: [f[0] for f in files[k]] for k in files}), open(f"{W_}/chord.json", "w"))
+    print("chord-t: " + ", ".join(f"C{k} {files[k][c][0]} deg" for k, c in sorted(picks.items())))
 
 
 def stage_tour(a, W_, K):
@@ -271,6 +329,9 @@ def main():
                     "split into exactly two of equal size around its two critical cells farthest apart")
     ap.add_argument("--count", type=int, default=0, help="k-medoids: exactly this many clusters (subCH-K's source)")
     ap.add_argument("--geometry", action="store_true", help="stop after the tour (no ns-3 pass or River)")
+    ap.add_argument("--chordTour", default="", metavar="FRAC,CLUE",
+                    help="CHORD-T (item 136): bearings with at least FRAC of the longest in-cluster flight and CLUE of "
+                         "one clue set, chosen jointly with team 1's tour (chord_tour.py)")
     ap.add_argument("--lane", type=float, default=4.5, help="--partition=lane: lane width, cells")
     ap.add_argument("--banks", default="parallel", choices=("parallel", "local"),
                     help="River Banks: the sum vector's normal, or the path's local normal (CLAUDE.md §8 item 103)")
@@ -292,6 +353,8 @@ def main():
     K = json.load(open("map.json"))["clusters"]
     b = stage_deploy(a, W_, K)
     print("bearings: " + ", ".join(f"C{k} {v['bearing']} deg ({v['inside']} m inside)" for k, v in b.items()))
+    if a.chordTour:
+        stage_chord(a, W_, K)
     stage_tour(a, W_, K)
     if a.geometry:
         for k in range(1, K + 1):

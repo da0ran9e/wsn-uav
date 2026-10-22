@@ -19,3 +19,17 @@
 - Trên một bản đồ, chỉ đổi kiểu nối tour đã làm T\* k-medoids dao động 704–741 s: nhiễu một bản đồ cỡ ±40 s.
 
 **Dang dở:** chưa đủ bản đồ để kết luận lớp 2; chờ người dùng chọn hướng.
+
+## Vòng 6: chấm lại có ghép cặp (quan trọng)
+
+`l1_rank.py` sinh kho ảnh và nhiễu đối sánh của từng camera theo **tên thư mục bản đồ** (`mapname`). Các vòng 1–5 đặt tên `KD-k8-s10`, `SW-k8-s10`… nên hai cách chia nhận hai "thế giới" khác nhau (c\* khác, kho ảnh khác): so sánh **không ghép cặp**. Chấm lại với liên kết `PR/KD/<bản đồ>`, `PR/SW/<bản đồ>` (log `r6-paired.md`):
+
+| Bản đồ | k-medoids | SWATH-K | Chênh |
+|---|---|---|---|
+| k4-s2 | 535 | 569 | +34 |
+| k6-s9 | 725 | 719 | −6 |
+| k8-s10 | 810 | 797 | −13 |
+
+Chênh lệch ở vòng 2–5 phần lớn là nhiễu do không ghép cặp; `--axeNear` gần như không đổi T\* của k-medoids (535 so với 536, 725 so với 730, 810 so với 805). Từ đây mọi so sánh dùng tên thư mục là tên bản đồ.
+
+Chỉ số giao dữ liệu (`tools/l2_metrics.py`, k-medoids / SWATH-K): pha 1 xong (critical cell cuối có cửa sổ) 403 / 395, 614 / 514, 728 / 668 s; lúc TB critical cell sẵn sàng 227 / 258, 343 / 311, 360 / 361 s; tour đội 1 452 / 431, 709 / 600, 808 / 774 s.

@@ -1,0 +1,27 @@
+KD k8-s11 exit 0 19:53:00
+SW k8-s11 exit 0 19:54:12
+KD k8-s1 exit 0 19:57:04
+SW k8-s1 exit 0 20:00:26
+KD k8-s8 exit 0 20:00:41
+KD k6-s13 exit 0 20:03:52
+SW k8-s8 exit 0 20:06:12
+SW k6-s13 exit 0 20:09:03
+KD k6-s20 exit 0 20:09:08
+KD k6-s11 exit 0 20:12:11
+SW k6-s20 exit 0 20:13:58
+SW k6-s11 exit 0 20:16:36
+KD k4-s21 exit 0 20:16:56
+KD k4-s13 exit 0 20:19:59
+SW k4-s21 exit 0 20:20:33
+KD k4-s20 exit 0 20:22:41
+SW k4-s13 exit 0 20:23:20
+KD k2-s9 exit 0 20:24:36
+SW k4-s20 exit 0 20:25:42
+SW k2-s9 exit 0 20:26:18
+KD k2-s4 exit 0 20:26:47
+KD k2-s10 exit 0 20:27:56
+SW k2-s4 exit 0 20:27:58
+KD k2-s23 exit 0 20:29:09
+SW k2-s10 exit 0 20:30:01
+SW k2-s23 exit 0 20:31:48
+all done 20:31:48

@@ -1430,6 +1430,12 @@ về cơ chế river:
 có thể thêm một vài hình chụp từ visualize
 ```
 
+*127. 2026-10-22 · lớp 2 · báo cáo kỹ thuật lớp 2 kiểu IEEE, 3–4 trang: ý tưởng cốt lõi, thủ tục xử lý với mã giả kiểu ICC/TWC, hình tuyển chọn (cả hình cho các bước), vài kết quả thực nghiệm đáng kể; làm nguồn cho 1–2 mục của bài ICC*
+
+```text
+Từ các công việc chúng ta đã làm trên Layer 2, tôi cần một technical report trình bày được những ý tưởng cốt lõi chính (core idea) sau đó mô tả kỹ các thủ tục xử lý (có kết hợp các thuật toán giả mã như trong các bài báo IEEE, kiểu hội nghị ICC hay tạp chí TWC) và có minh họa là các hình vẽ (tuyển chọn từ các hình chúng ta đã có, chỉ chọn những hình quan trọng và hiệu quả nhất). Cuối cùng có thể kết hợp công bố một số kết quả thực nghiệm đáng kể nhất. Toàn bộ báo cáo nên khoảng 3-4 trang (có thể sử dụng IEEE template). Dựa trên báo cáo này tôi có thể sử dụng phần lớn material để xây dưng 1 hoặc 2 session trong một bài báo sẽ gửi cho IEEE ICC. Cũng dùng hình vẽ cho các bước mô tả
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

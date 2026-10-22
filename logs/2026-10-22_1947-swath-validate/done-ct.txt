@@ -31,3 +31,19 @@ CT2 k2-s9 exit 0 21:51:09
 CT2 k2-s10 exit 0 21:52:15
 CT2 k2-s23 exit 0 21:52:58
 all done 21:52:58
+CT3 k8-s1 exit 0 21:58:38
+CT3 k8-s11 exit 0 22:00:23
+CT3 k8-s8 exit 0 22:02:17
+CT3 k8-s10 exit 0 22:04:15
+CT3 k6-s13 exit 0 22:05:18
+CT3 k6-s11 exit 0 22:07:59
+CT3 k6-s20 exit 0 22:08:07
+CT3 k6-s9 exit 0 22:11:33
+CT3 k4-s21 exit 0 22:12:01
+CT3 k4-s13 exit 0 22:13:52
+CT3 k4-s20 exit 0 22:15:33
+CT3 k4-s2 exit 0 22:16:14
+CT3 k2-s9 exit 0 22:16:47
+CT3 k2-s4 exit 0 22:17:45
+CT3 k2-s10 exit 0 22:18:27
+CT3 k2-s23 exit 0 22:19:15

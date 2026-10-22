@@ -1,5 +1,16 @@
 # Handoff · 2026-10-22
 
+## Cập nhật tối 2026-10-22 (phiên tiếp quản, CLAUDE.md §8 mục 130–136)
+
+- **Container mới không có cây ns-3.** Dựng lại: `bash logs/2026-10-22_1732-env-setup/setup.sh` (khoảng 3 phút), rồi `pip install --break-system-packages matplotlib markdown pymupdf`. Binary đóng băng chép vào scratchpad `BIN/` (`deploy-bin` đã có `--chCells`; bản cũ `deploy-bin-v0`, cho đầu ra giống từng byte khi không dùng tùy chọn đó).
+- **Quy tắc mới:** lưu ảnh (mục 131), commit cả ảnh tạm, ảnh không chữ, `INDEX.md` trong mỗi `figures/`.
+- **Chốt propose lớp 2 (mục 135–136):** báo cáo `uav-l2/docs/PROPOSE-ITER-vi.md`; SWATH-K: `uav-l2/docs/SWATH-vi.md`. Kết quả chính trên 16 bản đồ ghép cặp: **CHORD-T** (giữ cụm k-medoids, chọn hướng đường bay qua CH cùng thứ tự tour, `mission.py --chordTour 0.6,0.8`) nhanh hơn k-medoids 29 s trên 16/16 bản đồ; SWATH-K không hơn trung bình.
+- **Bẫy mới:** `l1_rank.py` sinh thế giới ngẫu nhiên theo tên thư mục; muốn so ghép cặp thì thư mục làm việc phải mang đúng tên bản đồ (`SET/k8-s10`), không thêm tiền tố.
+- **Sửa mô hình mới (tùy chọn, mặc định tắt để tái tạo số cũ):** `--critRing domain`, `--axeNear`, `--windowAt crit`. Cấu hình đang dùng để chốt propose bật cả ba.
+- **Chưa chạy:** chiến dịch 40 bản đồ, baseline mới (kéo thẳng cấp nhiệm vụ đã có mã: phương án `Pd+prog`; cánh bằng bay vòng; B5 = SWATH luồng hẹp + không hợp tác; Trickle). Người dùng chưa chốt N.
+
+---
+
 - **Nhánh:** `claude/document-review-xslwgg` (repo `da0ran9e/wsn-uav`). Commit cuối trước bản này: `11bce58`. Cây làm việc sạch.
 - **Vị trí:** gốc repo này chính là `src/wsn-uav/` trong cây ns-3. Cây ns-3 nằm ở `/home/user/ns3-dev`. Trong `ns3-dev/src/`, ba thư mục `uav-coop`, `uav-coop2`, `uav-sar` là symlink về repo. `uav-l2` không phải module ns-3; nó là công cụ Python gọi các binary ns-3.
 - **Đọc theo thứ tự khi vào phiên mới:**

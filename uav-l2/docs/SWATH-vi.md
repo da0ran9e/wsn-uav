@@ -24,4 +24,17 @@ Với một UAV cánh bằng, hơn một nửa tour đội 1 của k-medoids là
 
 ## 4. Kết quả
 
-(điền sau khi có số liệu)
+16 bản đồ (4 mỗi cỡ), ghép cặp với k-medoids + đường thẳng dài nhất qua CH, cùng P\* (`PROPOSE-ITER-vi.md` §1). Chênh = SWATH trừ k-medoids.
+
+| | k2 | k4 | k6 | k8 | cả 16 |
+|---|---|---|---|---|---|
+| SWATH-K, ΔT\* (bản đồ tốt hơn) | +57 s (0/4) | +15 s (2/4) | −28 s (4/4) | −20 s (2/4) | +6 s (8/16) |
+| SWATH-L, ΔT\* | +56 s (0/4) | +4 s (2/4) | −33 s (4/4) | −44 s (4/4) | −4 s (10/16) |
+| SWATH-K, Δ tour đội 1 | +77 s | +2 s | +4 s | +5 s | +22 s |
+| SWATH-K, Δ khung River | +36 k | +40 k | +60 k | +18 k | +38 k |
+
+- Ở bản đồ nhỏ (2 cụm), ba luồng cùng các vòng quay đầu dài hơn hai đường thẳng của k-medoids.
+- Ở bản đồ lớn, SWATH-L thắng đều (k6, k8: 8/8), nhưng tốn gần gấp đôi khung River (+94 k mỗi bản đồ) vì Axe dài.
+- Luồng 7–8 cell kém hơn luồng 6: trên k8-s10 chỉ 38 % / 33 % critical cell giữ đủ 12 manh mối sau River, so với 77 % (vòng 3, trước khi sửa Axe; số T\* của vòng đó không ghép cặp nên không dùng).
+
+**Kết luận:** SWATH-K không phải lựa chọn tốt nhất cho mọi cỡ. Ưu điểm chính của nó (bỏ quay vòng giữa các cụm) đạt được rẻ hơn bằng CHORD-T (`PROPOSE-ITER-vi.md` §3): giữ cụm k-medoids, chỉ chọn hướng đường bay của các cụm cùng với thứ tự tour.

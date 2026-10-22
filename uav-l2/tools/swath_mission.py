@@ -23,7 +23,7 @@ from map_gen import cell_at, centre
 from meander_mission import dense, through
 from mission import sh, stage_runs, stage_tour
 from restructure import domain
-from swath import RHO, swath
+from swath import RHO, likely_critical, swath
 
 
 def stage_map(a, W_):
@@ -33,7 +33,8 @@ def stage_map(a, W_):
     land = set(g["domain"])
     xs, ys = [centre(h)[0] for h in land], [centre(h)[1] for h in land]
     bs = ((min(xs) + max(xs)) / 2, min(ys) - 1000.0)
-    owner, r, cuts, info = swath(land, bs, L=a.lane)
+    owner, r, cuts, info = swath(land, bs, L=a.lane,
+                                 crit=likely_critical(g["nodes"], land) if a.routeBy == "latency" else None)
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
         f.write("q,r,cx,cy,type\n")
@@ -56,7 +57,7 @@ def stage_map(a, W_):
     np.savez(f"{W_}/route.npz", poly=r["poly"], s=r["s"], cuts=np.array(cuts))
     sz = np.bincount(list(owner.values()))
     json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="swath", lane=a.lane,
-                   bearing=info["deg"], offset=info["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]),
+                   bearing=info["deg"], offset=info["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), routeBy=a.routeBy,
                    cv=float(sz.std() / sz.mean())), open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {len(nodes)} nodes, {K} clusters {sz.tolist()}, route "
           f"{r['s'][-1] / 1000:.1f} km over {len(r['lanes'])} lanes at {info['deg']} deg, BS {bs[0]:.0f},{bs[1]:.0f}")
@@ -128,6 +129,8 @@ def main():
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--schemes", default="rf", help="tags of mission.SCHEMES to run")
     ap.add_argument("--lane", type=float, default=6.0, help="lane width, cells")
+    ap.add_argument("--routeBy", default="length", choices=("length", "latency"),
+                    help="the shortest route, or the one over the likely critical cells earliest (swath.py step 3)")
     ap.add_argument("--banks", default="local", choices=("parallel", "local"))
     ap.add_argument("--windowKB", type=float, default=400)
     ap.add_argument("--windowAt", default="crit", choices=("ch", "crit"))

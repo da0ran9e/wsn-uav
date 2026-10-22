@@ -97,12 +97,18 @@ def load_around(path):
     return {(int(x["q"]), int(x["r"])): float(x["score"]) for x in csv.DictReader(open(path))}
 
 
-def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, window=0, window_at="ch", domain_sc=None):
+def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, window=0, window_at="ch", domain_sc=None,
+         near=False):
     c, w, R, S, uav = geo["c"], geo["w"], geo["R"], geo["S"], geo["uav"]
-    # Algorithm 1: Axe and Seg (packets sent above each Axe cell; outside the cluster: none)
+    # Algorithm 1: Axe and Seg (packets sent above each Axe cell; outside the cluster: none, or with near (CLAUDE.md
+    # §8 item 135) the nearest cluster cell next to where the UAV is, whose nodes hear it from a few hundred metres)
     axe, seg = [], {}
+    reentry = reentry or near   # the nearest cell may change back and forth along a path that grazes the edge
     for s, (x, y) in enumerate(uav):
         h = hex_of(x, y, R)
+        if h not in S and near:
+            nb = [g for g in ring(h, 1) if g in S]
+            h = min(nb, key=lambda g: math.dist(c[g], (x, y))) if nb else h
         if h not in S:
             continue
         if h not in seg:

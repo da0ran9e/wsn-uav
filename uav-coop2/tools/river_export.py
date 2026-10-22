@@ -38,12 +38,14 @@ def main():
                     help="the window around the CH for the whole cluster, or around each critical cell (item 120)")
     ap.add_argument("--around", default="", help="CSV q,r,score of every domain cell: critical cells' local test "
                     "over the real neighbourhood (CLAUDE.md §8 item 135)")
+    ap.add_argument("--axeNear", action="store_true", help="a packet sent just outside the cluster belongs to the "
+                    "nearest cluster cell next to the UAV (CLAUDE.md §8 item 135)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     geo = load(a.deploy, a.path)
     P = plan(geo, width=a.width, kg=a.kg, kl=a.kl, banks=a.banks, reentry=a.reentry,
              window=math.ceil(a.windowKB * 1000 / 99), window_at=a.windowAt,
-             domain_sc=load_around(a.around) if a.around else None)
+             domain_sc=load_around(a.around) if a.around else None, near=a.axeNear)
     cells = lambda cs: f"{len(cs)} " + " ".join(f"{q} {r}" for q, r in cs)
     with open(a.out, "w") as f:
         f.write(f"N {len(geo['uav'])}\n")

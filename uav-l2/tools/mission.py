@@ -218,6 +218,8 @@ def domain_scores(W_, K):
 def stage_runs(a, W_, K):
     if getattr(a, "critRing", "cluster") == "domain" and not os.path.exists(f"{W_}/domain-cl.csv"):
         domain_scores(W_, K)
+    if getattr(a, "axeNear", False):   # read back by mission_report.load_map, so the analysis plans as River did
+        json.dump(dict(axeNear=True), open(f"{W_}/plan-opts.json", "w"))
     passenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/pass-lib")
     rivenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
 
@@ -232,6 +234,7 @@ def stage_runs(a, W_, K):
                 *([f"--windowKB={a.windowKB:g}"] if getattr(a, "windowKB", 0) else []),
                 *([f"--windowAt={a.windowAt}"] if getattr(a, "windowAt", "ch") != "ch" else []),
                 *(["--around=domain-cl.csv"] if os.path.exists(f"{W_}/domain-cl.csv") else []),
+                *(["--axeNear"] if os.path.exists(f"{W_}/plan-opts.json") else []),
                 f"--out=plan{k}.txt"], f"plan{k}.log")
         return k
 
@@ -273,6 +276,8 @@ def main():
                     help="River Banks: the sum vector's normal, or the path's local normal (CLAUDE.md §8 item 103)")
     ap.add_argument("--windowKB", type=float, default=0,
                     help="each cluster needs only this much of D, around the CH (river_export.py; item 106)")
+    ap.add_argument("--axeNear", action="store_true", help="River's Axe also takes packets sent next to the cluster "
+                    "(river_export.py --axeNear; item 135)")
     ap.add_argument("--critRing", default="cluster", choices=("cluster", "domain"),
                     help="critical cells' local test over the cluster's cells, or the real neighbourhood (item 135)")
     ap.add_argument("--windowAt", default="ch", choices=("ch", "crit"),

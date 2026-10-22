@@ -132,6 +132,7 @@ def main():
     ap.add_argument("--windowKB", type=float, default=400)
     ap.add_argument("--windowAt", default="crit", choices=("ch", "crit"))
     ap.add_argument("--critRing", default="domain", choices=("cluster", "domain"))
+    ap.add_argument("--axeNear", action="store_true", help="River's Axe also takes packets sent next to the cluster")
     ap.add_argument("--geometry", action="store_true", help="stop after stage 4 (no ns-3 pass or River)")
     a = ap.parse_args()
     a.reentry = True

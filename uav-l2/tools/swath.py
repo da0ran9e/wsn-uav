@@ -6,9 +6,11 @@ into K clusters along it, so team 1 flies a single continuous line and turns onl
   2  route: each lane flown along its centre line (clipped into its cells) from its first cell to its last,
      alternately both ways; one lane's end joined to the next lane's start by the shortest Dubins path of the fixed
      wing's minimum radius RHO (dubins.path_csc); lakes and gaps are flown over (soft obstacles)
-  3  th and off: the shortest route, BS -> route -> BS included (Dubins at both ends)
-  4  chain: the land cells in route order (lane by lane, along the flight); cut into K consecutive clusters of
-     about N / K cells, each cut within +-DELTA cells of its target so that every cluster is connected
+  3  th and off: the shortest route, BS -> route -> BS included (Dubins at both ends), among those on which every
+     cluster's stretch carries at least one copy of the clue set over the cluster's own cells (CLUE packets, the
+     longest visit of each cell counted, as river_plan's Axe); if none, the fewest clusters short of it
+  4  chain: the land cells in route order (lane by lane, along the flight); cut into K consecutive runs of about
+     N / K cells, repaired into connected clusters (cut)
 Each cluster is then flown along its own stretch of the route (swath_mission.py).
 
     python3 tools/swath.py --clusters 8 --seed 10     # route and cut of one map, printed
@@ -17,13 +19,14 @@ import argparse, math
 
 import numpy as np
 
-from map_gen import W, centre
+from map_gen import R as R_CELL, W, centre
 from partition import pieces, rebalance
 from restructure import CAP, domain, touching
 import dubins
 
 RHO = 50.0 * 50.0 / 9.80665   # minimum turn radius at 50 m/s, 45 degree bank (meander.RHO)
 STEP = 2.0                    # route vertices, m
+CLUE = math.ceil(400 * 1000 / 99)   # one copy of the clue set, 99 B packets (mission.py --windowKB 400)
 
 
 def route(land, th, L, off):
@@ -78,9 +81,9 @@ def heading(poly, i, back=False):
     return math.atan2(v[1], v[0])
 
 
-def best_route(land, bs, L=6.0):
-    """Step 3: the bearing (5 degree steps) and offset with the shortest BS -> route -> BS."""
-    best = None
+def routes(land, bs, L=6.0):
+    """Every bearing (5 degree steps) and offset, shortest BS -> route -> BS first: [(metres, deg, off, route)]."""
+    out = []
     for deg in range(0, 180, 5):
         for off in (0.0, 1 / 3, 2 / 3):
             r = route(land, math.radians(deg), L, off)
@@ -89,9 +92,38 @@ def best_route(land, bs, L=6.0):
                 dubins.free_start(bs, (*P[0], heading(P, 0)), RHO) + dubins.free_end((*P[-1], heading(P, len(P) - 1, True)), bs, RHO),
                 dubins.free_start(bs, (*P[-1], heading(P, len(P) - 1, True) + math.pi), RHO)
                 + dubins.free_end((*P[0], heading(P, 0) + math.pi), bs, RHO))
-            if best is None or tot < best[0]:
-                best = (tot, deg, off, r)
-    return best
+            out.append((tot, deg, off, r))
+    return sorted(out, key=lambda x: x[0])
+
+
+def cells_at(P):
+    """map_gen.cell_at for an array of points."""
+    q, r = (math.sqrt(3) / 3 * P[:, 0] - P[:, 1] / 3) / R_CELL, (2 / 3 * P[:, 1]) / R_CELL
+    s = -q - r
+    rq, rr, rs = np.round(q), np.round(r), np.round(s)
+    dq, dr, ds = np.abs(rq - q), np.abs(rr - r), np.abs(rs - s)
+    fq, fr = (dq > dr) & (dq > ds), ~((dq > dr) & (dq > ds)) & (dr > ds)
+    rq = np.where(fq, -rr - rs, rq)
+    rr = np.where(fr, -rq - rs, rr)
+    return np.c_[rq, rr].astype(int)
+
+
+def axe_packets(r, owner, cuts):
+    """Per cluster: packets (one per 0.5 m) sent over its own cells along its stretch, each cell's longest visit."""
+    out = []
+    for k in range(len(cuts) - 1):
+        d = np.arange(cuts[k], cuts[k + 1], 0.5)
+        P = np.c_[np.interp(d, r["s"], r["poly"][:, 0]), np.interp(d, r["s"], r["poly"][:, 1])]
+        H = cells_at(P)
+        mine = np.array([owner.get((int(a), int(b))) == k for a, b in H])
+        best, run, prev = {}, 0, None
+        for (a, b), m in zip(map(tuple, H), mine):
+            run = run + 1 if (a, b) == prev else 1
+            prev = (a, b)
+            if m:
+                best[(a, b)] = max(best.get((a, b), 0), run)
+        out.append(sum(best.values()))
+    return out
 
 
 def cut(chain, K):
@@ -121,13 +153,21 @@ def swath(land, bs, K=None, L=6.0):
     """Steps 1-4. Returns {cell: cluster}, the route, and the route coordinates of the cuts: cluster k flies its
     stretch [cuts[k], cuts[k + 1]] of the route (the cuts of the chain before the repair)."""
     K = K or math.ceil(len(land) / CAP)
-    tot, deg, off, r = best_route(land, bs, L)
-    chain = [h for _, cs in r["lanes"] for h in cs]
-    owner = cut(chain, K)
-    pos, N = r["pos"], len(chain)
-    b = [i * K // N for i in range(N)]
-    cuts = [0.0] + [(pos[chain[i - 1]] + pos[chain[i]]) / 2 for i in range(1, N) if b[i] != b[i - 1]] + [float(r["s"][-1])]
-    return owner, r, cuts, dict(total=tot, deg=deg, off=off)
+    best = None
+    for tot, deg, off, r in routes(land, bs, L):
+        chain = [h for _, cs in r["lanes"] for h in cs]
+        owner = cut(chain, K)
+        pos, N = r["pos"], len(chain)
+        b = [i * K // N for i in range(N)]
+        cuts = [0.0] + [(pos[chain[i - 1]] + pos[chain[i]]) / 2 for i in range(1, N) if b[i] != b[i - 1]] + \
+            [float(r["s"][-1])]
+        ax = axe_packets(r, owner, cuts)
+        short = sum(a < CLUE for a in ax)
+        if best is None or short < best[0]:
+            best = (short, owner, r, cuts, dict(total=tot, deg=deg, off=off, axe=ax, short=short))
+        if short == 0:
+            break
+    return best[1:]
 
 
 def main():
@@ -144,7 +184,7 @@ def main():
     whole = all(len(pieces([h for h in owner if owner[h] == k])) == 1 for k in range(len(sz)))
     print(f"{len(land)} cells, bearing {info['deg']} deg, offset {info['off']:.2f}, {len(r['lanes'])} lanes, route "
           f"{r['s'][-1] / 1000:.1f} km, with BS {info['total'] / 1000:.1f} km; {len(sz)} clusters {sz.tolist()}, "
-          f"cv {sz.std() / sz.mean():.3f}, connected {whole}")
+          f"cv {sz.std() / sz.mean():.3f}, connected {whole}; Axe packets {info['axe']} ({info['short']} short)")
 
 
 if __name__ == "__main__":

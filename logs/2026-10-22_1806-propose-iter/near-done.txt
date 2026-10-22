@@ -1,0 +1,6 @@
+KD k8-s10 exit 0 19:41:56
+SW k8-s10 exit 0 19:42:05
+KD k6-s9 exit 0 19:42:38
+KD k4-s2 exit 0 19:43:09
+SW k6-s9 exit 0 19:43:24
+SW k4-s2 exit 0 19:43:55

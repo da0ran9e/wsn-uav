@@ -27,3 +27,5 @@
 Lợi của hợp tác (không hợp tác trừ P\*): k-medoids +19 s, CHORD-T 80 % +50 s. Báo cáo: `uav-l2/docs/PROPOSE-ITER-vi.md`.
 
 **Dang dở:** chọn CLUE (đề xuất 80 %), chốt N, chiến dịch và baseline.
+
+**Thêm sau:** độ nhạy D = 64 / 256 (`sens-dim*.md`): CHORD-T 80 % −30 / −29 s, 70 % −37 / −36 s. Kéo thẳng trên thư mục CHORD-T 80 % (`job-d.sh`, `CT1d-*.md`, `score-ct1-direct.md`): T\* bằng River (+0,5 s), River ít hơn 11 % khung.

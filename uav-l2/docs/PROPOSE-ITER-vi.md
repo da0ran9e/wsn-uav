@@ -67,14 +67,38 @@ Ràng buộc có tác dụng là **CLUE**: đoạn trong cụm tối thiểu, t�
 
 Hình: `figures/chordT-tradeoff-16maps.png` (đánh đổi theo CLUE), `figures/l2-variants-16maps.png` (mọi phương án theo cỡ bản đồ), `figures/chordT-k6-s9-kmedoids-vs-chordT1.png` (đường bay).
 
+### 3.3 Độ nhạy theo lớp 1
+
+Cùng các lần chạy ns-3, chấm lại với số chiều hiệu dụng D khác (log `sens-dim64.md`, `sens-dim256.md`):
+
+| ΔT\* so với k-medoids | D = 64 (đối sánh nhiễu) | D = 128 (gốc) | D = 256 (đối sánh sạch) |
+|---|---|---|---|
+| CHORD-T CLUE 80 % | −30 s (15/16) | −29 s (16/16) | −29 s (16/16) |
+| CHORD-T CLUE 70 % | −37 s (15/16), p90 −69 s | −38 s (16/16) | −36 s (16/16) |
+
+Lợi của CHORD-T gần như không đổi theo D: nó đến từ tour đội 1, không từ mô hình lớp 1.
+
+### 3.4 Lớp 3 dưới CHORD-T: River so với kéo thẳng
+
+Cùng 16 thư mục CHORD-T CLUE 80 %, thêm một lượt ns-3 kéo thẳng (`--schemes d`, log `CT1d-*.md`, `score-ct1-direct.md`):
+
+| | River so với kéo thẳng | River so với không hợp tác |
+|---|---|---|
+| ΔT\* | kéo thẳng chậm hơn 0,5 s TB (River tốt hơn 9/16, khoảng −5…+7 s) | không hợp tác chậm hơn 49,8 s (15/16) |
+| khung mỗi cụm | 50,3 k so với 56,7 k: River ít hơn 11 % | |
+| critical cell cuối có cửa sổ | 27,0 so với 29,0 s (River nhanh hơn ở 64/80 cụm) | |
+
+Hợp tác quyết định T\*, nhất là khi lớp 2 cho đường bay ngắn. So với một cách hợp tác đơn giản (kéo thẳng từ Axe), River cho cùng T\* nhưng ít khung hơn và xong sớm hơn một chút. Bài báo nên nói về River đúng như vậy, không nói "River làm nhiệm vụ nhanh hơn kéo thẳng".
+
 ## 4. Kết luận và đề xuất
 
 1. **Lớp 2 đề xuất: CHORD-T.** Giữ cụm k-medoids và đường thẳng qua CH, nhưng BS chọn hướng đường bay của mọi cụm cùng với thứ tự tour. Trên 16 bản đồ ghép cặp nó nhanh hơn bản trước ở mọi bản đồ, và lợi tăng theo cỡ bản đồ. Nó không đổi cụm, nên công bằng về số cụm và cỡ cụm (mục 118) là hiển nhiên.
 2. **Núm CLUE:** T\* bão hoà ở 70 % (−38 s); 60 % không nhanh hơn mà thiếu manh mối nhiều hơn. Đề xuất mặc định **CLUE = 80 %** (−29 s, 16/16; giữ 99,5 % trọng số manh mối, 84 % critical cell đủ 12 manh mối). Quy tắc chọn: CLUE nhỏ nhất mà vẫn giữ ≥ 99 % trọng số manh mối. 70 % để làm điểm "nhanh nhất" trong phần độ nhạy. Cần người dùng chốt.
 3. **SWATH-K / SWATH-L** (đường luống liền) không hơn trung bình và kém rõ ở bản đồ nhỏ; giữ làm phương án lớp 2 thay thế trong phần thảo luận. MEANDER-K bỏ.
-4. **Câu chuyện lớp 2 + lớp 3:** với CHORD-T, hợp tác mặt đất có giá trị gấp khoảng 2,6 lần (+50 s so với +19 s). Không hợp tác thì CHORD-T gần như không hơn k-medoids. Lớp 2 chỉ chọn được đường ngắn và nối tour tốt vì River lấp phần dữ liệu thiếu.
-5. **Cái giá:** River tốn thêm khung (+105 k mỗi bản đồ ở CLUE 80 %), vì Axe ngắn hơn và critical cell xa đường bay hơn. Phải báo cáo cùng với T\*.
-6. **Sửa mô hình giữ lại cho mọi phương án:** critical cell theo lân cận thật, Axe gồm gói sát mép cụm, cửa sổ theo critical cell, đổi hướng giữa đường.
+4. **Lớp 3:** River so với kéo thẳng: cùng T\*, ít hơn 11 % khung (§3.4).
+5. **Câu chuyện lớp 2 + lớp 3:** với CHORD-T, hợp tác mặt đất có giá trị gấp khoảng 2,6 lần (+50 s so với +19 s). Không hợp tác thì CHORD-T gần như không hơn k-medoids. Lớp 2 chỉ chọn được đường ngắn và nối tour tốt vì River lấp phần dữ liệu thiếu.
+6. **Cái giá:** River tốn thêm khung (+105 k mỗi bản đồ ở CLUE 80 %), vì Axe ngắn hơn và critical cell xa đường bay hơn. Phải báo cáo cùng với T\*.
+7. **Sửa mô hình giữ lại cho mọi phương án:** critical cell theo lân cận thật, Axe gồm gói sát mép cụm, cửa sổ theo critical cell, đổi hướng giữa đường.
 
 **Cấu hình P\* đề xuất cho chiến dịch:** `mission.py --windowKB 400 --windowAt crit --critRing domain --axeNear --chordTour 0.6,0.8`; `l1_rank.py` phương án `P+prog-kin-puq-stage-zero-redir`.
 

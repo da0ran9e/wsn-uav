@@ -10,10 +10,12 @@ curvilinear coordinates (meander.coords), and each cluster's stretch is bent lig
      1.02 / RHO (kin_time.curvature, 3 points 10 m apart)
   3  route: the lanes in order of n, alternately both ways, each joined to the next by the shortest Dubins path of
      radius RHO; the offset, the first lane's direction along s, and which end the BS starts from: the fewest clusters (step 4), then the shortest
-     BS -> route -> BS
+     BS -> route -> BS (with --minAxe the shortest only: thin lanes are already merged)
   4  clusters: each lane's cells in route order cut into max(ceil(cells / CAPL), ceil(length / (span W))) equal
      consecutive runs (CAPL 190, span --span, default SPAN 14: the saturation optimum of SAT-vi.md), repaired into connected clusters
      (a run's smaller pieces join the touching cluster they share most edges with); the natural cluster count
+     --minAxe (item 149): each lane cut by the length of its line over its own cells instead, every cluster at
+     least minAxe km (one copy of the clue set over its own cells at a constant 50 m/s)
   5  deploy: uav-coop-deploy, the CH the strongest node under the cluster's stretch (swath_mission.stage_deploy)
   6  bend, one lane line at a time (so the clusters along it still join seamlessly): every critical cell
      (river_plan Algorithm 3, the local test over the real neighbourhood) farther than the River half width
@@ -113,7 +115,7 @@ def reverse(r):
                 lanes=[(i, cs[::-1], (Ln - b, Ln - a)) for i, cs, (a, b) in r["lanes"][::-1]])
 
 
-def best_route(land, bs, L, span=SPAN):
+def best_route(land, bs, L, span=SPAN, min_axe=0.0):
     out = []
     for off, flip in ((o, f) for o in (0.0, 1 / 3, 2 / 3) for f in (0, 1)):
         r = route(land, L, off, flip)
@@ -121,15 +123,30 @@ def best_route(land, bs, L, span=SPAN):
             P = x["poly"]
             tot = x["s"][-1] + dubins.free_start(bs, (*P[0], heading(P, 0)), RHO) + \
                 dubins.free_end((*P[-1], heading(P, len(P) - 1, True)), bs, RHO)
-            out.append((len(partition(x, span)[1]), tot, x))
+            out.append((0 if min_axe else len(partition(x, span)[1]), tot, x))   # by length: the shortest only
     return min(out, key=lambda t: t[:2])[1:]
 
 
-def partition(r, cells_long=SPAN):
-    """Step 4: owner {cell: cluster}, and each cluster's stretch (route coordinates) before the repair."""
+def partition(r, cells_long=SPAN, min_axe=0.0):
+    """Step 4: owner {cell: cluster}, and each cluster's stretch (route coordinates) before the repair. min_axe > 0
+    (item 149): each lane cut instead into floor(L / min_axe) runs of equal L, L the length of the lane's line over
+    its own cells, so that every cluster's Axe carries at least min_axe metres of packets (one copy of the clue set
+    at 2.02 km for 400 kB); the ns-3 pass flies at a constant 50 m/s, so no slowing down makes up a short one."""
     owner, span, k = {}, [], 0
     for _, cs, (a, b) in r["lanes"]:
         p = r["pos"]
+        if min_axe:
+            d = np.arange(a, b, 2.0)
+            P = np.c_[np.interp(d, r["s"], r["poly"][:, 0]), np.interp(d, r["s"], r["poly"][:, 1])]
+            mine = set(cs)
+            land = np.cumsum([2.0 * (tuple(h) in mine) for h in cells_at(P)])
+            m = max(1, int(land[-1] // min_axe), math.ceil(len(cs) / CAPL))
+            cut = [a] + [float(d[int(np.searchsorted(land, land[-1] * j / m))]) for j in range(1, m)] + [b]
+            for h in cs:
+                owner[h] = k + min(m - 1, int(np.searchsorted(cut, p[h], side="right")) - 1)
+            span += list(zip(cut[:-1], cut[1:]))
+            k += m
+            continue
         m = max(math.ceil(len(cs) / CAPL), math.ceil((p[cs[-1]] - p[cs[0]]) / (cells_long * W)), 1)
         for j in range(m):
             run = cs[j * len(cs) // m:(j + 1) * len(cs) // m]
@@ -160,8 +177,8 @@ def stage_map(a, W_):
     g = domain(a.clusters, a.seed, a.shape)
     land = set(g["domain"])
     bs = bs_point(land, a.bs)
-    tot, r = best_route(land, bs, a.lane, a.span)
-    owner, span = partition(r, a.span)
+    tot, r = best_route(land, bs, a.lane, a.span, a.minAxe * 1000)
+    owner, span = partition(r, a.span, a.minAxe * 1000)
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
         f.write("q,r,cx,cy,type\n")
@@ -183,7 +200,7 @@ def stage_map(a, W_):
              lanes=np.array([iv for _, _, iv in r["lanes"]]))
     sz = np.bincount(list(owner.values()))
     json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="meander-lane",
-                   lane=a.lane, span=a.span, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
+                   lane=a.lane, span=a.span, minAxe=a.minAxe, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
                    cv=float(sz.std() / sz.mean())), open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {K} clusters {sz.tolist()}, {len(r['lanes'])} lanes, route "
           f"{r['s'][-1] / 1000:.1f} km, with BS {tot / 1000:.1f} km")
@@ -309,6 +326,8 @@ def main():
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--bs", default="south", choices=("south", "end", "side", "centre"))
     ap.add_argument("--span", type=float, default=SPAN, help="clusters at most SPAN cells long along the route")
+    ap.add_argument("--minAxe", type=float, default=0.0,
+                    help="km: cut each lane by length so every cluster flies at least this much over its own cells")
     ap.add_argument("--shape", default="", help="map_gen options for the domain (restructure.domain)")
     ap.add_argument("--work", required=True)
     ap.add_argument("--bin", required=True)

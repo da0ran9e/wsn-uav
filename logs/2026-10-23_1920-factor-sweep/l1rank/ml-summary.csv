@@ -1,0 +1,7 @@
+set,size,method,maps,n,Tstar,ci,p90,Tall,rank,first
+meander,10,P+prog-route-puq-stage-zero-redir,2,200,926.8,86.5,1610.6,14202.2,2.75,0.435
+meander,10,P+prog-route-puq-stage-zero-redir-kt,2,200,956.1,88.7,1606.7,14241.3,2.74,0.43
+meander,10,B4-route-puq-stage-zero-redir-kt,2,200,1005.5,101.8,1777.6,14110.3,3.0,0.45
+meander,11,P+prog-route-puq-stage-zero-redir,1,100,1204.7,182.8,2337.0,13929.7,3.59,0.38
+meander,11,P+prog-route-puq-stage-zero-redir-kt,1,100,1271.1,185.7,2351.3,13970.5,3.67,0.36
+meander,11,B4-route-puq-stage-zero-redir-kt,1,100,1360.9,192.1,2453.5,13826.2,4.08,0.31

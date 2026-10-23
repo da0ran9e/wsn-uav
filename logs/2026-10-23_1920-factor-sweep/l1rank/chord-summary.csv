@@ -1,0 +1,7 @@
+set,size,method,maps,n,Tstar,ci,p90,Tall,rank,first
+chordT,10,P+prog-kin-puq-stage-zero-redir,2,200,904.3,70.7,1537.0,14704.1,2.12,0.475
+chordT,10,P+prog-kin-puq-stage-zero-redir-kt,2,200,936.6,71.9,1576.9,14742.6,2.14,0.48
+chordT,10,B4-kin-puq-stage-zero-redir-kt,2,200,1016.3,95.4,1815.1,14626.0,2.46,0.48
+chordT,11,P+prog-kin-puq-stage-zero-redir,1,100,958.2,113.9,1546.6,14520.8,2.11,0.5
+chordT,11,P+prog-kin-puq-stage-zero-redir-kt,1,100,988.4,116.4,1571.4,14569.2,2.14,0.5
+chordT,11,B4-kin-puq-stage-zero-redir-kt,1,100,1012.4,124.0,1633.0,14457.0,2.3,0.43

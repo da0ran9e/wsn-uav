@@ -8,3 +8,9 @@ MK k4-s20 exit 0 07:36:39
 MK k4-s21 exit 0 07:38:54
 MK k6-s11 exit 0 07:42:11
 MK k6-s13 exit 0 07:45:37
+MK k6-s20 exit 0 07:48:25
+MK k6-s9 exit 0 07:51:50
+MK k8-s1 exit 0 07:55:38
+MK k8-s10 exit 0 07:59:34
+MK k8-s11 exit 0 08:03:33
+MK k8-s8 exit 0 08:08:01

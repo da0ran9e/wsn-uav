@@ -9,7 +9,9 @@ one frame per 10 ms, so a cluster gets one copy of the clue set (CLUE frames) on
 own cells; a cluster short of that is fixed by slowing down over its cells (down to VMIN) and, if that is not enough,
 by circling inside it at VMIN; the extra time adds to the tour. Prints per work: tour at constant 50 m/s, with the
 profile, the fixes and the total, for PHI in PHIS. smooth: every cluster path is first smoothed (1-2-1 passes, ends
-fixed) until its curvature is at most 1.02 / R_TURN, or 400 passes (MEANDER's bends, item 144).
+fixed) until its curvature is at most 1.02 / R_TURN, or 400 passes (MEANDER's bends, item 144). KIND skin / route:
+where one cluster's stretch runs on into the next (mission_policy.seams), its lead-out and the next lead-in are
+not flown.
 """
 import math, sys
 
@@ -17,7 +19,7 @@ import numpy as np
 
 from iter_fig import flown, poses
 from map_gen import cell_at
-from mission_policy import R_TURN, tour
+from mission_policy import R_TURN, seams, tour
 from mission_report import load_map
 
 VMAX, VMIN, ACC, G = 50.0, 25.0, 2.0, 9.80665
@@ -64,12 +66,21 @@ def run(w, kind, smoothed=False):
     M = load_map(w, schemes=(), with_bits=False)
     legs, t_const = tour(M, kind)
     trs = flown(M, legs, kind)
+    seam = seams(M) if kind in ("skin", "route") else {}
+    dirs = [0 if math.dist(l[1], M["cl"][l[0]]["geo"]["path"][0]) < 1e-6 else 1 for l in legs]
+    key = lambda i, j: (legs[i][0], dirs[i], legs[j][0], dirs[j])
     parts, owner = [], []
     for i, l in enumerate(legs):
         parts.append(trs[i]); owner.append(None)
-        p = M["cl"][l[0]]["geo"]["path"]
-        p = smooth(p) if smoothed else p
-        parts.append(p if math.dist(l[1], p[0]) < 1e-6 else p[::-1]); owner.append(l[0])
+        g = M["cl"][l[0]]["geo"]
+        p, part = (g["path"], g["part"]) if dirs[i] == 0 else (g["path"][::-1], g["part"][::-1])
+        keep = np.ones(len(p), bool)   # a seamless junction flies on from core to core: the leads there are dropped
+        if i > 0 and key(i - 1, i) in seam:
+            keep &= ~((part == 0) | (part == 3)) | (np.arange(len(p)) > len(p) // 2)
+        if i + 1 < len(legs) and key(i, i + 1) in seam:
+            keep &= ~((part == 0) | (part == 3)) | (np.arange(len(p)) < len(p) // 2)
+        p = p[keep]
+        parts.append(smooth(p) if smoothed else p); owner.append(l[0])
     parts.append(trs[-1]); owner.append(None)
     seq = [(resample(np.asarray(q, float)), k) for q, k in zip(parts, owner)]
     P = np.vstack([q for q, _ in seq])

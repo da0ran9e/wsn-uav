@@ -129,7 +129,9 @@ def tour(M, kind):
     Lh = {k: l3hat(M["cl"][k]) for k in ks}
     st = lambda k, d: seg[k][0] if d == 0 else seg[k][1]
     en = lambda k, d: seg[k][1] if d == 0 else seg[k][0]
-    if kind in ("latency", "seam", "kin", "skin") or K > 12:
+    if kind == "route":   # meander_lane.py (item 146): the clusters in route order, as kin with seamless junctions
+        order, link = [(k, 0) for k in ks], {**kin_links(M), **seams(M)}
+    elif kind in ("latency", "seam", "kin", "skin") or K > 12:
         # latency (CLAUDE.md §8 item 114): least sum_k n_k leave_k, n_k the critical cells of cluster k, i.e. the
         # mean time a critical cell is left behind; exact Held-Karp up to 12 segments, else tour_heur (as for short
         # and l3first beyond 12 segments). seam (item 116): latency with the seamless junctions of seams();
@@ -139,6 +141,7 @@ def tour(M, kind):
         link = seams(M) if kind == "seam" else kin_links(M) if kind == "kin" else \
             {**kin_links(M), **seams(M)} if kind == "skin" else {}
         order = latency_order(bs, seg, n, link) if n and K <= 12 else order_segments(bs, seg, n, link)
+    if kind == "route" or kind in ("latency", "seam", "kin", "skin") or K > 12:
         legs, t, pos, prev = [], 0.0, bs, None
         for k, d in order:
             t += link.get((*prev, k, d) if prev else (None, None, k, d), math.dist(pos, st(k, d))) / V1

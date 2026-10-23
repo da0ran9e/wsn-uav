@@ -38,10 +38,10 @@ def poses(M, leg):
 
 def flown(M, legs, kind):
     """Team 1's transits as polylines: BS, between consecutive legs, back to the BS."""
-    if kind not in ("kin", "skin"):
+    if kind not in ("kin", "skin", "route"):
         pts = [M["bs"]] + [p for l in legs for p in (l[1], l[2])] + [M["bs"]]
         return [np.array([a, b]) for a, b in zip(pts[0::2], pts[1::2])]
-    seam = seams(M) if kind == "skin" else {}
+    seam = seams(M) if kind in ("skin", "route") else {}
     dirs = [0 if math.dist(l[1], M["cl"][l[0]]["geo"]["path"][0]) < 1e-6 else 1 for l in legs]
     bs, free = M["bs"], [2 * math.pi * i / 72 for i in range(72)]
     out = [np.array(min((path((*bs, h), poses(M, legs[0])[0], R_TURN) for h in free), key=lambda q: q[1])[0])]

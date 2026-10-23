@@ -4,3 +4,13 @@ CT1t k2-s4 exit 0 07:55:23
 CT1t k2-s9 exit 0 07:57:08
 CT1t k4-s2 exit 0 08:07:35
 CT1t k4-s13 exit 0 08:07:41
+CT1t k4-s20 exit 0 08:14:41
+CT1t k4-s21 exit 0 08:15:05
+CT1t k6-s13 exit 0 08:22:56
+CT1t k6-s11 exit 0 08:24:03
+CT1t k6-s20 exit 0 08:31:00
+CT1t k6-s9 exit 0 08:33:04
+CT1t k8-s1 exit 0 08:42:50
+CT1t k8-s10 exit 0 08:45:10
+CT1t k8-s11 exit 0 08:55:39
+CT1t k8-s8 exit 0 08:56:07

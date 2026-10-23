@@ -1545,6 +1545,15 @@ cho tôi xem các hình so sánh trong cùng bản đồ của các thuật toá
 hình cmp k8 s1 layer 2 nói gì
 ```
 
+*143. 2026-10-23 · uav-l2 · câu hỏi nhanh: đoạn nối cong có phạt gia tốc chưa; đoạn bay qua cluster giao đủ dữ liệu chưa; cùng số cluster chưa; bỏ subCH*
+
+```text
+các đoạn nối cong đã có phạt gia tốc chưa
+các đoạn bay qua cluster đã đảm bảo giao đủ dữ liệu chưa 
+đã cùng số lượng cluster chưa 
+trả lời nhanh bỏ qua không bàn đến subCH nữa
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

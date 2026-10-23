@@ -250,6 +250,8 @@ def main():
                     help="critical cells' local test over the cluster's cells, or the real neighbourhood (item 135)")
     ap.add_argument("--windowAt", default="ch", choices=("ch", "crit"),
                     help="the window around the CH, or one around each critical cell (river_export.py; item 120)")
+    ap.add_argument("--axeNear", action="store_true", help="River's Axe also takes packets sent next to the cluster "
+                    "(mission.py --axeNear; item 135)")
     ap.add_argument("--meanderK", action="store_true",
                     help="MEANDER-K (item 118): exactly ceil(cells / 80) clusters, as k-medoids; lane width searched")
     ap.add_argument("--geometry", action="store_true", help="stop after stage 3 (no ns-3 pass or River)")

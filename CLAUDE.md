@@ -1527,6 +1527,12 @@ CLUE 80 %, cho tôi xem hình trước
 cài đặt các baseline, không cần chạy quá nhiều lượt, cho tôi xem bảng so sánh chung nhanh để phán đoán kết quả trước
 ```
 
+*140. 2026-10-23 · uav-l2 · câu hỏi: còn thuật toán đề xuất theo MEANDER thì sao*
+
+```text
+còn thuật toán đề xuất theo meander thì sao
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

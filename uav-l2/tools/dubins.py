@@ -57,6 +57,60 @@ def length(p0, p1, r):
     return best * r
 
 
+def path(p0, p1, r, step=2.0):
+    """Points every <= step m along the shortest of the six words from p0 to p1 (the path length() measures), and its
+    length; for drawing team 1's transits."""
+    dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+    d = math.hypot(dx, dy) / r
+    th = math.atan2(dy, dx)
+    a, b = _mod(p0[2] - th), _mod(p1[2] - th)
+    sa, sb, ca, cb, cab = math.sin(a), math.sin(b), math.cos(a), math.cos(b), math.cos(a - b)
+    words = []
+    tmp = 2 + d * d - 2 * cab + 2 * d * (sa - sb)
+    if tmp >= -1e-9:
+        y = math.atan2(cb - ca, d + sa - sb)
+        words.append(("LSL", _mod(-a + y), math.sqrt(max(tmp, 0.0)), _mod(b - y)))
+    tmp = 2 + d * d - 2 * cab + 2 * d * (sb - sa)
+    if tmp >= -1e-9:
+        y = math.atan2(ca - cb, d - sa + sb)
+        words.append(("RSR", _mod(a - y), math.sqrt(max(tmp, 0.0)), _mod(-b + y)))
+    tmp = -2 + d * d + 2 * cab + 2 * d * (sa + sb)
+    if tmp >= -1e-9:
+        q = math.sqrt(max(tmp, 0.0))
+        y = math.atan2(-ca - cb, d + sa + sb) - math.atan2(-2.0, q)
+        words.append(("LSR", _mod(-a + y), q, _mod(-_mod(b) + y)))
+    tmp = d * d - 2 + 2 * cab - 2 * d * (sa + sb)
+    if tmp >= -1e-9:
+        q = math.sqrt(max(tmp, 0.0))
+        y = math.atan2(ca + cb, d - sa - sb) - math.atan2(2.0, q)
+        words.append(("RSL", _mod(a - y), q, _mod(_mod(b) - y)))
+    tmp = (6 - d * d + 2 * cab + 2 * d * (sa - sb)) / 8
+    if abs(tmp) <= 1 + 1e-9:
+        q = _mod(TAU - math.acos(max(-1.0, min(1.0, tmp))))
+        t = _mod(a - math.atan2(ca - cb, d - sa + sb) + q / 2)
+        words.append(("RLR", t, q, _mod(a - b - t + q)))
+    tmp = (6 - d * d + 2 * cab + 2 * d * (sb - sa)) / 8
+    if abs(tmp) <= 1 + 1e-9:
+        q = _mod(TAU - math.acos(max(-1.0, min(1.0, tmp))))
+        t = _mod(-a - math.atan2(ca - cb, d + sa - sb) + q / 2)
+        words.append(("LRL", t, q, _mod(_mod(b) - a - t + q)))
+    word, *segs = min(words, key=lambda w: sum(w[1:]))
+    x, y, h = p0
+    pts = [(x, y)]
+    for kind, u in zip(word, segs):
+        n = max(1, math.ceil(u * r / step))
+        for _ in range(n):
+            v = u / n
+            if kind == "S":
+                x, y = x + r * v * math.cos(h), y + r * v * math.sin(h)
+            else:
+                sd = 1 if kind == "L" else -1
+                x, y = x + sd * r * (math.sin(h + sd * v) - math.sin(h)), y - sd * r * (math.cos(h + sd * v) - math.cos(h))
+                h += sd * v
+            pts.append((x, y))
+    return pts, sum(segs) * r
+
+
 def path_csc(p0, p1, r, step=2.0):
     """Points every <= step m along the shortest turn-straight-turn word (LSL, RSR, LSR, RSL) from p0 to p1, and its
     length; for SWATH-K's turns between lanes at least 2r apart, where a CSC word is the shortest path."""

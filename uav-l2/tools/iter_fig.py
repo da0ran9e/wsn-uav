@@ -8,6 +8,7 @@ team 1 flies (radius R_TURN; from and to the BS with the best free heading), str
 seamlessly.
 """
 import math
+import os
 import sys
 
 import matplotlib
@@ -54,7 +55,7 @@ def flown(M, legs, kind):
 
 
 def panel(ax, w, kind):
-    M = load_map(w, schemes=("rf",), with_bits=False)
+    M = load_map(w, schemes=("rf",) if os.path.exists(f"{w}/r1-rf-crit.csv") else (), with_bits=False)   # () for --geometry
     for h in M["water"]:
         ax.add_collection(PolyCollection([corners(h)], facecolors="#9cc3e6", edgecolors=SURF, linewidths=.3))
     for k, C in M["cl"].items():

@@ -73,7 +73,7 @@ def stage_map(a, W_):
         cv, a.lane, a.frag, (owner, lane, s, n, _, _) = best
         assert cv < math.inf, "MEANDER-K: no lane width gives connected clusters"
     else:
-        owner, lane, s, n, _, _ = partition_meander(land, a.lane, span=a.span, frag_share=a.frag)
+        owner, lane, s, n, _, _ = partition_meander(land, a.lane, cap=a.cap, span=a.span, frag_share=a.frag)
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
         f.write("q,r,cx,cy,type\n")
@@ -243,6 +243,8 @@ def main():
     ap.add_argument("--banks", default="local", choices=("parallel", "local"))
     ap.add_argument("--partition", default="meander", choices=("meander", "kmedoids"),
                     help="kmedoids: mission.py's compact clusters, each flown along its own spine (item 106)")
+    ap.add_argument("--cap", type=int, default=CAP, help="MEANDER: most cells per cluster (item 145: the SAT optimum, "
+                    "110-190)")
     ap.add_argument("--span", type=float, default=0, help="MEANDER: clusters at most this many cells long along s")
     ap.add_argument("--windowKB", type=float, default=0,
                     help="each cluster needs only this much of D, around the CH (river_export.py)")

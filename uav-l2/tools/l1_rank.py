@@ -49,8 +49,8 @@ Methods (name = base + options):
             BS -> route -> BS; Dubins turns), broadcasting the clue set over and over, one frame per 0.5 m; no River.
             Reception as the pass: a cell holds a frame when one of its nodes does (each node loses it with the
             A2G PER, independently), a clue when it holds every frame of one copy (one realisation per map, seeded
-            by its name). Lanes: the widest of LANES cells with every critical cell holding all clues (else the
-            narrowest). A cell reports when it holds every clue, else after the last frame within 1.5 km, plus its
+            by its name). Lanes: the widest of LANES cells with which every critical cell holds all clues with
+            probability >= 0.9 (what the BS can compute before the flight; else the narrowest). A cell reports when it holds every clue, else after the last frame within 1.5 km, plus its
             in-cell gather (gatherDoneS) and the match; then LoRa and team 2 (team-2 options as B3)
 Writes OUT-draws.csv (map, set, draw, method: Tstar, Tall, rank, dep, starIn, ...), OUT-cells.csv (per critical
 cell: held clue weight river/direct) and OUT-summary.csv.
@@ -160,12 +160,26 @@ def b5_sweep(M, C, seq, crits, res):
         t0 = dubins_free(M["bs"], P, False) / V1
         nf = int(sv[-1] / 0.5)
         F = np.array([np.interp(np.arange(nf) * 0.5, sv, P[:, a]) for a in (0, 1)]).T   # frame positions
-        out = {}
+        lose, near, ok = {}, {}, True
         for x in crits:
             d = np.linalg.norm(F[:, None, :] - nodes[x][None, :, :], axis=2)                # frames x nodes
-            near = d.min(axis=1) < 1500
-            lose = np.where(near[:, None], np.interp(d, grid, pt, right=1.0), 1.0).prod(axis=1)
-            got = rng.random(nf) >= lose
+            near[x] = d.min(axis=1) < 1500
+            lose[x] = np.where(near[x][:, None], np.interp(d, grid, pt, right=1.0), 1.0).prod(axis=1)
+            lg = np.r_[0, np.cumsum(np.log(np.maximum(1 - lose[x], 1e-300)))]           # log P(frame), cumulated
+            pall = 1.0
+            for j in range(len(C)):
+                miss = 1.0
+                for kk in range(nf // Q + 1):
+                    a0, a1 = kk * Q + st[j], kk * Q + en[j]
+                    if a1 <= nf:
+                        miss *= 1 - math.exp(lg[a1] - lg[a0])
+                pall *= 1 - miss
+            ok &= pall >= 0.9
+        if not ok and lane != LANES[-1]:
+            continue
+        out = {}
+        for x in crits:
+            got = rng.random(nf) >= lose[x]
             held, when = np.zeros(len(C), bool), np.full(len(C), np.inf)
             for j in range(len(C)):
                 for kk in range(nf // Q + 1):
@@ -173,11 +187,10 @@ def b5_sweep(M, C, seq, crits, res):
                     if a1 <= nf and got[a0:a1].all():
                         held[j], when[j] = True, t0 + a1 * 0.5 / V1
                         break
-            last = t0 + (np.nonzero(near)[0].max() + 1) * 0.5 / V1 if near.any() else t0
+            last = t0 + (np.nonzero(near[x])[0].max() + 1) * 0.5 / V1 if near[x].any() else t0
             gat = float(res[x[0]]["res"]["rf"][x[1]]["gatherDoneS"])
             out[x] = (held, (float(when.max()) if held.all() else last) + max(gat, 0.0))
-        if all(h.all() for h, _ in out.values()) or lane == LANES[-1]:
-            return out, lane, float(sv[-1])
+        return out, lane, float(sv[-1])
 
 
 def world(name, d, cells, C):

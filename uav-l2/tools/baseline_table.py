@@ -47,7 +47,7 @@ def main():
     ref = data[0][1]
     sizes = ("k2", "k4", "k6", "k8")
     lines = ["| Phương án | T\\* TB | p90 | " + " | ".join(sizes) + " | ΔT\\* so với P\\* (P\\* nhanh hơn) | khung mặt đất / bản đồ |",
-             "|---|" + "---|" * (len(sizes) + 5)]
+             "|---|" + "---|" * (len(sizes) + 4)]
     for label, T, F in data:
         maps = sorted(T)
         allT = [t for m in maps for t in T[m]]

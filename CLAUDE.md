@@ -1508,6 +1508,12 @@ sau khi đã chốt chặt chẽ thì mới bắt đầu chạy các mô phỏng
 phần này cho bạn tự hoạt động và báo cáo cho tôi vào sáng mai, thời gian hoạt động khoảng 5-6 tiếng đồng hồ thoải mái để thử nghiệm
 ```
 
+*137. 2026-10-23 · lớp 2 · câu hỏi: tên CHORD và MEANDER lấy từ đâu*
+
+```text
+những cái tên CHORD hay MEANDER bạn lấy từ đâu
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

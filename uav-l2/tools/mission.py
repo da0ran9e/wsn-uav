@@ -26,7 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from map_gen import cell_at, centre
 from partition import partition
-from restructure import domain, lane_partition
+from restructure import bs_point, domain, lane_partition
 from subch import subch_partition
 from river_plan import load, load_around, plan  # noqa: E402 (subch puts uav-coop2/tools on the path)
 from tour_heur import order_segments
@@ -86,9 +86,7 @@ def stage_map(a, W_):
             for v in nodes:
                 if owner[(v[3], v[4])] == k:
                     f.write(f"{v[1]:.3f},{v[2]:.3f},{v[3]},{v[4]},{v[5]:.6g},{v[6]:.6g},{v[7]:.6g}\n")
-    ys = [centre(h)[1] for h in land]
-    xs = [centre(h)[0] for h in land]
-    bs = ((min(xs) + max(xs)) / 2, min(ys) - 1000.0)
+    bs = bs_point(land, getattr(a, "bs", "south"))
     json.dump(dict(clusters=len(med), cells=len(land), nodes=len(nodes), bs=bs, over=over),
               open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {len(nodes)} nodes, {len(med)} clusters "
@@ -136,7 +134,8 @@ def stage_deploy(a, W_, K):
 
 
 def stage_chord(a, W_, K):
-    """--chordTour FRAC,CLUE (CHORD-T, item 136): the bearings of all clusters re-chosen jointly with team 1's tour
+    """--chordTour FRAC,CLUE (CHORD-T, item 136; CLUE of the --windowKB clue set, item 149): the bearings of all
+    clusters re-chosen jointly with team 1's tour
     (chord_tour.choose); every candidate deployed for real (its Dubins lead-in / lead-out must be feasible) into
     cand/, the chosen ones copied over the cluster's deploy files."""
     if os.path.exists(f"{W_}/chord.json"):
@@ -156,7 +155,7 @@ def stage_chord(a, W_, K):
         top = scan[0][1]
         pick = [(bj["bearing"], bj["inside"])]
         for b, ins in scan:
-            if ins >= frac * top and ins >= clue * math.ceil(400 * 1000 / 99) * 0.5 and \
+            if ins >= frac * top and ins >= clue * math.ceil((a.windowKB or 400) * 1000 / 99) * 0.5 and \
                     all(min(abs(b - p), 180 - abs(b - p)) >= 10 for p, _ in pick) and len(pick) < 6:
                 pick.append((b, ins))
         cands[k], files[k] = [], []
@@ -312,6 +311,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--clusters", type=int, required=True, help="map size: 80 x CLUSTERS cells grown")
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--bs", default="south", choices=("south", "end", "side", "centre"),
+                    help="where the BS is (restructure.bs_point, item 149)")
     ap.add_argument("--shape", default="", help="map_gen options for the domain, e.g. spine=8.8,bend=220 (item 147)")
     ap.add_argument("--work", required=True)
     ap.add_argument("--bin", required=True)

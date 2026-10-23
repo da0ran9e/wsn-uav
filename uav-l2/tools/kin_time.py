@@ -5,7 +5,7 @@
 The whole flight (BS, transits, every cluster's path, back to the BS; the Dubins transits of iter_fig.flown) as one
 polyline. Speed: at most VMAX, at most sqrt(g tan(PHI) / curvature) (curvature from three points 10 m apart), along-track
 acceleration within +-ACC (forward and backward passes, the usual minimum-time profile). Delivery: the UAV broadcasts
-one frame per 10 ms, so a cluster gets one copy of the clue set (CLUE frames) only if it spends CLUE x 10 ms over its
+one frame per 10 ms, so a cluster gets one copy of the clue set (CLUE frames: q_kb of 99 B, 4041 at 400 kB) only if it spends CLUE x 10 ms over its
 own cells; a cluster short of that is fixed by slowing down over its cells (down to VMIN) and, if that is not enough,
 by circling inside it at VMIN; the extra time adds to the tour. Prints per work: tour at constant 50 m/s, with the
 profile, the fixes and the total, for PHI in PHIS. smooth: every cluster path is first smoothed (1-2-1 passes, ends
@@ -23,8 +23,7 @@ from mission_policy import R_TURN, seams, tour
 from mission_report import load_map
 
 VMAX, VMIN, ACC, G = 50.0, 25.0, 2.0, 9.80665
-PHIS = (45, 30)                      # bank: the one that sets R_TURN, and a sustained-turn sensitivity
-CLUE = math.ceil(400 * 1000 / 99)    # frames of one clue set; 10 ms each
+PHIS = (45, 30, 60)                  # bank: the one that sets R_TURN, and two sensitivities (item 149)
 STEP = 10.0
 
 
@@ -62,7 +61,7 @@ def smooth(P):
     return Q
 
 
-def run(w, kind, smoothed=False):
+def run(w, kind, smoothed=False, q_kb=400):
     M = load_map(w, schemes=(), with_bits=False)
     legs, t_const = tour(M, kind)
     trs = flown(M, legs, kind)
@@ -114,7 +113,7 @@ def run(w, kind, smoothed=False):
                 over.setdefault(k, [0.0, 0.0])
                 over[k][0] += dt[i]
                 over[k][1] += np.linalg.norm(P[i + 1] - P[i])
-        need = CLUE * 0.01
+        need = math.ceil(q_kb * 1000 / 99) * 0.01   # one copy of a q_kb clue set, 99 B frames
         fix, how = 0.0, {}
         for k in sorted(M["cl"]):
             t, L = over.get(k, (0.0, 0.0))

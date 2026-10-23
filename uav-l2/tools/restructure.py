@@ -48,6 +48,37 @@ CAP, V1 = 80, 50.0
 ORIG = {2: 3, 4: 2, 6: 4, 8: 4}   # clusters -> seed of the first four mission maps
 
 
+def bs_point(land, where="south"):
+    """The BS (CLAUDE.md §8 item 149): south, 1 km below the land's bounding box (the default so far); end, 1 km
+    beyond the southern end of the land's spine (meander.coords); side, 1 km out from the land beside the spine's
+    midpoint, on the nearer side; centre, the spine's middle cell. Out from the land: past the farthest land cell
+    along the ray (lakes and bays in between do not count)."""
+    if where == "south":
+        xs, ys = [centre(h)[0] for h in land], [centre(h)[1] for h in land]
+        return ((min(xs) + max(xs)) / 2, min(ys) - 1000.0)
+    from meander import coords
+    _, spine, _, _ = coords(land)
+    P = np.array([centre(h) for h in spine])
+    mid = P[len(P) // 2]
+    if where == "centre":
+        return tuple(float(x) for x in mid)
+
+    def out(o, u):   # 1 km past the farthest land cell along the ray o + t u
+        t = np.arange(0, 12000, 25.0)
+        inl = [cell_at(*(o + x * u)) in land for x in t]
+        far = max((x for x, i in zip(t, inl) if i), default=0.0)
+        return o + (far + 1000.0) * u, far
+    if where == "end":
+        a, b = (P[0], P[min(5, len(P) - 1)]) if P[0][1] <= P[-1][1] else (P[-1], P[max(len(P) - 6, 0)])
+        u = (a - b) / np.linalg.norm(a - b)
+        return tuple(float(x) for x in out(a, u)[0])
+    i = len(P) // 2
+    t = P[min(i + 3, len(P) - 1)] - P[max(i - 3, 0)]
+    nv = np.array([-t[1], t[0]]) / np.linalg.norm(t)
+    (p1, f1), (p2, f2) = out(mid, nv), out(mid, -nv)
+    return tuple(float(x) for x in (p1 if f1 <= f2 else p2))
+
+
 def domain(K, seed, shape=""):
     """shape: map_gen options as "spine=8.8,bend=220,width=1" (CLAUDE.md §8 item 147), on top of the defaults."""
     p = argparse.ArgumentParser()

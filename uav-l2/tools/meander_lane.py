@@ -11,8 +11,8 @@ curvilinear coordinates (meander.coords), and each cluster's stretch is bent lig
   3  route: the lanes in order of n, alternately both ways, each joined to the next by the shortest Dubins path of
      radius RHO; the offset, the first lane's direction along s, and which end the BS starts from: the fewest clusters (step 4), then the shortest
      BS -> route -> BS
-  4  clusters: each lane's cells in route order cut into max(ceil(cells / CAPL), ceil(length / (SPAN W))) equal
-     consecutive runs (CAPL 190, SPAN 14: the saturation optimum of SAT-vi.md), repaired into connected clusters
+  4  clusters: each lane's cells in route order cut into max(ceil(cells / CAPL), ceil(length / (span W))) equal
+     consecutive runs (CAPL 190, span --span, default SPAN 14: the saturation optimum of SAT-vi.md), repaired into connected clusters
      (a run's smaller pieces join the touching cluster they share most edges with); the natural cluster count
   5  deploy: uav-coop-deploy, the CH the strongest node under the cluster's stretch (swath_mission.stage_deploy)
   6  bend, one lane line at a time (so the clusters along it still join seamlessly): every critical cell
@@ -33,7 +33,7 @@ from meander import coords
 from meander_mission import dense
 from mission import domain_scores, stage_runs, stage_tour
 from partition import pieces
-from restructure import domain, touching
+from restructure import bs_point, domain, touching
 from swath import RHO, cells_at, heading
 from swath_mission import stage_deploy
 import dubins
@@ -113,7 +113,7 @@ def reverse(r):
                 lanes=[(i, cs[::-1], (Ln - b, Ln - a)) for i, cs, (a, b) in r["lanes"][::-1]])
 
 
-def best_route(land, bs, L):
+def best_route(land, bs, L, span=SPAN):
     out = []
     for off, flip in ((o, f) for o in (0.0, 1 / 3, 2 / 3) for f in (0, 1)):
         r = route(land, L, off, flip)
@@ -121,16 +121,16 @@ def best_route(land, bs, L):
             P = x["poly"]
             tot = x["s"][-1] + dubins.free_start(bs, (*P[0], heading(P, 0)), RHO) + \
                 dubins.free_end((*P[-1], heading(P, len(P) - 1, True)), bs, RHO)
-            out.append((len(partition(x)[1]), tot, x))
+            out.append((len(partition(x, span)[1]), tot, x))
     return min(out, key=lambda t: t[:2])[1:]
 
 
-def partition(r):
+def partition(r, cells_long=SPAN):
     """Step 4: owner {cell: cluster}, and each cluster's stretch (route coordinates) before the repair."""
     owner, span, k = {}, [], 0
     for _, cs, (a, b) in r["lanes"]:
         p = r["pos"]
-        m = max(math.ceil(len(cs) / CAPL), math.ceil((p[cs[-1]] - p[cs[0]]) / (SPAN * W)), 1)
+        m = max(math.ceil(len(cs) / CAPL), math.ceil((p[cs[-1]] - p[cs[0]]) / (cells_long * W)), 1)
         for j in range(m):
             run = cs[j * len(cs) // m:(j + 1) * len(cs) // m]
             for h in run:
@@ -159,10 +159,9 @@ def stage_map(a, W_):
         return
     g = domain(a.clusters, a.seed, a.shape)
     land = set(g["domain"])
-    xs, ys = [centre(h)[0] for h in land], [centre(h)[1] for h in land]
-    bs = ((min(xs) + max(xs)) / 2, min(ys) - 1000.0)
-    tot, r = best_route(land, bs, a.lane)
-    owner, span = partition(r)
+    bs = bs_point(land, a.bs)
+    tot, r = best_route(land, bs, a.lane, a.span)
+    owner, span = partition(r, a.span)
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
         f.write("q,r,cx,cy,type\n")
@@ -184,7 +183,7 @@ def stage_map(a, W_):
              lanes=np.array([iv for _, _, iv in r["lanes"]]))
     sz = np.bincount(list(owner.values()))
     json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="meander-lane",
-                   lane=a.lane, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
+                   lane=a.lane, span=a.span, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
                    cv=float(sz.std() / sz.mean())), open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {K} clusters {sz.tolist()}, {len(r['lanes'])} lanes, route "
           f"{r['s'][-1] / 1000:.1f} km, with BS {tot / 1000:.1f} km")
@@ -308,6 +307,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--clusters", type=int, required=True, help="map size: 80 x CLUSTERS cells grown")
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--bs", default="south", choices=("south", "end", "side", "centre"))
+    ap.add_argument("--span", type=float, default=SPAN, help="clusters at most SPAN cells long along the route")
     ap.add_argument("--shape", default="", help="map_gen options for the domain (restructure.domain)")
     ap.add_argument("--work", required=True)
     ap.add_argument("--bin", required=True)

@@ -1533,6 +1533,12 @@ cài đặt các baseline, không cần chạy quá nhiều lượt, cho tôi xe
 còn thuật toán đề xuất theo meander thì sao
 ```
 
+*141. 2026-10-23 · uav-l2 · xem hình so sánh các thuật toán trên cùng một bản đồ*
+
+```text
+cho tôi xem các hình so sánh trong cùng bản đồ của các thuật toán
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

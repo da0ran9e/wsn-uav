@@ -1570,6 +1570,12 @@ test thử chord và meander bằng python nếu có thể
 cài đặt nhanh cho tôi xem 2 hình 2 thuật toán này kèm số đo thời gian
 ```
 
+*146. 2026-10-23 · uav-l2 · đính chính MEANDER: dựng theo luồng với đường bay kiểu luống, rồi uốn nhẹ để bám critical cell*
+
+```text
+tôi nhìn hình thì nghi ngờ bạn đã hiểu sai về meander, meander thực tế được dựng theo lane với các đường bay kiểu luống rồi uốn nhẹ để bám critical cells
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

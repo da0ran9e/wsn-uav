@@ -10,3 +10,4 @@ SK k6-s11 exit 0 07:19:55
 SK k6-s13 exit 0 07:22:31
 SK k6-s20 exit 0 07:24:10
 SK k6-s9 exit 0 07:25:56
+SK k8-s10 exit 0 07:33:50

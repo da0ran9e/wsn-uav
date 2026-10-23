@@ -1,0 +1,22 @@
+# MK-k4-s13
+
+- Bắt đầu: 2026-10-23 07:30:35, chạy 118 s, mã thoát 0
+- Thư mục: `/home/user/wsn-uav/uav-l2`
+
+**Lệnh**
+
+```bash
+python3 tools/meander_mission.py --clusters 4 --seed 13 --work /tmp/claude-0/-home-user-wsn-uav/fd83db84-4832-5a0e-be6a-d1201f4d6a60/scratchpad/MK16/k4-s13 --bin /tmp/claude-0/-home-user-wsn-uav/fd83db84-4832-5a0e-be6a-d1201f4d6a60/scratchpad/BIN --jobs 2 --meanderK --windowKB 400 --windowAt crit --critRing domain --axeNear
+```
+
+**Kết quả**
+
+```text
+map: 312 land cells, 6617 nodes, 4 clusters [80, 80, 80, 72], BS 476,-3100
+curves: C1 3.62 km, CH 68 m off, k*rho 0.99, C2 4.50 km, CH 12 m off, k*rho 0.91, C3 2.92 km, CH 4 m off, k*rho 0.94, C4 2.11 km, CH 156 m off, k*rho 0.89
+tour: 21.2 km, 423 s, order [(2, 1), (3, 0), (4, 1), (1, 0)]
+  run 1 river-full: D 8132, 8/8 critical done, sim 11.8 s, wall 7 s, 15090 hops, 437 MAC give-ups, 0/146 gateway pairs with q < 0.5
+  run 1 river-full: D 5332, 3/3 critical done, sim 6.1 s, wall 3 s, 4739 hops, 191 MAC give-ups, 0/141 gateway pairs with q < 0.5
+  run 1 river-full: D 10015, 7/7 critical done, sim 17.0 s, wall 14 s, 24936 hops, 885 MAC give-ups, 0/140 gateway pairs with q < 0.5
+  run 1 river-full: D 5137, 4/4 critical done, sim 14.1 s, wall 5 s, 10188 hops, 332 MAC give-ups, 0/141 gateway pairs with q < 0.5
+```

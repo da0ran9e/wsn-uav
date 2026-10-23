@@ -50,7 +50,8 @@ Kết quả: `uav-l2/docs/L1-MISSION2-vi.md`.
 | **B3‑r** | cánh quay | bộ manh mối (400 kB) | hover multicast theo nhóm r → đối sánh → LoRa → đội 2 như P\* | cánh bằng + River vs cánh quay hover |
 | **B6** | cánh quay | bộ manh mối | hover từng critical cell · unicast → LoRa → đội 2 như P\* | như B3, nhóm cỡ 1 |
 | **B7** | — | — | đội 2 biết trước c\*, bay thẳng lúc t = 0, xác minh | cận dưới |
-| B5 | cánh bằng quét luống | | chưa làm (cần River cho nhiều luống) | đường bay (lớp 2) |
+| **B8‑r** | cánh bằng (đội 1) | bộ manh mối | bay thẳng tới tâm từng nhóm r (như B3), **bay vòng** bán kính 255 m quanh tâm, multicast tới khi node kém nhất đủ (fountain lý tưởng, PER trung bình trên vòng) → LoRa → đội 2 như P\* · không River | cánh bằng tự phục vụ thay cho River |
+| **B5** | cánh bằng quét luống | bộ manh mối, phát lặp liên tục | đường luống của SWATH phủ cả miền (Dubins ở đầu luống), một khung mỗi 0,5 m · thu như pass: cell có khung khi một node của nó có (PER A2G độc lập từng node), có manh mối khi đủ mọi khung của một bản · luống rộng nhất trong 12…3 cell mà mọi critical cell đủ 12 manh mối · không River · báo khi đủ (hoặc sau khung cuối trong 1,5 km) + gom nội cell + đối sánh → LoRa → đội 2 như P\* | đường bay phủ kín thay cho hợp tác |
 
 ## Ablation lớp 1 (ngoài nhiệm vụ, `paper/L1-MODEL-vi.md` §4)
 - đủ / thiếu manh mối · nửa luồng xen kẽ / xếp nhóm · thiếu mặt · chỉ bộ phận · trọng số đều
@@ -58,8 +59,8 @@ Kết quả: `uav-l2/docs/L1-MISSION2-vi.md`.
 
 ## Ablation lớp 3 (ns‑3, trong cluster; giữ từ trước)
 - kéo thẳng · Circle chuẩn bị sẵn / theo yêu cầu / động · số màu kênh · độ rộng River · số critical cell · chọn gateway
+- **Trickle** (mục 134, 139; `coop2-river.cc --scheme=trickle`): phổ biến kiểu Deluge, không kế hoạch, trên **cùng các cell, cùng lưới kênh và gateway** với River. Đối tượng = mọi gói mà một critical cell nào đó cần, chia trang 64 gói; mỗi cell gom về CL phần node của nó có; CL chạy bộ định thời Trickle (RFC 6206; Imin 1 s, Imax 64 s, k = 1): giữa nửa sau mỗi khoảng, nếu chưa nghe đủ k quảng bá trùng khớp thì gửi mỗi cell kề danh sách trang đã đủ; cell nghe thấy trang mình thiếu thì xin hàng xóm đó phần còn thiếu của trang thấp nhất (một yêu cầu một lúc, hỏi lại sau hạn chờ); cell thấy hàng xóm thiếu trang của mình hoặc vừa đủ một trang thì đặt lại khoảng về Imin. Ở cấp nhiệm vụ: phương án `Pt+prog`.
 
 ## Còn thiếu / cần chốt
-- B5 (quét luống)
 - tham số lớp 1 cần neo vào số đo thật (trước hết D), kích thước tệp lớn
 - N: 10 bản đồ mỗi cỡ, dưới quy tắc N ≥ 120

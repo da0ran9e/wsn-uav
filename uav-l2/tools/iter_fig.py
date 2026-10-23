@@ -47,7 +47,7 @@ def flown(M, legs, kind):
     out = [np.array(min((path((*bs, h), poses(M, legs[0])[0], R_TURN) for h in free), key=lambda q: q[1])[0])]
     for i in range(1, len(legs)):
         a, b = poses(M, legs[i - 1])[1], poses(M, legs[i])[0]
-        out.append(np.array([a[:2], b[:2]]) if (legs[i - 1][0], dirs[i - 1], legs[i][0], dirs[i]) in seam
+        out.append(np.empty((0, 2)) if (legs[i - 1][0], dirs[i - 1], legs[i][0], dirs[i]) in seam   # flown on: none
                    else np.array(path(a, b, R_TURN)[0]))
     end = poses(M, legs[-1])[1]
     out.append(np.array(min((path(end, (*bs, h), R_TURN) for h in free), key=lambda q: q[1])[0]))

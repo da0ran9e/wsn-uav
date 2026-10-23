@@ -121,7 +121,19 @@ def run(w, kind, smoothed=False, q_kb=400):
                 continue
             fix += need - t
             how[k] = "slow" if L / VMIN >= need else "circle"
-        out[phi] = dict(profile=float(dt.sum()), fix=fix, how=how, over={k: round(v[0], 1) for k, v in over.items()})
+        # when team 1 leaves each cluster (the end of its path flown, lead-out included): the profile's clock plus
+        # every delivery fix so far, its own included (l1_rank -kt, item 149)
+        tc, last = np.r_[0, np.cumsum(dt)], {}
+        for i, k in enumerate(tag):
+            if k >= 0:
+                last[k] = i
+        leave, add = {}, 0.0
+        for l in legs:
+            t, _ = over.get(l[0], (0.0, 0.0))
+            add += max(0.0, need - t)
+            leave[l[0]] = float(tc[last[l[0]]]) + add
+        out[phi] = dict(profile=float(dt.sum()), fix=fix, how=how, over={k: round(v[0], 1) for k, v in over.items()},
+                        leave=leave)
     return M, out
 
 

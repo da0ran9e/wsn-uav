@@ -1,0 +1,26 @@
+# ml-K8-spine10-width0.7-bend120-bscentre-span14-q400-s5
+
+- Bắt đầu: 2026-10-23 19:22:51, chạy 8 s, mã thoát 0
+- Thư mục: `/home/user/wsn-uav`
+
+**Lệnh**
+
+```bash
+python3 uav-l2/tools/meander_lane.py --clusters 8 --seed 5 --shape spine=10,bend=120,width=0.7 --bs centre --span 14 --lane 8 --work /tmp/claude-0/-home-user-wsn-uav/fd83db84-4832-5a0e-be6a-d1201f4d6a60/scratchpad/SW/K8-spine10-width0.7-bend120-bscentre-span14-q400-s5/ml --bin /tmp/claude-0/-home-user-wsn-uav/fd83db84-4832-5a0e-be6a-d1201f4d6a60/scratchpad/BIN --geometry
+```
+
+**Kết quả**
+
+```text
+map: 853 land cells, 10 clusters [93, 93, 93, 93, 93, 77, 78, 77, 78, 78], 2 lanes, route 22.7 km, with BS 32.7 km
+C1: 2.02 km, 9 critical, beyond the River half width 5 -> 5, mean distance 411 -> 393 m, shift <= 146 m, k*rho 1.02
+C2: 1.78 km, 8 critical, beyond the River half width 5 -> 6, mean distance 397 -> 389 m, shift <= 101 m, k*rho 1.02
+C3: 1.75 km, 7 critical, beyond the River half width 5 -> 3, mean distance 370 -> 358 m, shift <= 104 m, k*rho 1.02
+C4: 2.32 km, 5 critical, beyond the River half width 1 -> 2, mean distance 248 -> 265 m, shift <= 127 m, k*rho 1.02
+C5: 2.53 km, 5 critical, beyond the River half width 3 -> 3, mean distance 376 -> 368 m, shift <= 81 m, k*rho 1.02
+C6: 2.52 km, 6 critical, beyond the River half width 2 -> 1, mean distance 236 -> 186 m, shift <= 142 m, k*rho 1.00
+C7: 1.44 km, 5 critical, beyond the River half width 3 -> 2, mean distance 361 -> 294 m, shift <= 236 m, k*rho 1.00
+C8: 1.58 km, 5 critical, beyond the River half width 2 -> 2, mean distance 330 -> 318 m, shift <= 165 m, k*rho 1.00
+C9: 2.50 km, 4 critical, beyond the River half width 0 -> 0, mean distance 65 -> 96 m, shift <= 73 m, k*rho 1.00
+C10: 2.72 km, 5 critical, beyond the River half width 2 -> 2, mean distance 230 -> 170 m, shift <= 124 m, k*rho 1.00
+```

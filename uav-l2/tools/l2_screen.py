@@ -22,7 +22,7 @@ def row(label, w, kind, q=400):
                   for C in M["cl"].values() for h in C["P"]["crit"]])
     t = [f"{o[p]['profile'] + o[p]['fix']:.0f} ({len(o[p]['how'])})" for p in kin_time.PHIS]
     q = o["parts"]
-    return (f"| {label} | {len(M['cl'])} | {M['m']['cells']} | {o['const']:.0f} | {t[0]} | {t[1]} | "
+    return (f"| {label} | {len(M['cl'])} | {M['m']['cells']} | {o['const']:.0f} | {t[0]} | {t[1]} | {t[2]} | "
             + " | ".join(f"{q[x] / 1000:.1f}" for x in ("core", "lead", "transit", "bs"))
             + f" | {len(d)} | {d.mean():.0f} | {np.percentile(d, 90):.0f} | {(d > 2 * OMEGA).sum()} |")
 

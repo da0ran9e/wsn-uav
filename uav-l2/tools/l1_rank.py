@@ -33,7 +33,10 @@ Methods (name = base + options):
             leaves with team 1, at t = 0, and stages towards the critical cells' centre until reports come), -pu,
             -puh, -puq, -put, -stage, -short / -latency / -seam (team 1's tour; default l3first; seam = latency
             with seamless junctions, mission_policy.seams;
-            kin = latency with Dubins transits, mission_policy.kin_links)
+            kin = latency with Dubins transits, mission_policy.kin_links; skin = kin, seamless where a line runs on
+            into the next; route = meander_lane's clusters in route order, as skin)
+            -kt (CLAUDE.md §8 item 149): team 1's leave times from kin_time's speed profile at 45 degree bank with
+            the delivery fixes, instead of a constant 50 m/s
             -redir (team 2 may change its target in flight when a report comes; P, B4, P+prog)
             P+prog only: -allclues (upper bound: the River report holds all 12 clues, as if every Axe were long
             enough for the clue set)
@@ -60,6 +63,7 @@ from multiprocessing import Pool
 
 import numpy as np
 
+import kin_time
 import l1_model as L
 from l1_mission import match_time
 from mission_baselines import BC_FRAME, BIG, SETTLE, UC_FRAME, frames, groups, per, tsp_order
@@ -344,7 +348,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             base = base.replace("Pd", "P").replace("Pt", "P")
             order = "grouped" if "grouped" in opts else "interleaved"
             wC = Cq if "equal" in opts else C
-            tk = next((o for o in opts if o in ("short", "latency", "seam", "kin", "skin")), "l3first")
+            tk = next((o for o in opts if o in ("short", "latency", "seam", "kin", "skin", "route")), "l3first")
+            tk += "/kt" if "kt" in opts else ""
             if base == "P+prog":
                 ad, ar = ready("direct", tk), ready("river", tk, sch)
                 pd_, pr_ = posts("direct", order, wC), posts("full" if "allclues" in opts else "river", order, wC)
@@ -439,8 +444,12 @@ def one_work(job):
     M["name"] = mapname(w)
     M["windowAt"] = "crit" if any(l.startswith("NEED") for k in range(1, K + 1) for l in open(f"{w}/plan{k}.txt")) \
         else "ch"
-    kinds = {o for m in methods for o in m.split("-") if o in ("short", "latency", "seam", "kin", "skin")} | {"l3first"}
+    kinds = {o for m in methods for o in m.split("-") if o in ("short", "latency", "seam", "kin", "skin", "route")} | {"l3first"}
     tours = {k: tour(M, k) for k in kinds}
+    for k in {o for m in methods if "kt" in m.split("-") for o in m.split("-") if o in kinds}:   # -kt (item 149)
+        _, o = kin_time.run(w, k)
+        legs = tours[k][0]
+        tours[k + "/kt"] = ([(*l[:4], o[45]["leave"][l[0]]) for l in legs], o[45]["profile"] + o[45]["fix"])
     hold = holdings(M, C, seqs)
     if any(m.split("-")[0] == "B5" for m in methods):
         crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
@@ -454,7 +463,8 @@ def one_work(job):
         phase = {k: float(prng.uniform(0, GAP)) for k in sorted(M["cl"])}
         out, rows, nc = missions(M, tours, hold, d, phase, C, Cq, methods)
         for meth, (Ts, Ta, rank, dep, sin) in out.items():
-            tk = next((o for o in meth.split("-") if o in ("short", "latency", "seam", "kin", "skin")), "l3first")
+            tk = next((o for o in meth.split("-") if o in ("short", "latency", "seam", "kin", "skin", "route")), "l3first")
+            tk += "/kt" if "kt" in meth.split("-") else ""
             draws.append(dict(map=M["name"], size=len(M["cl"]), set=sname, draw=d, method=meth, crits=nc,
                               team1=round(tours[tk][1], 1), Tstar=round(Ts, 1), Tall=round(Ta, 1), rank=rank,
                               dep=round(dep, 1), starIn=round(sin, 1)))

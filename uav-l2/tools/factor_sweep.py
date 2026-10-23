@@ -7,7 +7,7 @@ number of clusters, geometry only (CLAUDE.md §8 item 149).
 Base: the band of item 147 (8 x 80 cells grown along a 10 km spine bent 120 degrees, width 0.7 km), BS south,
 MEANDER lanes 8 cells and clusters at most SPAN 14 cells long, a 400 kB clue set, 45 degree bank. Each factor moves
 alone; the other ones stay at the base. Seeds: the first SEEDS seeds whose land is one piece (partition.py's
-k-medoids needs connected land).
+k-medoids needs connected land) and whose nodes uav-coop-deploy accepts (seeds()).
   size    80 K cells, K 4 6 8 12 16; spine and width scaled by sqrt(K / 8) (the same shape, larger)
   aspect  spine / width 5 / 1.4, 7 / 1.0, 10 / 0.7, 14 / 0.5 km (about the same area), and the compact domain
           without a spine (restructure.domain's default, as the 16 campaign maps)
@@ -47,9 +47,12 @@ def name(c):
 
 
 def seeds(c):
+    """Also skips a seed with a node whose observation or computing score rounds to 1 in the 6 digits mission.py
+    writes (uav-coop-deploy checks 0 <= v < 1)."""
     out, s = [], 1
     while len(out) < SEEDS:
-        if len(pieces(list(domain(c["K"], s, shape(c))["domain"]))) == 1:
+        g = domain(c["K"], s, shape(c))
+        if len(pieces(list(g["domain"]))) == 1 and all(float(f"{x:.6g}") < 1 for v in g["nodes"] for x in v[5:7]):
             out.append(s)
         s += 1
     return out

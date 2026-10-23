@@ -1521,6 +1521,12 @@ tiếp tục đi,
 CLUE 80 %, cho tôi xem hình trước
 ```
 
+*139. 2026-10-23 · uav-l2 · cài đặt các baseline, chạy ít lượt, bảng so sánh chung nhanh để phán đoán trước*
+
+```text
+cài đặt các baseline, không cần chạy quá nhiều lượt, cho tôi xem bảng so sánh chung nhanh để phán đoán kết quả trước
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

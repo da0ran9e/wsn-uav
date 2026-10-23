@@ -27,7 +27,8 @@ named <map> (k4-s1, ...) or k<K>. Per map and draw (paired: the same draw on the
               stage    while waiting it flies towards the P(c*)-weighted centre of the cells not visited yet
 Methods (name = base + options):
   P         River reports;  B4  direct reports only (no cooperation);  P+prog  the direct report first, the River
-            report when it comes (both through the CH's LoRa)
+            report when it comes (both through the CH's LoRa); Pd, Pd+prog / Pt, Pt+prog  the same with the
+            direct-pull (r*-d) / Trickle (r*-t, CLAUDE.md §8 item 139) ns-3 runs in place of River's
   options   -grouped (broadcast order by aspect), -equal (no importance: every clue weight 1), -wait, -zero (team 2
             leaves with team 1, at t = 0, and stages towards the critical cells' centre until reports come), -pu,
             -puh, -puq, -put, -stage, -short / -latency / -seam (team 1's tour; default l3first; seam = latency
@@ -39,7 +40,18 @@ Methods (name = base + options):
   B1 (no phase 1: TSP over every critical cell with the large file), B2-r (groups, multicast large file), B3-r
   (rotary multicast of the clue set to groups, then LoRa, team 2), B6 (rotary unicast of the clue set to each
   critical cell, then LoRa, team 2), B7 (oracle: straight to c*); B3 and B6 take the team-2 options (-pu..., -stage,
-  -zero)
+  -zero, -redir)
+  B8-r      (CLAUDE.md §8 item 134) the fixed wing of team 1 serves the same groups as B3-r itself, no River: it
+            flies to each group's hover point (straight, V1) and circles it at R_TURN, multicasting the clue set
+            until the group's worst receiver has it (ideal fountain code at the mean PER over the circle, as B3);
+            then LoRa and team 2 (team-2 options as B3)
+  B5        (item 134) the fixed wing sweeps the whole land on SWATH's serpentine (swath.route, the shortest
+            BS -> route -> BS; Dubins turns), broadcasting the clue set over and over, one frame per 0.5 m; no River.
+            Reception as the pass: a cell holds a frame when one of its nodes does (each node loses it with the
+            A2G PER, independently), a clue when it holds every frame of one copy (one realisation per map, seeded
+            by its name). Lanes: the widest of LANES cells with every critical cell holding all clues (else the
+            narrowest). A cell reports when it holds every clue, else after the last frame within 1.5 km, plus its
+            in-cell gather (gatherDoneS) and the match; then LoRa and team 2 (team-2 options as B3)
 Writes OUT-draws.csv (map, set, draw, method: Tstar, Tall, rank, dep, starIn, ...), OUT-cells.csv (per critical
 cell: held clue weight river/direct) and OUT-summary.csv.
 """
@@ -51,7 +63,8 @@ import numpy as np
 import l1_model as L
 from l1_mission import match_time
 from mission_baselines import BC_FRAME, BIG, SETTLE, UC_FRAME, frames, groups, per, tsp_order
-from mission_policy import AIR, GAP, HOP, tour
+from mission_policy import AIR, GAP, HOP, R_TURN, V1, tour
+import swath
 from mission_report import load_map
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
@@ -109,6 +122,62 @@ def holdings(M, C, seqs):
                 res[name] = (riv | dire, dire)
             out[(k, h)] = res
     return out
+
+
+LANES = (12, 11, 10, 9, 8, 7, 6, 5, 4, 3)   # B5 lane widths tried, cells, widest first
+
+
+def orbit_per(c, x, n=72):
+    """Mean A2G PER at ground point x from a UAV circling c at R_TURN."""
+    return float(np.mean([per(math.dist(x, (c[0] + R_TURN * math.cos(2 * math.pi * i / n),
+                                             c[1] + R_TURN * math.sin(2 * math.pi * i / n)))) for i in range(n)]))
+
+
+def dubins_free(bs, P, back):
+    """Shortest Dubins path from the BS (any heading) into the polyline's start, or (back) from its end to the BS."""
+    if back:
+        v = P[-1] - P[-6]
+        return swath.dubins.free_end((*P[-1], math.atan2(v[1], v[0])), bs, swath.RHO)
+    v = P[5] - P[0]
+    return swath.dubins.free_start(bs, (*P[0], math.atan2(v[1], v[0])), swath.RHO)
+
+
+def b5_sweep(M, C, seq, crits, res):
+    """B5 (item 134): ({(k, h): (held clue mask, time the cell reports at its CL)}, lane width, route metres)."""
+    st, en, Q = L.layout(C, seq)
+    land = {h for cl in M["cl"].values() for h in cl["geo"]["cells"]}
+    nodes = {x: np.array([(float(n["x"]), float(n["y"])) for n in M["cl"][x[0]]["geo"]["nodes"]
+                          if (int(n["q"]), int(n["r"])) == x[1]]) for x in crits}
+    grid = np.arange(0, 3001.0)
+    pt = np.array([per(g) for g in grid])
+    rng = np.random.default_rng(int.from_bytes(hashlib.sha256(f"B5/{M['name']}".encode()).digest()[:8], "little"))
+    for lane in LANES:
+        _, _, _, r = swath.routes(land, M["bs"], lane)[0]
+        P, sv = r["poly"], r["s"]
+        if dubins_free(M["bs"], P[::-1], False) + dubins_free(M["bs"], P, True) < \
+                dubins_free(M["bs"], P, False) + dubins_free(M["bs"], P[::-1], True):
+            P, sv = P[::-1], sv[-1] - sv[::-1]
+        t0 = dubins_free(M["bs"], P, False) / V1
+        nf = int(sv[-1] / 0.5)
+        F = np.array([np.interp(np.arange(nf) * 0.5, sv, P[:, a]) for a in (0, 1)]).T   # frame positions
+        out = {}
+        for x in crits:
+            d = np.linalg.norm(F[:, None, :] - nodes[x][None, :, :], axis=2)                # frames x nodes
+            near = d.min(axis=1) < 1500
+            lose = np.where(near[:, None], np.interp(d, grid, pt, right=1.0), 1.0).prod(axis=1)
+            got = rng.random(nf) >= lose
+            held, when = np.zeros(len(C), bool), np.full(len(C), np.inf)
+            for j in range(len(C)):
+                for kk in range(nf // Q + 1):
+                    a0, a1 = kk * Q + st[j], kk * Q + en[j]
+                    if a1 <= nf and got[a0:a1].all():
+                        held[j], when[j] = True, t0 + a1 * 0.5 / V1
+                        break
+            last = t0 + (np.nonzero(near)[0].max() + 1) * 0.5 / V1 if near.any() else t0
+            gat = float(res[x[0]]["res"]["rf"][x[1]]["gatherDoneS"])
+            out[x] = (held, (float(when.max()) if held.all() else last) + max(gat, 0.0))
+        if all(h.all() for h, _ in out.values()) or lane == LANES[-1]:
+            return out, lane, float(sv[-1])
 
 
 def world(name, d, cells, C):
@@ -257,9 +326,9 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
     light = sum(math.ceil(c["kB"] * 1000 / 99) for c in C)
     for meth in methods:
         base, *opts = meth.split("-")
-        if base in ("P", "B4", "P+prog", "Pd", "Pd+prog"):
-            sch = "d" if base.startswith("Pd") else "rf"
-            base = base.replace("Pd", "P")
+        if base in ("P", "B4", "P+prog", "Pd", "Pd+prog", "Pt", "Pt+prog"):
+            sch = "d" if base.startswith("Pd") else "t" if base.startswith("Pt") else "rf"
+            base = base.replace("Pd", "P").replace("Pt", "P")
             order = "grouped" if "grouped" in opts else "interleaved"
             wC = Cq if "equal" in opts else C
             tk = next((o for o in opts if o in ("short", "latency", "seam", "kin", "skin")), "l3first")
@@ -295,7 +364,31 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
                 a_, p_ = lora(M, rd, phase), posts("full", "", C)
                 dep, rule, stg, beta = policy(opts)
                 out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg,
-                                  beta=beta)
+                                  beta=beta, redirect="redir" in opts)
+        elif base == "B8":
+            t, p, rd = 0.0, bs, {}
+            G = groups(pos, int(opts[0]))
+            for i in tsp_order(bs, [g[0] for g in G]):
+                hp, mem = G[i]
+                t += math.dist(p, hp) / V1 + light * BC_FRAME / (1 - max(orbit_per(hp, pos[b]) for b in mem))
+                for b in mem:
+                    rd[b] = t + tm
+                p = hp
+            a_, p_ = lora(M, rd, phase), posts("full", "", C)
+            dep, rule, stg, beta = policy(opts)
+            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg,
+                              beta=beta, redirect="redir" in opts)
+        elif base == "B5":
+            sweep = M["b5"][0]
+            a_ = lora(M, {x: sweep[x][1] + tm for x in crits}, phase)
+            p_ = {}
+            for x in crits:
+                m = sweep[x][0]
+                al, be, sd, _ = L.calib(C, m, truth=C)
+                p_[x] = (al + be * float(L.report(mv[x], C, m)[0]), max(sd, 1e-4)) if m.any() else (al, sd)
+            dep, rule, stg, beta = policy(opts)
+            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg,
+                              beta=beta, redirect="redir" in opts)
         elif base == "B6":
             t, p, rd = 0.0, bs, {}
             for i in tsp_order(bs, [pos[x] for x in crits]):
@@ -305,7 +398,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
                 p = pos[x]
             a_, p_ = lora(M, rd, phase), posts("full", "", C)
             dep, rule, stg, beta = policy(opts)
-            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg, beta=beta)
+            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg, beta=beta,
+                              redirect="redir" in opts)
         else:
             raise SystemExit(f"unknown method {meth}")
     w = np.array([c["w"] for c in C])
@@ -325,15 +419,21 @@ def one_work(job):
     Cq = [dict(c, w=1.0) for c in C]
     seqs = {"interleaved": L.order(C, "interleaved"), "grouped": L.order(C, "grouped")}
     K = json.load(open(f"{w}/map.json"))["clusters"]
-    if not all(os.path.exists(f"{w}/r{k}-d-crit.csv") for k in range(1, K + 1)):   # no direct-pull River run
-        methods = [m for m in methods if not m.startswith("Pd")]
-    M = load_map(w, schemes=("rf", "d") if any(m.startswith("Pd") for m in methods) else ("rf",))
+    for tag in ("d", "t"):   # no direct-pull (d) or Trickle (t) run on this work folder
+        if not all(os.path.exists(f"{w}/r{k}-{tag}-crit.csv") for k in range(1, K + 1)):
+            methods = [m for m in methods if not m.startswith("P" + tag)]
+    M = load_map(w, schemes=("rf",) + tuple(t for t in ("d", "t") if any(m.startswith("P" + t) for m in methods)))
     M["name"] = mapname(w)
     M["windowAt"] = "crit" if any(l.startswith("NEED") for k in range(1, K + 1) for l in open(f"{w}/plan{k}.txt")) \
         else "ch"
     kinds = {o for m in methods for o in m.split("-") if o in ("short", "latency", "seam", "kin", "skin")} | {"l3first"}
     tours = {k: tour(M, k) for k in kinds}
     hold = holdings(M, C, seqs)
+    if any(m.split("-")[0] == "B5" for m in methods):
+        crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
+        M["b5"] = b5_sweep(M, C, seqs["interleaved"], crits, M["cl"])
+        print(f"{sname} {M['name']}: B5 lanes {M['b5'][1]} cells, route {M['b5'][2] / 1000:.1f} km, "
+              f"{sum(h.all() for h, _ in M['b5'][0].values())}/{len(crits)} critical cells hold every clue", flush=True)
     seedm = int.from_bytes(hashlib.sha256(M["name"].encode()).digest()[:4], "little")
     prng = np.random.default_rng(seedm)
     draws, cells = [], []

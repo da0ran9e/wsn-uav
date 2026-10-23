@@ -37,6 +37,15 @@
 //                          has, takes n = ceil(lack / share) members (--circleMin..--circleMax, rings
 //                          1-2) and asks each for its group's part; members serve as on demand
 //   direct                 each critical cell asks every Axe cell for what it lacks of Seg(a)
+//   trickle                baseline without a plan (CLAUDE.md §8 items 134, 139): Deluge-style dissemination over
+//                          the same cells, radios and gateway pairs. The object is every packet some critical cell
+//                          needs, in pages of --page packets; every cell gathers what its nodes hold of it, then
+//                          its CL runs a Trickle timer (RFC 6206: --tImin, --tImax, redundancy --tK): at a random
+//                          time in the second half of each interval, unless it heard tK consistent adverts, it
+//                          sends each adjacent cell an advert of its complete pages. A cell that hears of a page it
+//                          lacks asks that neighbour for its missing packets of the lowest such page (one request
+//                          at a time, again after a timeout); a cell that hears a neighbour lack one of its pages,
+//                          or completes a page, resets its timer to tImin.
 // Writes OUT-crit.csv (per run and critical cell) and OUT-runs.csv (per run).
 
 #include "ns3/core-module.h"
@@ -58,6 +67,7 @@
 #include <fstream>
 #include <functional>
 #include <map>
+#include <random>
 #include <set>
 #include <sstream>
 #include <tuple>
@@ -208,7 +218,8 @@ int main(int argc, char* argv[]) {
                                                            prep = "full", trace;
     uint32_t firstRun = 1, runs = 1;
     double limitS = 1800, maxLossDb = 130, share = 400;
-    uint32_t circleMin = 2, circleMax = 12;
+    uint32_t circleMin = 2, circleMax = 12, page = 64, tK = 1;
+    double tImin = 1, tImax = 64;
     int colours = 7;
     std::string gwSelect = "deploy";
     CommandLine cmd;
@@ -219,7 +230,11 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("bits", "prefix of the pass bitmaps: PREFIX-rR.bin", bits);
     cmd.AddValue("firstRun", "first mission", firstRun);
     cmd.AddValue("runs", "missions", runs);
-    cmd.AddValue("scheme", "river | direct", scheme);
+    cmd.AddValue("scheme", "river | direct | trickle", scheme);
+    cmd.AddValue("page", "trickle: packets per page", page);
+    cmd.AddValue("tImin", "trickle: shortest interval, s", tImin);
+    cmd.AddValue("tImax", "trickle: longest interval, s", tImax);
+    cmd.AddValue("tK", "trickle: redundancy constant", tK);
     cmd.AddValue("prep", "river only: full | ondemand | adaptive", prep);
     cmd.AddValue("share", "adaptive: packets of the lack per Circle member", share);
     cmd.AddValue("circleMin", "adaptive: fewest Circle members", circleMin);
@@ -233,7 +248,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("trace", "prefix: the first mission's hops, CL arrivals, in-cell routes and gateway pairs",
                  trace);
     cmd.Parse(argc, argv);
-    CHECK(scheme == "river" || scheme == "direct");
+    CHECK(scheme == "river" || scheme == "direct" || scheme == "trickle");
+    CHECK(page > 0 && tK > 0 && 0 < tImin && tImin <= tImax);
     CHECK(prep == "full" || prep == "ondemand" || prep == "adaptive");
     CHECK(share > 0 && 1 <= circleMin && circleMin <= circleMax);
     CHECK(colours == 3 || colours == 4 || colours == 7 || colours == 13);
@@ -604,6 +620,7 @@ int main(int argc, char* argv[]) {
             radios[ri].qNext.push_back(to);
             request(ri);
         };
+        std::function<void(const Hex&, uint32_t)> onNew;   // trickle: a cell's CL takes in a new packet
         // done by value: the waiters it wakes may add jobs and move the vector that held it
         auto arrive = [&](const Hex& c, int32_t s, std::function<void()> done) {
             if (s >= 0) {
@@ -611,6 +628,7 @@ int main(int argc, char* argv[]) {
                 if (!h[s]) {
                     h[s] = 1;
                     at[c][s] = now();
+                    if (onNew) onNew(c, (uint32_t)s);
                     auto it = waiters.find({c, (uint32_t)s});
                     if (it != waiters.end()) {
                         auto fns = std::move(it->second);
@@ -914,7 +932,7 @@ int main(int argc, char* argv[]) {
                     });
                 }
             }
-        } else {
+        } else if (scheme == "direct") {
             for (auto& x : plan.axe) needOr(x.a, segMask(x.a));
             for (auto& d : plan.direct) {
                 const int toA = addPath(d.path), toK = addPath(rev(d.path));
@@ -929,6 +947,135 @@ int main(int argc, char* argv[]) {
                     });
                 });
             }
+        }
+        // Trickle state lives for the whole run (callbacks refer to it).
+        std::vector<uint8_t> obj(N, 0);
+        std::vector<uint32_t> pageOf(N, 0), pageSize;
+        std::vector<std::vector<uint32_t>> pagePk;             // page -> its packets
+        std::map<Hex, std::vector<std::pair<Hex, int>>> nbr;   // cell -> (adjacent cell, path cell -> it)
+        std::map<Hex, std::vector<uint32_t>> inPage;           // cell -> packets held per page
+        std::map<Hex, std::vector<uint8_t>> full;              // cell -> complete pages
+        std::map<Hex, std::map<uint32_t, Hex>> avail;          // cell -> page -> a neighbour that has it
+        std::map<Hex, int64_t> asked;                          // cell -> page asked for, -1 none
+        std::map<Hex, uint32_t> askId;
+        struct Tk {
+            double I = 0;
+            uint32_t c = 0;
+            EventId fire, end;
+        };
+        std::map<Hex, Tk> tk;
+        std::mt19937_64 trng(0x7c1c4e + run);
+        std::function<void(const Hex&)> interval, askNext;
+        if (scheme == "trickle") {
+            for (const Hex& k : plan.crit)
+                for (uint32_t s = 0; s < N; ++s) obj[s] |= needK[k][s];
+            uint32_t n = 0;
+            for (uint32_t s = 0; s < N; ++s)
+                if (obj[s]) {
+                    pageOf[s] = n / page;
+                    if (n % page == 0) {
+                        pageSize.push_back(0);
+                        pagePk.emplace_back();
+                    }
+                    pageSize.back()++;
+                    pagePk.back().push_back(s);
+                    n++;
+                }
+            const uint32_t P = (uint32_t)pageSize.size();
+            for (auto& [k, v] : gw)
+                if (used.count(k.first) && used.count(k.second)) nbr[k.first].push_back({k.second, addPath({k.first, k.second})});
+            auto advert = [&](const Hex& c) {
+                const std::vector<uint8_t> mine = full[c];
+                for (auto& [b, path] : nbr[c]) {
+                    const Hex from = c, to = b;
+                    send(path, -1, kControl, [&, from, to, mine] {
+                        bool more = false, less = false;
+                        for (uint32_t p = 0; p < mine.size(); ++p) {
+                            if (mine[p] && !full[to][p]) {
+                                more = true;
+                                avail[to][p] = from;
+                            }
+                            less |= full[to][p] && !mine[p];
+                        }
+                        if (!more && !less) tk[to].c++;
+                        if (less && tk[to].I > tImin) {   // the sender lacks a page of mine: tell it soon
+                            tk[to].I = tImin;
+                            interval(to);
+                        }
+                        if (more) askNext(to);
+                    });
+                }
+            };
+            interval = [&, advert](const Hex& c) {
+                Tk& t = tk[c];
+                Simulator::Cancel(t.fire);
+                Simulator::Cancel(t.end);
+                t.c = 0;
+                const double at = t.I / 2 + std::uniform_real_distribution<double>(0, t.I / 2)(trng);
+                t.fire = Simulator::Schedule(Seconds(at), [&, c, advert] {
+                    if (tk[c].c < tK) advert(c);
+                });
+                t.end = Simulator::Schedule(Seconds(t.I), [&, c] {
+                    tk[c].I = std::min(2 * tk[c].I, tImax);
+                    interval(c);
+                });
+            };
+            askNext = [&](const Hex& me) {
+                if (asked[me] >= 0) return;
+                for (auto& [p, from] : avail[me]) {
+                    if (full[me][p]) continue;
+                    std::vector<uint32_t> lack;
+                    for (uint32_t s : pagePk[p])
+                        if (!hold(me)[s]) lack.push_back(s);
+                    int toFrom = -1, back = -1;
+                    for (auto& [b, path] : nbr[me])
+                        if (b == from) toFrom = path;
+                    for (auto& [b, path] : nbr[from])
+                        if (b == me) back = path;
+                    CHECK(toFrom >= 0 && back >= 0);
+                    asked[me] = p;
+                    const uint32_t id = ++askId[me];
+                    const Hex prov = from;
+                    send(toFrom, -1, kControl, [&, prov, back, lack] {
+                        for (uint32_t s : lack) when(prov, s, [&, s, back] { send(back, (int32_t)s, kPull); });
+                    });
+                    Simulator::Schedule(Seconds(5 + 0.1 * lack.size()), [&, me, p, id] {
+                        if (asked[me] == (int64_t)p && askId[me] == id) {   // no full page yet: ask again
+                            asked[me] = -1;
+                            askNext(me);
+                        }
+                    });
+                    return;
+                }
+            };
+            onNew = [&](const Hex& c, uint32_t s) {
+                if (!obj[s] || !inPage.count(c)) return;
+                const uint32_t p = pageOf[s];
+                if (++inPage[c][p] < pageSize[p]) return;
+                full[c][p] = 1;
+                if (asked[c] == (int64_t)p) {
+                    asked[c] = -1;
+                    askNext(c);
+                }
+                if (tk[c].I > tImin) {   // new data: advertise soon
+                    tk[c].I = tImin;
+                    interval(c);
+                }
+            };
+            for (const Hex& c : used) {
+                needOr(c, obj);
+                inPage[c].assign(P, 0);
+                full[c].assign(P, 0);
+                asked[c] = -1;
+                for (uint32_t s = 0; s < N; ++s)
+                    if (obj[s] && hold(c)[s]) inPage[c][pageOf[s]]++;
+                for (uint32_t p = 0; p < P; ++p) full[c][p] = inPage[c][p] == pageSize[p];
+                atStart.push_back([&, c] {
+                    tk[c].I = tImin;
+                    interval(c);
+                });
+            }
+            std::printf("trickle: %u packets in %u pages over %zu cells\n", n, P, used.size());
         }
         // Completion of the critical cells.
         std::map<Hex, double> doneAt;

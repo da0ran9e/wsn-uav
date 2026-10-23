@@ -1,0 +1,7 @@
+SK k2-s4 exit 0 07:07:50
+SK k2-s10 exit 0 07:09:09
+SK k2-s23 exit 0 07:09:52
+SK k2-s9 exit 0 07:10:06
+SK k4-s2 exit 0 07:12:42
+SK k4-s13 exit 0 07:14:28
+SK k4-s20 exit 0 07:14:38

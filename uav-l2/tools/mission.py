@@ -37,7 +37,8 @@ COOP2 = os.path.join(HERE, "../../uav-coop2/tools")
 V1 = 50.0   # team 1 speed, m/s (the pass: one packet per 0.5 m every 10 ms)
 SCHEMES = {"rf": ["--scheme=river", "--prep=full"],
            "ad12": ["--scheme=river", "--prep=adaptive", "--circleMin=12", "--circleMax=12"],
-           "d": ["--scheme=direct"]}
+           "d": ["--scheme=direct"],
+           "t": ["--scheme=trickle"]}   # baseline (item 139); needs a river-bin built with it
 
 
 def sh(cmd, log, env=None, ok=False):
@@ -318,7 +319,7 @@ def main():
     ap.add_argument("--work", required=True)
     ap.add_argument("--bin", required=True)
     ap.add_argument("--jobs", type=int, default=3)
-    ap.add_argument("--schemes", default=",".join(SCHEMES), help="tags of SCHEMES to run")
+    ap.add_argument("--schemes", default="rf,ad12,d", help="tags of SCHEMES to run")
     ap.add_argument("--partition", default="kmedoids", choices=("kmedoids", "lane", "subch"),
                     help="phase 0: partition.py k-medoids, or restructure.py lanes (CLAUDE.md §8 item 84), or the "
                          "k-medoids clusters of --src split around critical cells far apart (subch.py, item 114)")

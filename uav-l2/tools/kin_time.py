@@ -69,9 +69,11 @@ def run(w, kind, smoothed=False):
     seam = seams(M) if kind in ("skin", "route") else {}
     dirs = [0 if math.dist(l[1], M["cl"][l[0]]["geo"]["path"][0]) < 1e-6 else 1 for l in legs]
     key = lambda i, j: (legs[i][0], dirs[i], legs[j][0], dirs[j])
-    parts, owner = [], []
+    parts, owner, kinds = [], [], []
     for i, l in enumerate(legs):
-        parts.append(trs[i]); owner.append(None)
+        seamless = i > 0 and key(i - 1, i) in seam   # flown on from core to core: no transit, no leads there
+        parts.append(np.empty((0, 2)) if seamless else trs[i]); owner.append(None)
+        kinds.append("bs" if i == 0 else "transit")
         g = M["cl"][l[0]]["geo"]
         p, part = (g["path"], g["part"]) if dirs[i] == 0 else (g["path"][::-1], g["part"][::-1])
         keep = np.ones(len(p), bool)   # a seamless junction flies on from core to core: the leads there are dropped
@@ -79,13 +81,30 @@ def run(w, kind, smoothed=False):
             keep &= ~((part == 0) | (part == 3)) | (np.arange(len(p)) > len(p) // 2)
         if i + 1 < len(legs) and key(i, i + 1) in seam:
             keep &= ~((part == 0) | (part == 3)) | (np.arange(len(p)) < len(p) // 2)
+        lead = ((part == 0) | (part == 3))[keep]
         p = p[keep]
-        parts.append(smooth(p) if smoothed else p); owner.append(l[0])
-    parts.append(trs[-1]); owner.append(None)
-    seq = [(resample(np.asarray(q, float)), k) for q, k in zip(parts, owner)]
+        p = smooth(p) if smoothed else p
+        if not smoothed:   # the leads and the core apart (length split below)
+            parts.append(p); owner.append(l[0]); kinds.append(("core", lead))
+        else:
+            parts.append(p); owner.append(l[0]); kinds.append(("core", None))
+    parts.append(trs[-1]); owner.append(None); kinds.append("bs")
+    seq = [(resample(np.asarray(q, float)), k) for q, k in zip(parts, owner) if len(q) > 1]
     P = np.vstack([q for q, _ in seq])
     tag = np.concatenate([[k if k is not None else -1] * len(q) for q, k in seq])
     out = dict(const=sum(np.linalg.norm(np.diff(P, axis=0), axis=1)) / VMAX)
+    L = dict(bs=0.0, transit=0.0, lead=0.0, core=0.0)   # metres of each kind
+    for q, kd in zip(parts, kinds):
+        if len(q) < 2:
+            continue
+        seg = np.linalg.norm(np.diff(np.asarray(q, float), axis=0), axis=1)
+        if isinstance(kd, tuple):
+            ld = kd[1] if kd[1] is not None else np.zeros(len(q), bool)
+            L["lead"] += float(seg[ld[1:] & ld[:-1]].sum())
+            L["core"] += float(seg[~(ld[1:] & ld[:-1])].sum())
+        else:
+            L[kd] += float(seg.sum())
+    out["parts"] = L
     for phi in PHIS:
         dt = profile(P, phi)
         over = {}

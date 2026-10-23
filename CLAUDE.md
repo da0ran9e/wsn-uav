@@ -1582,6 +1582,12 @@ tôi nhìn hình thì nghi ngờ bạn đã hiểu sai về meander, meander th�
 tôi muốn tìm một kịch bản mà ở đó meander thắng chord hoàn toàn
 ```
 
+*148. 2026-10-23 · uav-l2 · không tìm bản đồ, mà tìm ra các yếu tố có lợi cho MEANDER trước*
+
+```text
+không phải tìm bản đồ mà tìm ra những yếu tố có lợi cho nó đã
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

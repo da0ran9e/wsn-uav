@@ -21,3 +21,5 @@
 - Uốn bám critical cell chỉ giúp ít (khoảng cách TB giảm 0–35 % theo cụm; có cụm tăng vì bướu qua CH): luồng rộng 8 cell, critical cell nằm cả hai phía đường bay.
 
 **Dang dở:** chưa chạy ns-3 River và T\*; mới một bản đồ. `cmp-k8-s1-chordT-vs-meanderOpt.png` và bảng trong `logs/2026-10-23_17xx-chord-meander-kin/` là MEANDER cũ (hiểu sai), không dùng.
+
+**Lưu ý (mục 148):** số MEANDER ở đây đo với lỗi chỗ nối liền của `kin_time.py` (chậm thêm 60–180 s). Số đúng: `logs/2026-10-23_1855-meander-wins/screen-all-fixed-table.md`.

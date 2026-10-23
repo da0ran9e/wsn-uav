@@ -1539,6 +1539,12 @@ còn thuật toán đề xuất theo meander thì sao
 cho tôi xem các hình so sánh trong cùng bản đồ của các thuật toán
 ```
 
+*142. 2026-10-23 · uav-l2 · câu hỏi: hình cmp-k8-s1-layer2 nói gì*
+
+```text
+hình cmp k8 s1 layer 2 nói gì
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

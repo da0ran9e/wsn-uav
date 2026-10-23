@@ -48,11 +48,15 @@ CAP, V1 = 80, 50.0
 ORIG = {2: 3, 4: 2, 6: 4, 8: 4}   # clusters -> seed of the first four mission maps
 
 
-def domain(K, seed):
+def domain(K, seed, shape=""):
+    """shape: map_gen options as "spine=8.8,bend=220,width=1" (CLAUDE.md §8 item 147), on top of the defaults."""
     p = argparse.ArgumentParser()
     add_args(p)
     g = p.parse_args([])
     g.seed, g.cells, g.lakes, g.lakeCells = seed, 80 * K, K, 10
+    for kv in filter(None, shape.split(",")):
+        k, v = kv.split("=")
+        setattr(g, k, float(v))
     return generate(g, random.Random(seed))
 
 

@@ -1576,6 +1576,12 @@ cài đặt nhanh cho tôi xem 2 hình 2 thuật toán này kèm số đo thời
 tôi nhìn hình thì nghi ngờ bạn đã hiểu sai về meander, meander thực tế được dựng theo lane với các đường bay kiểu luống rồi uốn nhẹ để bám critical cells
 ```
 
+*147. 2026-10-23 · uav-l2 · tìm một kịch bản mà MEANDER (kiểu luống) thắng CHORD hoàn toàn*
+
+```text
+tôi muốn tìm một kịch bản mà ở đó meander thắng chord hoàn toàn
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

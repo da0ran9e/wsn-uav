@@ -4,12 +4,12 @@ curvilinear coordinates (meander.coords), and each cluster's stretch is bent lig
     python3 tools/meander_lane.py --clusters 8 --seed 1 --work WORK --bin BIN [--lane 8] [--geometry]
 
   1  lanes: n (signed geodesic distance to the spine) cut into strips L cells wide, offset 0, 1/3 or 2/3 of a lane;
-     a lane under CAPL / 4 cells joins its neighbour
+     a lane under CAPL / 4 cells joins its neighbour; each land piece (cut off by a lake or a river) its own spine
   2  lane line: per W/2 of s, the mean centre of the lane's cells nearest the strip's centre n_c (clipped into the
      lane where it is narrower); a 7-bin moving average, then smoothed (ends fixed) until its curvature is at most
      1.02 / RHO (kin_time.curvature, 3 points 10 m apart)
   3  route: the lanes in order of n, alternately both ways, each joined to the next by the shortest Dubins path of
-     radius RHO; the offset, and which end the BS starts from: the fewest clusters (step 4), then the shortest
+     radius RHO; the offset, the first lane's direction along s, and which end the BS starts from: the fewest clusters (step 4), then the shortest
      BS -> route -> BS
   4  clusters: each lane's cells in route order cut into max(ceil(cells / CAPL), ceil(length / (SPAN W))) equal
      consecutive runs (CAPL 190, SPAN 14: the saturation optimum of SAT-vi.md), repaired into connected clusters
@@ -67,24 +67,27 @@ def lane_line(cells, s, n, nc):
     return P
 
 
-def route(land, L, off):
-    _, _, s, n = coords(land)
-    lane = {h: int(math.floor(n[h] / (L * W) + off)) for h in land}
-    while True:   # a lane under CAPL / 4 cells joins the neighbouring lane towards the spine
+def route(land, L, off, flip=0):
+    s, n, lane = {}, {}, {}
+    for k, part in enumerate(sorted(pieces(list(land)), key=len, reverse=True)):   # a lake or river cuts the land:
+        _, _, sp, np_ = coords(set(part))                                          # each piece its own spine
+        s.update(sp); n.update(np_)
+        lane.update({h: (k, int(math.floor(np_[h] / (L * W) + off))) for h in part})
+    while True:   # a lane under CAPL / 4 cells joins the neighbouring lane of its piece towards the spine
         size = {i: sum(1 for v in lane.values() if v == i) for i in set(lane.values())}
-        thin = [i for i in sorted(size) if size[i] < CAPL / 4 and len(size) > 1]
+        thin = [i for i in sorted(size) if size[i] < CAPL / 4 and sum(x[0] == i[0] for x in size) > 1]
         if not thin:
             break
         i = thin[0]
-        j = min((x for x in size if x != i), key=lambda x: (abs(x - i), abs(x)))
+        j = min((x for x in size if x != i and x[0] == i[0]), key=lambda x: (abs(x[1] - i[1]), abs(x[1])))
         lane = {h: j if v == i else v for h, v in lane.items()}
     ids = sorted(set(lane.values()))
     pts, pos, order, s0 = [], {}, [], 0.0
     for m, i in enumerate(ids):
         mine = [h for h in land if lane[h] == i]
-        nc = float(np.clip((i - off + 0.5) * L * W, min(n[h] for h in mine), max(n[h] for h in mine)))
+        nc = float(np.clip((i[1] - off + 0.5) * L * W, min(n[h] for h in mine), max(n[h] for h in mine)))
         P = lane_line(mine, s, n, nc)
-        P = P if m % 2 == 0 else P[::-1]
+        P = P if (m + flip) % 2 == 0 else P[::-1]
         if pts:   # the shortest turn from the previous lane's end into this one
             E, S = pts[-1][-1], P[0]
             turn = dubins.path((*E, heading(pts[-1], len(pts[-1]) - 1, True)), (*S, heading(P, 0)), RHO, 2.0)[0]
@@ -112,8 +115,8 @@ def reverse(r):
 
 def best_route(land, bs, L):
     out = []
-    for off in (0.0, 1 / 3, 2 / 3):
-        r = route(land, L, off)
+    for off, flip in ((o, f) for o in (0.0, 1 / 3, 2 / 3) for f in (0, 1)):
+        r = route(land, L, off, flip)
         for x in (r, reverse(r)):
             P = x["poly"]
             tot = x["s"][-1] + dubins.free_start(bs, (*P[0], heading(P, 0)), RHO) + \
@@ -154,7 +157,7 @@ def partition(r):
 def stage_map(a, W_):
     if os.path.exists(f"{W_}/clusters.csv"):
         return
-    g = domain(a.clusters, a.seed)
+    g = domain(a.clusters, a.seed, a.shape)
     land = set(g["domain"])
     xs, ys = [centre(h)[0] for h in land], [centre(h)[1] for h in land]
     bs = ((min(xs) + max(xs)) / 2, min(ys) - 1000.0)
@@ -305,6 +308,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--clusters", type=int, required=True, help="map size: 80 x CLUSTERS cells grown")
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--shape", default="", help="map_gen options for the domain (restructure.domain)")
     ap.add_argument("--work", required=True)
     ap.add_argument("--bin", required=True)
     ap.add_argument("--jobs", type=int, default=3)

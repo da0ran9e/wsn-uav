@@ -24,9 +24,9 @@ BIN holds deploy-bin, pass-bin (+ pass-lib/), river-bin (+ lib/).
 import argparse, csv, json, math, os, random, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 
-from map_gen import add_args, cell_at, centre, generate
+from map_gen import cell_at, centre
 from partition import partition
-from restructure import lane_partition
+from restructure import domain, lane_partition
 from subch import subch_partition
 from river_plan import load, load_around, plan  # noqa: E402 (subch puts uav-coop2/tools on the path)
 from tour_heur import order_segments
@@ -52,11 +52,7 @@ def sh(cmd, log, env=None, ok=False):
 def stage_map(a, W_):
     if os.path.exists(f"{W_}/clusters.csv"):
         return
-    p = argparse.ArgumentParser()
-    add_args(p)
-    g_args = p.parse_args([])
-    g_args.seed, g_args.cells, g_args.lakes, g_args.lakeCells = a.seed, 80 * a.clusters, a.clusters, 10
-    g = generate(g_args, random.Random(a.seed))
+    g = domain(a.clusters, a.seed, getattr(a, "shape", ""))
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     land = set(g["domain"])
     with open(f"{W_}/domain-cells.csv", "w") as f:
@@ -316,6 +312,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--clusters", type=int, required=True, help="map size: 80 x CLUSTERS cells grown")
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--shape", default="", help="map_gen options for the domain, e.g. spine=8.8,bend=220 (item 147)")
     ap.add_argument("--work", required=True)
     ap.add_argument("--bin", required=True)
     ap.add_argument("--jobs", type=int, default=3)

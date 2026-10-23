@@ -8,7 +8,8 @@
 - **Bẫy mới:** `l1_rank.py` sinh thế giới ngẫu nhiên theo tên thư mục; muốn so ghép cặp thì thư mục làm việc phải mang đúng tên bản đồ (`SET/k8-s10`), không thêm tiền tố.
 - **Sửa mô hình mới (tùy chọn, mặc định tắt để tái tạo số cũ):** `--critRing domain`, `--axeNear`, `--windowAt crit`. Cấu hình đang dùng để chốt propose bật cả ba.
 - **Lớp 3 dưới CHORD-T (16 bản đồ, kiểm tra sơ bộ):** kéo thẳng cho cùng T\* với River (+0,5 s, River tốt hơn 9/16), nhưng River ít hơn 11 % khung và critical cell cuối có cửa sổ sớm hơn 2 s (64/80 cụm). Không hợp tác chậm hơn 49,8 s (15/16). Bài báo nên đặt lợi của River vào chi phí mạng và thời gian xong, không vào T\* (`PROPOSE-ITER-vi.md` §3.4). Độ nhạy D = 64 / 256: CHORD-T vẫn −30 / −29 s.
-- **Chưa chạy:** chiến dịch 40 bản đồ, baseline mới (cánh bằng bay vòng; B5 = SWATH luồng hẹp + không hợp tác; Trickle). Kéo thẳng cấp nhiệm vụ có mã (phương án `Pd+prog`), mới chạy trên 16 bản đồ. Người dùng chưa chốt N và CLUE.
+- **23-10: CLUE chốt 80 % (mục 138). Baseline đã cài (mục 139):** B8 cánh bằng bay vòng, B5 quét luống (Python, `l1_rank.py`), Trickle (`coop2-river.cc --scheme=trickle`, binary scratchpad `BIN2/`), cùng subCH-K và MEANDER-K với cấu hình P\*. Bảng nhanh 16 bản đồ: `logs/2026-10-23_0706-baselines/README.md`, `table-all.md`. P\* 585 s; kéo thẳng và Trickle cùng T\* (Trickle 4,7 lần khung); không hợp tác +50 s; subCH-K +15 s (baseline mạnh nhất); MEANDER-K +64 s; B5 +112 s; B8 +368 s; cánh quay +900 s trở lên.
+- **Chưa chạy:** chiến dịch (người dùng chưa chốt N).
 
 ---
 

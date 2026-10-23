@@ -18,3 +18,5 @@
 Hồ sơ tốc độ: v ≤ 50 m/s, v ≤ √(g·tanφ/κ), |a| ≤ 2 m/s², giảm tốc xuống ≥ 25 m/s. Giao đủ: ≥ 40,4 s trên chính cell của cụm (4 041 khung × 10 ms). Đường MEANDER gốc có chỗ gấp (bán kính tới 88 m); làm mịn (1-2-1, đầu mút giữ nguyên) dịch đường ≤ 53 m, CH lệch ≤ 27 m.
 
 **Dang dở:** mới một bản đồ; chưa chạy ns-3 River và T\* cho MEANDER tối ưu; đoạn nối Dubins vẫn dựng ở 255 m (nghiêng 45°).
+
+**Lưu ý (mục 146):** MEANDER trong log này là bản hiểu sai (đường riêng từng cụm, thứ tự theo độ trễ). Bản đúng kiểu luống: `logs/2026-10-23_1837-meander-lane/`.

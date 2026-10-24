@@ -1613,6 +1613,12 @@ thử lại với bản đồ ngẫu nhiên
 trong lúc chạy tổng hợp lại tất cả các tham số cho tôi thành một bảng riêng, tôi sẽ kiểm tra nguồn của từng yếu tốt
 ```
 
+*153. 2026-10-24 · uav-l2 · thử đường bay MEANDER thẳng hẳn; chỉ bảo đảm giao đủ, không bay thừa*
+
+```text
+thử để đường bay thẳng hẳn xem sao, và đảm bảo đủ thôi chứ đừng bay thừa
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

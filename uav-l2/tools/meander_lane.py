@@ -8,7 +8,9 @@ curvilinear coordinates (meander.coords), and each cluster's stretch is bent lig
   2  lane line: per W/2 of s, the mean centre of the lane's cells nearest the strip's centre n_c (clipped into the
      lane where it is narrower); a 7-bin moving average, then smoothed (ends fixed) until its curvature is at most
      1.02 / RHO (kin_time.curvature, 3 points 10 m apart); --straight S km (item 151): its deviation from the
-     chord between its ends first smoothed at scale S (straighten), inf the chord
+     chord between its ends first smoothed at scale S (straighten), inf the chord. --parallel (item 153): the
+     lanes straight and parallel instead (swath.route), the bearing (5 degree steps) and offset of the shortest
+     BS -> route -> BS (with --trim the shortest once trimmed, every cluster's shortfall to minAxe added)
   3  route: the lanes in order of n, alternately both ways, each joined to the next by the shortest Dubins path of
      radius RHO; the offset, the first lane's direction along s, and which end the BS starts from: the fewest clusters (step 4), then the shortest
      BS -> route -> BS (with --minAxe the shortest only: thin lanes are already merged)
@@ -16,7 +18,8 @@ curvilinear coordinates (meander.coords), and each cluster's stretch is bent lig
      consecutive runs (CAPL 190, span --span, default SPAN 14: the saturation optimum of SAT-vi.md), repaired into connected clusters
      (a run's smaller pieces join the touching cluster they share most edges with); the natural cluster count
      --minAxe (item 149): each lane cut by the length of its line over its own cells instead, every cluster at
-     least minAxe km (one copy of the clue set over its own cells at a constant 50 m/s)
+     least minAxe km (one copy of the clue set over its own cells at a constant 50 m/s); --trim T (item 153): the
+     lane's land left over cut off its two ends (each end at most RHO + T cells; the leads deliver over RHO of it)
   5  deploy: uav-coop-deploy, the CH the strongest node under the cluster's stretch (swath_mission.stage_deploy)
   6  bend, one lane line at a time (so the clusters along it still join seamlessly): every critical cell
      (river_plan Algorithm 3, the local test over the real neighbourhood) farther than --reach cells (default the
@@ -37,7 +40,7 @@ from meander_mission import dense
 from mission import domain_scores, stage_runs, stage_tour
 from partition import pieces
 from restructure import bs_point, domain, touching
-from swath import RHO, cells_at, heading
+from swath import RHO, cells_at, heading, route as swath_route
 from swath_mission import stage_deploy
 import dubins
 
@@ -136,24 +139,41 @@ def reverse(r):
                 lanes=[(i, cs[::-1], (Ln - b, Ln - a)) for i, cs, (a, b) in r["lanes"][::-1]])
 
 
-def best_route(land, bs, L, span=SPAN, min_axe=0.0, scale=0.0):
+def parallel(land, th, L, off):
+    """--parallel (item 153): straight parallel lanes across bearing th (swath.route), as route() returns them."""
+    r = swath_route(land, th, L, off)
+    return dict(r, lanes=[(i, cs, (r["pos"][cs[0]] - W / 2, r["pos"][cs[-1]] + W / 2)) for i, cs in r["lanes"]])
+
+
+def best_route(land, bs, L, span=SPAN, min_axe=0.0, scale=0.0, straight_lanes=False, trim=-1.0):
     out = []
-    for off, flip in ((o, f) for o in (0.0, 1 / 3, 2 / 3) for f in (0, 1)):
-        r = route(land, L, off, flip, scale)
+    cands = ([parallel(land, math.radians(deg), L, off) for deg in range(0, 180, 5) for off in (0.0, 1 / 3, 2 / 3)]
+             if straight_lanes else
+             [route(land, L, off, flip, scale) for off in (0.0, 1 / 3, 2 / 3) for flip in (0, 1)])
+    for r in cands:
         for x in (r, reverse(r)):
             P = x["poly"]
             tot = x["s"][-1] + dubins.free_start(bs, (*P[0], heading(P, 0)), RHO) + \
                 dubins.free_end((*P[-1], heading(P, len(P) - 1, True)), bs, RHO)
-            out.append((0 if min_axe else len(partition(x, span)[1]), tot, x))   # by length: the shortest only
-    return min(out, key=lambda t: t[:2])[1:]
+            if min_axe and trim >= 0:   # item 153: the shortest once trimmed, a cluster's shortfall counted as flown
+                info = partition(x, span, min_axe, trim)[2]
+                key = (0, tot - info["trimmed"] + sum(max(0.0, min_axe - g) for g in info["got"]))
+            else:
+                key = (0 if min_axe else len(partition(x, span)[1]), tot)   # with min_axe by length: the shortest
+            out.append((*key, tot, x))
+    return min(out, key=lambda t: t[:2])[2:]
 
 
-def partition(r, cells_long=SPAN, min_axe=0.0):
+def partition(r, cells_long=SPAN, min_axe=0.0, trim=-1.0):
     """Step 4: owner {cell: cluster}, and each cluster's stretch (route coordinates) before the repair. min_axe > 0
     (item 149): each lane cut instead into floor(L / min_axe) runs of equal L, L the length of the lane's line over
     its own cells, so that every cluster's Axe carries at least min_axe metres of packets (one copy of the clue set
-    at 2.02 km for 400 kB); the ns-3 pass flies at a constant 50 m/s, so no slowing down makes up a short one."""
-    owner, span, k = {}, [], 0
+    at 2.02 km for 400 kB); the ns-3 pass flies at a constant 50 m/s, so no slowing down makes up a short one.
+    trim >= 0 (metres, item 153): the lane's land left over by the m runs, half off each end, plus RHO (the lead-in
+    and lead-out, along the same straight line, still deliver over it), at most RHO + trim per end; the cells
+    there stay with the end clusters, unflown. Also returns, with min_axe, each cluster's metres over its own cells
+    (the leads at trimmed lane ends included) and the route metres trimmed off."""
+    owner, span, k, info = {}, [], 0, dict(got=[], trimmed=0.0)
     for _, cs, (a, b) in r["lanes"]:
         p = r["pos"]
         if min_axe:
@@ -162,10 +182,17 @@ def partition(r, cells_long=SPAN, min_axe=0.0):
             mine = set(cs)
             land = np.cumsum([2.0 * (tuple(h) in mine) for h in cells_at(P)])
             m = max(1, int(land[-1] // min_axe), math.ceil(len(cs) / CAPL))
-            cut = [a] + [float(d[int(np.searchsorted(land, land[-1] * j / m))]) for j in range(1, m)] + [b]
+            t = min(max(land[-1] - m * min_axe, 0.0) / 2 + RHO, RHO + trim, land[-1] / 4) if trim >= 0 else 0.0
+            at = lambda x: float(d[min(int(np.searchsorted(land, x)), len(d) - 1)])
+            cut = [at(t) if t else a] + [at(t + (land[-1] - 2 * t) * j / m) for j in range(1, m)] + \
+                  [at(land[-1] - t) if t else b]
             for h in cs:
-                owner[h] = k + min(m - 1, int(np.searchsorted(cut, p[h], side="right")) - 1)
+                owner[h] = k + min(m - 1, max(0, int(np.searchsorted(cut, p[h], side="right")) - 1))
             span += list(zip(cut[:-1], cut[1:]))
+            on = lambda x: float(np.interp(x, d, land))
+            ext = [cut[0] - RHO if t else cut[0]] + cut[1:-1] + [cut[-1] + RHO if t else cut[-1]]
+            info["got"] += [on(y) - on(x) for x, y in zip(ext[:-1], ext[1:])]
+            info["trimmed"] += cut[0] - a + b - cut[-1]
             k += m
             continue
         m = max(math.ceil(len(cs) / CAPL), math.ceil((p[cs[-1]] - p[cs[0]]) / (cells_long * W)), 1)
@@ -189,7 +216,7 @@ def partition(r, cells_long=SPAN, min_axe=0.0):
                     moved = True
         if not moved:
             break
-    return owner, span
+    return owner, span, info
 
 
 def stage_map(a, W_):
@@ -198,8 +225,9 @@ def stage_map(a, W_):
     g = domain(a.clusters, a.seed, a.shape)
     land = set(g["domain"])
     bs = bs_point(land, a.bs)
-    tot, r = best_route(land, bs, a.lane, a.span, a.minAxe * 1000, a.straight * 1000)
-    owner, span = partition(r, a.span, a.minAxe * 1000)
+    trim = a.trim * W if a.trim >= 0 else -1.0
+    tot, r = best_route(land, bs, a.lane, a.span, a.minAxe * 1000, a.straight * 1000, a.parallel, trim)
+    owner, span, _ = partition(r, a.span, a.minAxe * 1000, trim)
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
         f.write("q,r,cx,cy,type\n")
@@ -221,7 +249,9 @@ def stage_map(a, W_):
              lanes=np.array([iv for _, _, iv in r["lanes"]]))
     sz = np.bincount(list(owner.values()))
     json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="meander-lane",
-                   lane=a.lane, span=a.span, minAxe=a.minAxe, straight=a.straight, reach=a.reach, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
+                   lane=a.lane, span=a.span, minAxe=a.minAxe, straight=a.straight, reach=a.reach,
+                   parallel=a.parallel, bearing=round(math.degrees(r["th"])) if "th" in r else None,
+                   trim=a.trim, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
                    cv=float(sz.std() / sz.mean())), open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {K} clusters {sz.tolist()}, {len(r['lanes'])} lanes, route "
           f"{r['s'][-1] / 1000:.1f} km, with BS {tot / 1000:.1f} km")
@@ -352,6 +382,10 @@ def main():
     ap.add_argument("--shape", default="", help="map_gen options for the domain (restructure.domain)")
     ap.add_argument("--straight", type=float, default=0.0,
                     help="km: straighten each lane line at this scale (0 none, inf the chord; item 151)")
+    ap.add_argument("--parallel", action="store_true",
+                    help="straight parallel lanes (swath.route) at the bearing of the shortest route (item 153)")
+    ap.add_argument("--trim", type=float, default=-1.0,
+                    help="cells: with --minAxe, cut each lane's leftover off its ends, at most RHO + TRIM cells (item 153)")
     ap.add_argument("--reach", type=float, default=OMEGA / W,
                     help="cells: only critical cells farther than this from the line pull it (item 151: 5)")
     ap.add_argument("--work", required=True)

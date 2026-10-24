@@ -7,7 +7,8 @@ curvilinear coordinates (meander.coords), and each cluster's stretch is bent lig
      a lane under CAPL / 4 cells joins its neighbour; each land piece (cut off by a lake or a river) its own spine
   2  lane line: per W/2 of s, the mean centre of the lane's cells nearest the strip's centre n_c (clipped into the
      lane where it is narrower); a 7-bin moving average, then smoothed (ends fixed) until its curvature is at most
-     1.02 / RHO (kin_time.curvature, 3 points 10 m apart)
+     1.02 / RHO (kin_time.curvature, 3 points 10 m apart); --straight S km (item 151): its deviation from the
+     chord between its ends first smoothed at scale S (straighten), inf the chord
   3  route: the lanes in order of n, alternately both ways, each joined to the next by the shortest Dubins path of
      radius RHO; the offset, the first lane's direction along s, and which end the BS starts from: the fewest clusters (step 4), then the shortest
      BS -> route -> BS (with --minAxe the shortest only: thin lanes are already merged)
@@ -18,8 +19,8 @@ curvilinear coordinates (meander.coords), and each cluster's stretch is bent lig
      least minAxe km (one copy of the clue set over its own cells at a constant 50 m/s)
   5  deploy: uav-coop-deploy, the CH the strongest node under the cluster's stretch (swath_mission.stage_deploy)
   6  bend, one lane line at a time (so the clusters along it still join seamlessly): every critical cell
-     (river_plan Algorithm 3, the local test over the real neighbourhood) farther than the River half width
-     OMEGA pulls the line towards itself by min(d - OMEGA, BEND) with a Gaussian bump (sigma = sqrt(2 a RHO), as
+     (river_plan Algorithm 3, the local test over the real neighbourhood) farther than --reach cells (default the
+     River half width OMEGA; item 151: 5) pulls the line towards itself by min(d - OMEGA, BEND) with a Gaussian bump (sigma = sqrt(2 a RHO), as
      meander_mission.through), then every CH pulls it onto itself; the bumps widened until the curvature is at
      most 1.02 / RHO (bend_lane); cut back into the clusters' stretches, straight lead-in /
      lead-out of RHO; c{k}-path-s35.csv
@@ -47,7 +48,27 @@ CAPL, SPAN = 190, 14
 OMEGA, BEND = 3.5 / 2 * W, W
 
 
-def lane_line(cells, s, n, nc):
+def straighten(P, scale):
+    """The line's deviation from the chord between its ends, smoothed by a Gaussian of scale metres along it (odd
+    reflection at the ends, which stay fixed): 0 keeps the line, larger scales flatten its bends, inf gives the
+    chord (item 151)."""
+    if scale <= 0 or len(P) < 3:
+        return P
+    t = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+    chord = P[0] + np.outer(t / t[-1], P[-1] - P[0])
+    if not np.isfinite(scale):
+        return chord
+    dev = P - chord
+    step = t[-1] / (len(P) - 1)
+    k = max(1, int(3 * scale / step))
+    ext = np.r_[-dev[k:0:-1], dev, -dev[-2:-k - 2:-1]]   # odd reflection: the deviation stays 0 at the ends
+    g = np.exp(-0.5 * (np.arange(-k, k + 1) * step / scale) ** 2)
+    g /= g.sum()
+    sm = np.c_[np.convolve(ext[:, 0], g, "same"), np.convolve(ext[:, 1], g, "same")][k:k + len(P)]
+    return chord + sm
+
+
+def lane_line(cells, s, n, nc, scale=0.0):
     pts = []
     S0, S1 = min(s[h] for h in cells), max(s[h] for h in cells)
     for a in np.arange(S0, S1 + 1e-9, W / 2):
@@ -59,7 +80,7 @@ def lane_line(cells, s, n, nc):
     if len(P) >= 5:
         Q = np.vstack([P[:1]] * 3 + [P] + [P[-1:]] * 3)
         P = np.vstack([P[:1], np.mean([Q[i:i + len(P)] for i in range(7)], axis=0)[1:-1], P[-1:]])
-    P = resample(P)
+    P = straighten(resample(P), scale)
     for it in range(6000):
         if len(P) < 5 or kcurv(P).max() * RHO <= 1.02:
             break
@@ -69,7 +90,7 @@ def lane_line(cells, s, n, nc):
     return P
 
 
-def route(land, L, off, flip=0):
+def route(land, L, off, flip=0, scale=0.0):
     s, n, lane = {}, {}, {}
     for k, part in enumerate(sorted(pieces(list(land)), key=len, reverse=True)):   # a lake or river cuts the land:
         _, _, sp, np_ = coords(set(part))                                          # each piece its own spine
@@ -88,7 +109,7 @@ def route(land, L, off, flip=0):
     for m, i in enumerate(ids):
         mine = [h for h in land if lane[h] == i]
         nc = float(np.clip((i[1] - off + 0.5) * L * W, min(n[h] for h in mine), max(n[h] for h in mine)))
-        P = lane_line(mine, s, n, nc)
+        P = lane_line(mine, s, n, nc, scale)
         P = P if (m + flip) % 2 == 0 else P[::-1]
         if pts:   # the shortest turn from the previous lane's end into this one
             E, S = pts[-1][-1], P[0]
@@ -115,10 +136,10 @@ def reverse(r):
                 lanes=[(i, cs[::-1], (Ln - b, Ln - a)) for i, cs, (a, b) in r["lanes"][::-1]])
 
 
-def best_route(land, bs, L, span=SPAN, min_axe=0.0):
+def best_route(land, bs, L, span=SPAN, min_axe=0.0, scale=0.0):
     out = []
     for off, flip in ((o, f) for o in (0.0, 1 / 3, 2 / 3) for f in (0, 1)):
-        r = route(land, L, off, flip)
+        r = route(land, L, off, flip, scale)
         for x in (r, reverse(r)):
             P = x["poly"]
             tot = x["s"][-1] + dubins.free_start(bs, (*P[0], heading(P, 0)), RHO) + \
@@ -177,7 +198,7 @@ def stage_map(a, W_):
     g = domain(a.clusters, a.seed, a.shape)
     land = set(g["domain"])
     bs = bs_point(land, a.bs)
-    tot, r = best_route(land, bs, a.lane, a.span, a.minAxe * 1000)
+    tot, r = best_route(land, bs, a.lane, a.span, a.minAxe * 1000, a.straight * 1000)
     owner, span = partition(r, a.span, a.minAxe * 1000)
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
@@ -200,7 +221,7 @@ def stage_map(a, W_):
              lanes=np.array([iv for _, _, iv in r["lanes"]]))
     sz = np.bincount(list(owner.values()))
     json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="meander-lane",
-                   lane=a.lane, span=a.span, minAxe=a.minAxe, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
+                   lane=a.lane, span=a.span, minAxe=a.minAxe, straight=a.straight, reach=a.reach, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
                    cv=float(sz.std() / sz.mean())), open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {K} clusters {sz.tolist()}, {len(r['lanes'])} lanes, route "
           f"{r['s'][-1] / 1000:.1f} km, with BS {tot / 1000:.1f} km")
@@ -235,7 +256,7 @@ def critical(nodes, around, kg=2.0, kl=1.0, r=2):
     return sorted(crit)
 
 
-def bend_lane(P, pins, pulls):
+def bend_lane(P, pins, pulls, reach=OMEGA):
     """Step 6 on one lane line P (10 m vertices): each pull (a critical cell farther than OMEGA) a Gaussian bump of
     min(d - OMEGA, BEND) towards it, then each pin (a CH) a bump onto it (three rounds, so a later bump does not
     move an earlier pin; then exact), each measured from the line so far. A bump of a with sigma = sqrt(2 a RHO)
@@ -254,8 +275,8 @@ def bend_lane(P, pins, pulls):
         for c in pulls:
             d = np.linalg.norm(Q - c, axis=1)
             i = int(np.argmin(d))
-            if d[i] > OMEGA:
-                Q = bump(Q, c, min(d[i] - OMEGA, BEND), i, mult)
+            if d[i] > reach:
+                Q = bump(Q, c, min(d[i] - reach, BEND), i, mult)
         idx = [int(np.argmin(np.linalg.norm(Q - c, axis=1))) for c in pins]
         for _ in range(3):
             for c, i in zip(pins, idx):
@@ -270,7 +291,7 @@ def bend_lane(P, pins, pulls):
     return Q, idx, kmax
 
 
-def stage_curve(W_, K):
+def stage_curve(W_, K, reach=OMEGA):
     if not os.path.exists(f"{W_}/domain-cl.csv"):
         domain_scores(W_, K)
     around = load_around(f"{W_}/domain-cl.csv")
@@ -292,7 +313,7 @@ def stage_curve(W_, K):
         d = np.r_[np.arange(a, b, 10.0), b]
         P = np.c_[np.interp(d, rs, poly[:, 0]), np.interp(d, rs, poly[:, 1])]
         pulls = [c for k in ks for c in crit[k] if not np.allclose(c, ch[k], atol=W)]
-        Q, idx, kmax = bend_lane(P, [ch[k] for k in ks], pulls)
+        Q, idx, kmax = bend_lane(P, [ch[k] for k in ks], pulls, reach)
         for k, i in zip(ks, idx):
             lo, hi = (int(np.searchsorted(d, span[k - 1][0])), int(np.searchsorted(d, span[k - 1][1])))
             lo, hi = min(lo, i), max(hi, i)
@@ -311,8 +332,8 @@ def stage_curve(W_, K):
                         nx = D[m + 1] if m + 1 < len(D) else parts[j + 1][0] if j < 3 else p + (p - D[m - 1])
                         th = math.degrees(math.atan2(nx[1] - p[1], nx[0] - p[0]))
                         f.write(f"{j},{-1 if j in (0, 3) else 0 if m == 0 else 1},{p[0]:.3f},{p[1]:.3f},{th:.4f}\n")
-            out[k] = dict(crit=len(crit[k]), far_before=sum(x > OMEGA for x in before),
-                          far_after=sum(x > OMEGA for x in after), mean_before=round(float(np.mean(before)), 1),
+            out[k] = dict(crit=len(crit[k]), far_before=sum(x > reach for x in before),
+                          far_after=sum(x > reach for x in after), mean_before=round(float(np.mean(before)), 1),
                           mean_after=round(float(np.mean(after)), 1), curvature=round(float(kmax), 3),
                           shift=round(float(np.max(np.linalg.norm(Q[lo:hi + 1] - P[lo:hi + 1], axis=1))), 1),
                           length=round(float(np.linalg.norm(np.diff(C, axis=0), axis=1).sum()), 1))
@@ -329,6 +350,10 @@ def main():
     ap.add_argument("--minAxe", type=float, default=0.0,
                     help="km: cut each lane by length so every cluster flies at least this much over its own cells")
     ap.add_argument("--shape", default="", help="map_gen options for the domain (restructure.domain)")
+    ap.add_argument("--straight", type=float, default=0.0,
+                    help="km: straighten each lane line at this scale (0 none, inf the chord; item 151)")
+    ap.add_argument("--reach", type=float, default=OMEGA / W,
+                    help="cells: only critical cells farther than this from the line pull it (item 151: 5)")
     ap.add_argument("--work", required=True)
     ap.add_argument("--bin", required=True)
     ap.add_argument("--jobs", type=int, default=3)
@@ -350,8 +375,8 @@ def main():
     K = json.load(open("map.json"))["clusters"]
     stage_core(W_, K)
     stage_deploy(a, W_, K)
-    for k, v in stage_curve(W_, K).items():
-        print(f"C{k}: {v['length'] / 1000:.2f} km, {v['crit']} critical, beyond the River half width "
+    for k, v in stage_curve(W_, K, a.reach * W).items():
+        print(f"C{k}: {v['length'] / 1000:.2f} km, {v['crit']} critical, beyond reach "
               f"{v['far_before']} -> {v['far_after']}, mean distance {v['mean_before']:.0f} -> {v['mean_after']:.0f} m, "
               f"shift <= {v['shift']:.0f} m, k*rho {v['curvature']:.2f}")
     if a.geometry:

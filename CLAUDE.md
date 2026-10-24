@@ -1600,6 +1600,13 @@ quét từng yếu tố một thêm cả kích thước miền nữa nhé , sau 
 báo cáo ngắn gọn đi
 ```
 
+*151. 2026-10-24 · uav-l2 · miền hẹp dài làm mất tính tổng quát; chỉnh độ uốn của đường luống thẳng dần ra, không cần bám sát critical cell, cách khoảng 5 cell là đủ; thử lại với bản đồ ngẫu nhiên*
+
+```text
+miền hẹp dài sẽ làm mất tính tổng quát của bài, bạn đã thử điều chỉnh độ uốn thẳng dần ra chưa, không cần bám sát váo critical cells mà chỉ cần cách nó khoảng 5 cell đã tốt rồi
+thử lại với bản đồ ngẫu nhiên
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -1643,6 +1643,12 @@ cũng khá tốt rồi, bây giờ uốn nhẹ đường của chord một chút
 có thể sửa được lỗi vận tốc của ns3 không, phải sửa trước mới chạy nếu không thì cũng không có ý nghĩa gì
 ```
 
+*158. 2026-10-24 · kênh A2G · bàn tham số môi trường: kịch bản nào UAV chỉ truyền hiệu quả trong bán kính khoảng 100–200 m (ví dụ gói fountain code: node ngoài 200 m hầu như không giải mã được)*
+
+```text
+bàn về tham số môi trường, với kịch bản nào, UAV chỉ có thể cho một bán kính truyền tin hiệu quả khoảng 100-200m không. ví dụ nếu phát gói fountain code thì các node nằm ngoài 200 m hầu như không giải mã được
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

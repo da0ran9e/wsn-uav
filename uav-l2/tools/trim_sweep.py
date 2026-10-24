@@ -10,6 +10,8 @@ small margin), no pull towards critical cells (--reach 1000: the line only bends
 needs); VARIANTS: without (par) and with (par-trim5) the lanes' leftover cut off their ends (--trim 5). CHORD-T:
 mission.py --chordTour 0.6,0.8 with MEANDER's cluster count. Columns as straight_sweep. --chAnywhere (item 154):
 both take the CH the strongest node of the cluster wherever it lies (a random position: the node scores are random).
+par-trim5-chord (item 155): MEANDER cut around the CHs CHORD-T's clusters already have (CHORD-T with par-trim5's
+count), so both serve the same CHs.
 """
 import argparse, json, os
 from concurrent.futures import ThreadPoolExecutor
@@ -17,7 +19,8 @@ from concurrent.futures import ThreadPoolExecutor
 from factor_sweep import run, seeds
 from straight_sweep import K, extra
 
-VARIANTS = {"par": ["--parallel"], "par-trim5": ["--parallel", "--trim", "5"]}
+VARIANTS = {"par": ["--parallel"], "par-trim5": ["--parallel", "--trim", "5"],
+            "par-trim5-chord": ["--parallel", "--trim", "5"]}
 MINAXE = 2.1
 
 
@@ -31,9 +34,12 @@ def chord(a, s, k):
 
 def one(a, s, v):
     w = ml(a, s, v)
+    ch = a.ch
+    if v.endswith("-chord"):   # after par-trim5 and its CHORD-T (VARIANTS' order)
+        ch = ["--chFrom", chord(a, s, json.load(open(f"{ml(a, s, 'par-trim5')}/map.json"))["clusters"])]
     if not os.path.exists(f"{w}/c1-curve.json"):
         run(["python3", "uav-l2/tools/meander_lane.py", "--clusters", str(K), "--seed", str(s), "--lane", "8",
-             "--minAxe", str(MINAXE), "--reach", "1000", *VARIANTS[v], *a.ch, "--work", w, "--bin", a.bin,
+             "--minAxe", str(MINAXE), "--reach", "1000", *VARIANTS[v], *ch, "--work", w, "--bin", a.bin,
              "--geometry"],
             f"{a.log}/ml-s{s}-{v}.md")
     if not os.path.exists(f"{w}/c1-curve.json"):

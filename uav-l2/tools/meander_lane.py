@@ -20,6 +20,9 @@ curvilinear coordinates (meander.coords), and each cluster's stretch is bent lig
      --minAxe (item 149): each lane cut by the length of its line over its own cells instead, every cluster at
      least minAxe km (one copy of the clue set over its own cells at a constant 50 m/s); --trim T (item 153): the
      lane's land left over cut off its two ends (each end at most RHO + T cells; the leads deliver over RHO of it)
+     --chFrom DIR (item 155): the CHs given (DIR's, e.g. the existing clusters' CHs): each lane cut between its
+     CHs instead, one cluster per CH; a lane without a CH is not flown, its cells join the clusters they touch;
+     lanes chosen with no CH-less lane first, then the shortest once trimmed, the bends onto the CHs included
   5  deploy: uav-coop-deploy, the CH the strongest node under the cluster's stretch (swath_mission.stage_deploy);
      --chAnywhere (item 154): the strongest node of the cluster wherever it lies, the line then bent onto it (step 6)
   6  bend, one lane line at a time (so the clusters along it still join seamlessly): every critical cell
@@ -146,9 +149,10 @@ def parallel(land, th, L, off):
     return dict(r, lanes=[(i, cs, (r["pos"][cs[0]] - W / 2, r["pos"][cs[-1]] + W / 2)) for i, cs in r["lanes"]])
 
 
-def best_route(land, bs, L, span=SPAN, min_axe=0.0, scale=0.0, straight_lanes=False, trim=-1.0):
+def best_route(land, bs, L, span=SPAN, min_axe=0.0, scale=0.0, straight_lanes=False, trim=-1.0, chs=None):
     out = []
-    cands = ([parallel(land, math.radians(deg), L, off) for deg in range(0, 180, 5) for off in (0.0, 1 / 3, 2 / 3)]
+    offs = [i / 6 for i in range(6)] if chs else (0.0, 1 / 3, 2 / 3)
+    cands = ([parallel(land, math.radians(deg), L, off) for deg in range(0, 180, 5) for off in offs]
              if straight_lanes else
              [route(land, L, off, flip, scale) for off in (0.0, 1 / 3, 2 / 3) for flip in (0, 1)])
     for r in cands:
@@ -157,15 +161,16 @@ def best_route(land, bs, L, span=SPAN, min_axe=0.0, scale=0.0, straight_lanes=Fa
             tot = x["s"][-1] + dubins.free_start(bs, (*P[0], heading(P, 0)), RHO) + \
                 dubins.free_end((*P[-1], heading(P, len(P) - 1, True)), bs, RHO)
             if min_axe and trim >= 0:   # item 153: the shortest once trimmed, a cluster's shortfall counted as flown
-                info = partition(x, span, min_axe, trim)[2]
-                key = (0, tot - info["trimmed"] + sum(max(0.0, min_axe - g) for g in info["got"]))
+                info = partition(x, span, min_axe, trim, chs)[2]   # item 155: no CH-less lane first, bends added
+                key = (info["orphans"], tot - info["trimmed"] + sum(max(0.0, min_axe - g) for g in info["got"])
+                       + info["bend"])
             else:
                 key = (0 if min_axe else len(partition(x, span)[1]), tot)   # with min_axe by length: the shortest
             out.append((*key, tot, x))
     return min(out, key=lambda t: t[:2])[2:]
 
 
-def partition(r, cells_long=SPAN, min_axe=0.0, trim=-1.0):
+def partition(r, cells_long=SPAN, min_axe=0.0, trim=-1.0, chs=None):
     """Step 4: owner {cell: cluster}, and each cluster's stretch (route coordinates) before the repair. min_axe > 0
     (item 149): each lane cut instead into floor(L / min_axe) runs of equal L, L the length of the lane's line over
     its own cells, so that every cluster's Axe carries at least min_axe metres of packets (one copy of the clue set
@@ -173,8 +178,14 @@ def partition(r, cells_long=SPAN, min_axe=0.0, trim=-1.0):
     trim >= 0 (metres, item 153): the lane's land left over by the m runs, half off each end, plus RHO (the lead-in
     and lead-out, along the same straight line, still deliver over it), at most RHO + trim per end; the cells
     there stay with the end clusters, unflown. Also returns, with min_axe, each cluster's metres over its own cells
-    (the leads at trimmed lane ends included) and the route metres trimmed off."""
-    owner, span, k, info = {}, [], 0, dict(got=[], trimmed=0.0)
+    (the leads at trimmed lane ends included) and the route metres trimmed off.
+    chs [(cell, (x, y))] (item 155, with min_axe): each lane cut between the CHs in it, one cluster per CH (each
+    cut at the equal share of the land, kept a cell W from the CHs; the ends trimmed short of the first and last
+    CH); a lane without one is not flown and its cells join the clusters they touch. info then also counts those
+    lanes and the metres the bends onto the CHs add (a Gaussian bump of a with sigma sqrt(2 a RHO), as bend_lane:
+    a^1.5 sqrt(pi) / (4 sqrt(2 RHO)))."""
+    owner, span, k, info = {}, [], 0, dict(got=[], trimmed=0.0, orphans=0, bend=0.0)
+    left = []
     for _, cs, (a, b) in r["lanes"]:
         p = r["pos"]
         if min_axe:
@@ -182,16 +193,37 @@ def partition(r, cells_long=SPAN, min_axe=0.0, trim=-1.0):
             P = np.c_[np.interp(d, r["s"], r["poly"][:, 0]), np.interp(d, r["s"], r["poly"][:, 1])]
             mine = set(cs)
             land = np.cumsum([2.0 * (tuple(h) in mine) for h in cells_at(P)])
-            m = max(1, int(land[-1] // min_axe), math.ceil(len(cs) / CAPL))
-            t = min(max(land[-1] - m * min_axe, 0.0) / 2 + RHO, RHO + trim, land[-1] / 4) if trim >= 0 else 0.0
             at = lambda x: float(d[min(int(np.searchsorted(land, x)), len(d) - 1)])
-            cut = [at(t) if t else a] + [at(t + (land[-1] - 2 * t) * j / m) for j in range(1, m)] + \
-                  [at(land[-1] - t) if t else b]
+            if chs is not None:
+                here = [np.asarray(xy) for h, xy in chs if h in mine]
+                if not here:
+                    info["orphans"] += 1
+                    left += list(cs)
+                    continue
+                ix = sorted(int(np.argmin(np.linalg.norm(P - c, axis=1))) for c in here)
+                info["bend"] += sum(float(np.min(np.linalg.norm(P - c, axis=1))) ** 1.5 for c in here) \
+                    * math.sqrt(math.pi) / (4 * math.sqrt(2 * RHO))
+                lc = [float(land[i]) for i in ix]
+                m = len(here)
+                t0 = t1 = 0.0
+                if trim >= 0:   # each end on its own, short of its CH; what one end cannot take the other may
+                    cap0, cap1 = (max(0.0, min(RHO + trim, land[-1] / 4, x - W)) for x in (lc[0], land[-1] - lc[-1]))
+                    want = max(land[-1] - m * min_axe, 0.0) + 2 * RHO
+                    t0 = min(cap0, max(want / 2, want - cap1))
+                    t1 = min(cap1, want - t0)
+                inner = [float(np.clip(t0 + (land[-1] - t0 - t1) * j / m, lc[j - 1] + W, lc[j] - W))
+                         if lc[j] - lc[j - 1] > 2 * W else (lc[j - 1] + lc[j]) / 2 for j in range(1, m)]
+                cut = [at(t0) if t0 else a] + [at(x) for x in inner] + [at(land[-1] - t1) if t1 else b]
+            else:
+                m = max(1, int(land[-1] // min_axe), math.ceil(len(cs) / CAPL))
+                t = min(max(land[-1] - m * min_axe, 0.0) / 2 + RHO, RHO + trim, land[-1] / 4) if trim >= 0 else 0.0
+                cut = [at(t) if t else a] + [at(t + (land[-1] - 2 * t) * j / m) for j in range(1, m)] + \
+                      [at(land[-1] - t) if t else b]
             for h in cs:
                 owner[h] = k + min(m - 1, max(0, int(np.searchsorted(cut, p[h], side="right")) - 1))
             span += list(zip(cut[:-1], cut[1:]))
             on = lambda x: float(np.interp(x, d, land))
-            ext = [cut[0] - RHO if t else cut[0]] + cut[1:-1] + [cut[-1] + RHO if t else cut[-1]]
+            ext = [cut[0] - RHO if cut[0] > a else cut[0]] + cut[1:-1] + [cut[-1] + RHO if cut[-1] < b else cut[-1]]
             info["got"] += [on(y) - on(x) for x, y in zip(ext[:-1], ext[1:])]
             info["trimmed"] += cut[0] - a + b - cut[-1]
             k += m
@@ -205,6 +237,19 @@ def partition(r, cells_long=SPAN, min_axe=0.0, trim=-1.0):
             hi = b if j == m - 1 else (p[run[-1]] + p[cs[(j + 1) * len(cs) // m]]) / 2
             span.append((lo, hi))
         k += m
+    while left:   # item 155: a CH-less lane's cells, piece by piece, to the cluster they touch most (else the nearest CH)
+        part = pieces(left)[0]
+        nb = {}
+        for g in (g for h in part for g in ring(h, 1) if g in owner):
+            nb[owner[g]] = nb.get(owner[g], 0) + 1
+        if nb:
+            j = max(nb, key=lambda j: (nb[j], -j))
+        else:
+            c = np.mean([centre(h) for h in part], axis=0)
+            j = owner[min((h for h, _ in chs), key=lambda h: np.linalg.norm(np.asarray(centre(h)) - c))]
+        for h in part:
+            owner[h] = j
+        left = [h for h in left if h not in owner]
     while True:
         moved = False
         for c in range(k):
@@ -227,8 +272,16 @@ def stage_map(a, W_):
     land = set(g["domain"])
     bs = bs_point(land, a.bs)
     trim = a.trim * W if a.trim >= 0 else -1.0
-    tot, r = best_route(land, bs, a.lane, a.span, a.minAxe * 1000, a.straight * 1000, a.parallel, trim)
-    owner, span, _ = partition(r, a.span, a.minAxe * 1000, trim)
+    chs = None
+    if a.chFrom:   # item 155: the CHs given, (cell, position) each
+        chs = [((int(x["q"]), int(x["r"])), (float(x["x"]), float(x["y"])))
+               for f in sorted(os.listdir(a.chFrom)) if f.startswith("c") and f.endswith("-nodes-s35.csv") and f[1:f.index("-")].isdigit()
+               for x in csv.DictReader(open(f"{a.chFrom}/{f}")) if x["isCH"] == "1"]
+        json.dump([[*h, *xy] for h, xy in chs], open(f"{W_}/chs.json", "w"))
+    tot, r = best_route(land, bs, a.lane, a.span, a.minAxe * 1000, a.straight * 1000, a.parallel, trim, chs)
+    owner, span, info = partition(r, a.span, a.minAxe * 1000, trim, chs)
+    if chs:   # every cluster exactly one CH
+        assert sorted(owner[h] for h, _ in chs) == list(range(len(span))), [owner[h] for h, _ in chs]
     gaps = {h: "lake" for h in g["lake_set"]} | {h: "river" for h in g["river"]}
     with open(f"{W_}/domain-cells.csv", "w") as f:
         f.write("q,r,cx,cy,type\n")
@@ -252,7 +305,7 @@ def stage_map(a, W_):
     json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="meander-lane",
                    lane=a.lane, span=a.span, minAxe=a.minAxe, straight=a.straight, reach=a.reach,
                    parallel=a.parallel, bearing=round(math.degrees(r["th"])) if "th" in r else None,
-                   trim=a.trim, chAnywhere=a.chAnywhere, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
+                   trim=a.trim, chAnywhere=a.chAnywhere, chFrom=a.chFrom, orphans=info["orphans"], bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
                    cv=float(sz.std() / sz.mean())), open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {K} clusters {sz.tolist()}, {len(r['lanes'])} lanes, route "
           f"{r['s'][-1] / 1000:.1f} km, with BS {tot / 1000:.1f} km")
@@ -269,6 +322,8 @@ def stage_core(W_, K):
         np.save(f"{W_}/c{k}-core.npy", core)
         mine = {(int(r["q"]), int(r["r"])) for r in csv.DictReader(open(f"{W_}/c{k}-cells.csv"))}
         under = sorted({tuple(h) for h in cells_at(core)} & mine) or sorted(mine)
+        if os.path.exists(f"{W_}/chs.json"):   # item 155: the given CH's cell
+            under = [h for h in ((q, r) for q, r, *_ in json.load(open(f"{W_}/chs.json"))) if h in mine]
         with open(f"{W_}/c{k}-chcells.csv", "w") as f:
             f.write("q,r\n" + "".join(f"{q},{r}\n" for q, r in under))
 
@@ -389,6 +444,8 @@ def main():
                     help="cells: with --minAxe, cut each lane's leftover off its ends, at most RHO + TRIM cells (item 153)")
     ap.add_argument("--chAnywhere", action="store_true",
                     help="the CH the strongest node of the cluster wherever it lies, not under the line (item 154)")
+    ap.add_argument("--chFrom", default="",
+                    help="work folder whose CHs (c*-nodes-s35.csv) MEANDER's clusters are cut around (item 155)")
     ap.add_argument("--reach", type=float, default=OMEGA / W,
                     help="cells: only critical cells farther than this from the line pull it (item 151: 5)")
     ap.add_argument("--work", required=True)
@@ -405,6 +462,7 @@ def main():
     a = ap.parse_args()
     a.reentry, a.tourKind = True, "route"
     a.bin = os.path.abspath(a.bin)
+    a.chFrom = os.path.abspath(a.chFrom) if a.chFrom else ""
     os.makedirs(a.work, exist_ok=True)
     W_ = os.path.abspath(a.work)
     os.chdir(W_)

@@ -1625,6 +1625,12 @@ thử để đường bay thẳng hẳn xem sao, và đảm bảo đủ thôi ch
 một điểm nữa chưa công bằng là hiện cả 2 đang tự chọn CH có vị trí tốt nhất, giả sử CH ở vị trí ngẫu nhiên thì sẽ thế nào
 ```
 
+*155. 2026-10-24 · uav-l2 · MEANDER: ở bước chia cụm, chia dựa trên vị trí các CH đã có*
+
+```text
+với meander ở bước chia cụm hãy thử cố gắng chia cụm dựa trên vị trí Ch đã có
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

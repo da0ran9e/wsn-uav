@@ -377,6 +377,23 @@ def bend_lane(P, pins, pulls, reach=OMEGA):
     return Q, idx, kmax
 
 
+def write_path(fn, C, i):
+    """C (10 m vertices) as a deploy path file: a straight lead-in and lead-out of RHO along its end tangents, the
+    CH at vertex i between parts 1 and 2."""
+    t0, t1 = C[min(3, len(C) - 1)] - C[0], C[-1] - C[max(len(C) - 4, 0)]
+    t0, t1 = t0 / np.linalg.norm(t0), t1 / np.linalg.norm(t1)
+    parts = [np.array([C[0] - RHO * t0, C[0]]), C[:i + 1], C[i:], np.array([C[-1], C[-1] + RHO * t1])]
+    with open(fn, "w") as f:
+        f.write("part,seg,x,y,thDeg\n")
+        for j, Pj in enumerate(parts):
+            D = dense(Pj)
+            D = D if j == 3 else D[:-1]
+            for m, p in enumerate(D):
+                nx = D[m + 1] if m + 1 < len(D) else parts[j + 1][0] if j < 3 else p + (p - D[m - 1])
+                th = math.degrees(math.atan2(nx[1] - p[1], nx[0] - p[0]))
+                f.write(f"{j},{-1 if j in (0, 3) else 0 if m == 0 else 1},{p[0]:.3f},{p[1]:.3f},{th:.4f}\n")
+
+
 def stage_curve(W_, K, reach=OMEGA):
     if not os.path.exists(f"{W_}/domain-cl.csv"):
         domain_scores(W_, K)
@@ -406,18 +423,7 @@ def stage_curve(W_, K, reach=OMEGA):
             C, i = Q[lo:hi + 1], i - lo
             before = [float(np.min(np.linalg.norm(P[lo:hi + 1] - c, axis=1))) for c in crit[k]]
             after = [float(np.min(np.linalg.norm(C - c, axis=1))) for c in crit[k]]
-            t0, t1 = C[min(3, len(C) - 1)] - C[0], C[-1] - C[max(len(C) - 4, 0)]
-            t0, t1 = t0 / np.linalg.norm(t0), t1 / np.linalg.norm(t1)
-            parts = [np.array([C[0] - RHO * t0, C[0]]), C[:i + 1], C[i:], np.array([C[-1], C[-1] + RHO * t1])]
-            with open(f"{W_}/c{k}-path-s35.csv", "w") as f:
-                f.write("part,seg,x,y,thDeg\n")
-                for j, Pj in enumerate(parts):
-                    D = dense(Pj)
-                    D = D if j == 3 else D[:-1]
-                    for m, p in enumerate(D):
-                        nx = D[m + 1] if m + 1 < len(D) else parts[j + 1][0] if j < 3 else p + (p - D[m - 1])
-                        th = math.degrees(math.atan2(nx[1] - p[1], nx[0] - p[0]))
-                        f.write(f"{j},{-1 if j in (0, 3) else 0 if m == 0 else 1},{p[0]:.3f},{p[1]:.3f},{th:.4f}\n")
+            write_path(f"{W_}/c{k}-path-s35.csv", C, i)
             out[k] = dict(crit=len(crit[k]), far_before=sum(x > reach for x in before),
                           far_after=sum(x > reach for x in after), mean_before=round(float(np.mean(before)), 1),
                           mean_after=round(float(np.mean(after)), 1), curvature=round(float(kmax), 3),

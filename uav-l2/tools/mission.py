@@ -191,6 +191,38 @@ def stage_chord(a, W_, K):
     print("chord-t: " + ", ".join(f"C{k} {files[k][c][0]} deg" for k, c in sorted(picks.items())))
 
 
+def stage_bend(a, W_, K):
+    """--bendCrit CELLS (item 156): each cluster's chord bent lightly towards its critical cells that lie farther than
+    the River half width OMEGA from it but within CELLS cells, by min(d - OMEGA, W) each, the CH pinned
+    (meander_lane.bend_lane); the straight path kept as c{k}-path-chord.csv."""
+    import numpy as np
+    from map_gen import W
+    from meander_lane import bend_lane, critical, write_path
+    if not os.path.exists(f"{W_}/domain-cl.csv"):
+        domain_scores(W_, K)
+    around = load_around(f"{W_}/domain-cl.csv")
+    for k in range(1, K + 1):
+        if os.path.exists(f"{W_}/c{k}-path-chord.csv"):
+            continue
+        xy = [(float(r["x"]), float(r["y"])) for r in csv.DictReader(open(f"{W_}/c{k}-path-s35.csv"))
+              if r["part"] in ("1", "2")]
+        core = np.array([p for i, p in enumerate(xy) if i == 0 or p != xy[i - 1]])
+        s = np.r_[0, np.cumsum(np.linalg.norm(np.diff(core, axis=0), axis=1))]
+        d = np.r_[np.arange(0, s[-1], 10.0), s[-1]]
+        P = np.c_[np.interp(d, s, core[:, 0]), np.interp(d, s, core[:, 1])]
+        nodes = list(csv.DictReader(open(f"{W_}/c{k}-nodes-s35.csv")))
+        x = next(r for r in nodes if r["isCH"] == "1")
+        ch = np.array([float(x["x"]), float(x["y"])])
+        lat = {(int(r["q"]), int(r["r"])): np.array([float(r["cx"]), float(r["cy"])])
+               for r in csv.DictReader(open(f"{W_}/c{k}-lattice.csv"))}
+        pulls = [lat[h] for h in critical(nodes, around) if not np.allclose(lat[h], ch, atol=W)
+                 and np.min(np.linalg.norm(P - lat[h], axis=1)) <= a.bendCrit * W]
+        Q, idx, _ = bend_lane(P, [ch], pulls)
+        os.rename(f"{W_}/c{k}-path-s35.csv", f"{W_}/c{k}-path-chord.csv")
+        write_path(f"{W_}/c{k}-path-s35.csv", Q, idx[0])
+        print(f"C{k}: bent towards {len(pulls)} critical cells, shift <= {np.max(np.linalg.norm(Q - P, axis=1)):.0f} m")
+
+
 def stage_tour(a, W_, K):
     if os.path.exists(f"{W_}/tour.json"):
         return json.load(open(f"{W_}/tour.json"))
@@ -329,6 +361,8 @@ def main():
                     "split into exactly two of equal size around its two critical cells farthest apart")
     ap.add_argument("--count", type=int, default=0, help="k-medoids: exactly this many clusters (subCH-K's source)")
     ap.add_argument("--geometry", action="store_true", help="stop after the tour (no ns-3 pass or River)")
+    ap.add_argument("--bendCrit", type=float, default=0,
+                    help="cells: bend each chord lightly towards its critical cells within this distance (item 156)")
     ap.add_argument("--chAnywhere", action="store_true",
                     help="the CH the strongest node wherever it lies (no 300 m edge margin; item 154)")
     ap.add_argument("--chordTour", default="", metavar="FRAC,CLUE",
@@ -357,6 +391,8 @@ def main():
     print("bearings: " + ", ".join(f"C{k} {v['bearing']} deg ({v['inside']} m inside)" for k, v in b.items()))
     if a.chordTour:
         stage_chord(a, W_, K)
+    if a.bendCrit:
+        stage_bend(a, W_, K)
     stage_tour(a, W_, K)
     if a.geometry:
         for k in range(1, K + 1):

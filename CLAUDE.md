@@ -1631,6 +1631,12 @@ một điểm nữa chưa công bằng là hiện cả 2 đang tự chọn CH c�
 với meander ở bước chia cụm hãy thử cố gắng chia cụm dựa trên vị trí Ch đã có
 ```
 
+*156. 2026-10-24 · uav-l2 · uốn nhẹ đường CHORD cho hơi bám các critical cell gần đó; chạy lại hai thiết kế (CHORD-T, MEANDER theo CH có sẵn) trên vài bản đồ với ns-3*
+
+```text
+cũng khá tốt rồi, bây giờ uốn nhẹ đường của chord một chút cho hơi bám vào các critical cell gần đó, chạy lại 2 thiết kế này trên vài bản đồ với ns3 để xem kết quả
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

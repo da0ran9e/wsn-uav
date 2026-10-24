@@ -118,7 +118,8 @@ def stage_deploy(a, W_, K):
                     "--spacings=35", "--angle=180", f"--out=c{k}"]
             env = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
             # a random entry only to get the roles: try other entries if a path from it is infeasible
-            margins = (0, 100, 200, 300) if a.partition == "subch" else (300, 200, 100, 0)   # subCH: the strongest node
+            margins = (0, 100, 200, 300) if a.partition == "subch" or getattr(a, "chAnywhere", False) \
+                else (300, 200, 100, 0)   # subCH, --chAnywhere (item 154): the strongest node wherever it is
             margin = next(m for m in margins for p in range(10)
                           if sh(base + [f"--chMargin={m}", f"--pick={p}"], f"c{k}-deploy0.log", env, ok=True))
             base.append(f"--chMargin={margin}")
@@ -328,6 +329,8 @@ def main():
                     "split into exactly two of equal size around its two critical cells farthest apart")
     ap.add_argument("--count", type=int, default=0, help="k-medoids: exactly this many clusters (subCH-K's source)")
     ap.add_argument("--geometry", action="store_true", help="stop after the tour (no ns-3 pass or River)")
+    ap.add_argument("--chAnywhere", action="store_true",
+                    help="the CH the strongest node wherever it lies (no 300 m edge margin; item 154)")
     ap.add_argument("--chordTour", default="", metavar="FRAC,CLUE",
                     help="CHORD-T (item 136): bearings with at least FRAC of the longest in-cluster flight and CLUE of "
                          "one clue set, chosen jointly with team 1's tour (chord_tour.py)")

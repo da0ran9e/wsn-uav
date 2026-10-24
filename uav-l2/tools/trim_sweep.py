@@ -8,7 +8,8 @@ Maps as straight_sweep (restructure.domain(8, seed), BS south). MEANDER: lanes 8
 (--parallel), cut so every cluster has --minAxe 2.1 km over its own cells (one copy of the clue set, 2.02 km, and a
 small margin), no pull towards critical cells (--reach 1000: the line only bends onto each CH, which the ns-3 pass
 needs); VARIANTS: without (par) and with (par-trim5) the lanes' leftover cut off their ends (--trim 5). CHORD-T:
-mission.py --chordTour 0.6,0.8 with MEANDER's cluster count. Columns as straight_sweep.
+mission.py --chordTour 0.6,0.8 with MEANDER's cluster count. Columns as straight_sweep. --chAnywhere (item 154):
+both take the CH the strongest node of the cluster wherever it lies (a random position: the node scores are random).
 """
 import argparse, json, os
 from concurrent.futures import ThreadPoolExecutor
@@ -32,7 +33,8 @@ def one(a, s, v):
     w = ml(a, s, v)
     if not os.path.exists(f"{w}/c1-curve.json"):
         run(["python3", "uav-l2/tools/meander_lane.py", "--clusters", str(K), "--seed", str(s), "--lane", "8",
-             "--minAxe", str(MINAXE), "--reach", "1000", *VARIANTS[v], "--work", w, "--bin", a.bin, "--geometry"],
+             "--minAxe", str(MINAXE), "--reach", "1000", *VARIANTS[v], *a.ch, "--work", w, "--bin", a.bin,
+             "--geometry"],
             f"{a.log}/ml-s{s}-{v}.md")
     if not os.path.exists(f"{w}/c1-curve.json"):
         return s, v, "meander failed"
@@ -41,7 +43,7 @@ def one(a, s, v):
     if not os.path.exists(f"{c}/tour.json"):
         run(["python3", "uav-l2/tools/mission.py", "--clusters", str(K), "--seed", str(s), "--count", str(k),
              "--work", c, "--bin", a.bin, "--windowKB", "400", "--windowAt", "crit", "--critRing", "domain",
-             "--axeNear", "--chordTour", "0.6,0.8", "--geometry"], f"{a.log}/chord-s{s}-K{k}.md")
+             "--axeNear", "--chordTour", "0.6,0.8", *a.ch, "--geometry"], f"{a.log}/chord-s{s}-K{k}.md")
     return s, v, "ok" if os.path.exists(f"{c}/tour.json") else "chord failed"
 
 
@@ -71,7 +73,9 @@ def main():
     ap.add_argument("--log", required=True)
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--table", default="")
+    ap.add_argument("--chAnywhere", action="store_true")
     a = ap.parse_args()
+    a.ch = ["--chAnywhere"] if a.chAnywhere else []
     a.work, a.bin, a.log = (os.path.abspath(x) for x in (a.work, a.bin, a.log))
     S = seeds(dict(K=K, spine=0.0))
     if a.table:

@@ -1619,6 +1619,12 @@ trong lúc chạy tổng hợp lại tất cả các tham số cho tôi thành m
 thử để đường bay thẳng hẳn xem sao, và đảm bảo đủ thôi chứ đừng bay thừa
 ```
 
+*154. 2026-10-24 · uav-l2 · chưa công bằng: cả CHORD-T và MEANDER đang tự chọn CH ở vị trí tốt nhất; nếu CH ở vị trí ngẫu nhiên thì sao*
+
+```text
+một điểm nữa chưa công bằng là hiện cả 2 đang tự chọn CH có vị trí tốt nhất, giả sử CH ở vị trí ngẫu nhiên thì sẽ thế nào
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

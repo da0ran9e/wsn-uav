@@ -20,7 +20,8 @@ curvilinear coordinates (meander.coords), and each cluster's stretch is bent lig
      --minAxe (item 149): each lane cut by the length of its line over its own cells instead, every cluster at
      least minAxe km (one copy of the clue set over its own cells at a constant 50 m/s); --trim T (item 153): the
      lane's land left over cut off its two ends (each end at most RHO + T cells; the leads deliver over RHO of it)
-  5  deploy: uav-coop-deploy, the CH the strongest node under the cluster's stretch (swath_mission.stage_deploy)
+  5  deploy: uav-coop-deploy, the CH the strongest node under the cluster's stretch (swath_mission.stage_deploy);
+     --chAnywhere (item 154): the strongest node of the cluster wherever it lies, the line then bent onto it (step 6)
   6  bend, one lane line at a time (so the clusters along it still join seamlessly): every critical cell
      (river_plan Algorithm 3, the local test over the real neighbourhood) farther than --reach cells (default the
      River half width OMEGA; item 151: 5) pulls the line towards itself by min(d - OMEGA, BEND) with a Gaussian bump (sigma = sqrt(2 a RHO), as
@@ -251,7 +252,7 @@ def stage_map(a, W_):
     json.dump(dict(clusters=K, cells=len(land), nodes=len(nodes), bs=bs, over=0, partition="meander-lane",
                    lane=a.lane, span=a.span, minAxe=a.minAxe, straight=a.straight, reach=a.reach,
                    parallel=a.parallel, bearing=round(math.degrees(r["th"])) if "th" in r else None,
-                   trim=a.trim, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
+                   trim=a.trim, chAnywhere=a.chAnywhere, bs_at=a.bs, shape=a.shape, offset=r["off"], route=float(r["s"][-1]), lanes=len(r["lanes"]), total=float(tot),
                    cv=float(sz.std() / sz.mean())), open(f"{W_}/map.json", "w"))
     print(f"map: {len(land)} land cells, {K} clusters {sz.tolist()}, {len(r['lanes'])} lanes, route "
           f"{r['s'][-1] / 1000:.1f} km, with BS {tot / 1000:.1f} km")
@@ -386,6 +387,8 @@ def main():
                     help="straight parallel lanes (swath.route) at the bearing of the shortest route (item 153)")
     ap.add_argument("--trim", type=float, default=-1.0,
                     help="cells: with --minAxe, cut each lane's leftover off its ends, at most RHO + TRIM cells (item 153)")
+    ap.add_argument("--chAnywhere", action="store_true",
+                    help="the CH the strongest node of the cluster wherever it lies, not under the line (item 154)")
     ap.add_argument("--reach", type=float, default=OMEGA / W,
                     help="cells: only critical cells farther than this from the line pull it (item 151: 5)")
     ap.add_argument("--work", required=True)

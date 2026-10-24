@@ -82,9 +82,10 @@ def stage_deploy(a, W_, K):
     for k in range(1, K + 1):
         if os.path.exists(f"{W_}/c{k}-path-deploy.csv"):
             continue
+        anywhere = getattr(a, "chAnywhere", False)   # item 154: the strongest node of the cluster, wherever it lies
         base = [f"{a.bin}/deploy-bin", f"--regionIn=c{k}-cells.csv", f"--nodesIn=c{k}-nodesin.csv",
-                "--spacings=35", "--angle=180", f"--chCells=c{k}-chcells.csv", f"--out=c{k}"]
-        margin, pick = next((m, p) for m in (300, 200, 100, 0) for p in range(10)
+                "--spacings=35", "--angle=180", *([] if anywhere else [f"--chCells=c{k}-chcells.csv"]), f"--out=c{k}"]
+        margin, pick = next((m, p) for m in ((0, 100, 200, 300) if anywhere else (300, 200, 100, 0)) for p in range(10)
                             if sh(base + [f"--chMargin={m}", f"--pick={p}"], f"c{k}-deploy.log", env, ok=True))
         os.rename(f"c{k}-path-s35.csv", f"c{k}-path-deploy.csv")
         json.dump(dict(chMargin=margin, pick=pick), open(f"{W_}/c{k}-deploy.json", "w"))

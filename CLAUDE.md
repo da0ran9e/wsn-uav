@@ -1607,6 +1607,12 @@ miền hẹp dài sẽ làm mất tính tổng quát của bài, bạn đã th�
 thử lại với bản đồ ngẫu nhiên
 ```
 
+*152. 2026-10-24 · tổng hợp · bảng riêng gom tất cả các tham số đang dùng, để người dùng kiểm tra nguồn từng yếu tố*
+
+```text
+trong lúc chạy tổng hợp lại tất cả các tham số cho tôi thành một bảng riêng, tôi sẽ kiểm tra nguồn của từng yếu tốt
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

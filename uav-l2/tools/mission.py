@@ -303,6 +303,10 @@ def domain_scores(W_, K):
 
 
 def stage_runs(a, W_, K):
+    if getattr(a, "kinPass", False):   # item 157: every pass flies team 1's speed profile (pass_speed.py)
+        import pass_speed
+        if not all(os.path.exists(f"{W_}/c{k}-speed.json") for k in range(1, K + 1)):
+            pass_speed.run(W_, K, getattr(a, "windowKB", 0) or 400)
     if getattr(a, "critRing", "cluster") == "domain" and not os.path.exists(f"{W_}/domain-cl.csv"):
         domain_scores(W_, K)
     if getattr(a, "axeNear", False):   # read back by mission_report.load_map, so the analysis plans as River did
@@ -361,6 +365,8 @@ def main():
                     "split into exactly two of equal size around its two critical cells farthest apart")
     ap.add_argument("--count", type=int, default=0, help="k-medoids: exactly this many clusters (subCH-K's source)")
     ap.add_argument("--geometry", action="store_true", help="stop after the tour (no ns-3 pass or River)")
+    ap.add_argument("--kinPass", action="store_true",
+                    help="the ns-3 pass flies team 1's speed profile: slower, or circling, where a cluster is short (item 157)")
     ap.add_argument("--bendCrit", type=float, default=0,
                     help="cells: bend each chord lightly towards its critical cells within this distance (item 156)")
     ap.add_argument("--chAnywhere", action="store_true",

@@ -13,7 +13,7 @@ fixed) until its curvature is at most 1.02 / R_TURN, or 400 passes (MEANDER's be
 where one cluster's stretch runs on into the next (mission_policy.seams), its lead-out and the next lead-in are
 not flown.
 """
-import math, sys
+import json, math, os, sys
 
 import numpy as np
 
@@ -41,9 +41,11 @@ def curvature(P):
     return np.r_[k[0], k, k[-1]]
 
 
-def profile(P, phi):
-    """Seconds per STEP segment of the resampled polyline P."""
+def profile(P, phi, cap=None):
+    """Seconds per STEP segment of the resampled polyline P; cap: a speed limit per point (item 157)."""
     v = np.minimum(VMAX, np.sqrt(G * math.tan(math.radians(phi)) / np.maximum(curvature(P), 1e-9)))
+    if cap is not None:
+        v = np.minimum(v, cap)
     ds = np.linalg.norm(np.diff(P, axis=0), axis=1)
     for i in range(1, len(v)):
         v[i] = min(v[i], math.sqrt(v[i - 1] ** 2 + 2 * ACC * ds[i - 1]))
@@ -104,8 +106,14 @@ def run(w, kind, smoothed=False, q_kb=400):
         else:
             L[kd] += float(seg.sum())
     out["parts"] = L
+    # pass_speed.py (item 157): each cluster's speed cap over its own cells, as its ns-3 pass flies it
+    caps = {k: json.load(open(f"{w}/c{k}-speed.json"))["cap"] for k in M["cl"] if os.path.exists(f"{w}/c{k}-speed.json")}
+    cap = None
+    if caps:
+        cap = np.array([caps.get(k, VMAX) if k >= 0 and cell_at(*p) in M["cl"][k]["geo"]["S"] else VMAX
+                        for p, k in zip(P, tag)])
     for phi in PHIS:
-        dt = profile(P, phi)
+        dt = profile(P, phi, cap)
         over = {}
         for i in range(len(dt)):
             k = tag[i]

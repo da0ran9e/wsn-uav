@@ -1637,6 +1637,12 @@ với meander ở bước chia cụm hãy thử cố gắng chia cụm dựa tr�
 cũng khá tốt rồi, bây giờ uốn nhẹ đường của chord một chút cho hơi bám vào các critical cell gần đó, chạy lại 2 thiết kế này trên vài bản đồ với ns3 để xem kết quả
 ```
 
+*157. 2026-10-24 · uav-l2 · sửa lỗi vận tốc của pass ns-3 (bay đều 50 m/s, không giảm tốc hay lượn bù) trước khi chạy, nếu không thì kết quả không có ý nghĩa*
+
+```text
+có thể sửa được lỗi vận tốc của ns3 không, phải sửa trước mới chạy nếu không thì cũng không có ý nghĩa gì
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

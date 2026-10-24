@@ -29,7 +29,7 @@ import numpy as np
 from map_gen import W, cell_at, centre, corners, strip_text
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
-from river_plan import load_around, plan  # noqa: E402
+from river_plan import load_around, packets, plan  # noqa: E402
 
 MATCH, LORA, AIR, V2, HOVER = 5.0, 30.0, 0.4, 15.0, 30.0
 SCHEMES = ("rf", "ad12", "d")
@@ -58,9 +58,7 @@ def load_map(w, schemes=SCHEMES, with_bits=True):
         prow = list(csv.DictReader(open(f"{w}/c{k}-path-s35.csv")))
         path = np.array([[float(q["x"]), float(q["y"])] for q in prow])
         part = np.array([int(q["part"]) for q in prow])   # 0 lead-in, 1 entry -> CH, 2 CH -> exit, 3 lead-out
-        seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
-        d = np.arange(0, seg[-1], 0.5)
-        uav = np.c_[np.interp(d, seg, path[:, 0]), np.interp(d, seg, path[:, 1])]
+        uav = packets(prow)   # packet s at uav[s] (with column t, the speed profile; item 157)
         geo = dict(c=c, w=W, R=W / math.sqrt(3), cells=sel, S=set(sel), nodes=nodes, path=path, part=part, uav=uav)
         res = {t: {(int(r["q"]), int(r["r"])): r for r in csv.DictReader(open(f"{w}/r{k}-{t}-crit.csv"))}
                for t in schemes}

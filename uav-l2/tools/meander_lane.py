@@ -450,6 +450,8 @@ def main():
                     help="cells: with --minAxe, cut each lane's leftover off its ends, at most RHO + TRIM cells (item 153)")
     ap.add_argument("--chAnywhere", action="store_true",
                     help="the CH the strongest node of the cluster wherever it lies, not under the line (item 154)")
+    ap.add_argument("--kinPass", action="store_true",
+                    help="the ns-3 pass flies team 1's speed profile (pass_speed.py; item 157)")
     ap.add_argument("--chFrom", default="",
                     help="work folder whose CHs (c*-nodes-s35.csv) MEANDER's clusters are cut around (item 155)")
     ap.add_argument("--reach", type=float, default=OMEGA / W,

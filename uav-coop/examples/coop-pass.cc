@@ -97,10 +97,20 @@ struct GroundNode {
     bool isCH = false;
 };
 
-// The flight path as a polyline with cumulative length; part per vertex.
+// The flight path as a polyline with cumulative length; part per vertex; with column t, the time
+// at each vertex (s from the start of the lead-in: the speed profile, CLAUDE.md §8 item 157).
 struct Track {
-    std::vector<double> x, y, s;
+    std::vector<double> x, y, s, t;
     std::vector<int> part;
+    Vector AtTime(double tau, int* prt = nullptr) const {
+        const size_t i = std::min<size_t>(
+            std::upper_bound(t.begin(), t.end(), tau) - t.begin(), t.size() - 1);
+        const size_t j = i == 0 ? 0 : i - 1;
+        const double L = t[i] - t[j];
+        const double f = L > 0 ? std::clamp((tau - t[j]) / L, 0.0, 1.0) : 0.0;
+        if (prt) *prt = part[i];
+        return Vector(x[j] + f * (x[i] - x[j]), y[j] + f * (y[i] - y[j]), 0);
+    }
     Vector At(double d, int* prt = nullptr) const {
         const size_t i = std::min<size_t>(
             std::upper_bound(s.begin(), s.end(), d) - s.begin(), s.size() - 1);
@@ -132,7 +142,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("nodes", "nodes CSV from uav-coop-deploy", nodesFile);
     cmd.AddValue("path", "path CSV from uav-coop-deploy (same spacing)", pathFile);
     cmd.AddValue("alt", "flight altitude, m (also the end of the free-space segment)", alt);
-    cmd.AddValue("speed", "ground speed, m/s", speed);
+    cmd.AddValue("speed", "ground speed, m/s (a path with column t: the most it may fly)", speed);
     cmd.AddValue("alpha", "path-loss exponent beyond the free-space segment", alpha);
     cmd.AddValue("K", "Rician K factor", kFactor);
     cmd.AddValue("runs", "independent missions (method rule: >= 120)", runs);
@@ -154,18 +164,23 @@ int main(int argc, char* argv[]) {
         T.x.push_back(x);
         T.y.push_back(y);
         T.part.push_back(std::stoi(r.at("part")));
+        if (r.count("t")) T.t.push_back(std::stod(r.at("t")));
     }
     CHECK(T.x.size() > 2);
+    const bool timed = !T.t.empty();
+    CHECK(!timed || (T.t.size() == T.x.size() && T.t[0] == 0));
     for (size_t i = 1; i < T.x.size(); ++i) {
         const double d = T.s[i] - T.s[i - 1];
         CHECK(d > 0 && d <= 2.0 + 1e-2);   // every <= 2 m (CSV rounds to 1 mm): continuous
         CHECK(T.part[i] >= T.part[i - 1]);
+        if (timed) CHECK(T.t[i] > T.t[i - 1] && d / (T.t[i] - T.t[i - 1]) <= speed + 0.5);   // 0.1 ms rounding
     }
-    const double length = T.s.back();
-    const uint32_t nPk = (uint32_t)std::floor(length / (speed * dt)) + 1;
+    const double length = T.s.back(), duration = timed ? T.t.back() : length / speed;
+    const uint32_t nPk = (uint32_t)std::floor(timed ? duration / dt : length / (speed * dt)) + 1;
     std::vector<Vector> pkPos(nPk);
     std::vector<int> pkPart(nPk);
-    for (uint32_t s = 0; s < nPk; ++s) pkPos[s] = T.At(s * speed * dt, &pkPart[s]);
+    for (uint32_t s = 0; s < nPk; ++s)
+        pkPos[s] = timed ? T.AtTime(s * dt, &pkPart[s]) : T.At(s * speed * dt, &pkPart[s]);
 
     // ---- the nodes ---------------------------------------------------------
     std::vector<GroundNode> nodes;
@@ -187,10 +202,11 @@ int main(int argc, char* argv[]) {
     CHECK(chIdx < nNodes);
     CHECK(nodes[chIdx].dPath < 1.0);                 // the path flies over the CH
 
-    std::printf("path %s: %.0f m = %.1f s at %.0f m/s, %u packets (one every %.0f ms); altitude "
+    std::printf("path %s: %.0f m = %.1f s at %.1f m/s%s, %u packets (one every %.0f ms); altitude "
                 "%.0f m\nnodes %s: %u, CH #%u\nchannel: free space to %.0f m, then alpha %.2f, "
                 "Rician K %.1f; +%.0f dBm, sensitivity %.0f dBm, %u B PSDU\n", pathFile.c_str(),
-                length, length / speed, speed, nPk, dt * 1e3, alt, nodesFile.c_str(), nNodes,
+                length, duration, length / duration, timed ? " on average (its speed profile)" : "", nPk,
+                dt * 1e3, alt, nodesFile.c_str(), nNodes,
                 nodes[chIdx].id, dref, alpha, kFactor, txDbm, sens, psdu);
 
     // Per node over missions.
@@ -230,7 +246,8 @@ int main(int argc, char* argv[]) {
         Ptr<WaypointMobilityModel> um = uav.Get(0)->GetObject<WaypointMobilityModel>();
         um->AddWaypoint(Waypoint(Seconds(0), Vector(T.x[0], T.y[0], alt)));
         for (size_t i = 0; i < T.x.size(); ++i)
-            um->AddWaypoint(Waypoint(Seconds(kStartS + T.s[i] / speed), Vector(T.x[i], T.y[i], alt)));
+            um->AddWaypoint(Waypoint(Seconds(kStartS + (timed ? T.t[i] : T.s[i] / speed)),
+                                     Vector(T.x[i], T.y[i], alt)));
 
         // ONE helper for every node, alive until Destroy: its destructor disposes the
         // channel and would silently stop all reception.

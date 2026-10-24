@@ -48,7 +48,21 @@ def hexdist(a, b):
     return (abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[0] + a[1] - b[0] - b[1])) // 2
 
 
-def load(deploy, path_csv, step=0.5):
+def packets(rows):
+    """Where the UAV is when it sends each packet, one every 10 ms from the start of the path (rows of a path CSV):
+    every 0.5 m at a constant 50 m/s, or, if the path carries its times (column t, s; CLAUDE.md §8 item 157), at
+    those times, as uav-coop-pass places them."""
+    path = np.array([[float(q["x"]), float(q["y"])] for q in rows])
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
+    if rows and "t" in rows[0]:
+        t = np.array([float(q["t"]) for q in rows])
+        ts = np.arange(int(math.floor(t[-1] / 0.01)) + 1) * 0.01
+        return np.c_[np.interp(ts, t, path[:, 0]), np.interp(ts, t, path[:, 1])]
+    d = np.arange(0, seg[-1], 0.5)
+    return np.c_[np.interp(d, seg, path[:, 0]), np.interp(d, seg, path[:, 1])]
+
+
+def load(deploy, path_csv):
     """Lattice, cells, nodes and the flight path sampled at one point per packet."""
     lat = list(csv.DictReader(open(os.path.join(deploy, "deploy-lattice.csv"))))
     c = {(int(x["q"]), int(x["r"])): (float(x["cx"]), float(x["cy"])) for x in lat}
@@ -59,12 +73,9 @@ def load(deploy, path_csv, step=0.5):
         assert hex_of(x, y, R) == h
     sel = sorted((int(x["q"]), int(x["r"])) for x in lat if x["selected"] == "1")
     nodes = list(csv.DictReader(open(os.path.join(deploy, "deploy-nodes-s35.csv"))))
-    path = np.array([[float(q["x"]), float(q["y"])] for q in csv.DictReader(open(path_csv))])
-    # resample the flight path at one point every step metres: packet s is sent at uav[s]
-    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
-    d = np.arange(0, seg[-1], step)
-    uav = np.c_[np.interp(d, seg, path[:, 0]), np.interp(d, seg, path[:, 1])]
-    return dict(c=c, w=w, R=R, cells=sel, S=set(sel), nodes=nodes, path=path, uav=uav)
+    rows = list(csv.DictReader(open(path_csv)))
+    path = np.array([[float(q["x"]), float(q["y"])] for q in rows])
+    return dict(c=c, w=w, R=R, cells=sel, S=set(sel), nodes=nodes, path=path, uav=packets(rows))   # packet s at uav[s]
 
 
 def cellpath(src, dst, allowed, c):
@@ -157,7 +168,8 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, w
             z, nz = uav[m], np.array([-t[1], t[0]])
             t0, t1 = heading(m - 200, 20), heading(m + 200, 20)   # +-100 m: heading change -> curvature
             turn = math.atan2(t0[0] * t1[1] - t0[1] * t1[0], float(np.dot(t0, t1)))
-            rc = (min(m + 200, N - 1) - max(m - 200, 0)) * 0.5 / abs(turn) if abs(turn) > 1e-6 else math.inf
+            arc = np.linalg.norm(np.diff(uav[max(m - 200, 0):min(m + 200, N - 1) + 1], axis=0), axis=1).sum()
+            rc = arc / abs(turn) if abs(turn) > 1e-6 else math.inf
             # normals converge at the centre of curvature, on the side the path turns towards
             reach = (min(omega, rc), omega) if turn > 0 else (omega, min(omega, rc))
         for side, sg in ((0, 1.0), (1, -1.0)):

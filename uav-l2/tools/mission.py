@@ -28,7 +28,7 @@ from map_gen import cell_at, centre
 from partition import partition
 from restructure import bs_point, domain, lane_partition
 from subch import subch_partition
-from river_plan import load, load_around, plan  # noqa: E402 (subch puts uav-coop2/tools on the path)
+from river_plan import hexdist, load, load_around, plan  # noqa: E402 (subch puts uav-coop2/tools on the path)
 from tour_heur import order_segments
 from chord_tour import choose
 
@@ -134,6 +134,44 @@ def stage_deploy(a, W_, K):
     return out
 
 
+def fit_path(rows, S, crit, target, need):
+    """--chordFit (item 159): a straight path (rows of its CSV) cut to the shortest stretch through the CH that flies
+    target metres over the cluster's own cells S, the closest to the critical cells (points crit) among the
+    shortest (within 20 m of it), with straight leads of RHO beyond its ends; the whole line when it is shorter.
+    Returns dict(C core vertices, i the CH's index, L metres with the leads, own metres over S, poses both ways,
+    fix seconds the delivery still lacks at 50 m/s for need metres, axe the own cells under the core)."""
+    import numpy as np
+    from swath import RHO, cells_at
+    core = [r for r in rows if r["part"] in ("1", "2")]
+    xy = [(float(r["x"]), float(r["y"])) for r in core]
+    keep = [i for i in range(len(xy)) if i == 0 or xy[i] != xy[i - 1]]
+    X = np.array([xy[i] for i in keep])
+    ich = next(j for j, i in enumerate(keep) if core[i]["part"] == "2")   # part 2 starts at the CH
+    s = np.r_[0, np.cumsum(np.linalg.norm(np.diff(X, axis=0), axis=1))]
+    on = np.array([tuple(h) in S for h in cells_at(X)])
+    own = np.r_[0, np.cumsum(np.diff(s) * on[1:])]
+    i0, i1 = 0, len(X) - 1
+    if own[-1] > target:
+        wins = []
+        for i in range(ich + 1):
+            j = int(np.searchsorted(own, own[i] + target))
+            if j < len(X):
+                wins.append((s[max(j, ich)] - s[i], i, max(j, ich)))
+        best = min(w[0] for w in wins)
+        cp = np.array(crit) if len(crit) else np.empty((0, 2))
+        dist = lambda i, j: float(np.mean([np.min(np.linalg.norm(X[i:j + 1] - c, axis=1)) for c in cp])) if len(cp) else 0.0
+        _, i0, i1 = min((dist(i, j), i, j) for L, i, j in wins if L <= best + 20)
+    C = X[i0:i1 + 1]
+    t0, t1 = C[min(3, len(C) - 1)] - C[0], C[-1] - C[max(len(C) - 4, 0)]
+    t0, t1 = t0 / np.linalg.norm(t0), t1 / np.linalg.norm(t1)
+    a0, a1 = C[0] - RHO * t0, C[-1] + RHO * t1
+    h0, h1 = math.atan2(t0[1], t0[0]), math.atan2(t1[1], t1[0])
+    got = float(own[i1] - own[i0])
+    return dict(C=C, i=ich - i0, L=float(s[i1] - s[i0]) + 2 * RHO, own=got, fix=max(0.0, (need - got) / V1),
+                poses=[((*a0, h0), (*a1, h1)), ((*a1, h1 + math.pi), (*a0, h0 + math.pi))],
+                axe={tuple(h) for h in cells_at(C)} & S)
+
+
 def stage_chord(a, W_, K):
     """--chordTour FRAC,CLUE (CHORD-T, item 136; CLUE of the --windowKB clue set, item 149): the bearings of all
     clusters re-chosen jointly with team 1's tour
@@ -147,10 +185,13 @@ def stage_chord(a, W_, K):
     if getattr(a, "critRing", "cluster") == "domain" and not os.path.exists(f"{W_}/domain-cl.csv"):
         domain_scores(W_, K)
     around = load_around(f"{W_}/domain-cl.csv") if os.path.exists(f"{W_}/domain-cl.csv") else None
-    cands, n, files = {}, {}, {}
+    cands, n, files, fits = {}, {}, {}, {}
+    need = math.ceil((a.windowKB or 400) * 1000 / 99) * 0.5   # one copy of the clue set at 50 m/s, metres
     for k in range(1, K + 1):
         deploy_links(W_, k)
-        n[k] = len(plan(load(f"{W_}/d{k}", f"{W_}/c{k}-path-s35.csv"), reentry=True, domain_sc=around)["crit"])
+        geo = load(f"{W_}/d{k}", f"{W_}/c{k}-path-s35.csv")
+        crit = plan(geo, reentry=True, domain_sc=around)["crit"]
+        n[k] = len(crit)
         bj = json.load(open(f"{W_}/c{k}-bearing.json"))
         scan = bearings(W_, k)
         top = scan[0][1]
@@ -167,14 +208,28 @@ def stage_chord(a, W_, K):
                                           f"--out={pre}"], f"{pre}-deploy.log", env, ok=True):
                 continue
             p = list(csv.DictReader(open(f"{W_}/{pre}-path-s35.csv")))
+            if getattr(a, "chordFit", 0):   # item 159: the line cut to just enough, its delivery shortfall in its time
+                f = fit_path(p, geo["S"], [geo["c"][h] for h in crit], a.chordFit * need, need)
+                tail = max(0.0, -12.0 + 0.101 * len(geo["S"]) + 5.7 * max(
+                    [min(hexdist(h, x) for x in f["axe"]) for h in crit] or [0])) if f["axe"] else 0.0
+                cands[k].append(dict(L=f["L"], fix=f["fix"], tail=tail, poses=f["poses"]))
+                fits[(k, pre)] = f
+                files[k].append((b, ins, pre))
+                continue
             xy = [(float(r["x"]), float(r["y"])) for r in p]
             h0, h1 = math.radians(float(p[0]["thDeg"])), math.radians(float(p[-1]["thDeg"]))
             cands[k].append(dict(L=sum(math.dist(u, v) for u, v in zip(xy, xy[1:])),
                                  poses=[((*xy[0], h0), (*xy[-1], h1)), ((*xy[-1], h1 + math.pi), (*xy[0], h0 + math.pi))]))
             files[k].append((b, ins, pre))
-    picks, order = choose(tuple(json.load(open(f"{W_}/map.json"))["bs"]), cands, n)
+    picks, order = choose(tuple(json.load(open(f"{W_}/map.json"))["bs"]), cands, n, getattr(a, "riverTour", 0.0))
     for k, c in picks.items():
         b, ins, pre = files[k][c]
+        if fits:   # the chosen line cut to just enough (meander_lane.write_path), the whole one kept
+            from meander_lane import write_path
+            f = fits[(k, pre)]
+            write_path(f"{W_}/{pre}-path-fit.csv", f["C"], f["i"])
+            os.replace(f"{W_}/{pre}-path-s35.csv", f"{W_}/{pre}-path-full.csv")
+            os.replace(f"{W_}/{pre}-path-fit.csv", f"{W_}/{pre}-path-s35.csv")
         if pre != f"c{k}":
             for f in os.listdir(W_):   # the old line's pass, plan and River results must not be reused
                 if f.startswith((f"pass{k}-", f"plan{k}.", f"r{k}-")):
@@ -186,7 +241,9 @@ def stage_chord(a, W_, K):
             json.dump(dict(bj, bearing=b, inside=ins, longest=bj["bearing"]), open(f"{W_}/c{k}-bearing.json", "w"))
     if os.path.exists(f"{W_}/tour.json"):
         os.remove(f"{W_}/tour.json")
-    json.dump(dict(frac=frac, clue=clue, picks={k: files[k][c][0] for k, c in picks.items()},
+    json.dump(dict(frac=frac, clue=clue, fit=getattr(a, "chordFit", 0), riverTour=getattr(a, "riverTour", 0.0),
+                   own={k: round(fits[(k, files[k][c][2])]["own"], 1) for k, c in picks.items()} if fits else {},
+                   picks={k: files[k][c][0] for k, c in picks.items()},
                    candidates={k: [f[0] for f in files[k]] for k in files}), open(f"{W_}/chord.json", "w"))
     print("chord-t: " + ", ".join(f"C{k} {files[k][c][0]} deg" for k, c in sorted(picks.items())))
 
@@ -217,6 +274,9 @@ def stage_bend(a, W_, K):
                for r in csv.DictReader(open(f"{W_}/c{k}-lattice.csv"))}
         pulls = [lat[h] for h in critical(nodes, around) if not np.allclose(lat[h], ch, atol=W)
                  and np.min(np.linalg.norm(P - lat[h], axis=1)) <= a.bendCrit * W]
+        if getattr(a, "bendShort", False) and getattr(a, "chordFit", 0) and \
+                json.load(open(f"{W_}/chord.json"))["own"].get(str(k), 0) >= math.ceil((a.windowKB or 400) * 1000 / 99) * 0.5:
+            continue   # item 159: only a cluster short of one clue-set copy bends towards its critical cells
         Q, idx, _ = bend_lane(P, [ch], pulls)
         os.rename(f"{W_}/c{k}-path-s35.csv", f"{W_}/c{k}-path-chord.csv")
         write_path(f"{W_}/c{k}-path-s35.csv", Q, idx[0])
@@ -365,6 +425,12 @@ def main():
                     "split into exactly two of equal size around its two critical cells farthest apart")
     ap.add_argument("--count", type=int, default=0, help="k-medoids: exactly this many clusters (subCH-K's source)")
     ap.add_argument("--geometry", action="store_true", help="stop after the tour (no ns-3 pass or River)")
+    ap.add_argument("--chordFit", type=float, default=0,
+                    help="with --chordTour: cut each line to F copies of the clue set over its own cells (item 159)")
+    ap.add_argument("--riverTour", type=float, default=0.0,
+                    help="with --chordFit: weight of the latest estimated River end in the tour (item 159)")
+    ap.add_argument("--bendShort", action="store_true",
+                    help="with --bendCrit and --chordFit: bend only the clusters short of one copy (item 159)")
     ap.add_argument("--kinPass", action="store_true",
                     help="the ns-3 pass flies team 1's speed profile: slower, or circling, where a cluster is short (item 157)")
     ap.add_argument("--bendCrit", type=float, default=0,

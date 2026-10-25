@@ -104,6 +104,7 @@ Các thư mục k8 trong bảng chạy thêm `--schemes rf,d`: phương án kéo
 **Bản lưu dữ liệu:** `uav-l2/docs/data/results/raw/<kênh>-<bản đồ>.tar.xz`, khoảng 1,2 MB mỗi tệp (`logs/2026-10-25_0600-fc-baseline/archive.sh`).
 - Gồm: bản đồ, cụm, node, đường bay, kế hoạch River, kết quả River từng critical cell, thông tin và đường bay FC.
 - Không gồm bitmap của lượt bay ns-3 (khoảng 1 MB mỗi cụm). Để dựng lại: giải nén vào một thư mục, rồi chạy lại đúng lệnh 1 trên thư mục đó. Chỉ bước pass chạy lại; các bước khác đã có kết quả nên được bỏ qua. Sau đó lệnh 2 và 3 cho lại bảng trên.
+- Đã kiểm chứng trên `r200-k8-s1` (`logs/2026-10-25_0600-fc-baseline/roundtrip.md`): 8 bitmap pass dựng lại, cùng 8 kế hoạch và 16 tệp kết quả River (`rf`, `d`), giống hệt bản gốc từng byte (32/32 tệp).
 
 ## 5. Giới hạn của FC (cần nêu khi dùng số này)
 - Mã fountain lý tưởng: phần dư 5 %, không tính chi phí giải mã.

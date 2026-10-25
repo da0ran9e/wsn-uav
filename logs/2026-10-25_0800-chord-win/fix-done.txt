@@ -9,3 +9,5 @@ r500 k16 exit 0 11:16:43
 open k16 exit 0 11:19:10
 r500 k8 exit 0 11:24:01
 open k8 exit 0 11:24:47
+open k12 exit 0 11:25:06
+all done 11:25:06

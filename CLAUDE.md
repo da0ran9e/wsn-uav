@@ -1738,6 +1738,12 @@ Giải thích thêm về ML tour và mô hình học trên dữ liệu
 toàn bộ ý tưởng này dự kiến thực hiện mất bao lâu
 ```
 
+*173. 2026-10-25 · paper · câu hỏi: trước khi cài LM-Tour có cần trọng số học trên dữ liệu đang có không*
+
+```text
+vậy trước khi cài ML tour ta cần có phần trọng số được học trên dữ liệu đang có phải không
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

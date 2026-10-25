@@ -1,6 +1,6 @@
 # c-score-r200-k8-R450
 
-- Bắt đầu: 2026-10-25 17:13:08, chạy 21 s, mã thoát 0
+- Bắt đầu: 2026-10-25 17:18:40, chạy 22 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav/uav-l2/tools`
 
 **Lệnh**

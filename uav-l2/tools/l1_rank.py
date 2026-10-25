@@ -38,6 +38,11 @@ Methods (name = base + options):
             -kt (CLAUDE.md §8 item 149): team 1's leave times from kin_time's speed profile at 45 degree bank with
             the delivery fixes, instead of a constant 50 m/s
             -redir (team 2 may change its target in flight when a report comes; P, B4, P+prog)
+            -fcd (CLAUDE.md §8 item 169; P+prog with -kt): the clue set fountain-coded as for FC and DN, and
+            systematic, so River's window is unchanged (its source packets); team 1 broadcasts coded packets
+            the whole flight, and the first report is the cell's own decode (fc_baseline.realise along team 1's
+            kin_time track, one realisation seeded by CHORDFC/<map>/<channel>; decode + in-cell gather), the
+            second the River report; each report holds everything the cell has by then
             P+prog only: -allclues (upper bound: the River report holds all 12 clues, as if every Axe were long
             enough for the clue set)
   B1 (no phase 1: TSP over every critical cell with the large file), B2-r (groups, multicast large file), B3-r
@@ -367,7 +372,18 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             wC = Cq if "equal" in opts else C
             tk = next((o for o in opts if o in ("short", "latency", "seam", "kin", "skin", "route")), "l3first")
             tk += "/kt" if "kt" in opts else ""
-            if base == "P+prog":
+            if base == "P+prog" and "fcd" in opts:   # the clue set fountain-coded, heard along the whole flight
+                fo = M["fcd"][0]
+
+                def post_of(x, m):
+                    al, be, sd, _ = L.calib(wC, m, truth=C)
+                    return (al + be * float(L.report(mv[x], wC, m)[0]), max(sd, 1e-4)) if m.any() else (al, sd)
+                ad, ar = lora(M, {x: fo[x][1] + tm for x in crits}, phase), ready("river", tk, sch)
+                reps = {}
+                for x in crits:   # each report holds everything the cell has by then
+                    ev = sorted([(ad[x], 0, fo[x][0]), (ar[x], 1, hold[x][order][0] if not stalled(x, sch) else fo[x][0])])
+                    reps[x] = [(ev[0][0], post_of(x, ev[0][2])), (ev[1][0], post_of(x, ev[0][2] | ev[1][2]))]
+            elif base == "P+prog":
                 ad, ar = ready("direct", tk), ready("river", tk, sch)
                 pd_, pr_ = posts("direct", order, wC), posts("full" if "allclues" in opts else "river", order, wC, sch)
                 reps = {x: [(t, v) for t, _, v in sorted([(ad[x], 0, pd_[x]), (ar[x], 1, pr_[x])])] for x in crits}
@@ -472,6 +488,10 @@ def one_work(job):
         _, o = kin_time.run(w, k)
         legs = tours[k][0]
         tours[k + "/kt"] = ([(*l[:4], o[45]["leave"][l[0]]) for l in legs], o[45]["profile"] + o[45]["fix"])
+        if any("fcd" in m.split("-") for m in methods):   # -fcd (item 169): one reception realisation along this flight
+            crits = [(kk, h) for kk in sorted(M["cl"]) for h in M["cl"][kk]["P"]["crit"]]
+            tc, pts, _ = o[45]["track"]
+            M["fcd"] = fc_baseline.realise(fc_baseline.Ground(M, C, crits, w), M, C, crits, pts, tc, "chordfc", w, {})
     hold = holdings(M, C, seqs)
     if any(m.split("-")[0] == "B5" for m in methods):
         crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]

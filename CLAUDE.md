@@ -1713,6 +1713,13 @@ trong lúc chờ bạn thử cài thêm baseline như sau: gom các critical cel
 sau đó cho tôi animation cả 3 thuật toán trên cùng bản đồ nhé
 ```
 
+*169. 2026-10-25 · uav-l2 · câu hỏi: đội 1 của CHORD thường xong sớm hơn nhưng sao vẫn thua; sửa để CHORD thắng rõ*
+
+```text
+tôi thấy đội 1 của chord có xu hướng hoàn thành sớm hơn nhưng tại sao lại thua 
+sửa lại sao cho chord thắng rõ nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

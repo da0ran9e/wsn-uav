@@ -46,6 +46,13 @@
 //                          lacks asks that neighbour for its missing packets of the lowest such page (one request
 //                          at a time, again after a timeout); a cell that hears a neighbour lack one of its pages,
 //                          or completes a page, resets its timer to tImin.
+// Repair (--repair=S > 0, river --prep=full; CLAUDE.md §8 item 169): two gaps closed.
+//   Axe     an Axe cell's gather also takes the packets of its own Seg that none of its nodes heard from an
+//           adjacent cell that holds them (a request, then the packets over that cell pair's gateways)
+//   stalls  a critical cell that still lacks packets and has taken in none for S seconds asks its Circle
+//           members again for the rest of their groups; a member that lacks one asks its Bank again, and a
+//           Bank that lacks one its Axe cell (an 802.15.4 ACK carries only a sequence number, so a frame can
+//           be taken as delivered on another exchange's ACK and lost)
 // Writes OUT-crit.csv (per run and critical cell) and OUT-runs.csv (per run).
 
 #include "ns3/core-module.h"
@@ -217,7 +224,7 @@ int main(int argc, char* argv[]) {
     std::string nodesCsv, routesCsv, gwCsv, planFile, bits, out = "river-ns3", scheme = "river",
                                                            prep = "full", trace;
     uint32_t firstRun = 1, runs = 1;
-    double limitS = 1800, maxLossDb = 130, share = 400;
+    double limitS = 1800, maxLossDb = 130, share = 400, repairS = 0;
     uint32_t circleMin = 2, circleMax = 12, page = 64, tK = 1;
     double tImin = 1, tImax = 64;
     int colours = 7;
@@ -240,6 +247,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("circleMin", "adaptive: fewest Circle members", circleMin);
     cmd.AddValue("circleMax", "adaptive: most Circle members", circleMax);
     cmd.AddValue("limit", "stop a mission after this many seconds", limitS);
+    cmd.AddValue("repair", "river --prep=full: Axe cells complete their Seg from adjacent cells, and a critical cell "
+                 "idle this many seconds asks again (0: off)", repairS);
     cmd.AddValue("maxLoss", "SpectrumChannel MaxLossDb", maxLossDb);
     cmd.AddValue("colours", "cell channels: 3, 4, 7 or 13 colours", colours);
     cmd.AddValue("gwSelect", "gateway pair of each cell pair: deploy (uav-coop, by geometry) | quality "
@@ -719,23 +728,47 @@ int main(int argc, char* argv[]) {
             if (gatherLeft.count(c) && gatherLeft[c] == 0) fn();
             else onGathered[c].push_back(std::move(fn));
         };
-        // Convention 1: bring what cell c needs from its own nodes to its CL.
+        // Convention 1: bring what cell c needs from its own nodes to its CL. With --repair, an Axe cell also
+        // asks an adjacent cell for the packets of its Seg that none of its own nodes heard.
         auto gather = [&](const Hex& c, const std::vector<uint8_t>& need) {
             auto& h = hold(c);
             const int cl = clOf.at(c);
             route(cl);
             const auto& etx = etxTo[cl];
             int n = 0;
+            std::map<Hex, std::vector<std::pair<uint32_t, int>>> nbr;   // adjacent cell -> (packet, its holder)
             for (uint32_t s = 0; s < N; ++s) {
                 if (!need[s] || h[s]) continue;
                 int best = -1;
                 for (int v : members[c])
                     if (v != cl && rx[v][s] && (best < 0 || etx.at(v) < etx.at(best))) best = v;
-                if (best < 0) continue;
+                if (best < 0) {
+                    if (repairS > 0 && seg.count(c) && s >= seg[c].first && s <= seg[c].second)
+                        for (auto [dq, dr] : {std::pair{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, -1}, {-1, 1}}) {
+                            const Hex c2{c.q + dq, c.r + dr};
+                            if (!used.count(c2) || !gw.count({c, c2})) continue;
+                            const auto it = std::find_if(members[c2].begin(), members[c2].end(),
+                                                         [&](int v) { return rx[v][s] != 0; });
+                            if (it == members[c2].end()) continue;
+                            nbr[c2].push_back({s, *it});
+                            n++;
+                            break;
+                        }
+                    continue;
+                }
                 n++;
                 forward(best, newJob(-1, (int32_t)s, kGather, [&, c] {
                             if (--gatherLeft[c] == 0) gathered(c);
                         }), 0);
+            }
+            for (auto& [c2, xs] : nbr) {
+                const int data = addPath({c2, c});
+                send(addPath({c, c2}), -1, kControl, [&, c, data, xs = xs] {
+                    for (auto [s, v] : xs)
+                        forward(v, newJob(data, (int32_t)s, kGather, [&, c] {
+                                    if (--gatherLeft[c] == 0) gathered(c);
+                                }), 0);
+                });
             }
             gatherLeft[c] = n;
             if (n == 0) gathered(c);
@@ -778,13 +811,26 @@ int main(int argc, char* argv[]) {
             lackCL[k] = a;
             lackCell[k] = b;
         }
+        // --repair state lives for the whole run (callbacks refer to it)
+        std::map<Hex, std::vector<std::function<void()>>> redo;   // a critical cell's requests again
+        std::map<std::pair<Hex, Hex>, std::pair<int, int>> bankPath;   // (a, b) -> (a -> b, b -> a)
         if (scheme == "river") {
             for (auto& x : plan.axe) needOr(x.a, segMask(x.a));
+            // --repair: Bank b asks its Axe cell a again for packet s
+            auto refill = [&](const Hex& a, const Hex& b, uint32_t s) {
+                const auto it = bankPath.find({a, b});
+                if (it == bankPath.end()) return;
+                const auto [fwd, back] = it->second;
+                send(back, -1, kControl, [&, a, s, fwd = fwd] {
+                    when(a, s, [&, s, fwd] { send(fwd, (int32_t)s, kBankFill); });
+                });
+            };
             // Algorithm 5: a Bank tells its Axe cell what it has of Seg(a); the Axe sends the rest.
             for (auto& bk : plan.banks) {
                 if (bk.b == bk.a) continue;
                 needOr(bk.b, segMask(bk.a));
                 const int fwd = addPath(bk.path), back = addPath(rev(bk.path));
+                bankPath[{bk.a, bk.b}] = {fwd, back};
                 const Hex a = bk.a, b = bk.b;
                 afterGather(b, [&, a, b, fwd, back] {
                     auto m = segMask(a);
@@ -831,6 +877,38 @@ int main(int argc, char* argv[]) {
                         }
                     });
                 }
+                // --repair: k asks m again for what it still lacks of m's group; m passes on what it holds and
+                // asks the Banks again for the rest
+                if (repairS > 0 && prep == "full")
+                    redo[k].push_back([&, k, m, ts, src, group, toK, toM, refill] {
+                        std::vector<uint32_t> part;
+                        for (uint32_t s = 0; s < N; ++s)
+                            if (group[s] && !hold(k)[s]) part.push_back(s);
+                        if (part.empty()) return;
+                        send(toM, -1, kControl, [&, m, ts, src, part, toK, refill] {
+                            std::vector<std::vector<uint32_t>> X(ts.size());
+                            for (uint32_t s : part) {
+                                if (hold(m)[s]) {
+                                    send(toK, (int32_t)s, kPull);
+                                    continue;
+                                }
+                                for (size_t i = 0; i < ts.size(); ++i)
+                                    if (s >= seg[ts[i]->a].first && s <= seg[ts[i]->a].second) X[i].push_back(s);
+                                when(m, s, [&, s, toK] { send(toK, (int32_t)s, kPull); });
+                            }
+                            for (size_t i = 0; i < ts.size(); ++i) {
+                                if (X[i].empty()) continue;
+                                const Hex a = ts[i]->a, b = ts[i]->b;
+                                const int fwd = src[i].first;
+                                send(src[i].second, -1, kControl, [&, a, b, fwd, xs = X[i], refill] {
+                                    for (uint32_t s : xs) {
+                                        if (b != a && !hold(b)[s]) refill(a, b, s);
+                                        when(b, s, [&, s, fwd] { send(fwd, (int32_t)s, kCircleFill); });
+                                    }
+                                });
+                            }
+                        });
+                    });
                 // Algorithm 7: k asks m for what it lacks of m's group, once k has gathered.
                 afterGather(k, [&, k, m, ts, group, toK, toM, fetch] {
                     std::vector<uint32_t> part;
@@ -1078,7 +1156,7 @@ int main(int argc, char* argv[]) {
             std::printf("trickle: %u packets in %u pages over %zu cells\n", n, P, used.size());
         }
         // Completion of the critical cells.
-        std::map<Hex, double> doneAt;
+        std::map<Hex, double> doneAt, lastNew;
         std::map<Hex, uint32_t> left;
         auto finish = [&](const Hex& k) {
             doneAt[k] = now();
@@ -1089,10 +1167,20 @@ int main(int argc, char* argv[]) {
                 if (needK[k][s] && !hold(k)[s]) {
                     left[k]++;
                     when(k, s, [&, k] {
+                        lastNew[k] = now();
                         if (--left[k] == 0) finish(k);
                     });
                 }
         }
+        // --repair: every S / 2 seconds, a critical cell idle for S seconds and not done asks again
+        std::function<void(const Hex&)> watch = [&](const Hex& k) {
+            if (!left[k]) return;
+            if (now() - lastNew[k] >= repairS) {
+                lastNew[k] = now();
+                for (auto& f : redo[k]) f();
+            }
+            Simulator::Schedule(Seconds(repairS / 2), [&, k] { watch(k); });
+        };
         std::function<void()> progress = [&] {
             std::fprintf(stderr, "  run %u t=%.0f s: %llu hops, %llu MAC give-ups, %zu/%zu critical done\n", run,
                          now(), (unsigned long long)hops, (unsigned long long)macFail, doneAt.size(),
@@ -1119,6 +1207,12 @@ int main(int argc, char* argv[]) {
             for (auto& f : atStart) f();
             for (const Hex& k : plan.crit)
                 if (!left[k]) finish(k);
+            if (repairS > 0)
+                for (const Hex& k : plan.crit)
+                    afterGather(k, [&, k] {
+                        lastNew[k] = now();
+                        Simulator::Schedule(Seconds(repairS / 2), [&, k] { watch(k); });
+                    });
             progress();
         });
         Simulator::Stop(Seconds(kT0 + limitS));

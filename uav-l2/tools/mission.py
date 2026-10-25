@@ -410,7 +410,8 @@ def stage_runs(a, W_, K):
         if not os.path.exists(f"{W_}/r{k}-{tag}-runs.csv") or len(open(f"{W_}/r{k}-{tag}-runs.csv").readlines()) < 2:
             sh([f"{a.bin}/river-bin", f"--nodes=c{k}-nodes-s35.csv", f"--routes=c{k}-routes-s35.csv",
                 f"--gateways=c{k}-gateways-s35.csv", f"--plan=plan{k}.txt", f"--bits=pass{k}-bits",
-                f"--firstRun={mission(k)}", "--runs=1", "--limit=900", "--gwSelect=quality", "--colours=7", *SCHEMES[tag], f"--out=r{k}-{tag}"],
+                f"--firstRun={mission(k)}", "--runs=1", "--limit=900", "--gwSelect=quality", "--colours=7", *SCHEMES[tag], f"--out=r{k}-{tag}",
+                *([f"--repair={a.riverRepair:g}"] if getattr(a, "riverRepair", 0) and tag == "rf" else [])],
                f"r{k}-{tag}.log", rivenv)
         print("  " + open(f"r{k}-{tag}.log").read().strip().splitlines()[-1] if os.path.exists(f"r{k}-{tag}.log")
               else f"  r{k}-{tag} done before", flush=True)
@@ -453,6 +454,9 @@ def main():
     ap.add_argument("--mapRuns", action="store_true",
                     help="each cluster's ns-3 pass and River run as mission 100000 CLUSTERS + 100 SEED + k instead of 1: "
                          "draws independent across clusters and maps, shared by every design of one map (item 161)")
+    ap.add_argument("--riverRepair", type=float, default=0,
+                    help="River (rf) with --repair=S: Axe cells complete their Seg from adjacent cells, a critical cell "
+                         "idle S seconds asks again (needs a river-bin built with it; item 169)")
     ap.add_argument("--kinPass", action="store_true",
                     help="the ns-3 pass flies team 1's speed profile: slower, or circling, where a cluster is short (item 157)")
     ap.add_argument("--bendCrit", type=float, default=0,

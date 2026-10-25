@@ -1,0 +1,31 @@
+# c3-plan-open-k8-R800
+
+- Bắt đầu: 2026-10-25 18:59:20, chạy 117 s, mã thoát 0
+- Thư mục: `/home/user/wsn-uav/uav-l2/tools`
+
+**Lệnh**
+
+```bash
+python3 lm_tour.py plan /tmp/claude-0/-home-user-wsn-uav/fd83db84-4832-5a0e-be6a-d1201f4d6a60/scratchpad/FIX/open/k8-s1 --out /tmp/claude-0/-home-user-wsn-uav/fd83db84-4832-5a0e-be6a-d1201f4d6a60/scratchpad/LM3/R800/open/k8-s1 --R 800 --rounds 1 --free
+```
+
+**Kết quả**
+
+```text
+C1: cap 42.5 m/s, 0 loops, 4041 packets over its cells (need 4041), pass 60.6 s
+C2: cap 49.1 m/s, 0 loops, 4041 packets over its cells (need 4041), pass 47.1 s
+C3: cap 35.2 m/s, 0 loops, 4041 packets over its cells (need 4041), pass 62.6 s
+C4: cap 40.3 m/s, 0 loops, 4041 packets over its cells (need 4041), pass 51.9 s
+C5: cap 45.6 m/s, 1 loops, 4041 packets over its cells (need 4041), pass 70.7 s
+C6: cap 40.6 m/s, 0 loops, 4041 packets over its cells (need 4041), pass 50.3 s
+C7: cap 43.7 m/s, 0 loops, 4041 packets over its cells (need 4041), pass 69.2 s
+C8: cap 50.0 m/s, 0 loops, 4088 packets over its cells (need 4041), pass 56.5 s
+round 1 C1: 2 insertions, pass 56 -> 61 s, transits 39 -> 36 s, mean ready 59 -> 56 s (River 7 -> 7 s, own decode 3 -> 4 of 5), N_after 13
+round 1 C2: 7 insertions, pass 59 -> 47 s, transits 64 -> 52 s, mean ready 66 -> 61 s (River 12 -> 14 s, own decode 3 -> 0 of 9), N_after 36
+round 1 C3: 4 insertions, pass 53 -> 63 s, transits 44 -> 42 s, mean ready 57 -> 57 s (River 7 -> 5 s, own decode 4 -> 6 of 7), N_after 29
+round 1 C4: 2 insertions, pass 51 -> 52 s, transits 61 -> 60 s, mean ready 55 -> 54 s (River 5 -> 5 s, own decode 2 -> 2 of 4), N_after 5
+round 1 C5: 2 insertions, pass 51 -> 71 s, transits 64 -> 72 s, mean ready 57 -> 52 s (River 7 -> 4 s, own decode 2 -> 4 of 4), N_after 9
+round 1 C6: 4 insertions, pass 51 -> 50 s, transits 42 -> 51 s, mean ready 55 -> 53 s (River 7 -> 6 s, own decode 4 -> 5 of 6), N_after 18
+round 1 C7: 3 insertions, pass 62 -> 69 s, transits 43 -> 65 s, mean ready 59 -> 61 s (River 3 -> 4 s, own decode 4 -> 5 of 5), N_after 24
+round 1 C8: 1 insertions, pass 56 -> 57 s, transits 157 -> 156 s, mean ready 63 -> 63 s (River 7 -> 7 s, own decode 1 -> 1 of 5), N_after 0
+```

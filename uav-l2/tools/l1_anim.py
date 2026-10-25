@@ -44,6 +44,8 @@ def main():
         ap.add_argument("--" + k, required=True)
     ap.add_argument("--method", default="P+prog-latency-puq-stage-zero")
     ap.add_argument("--draw", type=int, default=-1, help="the draw to show (default: chosen as above)")
+    ap.add_argument("--html", default="", help="also write the player page here (docs/anim/l1-head.html + l1-body.html)")
+    ap.add_argument("--title", default="Layer-1 Mission Replay", help="the page's title, with --html")
     a = ap.parse_args()
     w = a.work
     M = load_map(w, schemes=("rf",))
@@ -199,6 +201,11 @@ def main():
                            samplesPass=SAMPLES_PASS, R=100, match=round(tm, 3)))
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     json.dump(out, open(a.out, "w"), separators=(",", ":"))
+    if a.html:
+        anim = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../docs/anim")
+        head = open(f"{anim}/l1-head.html").read().replace("<title>Layer-1 Mission Replay</title>", f"<title>{a.title}</title>")
+        body = open(f"{anim}/l1-body.html").read().replace("__DATA__", json.dumps(out, separators=(",", ":")))
+        open(a.html, "w").write(head + body)
     print(f"{a.out}: {os.path.getsize(a.out) / 1e6:.2f} MB; draw {d}: c* cell {idx[star[1]]}, team 2 leaves {dep:.0f} s, "
           f"verifies c* at {Ts:.0f} s (visit {rank}), all at {Ta:.0f} s; {len(psnap)} decisions, "
           f"{sum(1 for e in t2 if e[0] == 'stage')} staging moves")

@@ -1,0 +1,4 @@
+set,size,method,maps,n,Tstar,ci,p90,Tall,rank,first
+r500,8,P+prog-kin-puq-stage-zero-redir-kt,1,100,807.9,102.3,1253.0,10543.6,2.39,0.42
+r500,8,Pd+prog-kin-puq-stage-zero-redir-kt,1,100,806.3,101.5,1243.3,10550.1,2.36,0.43
+r500,8,B4-kin-puq-stage-zero-redir-kt,1,100,1407.8,190.8,3024.7,9713.1,5.76,0.26

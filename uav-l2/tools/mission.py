@@ -373,12 +373,13 @@ def stage_runs(a, W_, K):
             pass_speed.run(W_, K, getattr(a, "windowKB", 0) or 400)
     if getattr(a, "critRing", "cluster") == "domain" and not os.path.exists(f"{W_}/domain-cl.csv"):
         domain_scores(W_, K)
-    if getattr(a, "axeNear", False):   # read back by mission_report.load_map, so the analysis plans as River did
-        json.dump(dict(axeNear=True), open(f"{W_}/plan-opts.json", "w"))
     env = getattr(a, "env", "open")
     if os.path.exists(f"{W_}/env.txt") and open(f"{W_}/env.txt").read().strip() != env:
         sys.exit(f"{W_} was flown with --env {open(f'{W_}/env.txt').read().strip()}, not {env}")
     open(f"{W_}/env.txt", "w").write(env + "\n")
+    if getattr(a, "axeNear", False):   # read back by mission_report.load_map, so the analysis plans as River did
+        json.dump(dict(axeNear=True, lossDb=ENV_LOSS[env]), open(f"{W_}/plan-opts.json", "w"))
+    opts = json.load(open(f"{W_}/plan-opts.json")) if os.path.exists(f"{W_}/plan-opts.json") else {}
     passenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/pass-lib")
     rivenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
 
@@ -399,7 +400,8 @@ def stage_runs(a, W_, K):
                 *([f"--windowKB={a.windowKB:g}"] if getattr(a, "windowKB", 0) else []),
                 *([f"--windowAt={a.windowAt}"] if getattr(a, "windowAt", "ch") != "ch" else []),
                 *(["--around=domain-cl.csv"] if os.path.exists(f"{W_}/domain-cl.csv") else []),
-                *(["--axeNear"] if os.path.exists(f"{W_}/plan-opts.json") else []),
+                *(["--axeNear"] if opts.get("axeNear") else []),
+                *([f"--lossDb={opts['lossDb']:g}"] if "lossDb" in opts else []),
                 f"--out=plan{k}.txt"], f"plan{k}.log")
         return k
 

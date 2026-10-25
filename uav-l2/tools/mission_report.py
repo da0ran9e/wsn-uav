@@ -49,7 +49,8 @@ def load_map(w, schemes=SCHEMES, with_bits=True):
     owner = {(int(r["q"]), int(r["r"])): int(r["cluster"]) for r in csv.DictReader(open(f"{w}/clusters.csv"))}
     cl = {}
     around = load_around(f"{w}/domain-cl.csv") if os.path.exists(f"{w}/domain-cl.csv") else None   # item 135
-    near = os.path.exists(f"{w}/plan-opts.json") and json.load(open(f"{w}/plan-opts.json")).get("axeNear", False)
+    opts = json.load(open(f"{w}/plan-opts.json")) if os.path.exists(f"{w}/plan-opts.json") else {}
+    near, near_loss = opts.get("axeNear", False), opts.get("lossDb")   # near_loss: item 163
     for k in range(1, m["clusters"] + 1):
         lat = list(csv.DictReader(open(f"{w}/c{k}-lattice.csv")))
         c = {(int(x["q"]), int(x["r"])): (float(x["cx"]), float(x["cy"])) for x in lat}
@@ -63,7 +64,8 @@ def load_map(w, schemes=SCHEMES, with_bits=True):
         res = {t: {(int(r["q"]), int(r["r"])): r for r in csv.DictReader(open(f"{w}/r{k}-{t}-crit.csv"))}
                for t in schemes}
         runs = {t: next(csv.DictReader(open(f"{w}/r{k}-{t}-runs.csv"))) for t in schemes}
-        P = plan(geo, reentry=True, domain_sc=around, near=near)   # a straight path never re-enters a cell: the same plan
+        P = plan(geo, reentry=True, domain_sc=around, near=near, near_loss=near_loss)   # a straight path never
+        # re-enters a cell: the same plan
         if not with_bits or not schemes:
             cl[k] = dict(geo=geo, P=P, res=res, runs=runs)
             continue

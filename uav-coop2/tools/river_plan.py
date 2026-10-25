@@ -48,6 +48,26 @@ def hexdist(a, b):
     return (abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[0] + a[1] - b[0] - b[1])) // 2
 
 
+NEAR_EPS = 1e-6   # item 163: a packet sent outside the cluster joins Seg(h) only if no node of h hears it w.p. <= this
+
+
+def hear_model(loss_db, H=100.0):
+    """P(a node at horizontal distance x from the UAV hears one packet) on the pass channel with an excess loss
+    (uav-coop-pass --lossDb, CLAUDE.md §8 item 163; the model of uav-l2/tools/a2g_radius.py, which matches the ns-3
+    pass, a2g_env.py): free space to H, then exponent 3, +10 dBm, Rician K = 2 per packet, heard when the faded
+    power is at least -101 dBm."""
+    xs, K, ps = np.arange(0, 3001, 5.0), 2.0, []
+    for x in xs:
+        d = math.hypot(x, H)
+        pl = 40.05 + 20 * math.log10(min(d, H)) + (30 * math.log10(d / H) if d > H else 0)
+        z = 10 ** ((-101.0 - (10 - pl - loss_db)) / 10)   # threshold over the mean power
+        g = np.linspace(z, z + 60 / (K + 1), 6000)
+        f = (K + 1) * math.exp(-K) * np.exp(-(K + 1) * g) * np.i0(2 * np.sqrt(K * (K + 1) * g))
+        ps.append(min(1.0, float(np.trapezoid(f, g))))
+    ps = np.array(ps)
+    return lambda x: np.interp(x, xs, ps)
+
+
 def packets(rows):
     """Where the UAV is when it sends each packet, one every 10 ms from the start of the path (rows of a path CSV):
     every 0.5 m at a constant 50 m/s, or, if the path carries its times (column t, s; CLAUDE.md §8 item 157), at
@@ -109,17 +129,27 @@ def load_around(path):
 
 
 def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, window=0, window_at="ch", domain_sc=None,
-         near=False):
+         near=False, near_loss=None):
     c, w, R, S, uav = geo["c"], geo["w"], geo["R"], geo["S"], geo["uav"]
     # Algorithm 1: Axe and Seg (packets sent above each Axe cell; outside the cluster: none, or with near (CLAUDE.md
-    # §8 item 135) the nearest cluster cell next to where the UAV is, whose nodes hear it from a few hundred metres)
+    # §8 item 135) the nearest cluster cell next to where the UAV is, whose nodes hear it from a few hundred metres;
+    # with near_loss (item 163) only if the channel of that excess loss makes it all but certain that one does)
     axe, seg = [], {}
     reentry = reentry or near   # the nearest cell may change back and forth along a path that grazes the edge
+    if near_loss is not None:
+        hear = hear_model(near_loss)
+        pos = {}
+        for x in geo["nodes"]:
+            pos.setdefault((int(x["q"]), int(x["r"])), []).append((float(x["x"]), float(x["y"])))
+        pos = {h: np.array(v) for h, v in pos.items()}
     for s, (x, y) in enumerate(uav):
         h = hex_of(x, y, R)
         if h not in S and near:
             nb = [g for g in ring(h, 1) if g in S]
             h = min(nb, key=lambda g: math.dist(c[g], (x, y))) if nb else h
+            if h in S and near_loss is not None and \
+                    np.prod(1 - hear(np.hypot(*(pos[h] - (x, y)).T))) > NEAR_EPS:
+                continue
         if h not in S:
             continue
         if h not in seg:

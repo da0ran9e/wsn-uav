@@ -1686,6 +1686,13 @@ trước hết với chord hãy cài 3 chế độ kênh sao cho thể hiện 3 
 cài chord trên vài loại bản đồ 8 12 và 16 cluster cho tôi animation visualize để xem
 ```
 
+*165. 2026-10-25 · uav-l2 · hỏi: lỗi River kẹt ở k16-s1 C6 có luôn xảy ra không, nếu không thì thay seed; dự định chiến dịch 3 cỡ mạng × 3 loại kênh × 10 bản đồ (mỗi bản đồ 1 seed) trên 4–5 baseline*
+
+```text
+nó có luôn sảy ra không, nếu không thì ta có thể chạy seed khác thay thế,
+tôi dự định sẽ chạy tập dữ liệu với 3 cỡ mạng này, 3 loại kênh và 10 bản đồ mỗi bản đồ 1 seed trên khoảng 4-5 baselines bạn thấy sao
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

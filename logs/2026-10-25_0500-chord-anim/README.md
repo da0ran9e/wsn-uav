@@ -41,3 +41,11 @@
 
 ## Dang dở
 - Lỗi River ở k16-s1 C6.
+
+## Bổ sung (mục 165): lỗi C6 có lặp lại không
+`c6-other-seeds.md`: River của C6 (k16-s1) chạy lại với cùng bitmap lượt bay nhưng mission index khác (bốc G2G và MAC khác).
+- Cùng index 1600106: lại kẹt y hệt (5/6, 900 s). ns-3 tất định nên lỗi tái tạo được.
+- Index 2–6: xong cả 5 lần (6/6, 28–33 s).
+- Kết luận: lỗi là một tổ hợp ngẫu nhiên hiếm, không phải do cấu trúc cụm.
+
+**Phát hiện thêm trong chấm điểm:** `l1_rank.ready` và `mission_report` dùng thẳng `doneS`. Một critical cell không xong River có `doneS = −1`, nên bị coi là đã nhận đủ dữ liệu River lúc rời cụm − 1 s, tức lạc quan. Cần sửa trước chiến dịch.

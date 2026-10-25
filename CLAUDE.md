@@ -1744,6 +1744,14 @@ toàn bộ ý tưởng này dự kiến thực hiện mất bao lâu
 vậy trước khi cài ML tour ta cần có phần trọng số được học trên dữ liệu đang có phải không
 ```
 
+*174. 2026-10-25 · paper · xác nhận thứ tự: chạy Python lấy bộ dự đoán trước, trong lúc đó cài LM-Tour, sau đó cài trên ns-3*
+
+```text
+vậy nếu theo kế hoạch ta sẽ chạy python để lấy bộ dự đoán điểm trước đúng không
+trong quá trình chạy ta sẽ cài LM tour
+sau đó sẽ cài trên ns3
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

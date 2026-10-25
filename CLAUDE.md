@@ -1693,6 +1693,13 @@ nó có luôn sảy ra không, nếu không thì ta có thể chạy seed khác 
 tôi dự định sẽ chạy tập dữ liệu với 3 cỡ mạng này, 3 loại kênh và 10 bản đồ mỗi bản đồ 1 seed trên khoảng 4-5 baselines bạn thấy sao
 ```
 
+*166. 2026-10-25 · uav-l2 · baseline mới FC: fountain code, pha 1 chỉ gom trong cell (không River), UAV cánh bằng lượn qua hoặc giảm tốc qua critical cell cho đủ 400 kB (12 file dùng chung), pha 2 như thường; so với CHORD trên 3 kênh × 3 cỡ miền, mỗi cỡ một bản đồ chung*
+
+```text
+tạm thời chưa dùng đến các baseline cũ, tôi muốn tạo một baseline mới có sử dụng fountain code và chỉ gom trong cell cho pha 1, UAV sẽ mang dữ liệu tham chiếu 400kB (12 file như đã mô tả dùng chung cho các thử nghiệm) bay lượn qua các critical cell sao cho giao đủ cho mỗi critical cell (không hover mà chỉ lượn qua hoặc giảm tốc) không có hợp tác river và pha 2 hoạt động như thường 
+chạy thử nghiệm với 3 kênh 3 kích thước miền nhưng chỉ 1 bản đồ chung cho cae chord để so sánh 2 thuật toán này trước
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -55,6 +55,12 @@ Methods (name = base + options):
             by its name). Lanes: the widest of LANES cells with which every critical cell holds all clues with
             probability >= 0.9 (what the BS can compute before the flight; else the narrowest). A cell reports when it holds every clue, else after the last frame within 1.5 km, plus its
             in-cell gather (gatherDoneS) and the match; then LoRa and team 2 (team-2 options as B3)
+  FC        (CLAUDE.md §8 item 166) the fixed wing carries the clue set fountain-coded and flies over the critical
+            cells themselves (TSP; Dubins to each, circles at VMIN where it is still short; fc_baseline.py), no
+            River: a cell reports when its nodes hold enough coded packets of every file, plus its in-cell gather
+            and the match; then LoRa and team 2 (team-2 options as B3); team1 = that flight
+River deadline: a critical cell whose River run is not done by LIMIT after leave (doneS -1) reports then, with the
+clues its own nodes heard (the direct mask)
 Writes OUT-draws.csv (map, set, draw, method: Tstar, Tall, rank, dep, starIn, ...), OUT-cells.csv (per critical
 cell: held clue weight river/direct) and OUT-summary.csv.
 """
@@ -63,6 +69,7 @@ from multiprocessing import Pool
 
 import numpy as np
 
+import fc_baseline
 import kin_time
 import l1_model as L
 from l1_mission import match_time
@@ -75,6 +82,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../
 from river_plan import hexdist  # noqa: E402
 
 V2, WINDOW = 15.0, math.ceil(400 * 1000 / 99)   # the River window of mission.py --windowKB 400
+LIMIT = 900.0                                    # River's deadline after leave (mission.py --limit)
 DEVICE, REF_IMAGES = "pi5-hailo8l", 20          # the large file: the full reference set, ~20 images in 1 MB
 VERIFY = SETTLE + frames(BIG) * UC_FRAME + match_time(DEVICE, REF_IMAGES, L.M)
 METHODS = "P,B4,P-grouped,B4-grouped,P-equal,P-wait,B1,B2-300,B2-500,B3-300,B3-500,B6,B7"
@@ -322,12 +330,15 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
     full = np.ones(len(C), bool)
     cache = {}
 
-    def posts(kind, order, wC):
-        key = (kind, order, id(wC))
+    def stalled(x, scheme):   # River not done by its deadline: the cell reports then, with what it heard itself
+        return float(res[x[0]]["res"][scheme][x[1]]["doneS"]) < 0
+
+    def posts(kind, order, wC, scheme="rf"):
+        key = (kind, order, id(wC), scheme)
         if key not in cache:
             out = {}
             for x in crits:
-                m = full if kind == "full" else hold[x][order][0 if kind == "river" else 1]
+                m = full if kind == "full" else hold[x][order][0 if kind == "river" and not stalled(x, scheme) else 1]
                 S = float(L.report(mv[x], wC, m)[0])
                 al, be, sd, _ = L.calib(wC, m, truth=C)
                 out[x] = (al + be * S, max(sd, 1e-4)) if m.any() else (al, sd)
@@ -337,7 +348,9 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
     def ready(kind, tk, scheme="rf"):
         leave = {l[0]: l[4] for l in tours[tk][0]}
         col = "doneS" if kind == "river" else "gatherDoneS"
-        return lora(M, {x: leave[x[0]] + float(res[x[0]]["res"][scheme][x[1]][col]) + tm for x in crits}, phase)
+        done = {x: LIMIT if kind == "river" and stalled(x, scheme) else float(res[x[0]]["res"][scheme][x[1]][col])
+                for x in crits}
+        return lora(M, {x: leave[x[0]] + done[x] + tm for x in crits}, phase)
 
     out = {}
     light = sum(math.ceil(c["kB"] * 1000 / 99) for c in C)
@@ -352,11 +365,11 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             tk += "/kt" if "kt" in opts else ""
             if base == "P+prog":
                 ad, ar = ready("direct", tk), ready("river", tk, sch)
-                pd_, pr_ = posts("direct", order, wC), posts("full" if "allclues" in opts else "river", order, wC)
+                pd_, pr_ = posts("direct", order, wC), posts("full" if "allclues" in opts else "river", order, wC, sch)
                 reps = {x: [(t, v) for t, _, v in sorted([(ad[x], 0, pd_[x]), (ar[x], 1, pr_[x])])] for x in crits}
             else:
                 kind = "river" if base == "P" else "direct"
-                a_, p_ = ready(kind, tk, sch), posts(kind, order, wC)
+                a_, p_ = ready(kind, tk, sch), posts(kind, order, wC, sch)
                 reps = {x: [(a_[x], p_[x])] for x in crits}
             dep, rule, stg, beta = policy(opts)
             tr = None if traces is None else traces.setdefault(meth, [])
@@ -396,8 +409,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             dep, rule, stg, beta = policy(opts)
             out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg,
                               beta=beta, redirect="redir" in opts)
-        elif base == "B5":
-            sweep = M["b5"][0]
+        elif base in ("B5", "FC"):
+            sweep = M["b5" if base == "B5" else "fc"][0]
             a_ = lora(M, {x: sweep[x][1] + tm for x in crits}, phase)
             p_ = {}
             for x in crits:
@@ -456,6 +469,10 @@ def one_work(job):
         M["b5"] = b5_sweep(M, C, seqs["interleaved"], crits, M["cl"])
         print(f"{sname} {M['name']}: B5 lanes {M['b5'][1]} cells, route {M['b5'][2] / 1000:.1f} km, "
               f"{sum(h.all() for h, _ in M['b5'][0].values())}/{len(crits)} critical cells hold every clue", flush=True)
+    if any(m.split("-")[0] == "FC" for m in methods):
+        crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
+        M["fc"] = fc_baseline.run(M, C, crits, w)
+        print(f"{sname} {M['name']}: FC {M['fc'][1]}", flush=True)
     seedm = int.from_bytes(hashlib.sha256(M["name"].encode()).digest()[:4], "little")
     prng = np.random.default_rng(seedm)
     draws, cells = [], []
@@ -465,8 +482,9 @@ def one_work(job):
         for meth, (Ts, Ta, rank, dep, sin) in out.items():
             tk = next((o for o in meth.split("-") if o in ("short", "latency", "seam", "kin", "skin", "route")), "l3first")
             tk += "/kt" if "kt" in meth.split("-") else ""
+            t1 = M["fc"][1]["tour"] if meth.split("-")[0] == "FC" else tours[tk][1]
             draws.append(dict(map=M["name"], size=len(M["cl"]), set=sname, draw=d, method=meth, crits=nc,
-                              team1=round(tours[tk][1], 1), Tstar=round(Ts, 1), Tall=round(Ta, 1), rank=rank,
+                              team1=round(t1, 1), Tstar=round(Ts, 1), Tall=round(Ta, 1), rank=rank,
                               dep=round(dep, 1), starIn=round(sin, 1)))
         if d == 0:
             cells += [dict(map=M["name"], set=sname, **r) for r in rows]

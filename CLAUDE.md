@@ -1720,6 +1720,12 @@ tôi thấy đội 1 của chord có xu hướng hoàn thành sớm hơn nhưng 
 sửa lại sao cho chord thắng rõ nhé
 ```
 
+*170. 2026-10-25 · paper · khung paper dự kiến (SigDrop_ICC_draft_v3.pdf: River, LM-Tour, đánh giá ns-3); xin ý kiến về phần V, ý tưởng mới dùng AI cho giải pháp · kèm PDF*
+
+```text
+@"/root/.claude/uploads/fd83db84-4832-5a0e-be6a-d1201f4d6a60/d6d27d00-SigDrop_ICC_draft_v3.pdf" đây là khung paper dự kiến của tôi, trong đó có phần V là một ý tưởng mới về việc sử dụng AI cho giải pháp này, bạn thử cho ý kiến của bạn xem sao
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

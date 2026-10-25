@@ -1,0 +1,210 @@
+<script>
+const DATA = __DATA__;
+(() => {
+const D = DATA, R = D.params.R, METH = ["CHORD", "FC", "DN"], MCOL = {CHORD: "mC", FC: "mF", DN: "mD"};
+const chans = Object.keys(D.chans);
+let ch = chans.includes("r200") ? "r200" : chans[0];
+const cells = D.cells.map(c => ({x: c[0], y: c[1], lake: c[2], k: c[3]}));
+const crit = D.crit.map(c => ({x: cells[c[0]].x, y: cells[c[0]].y, k: c[1], ch: c[2]}));
+const isCrit = new Set(D.crit.map(c => c[0]));
+
+// ---------- colours ----------
+let col = {};
+const NAMES = ["bg", "land", "land2", "water", "ink", "ink2", "data", "t2", "star", "rail", "track", "mC", "mF", "mD",
+               "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"];
+function readColors() { const cs = getComputedStyle(document.documentElement); for (const n of NAMES) col[n] = cs.getPropertyValue("--" + n).trim(); }
+readColors();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); dirty = true; });
+new MutationObserver(() => { readColors(); dirty = true; }).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+const kc = k => col["c" + (((k - 1) % 8 + 8) % 8 + 1)];
+function mix(a, b, t) { const p = s => s.length === 4 ? [1, 2, 3].map(i => parseInt(s[i] + s[i], 16)) : [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16));
+  const A = p(a), B = p(b); return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",") + ")"; }
+const lerp = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+const mmss = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+
+// ---------- the mission state at time t ----------
+function fillAt(m, S, i, t) {
+  const f = S.fill[i];
+  if (m === "CHORD") {
+    const [en, lv, own, riv, dn] = f;
+    if (t < en) return 0;
+    if (t < lv) return own * (t - en) / Math.max(1e-9, lv - en);
+    if (t < lv + dn) return own + (riv - own) * (t - lv) / Math.max(1e-9, dn);
+    return riv;
+  }
+  let n = 0; for (const v of f) if (v >= 0 && v <= t) n++; return n / f.length;
+}
+function trackAt(T, t) {   // [x, y, heading] of team 1
+  if (t <= T[0][0]) return [T[0][1], T[0][2], Math.atan2(T[1][2] - T[0][2], T[1][1] - T[0][1])];
+  let lo = 0, hi = T.length - 1;
+  if (t >= T[hi][0]) return [T[hi][1], T[hi][2], Math.atan2(T[hi][2] - T[hi - 1][2], T[hi][1] - T[hi - 1][1])];
+  while (hi - lo > 1) { const md = (lo + hi) >> 1; if (T[md][0] <= t) lo = md; else hi = md; }
+  const f = (t - T[lo][0]) / Math.max(1e-9, T[hi][0] - T[lo][0]);
+  return [T[lo][1] + (T[hi][1] - T[lo][1]) * f, T[lo][2] + (T[hi][2] - T[lo][2]) * f, Math.atan2(T[hi][2] - T[lo][2], T[hi][1] - T[lo][1])];
+}
+function team2At(S, t) {
+  let p = D.bs;
+  for (const e of S.team2) {
+    if (e[1] > t) break;
+    if (e[0] === "verify") p = [crit[e[5]].x, crit[e[5]].y];
+    else p = lerp(e[3], e[4], Math.min(1, (t - e[1]) / Math.max(1e-9, e[2] - e[1])));
+  }
+  return p;
+}
+
+// ---------- page ----------
+const nav = document.getElementById("chans"), host = document.getElementById("panels");
+for (const c of chans) {
+  const b = document.createElement("button"); b.id = "ch-" + c; b.textContent = c; b.setAttribute("aria-pressed", c === ch);
+  b.onclick = () => setChannel(c); nav.appendChild(b);
+}
+const panels = METH.map(m => {
+  const fig = document.createElement("figure"); fig.className = "panel";
+  const cap = document.createElement("figcaption"); const dot = document.createElement("i"); const nm = document.createElement("span");
+  nm.textContent = m; const st = document.createElement("span"); st.className = "st"; cap.append(dot, nm, st);
+  const cv = document.createElement("canvas"); cv.setAttribute("aria-label", m + " mission map");
+  fig.append(cap, cv); host.appendChild(fig);
+  return {m, cv, g: cv.getContext("2d"), dot, st, sc: 1, ox: 0, oy: 0};
+});
+const lanes = document.getElementById("lanes"), chap = document.getElementById("chap"), clock = document.getElementById("clock");
+const gl = lanes.getContext("2d"), gc = chap.getContext("2d");
+let box, END, t = 0, playing = false, dirty = true, dpr = 1;
+function setup() {
+  const P = cells.map(q => [q.x, q.y]).concat([D.bs]);
+  for (const m of METH) for (const p of D.chans[ch][m].t1) P.push([p[1], p[2]]);
+  box = [Math.min(...P.map(p => p[0])) - R * 1.5, Math.max(...P.map(p => p[0])) + R * 1.5,
+         Math.min(...P.map(p => p[1])) - R * 1.5, Math.max(...P.map(p => p[1])) + R * 1.5];
+  END = Math.max(...METH.map(m => Math.max(D.chans[ch][m].Tstar, D.chans[ch][m].end))) * 1.03;
+}
+function setChannel(c) {
+  ch = c; for (const b of nav.querySelectorAll("button")) b.setAttribute("aria-pressed", b.id === "ch-" + c);
+  setup(); fit(); t = playing ? 0 : END; dirty = true;
+}
+function fit() {
+  dpr = window.devicePixelRatio || 1;
+  const ar = (box[3] - box[2]) / (box[1] - box[0]);
+  for (const P of panels) {
+    const w = P.cv.getBoundingClientRect().width;
+    P.cv.style.height = Math.round(Math.min(w * ar, window.innerHeight * 0.62)) + "px";
+    const r = P.cv.getBoundingClientRect(); P.cv.width = Math.max(1, r.width * dpr); P.cv.height = Math.max(1, r.height * dpr);
+    P.sc = Math.min(P.cv.width / (box[1] - box[0]), P.cv.height / (box[3] - box[2]));
+    P.ox = (P.cv.width - P.sc * (box[1] - box[0])) / 2 - P.sc * box[0];
+    P.oy = (P.cv.height - P.sc * (box[3] - box[2])) / 2 + P.sc * box[3];
+  }
+  for (const c of [lanes, chap]) { const r = c.getBoundingClientRect(); c.width = Math.max(1, r.width * dpr); c.height = Math.max(1, r.height * dpr); }
+  dirty = true;
+}
+
+// ---------- drawing ----------
+function drawPanel(P, t) {
+  const g = P.g, m = P.m, S = D.chans[ch][m];
+  const X = x => P.ox + P.sc * x, Y = y => P.oy - P.sc * y;
+  const hex = (x, y, s) => { g.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (30 + 60 * i);
+    const px = X(x + R * s * Math.cos(a)), py = Y(y + R * s * Math.sin(a)); i ? g.lineTo(px, py) : g.moveTo(px, py); } g.closePath(); };
+  g.fillStyle = col.bg; g.fillRect(0, 0, P.cv.width, P.cv.height);
+  cells.forEach((c, i) => { if (isCrit.has(i)) return; hex(c.x, c.y, 0.96);
+    g.fillStyle = c.lake ? col.water : c.k ? mix(col.land, kc(c.k), 0.22) : col.land; g.fill(); });
+  g.lineCap = "round"; g.lineJoin = "round";
+  if (m === "CHORD") {   // each cluster's chord through its CH
+    g.strokeStyle = col.ink; g.globalAlpha = 0.35; g.lineWidth = 1.2 * dpr;
+    for (const p of D.paths) { g.beginPath(); p.forEach((q, i) => i ? g.lineTo(X(q[0]), Y(q[1])) : g.moveTo(X(q[0]), Y(q[1]))); g.stroke(); }
+    g.globalAlpha = 1;
+  }
+  if (m === "DN") {      // the neighbourhoods: orbits about the groups
+    g.strokeStyle = col.ink; g.globalAlpha = 0.45; g.lineWidth = 1 * dpr; g.setLineDash([3 * dpr, 3 * dpr]);
+    for (const q of S.groups) { g.beginPath(); g.arc(X(q[0]), Y(q[1]), q[2] * P.sc, 0, 2 * Math.PI); g.stroke(); }
+    g.setLineDash([]); g.globalAlpha = 1;
+  }
+  // critical cells: data held at the CL, ready, reported, verified
+  crit.forEach((c, i) => {
+    hex(c.x, c.y, 0.96); g.fillStyle = mix(col.land2, col.data, fillAt(m, S, i, t)); g.fill();
+    const ver = S.verified[i] >= 0 && t >= S.verified[i];
+    g.strokeStyle = ver ? col.t2 : t >= S.ready[i] ? col.data : col.ink;
+    g.lineWidth = (ver ? 2.4 : t >= S.ready[i] ? 2 : 1) * dpr; g.stroke();
+    if (S.reports[i].length && t >= S.reports[i][0]) { g.beginPath(); g.arc(X(c.x), Y(c.y), 2.4 * dpr, 0, 2 * Math.PI); g.fillStyle = col.ink; g.fill(); }
+  });
+  { const c = crit[D.star], x = X(c.x), y = Y(c.y), r = 7 * dpr; g.beginPath();   // c*
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
+      i ? g.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)) : g.moveTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); }
+    g.closePath(); g.lineWidth = 1.6 * dpr; g.strokeStyle = col.star; if (t >= S.Tstar) { g.fillStyle = col.star; g.fill(); } g.stroke(); }
+  g.fillStyle = col.ink; g.fillRect(X(D.bs[0]) - 5 * dpr, Y(D.bs[1]) - 5 * dpr, 10 * dpr, 10 * dpr);
+  // team 1 as flown so far
+  const T = S.t1, cur = trackAt(T, t);
+  g.strokeStyle = col.ink; g.globalAlpha = 0.6; g.lineWidth = 1.4 * dpr; g.beginPath(); g.moveTo(X(T[0][1]), Y(T[0][2]));
+  for (const p of T) { if (p[0] > t) break; g.lineTo(X(p[1]), Y(p[2])); }
+  g.lineTo(X(cur[0]), Y(cur[1])); g.stroke(); g.globalAlpha = 1;
+  if (t < S.end) { const x = X(cur[0]), y = Y(cur[1]), h = -cur[2], r = 7 * dpr; g.beginPath();
+    g.moveTo(x + 1.4 * r * Math.cos(h), y + 1.4 * r * Math.sin(h));
+    g.lineTo(x + r * Math.cos(h + 2.4), y + r * Math.sin(h + 2.4)); g.lineTo(x + r * Math.cos(h - 2.4), y + r * Math.sin(h - 2.4)); g.closePath();
+    g.fillStyle = col.ink; g.strokeStyle = col.bg; g.lineWidth = 1.5 * dpr; g.fill(); g.stroke(); }
+  // team 2
+  g.strokeStyle = col.t2; g.globalAlpha = 0.75; g.lineWidth = 1.4 * dpr; g.setLineDash([5 * dpr, 4 * dpr]);
+  for (const e of S.team2) { if (e[1] > t || e[0] === "verify") continue;
+    const q = lerp(e[3], e[4], Math.min(1, (t - e[1]) / Math.max(1e-9, e[2] - e[1])));
+    g.beginPath(); g.moveTo(X(e[3][0]), Y(e[3][1])); g.lineTo(X(q[0]), Y(q[1])); g.stroke(); }
+  g.setLineDash([]); g.globalAlpha = 1;
+  const q = team2At(S, t); g.beginPath(); g.arc(X(q[0]), Y(q[1]), 6 * dpr, 0, 2 * Math.PI);
+  g.fillStyle = col.t2; g.strokeStyle = col.bg; g.lineWidth = 2 * dpr; g.fill(); g.stroke();
+  P.dot.style.background = col[MCOL[m]];
+  P.st.textContent = t >= S.Tstar ? "T* " + mmss(S.Tstar) : "";
+}
+function drawLanes(t) {
+  const W = lanes.width, H = lanes.height, rh = H / METH.length, x = v => W * v / END;
+  gl.fillStyle = col.bg; gl.fillRect(0, 0, W, H);
+  gl.strokeStyle = col.track; gl.lineWidth = 1 * dpr;
+  for (let v = 300; v < END; v += 300) { gl.beginPath(); gl.moveTo(x(v), 0); gl.lineTo(x(v), H); gl.stroke(); }
+  METH.forEach((m, i) => {
+    const S = D.chans[ch][m], y0 = i * rh, mc = col[MCOL[m]];
+    gl.fillStyle = col.rail; gl.globalAlpha = 0.6; gl.fillRect(0, y0 + 2 * dpr, W, rh - 4 * dpr); gl.globalAlpha = 1;
+    gl.fillStyle = col.ink2; gl.fillRect(0, y0 + 5 * dpr, x(S.end), 3 * dpr);                // team 1 in the air
+    const rd = [...S.ready].sort((a, b) => a - b), n = rd.length, base = y0 + rh - 4 * dpr, top = y0 + 12 * dpr;
+    gl.beginPath(); gl.moveTo(0, base);                                                         // critical cells ready
+    rd.forEach((v, j) => { const yy = base - (base - top) * j / n; gl.lineTo(x(v), yy); gl.lineTo(x(v), base - (base - top) * (j + 1) / n); });
+    gl.lineTo(W, top); gl.lineTo(W, base); gl.closePath(); gl.fillStyle = mc; gl.globalAlpha = 0.22; gl.fill(); gl.globalAlpha = 1;
+    gl.strokeStyle = mc; gl.lineWidth = 1.6 * dpr; gl.beginPath(); gl.moveTo(0, base);
+    rd.forEach((v, j) => { gl.lineTo(x(v), base - (base - top) * j / n); gl.lineTo(x(v), base - (base - top) * (j + 1) / n); });
+    gl.lineTo(W, top); gl.stroke();
+    gl.strokeStyle = col.t2; gl.lineWidth = 1.2 * dpr;                                         // verifications
+    for (const v of S.verified) if (v >= 0) { gl.beginPath(); gl.moveTo(x(v), base); gl.lineTo(x(v), base - 6 * dpr); gl.stroke(); }
+    gl.strokeStyle = col.star; gl.lineWidth = 2.4 * dpr; gl.beginPath(); gl.moveTo(x(S.Tstar), y0 + 3 * dpr); gl.lineTo(x(S.Tstar), y0 + rh - 3 * dpr); gl.stroke();
+  });
+  gl.strokeStyle = col.ink; gl.lineWidth = 1.5 * dpr; gl.beginPath(); gl.moveTo(x(t), 0); gl.lineTo(x(t), H); gl.stroke();
+}
+function drawChap(t) {
+  const W = chap.width, H = chap.height;
+  gc.fillStyle = col.track; gc.fillRect(0, 0, W, H); gc.fillStyle = col.data; gc.globalAlpha = 0.35; gc.fillRect(0, 0, W * t / END, H); gc.globalAlpha = 1;
+  for (const m of METH) { const v = D.chans[ch][m].Tstar; gc.fillStyle = col[MCOL[m]]; gc.fillRect(W * v / END - 1.5 * dpr, 0, 3 * dpr, H); }
+  gc.fillStyle = col.ink; gc.fillRect(W * t / END - 1 * dpr, 0, 2 * dpr, H);
+}
+function draw() { for (const P of panels) drawPanel(P, t); drawLanes(t); drawChap(t); clock.textContent = mmss(t); }
+
+// ---------- controls ----------
+const ico = document.getElementById("ico"), speed = document.getElementById("speed");
+const PLAY = "M5 3v12l10-6z", PAUSE = "M4 3h3.5v12H4zM10.5 3H14v12h-3.5z";
+function setPlay(p) { playing = p; ico.innerHTML = '<path d="' + (p ? PAUSE : PLAY) + '"/>'; if (p && t >= END) t = 0; last = null; }
+document.getElementById("play").onclick = () => setPlay(!playing);
+const events = () => [...new Set([0, END, ...METH.flatMap(m => [D.chans[ch][m].Tstar, D.chans[ch][m].end])])].sort((a, b) => a - b);
+document.getElementById("prev").onclick = () => { t = [...events()].reverse().find(v => v < t - 0.5) ?? 0; dirty = true; };
+document.getElementById("next").onclick = () => { t = events().find(v => v > t + 0.5) ?? END; dirty = true; };
+function seek(ev, c) { const r = c.getBoundingClientRect(); t = Math.max(0, Math.min(END, END * (ev.clientX - r.left) / r.width)); dirty = true; }
+for (const c of [chap, lanes]) {
+  c.addEventListener("pointerdown", ev => { seek(ev, c); c.setPointerCapture(ev.pointerId); });
+  c.addEventListener("pointermove", ev => { if (ev.buttons) seek(ev, c); });
+}
+chap.addEventListener("keydown", ev => { if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") {
+  t = Math.max(0, Math.min(END, t + (ev.key === "ArrowRight" ? 1 : -1) * END / 100)); dirty = true; ev.preventDefault(); } });
+let last = null;
+function frame(now) {
+  if (playing) {
+    if (last !== null) { t += (now - last) / 1000 * END / 60 * Math.pow(2, +speed.value); if (t >= END) { t = END; setPlay(false); } }
+    last = now; dirty = true;
+  }
+  if (dirty) { draw(); dirty = false; }
+  requestAnimationFrame(frame);
+}
+setup(); t = END;   // at rest: the whole mission drawn; play replays it from the start
+addEventListener("resize", fit); fit();
+if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setPlay(true);
+requestAnimationFrame(frame);
+})();
+</script>

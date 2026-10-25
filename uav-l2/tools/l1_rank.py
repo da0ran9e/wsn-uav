@@ -321,7 +321,8 @@ def fly_all(bs, stops, cost, star_in):
 
 def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
     """The requested methods on one draw. Returns {method: (Tstar, Tall, rank, dep, starIn)} and per-cell rows.
-    traces (a dict), when given, gets team 2's trace (see team2) of each P / B4 / P+prog / B5 / FC / DN method."""
+    traces (a dict), when given, gets team 2's trace (see team2) of each P / B4 / P+prog / B5 / FC / DN method, and
+    under "reports" per such method each critical cell's report times at the BS."""
     bs = M["bs"]
     crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
     pos = {x: tuple(M["cl"][x[0]]["geo"]["c"][x[1]]) for x in crits}
@@ -377,6 +378,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             dep, rule, stg, beta = policy(opts)
             tr = None if traces is None else traces.setdefault(meth, [])
             out[meth] = team2(bs, pos, reps, U, prior, star, dep, rule, stg, tr, beta, "redir" in opts)
+            if traces is not None:
+                traces.setdefault("reports", {})[meth] = {x: [t for t, _ in r] for x, r in reps.items()}
         elif meth == "B1":
             out[meth] = fly_all(bs, [(pos[x], [x]) for x in crits], lambda s: VERIFY, lambda s: star in s[1]) + (0.0, 0.0)
         elif meth == "B7":
@@ -424,6 +427,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             tr = None if traces is None else traces.setdefault(meth, [])
             out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg, tr,
                               beta=beta, redirect="redir" in opts)
+            if traces is not None:
+                traces.setdefault("reports", {})[meth] = {x: [a_[x]] for x in crits}
         elif base == "B6":
             t, p, rd = 0.0, bs, {}
             for i in tsp_order(bs, [pos[x] for x in crits]):

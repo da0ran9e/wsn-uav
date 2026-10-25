@@ -1726,6 +1726,12 @@ sửa lại sao cho chord thắng rõ nhé
 @"/root/.claude/uploads/fd83db84-4832-5a0e-be6a-d1201f4d6a60/d6d27d00-SigDrop_ICC_draft_v3.pdf" đây là khung paper dự kiến của tôi, trong đó có phần V là một ý tưởng mới về việc sử dụng AI cho giải pháp này, bạn thử cho ý kiến của bạn xem sao
 ```
 
+*171. 2026-10-25 · paper · giải thích thêm về LM-Tour ("ML tour") và mô hình học trên dữ liệu ns-3*
+
+```text
+Giải thích thêm về ML tour và mô hình học trên dữ liệu
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -1680,6 +1680,12 @@ chạy qua nhiều bản đồ không cần thiết, đầu tiên cài các base
 trước hết với chord hãy cài 3 chế độ kênh sao cho thể hiện 3 mức độ môi trường phức tạp khi bán kinh phát hiệu quả khoảng 100,200,500m
 ```
 
+*164. 2026-10-25 · uav-l2 · chạy CHORD trên vài bản đồ 8, 12 và 16 cluster, cho xem animation*
+
+```text
+cài chord trên vài loại bản đồ 8 12 và 16 cluster cho tôi animation visualize để xem
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

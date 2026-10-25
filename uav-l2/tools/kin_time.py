@@ -141,7 +141,7 @@ def run(w, kind, smoothed=False, q_kb=400):
             add += max(0.0, need - t)
             leave[l[0]] = float(tc[last[l[0]]]) + add
         out[phi] = dict(profile=float(dt.sum()), fix=fix, how=how, over={k: round(v[0], 1) for k, v in over.items()},
-                        leave=leave)
+                        leave=leave, track=(tc, P, tag))   # track: the profile's clock (fixes not added), points, cluster
     return M, out
 
 

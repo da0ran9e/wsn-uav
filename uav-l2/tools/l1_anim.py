@@ -16,12 +16,17 @@ Exported (metres rounded, seconds from team 1's take-off):
   crit      per critical cell: verified score U, reports [time at the BS, kind (0 own reception, 1 River),
             posterior mean, sd], c*
   team2     moves [kind, t0, t1, from, to, cell]; P(c*) at each decision {cell: p}; Tstar, Tall
+  track     with a -kt method (CLAUDE.md §8 item 164): team 1's whole flight as flown, Dubins transits and speed
+            profile included (kin_time), about one [t, x, y] a second; legs then carry those enter / leave times
+With --windowAt crit plans every critical cell has its own window (as l1_rank.holdings); the pass shares are then
+over the union of those windows.
 """
 import argparse, csv, json, math, os, sys
 from collections import defaultdict
 
 import numpy as np
 
+import kin_time
 import l1_model as L
 import l1_rank as R
 from mission_policy import GAP, tour
@@ -43,11 +48,22 @@ def main():
     w = a.work
     M = load_map(w, schemes=("rf",))
     M["name"] = R.mapname(w)
+    M["windowAt"] = "crit" if any(l.startswith("NEED") for k in M["cl"] for l in open(f"{w}/plan{k}.txt")) else "ch"
     C = L.clues()
     seqs = {"interleaved": L.order(C, "interleaved"), "grouped": L.order(C, "grouped")}
     order = "grouped" if "grouped" in a.method else "interleaved"
     tk = next((o for o in a.method.split("-") if o in ("short", "latency", "seam", "kin")), "l3first")
     legs, back = tour(M, tk)
+    track = None
+    if "kt" in a.method.split("-"):   # as l1_rank -kt: leave times from team 1's speed profile
+        _, o = kin_time.run(w, tk)
+        assert o[45]["fix"] < 1.0, o[45]["fix"]   # the passes fly the profile (mission.py --kinPass)
+        tc, pts, tag = o[45]["track"]
+        enter = {k: float(tc[int(np.argmax(tag == k))]) for k in M["cl"]}
+        legs = [(l[0], l[1], l[2], enter[l[0]], o[45]["leave"][l[0]]) for l in legs]
+        back = o[45]["profile"]
+        keep = np.r_[0, np.where(np.diff(np.floor(tc)) > 0)[0] + 1, len(tc) - 1]
+        track = [[round(float(tc[i]), 2), round(float(pts[i][0])), round(float(pts[i][1]))] for i in keep]
     tours = {tk: (legs, back), "l3first": tour(M, "l3first")}
     hold = R.holdings(M, C, seqs)
     # ---- the draw: reproduce l1_rank's phases (same seed sequence), pick one worth watching
@@ -108,10 +124,14 @@ def main():
         lg = next(l for l in legs if l[0] == k)
         # the clue copy on the Axe window (as l1_rank.holdings) and the packets each cell heard along the pass
         allp = np.array(sorted(s for x in P["axe"] for s in P["seg"][x]))
-        c0 = int(np.argmin(np.linalg.norm(cl["geo"]["uav"] - [float(ch["x"]), float(ch["y"])], axis=1)))
         n_ = len(allp)
-        i0 = min(max(int(np.searchsorted(allp, c0)) - R.WINDOW // 2, 0), n_ - R.WINDOW) if n_ > R.WINDOW else 0
-        win = allp[i0:i0 + Q]
+
+        def start(x, y):   # as l1_rank.holdings
+            c0 = int(np.argmin(np.linalg.norm(cl["geo"]["uav"] - [x, y], axis=1)))
+            return min(max(int(np.searchsorted(allp, c0)) - R.WINDOW // 2, 0), n_ - R.WINDOW) if n_ > R.WINDOW else 0
+        i0 = start(float(ch["x"]), float(ch["y"]))
+        i0of = {h: start(*cl["geo"]["c"][h]) if M["windowAt"] == "crit" else i0 for h in P["crit"]}
+        win = np.unique(np.concatenate([allp[i:i + Q] for i in i0of.values()]))
         rev = math.dist(lg[1], cl["geo"]["path"][0]) > math.dist(lg[2], cl["geo"]["path"][0])
         cuts = np.linspace(0, len(cl["geo"]["uav"]), SAMPLES_PASS + 1).astype(int)[1:]
         share = {}
@@ -138,10 +158,10 @@ def main():
             dm = hold[x][order][1]
             done = []
             for j in range(len(C)):
-                if i0 + en[j] > n_:
+                if i0of[h] + en[j] > n_:
                     done.append(-1)
                     continue
-                ts = [arr[h].get(int(s), None) for s in allp[i0 + st[j]:i0 + en[j]]]
+                ts = [arr[h].get(int(s), None) for s in allp[i0of[h] + st[j]:i0of[h] + en[j]]]
                 done.append(-1 if any(v is None for v in ts) else round(max(ts), 2))
             crit[idx[h]] = dict(direct=[int(v) for v in dm], riverAt=done,
                                 doneS=float(cl["res"]["rf"][h]["doneS"]), gatherS=float(cl["res"]["rf"][h]["gatherDoneS"]))
@@ -174,7 +194,7 @@ def main():
                      for l in legs], back=round(back, 2),
                clue=[[c["t"], int(en[j] - st[j]), round(c["w"], 3), round(c["r"], 3)] for j, c in enumerate(C)],
                order=[int(j) for j in seqs[order]], team2=t2, psnap=psnap, star=idx[star[1]], Tstar=round(Ts, 2),
-               Tall=round(Ta, 2), dep=round(dep, 2), rank=rank, draw=d, method=a.method,
+               Tall=round(Ta, 2), dep=round(dep, 2), rank=rank, draw=d, method=a.method, track=track,
                params=dict(gap=GAP, air=R.AIR, verify=round(R.VERIFY, 2), v1=50.0, v2=R.V2, binRiver=BIN_RIVER,
                            samplesPass=SAMPLES_PASS, R=100, match=round(tm, 3)))
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)

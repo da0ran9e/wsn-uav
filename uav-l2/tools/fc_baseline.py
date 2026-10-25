@@ -22,7 +22,7 @@ hear_model's probability, as on the ns-3 pass. File j decodes at the packet that
 (fitted on 351 critical cells of the ns-3 River runs, R2 0.83). The cell reports at decode + gather; a cell some file
 of which never decodes reports what it has after the last packet it could hear. Then match, LoRa and team 2 as P*.
 """
-import csv, hashlib, math, os, sys
+import csv, hashlib, json, math, os, sys
 
 import numpy as np
 
@@ -157,6 +157,9 @@ def run(M, C, crits, work):
         w.writerow(["t", "x", "y"])
         for i in np.r_[np.arange(0, len(ts), 100), len(ts) - 1]:
             w.writerow([f"{ts[i]:.2f}", f"{U[i][0]:.1f}", f"{U[i][1]:.1f}"])
+    ready = [t for _, t in out.values()]
     info = dict(env=env, tour=float(tq[-1]), visits=visits, loops=round(loops, 2), crits=len(crits),
-                complete=int(sum(m.all() for m, _ in out.values())), moved=float(np.mean(moved_all)))
+                complete=int(sum(m.all() for m, _ in out.values())), moved=float(np.mean(moved_all)),
+                ready=[float(np.mean(ready)), float(np.max(ready))])
+    json.dump(info, open(f"{work}/fc-info.json", "w"))   # for fc_table.py
     return out, info

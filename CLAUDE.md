@@ -1700,6 +1700,12 @@ tạm thời chưa dùng đến các baseline cũ, tôi muốn tạo một basel
 chạy thử nghiệm với 3 kênh 3 kích thước miền nhưng chỉ 1 bản đồ chung cho cae chord để so sánh 2 thuật toán này trước
 ```
 
+*167. 2026-10-25 · uav-l2 · tổng hợp kết quả CHORD và FC thành một bảng lưu trong repo, kèm seed để chạy lại (`uav-l2/docs/RESULTS-vi.md`)*
+
+```text
+tổng hợp kết quả thành một bảng lưu lại tránh mất, lưu lại cả seed để chạy lại nếu cần
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

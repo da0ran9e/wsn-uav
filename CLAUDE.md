@@ -1776,6 +1776,12 @@ tôi thấy đường LM tour đề xuất trong hình bạn cho tôi đi qua CH
 vậy theo bạn ta nên cài đặt như nào với mô hình AI này, có nên cài đặt theo LM Tour bản draft. nếu có thì nên vẽ đường dtsp-n như nào đảm bảo nó cắt cluster tạo thành 1 river duy nhất và nếu không thì phải cải tiến river như nào
 ```
 
+*179. 2026-10-25 · paper · đồng ý phương án một River mỗi cluster (DTSP-N không bắt buộc qua CH); cài nhanh bằng Python và xem hình*
+
+```text
+cài đặt python nhanh và cho tôi xem hình
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

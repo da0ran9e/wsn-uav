@@ -39,6 +39,7 @@ import fc_baseline
 import kin_time
 import l1_model as L
 import l1_rank as R
+from map_gen import cell_at
 from meander_lane import bend_lane, write_path
 from mission import ENV_LOSS
 from mission_policy import GAP, R_TURN, tour
@@ -80,15 +81,38 @@ class Cluster:
         need = np.ceil((1 + fc_baseline.EPS) * K)
         self.need, self.target = float(need.sum()), float((need + 3 * np.sqrt(need)).sum())
 
-    def rows(self, pulls, R):
-        """CHORD's pass (no pulls) or the chord bent into the discs B(c, R/2) of the pulls."""
-        if not pulls:
+    def rows(self, pulls, R, line=None):
+        """CHORD's pass (no pulls) or the chord bent into the discs B(c, R/2) of the pulls, the CH pinned; with
+        line (--free, item 179) that straight line bent into them instead, nothing pinned."""
+        if not pulls and line is None:
             return self.rows0
-        Q, idx, _ = bend_lane(self.core0, [self.ch], [np.array(self.geo["c"][h]) for h in pulls], reach=R / 2,
-                              cap=math.inf)
+        base, pins = (self.core0, [self.ch]) if line is None else (line, [])
+        Q, idx, _ = bend_lane(base, pins, [np.array(self.geo["c"][h]) for h in pulls], reach=R / 2, cap=math.inf)
         with tempfile.NamedTemporaryFile("w+", suffix=".csv") as f:
-            write_path(f.name, Q, idx[0])
+            write_path(f.name, Q, idx[0] if idx else len(Q) // 2)
             return list(csv.DictReader(open(f.name)))
+
+    def once(self, rows, gap=300.0):
+        """The pass crosses the cluster once: one run over its cells, gaps (lakes) shorter than gap allowed."""
+        X = np.array([[float(r["x"]), float(r["y"])] for r in rows])[::5]
+        inside = np.array([cell_at(*p) in self.geo["S"] for p in X])
+        idx = np.nonzero(inside)[0]
+        if not len(idx):
+            return False
+        s = np.r_[0, np.cumsum(np.linalg.norm(np.diff(X, axis=0), axis=1))]
+        return all(s[b] - s[a] <= gap for a, b in zip(idx[:-1], idx[1:]) if b > a + 1)
+
+    def lines(self, kept, step=15):
+        """Straight lines over the cluster through the kept cells' centroid, every step degrees, 10 m vertices."""
+        C = np.array([self.geo["c"][h] for h in self.geo["cells"]])
+        o = np.mean([self.geo["c"][h] for h in kept], axis=0)
+        out = []
+        for b in range(0, 180, step):
+            u = np.array([math.cos(math.radians(b)), math.sin(math.radians(b))])
+            t = (C - o) @ u
+            d = np.arange(t.min() - 60, t.max() + 60, 10.0)
+            out.append(o + d[:, None] * u)
+        return out
 
     def evaluate(self, rows):
         """The pass flown (pass_speed.fit), its River plan and every critical cell's ready time from its start."""
@@ -113,9 +137,12 @@ class Cluster:
         return dict(rows=rows, timed=new, cap=cap, loops=loops, dur=dur, T=T, own=own, ready=ready, P=P,
                     L=float(np.linalg.norm(np.diff(uav, axis=0), axis=1).sum()))
 
-    def improve(self, R, theta, n_after, nb):
+    def improve(self, R, theta, n_after, nb, free=False):
         """Greedy insertions from CHORD's chord; nb = (previous end pose, next start pose, direction, BS) of the
-        tour. Returns (pulls, evaluation, base evaluation)."""
+        tour. free (item 179): the paper's Steps 1-2 instead, the CH not required: a weighted R-net of the critical
+        cells (by predicted River time on CHORD's pass, kept at least R apart), the straight lines through the
+        kept cells' centroid every 15 degrees bent into their discs, the best line that crosses the cluster once
+        (self.once) as the start. Returns (pulls, evaluation, base evaluation); base is CHORD's pass."""
         prev, nxt, d, bs = nb
 
         def J(e):
@@ -129,12 +156,30 @@ class Cluster:
             return sum(e["ready"].values()) + len(e["ready"]) * tin + theta * n_after * (tin + e["dur"] + tout)
         base = cur = self.evaluate(self.rows0)
         J(base)
-        pulls = []
+        pulls, line = [], None
+        if free:
+            order = sorted(base["P"]["crit"], key=lambda h: -base["T"][h])
+            kept = []
+            for h in order:
+                if all(math.dist(self.geo["c"][h], self.geo["c"][g]) >= R for g in kept):
+                    kept.append(h)
+            best = None
+            for ln in self.lines(kept):
+                r = self.rows(kept, R, ln)
+                if not self.once(r):
+                    continue
+                e = self.evaluate(r)
+                if best is None or J(e) < best[0]:
+                    best = (J(e), ln, e)
+            if best is not None:
+                _, line, cur = best
+                pulls = list(kept)
         while True:
             Q = np.array([[float(r["x"]), float(r["y"])] for r in cur["rows"]])
             cand = [h for h in base["P"]["crit"] if h not in pulls and
                     np.linalg.norm(Q - self.geo["c"][h], axis=1).min() > R / 2]
-            trials = [(J(e), h, e) for h in cand for e in [self.evaluate(self.rows(pulls + [h], R))]]
+            trials = [(J(e), h, e) for h in cand for r in [self.rows(pulls + [h], R, line)]
+                      if line is None or self.once(r) for e in [self.evaluate(r)]]
             if not trials:
                 break
             j, h, e = min(trials, key=lambda x: x[0])
@@ -187,7 +232,7 @@ def context(w):
     return env, opts["lossDb"], load_around(f"{w}/domain-cl.csv")
 
 
-def plan_lm(w, out, R, theta, rounds):
+def plan_lm(w, out, R, theta, rounds, free=False):
     env, loss, around = context(w)
     hear, model = hear_model(loss), Model.load(SURROGATE, "formula")
     M = load_map(w, schemes=(), with_bits=False)
@@ -195,7 +240,7 @@ def plan_lm(w, out, R, theta, rounds):
     n_after, nb, order = order_after(w)
     log = []
     for rnd in range(rounds):
-        res = {k: c.improve(R, theta, n_after[k], nb[k]) for k, c in cls.items()}
+        res = {k: c.improve(R, theta, n_after[k], nb[k], free) for k, c in cls.items()}
         build(w, out, {k: r[1]["rows"] for k, r in res.items()})
         log.append(dict(round=rnd + 1, order=order, n_after=n_after, clusters={
             k: dict(pulls=[list(h) for h in r[0]], dur=[round(r[2]["dur"], 1), round(r[1]["dur"], 1)],
@@ -213,7 +258,7 @@ def plan_lm(w, out, R, theta, rounds):
                   f"own decode {len(r[2]['own'])} -> {len(r[1]['own'])} of {len(r[1]['ready'])}), N_after {n_after[k]}",
                   flush=True)
         n_after, nb, order = order_after(out)
-    json.dump(dict(work=os.path.abspath(w), R=R, theta=theta, rounds=log), open(f"{out}/lm.json", "w"), indent=1)
+    json.dump(dict(work=os.path.abspath(w), R=R, theta=theta, free=free, rounds=log), open(f"{out}/lm.json", "w"), indent=1)
 
 
 def score(w, mode, draws):
@@ -266,6 +311,7 @@ def main():
     p.add_argument("--R", type=float, default=450.0)
     p.add_argument("--theta", type=float, default=1.0)
     p.add_argument("--rounds", type=int, default=2)
+    p.add_argument("--free", action="store_true", help="the CH not required: R-net + lines (item 179)")
     s = sub.add_parser("score")
     s.add_argument("works")
     s.add_argument("--mode", choices=("pred", "ns3"), required=True)
@@ -273,7 +319,7 @@ def main():
     s.add_argument("--out", required=True)
     a = ap.parse_args()
     if a.cmd == "plan":
-        plan_lm(a.work, a.out, a.R, a.theta, a.rounds)
+        plan_lm(a.work, a.out, a.R, a.theta, a.rounds, a.free)
         return
     rows = []
     for w in a.works.split(","):

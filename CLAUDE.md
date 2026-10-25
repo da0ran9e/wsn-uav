@@ -1667,6 +1667,12 @@ vậy bạn xem ta chốt giả lập này được chưa, các điều kiện k
 được nhưng chỉ cần sửa lỗi liên quan đến chord và các baseline khác sau này các baseline đã chạy thì chưa cần sửa
 ```
 
+*162. 2026-10-25 · uav-l2 · chưa chạy chiến dịch bây giờ*
+
+```text
+chưa cần chạy bây giờ
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -1,6 +1,6 @@
 """Excess A2G loss for the three environments of CLAUDE.md §8 item 163, calibrated on the ns-3 pass.
 
-    python3 tools/a2g_env.py BIN WORK [--targets 500,200,100]
+    python3 tools/a2g_env.py BIN WORK [--targets 500,200,100] [--fig PNG]
 
 WORK holds one cluster's c1-nodes-s35.csv and c1-path-s35.csv. For an excess loss L the pass (BIN/pass-bin
 --lossDb=L, mission 1) is flown once; every (node, packet) pair is binned by the horizontal distance r from the
@@ -8,6 +8,7 @@ UAV to the node when the packet was sent (10 m bins), and p(r) is the share of t
 where p(r) falls to 1/2, R10 to 1/10 (linear between bins). With the two-segment path loss, an excess loss L
 scales the slant distance of a given received power by 10^(-L / 30); the search starts there and then corrects
 on the measured R50 (secant in L against log slant R50) until it is within 2 % of the target.
+--fig: p(r) of 0 dB and of each target's loss, 0-1.5 km, no text (CLAUDE.md §8 item 63).
 """
 import argparse, csv, math, os, subprocess
 
@@ -47,6 +48,7 @@ def main():
     ap.add_argument("bin")
     ap.add_argument("work")
     ap.add_argument("--targets", default="500,200,100")
+    ap.add_argument("--fig", default="")
     a = ap.parse_args()
     b, w = os.path.abspath(a.bin), os.path.abspath(a.work)
     rows = []
@@ -74,6 +76,20 @@ def main():
     for row in sorted(set(rows)):
         print("| {:.2f} | {:.0f} | {:.0f} | {:.3f} | {:.3f} | {:.3f} | {:.3f} |".format(*row))
     print("\n" + ", ".join(f"R50 {t:.0f} m: {l:.2f} dB (measured {r:.0f} m)" for t, (l, r) in found.items()))
+    if a.fig:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(6, 3.2), dpi=200)
+        for loss, c in zip([0.0] + [l for l, _ in found.values()], ("#1b4f72", "#2e86c1", "#f39c12", "#c0392b")):
+            rr, p = fly(b, w, loss)
+            ax.plot(rr, p, color=c, lw=1.8)
+        ax.axhline(0.5, color="#999999", lw=0.8, ls=":")
+        ax.set_xlim(0, 1500)
+        ax.set_ylim(0, 1.02)
+        ax.tick_params(labelbottom=False, labelleft=False)
+        fig.tight_layout()
+        fig.savefig(a.fig)
 
 
 if __name__ == "__main__":

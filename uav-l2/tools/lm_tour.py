@@ -8,13 +8,16 @@ run): its clusters, CHs, critical cells and chords. LM-Tour keeps all of them an
   start   the cluster's CHORD chord through its CH. On pre-existing clusters the paper's Steps 1-2 (weighted R-net,
           base tour through the kept nodes' discs) reduce to this: the CH is the first kept node and the chord the
           pass through its disc
-  value   a pass is scored by J_k = sum over the cluster's critical cells c of ready_c + theta N_after dur_k, where
+  value   a pass is scored by J_k = sum over the cluster's n_k critical cells c of ready_c + n_k t_in
+          + theta N_after (t_in + dur_k + t_out), where
           ready_c = min(own_c, dur_k + T_River(c)) seconds from the start of the pass; T_River is the step-A formula
           (river_surrogate.py) on the River plan of this pass; own_c the time at which the expected union reception
           of the fountain-coded clue set by the cell's nodes along the pass reaches FC's target, plus FC's in-cell
           gather; dur_k the pass as pass_speed.fit flies it (slowed down, or looped, so that one copy of the clue
-          set is sent over the cluster's cells); N_after the critical cells of the clusters flown after it (each
-          second of the pass delays every one of them)
+          set is sent over the cluster's cells); t_in, t_out the Dubins transits from the previous cluster's pass
+          and to the next one's (mission_policy.kin_links; the BS with a free heading at the ends), whose poses
+          the bend changes; N_after the critical cells of the clusters flown after it (each second of the pass or
+          of its transits delays every one of them)
   insert  candidates: critical cells farther than R/2 from the pass. Each re-routes the chord into its disc
           B(c, R/2) (meander_lane.bend_lane: Gaussian bumps, the CH pinned, no cap); the candidate that lowers J_k
           most is inserted, until none lowers it. With uniform priors this is the paper's greedy rule
@@ -31,13 +34,14 @@ import argparse, csv, hashlib, json, math, os, re, sys, tempfile
 
 import numpy as np
 
+import dubins
 import fc_baseline
 import kin_time
 import l1_model as L
 import l1_rank as R
 from meander_lane import bend_lane, write_path
 from mission import ENV_LOSS
-from mission_policy import GAP, tour
+from mission_policy import GAP, R_TURN, tour
 from mission_report import load_map
 from pass_speed import fit
 from river_surrogate import WINDOW, Model, features, mission_plan
@@ -46,6 +50,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../
 from river_plan import hear_model, load_around, packets  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+V1 = 50.0
 SURROGATE = os.path.join(HERE, "../docs/data/results/river-surrogate.csv")
 METHOD = "P+prog-kin-puq-stage-zero-redir-kt-fcd"
 SKIP = re.compile(r"^(pass\d+-|plan\d+\.|r\d+-|tour\.json$|chordfc-|fc-|dn-|lm\.json$|"
@@ -108,10 +113,22 @@ class Cluster:
         return dict(rows=rows, timed=new, cap=cap, loops=loops, dur=dur, T=T, own=own, ready=ready, P=P,
                     L=float(np.linalg.norm(np.diff(uav, axis=0), axis=1).sum()))
 
-    def improve(self, R, theta, n_after):
-        """Greedy insertions from CHORD's chord; returns (pulls, evaluation, base evaluation)."""
-        J = lambda e: sum(e["ready"].values()) + theta * n_after * e["dur"]
+    def improve(self, R, theta, n_after, nb):
+        """Greedy insertions from CHORD's chord; nb = (previous end pose, next start pose, direction, BS) of the
+        tour. Returns (pulls, evaluation, base evaluation)."""
+        prev, nxt, d, bs = nb
+
+        def J(e):
+            p = np.array([[float(r["x"]), float(r["y"])] for r in e["rows"]])
+            p = p[::-1] if d else p
+            start = (*p[0], math.atan2(*(p[1] - p[0])[::-1]))
+            end = (*p[-1], math.atan2(*(p[-1] - p[-2])[::-1]))
+            tin = (dubins.free_start(bs, start, R_TURN) if prev is None else dubins.length(prev, start, R_TURN)) / V1
+            tout = (dubins.free_end(end, bs, R_TURN) if nxt is None else dubins.length(end, nxt, R_TURN)) / V1
+            e["tin"], e["tout"] = tin, tout
+            return sum(e["ready"].values()) + len(e["ready"]) * tin + theta * n_after * (tin + e["dur"] + tout)
         base = cur = self.evaluate(self.rows0)
+        J(base)
         pulls = []
         while True:
             Q = np.array([[float(r["x"]), float(r["y"])] for r in cur["rows"]])
@@ -128,12 +145,21 @@ class Cluster:
 
 
 def order_after(w):
-    """N_after per cluster: critical cells of the clusters team 1 flies after it (mission_policy.tour kin)."""
+    """Per cluster, of team 1's tour (mission_policy.tour kin): N_after, the critical cells of the clusters flown
+    after it, and its neighbours nb = (previous end pose, next start pose, direction, BS); and the order."""
     M = load_map(w, schemes=(), with_bits=False)
     legs, _ = tour(M, "kin")
     n = {k: len(M["cl"][k]["P"]["crit"]) for k in M["cl"]}
     order = [l[0] for l in legs]
-    return {k: sum(n[j] for j in order[i + 1:]) for i, k in enumerate(order)}, order
+    pose = {}
+    for l in legs:   # as mission_policy.kin_links
+        p = M["cl"][l[0]]["geo"]["path"]
+        d = 0 if math.dist(l[1], p[0]) < 1e-6 else 1
+        p = p[::-1] if d else p
+        pose[l[0]] = (d, (*p[0], math.atan2(*(p[1] - p[0])[::-1])), (*p[-1], math.atan2(*(p[-1] - p[-2])[::-1])))
+    nb = {k: (pose[order[i - 1]][2] if i else None, pose[order[i + 1]][1] if i + 1 < len(order) else None,
+              pose[k][0], M["bs"]) for i, k in enumerate(order)}
+    return {k: sum(n[j] for j in order[i + 1:]) for i, k in enumerate(order)}, nb, order
 
 
 def build(w, out, passes):
@@ -166,10 +192,10 @@ def plan_lm(w, out, R, theta, rounds):
     hear, model = hear_model(loss), Model.load(SURROGATE, "formula")
     M = load_map(w, schemes=(), with_bits=False)
     cls = {k: Cluster(w, M, k, model, hear, loss, around) for k in sorted(M["cl"])}
-    n_after, order = order_after(w)
+    n_after, nb, order = order_after(w)
     log = []
     for rnd in range(rounds):
-        res = {k: c.improve(R, theta, n_after[k]) for k, c in cls.items()}
+        res = {k: c.improve(R, theta, n_after[k], nb[k]) for k, c in cls.items()}
         build(w, out, {k: r[1]["rows"] for k, r in res.items()})
         log.append(dict(round=rnd + 1, order=order, n_after=n_after, clusters={
             k: dict(pulls=[list(h) for h in r[0]], dur=[round(r[2]["dur"], 1), round(r[1]["dur"], 1)],
@@ -177,14 +203,16 @@ def plan_lm(w, out, R, theta, rounds):
                            round(float(np.mean(list(r[1]["ready"].values()))), 1)],
                     river=[round(float(np.mean(list(r[2]["T"].values()))), 1),
                            round(float(np.mean(list(r[1]["T"].values()))), 1)],
+                    transits=[round(r[2]["tin"] + r[2]["tout"], 1), round(r[1]["tin"] + r[1]["tout"], 1)],
                     own=[len(r[2]["own"]), len(r[1]["own"])], crit=len(r[1]["ready"])) for k, r in res.items()}))
         for k, r in sorted(res.items()):
             print(f"round {rnd + 1} C{k}: {len(r[0])} insertions, pass {r[2]['dur']:.0f} -> {r[1]['dur']:.0f} s, "
+                  f"transits {r[2]['tin'] + r[2]['tout']:.0f} -> {r[1]['tin'] + r[1]['tout']:.0f} s, "
                   f"mean ready {np.mean(list(r[2]['ready'].values())):.0f} -> {np.mean(list(r[1]['ready'].values())):.0f} s "
                   f"(River {np.mean(list(r[2]['T'].values())):.0f} -> {np.mean(list(r[1]['T'].values())):.0f} s, "
                   f"own decode {len(r[2]['own'])} -> {len(r[1]['own'])} of {len(r[1]['ready'])}), N_after {n_after[k]}",
                   flush=True)
-        n_after, order = order_after(out)
+        n_after, nb, order = order_after(out)
     json.dump(dict(work=os.path.abspath(w), R=R, theta=theta, rounds=log), open(f"{out}/lm.json", "w"), indent=1)
 
 

@@ -102,7 +102,7 @@ class Cluster:
         s = np.r_[0, np.cumsum(np.linalg.norm(np.diff(X, axis=0), axis=1))]
         return all(s[b] - s[a] <= gap for a, b in zip(idx[:-1], idx[1:]) if b > a + 1)
 
-    def lines(self, kept, step=15):
+    def lines(self, kept, step=30):
         """Straight lines over the cluster through the kept cells' centroid, every step degrees, 10 m vertices."""
         C = np.array([self.geo["c"][h] for h in self.geo["cells"]])
         o = np.mean([self.geo["c"][h] for h in kept], axis=0)
@@ -141,7 +141,7 @@ class Cluster:
         """Greedy insertions from CHORD's chord; nb = (previous end pose, next start pose, direction, BS) of the
         tour. free (item 179): the paper's Steps 1-2 instead, the CH not required: a weighted R-net of the critical
         cells (by predicted River time on CHORD's pass, kept at least R apart), the straight lines through the
-        kept cells' centroid every 15 degrees bent into their discs, the best line that crosses the cluster once
+        kept cells' centroid every 30 degrees bent into their discs, the best line that crosses the cluster once
         (self.once) as the start. Returns (pulls, evaluation, base evaluation); base is CHORD's pass."""
         prev, nxt, d, bs = nb
 

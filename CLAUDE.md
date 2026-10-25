@@ -1661,6 +1661,12 @@ ta tạm thời không bàn đến meander nữa, giờ chúng ta sẽ quay lạ
 vậy bạn xem ta chốt giả lập này được chưa, các điều kiện kỹ thuật đã tốt chưa chuẩn bị chạy thực nghiệm lấy số
 ```
 
+*161. 2026-10-25 · uav-l2 · đồng ý kế hoạch chiến dịch; chỉ sửa lỗi liên quan đến CHORD (seed ns-3, đóng băng binary), lỗi kênh của các baseline đã chạy để sau*
+
+```text
+được nhưng chỉ cần sửa lỗi liên quan đến chord và các baseline khác sau này các baseline đã chạy thì chưa cần sửa
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

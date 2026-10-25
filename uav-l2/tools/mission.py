@@ -15,7 +15,8 @@ Stages (each writes into WORK; a stage whose outputs exist is skipped, so a run 
   3 tour      team 1 (one fixed-wing UAV, 50 m/s): BS -> every cluster's straight segment, either way
               round -> BS, the shortest such tour (Held-Karp over segments x direction); transits
               straight (no turn radius). Each cluster's pass starts when the UAV reaches its entry
-  4 pass      uav-coop-pass, mission 1, per cluster (only that cluster's nodes listen)
+  4 pass      uav-coop-pass, mission 1 (--mapRuns: one per map and cluster), per cluster (only that cluster's
+              nodes listen)
   5 river     river_export.py plan, then uav-coop2-river per cluster for SCHEMES (River prepared,
               River adaptive Circle of 12, direct pull); the cluster starts when the UAV leaves it
   6 analyse   (mission_report.py) matching, suspects, team 2
@@ -374,10 +375,15 @@ def stage_runs(a, W_, K):
     passenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/pass-lib")
     rivenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
 
+    def mission(k):   # item 161: the ns-3 mission index (pass fading, G2G shadowing and fades, MAC draws)
+        return 100000 * a.clusters + 100 * a.seed + k if getattr(a, "mapRuns", False) else 1
+
     def one(k):
         if not os.path.exists(f"{W_}/pass{k}-bits-r1.bin"):
-            sh([f"{a.bin}/pass-bin", f"--nodes=c{k}-nodes-s35.csv", f"--path=c{k}-path-s35.csv", "--firstRun=1",
-                "--runs=1", "--bits", f"--out=pass{k}"], f"pass{k}.log", passenv)
+            sh([f"{a.bin}/pass-bin", f"--nodes=c{k}-nodes-s35.csv", f"--path=c{k}-path-s35.csv",
+                f"--firstRun={mission(k)}", "--runs=1", "--bits", f"--out=pass{k}"], f"pass{k}.log", passenv)
+            if mission(k) != 1:   # the readers all take pass{k}-bits-r1.bin
+                os.symlink(f"pass{k}-bits-r{mission(k)}.bin", f"{W_}/pass{k}-bits-r1.bin")
         if not os.path.exists(f"{W_}/plan{k}.txt"):
             deploy_links(W_, k)
             sh([sys.executable, f"{COOP2}/river_export.py", f"--deploy=d{k}", f"--path=c{k}-path-s35.csv",
@@ -393,8 +399,8 @@ def stage_runs(a, W_, K):
         k, tag = job
         if not os.path.exists(f"{W_}/r{k}-{tag}-runs.csv") or len(open(f"{W_}/r{k}-{tag}-runs.csv").readlines()) < 2:
             sh([f"{a.bin}/river-bin", f"--nodes=c{k}-nodes-s35.csv", f"--routes=c{k}-routes-s35.csv",
-                f"--gateways=c{k}-gateways-s35.csv", f"--plan=plan{k}.txt", f"--bits=pass{k}-bits", "--firstRun=1",
-                "--runs=1", "--limit=900", "--gwSelect=quality", "--colours=7", *SCHEMES[tag], f"--out=r{k}-{tag}"],
+                f"--gateways=c{k}-gateways-s35.csv", f"--plan=plan{k}.txt", f"--bits=pass{k}-bits",
+                f"--firstRun={mission(k)}", "--runs=1", "--limit=900", "--gwSelect=quality", "--colours=7", *SCHEMES[tag], f"--out=r{k}-{tag}"],
                f"r{k}-{tag}.log", rivenv)
         print("  " + open(f"r{k}-{tag}.log").read().strip().splitlines()[-1] if os.path.exists(f"r{k}-{tag}.log")
               else f"  r{k}-{tag} done before", flush=True)
@@ -431,6 +437,9 @@ def main():
                     help="with --chordFit: weight of the latest estimated River end in the tour (item 159)")
     ap.add_argument("--bendShort", action="store_true",
                     help="with --bendCrit and --chordFit: bend only the clusters short of one copy (item 159)")
+    ap.add_argument("--mapRuns", action="store_true",
+                    help="each cluster's ns-3 pass and River run as mission 100000 CLUSTERS + 100 SEED + k instead of 1: "
+                         "draws independent across clusters and maps, shared by every design of one map (item 161)")
     ap.add_argument("--kinPass", action="store_true",
                     help="the ns-3 pass flies team 1's speed profile: slower, or circling, where a cluster is short (item 157)")
     ap.add_argument("--bendCrit", type=float, default=0,

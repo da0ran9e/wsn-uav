@@ -1764,6 +1764,12 @@ vậy bạn làm A và C trước nhé
 tổng hợp lại ngắn gọn nhưng chi tiết về những công việc ta đã hoàn thành ngày hôm nay(từ cài đặt 2 baselines mới)
 ```
 
+*177. 2026-10-25 · paper · nhận xét: đường LM-Tour trong hình đi qua CH, trong khi mô tả LM-Tour chỉ cần đường DTSP-N, không bắt buộc qua CH*
+
+```text
+tôi thấy đường LM tour đề xuất trong hình bạn cho tôi đi qua CH nhưng trong mô tả là chỉ cần là đường DTSP-N không cần thiết qua CH
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

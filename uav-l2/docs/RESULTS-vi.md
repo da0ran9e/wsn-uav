@@ -2,9 +2,7 @@
 
 Tệp này là nơi lưu số liệu so sánh CHORD (P\*) với hai baseline FC và DN. Mỗi lần có thêm lượt chạy thì cập nhật tại đây.
 
-**Trạng thái (2026-10-25):**
-- k8-s1 đã xong ở cả bốn kênh.
-- k12-s1 và k16-s1: CHORD ở r500, r200, r100 đang chạy (`logs/2026-10-25_0600-fc-baseline/chord-env.sh`). Bảng sẽ được bổ sung khi xong.
+**Trạng thái (2026-10-25):** đã xong cả 12 tổ hợp: 3 bản đồ (k8-s1, k12-s1, k16-s1; mỗi cỡ một bản đồ chung cho cả ba phương án) × 4 kênh (open, r500, r200, r100). Mỗi tổ hợp có 100 lượt bốc lớp 1.
 
 ## 1. Ba phương án
 - **CHORD (P\*)**, phương án đề xuất.
@@ -48,6 +46,30 @@ Sinh bằng `uav-l2/tools/fc_table.py`; bản CSV ở `uav-l2/docs/data/results/
 | k8-s1 | r100 | 8 | 45 | CHORD | 782 | 450 / 814 | 45/45 |  | 878 ± 98 | 763 / 1284 | 2.36 | 10599 |
 | k8-s1 | r100 | 8 | 45 | FC | 3621 | 1867 / 3589 | 45/45 | 45 / 123.25 | 2463 ± 229 | 2814 / 3667 | 2.66 | 13078 |
 | k8-s1 | r100 | 8 | 45 | DN | 3305 | 1678 / 3269 | 45/45 | 37 / 114.19 (37 nhóm, 200 m) | 2190 ± 217 | 2226 / 3383 | 2.70 | 12755 |
+| k12-s1 | open | 12 | 66 | CHORD | 1152 | 497 / 1007 | 66/66 |  | 939 ± 78 | 864 / 1390 | 1.99 | 16687 |
+| k12-s1 | open | 12 | 66 | FC | 971 | 431 / 918 | 66/66 | 22 / 4.75 | 815 ± 82 | 790 / 1350 | 1.88 | 16620 |
+| k12-s1 | open | 12 | 66 | DN | 913 | 409 / 831 | 66/66 | 20 / 9.12 (36 nhóm, 400 m) | 805 ± 81 | 755 / 1311 | 1.89 | 16580 |
+| k12-s1 | r500 | 12 | 66 | CHORD | 1152 | 533 / 1033 | 66/66 |  | 949 ± 78 | 864 / 1401 | 1.98 | 16701 |
+| k12-s1 | r500 | 12 | 66 | FC | 2228 | 1013 / 2167 | 66/66 | 49 / 34.25 | 1451 ± 144 | 1346 / 2359 | 2.08 | 17688 |
+| k12-s1 | r500 | 12 | 66 | DN | 2011 | 967 / 1979 | 66/66 | 38 / 35 (41 nhóm, 300 m) | 1388 ± 126 | 1328 / 2167 | 1.97 | 17523 |
+| k12-s1 | r200 | 12 | 66 | CHORD | 1152 | 566 / 1054 | 66/66 |  | 978 ± 76 | 914 / 1420 | 1.99 | 16712 |
+| k12-s1 | r200 | 12 | 66 | FC | 4976 | 2505 / 4916 | 66/66 | 64 / 150.25 | 3288 ± 279 | 3505 / 4876 | 2.35 | 20297 |
+| k12-s1 | r200 | 12 | 66 | DN | 4016 | 1964 / 3968 | 66/66 | 41 / 112.25 (41 nhóm, 300 m) | 2482 ± 230 | 2527 / 4027 | 2.09 | 19397 |
+| k12-s1 | r100 | 12 | 66 | CHORD | 1152 | 584 / 1064 | 66/66 |  | 994 ± 76 | 919 / 1412 | 1.96 | 16724 |
+| k12-s1 | r100 | 12 | 66 | FC | 5285 | 2663 / 5231 | 66/66 | 65 / 178.38 | 3460 ± 288 | 3684 / 5061 | 2.34 | 20580 |
+| k12-s1 | r100 | 12 | 66 | DN | 5078 | 2559 / 5034 | 66/66 | 58 / 168.19 (58 nhóm, 200 m) | 3248 ± 294 | 3426 / 5033 | 2.26 | 20423 |
+| k16-s1 | open | 15 | 92 | CHORD | 1415 | 640 / 1698 | 91/92 | River kẹt 1 | 1161 ± 134 | 1084 / 1791 | 2.31 | 23559 |
+| k16-s1 | open | 15 | 92 | FC | 1190 | 514 / 1132 | 92/92 | 29 / 7.5 | 949 ± 105 | 821 / 1509 | 2.02 | 23385 |
+| k16-s1 | open | 15 | 92 | DN | 1134 | 536 / 1041 | 92/92 | 29 / 7.81 (80 nhóm, 200 m) | 967 ± 95 | 895 / 1432 | 1.94 | 23339 |
+| k16-s1 | r500 | 15 | 92 | CHORD | 1415 | 681 / 1354 | 92/92 |  | 1137 ± 113 | 1096 / 1697 | 2.10 | 23546 |
+| k16-s1 | r500 | 15 | 92 | FC | 2839 | 1320 / 2784 | 92/92 | 69 / 45.12 | 1801 ± 174 | 1669 / 2804 | 2.05 | 24840 |
+| k16-s1 | r500 | 15 | 92 | DN | 2563 | 1238 / 2529 | 92/92 | 42 / 46.19 (44 nhóm, 400 m) | 1750 ± 176 | 1923 / 2826 | 2.10 | 24656 |
+| k16-s1 | r200 | 15 | 92 | CHORD | 1415 | 716 / 1398 | 92/92 |  | 1181 ± 111 | 1185 / 1791 | 2.12 | 23560 |
+| k16-s1 | r200 | 15 | 92 | FC | 6631 | 3264 / 6591 | 92/92 | 90 / 197.75 | 3964 ± 376 | 4177 / 6326 | 2.01 | 28501 |
+| k16-s1 | r200 | 15 | 92 | DN | 5567 | 2746 / 5523 | 92/92 | 44 / 144.94 (44 nhóm, 400 m) | 3469 ± 330 | 3765 / 5624 | 2.17 | 27524 |
+| k16-s1 | r100 | 15 | 92 | CHORD | 1415 | 792 / 2080 | 85/92 | River kẹt 7 | 1412 ± 187 | 1196 / 3089 | 3.23 | 22644 |
+| k16-s1 | r100 | 15 | 92 | FC | 7296 | 3619 / 7257 | 92/92 | 92 / 244.75 | 4368 ± 415 | 4617 / 6966 | 2.04 | 29153 |
+| k16-s1 | r100 | 15 | 92 | DN | 6808 | 3424 / 6761 | 92/92 | 80 / 233.62 (80 nhóm, 200 m) | 4468 ± 355 | 4764 / 6649 | 2.40 | 28649 |
 
 **Ý nghĩa các cột:**
 - *đội 1 bay*: thời gian từ BS về BS. CHORD dùng hồ sơ vận tốc 45° có phần bù giao dữ liệu; FC là đường bay của chính nó.
@@ -57,11 +79,30 @@ Sinh bằng `uav-l2/tools/fc_table.py`; bản CSV ở `uav-l2/docs/data/results/
 - *ghé / vòng lượn (nhóm)*: chỉ có ở FC và DN. Số điểm UAV phải bay tới (FC: critical cell; DN: nhóm) và tổng số vòng lượn; với DN kèm số nhóm và bán kính nhóm BS đã chọn.
 - *T\**: lúc đội 2 xác minh xong cell điểm cao nhất c\*. *hạng c\**: c\* là cell thứ mấy đội 2 thăm. *Tall*: lúc đội 2 thăm hết các critical cell và về BS.
 
+**T\* trung bình (s), tóm tắt:**
+
+| kênh | k8 CHORD / FC / DN | k12 CHORD / FC / DN | k16 CHORD / FC / DN | CHORD so với baseline tốt hơn |
+|---|---|---|---|---|
+| open | 762 / **660** / 708 | 939 / 815 / **805** | 1 161 / **949** / 967 | chậm hơn 16 / 17 / 22 % |
+| r500 | **808** / 1 138 / 1 078 | **949** / 1 451 / 1 388 | **1 137** / 1 801 / 1 750 | nhanh hơn 25 / 32 / 35 % |
+| r200 | **860** / 2 285 / 1 904 | **978** / 3 288 / 2 482 | **1 181** / 3 964 / 3 469 | nhanh hơn 55 / 61 / 66 % |
+| r100 | **878** / 2 463 / 2 190 | **994** / 3 460 / 3 248 | **1 412** / 4 368 / 4 468 | nhanh hơn 60 / 69 / 68 % |
+
 **Đọc nhanh:**
-- Ở kênh open, FC nhanh hơn: T\* 660 so với 762 s. Lý do là bán kính nghe khoảng 1 km, nên một lượt bay qua giao đủ cho nhiều cell cùng lúc; chỉ phải ghé 15/45 cell.
-- Khi kênh xấu đi, FC phải ghé từng cell và lượn nhiều vòng. Đội 1 của FC bay 1 499 → 3 621 s, còn CHORD vẫn 782 s, vì River bù phần thiếu dưới mặt đất.
-- Trên k8, CHORD nhanh hơn FC 29 % ở r500, 62 % ở r200 và 64 % ở r100.
-- DN rút ngắn đường bay của FC 2–20 %, nhờ gộp các cell gần nhau và chọn điểm vào quỹ đạo. Dù vậy, ở kênh xấu nó vẫn phải lượn quanh từng nhóm. CHORD nhanh hơn DN 25 % ở r500, 55 % ở r200 và 60 % ở r100. Ở kênh open, DN bay ngắn nhất (669 s), nhưng T\* (708 s) vẫn chậm hơn FC (660 s), vì thứ tự giao khác nhau.
+- Ở kênh open, hai baseline nhanh hơn CHORD 16–22 %. Lý do là bán kính nghe khoảng 1 km, nên một lượt bay qua giao đủ cho nhiều cell cùng lúc; FC chỉ phải ghé 15–29 cell, khoảng một phần ba số critical cell.
+- Từ r500 trở xuống, CHORD nhanh hơn baseline tốt nhất 25–69 %, và khoảng cách tăng khi bản đồ lớn hơn.
+  - Đường bay của CHORD không đổi theo kênh: 782 / 1 152 / 1 415 s. River bù phần thiếu dưới mặt đất.
+  - Đường bay của FC và DN dài gấp 2–6 lần so với chính nó ở kênh open, vì phải ghé từng critical cell (hoặc từng nhóm) và lượn nhiều vòng.
+- DN rút ngắn đường bay của FC 2–20 %, nhưng T\* không phải lúc nào cũng tốt hơn, vì thứ tự giao khác nhau: ở k8 open, k16 open và k16 r100, DN chậm hơn FC 2–7 %.
+- Không phương án nào thiếu manh mối, trừ các cell River kẹt của CHORD (mục 2.1).
+
+### 2.1. Các cell River không xong (CHORD)
+- **Số cell:** k16-s1 open 1/92, k16-s1 r100 7/92. Không có cell nào kẹt ở 10 tổ hợp còn lại.
+- **Cách tính khi chấm:** cell kẹt báo cáo lúc đội 1 rời cụm + 900 s, chỉ với những gì node của nó tự nghe được (thường không có manh mối nào). Vì vậy T\* của CHORD ở k16 r100 (1 412 s, p90 3 089 s) và ở k16 open bị kéo lên. Đây là cách tính bảo thủ, bất lợi cho CHORD.
+- **Mỗi cell kẹt đều thiếu đúng 1 gói,** và gói đó có node trong cụm giữ. Có hai nguyên nhân (`logs/2026-10-25_0600-fc-baseline/stall-why.md`, chạy lại có vết và khớp từng cell với lượt chính):
+  1. **Gói thuộc Seg của một cell Axe mà không node nào của cell đó nghe được.** Cụm C9 ở r100, gói 3910 thuộc Seg của cell (−13, 21), nhưng chỉ 10 node của cell bên cạnh (−12, 21) giữ nó. Cell Axe chỉ phân phối gói của chính mình, nên gói này không bao giờ được đẩy đi, và cả 6 critical cell của C9 đều thiếu nó. Ở r100 bán kính nghe chỉ khoảng 100 m, nên chuyện này dễ xảy ra hơn hẳn.
+  2. **Cell Axe có giữ gói, nhưng River làm rơi gói trên đường đi và không hỏi lại.** Gặp ở cụm C1 ở r100 (gói 3831) và cụm C6 ở open (mục 165).
+- **Sửa** cần đổi giao thức River trong ns-3: cell Axe lấy nốt gói Seg còn thiếu từ hàng xóm, và có cơ chế hỏi lại gói đã rơi. Sau đó phải dựng lại `river-bin` và chạy lại River trên cả 12 thư mục; bitmap lượt bay ns-3 giữ nguyên. Việc này đang chờ người dùng quyết định.
 
 ## 3. Seed và khoá ngẫu nhiên
 
@@ -71,6 +112,14 @@ Sinh bằng `uav-l2/tools/fc_table.py`; bản CSV ở `uav-l2/docs/data/results/
 | k8-s1 | r500 | 9.03 | 8 | 1 | 8 | 800101-800108 | `FC/k8-s1/r500, DN/k8-s1/r500` | 0–99 |
 | k8-s1 | r200 | 19.77 | 8 | 1 | 8 | 800101-800108 | `FC/k8-s1/r200, DN/k8-s1/r200` | 0–99 |
 | k8-s1 | r100 | 25.74 | 8 | 1 | 8 | 800101-800108 | `FC/k8-s1/r100, DN/k8-s1/r100` | 0–99 |
+| k12-s1 | open | 0 | 12 | 1 | 12 | 1200101-1200112 | `FC/k12-s1/open, DN/k12-s1/open` | 0–99 |
+| k12-s1 | r500 | 9.03 | 12 | 1 | 12 | 1200101-1200112 | `FC/k12-s1/r500, DN/k12-s1/r500` | 0–99 |
+| k12-s1 | r200 | 19.77 | 12 | 1 | 12 | 1200101-1200112 | `FC/k12-s1/r200, DN/k12-s1/r200` | 0–99 |
+| k12-s1 | r100 | 25.74 | 12 | 1 | 12 | 1200101-1200112 | `FC/k12-s1/r100, DN/k12-s1/r100` | 0–99 |
+| k16-s1 | open | 0 | 16 | 1 | 15 | 1600101-1600115 | `FC/k16-s1/open, DN/k16-s1/open` | 0–99 |
+| k16-s1 | r500 | 9.03 | 16 | 1 | 15 | 1600101-1600115 | `FC/k16-s1/r500, DN/k16-s1/r500` | 0–99 |
+| k16-s1 | r200 | 19.77 | 16 | 1 | 15 | 1600101-1600115 | `FC/k16-s1/r200, DN/k16-s1/r200` | 0–99 |
+| k16-s1 | r100 | 25.74 | 16 | 1 | 15 | 1600101-1600115 | `FC/k16-s1/r100, DN/k16-s1/r100` | 0–99 |
 
 Mỗi khoá dùng như sau:
 - **Bản đồ:** `mission.py --clusters K --seed S`. Seed S điều khiển miền (`map_gen`) và chia cụm (`partition`). Bước deploy không nhận seed và tất định theo bản đồ.
@@ -112,9 +161,13 @@ python3 uav-l2/tools/l1_rank.py --set ENV WORK[,WORK...] [--set ...] --draws 100
 python3 uav-l2/tools/fc_table.py uav-l2/docs/data/results/chord-fc L1 WORK [WORK ...]
 ```
 
-Các thư mục k8 trong bảng chạy thêm `--schemes rf,d`: phương án kéo thẳng (`d`) có chạy, nhưng không dùng trong bảng này. Thư mục open của k8-s1 là `scratchpad/CTRY/P/k8-s1` (mục 161). Lệnh chấm đúng như trên nằm ở `logs/2026-10-25_0600-fc-baseline/score-k8-dn.md`.
+**Lượt chạy nằm ở đâu:**
+- Thư mục k8 chạy thêm `--schemes rf,d`: phương án kéo thẳng (`d`) có chạy, nhưng không dùng trong bảng này.
+- Thư mục open: k8-s1 là `scratchpad/CTRY/P/k8-s1` (mục 161); k12-s1 và k16-s1 là `scratchpad/ANIM/k*-s1` (mục 164).
+- k12-s1 và k16-s1 ở r500, r200, r100: `logs/2026-10-25_0600-fc-baseline/chord-env.sh`.
+- Lệnh chấm cả 12 tổ hợp: `logs/2026-10-25_0600-fc-baseline/score.sh` (log `score-all.md`). Lệnh dựng bảng: `table-all.md`.
 
-**Bản lưu dữ liệu:** `uav-l2/docs/data/results/raw/<kênh>-<bản đồ>.tar.xz`, khoảng 1,2 MB mỗi tệp (`logs/2026-10-25_0600-fc-baseline/archive.sh`).
+**Bản lưu dữ liệu:** `uav-l2/docs/data/results/raw/<kênh>-<bản đồ>.tar.xz`, 1,1–2,2 MB mỗi tệp, tổng 20 MB cho 12 tệp (`logs/2026-10-25_0600-fc-baseline/archive.sh`).
 - Gồm: bản đồ, cụm, node, đường bay, kế hoạch River, kết quả River từng critical cell, thông tin và đường bay FC.
 - Không gồm bitmap của lượt bay ns-3 (khoảng 1 MB mỗi cụm). Để dựng lại: giải nén vào một thư mục, rồi chạy lại đúng lệnh 1 trên thư mục đó. Chỉ bước pass chạy lại; các bước khác đã có kết quả nên được bỏ qua. Sau đó lệnh 2 và 3 cho lại bảng trên.
 - Đã kiểm chứng trên `r200-k8-s1` (`logs/2026-10-25_0600-fc-baseline/roundtrip.md`): 8 bitmap pass dựng lại, cùng 8 kế hoạch và 16 tệp kết quả River (`rf`, `d`), giống hệt bản gốc từng byte (32/32 tệp).

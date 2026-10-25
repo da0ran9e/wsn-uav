@@ -10,7 +10,8 @@ and OUT.csv. Columns:
   team1    team 1's flight, BS to BS (CHORD: kin_time at 45 degree bank with the delivery fixes; FC, DN: their own)
   ready    when a critical cell holds its data at its CL, mean / max over the critical cells (CHORD: leave + River's
            doneS, a run not done by its deadline counted at leave + 900 s; FC, DN: decode + in-cell gather)
-  clues    critical cells holding all 12 clues (CHORD: River's mask, d = 0 of the cells file; FC, DN: decoded)
+  clues    critical cells holding all 12 clues (CHORD: River's mask, d = 0 of the cells file, or for a cell River
+           did not finish what its own nodes heard; FC, DN: decoded)
   Tstar    when team 2 has verified c*: mean, 95 % half-width, median, p90 over the draws; rank: c*'s place in
            team 2's visits; Tall: team 2 back at the BS after every critical cell
 Seeds: map (mission.py --seed; map_gen, partition), ns-3 mission index 100000 K + 100 seed + k of cluster k (pass:
@@ -59,7 +60,8 @@ def main():
             if label == "CHORD":
                 C = [c for c in cells if c["map"] == name and c["set"] == env]
                 r.update(ready_mean=round(float(np.mean(ready)), 1), ready_max=round(float(np.max(ready)), 1),
-                         clues=sum(int(c["riverAll"]) for c in C), stalls=sum(v < 0 for v in done.values()),
+                         clues=sum(int(c["directAll"] if done[(int(c["cluster"]), (int(c["q"]), int(c["r"])))] < 0
+                                       else c["riverAll"]) for c in C), stalls=sum(v < 0 for v in done.values()),
                          visits="", loops="", groups="", radius="")
             else:
                 fc = json.load(open(f"{w}/{label.lower()}-info.json"))

@@ -56,6 +56,27 @@ def with_loops(rows, ich, n, side):
     return rows[:ich + 1] + loop + rows[ich + 1:]
 
 
+def fit(rows, S, ch, clue):
+    """The pass rows (no column t) flown so that CLUE packets are sent over the cells S: (rows with t, cap, loops)."""
+    own = lambda p: cell_at(*p) in S
+    got = lambda rs: sum(own(p) for p in packets(rs))
+    ich = int(np.argmin([math.dist((float(r["x"]), float(r["y"])), ch) for r in rows]))
+    loops, base = 0, rows
+    if got(timed(rows, own, VMIN)) < clue:   # not even at VMIN: circle at the CH
+        side = max((1, -1), key=lambda sd: sum(own((float(r["x"]), float(r["y"]))) for r in with_loops(rows, ich, 1, sd)))
+        while got(timed(base, own, VMIN)) < clue:
+            loops += 1
+            base = with_loops(rows, ich, loops, side)
+    lo, hi = VMIN, VMAX
+    if got(timed(base, own, VMAX)) >= clue:
+        lo = VMAX
+    else:
+        for _ in range(30):
+            mid = (lo + hi) / 2
+            lo, hi = (mid, hi) if got(timed(base, own, mid)) >= clue else (lo, mid)
+    return timed(base, own, lo), lo, loops
+
+
 def run(W_, K, q_kb=400):
     clue = math.ceil(q_kb * 1000 / 99)
     out = {}
@@ -68,21 +89,7 @@ def run(W_, K, q_kb=400):
         got = lambda rs: sum(own(p) for p in packets(rs))
         ch = next(np.array([float(x["x"]), float(x["y"])]) for x in csv.DictReader(open(f"{W_}/c{k}-nodes-s35.csv"))
                   if x["isCH"] == "1")
-        ich = int(np.argmin([math.dist((float(r["x"]), float(r["y"])), ch) for r in rows]))
-        loops, base = 0, rows
-        if got(timed(rows, own, VMIN)) < clue:   # not even at VMIN: circle at the CH
-            side = max((1, -1), key=lambda sd: sum(own((float(r["x"]), float(r["y"]))) for r in with_loops(rows, ich, 1, sd)))
-            while got(timed(base, own, VMIN)) < clue:
-                loops += 1
-                base = with_loops(rows, ich, loops, side)
-        lo, hi = VMIN, VMAX
-        if got(timed(base, own, VMAX)) >= clue:
-            lo = VMAX
-        else:
-            for _ in range(30):
-                mid = (lo + hi) / 2
-                lo, hi = (mid, hi) if got(timed(base, own, mid)) >= clue else (lo, mid)
-        new = timed(base, own, lo)
+        new, lo, loops = fit(rows, S, ch, clue)
         with open(f"{W_}/c{k}-path-s35.csv", "w") as f:
             w = csv.DictWriter(f, fieldnames=list(new[0].keys()), lineterminator="\n")
             w.writeheader()

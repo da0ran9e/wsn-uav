@@ -342,9 +342,9 @@ def critical(nodes, around, kg=2.0, kl=1.0, r=2):
     return sorted(crit)
 
 
-def bend_lane(P, pins, pulls, reach=OMEGA):
-    """Step 6 on one lane line P (10 m vertices): each pull (a critical cell farther than OMEGA) a Gaussian bump of
-    min(d - OMEGA, BEND) towards it, then each pin (a CH) a bump onto it (three rounds, so a later bump does not
+def bend_lane(P, pins, pulls, reach=OMEGA, cap=BEND):
+    """Step 6 on one lane line P (10 m vertices): each pull (a critical cell farther than reach, OMEGA by default) a
+    Gaussian bump of min(d - reach, cap) towards it (cap BEND by default; LM-Tour: no cap), then each pin (a CH) a bump onto it (three rounds, so a later bump does not
     move an earlier pin; then exact), each measured from the line so far. A bump of a with sigma = sqrt(2 a RHO)
     turns at 1 / (2 RHO) at most; while the line turns sharper than 1.02 / RHO all bumps are widened (sigma x 1.5
     ... 6). No smoothing afterwards: with the CHs pinned it would tend to straight pieces kinked at the CHs.
@@ -362,7 +362,7 @@ def bend_lane(P, pins, pulls, reach=OMEGA):
             d = np.linalg.norm(Q - c, axis=1)
             i = int(np.argmin(d))
             if d[i] > reach:
-                Q = bump(Q, c, min(d[i] - reach, BEND), i, mult)
+                Q = bump(Q, c, min(d[i] - reach, cap), i, mult)
         idx = [int(np.argmin(np.linalg.norm(Q - c, axis=1))) for c in pins]
         for _ in range(3):
             for c, i in zip(pins, idx):

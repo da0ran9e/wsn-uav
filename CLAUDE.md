@@ -1732,6 +1732,12 @@ sửa lại sao cho chord thắng rõ nhé
 Giải thích thêm về ML tour và mô hình học trên dữ liệu
 ```
 
+*172. 2026-10-25 · paper · câu hỏi: toàn bộ ý tưởng LM-Tour + mô hình học dự kiến mất bao lâu*
+
+```text
+toàn bộ ý tưởng này dự kiến thực hiện mất bao lâu
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -131,6 +131,10 @@ def realise(gr, M, C, crits, Q, tq, tag, work, info):
     info.update(env=gr.env, tour=float(tq[-1]), crits=len(crits), complete=int(sum(m.all() for m, _ in out.values())),
                 moved=float(np.mean(moved_all)), ready=[float(np.mean(ready)), float(np.max(ready))], key=key)
     json.dump(info, open(f"{work}/{tag}-info.json", "w"))   # for fc_table.py
+    with open(f"{work}/{tag}-cells.csv", "w") as fh:   # per critical cell: every clue decoded, report time
+        w = csv.writer(fh, lineterminator="\n")
+        w.writerow(["cluster", "q", "r", "complete", "ready"])
+        w.writerows([k, h[0], h[1], int(m.all()), round(t, 2)] for (k, h), (m, t) in out.items())
     detail["track"] = track
     return out, info, detail
 

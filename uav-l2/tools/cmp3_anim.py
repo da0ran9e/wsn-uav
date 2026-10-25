@@ -12,7 +12,8 @@ code (missions, team2) and the baselines' (fc_baseline, dn_baseline), and each T
 Exported per channel and method (seconds from team 1's take-off, metres rounded):
   t1      team 1's flight as flown, about one [t, x, y] a second, and its end
   fill    per critical cell, how much of the clue set its CL holds over time: CHORD [enter, leave, own share,
-          River share, River done (s after leave, 900 if never)], FC / DN the decode time of each file (-1 never)
+          River share, River done (s after leave, 900 if never), the decode time of each file from its own nodes
+          (-fcd, item 169)], FC / DN the decode time of each file (-1 never)
   ready   per critical cell, when its CL holds its data; reports: when each of its reports reaches the BS
   team2   moves [kind, t0, t1, from, to, critical cell]; verified: when each critical cell is verified; Tstar, Tall
   groups  DN's neighbourhoods [centre x, y, orbit radius]
@@ -29,7 +30,7 @@ import l1_rank as R
 from mission_policy import GAP, tour
 from mission_report import load_map
 
-METHODS = (("CHORD", "P+prog-kin-puq-stage-zero-redir-kt"), ("FC", "FC-puq-stage-zero-redir"),
+METHODS = (("CHORD", "P+prog-kin-puq-stage-zero-redir-kt-fcd"), ("FC", "FC-puq-stage-zero-redir"),
            ("DN", "DN-puq-stage-zero-redir"))
 r0 = lambda v: int(round(float(v)))
 r1 = lambda v: round(float(v), 1)
@@ -60,6 +61,10 @@ def channel(w, d, l1rows):
     hold = R.holdings(M, C, seqs)
     crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
     det = {}
+    tc, pts, tag = o[45]["track"]
+    out, info, det["chordfc"] = fc_baseline.realise(fc_baseline.Ground(M, C, crits, w), M, C, crits, pts, tc, "chordfc",
+                                                    w, {})
+    M["fcd"] = (out, info)
     for name, mod in (("fc", fc_baseline), ("dn", dn_baseline)):
         out, info, det[name] = mod.run(M, C, crits, w)
         M[name] = (out, info)
@@ -71,7 +76,6 @@ def channel(w, d, l1rows):
     U, _ = R.world(M["name"], d, crits, C)
     star = max(crits, key=lambda x: U[x])
     ci = {x: i for i, x in enumerate(crits)}
-    tc, pts, tag = o[45]["track"]
     keep = np.r_[0, np.where(np.diff(np.floor(tc)) > 0)[0] + 1, len(tc) - 1]
     chord_track = [[r1(tc[i]), r0(pts[i][0]), r0(pts[i][1])] for i in keep]
     enter = {k: float(tc[int(np.argmax(tag == k))]) for k in M["cl"]}
@@ -99,8 +103,12 @@ def channel(w, d, l1rows):
                 stall = v < 0
                 dm, rm = hold[x]["interleaved"][1], hold[x]["interleaved"][0 if not stall else 1]
                 done = R.LIMIT if stall else v
-                fill.append([r1(enter[x[0]]), r1(leave[x[0]]), round(dm.mean(), 3), round(rm.mean(), 3), r1(done)])
-                ready.append(r1(leave[x[0]] + done))
+                fd = det["chordfc"][x]
+                fill.append([r1(enter[x[0]]), r1(leave[x[0]]), round(dm.mean(), 3), round(rm.mean(), 3), r1(done),
+                             fd["done"]])
+                riv = leave[x[0]] + done
+                own = fd["ready"] if min(fd["done"]) >= 0 else float("inf")
+                ready.append(r1(min(riv, own) if not stall else own if own < float("inf") else riv))
             t1, end = chord_track, r1(tours["kin/kt"][1])
         else:
             dd = det[label.lower()]

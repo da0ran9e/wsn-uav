@@ -25,14 +25,16 @@ const mmss = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + 
 // ---------- the mission state at time t ----------
 function fillAt(m, S, i, t) {
   const f = S.fill[i];
-  if (m === "CHORD") {
-    const [en, lv, own, riv, dn] = f;
-    if (t < en) return 0;
-    if (t < lv) return own * (t - en) / Math.max(1e-9, lv - en);
-    if (t < lv + dn) return own + (riv - own) * (t - lv) / Math.max(1e-9, dn);
-    return riv;
+  const decoded = d => { let n = 0; for (const v of d) if (v >= 0 && v <= t) n++; return n / d.length; };
+  if (m === "CHORD") {   // River's progress, or the files its own nodes decoded if more
+    const [en, lv, own, riv, dn, dec] = f;
+    let r = riv;
+    if (t < en) r = 0;
+    else if (t < lv) r = own * (t - en) / Math.max(1e-9, lv - en);
+    else if (t < lv + dn) r = own + (riv - own) * (t - lv) / Math.max(1e-9, dn);
+    return Math.max(r, dec ? decoded(dec) : 0);
   }
-  let n = 0; for (const v of f) if (v >= 0 && v <= t) n++; return n / f.length;
+  return decoded(f);
 }
 function trackAt(T, t) {   // [x, y, heading] of team 1
   if (t <= T[0][0]) return [T[0][1], T[0][2], Math.atan2(T[1][2] - T[0][2], T[1][1] - T[0][1])];

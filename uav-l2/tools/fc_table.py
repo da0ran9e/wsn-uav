@@ -3,13 +3,15 @@
 
     python3 tools/fc_table.py OUT L1 WORK [WORK ...]
 
-L1: the --out prefix of the l1_rank run that scored the WORKs with the methods P+prog-kin-puq-stage-zero-redir-kt
-(CHORD), FC-puq-stage-zero-redir and (if scored) DN-puq-stage-zero-redir, its sets named by channel; WORK: a mission folder (mission.py --mapRuns), named
+L1: the --out prefix of the l1_rank run that scored the WORKs with the methods P+prog-kin-puq-stage-zero-redir-kt-fcd
+(CHORD: the clue set fountain-coded, item 169), P+prog-kin-puq-stage-zero-redir-kt (CHORD-0: as before item 169),
+FC-puq-stage-zero-redir and DN-puq-stage-zero-redir (each if scored), its sets named by channel; WORK: a mission folder (mission.py --mapRuns), named
 by its map (k8-s1, ...), its channel in env.txt (none: open). Writes OUT.md (the results table and the seeds table)
 and OUT.csv. Columns:
   team1    team 1's flight, BS to BS (CHORD: kin_time at 45 degree bank with the delivery fixes; FC, DN: their own)
-  ready    when a critical cell holds its data at its CL, mean / max over the critical cells (CHORD: leave + River's
-           doneS, a run not done by its deadline counted at leave + 900 s; FC, DN: decode + in-cell gather)
+  ready    when a critical cell holds its data at its CL, mean / max over the critical cells (CHORD-0: leave +
+           River's doneS, a run not done by its deadline counted at leave + 900 s; CHORD: that or, if earlier, its
+           own decode + in-cell gather; FC, DN: decode + in-cell gather)
   clues    critical cells holding all 12 clues (CHORD: River's mask, d = 0 of the cells file, or for a cell River
            did not finish what its own nodes heard; FC, DN: decoded)
   Tstar    when team 2 has verified c*: mean, 95 % half-width, median, p90 over the draws; rank: c*'s place in
@@ -27,8 +29,8 @@ import kin_time
 from mission import ENV_LOSS
 from mission_report import load_map
 
-DESIGNS = (("P+prog-kin-puq-stage-zero-redir-kt", "CHORD"), ("FC-puq-stage-zero-redir", "FC"),
-           ("DN-puq-stage-zero-redir", "DN"))
+DESIGNS = (("P+prog-kin-puq-stage-zero-redir-kt-fcd", "CHORD"), ("P+prog-kin-puq-stage-zero-redir-kt", "CHORD-0"),
+           ("FC-puq-stage-zero-redir", "FC"), ("DN-puq-stage-zero-redir", "DN"))
 
 
 def main():
@@ -57,12 +59,20 @@ def main():
                      p90=round(float(np.percentile(ts, 90)), 1),
                      rank=round(float(np.mean([float(r["rank"]) for r in X])), 2),
                      Tall=round(float(np.mean([float(r["Tall"]) for r in X])), 1))
-            if label == "CHORD":
-                C = [c for c in cells if c["map"] == name and c["set"] == env]
-                r.update(ready_mean=round(float(np.mean(ready)), 1), ready_max=round(float(np.max(ready)), 1),
-                         clues=sum(int(c["directAll"] if done[(int(c["cluster"]), (int(c["q"]), int(c["r"])))] < 0
-                                       else c["riverAll"]) for c in C), stalls=sum(v < 0 for v in done.values()),
-                         visits="", loops="", groups="", radius="")
+            if label.startswith("CHORD"):
+                C = {(int(c["cluster"]), (int(c["q"]), int(c["r"]))): c for c in cells if c["map"] == name
+                     and c["set"] == env}
+                ok = {x: int(C[x]["directAll"] if done[x] < 0 else C[x]["riverAll"]) for x in crits}
+                rd = dict(zip(crits, ready))
+                if label == "CHORD":   # -fcd: the cell's own decode or River, whichever completes first
+                    for f in csv.DictReader(open(f"{w}/chordfc-cells.csv")):
+                        x = (int(f["cluster"]), (int(f["q"]), int(f["r"])))
+                        if f["complete"] == "1":
+                            rd[x] = min(rd[x], float(f["ready"])) if ok[x] else float(f["ready"])
+                            ok[x] = 1
+                r.update(ready_mean=round(float(np.mean(list(rd.values()))), 1),
+                         ready_max=round(float(np.max(list(rd.values()))), 1), clues=sum(ok.values()),
+                         stalls=sum(v < 0 for v in done.values()), visits="", loops="", groups="", radius="")
             else:
                 fc = json.load(open(f"{w}/{label.lower()}-info.json"))
                 r.update(ready_mean=round(fc["ready"][0], 1), ready_max=round(fc["ready"][1], 1),
@@ -80,7 +90,7 @@ def main():
           "ghé / vòng lượn (nhóm) | T\\* TB ± 95 % (s) | T\\* trung vị / p90 (s) | hạng c\\* | Tall (s) |",
           "|---" * 13 + "|"]
     for r in rows:
-        gl = (f"River kẹt {r['stalls']}" if r["stalls"] else "") if r["design"] == "CHORD" else \
+        gl = (f"River kẹt {r['stalls']}" if r["stalls"] else "") if r["design"].startswith("CHORD") else \
             f"{r['visits']} / {r['loops']:g}" + (f" ({r['groups']} nhóm, {r['radius']:g} m)" if r["groups"] else "")
         md.append(f"| {r['map']} | {r['channel']} | {r['clusters']} | {r['crits']} | {r['design']} | {r['team1']:.0f} | "
                   f"{r['ready_mean']:.0f} / {r['ready_max']:.0f} | {r['clues']}/{r['crits']} | {gl} | "

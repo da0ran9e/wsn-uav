@@ -1706,6 +1706,13 @@ chạy thử nghiệm với 3 kênh 3 kích thước miền nhưng chỉ 1 bản
 tổng hợp kết quả thành một bảng lưu lại tránh mất, lưu lại cả seed để chạy lại nếu cần
 ```
 
+*168. 2026-10-25 · uav-l2 · baseline mới: gom critical cell và CH gần nhau thành nhóm neighbor nhỏ, pha 1 chạy DTSP-N, pha 2 như thường; animation cả 3 thuật toán (CHORD, FC, nhóm + DTSP-N) trên cùng bản đồ*
+
+```text
+trong lúc chờ bạn thử cài thêm baseline như sau: gom các critical cell và CH gần nhau để tạo thành các nhóm neighbor nhỏ sau đó chạy thuật toán DTSP-N ở pha 1, pha 2 vẫn thế 
+sau đó cho tôi animation cả 3 thuật toán trên cùng bản đồ nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

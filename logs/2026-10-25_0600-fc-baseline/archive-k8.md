@@ -1,6 +1,6 @@
 # archive-k8
 
-- Bắt đầu: 2026-10-25 06:01:36, chạy 15 s, mã thoát 0
+- Bắt đầu: 2026-10-25 06:29:07, chạy 14 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**
@@ -12,8 +12,8 @@ logs/2026-10-25_0600-fc-baseline/archive.sh /tmp/claude-0/-home-user-wsn-uav/fd8
 **Kết quả**
 
 ```text
-open-k8-s1.tar.xz 1180 kB 8997bd88c9ac01d6
-r500-k8-s1.tar.xz 1192 kB 335ea85f782b4483
-r200-k8-s1.tar.xz 1144 kB 4e8f375d7dfbd055
-r100-k8-s1.tar.xz 1116 kB b837adcc7eed0f95
+open-k8-s1.tar.xz 1184 kB 951959d01f0be92d
+r500-k8-s1.tar.xz 1196 kB 506d12b3b5b9860e
+r200-k8-s1.tar.xz 1156 kB aee221c06e49cf25
+r100-k8-s1.tar.xz 1132 kB e9c4e57310892501
 ```

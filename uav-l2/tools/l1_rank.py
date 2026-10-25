@@ -59,6 +59,8 @@ Methods (name = base + options):
             cells themselves (TSP; Dubins to each, circles at VMIN where it is still short; fc_baseline.py), no
             River: a cell reports when its nodes hold enough coded packets of every file, plus its in-cell gather
             and the match; then LoRa and team 2 (team-2 options as B3); team1 = that flight
+  DN        (CLAUDE.md §8 item 168) as FC, but the critical cells grouped into small neighbourhoods and team 1's
+            tour over them by DTSP-N (orbits about the groups; dn_baseline.py)
 River deadline: a critical cell whose River run is not done by LIMIT after leave (doneS -1) reports then, with the
 clues its own nodes heard (the direct mask)
 Writes OUT-draws.csv (map, set, draw, method: Tstar, Tall, rank, dep, starIn, ...), OUT-cells.csv (per critical
@@ -69,6 +71,7 @@ from multiprocessing import Pool
 
 import numpy as np
 
+import dn_baseline
 import fc_baseline
 import kin_time
 import l1_model as L
@@ -318,7 +321,7 @@ def fly_all(bs, stops, cost, star_in):
 
 def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
     """The requested methods on one draw. Returns {method: (Tstar, Tall, rank, dep, starIn)} and per-cell rows.
-    traces (a dict), when given, gets team 2's trace (see team2) of each P / B4 / P+prog method."""
+    traces (a dict), when given, gets team 2's trace (see team2) of each P / B4 / P+prog / B5 / FC / DN method."""
     bs = M["bs"]
     crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
     pos = {x: tuple(M["cl"][x[0]]["geo"]["c"][x[1]]) for x in crits}
@@ -409,8 +412,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             dep, rule, stg, beta = policy(opts)
             out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg,
                               beta=beta, redirect="redir" in opts)
-        elif base in ("B5", "FC"):
-            sweep = M["b5" if base == "B5" else "fc"][0]
+        elif base in ("B5", "FC", "DN"):
+            sweep = M[base.lower()][0]
             a_ = lora(M, {x: sweep[x][1] + tm for x in crits}, phase)
             p_ = {}
             for x in crits:
@@ -418,7 +421,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
                 al, be, sd, _ = L.calib(C, m, truth=C)
                 p_[x] = (al + be * float(L.report(mv[x], C, m)[0]), max(sd, 1e-4)) if m.any() else (al, sd)
             dep, rule, stg, beta = policy(opts)
-            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg,
+            tr = None if traces is None else traces.setdefault(meth, [])
+            out[meth] = team2(bs, pos, {x: [(a_[x], p_[x])] for x in crits}, U, prior, star, dep, rule, stg, tr,
                               beta=beta, redirect="redir" in opts)
         elif base == "B6":
             t, p, rd = 0.0, bs, {}
@@ -469,10 +473,11 @@ def one_work(job):
         M["b5"] = b5_sweep(M, C, seqs["interleaved"], crits, M["cl"])
         print(f"{sname} {M['name']}: B5 lanes {M['b5'][1]} cells, route {M['b5'][2] / 1000:.1f} km, "
               f"{sum(h.all() for h, _ in M['b5'][0].values())}/{len(crits)} critical cells hold every clue", flush=True)
-    if any(m.split("-")[0] == "FC" for m in methods):
-        crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
-        M["fc"] = fc_baseline.run(M, C, crits, w)
-        print(f"{sname} {M['name']}: FC {M['fc'][1]}", flush=True)
+    for base, mod in (("FC", fc_baseline), ("DN", dn_baseline)):
+        if any(m.split("-")[0] == base for m in methods):
+            crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
+            M[base.lower()] = mod.run(M, C, crits, w)
+            print(f"{sname} {M['name']}: {base} {M[base.lower()][1]}", flush=True)
     seedm = int.from_bytes(hashlib.sha256(M["name"].encode()).digest()[:4], "little")
     prng = np.random.default_rng(seedm)
     draws, cells = [], []
@@ -482,7 +487,7 @@ def one_work(job):
         for meth, (Ts, Ta, rank, dep, sin) in out.items():
             tk = next((o for o in meth.split("-") if o in ("short", "latency", "seam", "kin", "skin", "route")), "l3first")
             tk += "/kt" if "kt" in meth.split("-") else ""
-            t1 = M["fc"][1]["tour"] if meth.split("-")[0] == "FC" else tours[tk][1]
+            t1 = M[meth.split("-")[0].lower()][1]["tour"] if meth.split("-")[0] in ("FC", "DN") else tours[tk][1]
             draws.append(dict(map=M["name"], size=len(M["cl"]), set=sname, draw=d, method=meth, crits=nc,
                               team1=round(t1, 1), Tstar=round(Ts, 1), Tall=round(Ta, 1), rank=rank,
                               dep=round(dep, 1), starIn=round(sin, 1)))

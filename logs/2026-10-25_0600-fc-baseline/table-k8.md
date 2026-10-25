@@ -1,6 +1,6 @@
 # table-k8
 
-- Bắt đầu: 2026-10-25 05:58:32, chạy 27 s, mã thoát 0
+- Bắt đầu: 2026-10-25 06:28:00, chạy 27 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**

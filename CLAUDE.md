@@ -1752,6 +1752,12 @@ trong quá trình chạy ta sẽ cài LM tour
 sau đó sẽ cài trên ns3
 ```
 
+*175. 2026-10-25 · paper · làm bước A (khớp bộ dự đoán ΔT bằng Python) và C (cài LM-Tour) trước*
+
+```text
+vậy bạn làm A và C trước nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

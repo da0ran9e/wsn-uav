@@ -58,6 +58,9 @@ ENV = {
     "urban-0dBm": hourani(9.61, 0.16, 1.0, 20.0, tx=0.0),
     "dense-0dBm": hourani(12.08, 0.11, 1.6, 23.0, tx=0.0),
     "highrise": hourani(27.23, 0.08, 2.3, 34.0),
+    "r500": lambda x: ok(10 - two_seg(math.hypot(x, H)) - 9.03, 2),     # item 163 (mission.ENV_LOSS)
+    "r200": lambda x: ok(10 - two_seg(math.hypot(x, H)) - 19.77, 2),
+    "r100": lambda x: ok(10 - two_seg(math.hypot(x, H)) - 25.74, 2),
 }
 XS = (0, 100, 200, 300, 500, 800)
 

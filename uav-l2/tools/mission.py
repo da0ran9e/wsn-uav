@@ -36,6 +36,9 @@ from chord_tour import choose
 HERE = os.path.dirname(os.path.abspath(__file__))
 COOP2 = os.path.join(HERE, "../../uav-coop2/tools")
 V1 = 50.0   # team 1 speed, m/s (the pass: one packet per 0.5 m every 10 ms)
+# Item 163: the pass's excess A2G loss per environment, dB, and so its R50 (where a packet gets through with
+# probability 1/2) measured on the ns-3 pass (tools/a2g_env.py): 1015 / 498 / 199 / 99 m.
+ENV_LOSS = {"open": 0.0, "r500": 9.03, "r200": 19.77, "r100": 25.74}
 SCHEMES = {"rf": ["--scheme=river", "--prep=full"],
            "ad12": ["--scheme=river", "--prep=adaptive", "--circleMin=12", "--circleMax=12"],
            "d": ["--scheme=direct"],
@@ -372,6 +375,10 @@ def stage_runs(a, W_, K):
         domain_scores(W_, K)
     if getattr(a, "axeNear", False):   # read back by mission_report.load_map, so the analysis plans as River did
         json.dump(dict(axeNear=True), open(f"{W_}/plan-opts.json", "w"))
+    env = getattr(a, "env", "open")
+    if os.path.exists(f"{W_}/env.txt") and open(f"{W_}/env.txt").read().strip() != env:
+        sys.exit(f"{W_} was flown with --env {open(f'{W_}/env.txt').read().strip()}, not {env}")
+    open(f"{W_}/env.txt", "w").write(env + "\n")
     passenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/pass-lib")
     rivenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
 
@@ -381,7 +388,8 @@ def stage_runs(a, W_, K):
     def one(k):
         if not os.path.exists(f"{W_}/pass{k}-bits-r1.bin"):
             sh([f"{a.bin}/pass-bin", f"--nodes=c{k}-nodes-s35.csv", f"--path=c{k}-path-s35.csv",
-                f"--firstRun={mission(k)}", "--runs=1", "--bits", f"--out=pass{k}"], f"pass{k}.log", passenv)
+                f"--firstRun={mission(k)}", "--runs=1", "--bits", f"--out=pass{k}",
+                *([f"--lossDb={ENV_LOSS[env]:g}"] if ENV_LOSS[env] else [])], f"pass{k}.log", passenv)
             if mission(k) != 1:   # the readers all take pass{k}-bits-r1.bin
                 os.symlink(f"pass{k}-bits-r{mission(k)}.bin", f"{W_}/pass{k}-bits-r1.bin")
         if not os.path.exists(f"{W_}/plan{k}.txt"):
@@ -437,6 +445,9 @@ def main():
                     help="with --chordFit: weight of the latest estimated River end in the tour (item 159)")
     ap.add_argument("--bendShort", action="store_true",
                     help="with --bendCrit and --chordFit: bend only the clusters short of one copy (item 159)")
+    ap.add_argument("--env", default="open", choices=tuple(ENV_LOSS),
+                    help="A2G environment of the pass: R50 1015 m (open), 500, 200 or 100 m, by an excess loss "
+                         "(ENV_LOSS; needs a pass-bin with --lossDb; item 163)")
     ap.add_argument("--mapRuns", action="store_true",
                     help="each cluster's ns-3 pass and River run as mission 100000 CLUSTERS + 100 SEED + k instead of 1: "
                          "draws independent across clusters and maps, shared by every design of one map (item 161)")

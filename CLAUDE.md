@@ -1673,6 +1673,13 @@ vậy bạn xem ta chốt giả lập này được chưa, các điều kiện k
 chưa cần chạy bây giờ
 ```
 
+*163. 2026-10-25 · uav-l2 · không cần chạy nhiều bản đồ; cài các baseline chính; trước hết với CHORD cài 3 chế độ kênh thể hiện 3 mức môi trường phức tạp, bán kính phát hiệu quả khoảng 100, 200, 500 m*
+
+```text
+chạy qua nhiều bản đồ không cần thiết, đầu tiên cài các baseline chính, 
+trước hết với chord hãy cài 3 chế độ kênh sao cho thể hiện 3 mức độ môi trường phức tạp khi bán kinh phát hiệu quả khoảng 100,200,500m
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

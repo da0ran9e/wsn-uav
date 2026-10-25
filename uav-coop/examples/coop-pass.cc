@@ -6,7 +6,8 @@
 // flies it at the A2G-RUN settings: altitude 100 m, 50 m/s, a numbered 127-byte PSDU
 // every 10 ms from the start of the lead-in to the end of the lead-out, +10 dBm,
 // urban channel (free space to 100 m, then alpha 3.0, Rician K = 2 per packet), PHY
-// direct (no MAC), every node listening.
+// direct (no MAC), every node listening. --lossDb adds a fixed excess loss to every link
+// (the environment's clutter and building entry, CLAUDE.md §8 item 163).
 //
 // As in A2G-SWEEP the UAV sends ONE FILE of K packets cyclically: packet s carries
 // chunk s mod K, so one pass evaluates every K at once. Per node and mission:
@@ -135,6 +136,7 @@ int main(int argc, char* argv[]) {
     std::string nodesFile = "deploy-nodes-s35.csv", pathFile = "deploy-path-s35.csv";
     double alt = params::kUavAltM, speed = params::kUavSpeedMps, alpha = params::kA2gAlpha;
     double kFactor = params::kA2gRicianK, txDbm = params::kTxPowerDbm, sens = params::kRxSensDbm;
+    double lossDb = 0;
     uint32_t runs = 120, firstRun = 1, seed = 1;
     std::string out = "pass";
     bool bits = false;
@@ -145,6 +147,7 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("speed", "ground speed, m/s (a path with column t: the most it may fly)", speed);
     cmd.AddValue("alpha", "path-loss exponent beyond the free-space segment", alpha);
     cmd.AddValue("K", "Rician K factor", kFactor);
+    cmd.AddValue("lossDb", "excess loss on every link, dB (environment, item 163)", lossDb);
     cmd.AddValue("runs", "independent missions (method rule: >= 120)", runs);
     cmd.AddValue("firstRun", "index of the first mission", firstRun);
     cmd.AddValue("seed", "RNG seed", seed);
@@ -204,10 +207,10 @@ int main(int argc, char* argv[]) {
 
     std::printf("path %s: %.0f m = %.1f s at %.1f m/s%s, %u packets (one every %.0f ms); altitude "
                 "%.0f m\nnodes %s: %u, CH #%u\nchannel: free space to %.0f m, then alpha %.2f, "
-                "Rician K %.1f; +%.0f dBm, sensitivity %.0f dBm, %u B PSDU\n", pathFile.c_str(),
-                length, duration, length / duration, timed ? " on average (its speed profile)" : "", nPk,
-                dt * 1e3, alt, nodesFile.c_str(), nNodes,
-                nodes[chIdx].id, dref, alpha, kFactor, txDbm, sens, psdu);
+                "excess loss %.2f dB, Rician K %.1f; +%.0f dBm, sensitivity %.0f dBm, %u B PSDU\n",
+                pathFile.c_str(), length, duration, length / duration,
+                timed ? " on average (its speed profile)" : "", nPk, dt * 1e3, alt, nodesFile.c_str(), nNodes,
+                nodes[chIdx].id, dref, alpha, lossDb, kFactor, txDbm, sens, psdu);
 
     // Per node over missions.
     const size_t nK = kFileSizes.size();
@@ -254,6 +257,12 @@ int main(int argc, char* argv[]) {
         LrWpanHelper lr;
         Ptr<PropagationLossModel> loss;
         Ptr<SpectrumChannel> ch = BuildA2gChannel(alpha, dref, kFactor, params::kFspl1mDb, loss);
+        if (lossDb != 0) {   // between the path loss and the fading; draws no random numbers
+            Ptr<MatrixPropagationLossModel> ex = CreateObject<MatrixPropagationLossModel>();
+            ex->SetDefaultLoss(lossDb);
+            ex->SetNext(loss->GetNext());
+            loss->SetNext(ex);
+        }
         ch->SetAttribute("MaxLossDb", DoubleValue(kMaxLossDb));
         lr.SetChannel(ch);
         NetDeviceContainer uavDev = lr.Install(uav);
@@ -305,11 +314,11 @@ int main(int argc, char* argv[]) {
         // The fade the channel applied = closed-form path loss - traced loss.
         ch->TraceConnectWithoutContext("PathLoss",
             Callback<void, Ptr<const SpectrumPhy>, Ptr<const SpectrumPhy>, double>(
-                [&](Ptr<const SpectrumPhy>, Ptr<const SpectrumPhy> rx, double lossDb) {
+                [&](Ptr<const SpectrumPhy>, Ptr<const SpectrumPhy> rx, double traced) {
                     auto it = idx.find(PeekPointer(rx));
                     if (it == idx.end()) return;
                     const double d = um->GetDistanceFrom(gm[it->second]);
-                    const double f = A2gPathLossDb(d, alpha, dref, params::kFspl1mDb) - lossDb;
+                    const double f = A2gPathLossDb(d, alpha, dref, params::kFspl1mDb) + lossDb - traced;
                     fadeN++;
                     fadeSum += std::pow(10.0, f / 10.0);
                     if (f < -10) fade10++;

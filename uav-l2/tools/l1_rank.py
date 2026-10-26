@@ -42,7 +42,8 @@ Methods (name = base + options):
             systematic, so River's window is unchanged (its source packets); team 1 broadcasts coded packets
             the whole flight, and the first report is the cell's own decode (fc_baseline.realise along team 1's
             kin_time track, one realisation seeded by CHORDFC/<map>/<channel>; decode + in-cell gather), the
-            second the River report; each report holds everything the cell has by then
+            second the River report; each report holds everything the cell has by then. B4 with -kt -fcd
+            (item 182): the same flight and coding, no River: the own-decode report only
             P+prog only: -allclues (upper bound: the River report holds all 12 clues, as if every Axe were long
             enough for the clue set)
   B1 (no phase 1: TSP over every critical cell with the large file), B2-r (groups, multicast large file), B3-r
@@ -372,7 +373,7 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
             wC = Cq if "equal" in opts else C
             tk = next((o for o in opts if o in ("short", "latency", "seam", "kin", "skin", "route")), "l3first")
             tk += "/kt" if "kt" in opts else ""
-            if base == "P+prog" and "fcd" in opts:   # the clue set fountain-coded, heard along the whole flight
+            if base in ("P+prog", "B4") and "fcd" in opts:   # the clue set fountain-coded, heard along the whole flight
                 fo = M["fcd"][0]
 
                 def post_of(x, m):
@@ -381,6 +382,9 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
                 ad, ar = lora(M, {x: fo[x][1] + tm for x in crits}, phase), ready("river", tk, sch)
                 reps = {}
                 for x in crits:   # each report holds everything the cell has by then
+                    if base == "B4":   # no River: the cell's own decode only (item 182)
+                        reps[x] = [(ad[x], post_of(x, fo[x][0]))]
+                        continue
                     ev = sorted([(ad[x], 0, fo[x][0]), (ar[x], 1, hold[x][order][0] if not stalled(x, sch) else fo[x][0])])
                     reps[x] = [(ev[0][0], post_of(x, ev[0][2])), (ev[1][0], post_of(x, ev[0][2] | ev[1][2]))]
             elif base == "P+prog":

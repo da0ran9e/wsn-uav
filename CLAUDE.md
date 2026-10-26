@@ -1794,6 +1794,13 @@ có thể mô tả qua về model đang dùng để chấm điểm trọng số 
 ngoài 2 baseline vừa cài hôm qua thì chúng ta nên thêm baseline nào đã có không
 ```
 
+*182. 2026-10-26 · paper · chạy thực nghiệm các baseline đề xuất (B4, Pd, B1, B7 cùng CHORD, FC, DN), tổng hợp bảng như hôm trước; chạy song song nhiều tiến trình*
+
+```text
+bắt đầu chạy thực nghiệm các mục đễ xuất tổng hợp thành bảng như hôm qua 
+nếu được hãy chạy song song nhiều tiến trình cho nhanh
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

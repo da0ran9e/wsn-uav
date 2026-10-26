@@ -1825,6 +1825,13 @@ tôi muốn LM Tour phải tốt hơn hẳn CHORD không chỉ vài giây, bạn
 nhiệm vụ này nên làm tiết kiệm chỉ sửa nhỏ để lấy bộ khung đẹp trước, sau khi quota đầy ta sẽ chạy code thật lấy số
 ```
 
+*185. 2026-10-26 · paper · nếu không tốn nhiều token: xuất PDF giống draft, ghép hình, các thay đổi và số điền vào viết chữ xanh để thấy một paper hoàn chỉnh*
+
+```text
+nếu không tốt thì hãy xuất cho tôi một bản pdf tương tự, ghép hình vào, các thay đổi, điền số ... hãy viết chữ màu xanh để tôi có thể thấy được một paper hoàn chỉnh
+ý tôi là nết không tốn nhiều token ...
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

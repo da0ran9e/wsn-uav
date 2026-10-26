@@ -1,8 +1,8 @@
 % Algorithm 3 of draft v5 (CLAUDE.md §8 item 184). Only line 8 changed from v3: the re-route enters B(v, \xi)
 % instead of B(v, R/2); \xi from eq. (5). Implemented as lm_tour.py plan --xi (auto = eq. (5)).
 \begin{algorithm}[t]
-\caption{\textsc{LM-Tour}}\label{alg:lmtour}
-\begin{algorithmic}[1]
+\caption{\textcolor{blue}{\textsc{LM-Tour} (v5: discs $B(\cdot,\xi)$)}}\label{alg:lmtour}
+\begin{algorithmic}[1]\small\color{blue}
 \Require AI nodes with weights $w$, land graph $G$, $R$, $\rho$, $\xi$, $\theta$, $L_{\max}$
 \State $A^\star \gets$ AI nodes sorted by $w$ (descending); $\mathcal{K}_1 \gets \emptyset$
 \For{all $u \in A^\star$}

@@ -47,19 +47,19 @@ with open(f"{H}/numbers.csv", "w", newline="") as f:
 
 get = {(x["r"], x["map"], x["design"]): x["Tstar"] for x in rows}
 order = ["LM-Tour + River-FC"] + list(NAME.values())
-L = [r"\begin{table}[t]\centering\caption{Mean mission time $T^\star$ (s), 100 paired draws, $K$ = 8 / 12 / 16 clusters."
+L = [r"\begin{table*}[t]\centering\color{blue}\caption{Mean mission time $T^\star$ (s), 100 paired draws, $K$ = 8 / 12 / 16 clusters."
      r" \textcolor{red}{[EST]: estimated, not run.}}\label{tab:tstar}", r"\setlength{\tabcolsep}{3pt}\footnotesize",
      r"\begin{tabular}{lcccc}\toprule", r"Scheme & $r=1000$ m & 500 & 200 & 150 \\\midrule"]
 for d in order:
     cells = [" / ".join(str(get[(rr, m, d)]) for m in MAPS) for _, rr in ENVS]
     tag = r"\textcolor{red}{" if d.startswith("LM") else "{"
     L.append(f"{tag}{d}}} & " + " & ".join(cells) + r" \\")
-L += [r"\bottomrule\end{tabular}\end{table}"]
+L += [r"\bottomrule\end{tabular}\end{table*}"]
 open(f"{H}/table-tstar.tex", "w").write("\n".join(L) + "\n")
 
 lm_last = [LAST["CHORD"][j] - round(G * RIVER[(e, "k16-s1")][1]) for j, (e, _) in enumerate(ENVS)]
 pct = lambda e: round(100 * SELF[e][2] / 92)
-C = [r"\begin{table}[t]\centering\caption{Critical cells complete after the pass (\%) and time from take-off to the"
+C = [r"\begin{table*}[t]\centering\color{blue}\caption{Critical cells complete after the pass (\%) and time from take-off to the"
      r" last completion (s) versus A2G range, $K = 16$ (92 critical cells). \textcolor{red}{[EST]: estimated.}}"
      r"\label{tab:complete}", r"\footnotesize\begin{tabular}{lcccc}\toprule",
      r"Scheme & $r=150$ & 200 & 500 & 1000\,m \\\midrule",
@@ -68,7 +68,7 @@ C = [r"\begin{table}[t]\centering\caption{Critical cells complete after the pass
      "FC + DTSP-N & " + " & ".join(f"100\\,\\% / {x}" for x in LAST["DN"][::-1]) + r" \\",
      "River-FC (CHORD) & " + " & ".join(f"100\\,\\% / {x}" for x in LAST["CHORD"][::-1]) + r" \\",
      r"\textcolor{red}{River-FC + LM-Tour} & " + " & ".join(f"\\textcolor{{red}}{{100\\,\\% / {x}}}" for x in lm_last[::-1])
-     + r" \\", r"\bottomrule\end{tabular}\end{table}"]
+     + r" \\", r"\bottomrule\end{tabular}\end{table*}"]
 open(f"{H}/table-complete.tex", "w").write("\n".join(C) + "\n")
 for d in order:
     print(f"{d:30s}", "  ".join(" / ".join(str(get[(rr, m, d)]) for m in MAPS) for _, rr in ENVS))

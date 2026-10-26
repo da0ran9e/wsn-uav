@@ -1801,6 +1801,16 @@ bắt đầu chạy thực nghiệm các mục đễ xuất tổng hợp thành 
 nếu được hãy chạy song song nhiều tiến trình cho nhanh
 ```
 
+*183. 2026-10-26 · paper · ba tài liệu chi tiết sẵn sàng cho paper: (1) tổng hợp mọi việc đã làm; (2) mô tả, mã giả, chi tiết thực nghiệm và baseline kèm bảng kết quả; (3) LM-Tour: ý tưởng, thuật toán, phân tích kết quả*
+
+```text
+tôi cần bạn làm cho tôi 3 tài liệu chi tiết, sẵn sàng cho paper: 
+1. tổng hợp lại tất cả những gì ta làm được 
+2. tổng hợp mô tả, pseudo code và chi tiết các thực nghiệm và baselines cùng bảng thống kê kết quả 
+3. mô tả chi tiết về lm tour chi tiết ý tưởng và thuật toán cùng phân tích kết quả (bạn nên tham
+khảo ý tưởng chính để hiểu rõ)
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

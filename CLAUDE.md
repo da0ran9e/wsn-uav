@@ -1788,6 +1788,12 @@ cài đặt python nhanh và cho tôi xem hình
 có thể mô tả qua về model đang dùng để chấm điểm trọng số không
 ```
 
+*181. 2026-10-26 · paper · hỏi: ngoài FC và DN, nên thêm baseline nào trong số đã có*
+
+```text
+ngoài 2 baseline vừa cài hôm qua thì chúng ta nên thêm baseline nào đã có không
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

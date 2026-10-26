@@ -1,6 +1,8 @@
-# Kết quả CHORD, FC và DN, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169)
+# Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182)
 
-Tệp này là nơi lưu số liệu so sánh CHORD (P\*) với hai baseline FC và DN. Mỗi lần có thêm lượt chạy thì cập nhật tại đây.
+Tệp này là nơi lưu số liệu so sánh CHORD (P\*) với các baseline FC, DN (mục 1–5) và Pd, B4, B1, B7 (mục 6). Mỗi lần có thêm lượt chạy thì cập nhật tại đây.
+
+**Cập nhật 2026-10-26 (mục 182):** bảng chung bảy phương án trên cùng 12 tổ hợp ở mục 6.
 
 **Trạng thái (2026-10-25, sau mục 169):** đã xong cả 12 tổ hợp: 3 bản đồ (k8-s1, k12-s1, k16-s1; mỗi cỡ một bản đồ chung cho mọi phương án) × 4 kênh (open, r500, r200, r100). Mỗi tổ hợp có 100 lượt bốc lớp 1.
 
@@ -245,3 +247,99 @@ python3 uav-l2/tools/fc_table.py uav-l2/docs/data/results/chord-fc L1 WORK [WORK
 - Chỉ có một realisation thu gói cho mỗi bản đồ và kênh. Phương sai của T\* lấy từ 100 lượt bốc lớp 1.
 - Phần tự giải mã của CHORD dùng mô hình thu giải tích (như FC và DN), không phải bitmap ns-3. Nó tính cả gói nghe được trên đường bay nối giữa các cụm. Phần River vẫn là ns-3.
 - Mỗi cỡ chỉ có một bản đồ. Kết luận về bản đồ lớn và nhỏ cần thêm bản đồ (chiến dịch ở mục 165).
+
+## 6. Bảng chung bảy phương án (mục 182)
+
+Cùng 12 tổ hợp (3 bản đồ × 4 kênh), cùng 100 lượt bốc lớp 1 ghép cặp như mục 2. CHORD, FC, DN cho lại đúng số mục 2.
+
+### 6.1. Bốn phương án thêm
+- **Pd: CHORD nhưng kéo trực tiếp thay River** (`Pd+prog-kin-puq-stage-zero-redir-kt-fcd`).
+  - Cùng đường bay, cùng mã fountain và phần tự giải mã như CHORD.
+  - Dưới mặt đất, mỗi critical cell hỏi thẳng từng cell Axe phần nó thiếu của đoạn dữ liệu mà cell Axe đó giữ (scheme `direct` của `coop2-river`), không có Banks và Circle.
+  - Chạy trên ns-3 với cùng binary và mission index như River.
+  - `direct` không có cơ chế `--repair` mà River có từ mục 169.
+- **B4: CHORD không có hợp tác dưới mặt đất** (`B4-kin-puq-stage-zero-redir-kt-fcd`).
+  - Cùng đường bay và cùng realisation thu gói mã fountain như CHORD.
+  - Không River, không kéo: mỗi critical cell chỉ báo những manh mối nó tự giải được, sau khi gom trong cell.
+- **B1: không có pha 1.** UAV cánh quay thăm mọi critical cell theo TSP và gửi tệp lớn tại từng cell.
+- **B7: oracle.** Đội 2 bay thẳng tới c\*; là chặn dưới của T\*.
+- B1 và B7 không dùng kênh A2G của đội 1, nên số giống nhau ở mọi kênh.
+
+### 6.2. Kết quả
+
+Sinh bằng `uav-l2/tools/cmp_table.py`; bản CSV ở `uav-l2/docs/data/results/baselines.csv`.
+
+T\* trung bình ± 95 % (s), 100 lượt bốc lớp 1 ghép cặp:
+
+| kênh | bản đồ | CHORD | FC | DN | Pd | B4 | B1 | B7 |
+|---|---|---|---|---|---|---|---|---|
+| open | k8-s1 | 647 ± 100 | 660 ± 103 | 708 ± 101 | 647 ± 100 | 650 ± 100 | 2926 ± 313 | 322 ± 17 |
+| open | k12-s1 | 686 ± 69 | 815 ± 82 | 805 ± 81 | 686 ± 69 | 687 ± 70 | 4168 ± 465 | 402 ± 20 |
+| open | k16-s1 | 863 ± 96 | 949 ± 105 | 967 ± 95 | 863 ± 96 | 862 ± 95 | 5169 ± 593 | 404 ± 21 |
+| r500 | k8-s1 | 784 ± 96 | 1138 ± 127 | 1078 ± 121 | 806 ± 97 | 1379 ± 207 | 2926 ± 313 | 322 ± 17 |
+| r500 | k12-s1 | 950 ± 75 | 1451 ± 144 | 1388 ± 126 | 950 ± 75 | 2030 ± 259 | 4168 ± 465 | 402 ± 20 |
+| r500 | k16-s1 | 1107 ± 108 | 1801 ± 174 | 1750 ± 176 | 1115 ± 108 | 2549 ± 378 | 5169 ± 593 | 404 ± 21 |
+| r200 | k8-s1 | 876 ± 97 | 2285 ± 214 | 1904 ± 162 | 850 ± 98 | 3711 ± 303 | 2926 ± 313 | 322 ± 17 |
+| r200 | k12-s1 | 975 ± 76 | 3288 ± 279 | 2482 ± 230 | 990 ± 76 | 5277 ± 420 | 4168 ± 465 | 402 ± 20 |
+| r200 | k16-s1 | 1192 ± 111 | 3964 ± 376 | 3469 ± 330 | 1192 ± 113 | 6298 ± 617 | 5169 ± 593 | 404 ± 21 |
+| r100 | k8-s1 | 872 ± 98 | 2463 ± 229 | 2190 ± 217 | 875 ± 98 | 3860 ± 316 | 2926 ± 313 | 322 ± 17 |
+| r100 | k12-s1 | 990 ± 76 | 3460 ± 288 | 3248 ± 294 | 990 ± 76 | 5308 ± 412 | 4168 ± 465 | 402 ± 20 |
+| r100 | k16-s1 | 1215 ± 111 | 4368 ± 415 | 4468 ± 355 | 1334 ± 162 | 6358 ± 598 | 5169 ± 593 | 404 ± 21 |
+
+Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngoặc: % lượt bốc CHORD nhanh hơn):
+
+| kênh | bản đồ | FC | DN | Pd | B4 | B1 | B7 |
+|---|---|---|---|---|---|---|---|
+| open | k8-s1 | +13 ± 34 (66 %) | +61 ± 40 (60 %) | -0 ± 0 (2 %) | +3 ± 6 (18 %) | +2278 ± 313 (91 %) | -325 ± 94 (0 %) |
+| open | k12-s1 | +130 ± 49 (77 %) | +120 ± 52 (80 %) | +0 ± 0 (0 %) | +2 ± 3 (3 %) | +3482 ± 468 (97 %) | -283 ± 70 (0 %) |
+| open | k16-s1 | +86 ± 38 (74 %) | +104 ± 73 (60 %) | +0 ± 0 (0 %) | -1 ± 2 (0 %) | +4306 ± 570 (93 %) | -458 ± 90 (0 %) |
+| r500 | k8-s1 | +354 ± 74 (81 %) | +294 ± 73 (81 %) | +21 ± 19 (54 %) | +595 ± 197 (74 %) | +2141 ± 309 (89 %) | -462 ± 92 (0 %) |
+| r500 | k12-s1 | +501 ± 113 (75 %) | +438 ± 98 (77 %) | -0 ± 8 (39 %) | +1080 ± 253 (81 %) | +3218 ± 468 (95 %) | -548 ± 76 (0 %) |
+| r500 | k16-s1 | +694 ± 105 (90 %) | +643 ± 159 (71 %) | +8 ± 8 (42 %) | +1442 ± 368 (80 %) | +4062 ± 565 (92 %) | -703 ± 102 (0 %) |
+| r200 | k8-s1 | +1409 ± 168 (93 %) | +1028 ± 131 (93 %) | -26 ± 25 (36 %) | +2835 ± 297 (97 %) | +2050 ± 308 (88 %) | -554 ± 94 (0 %) |
+| r200 | k12-s1 | +2313 ± 252 (99 %) | +1507 ± 197 (91 %) | +15 ± 16 (60 %) | +4302 ± 426 (100 %) | +3193 ± 466 (96 %) | -573 ± 76 (0 %) |
+| r200 | k16-s1 | +2772 ± 302 (97 %) | +2277 ± 315 (94 %) | -0 ± 13 (41 %) | +5106 ± 620 (96 %) | +3977 ± 559 (92 %) | -788 ± 103 (0 %) |
+| r100 | k8-s1 | +1590 ± 184 (93 %) | +1318 ± 175 (87 %) | +3 ± 21 (39 %) | +2987 ± 307 (98 %) | +2053 ± 308 (88 %) | -551 ± 94 (0 %) |
+| r100 | k12-s1 | +2471 ± 262 (99 %) | +2259 ± 286 (86 %) | +0 ± 12 (49 %) | +4318 ± 422 (100 %) | +3178 ± 467 (96 %) | -587 ± 76 (0 %) |
+| r100 | k16-s1 | +3153 ± 340 (97 %) | +3253 ± 358 (95 %) | +119 ± 97 (38 %) | +5142 ± 597 (98 %) | +3954 ± 559 (92 %) | -810 ± 103 (0 %) |
+
+Đội 1 của CHORD, Pd và B4 bay cùng một đường: 782 / 1 152 / 1 415 s (k8 / k12 / k16) ở mọi kênh. Đường bay của FC và DN như mục 2.
+
+**River và kéo trực tiếp ở mức critical cell** (ns-3, cùng các cell; *xong*: giây từ lúc đội 1 rời cụm tới lúc CL giữ đủ cửa sổ; *cell d nhanh hơn*: số cell kéo trực tiếp xong sớm hơn River, trong các cell cả hai đều xong; *lượt truyền*: tổng số lượt chuyển gói một chặng của mọi cụm):
+
+| kênh | bản đồ | cell | xong TB rf / d (s) | xong max rf / d (s) | kẹt rf / d | cell d nhanh hơn | lượt truyền rf / d (nghìn) | MAC lỗi rf / d (nghìn) |
+|---|---|---|---|---|---|---|---|---|
+| open | k8-s1 | 45 | 8 / 8 | 35 / 30 | 0 / 0 | 22/45 | 146 / 138 | 5 / 5 |
+| open | k12-s1 | 66 | 8 / 8 | 50 / 47 | 0 / 0 | 35/66 | 247 / 254 | 8 / 9 |
+| open | k16-s1 | 92 | 10 / 10 | 69 / 47 | 0 / 0 | 48/92 | 517 / 530 | 19 / 19 |
+| r500 | k8-s1 | 45 | 54 / 71 | 159 / 206 | 0 / 0 | 10/45 | 1612 / 1621 | 61 / 61 |
+| r500 | k12-s1 | 66 | 45 / 57 | 90 / 106 | 0 / 0 | 19/66 | 2112 / 2084 | 79 / 77 |
+| r500 | k16-s1 | 92 | 62 / 67 | 244 / 134 | 0 / 0 | 26/92 | 3721 / 3492 | 147 / 133 |
+| r200 | k8-s1 | 45 | 108 / 95 | 311 / 235 | 0 / 0 | 30/45 | 3107 / 2481 | 135 / 93 |
+| r200 | k12-s1 | 66 | 78 / 83 | 136 / 164 | 0 / 0 | 25/66 | 3897 / 3315 | 165 / 123 |
+| r200 | k16-s1 | 92 | 99 / 90 | 259 / 170 | 0 / 0 | 57/92 | 6169 / 5185 | 264 / 196 |
+| r100 | k8-s1 | 45 | 126 / 113 | 300 / 283 | 0 / 0 | 35/45 | 3542 / 2825 | 168 / 109 |
+| r100 | k12-s1 | 66 | 96 / 95 | 183 / 184 | 0 / 0 | 34/66 | 4736 / 3795 | 222 / 145 |
+| r100 | k16-s1 | 92 | 115 / 105 | 225 / 197 | 0 / 6 | 56/86 | 7114 / 5801 | 334 / 227 |
+
+### 6.3. Đọc nhanh
+- **CHORD nhanh nhất trong các phương án làm được, hoà với Pd.** B7 (oracle) là chặn dưới: 322 / 402 / 404 s.
+- **Hợp tác dưới mặt đất là phần làm nên lợi thế của một lượt bay qua CH.** So B4 với CHORD (cùng đường bay, cùng mã):
+  - Kênh open: như nhau (+3 ± 6 s ở k8; 82–99 % số lượt bốc bằng hệt), vì cell tự giải mã đủ trước khi River xong.
+  - Từ r500 trở xuống, B4 chậm hơn 1,8–5,4 lần; ở r200 và r100 B4 còn chậm hơn cả B1 (không có pha 1).
+  - Lý do: số critical cell tự giải đủ 12 manh mối từ lượt bay là 100 % ở open, 64–66 % ở r500, và gần như 0 ở r200, r100 (1 cell trên 406). Không có hợp tác, báo cáo của cell thiếu manh mối nên BS xếp hạng sai.
+- **River không nhanh hơn kéo trực tiếp về T\*.** Ở open, Pd và CHORD bằng hệt (mọi cell tự giải mã trước). Ở 9 ô kênh khác, chênh lệch nhỏ:
+  - khoảng tin cậy chứa 0 ở 5 ô;
+  - CHORD nhanh hơn ở r500 k8 (+21 ± 19 s, 3 %) và r500 k16 (+8 ± 8 s, 1 %); Pd nhanh hơn ở r200 k8 (−26 ± 25 s, 3 %);
+  - k16 r100: Pd chậm hơn +119 ± 97 s, vì 6/92 critical cell của kéo trực tiếp không xong. Đây là lỗi thiếu một gói mà River đã sửa bằng `--repair` ở mục 169; kéo trực tiếp chưa có cơ chế này. Với cơ chế đó, nhiều khả năng Pd cũng hoà ở ô này.
+  - Ở mức cell, River xong sớm hơn ở r500 (trung bình 54 / 45 / 62 s so với 71 / 57 / 67 s). Ở r200 và r100, kéo trực tiếp xong sớm hơn hoặc ngang (trừ r200 k12: 78 so với 83 s), và dùng ít lượt truyền hơn 15–20 %.
+  - Phần River chắc chắn hơn: 0 cell kẹt ở cả 12 tổ hợp.
+  - **Không nên viết rằng River làm nhiệm vụ nhanh hơn kéo trực tiếp;** số liệu này không ủng hộ. Điều số liệu ủng hộ: cần hợp tác dưới mặt đất (B4), và River không kẹt cell nào.
+- **B1 chậm hơn CHORD 3,3–6 lần**, nhưng CHORD chỉ nhanh hơn ở 88–97 % số lượt bốc: khi c\* nằm sớm trong tour TSP, B1 tới c\* trước cả khi báo cáo của CHORD về BS.
+- FC và DN như mục 2.
+
+### 6.4. Chạy lại
+- **ns-3 kéo trực tiếp** cho k12 và k16 (8 thư mục `scratchpad/FIX/<kênh>/k{12,16}-s1`, `CAMP-BIN4`): `logs/2026-10-26_0900-baselines/pd-run.sh`, 4 tiến trình song song. Đây là lệnh 1 của mục 4 với `--schemes d`.
+  - k8 dùng các lượt `d` đã có (chạy bằng `CAMP-BIN3`). Chạy lại k8 r200 bằng `CAMP-BIN4` cho 8/8 tệp `r*-d-crit.csv` giống hệt từng byte (`pd-r200-k8-s1-check.md`), vì `--repair` không chạm tới `direct`.
+- **Chấm:** `logs/2026-10-26_0900-baselines/score.sh 1` (CHORD, FC, DN, B4, B1, B7) và `score.sh 2` (Pd); 100 lượt bốc, khoá như mục 3. B4 dùng cùng khoá `CHORDFC/<bản đồ>/<kênh>` với CHORD.
+- **Bảng:** `python3 uav-l2/tools/cmp_table.py uav-l2/docs/data/results/baselines logs/2026-10-26_0900-baselines/l1rank/part1-draws.csv logs/2026-10-26_0900-baselines/l1rank/part2-draws.csv`; bảng cell River/kéo trực tiếp: `logs/2026-10-26_0900-baselines/river_cmp.py`.

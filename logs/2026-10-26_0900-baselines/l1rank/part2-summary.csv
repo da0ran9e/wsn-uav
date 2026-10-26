@@ -1,0 +1,13 @@
+set,size,method,maps,n,Tstar,ci,p90,Tall,rank,first
+open,8,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,647.1,100.3,1042.7,10437.9,2.3,0.5
+open,12,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,685.7,69.4,994.1,16427.1,1.8,0.58
+open,15,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,862.9,95.7,1349.9,23232.3,1.98,0.48
+r500,8,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,805.5,97.1,1201.9,10549.6,2.27,0.47
+r500,12,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,949.7,74.9,1404.3,16689.0,1.94,0.46
+r500,15,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,1115.0,108.3,1663.9,23494.1,2.0,0.45
+r200,8,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,850.0,97.5,1307.5,10586.8,2.28,0.5
+r200,12,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,989.8,75.5,1380.5,16703.7,2.02,0.45
+r200,15,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,1191.7,112.7,1746.9,23545.6,2.11,0.42
+r100,8,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,875.2,97.9,1358.8,10603.3,2.32,0.47
+r100,12,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,989.9,76.2,1411.3,16712.3,2.0,0.45
+r100,15,Pd+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,1334.1,161.6,2261.3,22729.9,2.79,0.41

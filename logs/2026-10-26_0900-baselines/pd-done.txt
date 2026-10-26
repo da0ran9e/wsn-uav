@@ -1,1 +1,10 @@
 r200 k8-check exit 0 03:48:50
+open k16 exit 0 03:56:18
+r500 k16 exit 0 04:18:36
+r100 k12 exit 0 04:26:22
+r200 k16 exit 0 04:32:21
+open k12 exit 0 04:34:08
+r100 k16 exit 0 04:38:02
+r500 k12 exit 0 04:41:37
+r200 k12 exit 0 04:43:34
+all done 04:43:34

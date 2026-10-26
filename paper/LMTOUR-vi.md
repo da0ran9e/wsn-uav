@@ -41,6 +41,15 @@ A\* là danh sách node AI xếp theo w giảm dần.
 2. **Tour cơ sở.** Tour Dubins (bán kính ρ) từ BS qua đĩa B(u, R/2) của mọi u ∈ K₁ (DTSP-N): thứ tự TSP + 2-opt, lấy mẫu hướng vào ở mỗi đĩa.
 3. **Chèn theo giá trị.** Node v ∈ A\* cách mọi node đã thăm hơn R/2 là ứng viên. Chèn v nghĩa là uốn tour cục bộ vào đĩa của v, tốn thêm ΔL(v). Chèn tham lam theo w(v)/ΔL(v), khi điểm còn vượt ngưỡng θ và tour còn trong sức bền L_max.
 
+**Thay đổi ở draft v5 (mục 184): bán kính đĩa ξ.** Bước 2 và dòng 8 của Thuật toán 3 dùng đĩa B(·, ξ) thay cho B(·, R/2); ngưỡng ứng viên (dòng 6, 11) vẫn là R/2. Theo (5):
+
+$$\xi = \min\bigl(\omega,\ \rho,\ \sqrt{r^2 - h^2}\bigr)$$
+
+- trong ω node nằm trong dải River; ξ ≤ ρ cho phép đường quay tới khoảng 120° tại landmark; trong √(r² − h²) node nghe UAV trực tiếp.
+- Giá trị dùng (ω = 303 m, ρ = 255 m, √(r² − h²) = R50 ngang đã hiệu chỉnh): **255 / 255 / 199 / 99 m** cho r = 1000 / 500 / 200 / 150 m. Quét thêm ξ ∈ {100, 175, 250} m (TODO của draft).
+- Mã: `lm_tour.py plan --xi auto` (hoặc `--xi 175`); mặc định vẫn R/2, nên các kết quả §6 không đổi. Chưa chạy.
+- Bộ khung mục Evaluation cho v5, kèm số LM-Tour **ước lượng**: `paper/icc-v5/`.
+
 **Kiểm tra cửa sổ:** mọi node được thăm phải được phát một bản đủ của truy vấn gần nó, tức đoạn QΔ ≈ 2 km quanh điểm gần nhất phải nằm trong tầm River R_Q (≈ 1 km).
 
 **Chọn R:** các node giữ lại cách nhau ít nhất R, nên |K₁| ≤ 4A/(πR²). Tour qua n điểm trong diện tích A dài nhiều nhất √(2nA) + O(√A) (Few 1955), cộng O(nρ) cho các vòng Dubins. Vậy tour giảm theo 1/R, còn quãng River tăng theo R; R chọn ở điểm cân bằng.

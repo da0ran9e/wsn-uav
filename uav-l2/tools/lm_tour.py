@@ -1,6 +1,6 @@
 """LM-Tour on the pre-existing clusters (paper Section V; CLAUDE.md §8 items 170-175), step C: model level.
 
-    python3 tools/lm_tour.py plan WORK --out LMWORK [--R 450] [--theta 1] [--rounds 2]
+    python3 tools/lm_tour.py plan WORK --out LMWORK [--R 450] [--xi auto] [--theta 1] [--rounds 2]
     python3 tools/lm_tour.py score WORK[,WORK...] --mode pred|ns3 [--draws 100] --out OUT
 
 WORK is a CHORD mission folder (mission.py --chordTour 0.6,0.8 --kinPass --windowKB 400 --windowAt crit, River
@@ -19,7 +19,8 @@ run): its clusters, CHs, critical cells and chords. LM-Tour keeps all of them an
           the bend changes; N_after the critical cells of the clusters flown after it (each second of the pass or
           of its transits delays every one of them)
   insert  candidates: critical cells farther than R/2 from the pass. Each re-routes the chord into its disc
-          B(c, R/2) (meander_lane.bend_lane: Gaussian bumps, the CH pinned, no cap); the candidate that lowers J_k
+          B(c, xi) (draft v5 line 8; --xi, default R/2 as before; auto: xi = min(omega, rho, R50 of the channel),
+          the lateral reach sqrt(r^2 - h^2) at which a node hears the UAV directly) (meander_lane.bend_lane: Gaussian bumps, the CH pinned, no cap); the candidate that lowers J_k
           most is inserted, until none lowers it. With uniform priors this is the paper's greedy rule
           w(v) / dL(v) >= theta, w the critical-cell seconds saved and dL the critical-cell seconds of delay
   order   team 1's tour over the new passes as for CHORD (mission_policy.tour kin); round 2 redoes the insertions
@@ -54,6 +55,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 V1 = 50.0
 SURROGATE = os.path.join(HERE, "../docs/data/results/river-surrogate.csv")
 METHOD = "P+prog-kin-puq-stage-zero-redir-kt-fcd"
+OMEGA = 303.0   # m: River half-width, 1.75 cells
+R50 = {"open": 1015.0, "r500": 498.0, "r200": 199.0, "r100": 99.0}   # m: lateral reach, calibrate.md
 SKIP = re.compile(r"^(pass\d+-|plan\d+\.|r\d+-|tour\.json$|chordfc-|fc-|dn-|lm\.json$|"
                   r"c\d+-path-(const|s35)\.csv$|c\d+-speed\.json$)")
 
@@ -81,13 +84,13 @@ class Cluster:
         need = np.ceil((1 + fc_baseline.EPS) * K)
         self.need, self.target = float(need.sum()), float((need + 3 * np.sqrt(need)).sum())
 
-    def rows(self, pulls, R, line=None):
-        """CHORD's pass (no pulls) or the chord bent into the discs B(c, R/2) of the pulls, the CH pinned; with
+    def rows(self, pulls, xi, line=None):
+        """CHORD's pass (no pulls) or the chord bent into the discs B(c, xi) of the pulls, the CH pinned; with
         line (--free, item 179) that straight line bent into them instead, nothing pinned."""
         if not pulls and line is None:
             return self.rows0
         base, pins = (self.core0, [self.ch]) if line is None else (line, [])
-        Q, idx, _ = bend_lane(base, pins, [np.array(self.geo["c"][h]) for h in pulls], reach=R / 2, cap=math.inf)
+        Q, idx, _ = bend_lane(base, pins, [np.array(self.geo["c"][h]) for h in pulls], reach=xi, cap=math.inf)
         with tempfile.NamedTemporaryFile("w+", suffix=".csv") as f:
             write_path(f.name, Q, idx[0] if idx else len(Q) // 2)
             return list(csv.DictReader(open(f.name)))
@@ -137,13 +140,14 @@ class Cluster:
         return dict(rows=rows, timed=new, cap=cap, loops=loops, dur=dur, T=T, own=own, ready=ready, P=P,
                     L=float(np.linalg.norm(np.diff(uav, axis=0), axis=1).sum()))
 
-    def improve(self, R, theta, n_after, nb, free=False):
+    def improve(self, R, theta, n_after, nb, free=False, xi=None):
         """Greedy insertions from CHORD's chord; nb = (previous end pose, next start pose, direction, BS) of the
         tour. free (item 179): the paper's Steps 1-2 instead, the CH not required: a weighted R-net of the critical
         cells (by predicted River time on CHORD's pass, kept at least R apart), the straight lines through the
         kept cells' centroid every 30 degrees bent into their discs, the best line that crosses the cluster once
         (self.once) as the start. Returns (pulls, evaluation, base evaluation); base is CHORD's pass."""
         prev, nxt, d, bs = nb
+        xi = R / 2 if xi is None else xi
 
         def J(e):
             p = np.array([[float(r["x"]), float(r["y"])] for r in e["rows"]])
@@ -165,7 +169,7 @@ class Cluster:
                     kept.append(h)
             best = None
             for ln in self.lines(kept):
-                r = self.rows(kept, R, ln)
+                r = self.rows(kept, xi, ln)
                 if not self.once(r):
                     continue
                 e = self.evaluate(r)
@@ -178,7 +182,7 @@ class Cluster:
             Q = np.array([[float(r["x"]), float(r["y"])] for r in cur["rows"]])
             cand = [h for h in base["P"]["crit"] if h not in pulls and
                     np.linalg.norm(Q - self.geo["c"][h], axis=1).min() > R / 2]
-            trials = [(J(e), h, e) for h in cand for r in [self.rows(pulls + [h], R, line)]
+            trials = [(J(e), h, e) for h in cand for r in [self.rows(pulls + [h], xi, line)]
                       if line is None or self.once(r) for e in [self.evaluate(r)]]
             if not trials:
                 break
@@ -232,15 +236,17 @@ def context(w):
     return env, opts["lossDb"], load_around(f"{w}/domain-cl.csv")
 
 
-def plan_lm(w, out, R, theta, rounds, free=False):
+def plan_lm(w, out, R, theta, rounds, free=False, xi=None):
     env, loss, around = context(w)
+    if xi == "auto":   # draft v5 eq. (5): within omega, rho and the direct-hearing reach
+        xi = min(OMEGA, R_TURN, R50[env])
     hear, model = hear_model(loss), Model.load(SURROGATE, "formula")
     M = load_map(w, schemes=(), with_bits=False)
     cls = {k: Cluster(w, M, k, model, hear, loss, around) for k in sorted(M["cl"])}
     n_after, nb, order = order_after(w)
     log = []
     for rnd in range(rounds):
-        res = {k: c.improve(R, theta, n_after[k], nb[k], free) for k, c in cls.items()}
+        res = {k: c.improve(R, theta, n_after[k], nb[k], free, xi) for k, c in cls.items()}
         build(w, out, {k: r[1]["rows"] for k, r in res.items()})
         log.append(dict(round=rnd + 1, order=order, n_after=n_after, clusters={
             k: dict(pulls=[list(h) for h in r[0]], dur=[round(r[2]["dur"], 1), round(r[1]["dur"], 1)],
@@ -258,7 +264,7 @@ def plan_lm(w, out, R, theta, rounds, free=False):
                   f"own decode {len(r[2]['own'])} -> {len(r[1]['own'])} of {len(r[1]['ready'])}), N_after {n_after[k]}",
                   flush=True)
         n_after, nb, order = order_after(out)
-    json.dump(dict(work=os.path.abspath(w), R=R, theta=theta, free=free, rounds=log), open(f"{out}/lm.json", "w"), indent=1)
+    json.dump(dict(work=os.path.abspath(w), R=R, xi=xi, theta=theta, free=free, rounds=log), open(f"{out}/lm.json", "w"), indent=1)
 
 
 def score(w, mode, draws):
@@ -309,6 +315,7 @@ def main():
     p.add_argument("work")
     p.add_argument("--out", required=True)
     p.add_argument("--R", type=float, default=450.0)
+    p.add_argument("--xi", default=None, help="disc radius (m) or auto; default R/2")
     p.add_argument("--theta", type=float, default=1.0)
     p.add_argument("--rounds", type=int, default=2)
     p.add_argument("--free", action="store_true", help="the CH not required: R-net + lines (item 179)")
@@ -319,7 +326,7 @@ def main():
     s.add_argument("--out", required=True)
     a = ap.parse_args()
     if a.cmd == "plan":
-        plan_lm(a.work, a.out, a.R, a.theta, a.rounds, a.free)
+        plan_lm(a.work, a.out, a.R, a.theta, a.rounds, a.free, a.xi if a.xi in (None, "auto") else float(a.xi))
         return
     rows = []
     for w in a.works.split(","):

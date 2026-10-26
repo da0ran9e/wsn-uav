@@ -1,0 +1,12 @@
+\begin{table}[t]\centering\caption{Mean mission time $T^\star$ (s), 100 paired draws, $K$ = 8 / 12 / 16 clusters. \textcolor{red}{[EST]: estimated, not run.}}\label{tab:tstar}
+\setlength{\tabcolsep}{3pt}\footnotesize
+\begin{tabular}{lcccc}\toprule
+Scheme & $r=1000$ m & 500 & 200 & 150 \\\midrule
+\textcolor{red}{LM-Tour + River-FC} & 647 / 686 / 863 & 775 / 942 / 1097 & 822 / 936 / 1143 & 810 / 942 / 1157 \\
+{CHORD + River-FC} & 647 / 686 / 863 & 784 / 950 / 1107 & 876 / 975 / 1192 & 872 / 990 / 1215 \\
+{FC + gather} & 660 / 815 / 949 & 1138 / 1451 / 1801 & 2285 / 3288 / 3964 & 2463 / 3460 / 4368 \\
+{FC + DTSP-N} & 708 / 805 / 967 & 1078 / 1388 / 1750 & 1904 / 2482 / 3469 & 2190 / 3248 / 4468 \\
+{Single pass, no cooperation} & 650 / 687 / 862 & 1379 / 2030 / 2549 & 3711 / 5277 / 6298 & 3860 / 5308 / 6358 \\
+{No broadcast (rotary TSP)} & 2926 / 4168 / 5169 & 2926 / 4168 / 5169 & 2926 / 4168 / 5169 & 2926 / 4168 / 5169 \\
+{Oracle} & 322 / 402 / 404 & 322 / 402 / 404 & 322 / 402 / 404 & 322 / 402 / 404 \\
+\bottomrule\end{tabular}\end{table}

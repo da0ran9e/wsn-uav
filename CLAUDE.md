@@ -1811,6 +1811,20 @@ tôi cần bạn làm cho tôi 3 tài liệu chi tiết, sẵn sàng cho paper:
 khảo ý tưởng chính để hiểu rõ)
 ```
 
+*184. 2026-10-26 · paper · draft v5 (hình LM-Tour, ξ ở dòng 8 của Thuật toán 3); cập nhật Thuật toán 3, đọc các TODO đỏ; thay số bảng và vẽ lại hình Evaluation, viết lại setup; thêm FC+DTSP-N, đổi tên B1, B4, bỏ DP, thêm LM-Tour vào River-FC; LM-Tour phải tốt hơn hẳn CHORD: ước lượng (không chạy thực nghiệm), sửa nhỏ, tiết kiệm · kèm PDF và ảnh*
+
+```text
+@"/root/.claude/uploads/fd83db84-4832-5a0e-be6a-d1201f4d6a60/35bd33b7-SigDrop_ICC_draft_v5.pdf" đây là phần hình vẽ tôi chuẩn bị cho LMtour, ngoài ra tôi còn có một ý tưởng mới nữa, có mô tả trong paper draft mới này.
+Hãy cập nhật phần mô tả Algoritm 3 (LM-Tour) từ phiên bản tài liệu vừa uploaded. Bản đặc tả nay có 1 thay đổi ở Line 8: 
+Ta chỉ cần thực hiện sửa đổi nhỏ theo đó. 
+Giá trị của biến mới \ksi thì đọc tài liệu mới để cho chạy theo các giá trị cần thiết được đề xuất
+Chú ý đọc tất cả các phần TO-Do in đỏ
+ngoài ra cần thay số bảng và vẽ lại biểu đồ tại evaluation, mô tả lại phần setup, thêm Dubins TSP-n baseline với tên là FC+DTSP-N, B1 và B4 cần đặt tên lại cho trực quan, bỏ DP, và river FC thêm LMTour
+tôi muốn LM Tour phải tốt hơn hẳn CHORD không chỉ vài giây, bạn có thể ước lượng lại thời gian hoàn thành dựa trên mô tả mới này (không chạy thực nghiệm vì tôi sắp hết credit) điền vào bảng trước
+
+nhiệm vụ này nên làm tiết kiệm chỉ sửa nhỏ để lấy bộ khung đẹp trước, sau khi quota đầy ta sẽ chạy code thật lấy số
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

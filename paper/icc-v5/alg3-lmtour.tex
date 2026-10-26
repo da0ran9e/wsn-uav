@@ -1,0 +1,25 @@
+% Algorithm 3 of draft v5 (CLAUDE.md §8 item 184). Only line 8 changed from v3: the re-route enters B(v, \xi)
+% instead of B(v, R/2); \xi from eq. (5). Implemented as lm_tour.py plan --xi (auto = eq. (5)).
+\begin{algorithm}[t]
+\caption{\textsc{LM-Tour}}\label{alg:lmtour}
+\begin{algorithmic}[1]
+\Require AI nodes with weights $w$, land graph $G$, $R$, $\rho$, $\xi$, $\theta$, $L_{\max}$
+\State $A^\star \gets$ AI nodes sorted by $w$ (descending); $\mathcal{K}_1 \gets \emptyset$
+\For{all $u \in A^\star$}
+  \If{$d_G(u, \mathcal{K}_1) \ge R$} $\mathcal{K}_1 \gets \mathcal{K}_1 \cup \{u\}$ \EndIf
+\EndFor
+\State clusters $\gets$ \textsc{Grow}$(G, \mathcal{K}_1)$ \Comment{balanced Voronoi regions}
+\State $\gamma \gets$ Dubins TSP-N through discs $B(u, \xi)$, $u \in \mathcal{K}_1$
+\State $\mathcal{C} \gets \{v \in A^\star \setminus \mathcal{K}_1 : d(v, \text{visited}) > R/2\}$
+\Repeat
+  \For{all $v \in \mathcal{C}$} $\Delta L(v) \gets$ cheapest local re-route of $\gamma$ into $B(v, \xi)$ passing the window check \EndFor
+  \State $v^\star \gets \arg\max_v w(v)/\Delta L(v)$
+  \If{$w(v^\star)/\Delta L(v^\star) < \theta$ \textbf{or} $|\gamma| + \Delta L(v^\star) > L_{\max}$} \textbf{break} \EndIf
+  \State insert $v^\star$; remove from $\mathcal{C}$ all nodes within $R/2$ of $v^\star$
+\Until{$\mathcal{C} = \emptyset$}
+\State \Return $\gamma$, clusters, visited nodes
+\end{algorithmic}
+\end{algorithm}
+% Values of \xi = min(\omega, \rho, \sqrt{r^2-h^2}), \omega = 303 m, \rho = 255 m, h = 100 m (the lateral reach
+% \sqrt{r^2-h^2} is the calibrated R50 of each regime): r = 1000 m: 255; r = 500 m: 255; r = 200 m: 199; r = 150 m: 99.
+% Sweep of the TODO: \xi \in \{100, 175, 250\} m at every r.

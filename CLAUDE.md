@@ -1782,6 +1782,12 @@ vậy theo bạn ta nên cài đặt như nào với mô hình AI này, có nên
 cài đặt python nhanh và cho tôi xem hình
 ```
 
+*180. 2026-10-26 · paper · hỏi: mô tả mô hình đang dùng để chấm điểm trọng số*
+
+```text
+có thể mô tả qua về model đang dùng để chấm điểm trọng số không
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

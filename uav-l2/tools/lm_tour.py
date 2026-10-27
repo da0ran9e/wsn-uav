@@ -50,7 +50,7 @@ import l1_model as L
 import l1_rank as R
 from map_gen import cell_at
 from meander_lane import bend_lane, write_path
-from mission import ENV_LOSS
+from mission import ENV_LOSS, runseed
 from mission_policy import GAP, R_TURN, tour
 from mission_report import load_map
 from pass_speed import fit
@@ -414,7 +414,7 @@ def score(w, mode, draws):
     Cq = [dict(c, w=1.0) for c in C]
     seqs = {"interleaved": L.order(C, "interleaved"), "grouped": L.order(C, "grouped")}
     M = load_map(w, schemes=("rf",)) if mode == "ns3" else load_map(w, schemes=(), with_bits=False)
-    M["name"], M["windowAt"] = R.mapname(w), "crit"
+    M["name"], M["windowAt"], M["rs"] = R.mapname(w), "crit", runseed(w)
     crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
     if mode == "pred":
         env, loss, around = context(w)
@@ -438,9 +438,9 @@ def score(w, mode, draws):
     else:
         full, none = np.ones(len(C), bool), np.zeros(len(C), bool)
         hold = {x: {s: (full, none) for s in seqs} for x in crits}
-    prng = np.random.default_rng(int.from_bytes(hashlib.sha256(M["name"].encode()).digest()[:4], "little"))
+    prng = np.random.default_rng(int.from_bytes(hashlib.sha256(M["name"].encode() + R.rs_tag(M)).digest()[:4], "little"))
     Ts = []
-    for d in range(draws):
+    for d in range(draws * (M["rs"] - 1), draws * M["rs"]):   # simulation seed R: its own block of draws (item 188)
         phase = {k: float(prng.uniform(0, GAP)) for k in sorted(M["cl"])}
         out, _, _ = R.missions(M, tours, hold, d, phase, C, Cq, [METHOD])
         Ts.append(out[METHOD][0])
@@ -482,8 +482,9 @@ def main():
     for w in a.works.split(","):
         Ts, t1, rd = score(w, a.mode, a.draws)
         env = open(f"{w}/env.txt").read().strip() if os.path.exists(f"{w}/env.txt") else "open"
-        rows += [dict(work=w, map=R.mapname(w), env=env, mode=a.mode, draw=d, Tstar=round(t, 1), team1=round(t1, 1),
-                      riverReady=round(rd, 1)) for d, t in enumerate(Ts)]
+        d0 = a.draws * (runseed(w) - 1)
+        rows += [dict(work=w, map=R.mapname(w), env=env, seed=runseed(w), mode=a.mode, draw=d0 + d, Tstar=round(t, 1),
+                      team1=round(t1, 1), riverReady=round(rd, 1)) for d, t in enumerate(Ts)]
         print(f"{w} [{a.mode}]: T* {np.mean(Ts):.0f} s (sd {np.std(Ts):.0f}), team 1 {t1:.0f} s, "
               f"mean River ready {rd:.0f} s", flush=True)
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)

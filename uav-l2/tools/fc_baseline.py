@@ -102,7 +102,7 @@ def realise(gr, M, C, crits, Q, tq, tag, work, info):
     ts = np.arange(0, tq[-1], SLOT)
     U = np.c_[np.interp(ts, tq, Q[:, 0]), np.interp(ts, tq, Q[:, 1])]
     f = gr.pat[np.arange(len(U)) % len(gr.pat)]
-    key = f"{tag.upper()}/{M['name']}/{gr.env}"
+    key = f"{tag.upper()}/{M['name']}/{gr.env}" + (f"/r{M['rs']}" if M.get("rs", 1) > 1 else "")   # item 188
     rng = np.random.default_rng(int.from_bytes(hashlib.sha256(key.encode()).digest()[:8], "little"))
     out, moved_all, detail = {}, [], {}
     for c, x in enumerate(crits):

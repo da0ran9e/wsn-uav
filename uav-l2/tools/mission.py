@@ -45,6 +45,11 @@ SCHEMES = {"rf": ["--scheme=river", "--prep=full"],
            "t": ["--scheme=trickle"]}   # baseline (item 139); needs a river-bin built with it
 
 
+def runseed(w):
+    """The work folder's simulation seed (--runSeed; item 188): 1 unless runseed.txt says otherwise."""
+    return int(open(f"{w}/runseed.txt").read()) if os.path.exists(f"{w}/runseed.txt") else 1
+
+
 def sh(cmd, log, env=None, ok=False):
     with open(log, "w") as f:
         r = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, env=env)
@@ -377,6 +382,11 @@ def stage_runs(a, W_, K):
     if os.path.exists(f"{W_}/env.txt") and open(f"{W_}/env.txt").read().strip() != env:
         sys.exit(f"{W_} was flown with --env {open(f'{W_}/env.txt').read().strip()}, not {env}")
     open(f"{W_}/env.txt", "w").write(env + "\n")
+    rs = getattr(a, "runSeed", 1)
+    if runseed(W_) != rs:
+        sys.exit(f"{W_} was run with --runSeed {runseed(W_)}, not {rs}")
+    if rs != 1:
+        open(f"{W_}/runseed.txt", "w").write(f"{rs}\n")
     if getattr(a, "axeNear", False):   # read back by mission_report.load_map, so the analysis plans as River did
         json.dump(dict(axeNear=True, lossDb=ENV_LOSS[env]), open(f"{W_}/plan-opts.json", "w"))
     opts = json.load(open(f"{W_}/plan-opts.json")) if os.path.exists(f"{W_}/plan-opts.json") else {}
@@ -384,7 +394,7 @@ def stage_runs(a, W_, K):
     rivenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")
 
     def mission(k):   # item 161: the ns-3 mission index (pass fading, G2G shadowing and fades, MAC draws)
-        return 100000 * a.clusters + 100 * a.seed + k if getattr(a, "mapRuns", False) else 1
+        return 100000 * a.clusters + 100 * a.seed + k + 10000000 * (rs - 1) if getattr(a, "mapRuns", False) else 1
 
     def one(k):
         if not os.path.exists(f"{W_}/pass{k}-bits-r1.bin"):
@@ -454,6 +464,9 @@ def main():
     ap.add_argument("--mapRuns", action="store_true",
                     help="each cluster's ns-3 pass and River run as mission 100000 CLUSTERS + 100 SEED + k instead of 1: "
                          "draws independent across clusters and maps, shared by every design of one map (item 161)")
+    ap.add_argument("--runSeed", type=int, default=1,
+                    help="with --mapRuns: simulation seed R, mission index + 10^7 (R - 1); also the reception "
+                         "realisations and layer-1 draws of the scoring tools (runseed.txt; item 188)")
     ap.add_argument("--riverRepair", type=float, default=0,
                     help="River (rf) with --repair=S: Axe cells complete their Seg from adjacent cells, a critical cell "
                          "idle S seconds asks again (needs a river-bin built with it; item 169)")

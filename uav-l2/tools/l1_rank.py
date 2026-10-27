@@ -86,6 +86,7 @@ from mission_baselines import BC_FRAME, BIG, SETTLE, UC_FRAME, frames, groups, p
 from mission_policy import AIR, GAP, HOP, R_TURN, V1, tour
 import swath
 from mission_report import load_map
+from mission import runseed
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
 from river_plan import hexdist  # noqa: E402
@@ -104,6 +105,11 @@ def complete(w):
     K = json.load(open(f"{w}/map.json"))["clusters"]
     return all(os.path.exists(f"{w}/r{k}-rf-crit.csv") and os.path.exists(f"{w}/pass{k}-bits-r1.bin")
                for k in range(1, K + 1))
+
+
+def rs_tag(M):
+    """Suffix of the random keys under simulation seed R > 1 (item 188); empty for seed 1, as before."""
+    return f"/r{M['rs']}".encode() if M.get("rs", 1) > 1 else b""
 
 
 def mapname(w):
@@ -483,7 +489,7 @@ def one_work(job):
         if not all(os.path.exists(f"{w}/r{k}-{tag}-crit.csv") for k in range(1, K + 1)):
             methods = [m for m in methods if not m.startswith("P" + tag)]
     M = load_map(w, schemes=("rf",) + tuple(t for t in ("d", "t") if any(m.startswith("P" + t) for m in methods)))
-    M["name"] = mapname(w)
+    M["name"], M["rs"] = mapname(w), runseed(w)
     M["windowAt"] = "crit" if any(l.startswith("NEED") for k in range(1, K + 1) for l in open(f"{w}/plan{k}.txt")) \
         else "ch"
     kinds = {o for m in methods for o in m.split("-") if o in ("short", "latency", "seam", "kin", "skin", "route")} | {"l3first"}
@@ -507,10 +513,10 @@ def one_work(job):
             crits = [(k, h) for k in sorted(M["cl"]) for h in M["cl"][k]["P"]["crit"]]
             M[base.lower()] = mod.run(M, C, crits, w)
             print(f"{sname} {M['name']}: {base} {M[base.lower()][1]}", flush=True)
-    seedm = int.from_bytes(hashlib.sha256(M["name"].encode()).digest()[:4], "little")
+    seedm = int.from_bytes(hashlib.sha256(M["name"].encode() + rs_tag(M)).digest()[:4], "little")
     prng = np.random.default_rng(seedm)
     draws, cells = [], []
-    for d in range(ndraws):
+    for d in range(ndraws * (M["rs"] - 1), ndraws * M["rs"]):   # simulation seed R: its own block of draws
         phase = {k: float(prng.uniform(0, GAP)) for k in sorted(M["cl"])}
         out, rows, nc = missions(M, tours, hold, d, phase, C, Cq, methods)
         for meth, (Ts, Ta, rank, dep, sin) in out.items():
@@ -520,7 +526,7 @@ def one_work(job):
             draws.append(dict(map=M["name"], size=len(M["cl"]), set=sname, draw=d, method=meth, crits=nc,
                               team1=round(t1, 1), Tstar=round(Ts, 1), Tall=round(Ta, 1), rank=rank,
                               dep=round(dep, 1), starIn=round(sin, 1)))
-        if d == 0:
+        if d == ndraws * (M["rs"] - 1):
             cells += [dict(map=M["name"], set=sname, **r) for r in rows]
     print(f"{sname} {M['name']}: {len(M['cl'])} clusters, {nc} critical cells; " + ", ".join(
         f"{m} {np.mean([r['Tstar'] for r in draws if r['method'] == m]):.0f}" for m in methods[:4]) + " s", flush=True)

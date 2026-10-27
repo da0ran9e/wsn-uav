@@ -1854,6 +1854,18 @@ vậy cần xem lại LM tour nhé, đầu tiên nó sẽ xây đường DTSP-N 
 theo đề xuất, cài đi
 ```
 
+*188. 2026-10-27 · paper · (phiên cloud) pull repo, đọc CLAUDE.md và handoff mới; chạy ngay thực nghiệm lấy số cho bảng: CHORD + River (đề xuất 1), LM-Tour + River (đề xuất 2), FC + DTSP-N, DTSP-N + River; mỗi mục 10 seed × 3 bản đồ × 4 mô hình kênh; tự bắt đầu khi được reset quota*
+
+```text
+pull lại repo nhé, trong lúc chúng ta hết token qouta tôi đã nhờ một người bạn của tôi tiếp tục sửa trong file này trong đó có các thuật toán mới, hãy đọc Claude.md để biết được công việc đã có những update gì cùng bản handout mới nhất nếu có. sau đó ngay lập tức chúng ta cần chạy lại thực nghiệm để lấy dữ liệu cho bảng số liệu cho các thuật toán sau:
+- CHORD + River (đề xuất 1)
+- LM-Tour + River (đề xuất 2)
+- FC + DTSP-N: cho thấy lợi ích của toàn hệ thống layer 2+3 so sánh với 2 đề xuất 
+- DTSP-N + river: cho thấy lợi ích của River khi so sánh với FC + DTSP-N
+mỗi mục 10 seed 3 bản đồ và 4 mô hình kênh 
+bắt đầu ngay khi bạn được reset usage limit vì có thể tôi sẽ chưa có mặt ngay để hướng dẫn bạn
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

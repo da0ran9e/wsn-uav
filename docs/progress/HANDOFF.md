@@ -1,4 +1,51 @@
-# Handoff · 2026-10-22
+# Handoff · 2026-10-22 (cập nhật 2026-10-27)
+
+## Cập nhật 2026-10-27 (CLAUDE.md §8 mục 186–187)
+
+**Định hướng mới của người dùng:**
+- CHORD chỉ còn là nền lý thuyết; LM-Tour phải tốt hơn nó đáng kể.
+- Khung evaluation mới (mục 187): CHORD + River (đề xuất 1), LM-Tour + River (đề xuất 2), FC + DTSP-N (toàn hệ thống), DTSP-N + River (lợi ích của River so với FC + DTSP-N), rotary TSP (mốc trên), Oracle (mốc dưới).
+- Bỏ khỏi khung: FC + gather, B4 (một lượt, không hợp tác) và kéo trực tiếp.
+- "CHORD" từ nay là **CHORD thường**: dây cung dài nhất qua CH, chọn riêng từng cụm, không `--chordTour`.
+
+**Môi trường chạy trên máy macOS của người dùng:**
+- Repo: `~/Github/ns-3-dev-git-ns-3.46/src/wsn-uav`.
+- ns-3 dựng riêng ở `~/Github/ns3-uav-build/ns3`; binary trong `~/Github/ns3-uav-build/BIN`; venv Python 3.10 ở `~/Github/ns3-uav-build/.venv`.
+- Thư mục chạy: `~/Github/ns3-uav-build/runs`.
+- Kiểm chứng: River chạy lại CHORD-T giống hệt bản cloud CAMP-BIN4 ở 32/32 cụm.
+
+**Mục 186 (`logs/2026-10-27_1330-chord-plain-vs-lm/`):**
+- LM-Tour cũ (uốn từ dây cung của CHORD) chỉ hơn CHORD thường 0–10 s, nằm trong nhiễu.
+- Uốn đường không giảm được lượng gói cả cụm còn thiếu.
+
+**Mục 187: LM-Tour viết lại (`lm_tour.py plan --dtspn --weight cl --wmin 1`, Algorithm 3 dòng 6–14):**
+1. DTSP-N qua các đĩa B(CH, ξ): mỗi cụm một đường thẳng qua CH (6 hướng). Không có độ dài tối thiểu; đường ngắn thì bay chậm hoặc lượn cho đủ một bản truy vấn. Hướng, chiều và thứ tự cụm được chọn chung (`chord_tour.choose`).
+2. Uốn tham lam về các critical cell có trọng số ≥ trung bình (điểm CL chia trung bình bản đồ), CH ghim, mỗi cụm qua một lần, tới khi J_k có trọng số thôi giảm.
+
+**Baseline DTSP-N + River (`--dtspnRiver`):**
+- Đường thẳng qua trọng tâm các critical cell của cụm, uốn vào đĩa của mọi critical cell (zigzag, không tự cắt, không ghim CH), cùng cách chọn tour.
+- `pass-bin` đòi đường bay qua CH, nên dùng `prefly.py` (node giả chỉ nhận, đặt trên đường bay, cắt khỏi bitmap). Không sửa ns-3.
+
+**Kết quả ns-3, k8-s1, 100 lượt bốc ghép cặp (`logs/2026-10-27_1800-lm-dtspn/`, T\* s):**
+
+| kênh | CHORD | LM-Tour | DTSP-N + River | LM − CHORD |
+|---|---|---|---|---|
+| open | 672 | 633 | 678 | −38 ± 31 |
+| r500 | 802 | 719 | 814 | −83 ± 38 |
+| r200 | 877 | 792 | 861 | −84 ± 35 |
+| r100 | 892 | 802 | 880 | −90 ± 38 |
+
+- LM-Tour thắng rõ ở cả bốn kênh. DTSP-N + River hoà CHORD.
+- Phần lợi đến chủ yếu từ tour DTSP-N: đội 1 bay 698 s so với 784 s. Bước uốn thêm 7–22 s.
+- Trọng số chưa ảnh hưởng gì tới T\*, vì c\* trong mô hình lớp 1 không phụ thuộc điểm CL.
+- Đây là số thăm dò.
+
+**Việc tiếp theo:**
+1. Chạy k12, k16 (bản đồ trong `uav-l2/docs/data/results/raw/`), mất khoảng 3–4 giờ.
+2. Viết lại `paper/EXPERIMENTS-vi.md` §5 và `paper/icc-v5/evaluation-v5.tex` theo khung mới.
+3. Cập nhật `paper/LMTOUR-vi.md` và Algorithm 3.
+
+---
 
 ## Cập nhật tối 2026-10-22 (phiên tiếp quản, CLAUDE.md §8 mục 130–136)
 

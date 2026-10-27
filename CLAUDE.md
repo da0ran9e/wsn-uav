@@ -1832,6 +1832,28 @@ nếu không tốt thì hãy xuất cho tôi một bản pdf tương tự, ghép
 ý tôi là nết không tốn nhiều token ...
 ```
 
+*186. 2026-10-27 · paper · CHORD chỉ làm nền lý thuyết cho LM-Tour, LM-Tour phải tốt hơn đáng kể; dựng lại CHORD thông thường và LM-Tour bản tốt nhất, chạy cả hai trên một bản đồ và seed trước đó, một lượt, lấy số kiểm tra*
+
+```text
+nếu bạn đã nắm được quy trình làm việc, vậy ta bắt đầu: như này, CHORD tôi thấy bạn đã cải tiến khá nhiều, nhưng nó không cần thiết, tôi muốn nó chỉ cần làm một nền lý thuyết để LMTour có thể đứng trên, do đó LMTour sẽ phải tốt hơn nó đáng kể. Bạn hãy thử
+    setup lại thực nghiệm CHORD thông thường và LMTour bản tốt nhất chạy lại 2 thực nghiệm này trên một bản đồ và seed trước đó 1 lượt để lấy số liệu kiểm tra
+```
+
+*187. 2026-10-27 · paper · khung evaluation mới (CHORD thường, LM-Tour, FC + DTSP-N, DTSP-N + River một lượt mỗi cụm, rotary TSP, Oracle); LM-Tour xem lại: DTSP-N qua các CH rồi uốn về landmark trọng số cao tới khi lợi ích bão hoà (`lm_tour.py plan --dtspn`, trọng số điểm CL, mục tiêu J_k có trọng số)*
+
+```text
+- CHORD + River (đề xuất 1)
+- LM-Tour + River (đề xuất 2)
+- FC + DTSP-N: cho thấy lợi ích của toàn hệ thống layer 2+3 so sánh với 2 đề xuất
+- DTSP-N + river: cho thấy lợi ích của River khi so sánh với FC + DTSP-N
+- rotary TSP (cận trên, giải pháp tối thiểu, cân nhắc)
+- Oracle (cận dưới, cân nhắc)
+Chord thường, DTSP-N + River sẽ giống DN nhưng cố gắng chỉ bay một lần trong mỗi cluster, zigzag cũng đưọc nhưng đừng vòng lại thành 2 river, chưa chạy vội
+... LM-Tour (uốn đường bay của DTSP-N về các landmark có weight cao) ...
+vậy cần xem lại LM tour nhé, đầu tiên nó sẽ xây đường DTSP-N trên tập CH,sau đó uốn dần với mỗi ứng viên tại từng cụm nếu weight cao đến khi lợi ích bão hoà
+theo đề xuất, cài đi
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

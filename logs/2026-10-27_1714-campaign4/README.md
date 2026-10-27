@@ -46,7 +46,10 @@ Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary T
 - Container bị thu hồi khi phiên rảnh mà không có tác vụ nền nào do phiên theo dõi:
   - 18:22–19:35 và 19:38–20:50 đều mất tiến trình, máy khởi động lại khi phiên được đánh thức;
   - các tệp trong scratchpad vẫn còn.
-- Cách giữ container sống: luôn có một `Bash run_in_background` (timeout tối đa 2 giờ) chờ `done.txt` có dòng mới, và đặt lại mỗi khi nó kết thúc. Đã kiểm chứng 20:52–21:24: uptime 34 phút, River vẫn chạy.
+- Luôn giữ một `Bash run_in_background` (timeout tối đa 2 giờ) chờ `done.txt` có dòng mới, và đặt lại mỗi khi nó kết thúc.
+  - Tác vụ nền này giữ container sống ít nhất 51 phút khi phiên rảnh (21:51–22:42).
+  - Nó không chặn được mọi lần khởi động lại: máy vẫn khởi động lại lúc 23:00.
+  - Khi đó phiên được báo ngay là tác vụ nền đã mất, nên có thể chạy lại `camp.sh` gần như tức thì.
 - Sau khi máy khởi động lại, chạy lại `setsid nohup bash camp.sh 1 10 &`:
   - tác vụ đã có `done` được bỏ qua;
   - `mission.py` bỏ qua pass và River đã xong;

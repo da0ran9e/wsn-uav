@@ -1,5 +1,5 @@
 """Copy of logs/2026-10-27_1800-lm-dtspn/prefly.py for this campaign: repo-relative tools path, mission index with
-the simulation seed of runseed.txt (mission.py --runSeed; item 188).
+the simulation seed of runseed.txt (mission.py --runSeed; item 188), the clusters counted from map.json.
 
 DTSP-N + River does not fly over the CH, which pass-bin requires (coop-pass.cc: CHECK dPath(CH) < 1 m; the CH
 is used for nothing else in the pass). For each such cluster of WORK: a nodes file with one extra receive-only node
@@ -9,7 +9,7 @@ skips the pass; River reads it with the real nodes file.
 
     python3 prefly.py WORK ENV K SEED BIN
 """
-import csv, math, os, subprocess, sys
+import csv, json, math, os, subprocess, sys
 
 import numpy as np
 
@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../
 from mission import ENV_LOSS, runseed  # noqa: E402
 
 w, env, K, seed, BIN = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5]
-for k in range(1, K + 1):
+for k in range(1, json.load(open(f"{w}/map.json"))["clusters"] + 1):   # K is the target count (k16: 15)
     if os.path.exists(f"{w}/pass{k}-bits-r1.bin"):
         continue
     nodes = list(csv.DictReader(open(f"{w}/c{k}-nodes-s35.csv")))

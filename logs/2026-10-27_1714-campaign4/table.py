@@ -1,0 +1,95 @@
+"""The campaign's table (CLAUDE.md §8 item 188) from score/R<R>/<env>-k<K>/: per scheme, channel and map, the mean
+T* over every seed done (100 layer-1 draws each) and team 1's flight, and the paired differences against LM-Tour,
+with a 95 % interval over seeds (the seed means, Student t), since the 100 draws of one seed share one ns-3
+network realisation.
+
+    python3 table.py [--csv OUT.csv] > table.md
+"""
+import argparse, csv, glob, math, os, re
+from collections import defaultdict
+
+import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ENVS = ("open", "r500", "r200", "r100")
+RANGE = {"open": "1 km", "r500": "500 m", "r200": "200 m", "r100": "150 m"}
+MAPS = (8, 12, 16)
+SCHEMES = (("LMD", "LM-Tour + River"), ("CP", "CHORD + River"), ("DR", "DTSP-N + River"), ("DN", "FC + DTSP-N"),
+           ("B1", "No broadcast (rotary TSP)"), ("B7", "Oracle"))
+L1 = {"DN-puq-stage-zero-redir": "DN", "B1": "B1", "B7": "B7", "P+prog-kin-puq-stage-zero-redir-kt-fcd": "CPl1"}
+T975 = {1: 12.71, 2: 4.30, 3: 3.18, 4: 2.78, 5: 2.57, 6: 2.45, 7: 2.36, 8: 2.31, 9: 2.26, 10: 2.23}
+
+
+def load():
+    """{(scheme, env, K, R): {draw: (T*, team 1)}}, and the largest |T*| gap between l1_rank's and lm_tour's CHORD."""
+    out, gap = {}, 0.0
+    for d in sorted(glob.glob(f"{HERE}/score/R*/*-k*/done")):
+        m = re.search(r"/R(\d+)/(\w+)-k(\d+)/done$", d)
+        R, env, K, d = int(m[1]), m[2], int(m[3]), os.path.dirname(d)
+        for r in csv.DictReader(open(f"{d}/score-ns3.csv")):
+            s = next(s for s in ("LMD", "CP", "DR") if f"/{s}/" in r["work"])
+            out.setdefault((s, env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"]))
+        for r in csv.DictReader(open(f"{d}/l1-draws.csv")):
+            out.setdefault((L1[r["method"]], env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"] or 0))
+        a, b = out[("CP", env, K, R)], out[("CPl1", env, K, R)]
+        assert a.keys() == b.keys(), (env, K, R)
+        gap = max(gap, max(abs(a[x][0] - b[x][0]) for x in a))
+    return out, gap
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--csv", default="")
+    a = ap.parse_args()
+    X, gap = load()
+    seeds = defaultdict(set)
+    for s, env, K, R in X:
+        seeds[(env, K)].add(R)
+    rows = []
+    for (s, env, K, R), v in sorted(X.items()):
+        if s == "CPl1":
+            continue
+        T = np.array([t for t, _ in v.values()])
+        rows.append(dict(scheme=s, env=env, map=f"k{K}-s1", seed=R, draws=len(T), Tstar=round(float(T.mean()), 1),
+                         TstarSd=round(float(T.std()), 1), team1=round(float(np.mean([u for _, u in v.values()])), 1)))
+    if a.csv:
+        with open(a.csv, "w", newline="") as f:
+            wr = csv.DictWriter(f, fieldnames=list(rows[0]), lineterminator="\n")
+            wr.writeheader()
+            wr.writerows(rows)
+    print(f"# Bảng chiến dịch (seed đã xong: {', '.join(f'k{K} {env} {len(seeds[(env, K)])}' for K in MAPS for env in ENVS if (env, K) in seeds)})\n")
+    print(f"CHORD chấm bằng `l1_rank` và bằng `lm_tour score` lệch nhau tối đa {gap:.1f} s ở mọi lượt bốc.\n")
+    print("T\\* trung bình (s) trên mọi seed và lượt bốc; ngoặc: số seed. Team 1: thời gian bay của đội 1 (s).\n")
+    print("| kênh (r) | bản đồ | " + " | ".join(n for _, n in SCHEMES) + " | team 1 LM / CHORD / DR / DN |")
+    print("|---|---|" + "---|" * len(SCHEMES) + "---|")
+    for env in ENVS:
+        for K in MAPS:
+            if (env, K) not in seeds:
+                continue
+            Rs = sorted(seeds[(env, K)])
+            cell = lambda s: np.mean([t for R in Rs for t, _ in X[(s, env, K, R)].values()])
+            t1 = lambda s: np.mean([np.mean([u for _, u in X[(s, env, K, R)].values()]) for R in Rs])
+            print(f"| {env} ({RANGE[env]}) | k{K} | " + " | ".join(f"{cell(s):.0f}" for s, _ in SCHEMES)
+                  + f" | {t1('LMD'):.0f} / {t1('CP'):.0f} / {t1('DR'):.0f} / {t1('DN'):.0f} | ({len(Rs)})")
+    print("\nChênh ghép cặp so với LM-Tour (s, âm là LM-Tour nhanh hơn), ± nửa khoảng tin cậy 95 % theo trung bình từng "
+          "seed; ngoặc: % lượt bốc LM-Tour nhanh hơn.\n")
+    pairs = (("CP", "CHORD"), ("DR", "DTSP-N + River"), ("DN", "FC + DTSP-N"))
+    print("| kênh | bản đồ | " + " | ".join(f"LM − {n}" for _, n in pairs) + " | DTSP-N + River − FC + DTSP-N |")
+    print("|---|---|" + "---|" * (len(pairs) + 1))
+
+    def diff(p, q, env, K, Rs):
+        per = [np.mean([X[(p, env, K, R)][x][0] - X[(q, env, K, R)][x][0] for x in X[(p, env, K, R)]]) for R in Rs]
+        allv = [X[(p, env, K, R)][x][0] - X[(q, env, K, R)][x][0] for R in Rs for x in X[(p, env, K, R)]]
+        hw = T975.get(len(Rs) - 1, 1.96) * np.std(per, ddof=1) / math.sqrt(len(Rs)) if len(Rs) > 1 else float("nan")
+        return f"{np.mean(per):+.0f} ± {hw:.0f} ({100 * np.mean(np.array(allv) < 0):.0f} %)"
+    for env in ENVS:
+        for K in MAPS:
+            if (env, K) not in seeds:
+                continue
+            Rs = sorted(seeds[(env, K)])
+            print(f"| {env} | k{K} | " + " | ".join(diff("LMD", q, env, K, Rs) for q, _ in pairs)
+                  + f" | {diff('DR', 'DN', env, K, Rs)} |")
+
+
+if __name__ == "__main__":
+    main()

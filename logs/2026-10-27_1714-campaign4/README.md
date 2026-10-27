@@ -27,7 +27,8 @@ Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary T
   - river 60a32c1245fd473c.
 - Kiểm chứng trên r500-k8-s1, CHORD-T (`validate-r500-k8.md`):
   - pass: `pass*-runs.csv` và `pass*-nodes.csv` giống từng byte với bản lưu trữ ở 8/8 cụm;
-  - River: `r*-rf-crit.csv` và `r*-rf-runs.csv` giống từng byte (trừ cột thời gian thực wallS) ở các cụm đã chạy xong.
+  - River: `r*-rf-crit.csv` và `r*-rf-runs.csv` giống từng byte ở 8/8 cụm, trừ cột thời gian thực wallS.
+- Bản đồ k16-s1 sinh lại từ đầu (cụm, CH, node, điểm CL) giống từng byte với `raw/r100-k16-s1.tar.xz`.
 
 ## Tệp
 - `task.sh R ENV K`: một tác vụ, tức bốn phương án trên một (seed, kênh, bản đồ):

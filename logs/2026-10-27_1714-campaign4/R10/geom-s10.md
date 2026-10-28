@@ -1,6 +1,6 @@
 # geom-s10
 
-- Bắt đầu: 2026-10-28 08:12:37, chạy 11 s, mã thoát 1
+- Bắt đầu: 2026-10-28 09:10:02, chạy 12 s, mã thoát 1
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**

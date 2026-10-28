@@ -1,4 +1,31 @@
-# Handoff · 2026-10-22 (cập nhật 2026-10-27)
+# Handoff · 2026-10-22 (cập nhật 2026-10-28)
+
+
+## Cập nhật 2026-10-28 · chiến dịch bốn phương án (CLAUDE.md §8 mục 188–196)
+
+**Đang chạy** trên container cloud: `logs/2026-10-27_1714-campaign4/camp.sh 2 10`.
+- Khung: 10 seed × 3 bản đồ (k8-s1, k12-s1, k16-s1) × 4 kênh.
+- Mỗi tác vụ (`task.sh R ENV K`) chạy: CHORD thường + River, LM-Tour (`--dtspn --weight cl --wmin 1`) + River, DTSP-N + River (đã sửa), FC + DTSP-N, B1, B7.
+- Seed 1 đã xong cả 12 ô.
+- Bảng tự cập nhật: `python3 logs/2026-10-27_1714-campaign4/table.py --csv uav-l2/docs/data/results/campaign4.csv --tex paper/icc-v5/table-campaign4.tex --results uav-l2/docs/RESULTS-vi.md`. Bảng nằm ở RESULTS §7.1.
+
+**Seed:** `mission.py --runSeed R` (ghi `runseed.txt`).
+- Chỉ số mission ns-3 cộng thêm 10⁷·(R − 1).
+- Khoá hiện thực hoá và khối lượt bốc lớp 1 riêng cho mỗi seed.
+- Seed 1 giữ đúng các khoá cũ: CHORD và LM-Tour ở k8 khớp từng giây với `logs/2026-10-27_1800-lm-dtspn`.
+
+**DTSP-N + River đã sửa (mục 191–194):**
+- `lm_tour.through_crit` đi zigzag qua đĩa ξ của mọi critical cell. Bản cũ (`every_crit`) chỉ vào 50–70 % số đĩa.
+- Kết quả: chậm hơn CHORD ở mọi ô, nhưng nhanh hơn FC + DTSP-N khi r ≤ 500 m.
+- `pass_speed.fit` có thêm nhánh dự phòng khi điểm gần CH nằm ngoài cụm (trước đó lặp vô hạn ở r100).
+
+**Bẫy vận hành:**
+- Container bị thu hồi hoặc khởi động lại khi phiên rảnh. Cách xử lý:
+  - luôn giữ một `Bash run_in_background` chờ `done.txt` có dòng mới (timeout 2 giờ);
+  - khi máy khởi động lại thì chạy lại `setsid nohup bash camp.sh <seed đầu> 10 &` trong thư mục log. Tác vụ có `done` và `done-dr` được bỏ qua; pass và River đã xong cũng được bỏ qua.
+- Máy mới cần `pip install scikit-learn`.
+- Lỗi đã sửa: k16 có 15 cụm (`prefly.py` đọc `map.json`), và bước kiểm tra seed của `mission.py` từng từ chối thư mục seed mới.
+- Thời gian: mỗi seed khoảng 10 giờ trên 4 lõi.
 
 ## Cập nhật 2026-10-27 (CLAUDE.md §8 mục 186–187)
 

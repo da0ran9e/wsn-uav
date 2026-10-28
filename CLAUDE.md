@@ -1920,6 +1920,12 @@ cho tôi bảng số liệu mới nhất
 tiến độ đến đâu rồi
 ```
 
+*198. 2026-10-28 · paper · hỏi: có chạy nhiều seed cùng lúc được không*
+
+```text
+có thể cho chạy nhiều seed cùng lúc không
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -8,7 +8,7 @@
 
 Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary TSP) và oracle (B7).
 
-**Đang chạy** (bảng kết quả điền khi xong từng seed).
+**Đã dừng** lúc 22:47 UTC ngày 28/10 theo yêu cầu người dùng (mục 209), ở 290/360 job (81 %). Bảng cuối: `uav-l2/docs/RESULTS-vi.md` §7.1, `paper/TECHREPORT-vi.md` §3.
 
 **DTSP-N + River (mục 191–193):**
 - 02:30: tạm dừng vì người dùng nghi có lỗi.
@@ -65,6 +65,17 @@ Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary T
   - `assigned/R8-k8` và `assigned/R9-k8` ghi `main`. Trong `job.sh`, phân công theo bản đồ thắng phân công theo seed;
   - phiên phụ s8, s9 lấy bản `job.sh` mới khi pull, nên các job k8 của chúng thoát với mã 3;
   - máy chính chạy `camp2.sh 8 9`. Job k16/k12 của hai seed này thoát với mã 3, chỉ job k8 chạy.
+- 20:21: hạn mức 5 giờ hết lần thứ ba, cả 5 phiên còn chạy đều dừng và máy chính khởi động lại. 22:35: chạy lại hàng đợi và gửi tin khởi động lại cho s4, s8, s9, s10.
+  - Hàng đợi chạy lại đã ghi đè log Markdown của hai job vừa xong mà chưa commit (seed 8, k8: r100 DTSP-N + River, r200 LM-Tour); kết quả trong `score/` còn nguyên.
+  - Đã sửa: `camp2.sh` bỏ qua job có dấu `done-*` trước khi gọi `runlog.py`.
+
+**Dừng chiến dịch (mục 209, 22:43–22:48):**
+- Máy chính dừng hàng đợi theo PID; mỗi phiên phụ nhận tin dừng, dừng hàng đợi, xoá tệp dở của job bị giết, push phần đã xong rồi huỷ lịch kiểm tra. Lịch kiểm tra định kỳ của phiên chính đã xoá.
+- Job `cp 8 r100 8` bị dừng sau khi mission và `l1_rank` đã xong, chỉ thiếu dấu `done-cp`. Bước chấm điểm được chạy lại (`R8/r100-k8-cp-score.md`, T\* 977 s khớp log gốc) và job được tính là xong.
+- Số job xong theo seed: 1, 2, 3, 5, 6, 7 đủ 36; seed 4: 15, seed 8: 17, seed 9: 14, seed 10: 28. Theo phương án: CHORD 95/120, LM-Tour 99/120, DTSP-N + River 96/120.
+- Số seed ghép cặp trong từng ô (mọi phương án đều xong): k8 6/6/6/8, k12 7/7/7/8, k16 10/9/10/10 (open/r500/r200/r100).
+- Cập nhật TECHREPORT: `techreport-stop.md` (`techreport.py --apply`), cộng các dòng tiến độ và các khoảng % trong §0, §3.1, §3.2, §3.5, §3.6.
+- Chạy tiếp nếu cần: trong phiên của từng seed (4, 8, 9, 10), chạy lại `camp2.sh R R` như `CHILD.md` bước 5; job đã có dấu `done-*` được bỏ qua. Nếu scratchpad đã mất thì dựng lại theo `CHILD.md` bước 1–3 trước.
 
 ## Cách hiểu "10 seed"
 - Bản đồ cố định: k8-s1, k12-s1, k16-s1, giống `uav-l2/docs/data/results/raw/` và `logs/2026-10-27_1800-lm-dtspn/`.

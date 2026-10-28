@@ -1,7 +1,7 @@
 # Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N)
 
 - **Phiên bản:** 2026-10-28, bản 1. Đây là tài liệu sống: mỗi lần chiến dịch có thêm seed, cập nhật §0 và §3 (cách làm trong `docs/progress/HANDOFF.md`).
-- **Dữ liệu chụp lúc:** commit `1c299d0` của `origin/claude/document-review-xslwgg` (2026-10-28 19:10 UTC; bảng §3 cập nhật ở mốc 70 %, mục 208).
+- **Dữ liệu chụp lúc:** commit `9bce43b` của `origin/claude/document-review-xslwgg` (2026-10-28 22:48 UTC; bảng §3 cập nhật khi dừng chiến dịch ở 81 %, mục 209).
 - **Phạm vi:** toàn bộ quá trình từ mục 186 tới mục 205 của CLAUDE.md §8, cộng phần nền (hệ thống, River, bộ dự đoán) mà các mục này dựa vào.
 - **Tài liệu gốc nên đọc kèm:**
   - `paper/SYSTEM-vi.md`, `paper/RIVER-vi.md`, `paper/BASELINES-vi.md`, `paper/L1-MODEL-vi.md`: nền;
@@ -14,16 +14,16 @@
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Chiến dịch 4 (4 phương án × 10 seed × 3 bản đồ × 4 kênh) | **70 %** (252/360 job). CHORD 84/120, LM-Tour 86/120, DTSP-N + River 82/120 job. Seed 1, 3, 5, 6, 7 đủ 12/12 ô; seed 2 còn bản đồ k8; seed 4, 8, 9, 10 tạm dừng (mục 206) |
+| Chiến dịch 4 (4 phương án × 10 seed × 3 bản đồ × 4 kênh) | **Đã dừng ở 81 %** (290/360 job, 22:47 UTC, mục 209). CHORD 95/120, LM-Tour 99/120, DTSP-N + River 96/120 job. Seed 1, 2, 3, 5, 6, 7 đủ 36/36 job; seed 4, 8, 9, 10 dừng ở 15, 17, 14, 28/36 job |
 | Bảng T\* | §3.1. Mỗi ô chỉ gộp các seed mà **mọi** phương án đều đã xong (ghép cặp) |
-| Phiên cloud | Lúc 16:22 UTC chỉ seed 5 (và có lẽ 6) còn push. Seed 2, 3, 4, 7, 8, 9, 10 im lặng từ 14:19–14:55. Cần kiểm tra (`docs/progress/HANDOFF.md`) |
+| Phiên cloud | Phiên chính và 4 phiên phụ (seed 4, 8, 9, 10) đã dừng và push phần đã xong; không còn lịch kiểm tra nào chạy |
 | Khảo sát Bậc 3 (bộ dự đoán học bằng cây) | Đã chạy 192 lượt River trên k8. Với dữ liệu hiện có, HGB chưa chọn đường tốt hơn công thức Bậc 2; **còn cân nhắc** (§5.7) |
 | Quy tắc thống kê | Số liệu là **thăm dò** cho tới khi N ≥ 120, tức đủ 10 seed × 12 ô (CLAUDE.md) |
 
 **Thông điệp chính đến lúc này (sẽ được xác nhận khi đủ seed):**
-1. LM-Tour + River nhanh nhất trong các phương án thực tế ở mọi ô: so với CHORD + River nhanh hơn 1–10 %, so với DTSP-N + River 8–26 %, so với FC + DTSP-N 10–72 %.
+1. LM-Tour + River nhanh nhất trong các phương án thực tế ở mọi ô: so với CHORD + River nhanh hơn 1–11 %, so với DTSP-N + River 10–26 %, so với FC + DTSP-N 10–72 %.
 2. Lợi thế của LM-Tour so với CHORD đến chủ yếu từ **tour DTSP-N qua các CH** (tour đội 1 ngắn hơn 14–28 % quãng đường). Bước uốn về landmark chỉ thêm 7–22 s (mức mô hình, k8).
-3. Hợp tác River là phần đáng giá nhất khi kênh xấu: ở r200/r100, mọi phương án có River nhanh hơn FC + DTSP-N 50–72 %.
+3. Hợp tác River là phần đáng giá nhất khi kênh xấu: ở r200/r100, mọi phương án có River nhanh hơn FC + DTSP-N 49–72 %.
 4. Ở kênh open, FC + DTSP-N gần ngang các phương án River (chỉ chậm hơn LM-Tour 10–14 %), vì cell nghe trực tiếp được hầu hết dữ liệu.
 
 ---
@@ -110,7 +110,7 @@ R50 là khoảng cách ngang mà ở đó một node nhận được một nửa
 
 ---
 
-## 3. Kết quả thực nghiệm (thăm dò, khoảng 70 % job)
+## 3. Kết quả thực nghiệm (thăm dò, 81 % job, chiến dịch đã dừng)
 
 Bảng sinh bằng `python3 logs/2026-10-27_1714-campaign4/table.py` trên dữ liệu đã push.
 
@@ -118,30 +118,30 @@ Số seed đã gộp vào từng ô:
 
 | | open | r500 | r200 | r100 |
 |---|---|---|---|---|
-| k8 | 5 | 5 | 5 | 6 |
-| k12 | 6 | 6 | 6 | 7 |
-| k16 | 9 | 7 | 8 | 10 |
+| k8 | 6 | 6 | 6 | 8 |
+| k12 | 7 | 7 | 7 | 8 |
+| k16 | 10 | 9 | 10 | 10 |
 
 ### 3.1 T\* (s), bản đồ k8 / k12 / k16 (8 / 12 / 15 cụm)
 
-Mọi bảng trong mục 3 xếp phương án theo T\* **giảm dần** (chậm nhất trước). Thứ tự này theo kênh r ≤ 500 m; ở kênh open, FC + DTSP-N nhanh hơn DTSP-N + River (690 so với 749 s ở k8).
+Mọi bảng trong mục 3 xếp phương án theo T\* **giảm dần** (chậm nhất trước). Thứ tự này theo kênh r ≤ 500 m; ở kênh open, FC + DTSP-N nhanh hơn DTSP-N + River (689 so với 751 s ở k8).
 
 | Phương án | r = 1 000 m (open) | 500 m | 200 m | 150 m (r100) |
 |---|---|---|---|---|
-| Rotary TSP (cận trên) | 2821 / 4211 / 5248 | 2821 / 4211 / 5178 | 2821 / 4211 / 5173 | 2809 / 4227 / 5242 |
-| FC + DTSP-N | 690 / 907 / 1067 | 1065 / 1535 / 1877 | 1911 / 2696 / 3689 | 2220 / 3366 / 4523 |
-| DTSP-N + River | 749 / 887 / 1092 | 914 / 1183 / 1452 | 965 / 1330 / 1669 | 1041 / 1374 / 1658 |
-| CHORD + River | 656 / 812 / 946 | 783 / 1095 / 1190 | 849 / 1155 / 1322 | 859 / 1173 / 1335 |
-| **LM-Tour + River** | **618 / 803 / 917** | **732 / 976 / 1164** | **791 / 1037 / 1229** | **800 / 1063 / 1262** |
+| Rotary TSP (cận trên) | 2809 / 4227 / 5242 | 2809 / 4227 / 5253 | 2809 / 4227 / 5242 | 2852 / 4194 / 5242 |
+| FC + DTSP-N | 689 / 914 / 1062 | 1063 / 1545 / 1895 | 1911 / 2715 / 3710 | 2268 / 3368 / 4523 |
+| DTSP-N + River | 751 / 887 / 1084 | 917 / 1187 / 1450 | 975 / 1340 / 1666 | 1055 / 1379 / 1658 |
+| CHORD + River | 658 / 814 / 939 | 778 / 1101 / 1196 | 847 / 1161 / 1321 | 872 / 1165 / 1335 |
+| **LM-Tour + River** | **618 / 803 / 911** | **730 / 981 / 1171** | **786 / 1041 / 1237** | **806 / 1054 / 1262** |
 
 **Tương đối (LM-Tour so với phương án khác, %, K = 8 / 12 / 16):**
 
 | So với | open | r500 | r200 | r100 |
 |---|---|---|---|---|
-| Rotary TSP (lần nhanh hơn) | 4,6× / 5,2× / 5,7× | 3,9× / 4,3× / 4,4× | 3,6× / 4,1× / 4,2× | 3,5× / 4,0× / 4,2× |
-| FC + DTSP-N | −10 / −11 / −14 | −31 / −36 / −38 | −59 / −62 / −67 | −64 / −68 / −72 |
-| DTSP-N + River | −17 / −9 / −16 | −20 / −17 / −20 | −18 / −22 / −26 | −23 / −23 / −24 |
-| CHORD + River | −6 / −1 / −3 | −6 / −11 / −2 | −7 / −10 / −7 | −7 / −9 / −6 |
+| Rotary TSP (lần nhanh hơn) | 4,5× / 5,3× / 5,8× | 3,8× / 4,3× / 4,5× | 3,6× / 4,1× / 4,2× | 3,5× / 4,0× / 4,2× |
+| FC + DTSP-N | −10 / −12 / −14 | −31 / −37 / −38 | −59 / −62 / −67 | −64 / −69 / −72 |
+| DTSP-N + River | −18 / −10 / −16 | −20 / −17 / −19 | −19 / −22 / −26 | −24 / −24 / −24 |
+| CHORD + River | −6 / −1 / −3 | −6 / −11 / −2 | −7 / −10 / −6 | −8 / −10 / −6 |
 
 ### 3.2 Thời gian hoàn thành pha 1
 
@@ -160,10 +160,10 @@ Mọi bảng trong mục 3 xếp phương án theo T\* **giảm dần** (chậm 
 |---|---|---|---|---|
 | open | 8 / 12 / 16 | 504 / 713 / 934 | 360 / 566 / 701 | 302 / 473 / 612 |
 | r500 | 8 / 12 / 16 | 523 / 732 / 954 | 401 / 607 / 745 | 338 / 508 / 654 |
-| r200 | 8 / 12 / 16 | 571 / 793 / 1072 | 437 / 642 / 777 | 374 / 544 / 692 |
-| r100 | 8 / 12 / 16 | 630 / 859 / 1066 | 453 / 659 / 796 | 390 / 554 / 705 |
+| r200 | 8 / 12 / 16 | 570 / 793 / 1072 | 438 / 643 / 777 | 374 / 544 / 692 |
+| r100 | 8 / 12 / 16 | 630 / 860 / 1066 | 453 / 660 / 796 | 389 / 554 / 705 |
 
-- LM-Tour đưa critical cell tới trạng thái sẵn sàng sớm hơn CHORD 58–105 s và sớm hơn DTSP-N + River 186–380 s.
+- LM-Tour đưa critical cell tới trạng thái sẵn sàng sớm hơn CHORD 58–106 s và sớm hơn DTSP-N + River 185–380 s.
 - Phần chênh này **lớn hơn** phần chênh T\* (§3.1), vì pha 2 (đội 2 bay và xác minh khoảng 78 s mỗi cell) và lớp 1 làm loãng nó.
 - FC + DTSP-N không có River nên không có cột này. Thời điểm giải mã từng cell nằm trong `l1-cells.csv`; chưa tổng hợp.
 - Lệnh: `python3 logs/2026-10-27_1714-campaign4/ready.py logs/2026-10-27_1714-campaign4`.
@@ -211,19 +211,19 @@ So seed 1 với trung bình các seed 2–10 đã xong:
 - **T\* tuyệt đối:** với mọi phương án có River, các seed khác cao hơn R1 khoảng 60–200 s ở k16 và 50–130 s ở k12, nhưng thấp hơn 30–80 s ở k8.
   - B7 (đội 2 biết trước c\*, vẫn chấm nội bộ dù đã bỏ khỏi bảng) chỉ lệch ±10 s, nên phần lệch không đến từ lớp 1.
   - Phần lệch đến từ hiện thực mạng ns-3 (fading, MAC), đúng biến số mà chiến dịch nhiều seed được thiết kế để bắt.
-- **Hệ quả cho paper:** không viết con số "LM-Tour nhanh hơn CHORD 6–10 %" từ seed 1. Tính lại chênh ghép cặp bằng `table.py` khi đủ seed. Ước lượng hiện tại là 1–10 %, và có ý nghĩa thống kê ở các ô k12/k16 kênh hẹp.
+- **Hệ quả cho paper:** không viết con số "LM-Tour nhanh hơn CHORD 6–10 %" từ seed 1. Tính lại chênh ghép cặp bằng `table.py` khi đủ seed. Ước lượng hiện tại là 1–11 %, và có ý nghĩa thống kê ở mọi ô trừ open k12, open k16 và r500 k16.
 
 ### 3.6 Các câu có thể viết vào paper (theo số hiện tại)
-1. **Toàn hệ thống (VI-A):** LM-Tour + River nhanh hơn FC + DTSP-N 10–14 % ở open, 35–38 % ở r500 và 60–72 % ở r200/r100. Khoảng cách tăng khi kênh xấu đi vì FC phải lượn tới khi từng cell tự nghe đủ.
+1. **Toàn hệ thống (VI-A):** LM-Tour + River nhanh hơn FC + DTSP-N 10–14 % ở open, 31–38 % ở r500 và 59–72 % ở r200/r100. Khoảng cách tăng khi kênh xấu đi vì FC phải lượn tới khi từng cell tự nghe đủ.
 2. **Giá trị của River (VI-B):**
-   - DTSP-N + River so với FC + DTSP-N: −14 đến −23 % ở r500, −50 đến −63 % ở r200/r100.
-   - Ở open, DTSP-N + River không hơn FC + DTSP-N (−2 đến +11 %), vì tour zigzag dài hơn tour FC còn River không có việc gì nhiều để làm.
+   - DTSP-N + River so với FC + DTSP-N: −14 đến −23 % ở r500, −49 đến −63 % ở r200/r100.
+   - Ở open, DTSP-N + River không hơn FC + DTSP-N (−3 đến +9 %), vì tour zigzag dài hơn tour FC còn River không có việc gì nhiều để làm.
 3. **Chọn đúng landmark (VI-C):**
-   - LM-Tour hơn DTSP-N + River 8–26 % dù cả hai đều dùng River và đều chọn tour bằng cùng một bộ giải (`chord_tour.choose`).
+   - LM-Tour hơn DTSP-N + River 10–26 % dù cả hai đều dùng River và đều chọn tour bằng cùng một bộ giải (`chord_tour.choose`).
    - Bay sát mọi critical cell không đáng giá. Chỉ uốn về những cell mà bộ dự đoán thấy có lợi.
    - Ở k16 r200, LM-Tour chỉ đưa 36/92 critical cell vào trong ξ (CHORD 42/92, DTSP-N + River 92/92), nhưng lại nhanh nhất (§3.4).
-4. **So với CHORD:** LM-Tour nhanh hơn 1–10 %, đi kèm đường bay ngắn hơn 14–28 %.
-5. **Cận trên (VI-D):** nhanh hơn Rotary TSP 3,7–5,7 lần.
+4. **So với CHORD:** LM-Tour nhanh hơn 1–11 %, đi kèm đường bay ngắn hơn 14–28 %.
+5. **Cận trên (VI-D):** nhanh hơn Rotary TSP 3,5–5,8 lần.
 
 ---
 

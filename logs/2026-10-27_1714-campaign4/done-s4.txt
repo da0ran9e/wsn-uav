@@ -10,3 +10,4 @@ R4 r500 k16 dr exit 1 2026-10-28_07:54:46
 2026-10-28 08:11:33 geom check (R4/geom-s4.md): GEOM OK, 12/12 ô 0 differ 0 missing (cả plan*.txt tự sinh lại). Đã giải nén lại geometry-r1 đủ 4 kênh từ 0ed2066.
 R4 r100 k16 dr exit 0 2026-10-28_08:51:18
 R4 r200 k16 lmd exit 0 2026-10-28_08:56:16
+R4 r100 k16 lmd exit 0 2026-10-28_09:01:06

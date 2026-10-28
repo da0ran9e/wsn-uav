@@ -1980,6 +1980,12 @@ nếu tổng số các job đã hoàn thành chiếm hơn 50% thì có thể t�
 I hit my usage limit while you were working, but it has reset now. Please continue from where you left off.
 ```
 
+*208. 2026-10-28 · paper · khi chạy đủ 70 % job thì cập nhật bảng số liệu trong paper/TECHREPORT-vi.md (chỉ sửa phần tối thiểu)*
+
+```text
+sau khi chạy đủ 70% hãy update vào bảng số liệu ở paper/TECHREPORT-vi.md (chỉ update những phần tối thiểu)
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

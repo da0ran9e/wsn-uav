@@ -1,0 +1,7 @@
+R8 r200 k16 lmd exit 1 2026-10-28_07:57:18
+R8 r100 k16 lmd exit 1 2026-10-28_07:57:18
+R8 r100 k16 dr exit 1 2026-10-28_07:57:18
+R8 r200 k16 dr exit 1 2026-10-28_07:57:19
+R8 r500 k16 lmd exit 1 2026-10-28_07:57:19
+R8 r500 k16 dr exit 1 2026-10-28_07:57:20
+note s8 2026-10-28_07:58:01: check OK sau khi cài matplotlib (child-setup.sh chưa cài). Như s3/s5/s7: geometry-r1.tar.xz chỉ có CP/open/R1 -> lmd/dr kênh r* exit 1 (thiếu plan-opts.json) khi chạy trước cp; job cp tự dựng hình học; sẽ chạy lượt camp2.sh thứ hai cho các job lỗi sau queue done.

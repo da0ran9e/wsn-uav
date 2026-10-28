@@ -383,7 +383,8 @@ def stage_runs(a, W_, K):
         sys.exit(f"{W_} was flown with --env {open(f'{W_}/env.txt').read().strip()}, not {env}")
     open(f"{W_}/env.txt", "w").write(env + "\n")
     rs = getattr(a, "runSeed", 1)
-    if runseed(W_) != rs:
+    ran = os.path.exists(f"{W_}/runseed.txt") or os.path.exists(f"{W_}/pass1-bits-r1.bin")   # flown before
+    if ran and runseed(W_) != rs:
         sys.exit(f"{W_} was run with --runSeed {runseed(W_)}, not {rs}")
     if rs != 1:
         open(f"{W_}/runseed.txt", "w").write(f"{rs}\n")

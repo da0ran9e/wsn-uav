@@ -1,11 +1,36 @@
 # Handoff · 2026-10-22 (cập nhật 2026-10-29)
 
+## Cập nhật 2026-10-28 22:50 UTC · chiến dịch 4 dừng ở 290/360 job (CLAUDE.md §8 mục 209–210)
+
+- Đã dừng hàng đợi trên máy chính và 8 phiên phụ. 8 phiên phụ đã archive (container đã thu hồi) và không còn lịch kiểm tra nào, nên không có gì tự chạy lại.
+- Số liệu lúc dừng: `paper/TECHREPORT-vi.md` §3, `uav-l2/docs/RESULTS-vi.md` §7.1.
+
+**70 job chưa xong** (CHORD = `cp`, LM = `lmd`, DR = `dr`; ✓ = đủ ba phương án):
+
+| Seed | Bản đồ | open | r500 | r200 | r100 | Số job |
+|---|---|---|---|---|---|---|
+| 4 | k8 | CHORD, LM, DR | CHORD, LM, DR | CHORD, LM, DR | CHORD, LM, DR | 12 |
+| 4 | k12 | CHORD, LM, DR | CHORD, LM, DR | CHORD, DR | ✓ | 8 |
+| 4 | k16 | ✓ | LM | ✓ | ✓ | 1 |
+| 8 | k8 | CHORD, LM, DR | CHORD, LM, DR | CHORD, DR | ✓ | 8 |
+| 8 | k12 | CHORD, LM, DR | CHORD, LM, DR | CHORD, DR | CHORD, LM, DR | 11 |
+| 9 | k8 | CHORD, LM, DR | CHORD, LM, DR | CHORD, LM, DR | CHORD, LM, DR | 12 |
+| 9 | k12 | CHORD, LM, DR | CHORD, LM, DR | CHORD, LM, DR | CHORD | 10 |
+| 10 | k8 | CHORD, LM, DR | CHORD, LM, DR | CHORD, DR | ✓ | 8 |
+
+- Seed 1, 2, 3, 5, 6, 7 đủ 36/36. Theo phương án còn thiếu: CHORD 25, LM-Tour 21, DTSP-N + River 24. Theo bản đồ: k8 40, k12 29, k16 1.
+- **`lmd 4 r500 16` hỏng tất định:** `river-bin` segfault (-11) ở cụm C10 ngay t = 0 (`--firstRun=31600110 --plan=plan10.txt`), lặp lại cả 3 lần (`logs/2026-10-27_1714-campaign4/done-s4.txt`). Chạy lại sẽ vẫn hỏng: cần sửa binary hoặc bỏ ô này. Vì job này, ô k16 r500 chỉ có 9 seed ghép cặp.
+- **Chạy tiếp:**
+  - mở phiên cloud mới và làm theo `logs/2026-10-27_1714-campaign4/CHILD.md` (cài đặt, kiểm tra, rồi `camp2.sh R R`); job đã có dấu `done-*` được bỏ qua;
+  - `assigned/R8-k8` và `assigned/R9-k8` đang ghi `main`: sửa thành tên của phiên sẽ chạy (`CAMP_ID`), hoặc xoá đi;
+  - xong thì chạy `table.py` và `techreport.py --apply` như phần dưới.
+
 ## Cập nhật 2026-10-29 · technical report của chiến dịch 4 (`paper/TECHREPORT-vi.md`)
 
 `paper/TECHREPORT-vi.md` là báo cáo kỹ thuật (kết quả, thuật toán, bộ dự đoán của LM-Tour). Phần vận hành của nó nằm ở đây.
 
 ### Hạn chế và việc còn lại
-- [ ] Hoàn tất chiến dịch 4 (còn khoảng 160 job). k8 thiếu nhiều nhất.
+- [ ] Hoàn tất chiến dịch 4 (còn 70 job, bảng ở mục 2026-10-28 22:50 UTC phía trên). k8 thiếu nhiều nhất.
 - [x] `paper/EXPERIMENTS-vi.md` (§2, §3, §4 E9–E12, §5 chiến dịch 4) và `paper/LMTOUR-vi.md` (viết lại theo thuật toán hiện tại) cập nhật 2026-10-29. Khi có thêm seed, cập nhật bảng §5 của EXPERIMENTS và §6.2 của LMTOUR cùng lúc với TECHREPORT §3.
 - [ ] Viết lại `paper/icc-v5/evaluation-v5.tex` theo khung mục 187 và bảng TECHREPORT §3 (`table.py --tex` đã sinh `paper/icc-v5/table-campaign4.tex`); cập nhật Algorithm 3 (`paper/icc-v5/alg3-lmtour.tex`) theo LMTOUR §5.
 - [x] Khảo sát Bậc 3 lần 1 (TECHREPORT §5.7): J_k tiếp tục dùng Bậc 2.

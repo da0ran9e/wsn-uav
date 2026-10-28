@@ -1986,10 +1986,16 @@ I hit my usage limit while you were working, but it has reset now. Please contin
 sau khi chạy đủ 70% hãy update vào bảng số liệu ở paper/TECHREPORT-vi.md (chỉ update những phần tối thiểu)
 ```
 
-*209. 2026-10-28 · paper · dừng các phiên chiến dịch 4 (ở mức 279/360 job) và cập nhật bảng số liệu trong paper/TECHREPORT-vi.md*
+*209. 2026-10-28 · paper · dừng các phiên chiến dịch 4 (ở mức 290/360 job) và cập nhật bảng số liệu trong paper/TECHREPORT-vi.md*
 
 ```text
 dừng các phiên lại và update file markdown được rồi nhé
+```
+
+*210. 2026-10-28 · quy tắc làm việc · đóng hẳn các phiên phụ để không tự chạy (tránh tốn quota); bảng job chưa xong và danh sách ngắn trong `docs/progress/HANDOFF.md`*
+
+```text
+đóng các phiên lại đảm bảo chúng không tự chạy tránh tốn thêm qouta, viết cho tôi một bảng tổng hợp các job chưa done một danh sách ngắn gọn vào handoff
 ```
 
 ---

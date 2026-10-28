@@ -71,6 +71,7 @@ Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary T
 
 **Dừng chiến dịch (mục 209, 22:43–22:48):**
 - Máy chính dừng hàng đợi theo PID; mỗi phiên phụ nhận tin dừng, dừng hàng đợi, xoá tệp dở của job bị giết, push phần đã xong rồi huỷ lịch kiểm tra. Lịch kiểm tra định kỳ của phiên chính đã xoá.
+- Sau đó (mục 210) cả 8 phiên phụ được archive, nên container của chúng đã thu hồi. Danh sách 70 job chưa xong nằm trong `docs/progress/HANDOFF.md`.
 - Job `cp 8 r100 8` bị dừng sau khi mission và `l1_rank` đã xong, chỉ thiếu dấu `done-cp`. Bước chấm điểm được chạy lại (`R8/r100-k8-cp-score.md`, T\* 977 s khớp log gốc) và job được tính là xong.
 - Số job xong theo seed: 1, 2, 3, 5, 6, 7 đủ 36; seed 4: 15, seed 8: 17, seed 9: 14, seed 10: 28. Theo phương án: CHORD 95/120, LM-Tour 99/120, DTSP-N + River 96/120.
 - Số seed ghép cặp trong từng ô (mọi phương án đều xong): k8 6/6/6/8, k12 7/7/7/8, k16 10/9/10/10 (open/r500/r200/r100).

@@ -376,7 +376,7 @@ Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngo�
 - Chi tiết: `logs/2026-10-28_0240-dtspn-check`, `logs/2026-10-28_0310-dtspn-fix`.
 
 <!-- campaign4:begin (table.py --results) -->
-Cập nhật 2026-10-28 05:19 UTC: 12/120 tác vụ xong (12/12 ô có ít nhất một seed).
+Cập nhật 2026-10-28 05:25 UTC: 12/120 tác vụ xong (12/12 ô có ít nhất một seed).
 
 T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong (1); – : chưa chạy xong.
 
@@ -384,7 +384,7 @@ T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 �
 |---|---|---|---|---|
 | LM-Tour + River | 633 / 721 / 807 | 719 / 905 / 1063 | 792 / 959 / 1063 | 802 / 978 / 1093 |
 | CHORD + River | 672 / 742 / 872 | 802 / 1013 / 1150 | 877 / 1075 / 1257 | 892 / 1091 / 1278 |
-| DTSP-N + River | 783 / 777 / 980 | – / 1130 / 1363 | 988 / 1255 / 1488 | 1044 / 1260 / 1560 |
+| DTSP-N + River | 783 / 777 / 980 | 961 / 1130 / 1363 | 988 / 1255 / 1488 | 1044 / 1260 / 1560 |
 | FC + DTSP-N | 708 / 805 / 967 | 1078 / 1389 / 1750 | 1905 / 2481 / 3469 | 2190 / 3248 / 4468 |
 | No broadcast (rotary TSP) | 2926 / 4168 / 5169 | 2926 / 4168 / 5169 | 2926 / 4168 / 5169 | 2926 / 4168 / 5169 |
 | Oracle | 322 / 402 / 404 | 322 / 402 / 404 | 322 / 402 / 404 | 322 / 402 / 404 |
@@ -396,7 +396,7 @@ Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng
 | open | k8 | −38 (76 %) | −150 (66 %) | −75 (66 %) | +75 (43 %) |
 | open | k12 | −21 (34 %) | −56 (42 %) | −84 (56 %) | −28 (59 %) |
 | open | k16 | −66 (54 %) | −174 (63 %) | −160 (70 %) | +13 (56 %) |
-| r500 | k8 | −83 (85 %) | – | −360 (84 %) | – |
+| r500 | k8 | −83 (85 %) | −242 (85 %) | −360 (84 %) | −118 (76 %) |
 | r500 | k12 | −109 (59 %) | −225 (70 %) | −484 (82 %) | −259 (73 %) |
 | r500 | k16 | −87 (58 %) | −300 (77 %) | −687 (85 %) | −387 (60 %) |
 | r200 | k8 | −84 (85 %) | −196 (66 %) | −1112 (91 %) | −916 (94 %) |
@@ -411,13 +411,15 @@ Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng
 - FC + DTSP-N, B1 và B7 trùng đúng với số của mục 2 và mục 6 ở seed 1 (ví dụ DN r200 k16 3469 s, r100 k12 3248 s), vì khoá seed 1 không đổi.
 - CHORD chấm bằng `l1_rank` và bằng `lm_tour score` cho cùng T\* ở mọi lượt bốc (lệch 0,0 s).
 
-**Đọc tạm, seed 1 (chưa được kết luận):**
-1. LM-Tour nhanh hơn CHORD ở mọi ô đã xong: 3 % (k12, 1 km) đến 15 % (k16, r200 và r100). Nó cũng nhanh hơn FC + DTSP-N từ 80 s (k12 1 km) tới 3,4 nghìn s (k16 r100).
-2. DTSP-N + River đã sửa (cả 8 ô đều đã đo bằng ns-3):
-   - chậm hơn LM-Tour 56–467 s (8–43 %) và chậm hơn CHORD ở mọi ô;
-   - nguyên nhân: đường zigzag qua mọi critical cell làm đội 1 bay lâu hơn (k16 r200: 2085 so với 1437 s của CHORD);
-   - nhanh hơn FC + DTSP-N 258–2908 s khi r ≤ 500 m. Phần chênh này là lợi ích của River;
-   - ở 1 km gần hoà FC + DTSP-N (−28 / +13 s), vì cell tự giải mã được trước khi River xong;
-   - ước lượng mức mô hình trước đó (mục 194) lệch số ns-3 0–17 s ở cả 8 ô.
-   - Cùng cách ước lượng, CHORD và LM-Tour chỉ lệch số ns-3 của chúng 0–19 s.
+**Đọc tạm, seed 1 đủ 12 ô (2026-10-28 05:25; chưa được kết luận):**
+1. LM-Tour nhanh nhất ở cả 12 ô:
+   - nhanh hơn CHORD 21–193 s (3–15 %);
+   - nhanh hơn DTSP-N + River 56–467 s;
+   - nhanh hơn FC + DTSP-N 75–3375 s.
+2. DTSP-N + River đã sửa (đều đo bằng ns-3):
+   - chậm hơn CHORD ở mọi ô, vì đường zigzag qua mọi critical cell làm đội 1 bay lâu hơn (k16 r200: 2085 so với 1437 s);
+   - nhanh hơn FC + DTSP-N 118–2908 s khi r ≤ 500 m; phần chênh này là lợi ích của River;
+   - ở 1 km hoà hoặc thua FC + DTSP-N (k8 +75, k12 −28, k16 +13 s), vì cell tự giải mã được trước khi River cần tới;
+   - ước lượng mức mô hình trước đó (mục 194) lệch số ns-3 0–17 s ở 8 ô đã ước lượng.
+3. CHORD và LM-Tour ở k8 khớp đúng từng giây với lượt chạy của phiên trước (`logs/2026-10-27_1800-lm-dtspn`).
 4. Mỗi ô mới có một hiện thực mạng. Theo quy tắc N ≥ 120 và "không tin một seed", cần chờ thêm seed trước khi đưa vào paper.

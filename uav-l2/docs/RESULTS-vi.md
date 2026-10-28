@@ -368,33 +368,44 @@ Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngo�
 - Bảng LaTeX cho paper: `paper/icc-v5/table-campaign4.tex`.
 - Cả hai sinh lại bằng `python3 logs/2026-10-27_1714-campaign4/table.py --csv uav-l2/docs/data/results/campaign4.csv --tex paper/icc-v5/table-campaign4.tex`.
 
-### 7.1. Kết quả đến 2026-10-28 01:10 (seed 1, 4/12 ô)
-T\* trung bình (s), K = 8 / 12 / 16 cụm. Mỗi ô là 100 lượt bốc lớp 1 trên **một** hiện thực mạng ns-3; – : chưa chạy xong.
+### 7.1. Kết quả (cập nhật dần theo tác vụ)
+<!-- campaign4:begin (table.py --results) -->
+Cập nhật 2026-10-28 01:59 UTC: 5/120 tác vụ xong (5/12 ô có ít nhất một seed).
+
+T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong (1); – : chưa chạy xong.
 
 | phương án | r = 1000 m | 500 m | 200 m | 150 m |
 |---|---|---|---|---|
-| LM-Tour + River | – / – / 807 | – / – / 1063 | – / – / 1063 | – / 978 / – |
-| CHORD + River | – / – / 872 | – / – / 1150 | – / – / 1257 | – / 1091 / – |
-| DTSP-N + River | – / – / 817 | – / – / 1210 | – / – / 1172 | – / 980 / – |
-| FC + DTSP-N | – / – / 967 | – / – / 1750 | – / – / 3469 | – / 3248 / – |
-| No broadcast (rotary TSP) | – / – / 5169 | – / – / 5169 | – / – / 5169 | – / 4168 / – |
-| Oracle | – / – / 404 | – / – / 404 | – / – / 404 | – / 402 / – |
+| LM-Tour + River | – / – / 807 | – / – / 1063 | – / 959 / 1063 | – / 978 / – |
+| CHORD + River | – / – / 872 | – / – / 1150 | – / 1075 / 1257 | – / 1091 / – |
+| DTSP-N + River | – / – / 817 | – / – / 1210 | – / 944 / 1172 | – / 980 / – |
+| FC + DTSP-N | – / – / 967 | – / – / 1750 | – / 2481 / 3469 | – / 3248 / – |
+| No broadcast (rotary TSP) | – / – / 5169 | – / – / 5169 | – / 4168 / 5169 | – / 4168 / – |
+| Oracle | – / – / 404 | – / – / 404 | – / 402 / 404 | – / 402 / – |
 
-Chênh ghép cặp (s; âm là phương án đầu nhanh hơn). Ngoặc là % lượt bốc phương án đầu nhanh hơn hẳn; các lượt còn lại phần lớn là hoà. Cột cuối là lợi ích của River: DTSP-N + River so với FC + DTSP-N.
+Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng tin cậy 95 % theo trung bình từng seed, khi đã có từ 2 seed). Ngoặc là % lượt bốc phương án đầu nhanh hơn hẳn, các lượt còn lại phần lớn là hoà.
 
-| kênh | bản đồ | LM − CHORD | LM − (DTSP-N + River) | LM − (FC + DTSP-N) | (DTSP-N + River) − (FC + DTSP-N) |
+| kênh | bản đồ | LM − (CHORD) | LM − (DTSP-N + River) | LM − (FC + DTSP-N) | (DTSP-N + River) − (FC + DTSP-N) |
 |---|---|---|---|---|---|
 | open | k16 | −66 (54 %) | −11 (53 %) | −160 (70 %) | −150 (72 %) |
 | r500 | k16 | −87 (58 %) | −147 (72 %) | −687 (85 %) | −540 (77 %) |
+| r200 | k12 | −116 (61 %) | +16 (40 %) | −1522 (90 %) | −1538 (91 %) |
 | r200 | k16 | −193 (62 %) | −109 (61 %) | −2406 (97 %) | −2297 (97 %) |
 | r100 | k12 | −113 (67 %) | −2 (55 %) | −2270 (89 %) | −2268 (91 %) |
+<!-- campaign4:end -->
 
 **Đối chiếu:**
 - FC + DTSP-N, B1 và B7 trùng đúng với số của mục 2 và mục 6 ở seed 1 (ví dụ DN r200 k16 3469 s, r100 k12 3248 s), vì khoá seed 1 không đổi.
 - CHORD chấm bằng `l1_rank` và bằng `lm_tour score` cho cùng T\* ở mọi lượt bốc (lệch 0,0 s).
 
-**Đọc tạm (chưa được kết luận):**
-1. LM-Tour nhanh nhất ở cả 4 ô: hơn CHORD 66–193 s (8–15 %), hơn FC + DTSP-N 160–2406 s.
-2. River là phần làm nên lợi thế so với FC khi kênh hẹp: DTSP-N + River nhanh hơn FC + DTSP-N 150 s ở 1 km, và 2,3 nghìn s ở r ≤ 200 m.
-3. DTSP-N + River có lúc gần bằng LM-Tour (r100 k12: −2 s; open k16: −11 s), có lúc chậm hơn rõ (r500 k16: −147 s).
+**Đọc tạm, sau 5 tác vụ seed 1 (chưa được kết luận):**
+1. LM-Tour nhanh hơn CHORD ở cả 5 ô, 66–193 s (8–15 %). Nó cũng nhanh hơn FC + DTSP-N 160–2406 s.
+2. River là phần làm nên lợi thế so với FC khi kênh hẹp. DTSP-N + River nhanh hơn FC + DTSP-N:
+   - 150 s ở r = 1 km;
+   - 540 s ở r = 500 m;
+   - 1,5–2,3 nghìn s ở r ≤ 200 m.
+3. Giữa LM-Tour và DTSP-N + River chưa phân định:
+   - LM-Tour nhanh hơn rõ ở k16 r500 (147 s) và k16 r200 (109 s);
+   - gần như hoà ở k16 open (−11 s) và k12 r100 (−2 s);
+   - DTSP-N + River nhanh hơn 16 s ở k12 r200.
 4. Mỗi ô mới có một hiện thực mạng. Theo quy tắc N ≥ 120 và "không tin một seed", cần chờ thêm seed trước khi đưa vào paper.

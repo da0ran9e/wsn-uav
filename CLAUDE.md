@@ -1884,6 +1884,12 @@ có kết quả mới chưa
 tôi nghĩ DTSP-N + River có lỗi những cái nào gần xong thì chờ còn lại chưa chạy hoặc vừa chạy của DTSP-N + River thì tạm dừng nhé
 ```
 
+*192. 2026-10-28 · paper · kiểm tra DTSP-N: đường qua các node trong cluster dạng zigzag nên phải bay chậm hơn CHORD đáng kể?*
+
+```text
+trong lúc chờ hãy cùng kiểm tra DTSP-N, theo tôi nghĩ, đường DTSP-N đi qua các node trong một cluster sẽ dạng  zigzag do đó sẽ bay chậm hơn CHORD đáng kể, bạn có thể xem qua xem có đúng không
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

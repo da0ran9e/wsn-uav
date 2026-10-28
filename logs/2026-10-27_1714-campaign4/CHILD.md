@@ -36,6 +36,7 @@ L=logs/2026-10-27_1714-campaign4
 2b. **Kiểm tra hình học** (thêm 08:05 ngày 28/10, mục 203): `CAMP_S=$CAMP_S bash $L/child-geom-check.sh <R>`.
    - Lệnh này so mọi tệp hình học của `CP/<kênh>/R<R>/<bản đồ>` với `geometry-r1.sha256` (seed 1 của phiên chính, đủ 4 kênh). Log được bỏ qua.
    - Ô chưa được job cp dựng thì in `pending`; tệp còn thiếu (job cp đang chạy) được đếm riêng.
+   - Tệp JSON chỉ lệch do làm tròn số thực (`tour.json` mà job cp tự dựng lệch khoảng 1e-12 s) được tính là khớp và đếm riêng ở cột `round-off only` (thêm 09:10, `json_close.py`).
    - Phải in `GEOM OK`. Ô nào có tệp `differ`: dừng các job của ô đó, ghi vào `done-s<R>.txt`, commit, push.
    - Chạy lại sau mỗi job cp xong và trước lần commit cuối.
    - `geometry-r1.tar.xz` từ 08:05 có đủ 4 kênh, `child-setup.sh` cài thêm matplotlib.

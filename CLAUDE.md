@@ -1962,6 +1962,12 @@ trong lúc chờ, hãy gen cho tôi hình vẽ đường bay của các chiến 
 chọn kênh 500 của bản đồ 8k vẽ cho tôi lần lượt 4 hình lại, tách riêng từng hình ra, không cần phân biệt bằng màu đường bay, chọn màu nổi bật dùng chung, màu cluster nhạt hơn một chút,
 ```
 
+*205. 2026-10-28 · quy tắc làm việc · hết hạn mức sử dụng giữa chừng, đã reset; tiếp tục từ chỗ dừng (máy chính khởi động lại, hàng đợi seed 2 mất từ 09:10)*
+
+```text
+I hit my usage limit while you were working, but it has reset now. Please continue from where you left off.
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

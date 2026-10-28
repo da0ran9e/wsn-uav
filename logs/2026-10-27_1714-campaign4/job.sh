@@ -9,7 +9,7 @@
 #   dr   DTSP-N + River: plan, prefly.py, mission, lm_tour score -> score-dr.csv
 # Markers done-cp, done-lmd, done-dr (done from task.sh stands for done-cp and done-lmd).
 # Several sessions share the seeds (item 201): assigned/R<R> names the session (CAMP_ID, main here) that runs seed
-# R; another session's seed exits 3 at once. CAMP_S is the session's scratchpad (binaries in CAMP-BIN5, runs in C4).
+# R (assigned/R<R>-k<K> for one map of it); another session's seed exits 3 at once. CAMP_S is the session's scratchpad (binaries in CAMP-BIN5, runs in C4).
 #   bash job.sh SCH R ENV K
 set -e
 SCH=$1; R=$2; ENV=$3; K=$4
@@ -25,7 +25,8 @@ FLAGS="--clusters $K --seed 1 --bin $BIN --windowKB 400 --windowAt crit --critRi
 CP=$C/CP/$ENV/R$R/k$K-s1
 LMD=$C/LMD/$ENV/R$R/k$K-s1
 DR=$C/DR/$ENV/R$R/k$K-s1
-if [ -e $HERE/assigned/R$R ] && [ "$(cat $HERE/assigned/R$R)" != "${CAMP_ID:-main}" ]; then exit 3; fi
+A=$HERE/assigned/R$R; [ -e $A-k$K ] && A=$A-k$K   # a map of a seed can be handed to another session (assigned/R<R>-k<K>)
+if [ -e $A ] && [ "$(cat $A)" != "${CAMP_ID:-main}" ]; then exit 3; fi
 # the same job already running (a queue restarted around it): leave it to that one
 if pgrep -f "job.sh $SCH $R $ENV $K\$" | grep -vqx -e "$$" -e "$PPID"; then exit 4; fi
 mkdir -p $OUT

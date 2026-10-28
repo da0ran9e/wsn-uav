@@ -60,6 +60,11 @@ Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary T
   - tạm dừng: seed 4 (11/36), 8 (8/36), 9 (8/36), 10 (16/36).
 - Khi năm seed đang chạy xong đủ, tổng đạt 259/360 (72 %). Lúc đó lịch kiểm tra định kỳ sẽ đánh thức nhóm tạm dừng.
 - Seed tạm dừng không mất gì: scratchpad còn nguyên, nên khi chạy lại, job đã có dấu done-* và pass/River đã xong đều được bỏ qua.
+- 19:10: đạt 70 % (252/360). TECHREPORT §3 được cập nhật (mục 208) và seed 4, 8, 9, 10 được đánh thức lại.
+- 19:37: seed 2 xong; máy chính rảnh nên nhận bản đồ k8 của seed 8 và 9:
+  - `assigned/R8-k8` và `assigned/R9-k8` ghi `main`. Trong `job.sh`, phân công theo bản đồ thắng phân công theo seed;
+  - phiên phụ s8, s9 lấy bản `job.sh` mới khi pull, nên các job k8 của chúng thoát với mã 3;
+  - máy chính chạy `camp2.sh 8 9`. Job k16/k12 của hai seed này thoát với mã 3, chỉ job k8 chạy.
 
 ## Cách hiểu "10 seed"
 - Bản đồ cố định: k8-s1, k12-s1, k16-s1, giống `uav-l2/docs/data/results/raw/` và `logs/2026-10-27_1800-lm-dtspn/`.

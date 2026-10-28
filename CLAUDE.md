@@ -1968,6 +1968,12 @@ chọn kênh 500 của bản đồ 8k vẽ cho tôi lần lượt 4 hình lại,
 I hit my usage limit while you were working, but it has reset now. Please continue from where you left off.
 ```
 
+*206. 2026-10-28 · paper · khi đã xong hơn 50 % job thì có thể tạm dừng vài seed đang chậm để dồn sức hoàn thành các seed gần xong, hướng tới mốc 70 % job trước*
+
+```text
+nếu tổng số các job đã hoàn thành chiếm hơn 50% thì có thể tạm dừng một vài seed đang chậm để cố gắng hoàn thành nốt các seed đang gần xong, tiến đến mốc 70% job trước
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

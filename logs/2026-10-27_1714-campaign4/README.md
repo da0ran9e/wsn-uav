@@ -17,6 +17,20 @@ Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary T
 - Lượt cũ để ở `C4/DR-old`; dòng DR trong `score-ns3.csv` của 5 tác vụ đầu là bản cũ và bị `table.py` bỏ qua.
 - Bản sửa có dấu riêng `done-dr` và kết quả `score-dr.csv`. Các tác vụ đã có `done` chỉ chạy thêm phần DTSP-N + River.
 
+**Hàng đợi job (mục 199, từ 2026-10-28 07:45):**
+- Đo trên seed 1: River tốn khoảng 19 giờ-lõi mỗi seed (CHORD 7,9; LM-Tour 6,9; DTSP-N + River 4,2). Các bước Python (lập kế hoạch, chấm điểm) thêm khoảng 2 giờ-lõi.
+- Máy có 4 lõi, nên nếu xếp kín thì mỗi seed chỉ cần khoảng 5–6 giờ. Cách chạy cũ mất khoảng 10 giờ:
+  - `task.sh` chạy ba phương án của một ô nối tiếp nhau, mỗi mission `--jobs 2`;
+  - trong các bước Python và ở đuôi mỗi mission, nửa số lõi đứng không.
+- `camp2.sh FIRST LAST` + `job.sh SCH R ENV K`:
+  - mỗi (phương án, seed, kênh, bản đồ) là một job, mission chạy `--jobs 1`;
+  - bốn job chạy cùng lúc, trộn seed và phương án;
+  - trước hàng đợi, hình học CHORD của mọi seed R > 1 được chép từ seed 1 (kèm `runseed.txt`), nên LM-Tour và DTSP-N + River không phải chờ mission CHORD.
+- Dấu xong: `done-cp`, `done-lmd`, `done-dr`. Dấu `done` của `task.sh` được hiểu là `done-cp` + `done-lmd`.
+- Điểm số: `score-cp.csv`, `score-lmd.csv`, `score-dr.csv`.
+- `mission.py` giờ chỉ ghi `env.txt`, `runseed.txt`, `plan-opts.json` khi tệp chưa có hoặc khác nội dung. Lý do: LM-Tour và DTSP-N + River đọc các tệp này của thư mục CHORD qua symlink trong lúc CHORD đang chạy.
+- Khởi động lại: `setsid nohup bash camp2.sh 2 10 &`.
+
 ## Cách hiểu "10 seed"
 - Bản đồ cố định: k8-s1, k12-s1, k16-s1, giống `uav-l2/docs/data/results/raw/` và `logs/2026-10-27_1800-lm-dtspn/`.
 - Seed mô phỏng R = 1…10 (`mission.py --runSeed R`, ghi `runseed.txt` trong thư mục chạy). R thay đổi:

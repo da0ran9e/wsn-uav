@@ -34,21 +34,26 @@ T975 = {1: 12.71, 2: 4.30, 3: 3.18, 4: 2.78, 5: 2.57, 6: 2.45, 7: 2.36, 8: 2.31,
 def load():
     """{(scheme, env, K, R): {draw: (T*, team 1)}}, and the largest |T*| gap between l1_rank's and lm_tour's CHORD."""
     out, gap = {}, 0.0
-    for d in sorted(glob.glob(f"{HERE}/score/R*/*-k*/done")):
-        m = re.search(r"/R(\d+)/(\w+)-k(\d+)/done$", d)
-        R, env, K, d = int(m[1]), m[2], int(m[3]), os.path.dirname(d)
-        for r in csv.DictReader(open(f"{d}/score-ns3.csv")):
-            s = next(s for s in ("LMD", "CP", "DR") if f"/{s}/" in r["work"])
-            if s != "DR":   # DR rows here are the pass before item 193 (C4/DR-old); the fixed one is in score-dr.csv
+    for d in sorted(glob.glob(f"{HERE}/score/R*/*-k*")):
+        m = re.search(r"/R(\d+)/(\w+)-k(\d+)$", d)
+        R, env, K = int(m[1]), m[2], int(m[3])
+        has = lambda x: os.path.exists(f"{d}/{x}")
+        files = []   # (scheme, file): task.sh wrote CP and LMD to score-ns3.csv (marker done); job.sh one file each
+        if has("done"):
+            files += [(None, "score-ns3.csv")]
+        files += [(s, f"score-{s.lower()}.csv") for s in ("CP", "LMD", "DR") if has(f"done-{s.lower()}")]
+        for want, f in files:
+            for r in csv.DictReader(open(f"{d}/{f}")):
+                s = next(s for s in ("LMD", "CP", "DR") if f"/{s}/" in r["work"])
+                if want is None and s == "DR":   # the pass before item 193 (C4/DR-old); the fixed one is in score-dr.csv
+                    continue
                 out.setdefault((s, env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"]))
-        if os.path.exists(f"{d}/done-dr"):
-            for r in csv.DictReader(open(f"{d}/score-dr.csv")):
-                out.setdefault(("DR", env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"]))
-        for r in csv.DictReader(open(f"{d}/l1-draws.csv")):
-            out.setdefault((L1[r["method"]], env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"] or 0))
-        a, b = out[("CP", env, K, R)], out[("CPl1", env, K, R)]
-        assert a.keys() == b.keys(), (env, K, R)
-        gap = max(gap, max(abs(a[x][0] - b[x][0]) for x in a))
+        if has("done") or has("done-cp"):
+            for r in csv.DictReader(open(f"{d}/l1-draws.csv")):
+                out.setdefault((L1[r["method"]], env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"] or 0))
+            a, b = out[("CP", env, K, R)], out[("CPl1", env, K, R)]
+            assert a.keys() == b.keys(), (env, K, R)
+            gap = max(gap, max(abs(a[x][0] - b[x][0]) for x in a))
     return out, gap
 
 
@@ -178,9 +183,9 @@ def main():
                       + f" | {diff('DR', 'DN', env, K, Rs)} |")
     print("\n".join(dl))
     if a.results:
-        done = len(glob.glob(f"{HERE}/score/R*/*-k*/done"))
+        done = len({(s, e, K, R) for s, e, K, R in X if s in ("CP", "LMD", "DR")})   # ns-3 jobs of 360
         when = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-        block = (f"<!-- campaign4:begin (table.py --results) -->\nCập nhật {when}: {done}/120 tác vụ xong "
+        block = (f"<!-- campaign4:begin (table.py --results) -->\nCập nhật {when}: {done}/360 job ns-3 xong (3 phương án × 120 ô) "
                  f"({len(seeds)}/12 ô có ít nhất một seed).\n\n" + "\n".join(gl) + "\n\nChênh ghép cặp (s; âm là phương án "
                  "đầu nhanh hơn; ± nửa khoảng tin cậy 95 % theo trung bình từng seed, khi đã có từ 2 seed). Ngoặc là % lượt "
                  "bốc phương án đầu nhanh hơn hẳn, các lượt còn lại phần lớn là hoà.\n\n" + "\n".join(dl)

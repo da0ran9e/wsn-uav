@@ -1926,6 +1926,12 @@ tiến độ đến đâu rồi
 có thể cho chạy nhiều seed cùng lúc không
 ```
 
+*199. 2026-10-28 · paper · tính toán hiệu năng, cho chạy nhiều seed và nhiều thuật toán cùng lúc*
+
+```text
+tính toán hiệu năng và cho chạy nhiều seed nhiều algorithm cùng lúc
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

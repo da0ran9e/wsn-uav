@@ -381,15 +381,18 @@ def stage_runs(a, W_, K):
     env = getattr(a, "env", "open")
     if os.path.exists(f"{W_}/env.txt") and open(f"{W_}/env.txt").read().strip() != env:
         sys.exit(f"{W_} was flown with --env {open(f'{W_}/env.txt').read().strip()}, not {env}")
-    open(f"{W_}/env.txt", "w").write(env + "\n")
+    if not os.path.exists(f"{W_}/env.txt"):   # written once: LM-Tour and DTSP-N + River runs read it via symlinks
+        open(f"{W_}/env.txt", "w").write(env + "\n")
     rs = getattr(a, "runSeed", 1)
     ran = os.path.exists(f"{W_}/runseed.txt") or os.path.exists(f"{W_}/pass1-bits-r1.bin")   # flown before
     if ran and runseed(W_) != rs:
         sys.exit(f"{W_} was run with --runSeed {runseed(W_)}, not {rs}")
-    if rs != 1:
+    if rs != 1 and not ran:
         open(f"{W_}/runseed.txt", "w").write(f"{rs}\n")
-    if getattr(a, "axeNear", False):   # read back by mission_report.load_map, so the analysis plans as River did
-        json.dump(dict(axeNear=True, lossDb=ENV_LOSS[env]), open(f"{W_}/plan-opts.json", "w"))
+    po = dict(axeNear=True, lossDb=ENV_LOSS[env])
+    if getattr(a, "axeNear", False) and (not os.path.exists(f"{W_}/plan-opts.json")
+                                        or json.load(open(f"{W_}/plan-opts.json")) != po):
+        json.dump(po, open(f"{W_}/plan-opts.json", "w"))   # read back by mission_report.load_map (River's plan)
     opts = json.load(open(f"{W_}/plan-opts.json")) if os.path.exists(f"{W_}/plan-opts.json") else {}
     passenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/pass-lib")
     rivenv = dict(os.environ, LD_LIBRARY_PATH=f"{a.bin}/lib")

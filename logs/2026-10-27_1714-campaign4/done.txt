@@ -98,3 +98,8 @@ the R2-R7 lines above failed at once (2026-10-28_05:18:15): mission.py refused a
 restart seeds 2-10 2026-10-28_05:18:29 (R1 r500 k8 still running on its own)
 R1 r500 k8 exit 0 2026-10-28_05:24:03
 restart after reboot 2026-10-28_05:31:33
+switched to the job queue camp2.sh (4 jobs, --jobs 1, seeds and schemes mixed) 2026-10-28_07:37:44; R2 k16 r100/r200 DR stopped mid-River (5/15, 10/15 clusters kept)
+R2 r200 k16 lmd exit 0 2026-10-28_07:38:12
+R2 r100 k16 lmd exit 0 2026-10-28_07:38:12
+R2 r100 k16 cp exit 0 2026-10-28_07:38:12
+R2 r200 k16 cp exit 0 2026-10-28_07:38:12

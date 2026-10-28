@@ -3,7 +3,7 @@
 
 ## Cập nhật 2026-10-28 · chiến dịch bốn phương án (CLAUDE.md §8 mục 188–196)
 
-**Đang chạy** trên container cloud: `logs/2026-10-27_1714-campaign4/camp.sh 2 10`.
+**Đang chạy** trên container cloud: `logs/2026-10-27_1714-campaign4/camp2.sh 2 10`. Đây là hàng đợi job (mục 199): bốn job `job.sh SCH R ENV K` chạy cùng lúc, mỗi job `--jobs 1`; thay cho `camp.sh` + `task.sh` từ 07:45 ngày 28/10.
 - Khung: 10 seed × 3 bản đồ (k8-s1, k12-s1, k16-s1) × 4 kênh.
 - Mỗi tác vụ (`task.sh R ENV K`) chạy: CHORD thường + River, LM-Tour (`--dtspn --weight cl --wmin 1`) + River, DTSP-N + River (đã sửa), FC + DTSP-N, B1, B7.
 - Seed 1 đã xong cả 12 ô.
@@ -22,7 +22,7 @@
 **Bẫy vận hành:**
 - Container bị thu hồi hoặc khởi động lại khi phiên rảnh. Cách xử lý:
   - luôn giữ một `Bash run_in_background` chờ `done.txt` có dòng mới (timeout 2 giờ);
-  - khi máy khởi động lại thì chạy lại `setsid nohup bash camp.sh <seed đầu> 10 &` trong thư mục log. Tác vụ có `done` và `done-dr` được bỏ qua; pass và River đã xong cũng được bỏ qua.
+  - khi máy khởi động lại thì chạy lại `setsid nohup bash camp2.sh 2 10 &` trong thư mục log. Job có dấu `done-*` được bỏ qua; pass và River đã xong cũng được bỏ qua.
 - Máy mới cần `pip install scikit-learn`.
 - Lỗi đã sửa: k16 có 15 cụm (`prefly.py` đọc `map.json`), và bước kiểm tra seed của `mission.py` từng từ chối thư mục seed mới.
 - Thời gian: mỗi seed khoảng 10 giờ trên 4 lõi.

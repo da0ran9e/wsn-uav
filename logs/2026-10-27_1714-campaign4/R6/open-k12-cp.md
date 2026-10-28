@@ -1,6 +1,6 @@
 # open-k12-cp
 
-- Bắt đầu: 2026-10-28 14:56:39, chạy 0 s, mã thoát 0
+- Bắt đầu: 2026-10-28 17:35:20, chạy 0 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**

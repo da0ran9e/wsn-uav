@@ -9,3 +9,8 @@ s10: geometry-r1.tar.xz has only CP/open (r100/r200/r500 R1 dirs empty) -> lmd/d
 note s10 2026-10-28_08:12:54: geom check (R10/geom-s10.md): r100/r200 k16 (self-built by cp at 07:57) differ from seed 1 only in tour.json, max |diff| 7.3e-12 over 32 floats (round-off; structure and every non-float value equal), same as s7/s9. NOT killed: far below the T* tolerance 0.05 s; tell me if you still want them rerun. Re-extracted geometry-r1 (4 channels); copied seed-1 geometry into the 7 not-yet-started cells (r500 k16, r* k12, r* k8), which now match byte for byte.
 R10 r100 k16 dr exit 0 2026-10-28_09:00:53
 R10 r200 k16 cp exit 0 2026-10-28_09:09:19
+R10 r100 k16 lmd exit 0 2026-10-28_09:14:20
+restart 2026-10-28_12:47:12 (reboot; camp2.sh)
+R10 r100 k16 lmd exit 0 2026-10-28_12:47:14
+R10 r100 k16 dr exit 0 2026-10-28_12:47:14
+R10 r200 k16 cp exit 0 2026-10-28_12:47:14

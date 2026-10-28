@@ -1,10 +1,10 @@
 # Thực nghiệm, baseline và kết quả
 
-- **Phiên bản:** 2026-10-26. Lời gốc: CLAUDE.md §8 (mục 1–8 kênh, 48–55 River, 68–73 nhiệm vụ, 120–169 lớp 2 và baseline, 182 bảng chung, 183 tài liệu này).
+- **Phiên bản:** 2026-10-29. Lời gốc: CLAUDE.md §8 (mục 1–8 kênh, 48–55 River, 68–73 nhiệm vụ, 120–169 lớp 2 và baseline, 182 bảng chung, 183 tài liệu này, 187–188 khung evaluation mới và chiến dịch 4).
 - **Bảng số gốc và seed:** `uav-l2/docs/RESULTS-vi.md`. Tài liệu này mô tả phương pháp và tổng hợp; khi số lệch nhau, `RESULTS-vi.md` và các log là nguồn đúng.
-- **Tài liệu đi kèm:** `paper/SUMMARY-vi.md` (tổng hợp), `paper/LMTOUR-vi.md` (LM-Tour).
+- **Tài liệu đi kèm:** `paper/TECHREPORT-vi.md` (báo cáo kỹ thuật của chiến dịch 4), `paper/LMTOUR-vi.md` (LM-Tour), `paper/SUMMARY-vi.md` (tổng hợp).
 
-> **Nhãn số liệu.** Mọi số ở đây là **số thăm dò**. Bảng chính (§5) dùng một bản đồ cho mỗi cỡ mạng, một lượt ns-3 cho mỗi cụm, và 100 lượt bốc lớp 1. Quy tắc của dự án: N ≥ 120 mới được công bố (CLAUDE.md §6). Chiến dịch nhiều bản đồ (mục 165) chưa chạy.
+> **Nhãn số liệu.** Mọi số ở đây là **số thăm dò**. Bảng chính (§5, chiến dịch 4) dùng 3 bản đồ cố định × 4 kênh × tối đa 10 seed mô phỏng × 100 lượt bốc lớp 1; lúc cập nhật mới xong khoảng 55 % seed. Quy tắc của dự án: N ≥ 120 mới được công bố (CLAUDE.md §6).
 
 ---
 
@@ -20,6 +20,7 @@
 | `pass-bin` (v3) | lượt bay của đội 1 theo hồ sơ vận tốc, suy hao thêm `--lossDb`, bitmap gói nhận của mọi node | `6f70076266e4a657` |
 | `river-bin` | River, kéo trực tiếp, Trickle; `--repair` | `2e636b6dcacf9bd5` |
 
+- **Chiến dịch 4** dùng bộ binary dựng lại từ mã hiện tại, đóng băng tại `CAMP-BIN5` (deploy 508c170d8d7af589, pass 4bb3832ed668ac76, river 60a32c1245fd473c), kiểm chứng giống từng byte với bản lưu trữ trên r500-k8 (`logs/2026-10-27_1714-campaign4/validate-r500-k8.md`).
 - **Python** (`uav-l2/tools/`): bản đồ, chia cụm, đường bay, tour, mô hình lớp 1, toàn bộ nhiệm vụ, các baseline mức mô hình, bảng, hình.
 
 ### 1.2 Mạng mặt đất
@@ -70,36 +71,41 @@ Chi tiết: `paper/L1-MODEL-vi.md`.
 ### 1.6 Thiết kế và chỉ số
 - **Ghép cặp:** mọi phương án trên cùng bản đồ và cùng kênh dùng cùng bitmap ns-3 (mission index 100000·K + 100·seed + k), cùng realisation thu gói mã fountain (khoá theo bản đồ và kênh), cùng 100 lượt bốc lớp 1 (khoá theo bản đồ, lượt, cell).
 - **Chỉ số chính:** **T\***, thời điểm đội 2 xác minh xong c\*. Phụ: phân vị 90 của T\*, hạng của c\* trong thứ tự thăm, T_all (thăm hết và về BS), thời gian bay của đội 1, thời điểm critical cell sẵn sàng, số lượt truyền mặt đất.
-- **Thống kê:** trung bình ± nửa khoảng tin cậy 95 % theo lượt bốc; chênh ghép cặp so với CHORD và tỉ lệ lượt bốc CHORD nhanh hơn.
+- **Seed mô phỏng (chiến dịch 4):** R = 1…10 (`mission.py --runSeed R`). R dời chỉ số mission ns-3 thêm 10⁷·(R − 1) (fading pass, che khuất và fading G2G, MAC), có khoá hiện thực hoá phía Python và khối 100 lượt bốc lớp 1 riêng. Seed 1 giữ đúng các khoá cũ.
+- **Thống kê:** trung bình theo lượt bốc; ở chiến dịch 4, mỗi ô chỉ gộp các seed mà mọi phương án đã xong, và khoảng tin cậy 95 % tính theo trung bình từng seed (Student t), vì 100 lượt bốc của một seed dùng chung một hiện thực mạng.
 
 ---
 
-## 2. Phương án đề xuất: CHORD (P\*)
+## 2. Hai phương án đề xuất: CHORD + River và LM-Tour + River
 
 ### 2.1 Thành phần
 
 | Lớp | Lựa chọn | Cờ |
 |---|---|---|
-| Lớp 2: đường bay | Mỗi cụm một đường thẳng qua CH (dây cung). Hướng và thứ tự cụm chọn chung theo độ trễ (CHORD-T, CLUE 80 %). Nối Dubins. Giảm tốc hoặc lượn để mỗi cụm nhận đủ một bản bộ manh mối | `--chordTour 0.6,0.8 --kinPass` |
+| Lớp 2: đường bay, đề xuất 1 | **CHORD:** mỗi cụm một dây cung dài nhất qua CH, hướng chọn riêng từng cụm; thứ tự cụm theo độ trễ (Σ n_k·leave_k), nối Dubins; giảm tốc hoặc lượn để mỗi cụm nhận đủ một bản bộ manh mối | `--kinPass` |
+| Lớp 2: đường bay, đề xuất 2 | **LM-Tour:** tour DTSP-N qua đĩa B(CH, ξ) (hướng qua CH, chiều và thứ tự chọn cùng lúc, chi phí chặng = thời gian giao đủ), rồi uốn về critical cell trọng số cao theo J_k tới khi bão hoà | `lm_tour.py plan --dtspn --weight cl --wmin 1 --xi auto` |
 | Mã | Bộ manh mối mã fountain dạng hệ thống, phát suốt chuyến bay | `-fcd` |
 | Lớp 3: River | Cửa sổ 400 kB theo từng critical cell, Axe gồm cả gói phát sát mép cụm, Circle chuẩn bị sẵn, sửa gói thiếu sau 20 s | `--windowKB 400 --windowAt crit --axeNear --riverRepair 20` |
 | Phản hồi | Báo hai lần: tự giải mã + gom trong cell, rồi River; mỗi báo cáo cộng dồn mọi thứ cell đã có | `P+prog` |
 | Pha 2 | Cất cánh lúc 0, đón đầu, ngưỡng β = 1/4, đổi hướng giữa đường | `-zero -stage -puq -redir` |
 
-Tên phương pháp trong `l1_rank`: `P+prog-kin-puq-stage-zero-redir-kt-fcd`.
+Tên phương pháp trong `l1_rank` (CHORD): `P+prog-kin-puq-stage-zero-redir-kt-fcd`. LM-Tour chấm bằng `lm_tour.py score`, cùng đường mã (trùng `l1_rank` từng lượt bốc với CHORD).
 
 ### 2.2 Mã giả
 
+Mã giả đầy đủ của LM-Tour (LM-PASS, EVAL, J_k): `paper/LMTOUR-vi.md` §4–5.
+
 ```text
-Algorithm CHORD-T  (BS, before take-off)
-Input: clusters with CH and critical cells (n_k), BS, ρ = 255 m, clue-set length L_Q = QΔ ≈ 2.02 km
- 1: for each cluster k:
- 2:     for each bearing θ ∈ {0°, 2°, …, 178°}: ℓ_k(θ) ← length of the line through CH_k at θ inside k
- 3:     Cand_k ← {θ : ℓ_k(θ) ≥ 0.6 · max ℓ_k and ℓ_k(θ) ≥ 0.8 · L_Q}         ▷ FRAC 0.6, CLUE 80 %
- 4:     each θ ∈ Cand_k gives a leg (entry → CH → exit) in two directions; its time = ℓ/v + delivery fix
- 5: choose one leg and direction per cluster and the visiting order minimising Σ_k n_k · leave_k
-        (Held-Karp over (cluster, bearing, direction) for ≤ 13 clusters, else heuristic + DP; Dubins links)
- 6: for each cluster in order: SPEEDFIT(leg)
+Algorithm CHORD  (BS, before take-off)
+ 1: for each cluster k: b_k ← bearing of the longest line through CH_k inside cluster k; γ_k ← that chord
+ 2: order, directions ← argmin Σ_k n_k · leave_k     ▷ Held-Karp ≤ 12 clusters, heuristic beyond; Dubins links
+ 3: for each cluster in order: SPEEDFIT(γ_k)
+
+Algorithm LM-TOUR  (BS, before take-off; short form)
+ 1: per cluster k and bearing b (every 30°): line through CH_k; cost = time after SPEEDFIT
+ 2: legs, directions, order ← argmin Σ_k W_k · leave_k    ▷ DTSP-N through B(CH_k, ξ), Held-Karp, Dubins
+ 3: per cluster: bend the leg into B(c, ξ) of the critical cell c (weight ≥ wmin, CH pinned, crossing once)
+    that lowers J_k most, until no bend lowers J_k; J_k uses the River predictor (LMTOUR-vi.md §3)
 
 Algorithm SPEEDFIT(leg)                                   ▷ pass_speed.fit
  1: if the packets sent over cluster cells at 50 m/s ≥ Q: fly at 50 m/s
@@ -138,8 +144,9 @@ Algorithm TEAM2  (BS, from t = 0)                         ▷ -zero -stage -puq 
 
 | Tên | Thay gì so với CHORD | Cô lập điều gì | Mức |
 |---|---|---|---|
+| **DTSP-N + River** | Mỗi cụm một đường zigzag đi vào đĩa B(c, ξ) của mọi critical cell, cắt cụm một lần; hướng, chiều và thứ tự cụm chọn chung; River như CHORD | River so với FC + DTSP-N; chọn landmark so với bay sát mọi cell | ns-3 (mục 187) |
 | **FC** | Đội 1 bay TSP qua chính các critical cell, lượn ở 25 m/s (bán kính 64 m) tới khi đủ gói mã; không River, chỉ gom trong cell | đường bay qua landmark thay cho River | mô hình thu + gom (mục 166) |
-| **DN** | Như FC, nhưng gom critical cell gần nhau thành nhóm, bay quỹ đạo tròn quanh nhóm theo DTSP-N | DTSP-N thay cho River | như FC (mục 168) |
+| **DN (FC + DTSP-N)** | Như FC, nhưng gom critical cell gần nhau thành nhóm, bay quỹ đạo tròn quanh nhóm theo DTSP-N | DTSP-N thay cho River | như FC (mục 168) |
 | **Pd** | Kéo trực tiếp thay River: mỗi critical cell hỏi thẳng từng cell Axe | tổ chức River (Bank, Circle) | ns-3 |
 | **B4** | Không hợp tác mặt đất: chỉ báo phần cell tự giải mã được | giá trị của hợp tác | ns-3 lượt bay + mô hình thu |
 | **B1** | Không pha 1: đội 2 thăm mọi critical cell theo TSP với tệp lớn | giá trị của cả pha 1 | mô hình |
@@ -152,7 +159,13 @@ Algorithm TEAM2  (BS, from t = 0)                         ▷ -zero -stage -puq 
 | k-medoids | Đường dài nhất qua CH, chọn riêng từng cụm | phần lợi của CHORD-T | ns-3 |
 | subCH-K, MEANDER-K, SWATH-K | Cách chia cụm khác (lớp 2), cùng số cụm K | tái cấu trúc cụm | ns-3 |
 
-Bảng chính (§5) gồm CHORD, FC, DN, Pd, B4, B1, B7 (mục 181–182). Các phương án còn lại chạy ở các vòng trước, với phiên bản pipeline cũ hơn (§4).
+**Khung evaluation hiện tại (chiến dịch 4, mục 187–188, bảng §5):** Rotary TSP (B1, cận trên), FC + DTSP-N, DTSP-N + River, CHORD + River, LM-Tour + River.
+- (a) Hai đề xuất so với FC + DTSP-N: lợi ích của cả lớp 2 + 3.
+- (b) DTSP-N + River so với FC + DTSP-N: lợi ích riêng của River.
+- (c) LM-Tour so với CHORD và DTSP-N + River: chọn đúng landmark quan trọng hơn bay sát mọi cell.
+- (d) Rotary TSP: giá trị của cả pha 1.
+
+Bảng của vòng trước (§6, E8) gồm CHORD, FC, DN, Pd, B4, B1, B7 (mục 181–182). Các phương án còn lại chạy ở các vòng trước nữa (§4).
 
 ### 3.2 Mã giả các baseline của bảng chính
 
@@ -180,6 +193,16 @@ Algorithm DN  (dn_baseline.py)
         Dubins links (DTSP-N, sequence first)
  6: fly the shortest of the three tours; leave an orbit as soon as every member is served (counting
     what it heard on the way); skip groups already served; report, LoRa and TEAM2 as FC
+
+Algorithm DTSP-N + River  (lm_tour.py plan --dtspnRiver; through_crit)
+ 1: for each cluster k, bearing b ∈ {0°, 30°, …, 150°}, arc radius r ∈ {63.7, 127.5, 255} m:
+ 2:     critical cells of k in their order along b; one waypoint per cell inside B(c, 0.95 ξ),
+        where the polyline through them cuts the corner most; straight entry/exit along b
+ 3:     headings at the waypoints (8 candidates each) by DP for the shortest Dubins chain of radius r
+ 4:     keep passes crossing the cluster once; every critical cell within ξ of the pass
+ 5: legs, directions, order ← argmin Σ_k n_k · leave_k (cost = time after SPEEDFIT); fly; RIVER
+ 6: pass-bin needs the CH on the path: prefly.py adds a receive-only node flagged as CH at the path point
+    nearest the CH and strips its bitmap row (the ns-3 source is unchanged)
 
 Algorithm Pd  (coop2-river --scheme direct)
  1: same flight, coding and REPORT as CHORD
@@ -277,9 +300,18 @@ k8-s1, pass theo hồ sơ vận tốc, chưa mã fountain:
 
 Hợp tác mặt đất chuyển từ "có cũng được" (open, +19 s) sang bắt buộc (r200, r100: không hợp tác chậm hơn 2 262–2 524 s).
 
-### E8. Bảng chính: bảy phương án (25–26/10, mục 166–169, 182) → §5
+### E8. Bảng bảy phương án (25–26/10, mục 166–169, 182) → §6
 
-### E9. LM-Tour (25–26/10, mục 170–180) → `paper/LMTOUR-vi.md`
+### E9. Bộ dự đoán thời gian River (25/10, mục 170–175) → `paper/LMTOUR-vi.md` §3
+812 critical cell (3 bản đồ × 4 kênh). Công thức 3 biến (hops, lackCell, cluLack): MAE 22,8 s, R² 0,60 trên bản đồ chưa thấy; ngang tuyến tính 12 đặc trưng, hơn cây tăng cường (26,1 s). 89 % phương sai nằm giữa các cụm, theo cluLack.
+
+### E10. LM-Tour: DTSP-N qua CH rồi uốn (27/10, mục 187, `logs/2026-10-27_1800-lm-dtspn/`) → `paper/LMTOUR-vi.md`
+k8-s1, ns-3, 100 lượt bốc: nhanh hơn CHORD 38 / 83 / 84 / 90 s (open / r500 / r200 / r100). Mức mô hình: riêng tour DTSP-N cho 19–83 s, bước uốn thêm 7–22 s.
+
+### E11. Chiến dịch 4: năm phương án × 10 seed × 3 bản đồ × 4 kênh (27–29/10, mục 188–205, `logs/2026-10-27_1714-campaign4/`) → §5
+
+### E12. Khảo sát Bậc 3 của bộ dự đoán (28–29/10, `logs/2026-10-28_t3-surrogate/`) → `paper/LMTOUR-vi.md` §3.6
+192 lượt pass + River ns-3 trên các biến thể đường bay của k8. Mô hình cây kiểu LightGBM (đơn điệu) học trên k12, k16 chưa chọn đường tốt hơn công thức 3 biến (regret 44 so với 26 s mỗi cụm); còn cân nhắc khi có thêm dữ liệu, mô hình p90 và học thứ hạng.
 
 **Phiên bản pipeline:**
 
@@ -290,14 +322,53 @@ Hợp tác mặt đất chuyển từ "có cũng được" (open, +19 s) sang b�
 | 25/10 (mục 161) | seed ns-3 theo bản đồ và cụm (`--mapRuns`), binary đóng băng | từ E7 |
 | 25/10 (mục 163) | bốn chế độ kênh, cổng gói sát mép theo kênh | từ E7 |
 | 25/10 (mục 169) | mã fountain cho CHORD (`-fcd`), River `--repair 20` | E8 |
+| 27–28/10 (mục 187–188) | CHORD thường (không `--chordTour`), LM-Tour `--dtspn`, DTSP-N + River; seed mô phỏng `--runSeed`; binary CAMP-BIN5 | E10–E12 |
 
 ---
 
-## 5. Kết quả chính (E8)
+## 5. Kết quả chính: chiến dịch 4 (E11)
+
+3 bản đồ (k8, k12, k16; 8 / 12 / 15 cụm, 45 / 66 / 92 critical cell) × 4 kênh × tối đa 10 seed × 100 lượt bốc lớp 1, ns-3 (CAMP-BIN5). Số chụp 2026-10-28 16:32 UTC, khoảng 55 % seed; số seed mỗi ô: k8 1 / 2 / 3 / 3, k12 3 / 4 / 4 / 7, k16 9 / 7 / 8 / 10 (open / r500 / r200 / r100). Bảng sinh bằng `logs/2026-10-27_1714-campaign4/table.py`; chi tiết và hình: `paper/TECHREPORT-vi.md` §3–4.
+
+### 5.1 T\* trung bình (s), k8 / k12 / k16, xếp theo T\* giảm dần
+
+| Phương án | r = 1 000 m (open) | 500 m | 200 m | 150 m (r100) |
+|---|---|---|---|---|
+| Rotary TSP (B1) | 2926 / 4122 / 5248 | 2941 / 4165 / 5178 | 2884 / 4165 / 5173 | 2884 / 4227 / 5242 |
+| FC + DTSP-N | 708 / 841 / 1067 | 1060 / 1489 / 1877 | 1893 / 2608 / 3689 | 2192 / 3366 / 4523 |
+| DTSP-N + River | 783 / 821 / 1092 | 915 / 1153 / 1452 | 952 / 1300 / 1669 | 1019 / 1374 / 1658 |
+| CHORD + River | 672 / 758 / 946 | 762 / 1054 / 1190 | 826 / 1117 / 1322 | 839 / 1173 / 1335 |
+| **LM-Tour + River** | **633 / 753 / 917** | **692 / 948 / 1164** | **765 / 1009 / 1229** | **779 / 1063 / 1262** |
+
+Ở kênh open, FC + DTSP-N nhanh hơn DTSP-N + River.
+
+### 5.2 Pha 1: thời gian bay đội 1 (s) và độ dài đường bay (km)
+
+| Kênh | FC + DTSP-N | DTSP-N + River | CHORD | LM-Tour |
+|---|---|---|---|---|
+| open | 669 / 913 / 1134 | 1066 / 1553 / 2007 | 784 / 1292 / 1437 | 698 / 1085 / 1394 |
+| r500 | 1320 / 2011 / 2563 | 1066 / 1553 / 2007 | 784 / 1292 / 1437 | 699 / 1085 / 1308 |
+| r200 | 2687 / 4016 / 5567 | 1018 / 1556 / 2085 | 784 / 1292 / 1437 | 697 / 1083 / 1293 |
+| r100 | 3305 / 5078 / 6808 | 1170 / 1589 / 2105 | 784 / 1292 / 1437 | 708 / 1082 / 1291 |
+
+Độ dài (km, k8 / k12 / k16): FC + DTSP-N 30,5–113,1 / 40,9–172,7 / 49,5–251,2 (tăng khi kênh xấu); DTSP-N + River 43,6–51,1 / 65,4–69,1 / 86,2–91,1; CHORD 38,6 / 64,0 / 70,7; LM-Tour 30,8–31,1 / 46,3–46,5 / 56,1–60,5.
+
+Thời điểm sẵn sàng trung bình của critical cell (s từ khi cất cánh, k8 / k12 / k16, r200): DTSP-N + River 570 / 794 / 1072, CHORD 437 / 643 / 777, LM-Tour 374 / 546 / 692.
+
+### 5.3 Đọc kết quả
+1. **LM-Tour + River nhanh nhất ở mọi ô:** so với CHORD 1–10 %, DTSP-N + River 8–26 %, FC + DTSP-N 10–14 % ở open, 35–38 % ở r500, 60–72 % ở r200 và r100; nhanh hơn Rotary TSP 3,7–5,7 lần.
+2. **River là cơ chế cho kênh xấu.** DTSP-N + River so với FC + DTSP-N: −14 đến −23 % ở r500, −50 đến −63 % ở r200 và r100; ở open thì ngang hoặc chậm hơn, vì cell tự giải mã được trước khi River cần tới.
+3. **Chọn đúng landmark quan trọng hơn bay sát mọi cell.** DTSP-N + River vào đĩa của mọi critical cell nhưng bay khoảng 62 s mỗi cụm thay vì 40 s; LM-Tour đưa ít cell vào đĩa nhất mà nhanh nhất (TECHREPORT §3.4).
+4. **Tour quyết định phần lớn chênh lệch giữa hai đề xuất:** đường bay LM-Tour ngắn hơn CHORD 14–28 %, thời gian đội 1 ngắn hơn 3–16 %.
+5. **Seed 1 không đại diện:** ở k16, chênh LM-Tour − CHORD của seed 1 lớn gấp 2–3 lần các seed khác. Chỉ chốt số khi đủ 10 seed.
+
+## 6. Kết quả vòng trước: bảy phương án (E8)
+
+Pipeline của vòng 25–26/10 (CHORD-T, một seed). Giữ lại vì các so sánh River với kéo trực tiếp, mã fountain và hợp tác mặt đất (B4) chưa chạy lại trong chiến dịch 4.
 
 3 bản đồ × 4 kênh × 100 lượt bốc lớp 1. Nguồn: `uav-l2/docs/data/results/baselines.{md,csv}`, `chord-fc.csv`; log `logs/2026-10-25_0600-fc-baseline/`, `logs/2026-10-25_0800-chord-win/`, `logs/2026-10-26_0900-baselines/`.
 
-### 5.1 T\* trung bình ± 95 % (s)
+### 6.1 T\* trung bình ± 95 % (s)
 
 | kênh | bản đồ | CHORD | FC | DN | Pd | B4 | B1 | B7 |
 |---|---|---|---|---|---|---|---|---|
@@ -316,7 +387,7 @@ Hợp tác mặt đất chuyển từ "có cũng được" (open, +19 s) sang b�
 
 In đậm: phương án làm được nhanh nhất (không tính oracle B7); ô không in đậm là hoà trong nhiễu. B1, B7 không dùng kênh của đội 1.
 
-### 5.2 Chênh ghép cặp so với CHORD (phương án − CHORD, s; ngoặc: % lượt bốc CHORD nhanh hơn)
+### 6.2 Chênh ghép cặp so với CHORD (phương án − CHORD, s; ngoặc: % lượt bốc CHORD nhanh hơn)
 
 | kênh | bản đồ | FC | DN | Pd | B4 | B1 |
 |---|---|---|---|---|---|---|
@@ -335,7 +406,7 @@ In đậm: phương án làm được nhanh nhất (không tính oracle B7); ô 
 
 B7 − CHORD: −283 … −810 s (cận dưới, 0 % lượt bốc CHORD nhanh hơn).
 
-### 5.3 Đội 1 và thời điểm sẵn sàng
+### 6.3 Đội 1 và thời điểm sẵn sàng
 
 | kênh | bản đồ | đội 1 bay CHORD / FC / DN (s) | sẵn sàng TB / max CHORD (s) | FC | DN | FC: ghé / vòng lượn | DN: ghé / vòng lượn (nhóm, bán kính) |
 |---|---|---|---|---|---|---|---|
@@ -356,7 +427,7 @@ B7 − CHORD: −283 … −810 s (cận dưới, 0 % lượt bốc CHORD nhanh 
 
 **Số critical cell tự giải đủ 12 manh mối từ lượt bay của CHORD** (không River): open 45/45, 66/66, 92/92; r500 29/45, 42/66, 61/92; r200 0/45, 0/66, 1/92; r100 0/45, 0/66, 0/92.
 
-### 5.4 River so với kéo trực tiếp ở mức cell (ns-3)
+### 6.4 River so với kéo trực tiếp ở mức cell (ns-3)
 *xong*: giây từ lúc đội 1 rời cụm tới lúc CL giữ đủ cửa sổ. *lượt truyền*: tổng số lượt chuyển gói một chặng.
 
 | kênh | bản đồ | cell | xong TB River / kéo (s) | xong max (s) | kẹt | cell kéo nhanh hơn | lượt truyền (nghìn) | MAC lỗi (nghìn) |
@@ -374,7 +445,7 @@ B7 − CHORD: −283 … −810 s (cận dưới, 0 % lượt bốc CHORD nhanh 
 | r100 | k12 | 66 | 96 / 95 | 183 / 184 | 0 / 0 | 34/66 | 4736 / 3795 | 222 / 145 |
 | r100 | k16 | 92 | 115 / 105 | 225 / 197 | 0 / 6 | 56/86 | 7114 / 5801 | 334 / 227 |
 
-### 5.5 Đóng góp của mã fountain và của sửa River (mục 169)
+### 6.5 Đóng góp của mã fountain và của sửa River (mục 169)
 T\* trung bình (s), theo `RESULTS-vi.md` §2.2:
 
 | | k8 open | k12 open | k16 open | k8 r500 | k16 r500 | k16 r100 |
@@ -386,7 +457,7 @@ T\* trung bình (s), theo `RESULTS-vi.md` §2.2:
 - Sửa River chỉ có tác dụng ở các ô có cell kẹt (k16 open, k16 r100). Hai lỗ hổng: gói thuộc Seg của một cell Axe mà chỉ cell bên cạnh nghe được; và ACK nhầm do số thứ tự 8 bit của 802.15.4.
 - Mã fountain có tác dụng lớn ở open, nhỏ ở r500, gần 0 ở r200 và r100, nơi một cell gần như không tự giải đủ được.
 
-### 5.6 Đọc kết quả
+### 6.6 Đọc kết quả
 1. **CHORD nhanh nhất trong các phương án làm được** ở 12/12 tổ hợp (hoà với Pd). So với baseline tốt hơn trong FC, DN: nhanh hơn 2 / 15 / 9 % ở open, 27 / 32 / 37 % ở r500, 54 / 61 / 66 % ở r200, 60 / 70 / 72 % ở r100 (k8 / k12 / k16). Ngoại lệ gần hoà: k8 open (−13 ± 34 s).
 2. **Khoảng cách tăng khi môi trường khó lên và mạng lớn lên.** Đường bay của CHORD không đổi theo kênh (782 / 1 152 / 1 415 s), vì phần thiếu do mặt đất bù. FC và DN phải lượn nhiều hơn: đội 1 bay gấp 2–6 lần chính nó ở open.
 3. **Hợp tác mặt đất là bắt buộc từ r500.** B4 chậm hơn CHORD 1,8–5,4 lần, và ở r200, r100 chậm hơn cả B1 (không có pha 1).
@@ -394,7 +465,7 @@ T\* trung bình (s), theo `RESULTS-vi.md` §2.2:
 5. **B1 chậm hơn CHORD 3,3–6 lần**, nhưng thắng ở 3–12 % số lượt bốc, khi c\* nằm sớm trong tour TSP của B1.
 6. **Còn cách cận dưới B7 283–810 s:** phần lớn nằm ở pha 2 (đội 2 xác minh các cell sai trước c\*, mỗi lần khoảng 78 s cộng thời gian bay) và độ trễ báo cáo qua LoRa.
 
-### 5.7 Điều được nói và không được nói
+### 6.7 Điều được nói và không được nói
 **Được nói** (kèm nhãn số thăm dò):
 - Một lượt bay qua CH cộng hợp tác mặt đất nhanh hơn rõ các baseline phục vụ trực tiếp bằng UAV (FC, DN, B1), và khoảng cách tăng khi bán kính A2G nhỏ đi và mạng lớn lên.
 - Hợp tác mặt đất là điều kiện cần khi R50 ≤ 500 m.
@@ -409,8 +480,9 @@ T\* trung bình (s), theo `RESULTS-vi.md` §2.2:
 
 ---
 
-## 6. Giới hạn và việc còn mở
-- **Một bản đồ mỗi cỡ.** Chiến dịch 3 cỡ × 4 kênh × 10 bản đồ (mục 165) chưa chạy.
+## 7. Giới hạn và việc còn mở
+- **Một bản đồ mỗi cỡ.** Chiến dịch 4 có 10 seed mô phỏng trên 3 bản đồ cố định, nên phương sai giữa các bản đồ chưa được đo. Chiến dịch 3 cỡ × 4 kênh × 10 bản đồ (mục 165) chưa chạy.
+- **Lớp 1 chưa có tiên nghiệm π không đều**, nên trọng số landmark của LM-Tour chỉ tác động T\* qua việc định hình tour.
 - **FC, DN, B4 dùng mô hình thu giải tích** cho gói mã (cùng mô hình nghe với pass ns-3); gom trong cell bằng công thức khớp trên ns-3 (R² 0,83), không tính tranh kênh khi UAV còn phát gần đó. FC hơi lạc quan.
 - **Mã fountain lý tưởng:** phần dư 5 %, không tính chi phí giải mã.
 - **Kéo trực tiếp chưa có `--repair`.** So sánh ở k16 r100 nghiêng về River.
@@ -420,7 +492,7 @@ T\* trung bình (s), theo `RESULTS-vi.md` §2.2:
 
 ---
 
-## 7. Tái lập
+## 8. Tái lập
 Lệnh đầy đủ và khoá seed: `uav-l2/docs/RESULTS-vi.md` §3–4 và §6.4. Tóm tắt (từ gốc repo, BIN = `scratchpad/CAMP-BIN4`):
 
 ```text
@@ -435,4 +507,6 @@ Pd+prog-kin-puq-stage-zero-redir-kt-fcd,B4-kin-puq-stage-zero-redir-kt-fcd,B1,B7
 python3 uav-l2/tools/cmp_table.py OUT L1-draws.csv
 ```
 
-Dữ liệu 12 thư mục nhiệm vụ: `uav-l2/docs/data/results/raw/<kênh>-<bản đồ>.tar.xz` (20 MB). Giải nén rồi chạy lại lệnh 1: chỉ bitmap pass được dựng lại, giống hệt từng byte.
+**Chiến dịch 4:** một tác vụ (mọi phương án trên một seed, kênh, bản đồ) là `logs/2026-10-27_1714-campaign4/task.sh R ENV K`; hàng đợi job `camp2.sh FIRST LAST` + `job.sh SCH R ENV K`; bảng `table.py --csv uav-l2/docs/data/results/campaign4.csv --tex paper/icc-v5/table-campaign4.tex --results uav-l2/docs/RESULTS-vi.md`.
+
+Dữ liệu 12 thư mục nhiệm vụ của E8: `uav-l2/docs/data/results/raw/<kênh>-<bản đồ>.tar.xz` (20 MB). Giải nén rồi chạy lại lệnh 1: chỉ bitmap pass được dựng lại, giống hệt từng byte.

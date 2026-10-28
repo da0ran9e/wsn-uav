@@ -1,22 +1,27 @@
-# LM-Tour: ý tưởng, thuật toán và phân tích kết quả
+# LM-Tour: ý tưởng, thuật toán, bộ dự đoán và kết quả
 
-- **Phiên bản:** 2026-10-26. Lời gốc: CLAUDE.md §8 mục 170–180, 183.
-- **Nguồn ý tưởng:** bản draft `SigDrop_ICC_draft_v3.pdf`, mục V "Flight design: LM-Tour" và đóng góp 3.
-- **Mã:** `uav-l2/tools/river_surrogate.py` (bước A), `uav-l2/tools/lm_tour.py` (bước C).
-- **Log:** `logs/2026-10-25_1500-lm-tour/`. Dữ liệu: `uav-l2/docs/data/results/river-surrogate*`, `uav-l2/docs/data/results/lm-tour/`.
-- **Tài liệu đi kèm:** `paper/SUMMARY-vi.md` (tổng hợp), `paper/EXPERIMENTS-vi.md` (thực nghiệm và baseline).
+- **Phiên bản:** 2026-10-29. Lời gốc: CLAUDE.md §8 mục 170–175 (bộ dự đoán), 184 (ξ), 187 (thuật toán hiện tại), 188 (chiến dịch 4).
+- **Nguồn ý tưởng:** draft `SigDrop_ICC_draft_v5`, mục V "Flight design: LM-Tour" và Algorithm 3.
+- **Mã:** `uav-l2/tools/river_surrogate.py` (bộ dự đoán), `uav-l2/tools/lm_tour.py` (`plan --dtspn`, `score`).
+- **Log:** `logs/2026-10-27_1800-lm-dtspn/` (k8, mức mô hình và ns-3), `logs/2026-10-27_1714-campaign4/` (chiến dịch 4), `logs/2026-10-28_t3-surrogate/` (khảo sát Bậc 3).
+- **Tài liệu đi kèm:** `paper/TECHREPORT-vi.md` (báo cáo kỹ thuật, §4.2 và §5), `paper/EXPERIMENTS-vi.md` (thực nghiệm).
 
 ---
 
 ## 0. Kết luận trong một đoạn
 
-LM-Tour chọn đường bay của đội 1 bằng một mô hình học dự đoán thời gian River.
-- **Bộ dự đoán (bước A) dùng được.** Một công thức 3 biến dự đoán thời gian River của từng critical cell với sai số tuyệt đối trung bình 22,8 s (R² 0,60) trên bản đồ chưa thấy. Mô hình cây tăng cường không hơn công thức. Biến quyết định là tổng lượng dữ liệu River phải chuyển trong cả cụm, không phải khoảng cách từ cell tới đường bay.
-- **LM-Tour (bước C) không hơn CHORD** trên cluster có sẵn:
-  - bản uốn dây cung qua CH: hơn nhiều nhất 10,7 ± 7,4 s (khoảng 1 %), phần lớn nằm trong nhiễu;
-  - bản tự do, không bắt buộc qua CH (mục 179): chậm hơn tới 63 s, tour đội 1 dài thêm 53–112 s.
-- **Lý do:** uốn đường bay không đổi được tổng lượng River phải chuyển, mà chỉ làm tour dài thêm. Pha 2 chiếm khoảng nửa T\*.
-- **Đề xuất cho paper:** giữ công thức dự đoán River làm công cụ lập kế hoạch. Không trình bày LM-Tour như một cải tiến đã được chứng minh (mục 8).
+LM-Tour chọn đường bay của đội 1 theo hai bước:
+1. dựng một tour **DTSP-N qua đĩa B(CH, ξ)** của mọi cụm, chọn hướng qua mỗi CH, chiều bay và thứ tự cụm cùng lúc;
+2. trong mỗi cụm, **uốn dần đường bay về các critical cell có trọng số cao**, chừng nào hàm mục tiêu J_k còn giảm.
+
+J_k dùng một **bộ dự đoán thời gian River** học trên các lượt ns-3 (MAE 22,8 s trên bản đồ chưa thấy).
+
+Kết quả chiến dịch 4 (khoảng 55 % seed, số thăm dò):
+- nhanh hơn CHORD + River 1–10 %;
+- nhanh hơn DTSP-N + River 8–26 %;
+- nhanh hơn FC + DTSP-N 10–72 %.
+
+Đường bay ngắn hơn CHORD 14–28 %. Phần lớn lợi ích đến từ tour; bước uốn tinh chỉnh thêm 7–22 s.
 
 ---
 
@@ -32,28 +37,9 @@ Mỗi node AI u có trọng số w(u), tổng hợp lý do nên bay sát nó:
 - năng lực tính toán;
 - cỡ cây camera legacy gắn vào nó;
 - tiên nghiệm π_u rằng mục tiêu đã đi qua;
-- **thời gian River tiết kiệm được** khi đường bay đi sát u. Phần này do một **bộ dự đoán học có giám sát** trên các lượt ns-3 cung cấp. Đầu vào: số hop tới đường bay, lượng thiếu dự đoán, số luồng dùng chung, bán kính A2G r.
+- **thời gian River tiết kiệm được** khi đường bay đi sát u. Phần này do một bộ dự đoán học có giám sát trên các lượt ns-3 cung cấp (§3).
 
-A\* là danh sách node AI xếp theo w giảm dần.
-
-### 1.3 Ba bước
-1. **R-net có trọng số.** Duyệt A\*, giữ một node nếu nó cách mọi node đã giữ ít nhất R (khoảng cách đồ thị trên đất). Tập giữ lại K₁ phủ mọi node AI trong bán kính R. Cluster là vùng Voronoi đồ thị của K₁, mọc bằng Dijkstra đa nguồn có giới hạn tải (GROW), với tải là tải River (cỡ cây + lượng thiếu).
-2. **Tour cơ sở.** Tour Dubins (bán kính ρ) từ BS qua đĩa B(u, R/2) của mọi u ∈ K₁ (DTSP-N): thứ tự TSP + 2-opt, lấy mẫu hướng vào ở mỗi đĩa.
-3. **Chèn theo giá trị.** Node v ∈ A\* cách mọi node đã thăm hơn R/2 là ứng viên. Chèn v nghĩa là uốn tour cục bộ vào đĩa của v, tốn thêm ΔL(v). Chèn tham lam theo w(v)/ΔL(v), khi điểm còn vượt ngưỡng θ và tour còn trong sức bền L_max.
-
-**Thay đổi ở draft v5 (mục 184): bán kính đĩa ξ.** Bước 2 và dòng 8 của Thuật toán 3 dùng đĩa B(·, ξ) thay cho B(·, R/2); ngưỡng ứng viên (dòng 6, 11) vẫn là R/2. Theo (5):
-
-$$\xi = \min\bigl(\omega,\ \rho,\ \sqrt{r^2 - h^2}\bigr)$$
-
-- trong ω node nằm trong dải River; ξ ≤ ρ cho phép đường quay tới khoảng 120° tại landmark; trong √(r² − h²) node nghe UAV trực tiếp.
-- Giá trị dùng (ω = 303 m, ρ = 255 m, √(r² − h²) = R50 ngang đã hiệu chỉnh): **255 / 255 / 199 / 99 m** cho r = 1000 / 500 / 200 / 150 m. Quét thêm ξ ∈ {100, 175, 250} m (TODO của draft).
-- Mã: `lm_tour.py plan --xi auto` (hoặc `--xi 175`); mặc định vẫn R/2, nên các kết quả §6 không đổi. Chưa chạy.
-- Bộ khung mục Evaluation cho v5, kèm số LM-Tour **ước lượng**: `paper/icc-v5/`.
-
-**Kiểm tra cửa sổ:** mọi node được thăm phải được phát một bản đủ của truy vấn gần nó, tức đoạn QΔ ≈ 2 km quanh điểm gần nhất phải nằm trong tầm River R_Q (≈ 1 km).
-
-**Chọn R:** các node giữ lại cách nhau ít nhất R, nên |K₁| ≤ 4A/(πR²). Tour qua n điểm trong diện tích A dài nhiều nhất √(2nA) + O(√A) (Few 1955), cộng O(nρ) cho các vòng Dubins. Vậy tour giảm theo 1/R, còn quãng River tăng theo R; R chọn ở điểm cân bằng.
-
+### 1.3 Algorithm 3 của draft
 ```text
 Algorithm 3  LM-TOUR  (draft)
 Input: AI nodes with weights w, land graph G, R, ρ, θ, L_max
@@ -61,10 +47,10 @@ Input: AI nodes with weights w, land graph G, R, ρ, θ, L_max
  2: for all u ∈ A* do
  3:     if d_G(u, K1) ≥ R then K1 ← K1 ∪ {u}
  4: clusters ← GROW(G, K1)                                   ▷ balanced Voronoi regions
- 5: γ ← Dubins TSP-N through discs B(u, R/2), u ∈ K1
+ 5: γ ← Dubins TSP-N through discs B(u, ξ), u ∈ K1
  6: C ← {v ∈ A* \ K1 : d(v, visited) > R/2}
  7: repeat
- 8:     for all v ∈ C do ΔL(v) ← cheapest local re-route of γ into B(v, R/2) passing the window check
+ 8:     for all v ∈ C do ΔL(v) ← cheapest local re-route of γ into B(v, ξ) passing the window check
  9:     v* ← argmax_v w(v)/ΔL(v)
 10:     if w(v*)/ΔL(v*) < θ or |γ| + ΔL(v*) > L_max then break
 11:     insert v*; remove from C all nodes within R/2 of v*
@@ -72,255 +58,234 @@ Input: AI nodes with weights w, land graph G, R, ρ, θ, L_max
 13: return γ, clusters, visited nodes
 ```
 
+### 1.4 Bán kính đĩa ξ (draft v5, công thức (5))
+$$\xi = \min\bigl(\omega,\ \rho,\ \sqrt{r^2 - h^2}\bigr) = \min(303,\ 255,\ R50) \Rightarrow 255 / 255 / 199 / 99\ \text{m}$$
+cho r = 1 000 / 500 / 200 / 150 m.
+- Trong ω, node nằm trong dải River.
+- ξ ≤ ρ để đường còn quay được tại landmark.
+- Trong √(r² − h²) (R50 ngang đã hiệu chỉnh), node nghe UAV trực tiếp.
+
 ---
 
-## 2. Đặt ý tưởng vào giả lập hiện có
+## 2. Đặt ý tưởng vào giả lập
 
-### 2.1 Cái gì cố định, cái gì LM-Tour được đổi
-Cài đặt hiện tại (mục 175, 179) chạy trên đúng các nhiệm vụ CHORD đã có (`scratchpad/FIX/<kênh>/k8-s1`, mục 169). Giữ nguyên:
-- cluster k-medoids có sẵn (≤ 80 cell), CH, critical cell;
-- River (`--repair 20`), mã fountain dạng hệ thống, lớp 1, LoRa, chính sách đội 2;
-- thứ tự tour đội 1 tính như CHORD (độ trễ có trọng số, nối Dubins).
+### 2.1 Cái gì cố định, LM-Tour đổi gì
+- **Cố định** (giống mọi phương án của chiến dịch): cluster k-medoids có sẵn (≤ 80 cell), CH, critical cell; River (`--repair 20`), lớp 1, LoRa, chính sách đội 2.
+- **LM-Tour đổi:** pass qua mỗi cụm, hướng và chiều bay, thứ tự cụm. Đổi pass thì đổi luôn kế hoạch River, phần tự giải mã và các đoạn nối.
+- **Trên cluster có sẵn**, dòng 1–4 của Algorithm 3 rút về: K₁ là tập các CH (node mạnh nhất mỗi cụm), clusters là các cụm có sẵn. Dòng 5 là tour DTSP-N qua các đĩa B(CH, ξ); dòng 6–12 là bước uốn.
 
-LM-Tour chỉ đổi **pass của mỗi cụm**: đoạn bay qua cụm, nên đổi luôn kế hoạch River, phần tự giải mã và các đoạn nối.
-
-Lý do không cài GROW (bước 1, chia cluster): người dùng đã chốt dùng cluster có sẵn làm phương án tổng quát nhất (mục 159). Lớp 2 tái cấu trúc cluster (LANE, MEANDER, SWATH) đã được thử và không thắng (xem `paper/SUMMARY-vi.md` §6).
-
-### 2.2 Hai chế độ
-- **Uốn (mặc định, mục 175).** Trên cluster có sẵn, bước 1–2 rút về chính dây cung CHORD:
-  - CH là node mạnh nhất cụm, nên là node đầu tiên được giữ;
-  - dây cung CHORD là đường qua đĩa của nó.
-
-  Phần riêng của LM-Tour là bước 3: uốn dây cung vào đĩa B(c, R/2) của các critical cell khác, CH vẫn được ghim.
-- **Tự do (`--free`, mục 177–179).** Người dùng chỉ ra rằng draft không bắt buộc đi qua CH, chỉ cần một đường DTSP-N. Ràng buộc thêm: mỗi cụm chỉ một River, tức pass cắt cụm đúng một lần.
-  - R-net trên các critical cell của cụm, xếp theo thời gian River dự đoán trên pass CHORD (lâu nhất trước);
-  - các đường thẳng qua trọng tâm các cell giữ lại, mỗi 30°, uốn vào đĩa của chúng, không ghim gì;
-  - bỏ đường cắt cụm quá một lần (khe hở > 300 m), lấy đường tốt nhất theo J_k;
-  - rồi chèn như chế độ uốn.
+### 2.2 Ràng buộc giao đủ dữ liệu và hệ quả
+- Mỗi cụm phải được phát **một bản sao trọn bộ manh mối** (4 041 gói, 40,4 s) trên chính các cell của nó (`pass_speed.fit`): đường ngắn thì giảm tốc, giảm tới 25 m/s vẫn chưa đủ thì lượn vòng 63,7 m tại CH.
+- **Hệ quả:** một đường ngắn bay chậm tốn **cùng thời gian trong cụm** như một dây cung dài bay nhanh. Đo trên k16 r200: CHORD bay 2,1 km trong cụm ở 48 m/s, LM-Tour 1,6 km ở 38 m/s; cả hai khoảng 40 s mỗi cụm.
+- Vì vậy chi phí của một chặng (dòng 5, dòng 8) phải đo bằng **thời gian sau khi giao đủ**, không bằng độ dài. Uốn thêm ở cụm phải giảm tốc gần như miễn phí.
 
 ### 2.3 Trọng số
-Mọi critical cell có cùng tiên nghiệm và cùng năng lực trong giả lập, và chưa có cây camera legacy. Vì vậy w(v) chỉ còn là **số giây critical cell tiết kiệm được**, đo bằng hàm mục tiêu J_k ở §4. Quy tắc w(v)/ΔL(v) ≥ θ của draft trở thành "chèn nếu J_k giảm" (§4.3).
+- w_c = điểm CL của critical cell c chia cho trung bình trên bản đồ (`--weight cl`); trọng số cụm W_k = Σ_{c ∈ Crit_k} w_c.
+- Ứng viên để uốn phải có w_c ≥ wmin = 1 (từ trung bình trở lên).
+- Trong mô hình lớp 1 hiện tại, c\* không phụ thuộc điểm CL, nên trọng số chỉ ảnh hưởng T\* qua việc định hình tour (mức mô hình, k8 r200: trọng số CL 808 s, trọng số đều 827 s). Khi có tiên nghiệm π_u không đều, trọng số sẽ có tác động trực tiếp.
 
 ---
 
-## 3. Bước A: bộ dự đoán thời gian River
+## 3. Bộ dự đoán thời gian River
 
-### 3.1 Dữ liệu
-- **Nhãn:** doneS của từng critical cell, số giây từ lúc đội 1 rời cụm tới lúc CL giữ đủ cửa sổ dữ liệu của nó (bản sao bộ manh mối gần nó nhất, 4 041 gói).
-- **Nguồn:** 12 thư mục FIX (3 bản đồ k8, k12, k16 × 4 kênh open, r500, r200, r100), River ns-3 `--repair 20`, binary CAMP-BIN4. Tổng 812 critical cell, 0 cell kẹt. doneS trung bình 67,3 s, độ lệch 54,8 s, từ 1,7 tới 311,3 s.
-- **Kế hoạch River tính lại** bằng `river_plan.plan` khớp với `plan{k}.txt` ns-3 đã chạy (lệch tối đa 2 gói ở biên cell).
+### 3.1 Vai trò
+J_k cần biết, **trước khi cất cánh**, River sẽ mất bao lâu để đưa đủ dữ liệu tới từng critical cell khi đường bay là γ. Chạy ns-3 cho mỗi ứng viên là không khả thi (2–4 phút một lượt River, hàng trăm ứng viên), nên BS dùng một mô hình thay thế f: đặc trưng của (cell, đường bay, kênh) → doneS.
 
-### 3.2 Đặc trưng (BS biết hết trước khi cất cánh)
+### 3.2 Dựng bộ dữ liệu
+- **Nhãn:** doneS của từng critical cell, số giây từ lúc đội 1 rời cụm tới lúc CL giữ đủ cửa sổ của nó (bản sao 4 041 gói gần nó nhất), đo bằng River ns-3.
+- **Nguồn:** 3 bản đồ (k8, k12, k16) × 4 kênh, River ns-3 `--repair 20`. 812 critical cell, 0 cell kẹt. doneS trung bình 67,3 s, độ lệch 54,8 s, từ 1,7 tới 311,3 s.
+- **Quy trình** (`river_surrogate.dataset`):
+  1. nạp hình học từng cụm;
+  2. tính lại kế hoạch River bằng `river_plan.plan`, đúng tham số đã dùng cho ns-3;
+  3. `check_plan`: đối chiếu từng dòng AXE / CRIT / NEED với `plan{k}.txt` của ns-3 (lệch tối đa 2 gói ở biên cell);
+  4. tính đặc trưng từ đường bay và mô hình nghe của kênh, ghép với nhãn;
+  5. ghi `uav-l2/docs/data/results/river-surrogate.csv`, mỗi dòng một critical cell.
+- Lượng thiếu dự đoán khớp ns-3 gần như tuyệt đối (tương quan r = 1,000 cho cell và CL; trung bình 2 200 so với 2 183 gói).
+
+### 3.3 Đặc trưng (BS biết hết trước khi cất cánh)
 
 | Đặc trưng | Nghĩa |
 |---|---|
 | hops | số cell từ critical cell tới cell Axe gần nhất trong cửa sổ của nó |
 | dpath | khoảng cách (m) từ tâm cell tới đường bay trong cửa sổ |
-| lackCell | số gói của cửa sổ mà mọi node của cell cộng lại được dự đoán là thiếu (mô hình nghe của kênh, hợp theo cell) |
+| lackCell | số gói của cửa sổ mà các node của cell (hợp lại) dự đoán là thiếu, theo mô hình nghe của kênh |
 | lackCL | như trên, riêng CL |
-| naxe | số cell Axe cửa sổ trải qua |
-| ring1, ring2 | số cell của cụm trong vòng 1, vòng 2 quanh nó (ứng viên Circle) |
+| naxe | số cell Axe mà cửa sổ trải qua |
+| ring1, ring2 | số cell của cụm trong vòng 1, vòng 2 (ứng viên Circle) |
 | ncrit | số critical cell của cụm |
-| share | số critical cell khác có cửa sổ chồng lên cửa sổ của nó (dùng chung Bank) |
-| shareLack | tổng lackCell của các cell đó |
-| **cluLack** | **tổng lackCell của mọi critical cell trong cụm: toàn bộ lượng River phải chuyển** |
+| share, shareLack | số critical cell khác có cửa sổ chồng lên, và tổng lackCell của chúng |
+| **cluLack** | tổng lackCell của mọi critical cell trong cụm: toàn bộ lượng River phải chuyển |
 | loss | suy hao thêm của kênh (dB) |
 
-Lượng thiếu dự đoán khớp ns-3: tương quan r = 1,000 cho cả cell và CL (trung bình 2 200 so với 2 183 gói).
+### 3.4 Huấn luyện và chọn mô hình
+Kiểm tra chéo bỏ một bản đồ (3 lượt) và bỏ một kênh (4 lượt); tập thử luôn là bản đồ hoặc kênh mô hình chưa thấy.
 
-### 3.3 Mô hình và kiểm tra chéo
+| Mô hình | Cách học | Bỏ một bản đồ: MAE (s) / R² | Bỏ một kênh: MAE / R² |
+|---|---|---|---|
+| trung bình | hằng số | 42,4 / −0,02 | 51,9 / −0,40 |
+| **công thức 3 biến (đang dùng)** | bình phương tối thiểu | **22,8 / 0,60** | **22,3 / 0,63** |
+| tuyến tính, 12 đặc trưng | bình phương tối thiểu | 23,0 / 0,60 | 24,1 / 0,61 |
+| cây tăng cường | sâu 2, 200 cây, lr 0,05, lá ≥ 20 | 26,1 / 0,40 | 28,6 / 0,55 |
 
-| Mô hình | Bỏ một bản đồ: MAE (s) / R² | Bỏ một kênh: MAE (s) / R² |
-|---|---|---|
-| trung bình | 42,4 / −0,02 | 51,9 / −0,40 |
-| **công thức 3 biến** | **22,8 / 0,60** | **22,3 / 0,63** |
-| tuyến tính, đủ 12 đặc trưng | 23,0 / 0,60 | 24,1 / 0,61 |
-| cây tăng cường (sâu 2, 200 cây, lr 0,05, lá ≥ 20) | 26,1 / 0,40 | 28,6 / 0,55 |
-
-Công thức khớp trên toàn bộ dữ liệu:
-
-$$\widehat{T}_{\text{River}}(c) = 0{,}71 + 2{,}29\,\text{hops}_c + 1{,}97\,\frac{\text{lackCell}_c}{1000} + 4{,}26\,\frac{\text{cluLack}_{k(c)}}{1000}\quad\text{(giây)}$$
+$$\widehat{T}_{\text{River}}(c) = 0{,}71 + 2{,}29\,\text{hops}_c + 1{,}97\,\frac{\text{lackCell}_c}{1000} + 4{,}26\,\frac{\text{cluLack}_{k(c)}}{1000}\quad\text{(s)}$$
 
 ![Dự đoán so với ns-3](../uav-l2/docs/figures/lm-surrogate-pred-vs-ns3.png)
 
-*Hình 1: mỗi chấm một critical cell. Trục ngang: doneS ns-3; trục dọc: dự đoán của công thức khi bỏ bản đồ của nó ra khỏi tập học. Màu theo kênh: xanh lá open, xanh dương r500, cam r200, đỏ r100. Đường chéo là dự đoán đúng.*
+*Hình 1: mỗi chấm một critical cell (812 cell). Trục ngang là doneS ns-3; trục dọc là dự đoán khi bản đồ của nó bị giữ lại làm tập thử. Màu theo kênh; đường chéo là dự đoán đúng.*
 
 **Đọc kết quả:**
-- **89 % phương sai của doneS nằm giữa các cụm.** cluLack là biến quan trọng nhất (độ quan trọng trong cây 0,54, tiếp theo lackCell 0,24).
-- Nghĩa là thời gian River của một critical cell chủ yếu do **lượng dữ liệu cả cụm phải chuyển** (River dùng chung Bank, gateway và kênh), còn khoảng cách riêng của cell tới đường bay chỉ ảnh hưởng ít (2,3 s mỗi hop).
-- Cây không hơn công thức vì dữ liệu chỉ có 3 bản đồ; cây sâu hơn học thuộc hai bản đồ và kém trên bản thứ ba.
-- **Phần đuôi bị dự đoán thấp:** các cell River 150–310 s đều được dự đoán thấp hơn thực tế.
+- **89 % phương sai doneS nằm giữa các cụm** và đi theo cluLack (độ quan trọng trong cây 0,54, tiếp theo lackCell 0,24). River dùng chung Bank, gateway và kênh, nên thời gian của một cell chủ yếu do lượng dữ liệu cả cụm phải chuyển; khoảng cách riêng của cell góp khoảng 2,3 s mỗi hop.
+- Cây không hơn công thức với 3 bản đồ; cây sâu hơn học thuộc hai bản đồ và kém trên bản thứ ba.
+- Phần đuôi (River 150–310 s) bị dự đoán thấp.
+
+### 3.5 Kiểm chứng ở mức nhiệm vụ
+- `lm_tour.py score --mode pred` thay doneS ns-3 bằng T̂; dùng để so các đường bay chưa chạy ns-3.
+- k8, CHORD: T\* dự đoán 672 / 816 / 897 / 917 s so với ns-3 672 / 802 / 877 / 892 s.
+- Chênh LM-Tour − CHORD (k8, seed 1): dự đoán −38 / −93 / −89 / −90 s so với ns-3 −38 / −83 / −84 / −90 s.
+- DTSP-N + River (k12, k16): ước lượng trước khi chạy ns-3 lệch số ns-3 0–17 s ở 8 ô.
+
+### 3.6 Khảo sát các mức mô hình học (ba bậc theo `SigDrop2_LMTour_Surrogate_guide.pdf`)
+
+| Bậc | Nội dung | Điều học được | Vai trò |
+|---|---|---|---|
+| 1. Công thức vật lý | w = V·[Lack(u, d̄) − Lack(u, 0)]·τ_f·h | lượng thiếu tính từ mô hình nghe khớp ns-3 (r = 1,000): đại lượng vật lý là đặc trưng tốt | nguồn đặc trưng lackCell, hops |
+| 2. Hiệu chỉnh trên ns-3 | T ≈ a + b·hops + c·lackCell + d·cluLack | 3 biến ngang 12 biến; biến quyết định là cluLack | **đang dùng** trong J_k |
+| 3. Cây kiểu LightGBM | 400 vòng, lr 0,05, đơn điệu theo khoảng cách và lượng thiếu | chưa chọn đường tốt hơn Bậc 2 với dữ liệu hiện có | **còn cân nhắc** |
+
+**Khảo sát Bậc 3** (`logs/2026-10-28_t3-surrogate/`): 192 lượt pass + River ns-3 trên k8. Mỗi (kênh, cụm) có 5–10 đường bay (đường DTSP-N không uốn, 5 biến thể uốn, và các đường khác đã chạy); tổng 253 đường bay, 1 457 kết quả cell. Mô hình học trên k12, k16 và phải chọn đường tốt nhất trong mỗi cụm của k8.
+
+| Mô hình | Spearman (xếp hạng đường trong cụm) | Regret (s mỗi cụm) | Chọn đúng đường tốt nhất |
+|---|---|---|---|
+| công thức (Bậc 2) | 0,52 | 26 ± 30 | 34 % |
+| cây kiểu LightGBM (Bậc 3) | 0,47 | 44 ± 46 | 28 % |
+| chọn ngẫu nhiên | 0 | 59 | – |
+
+Khi cho học thêm đường của chính bản đồ (bỏ riêng cụm đang thử), Bậc 3 nhỉnh hơn công thức 12,5 ± 37,4 s, trong nhiễu.
+
+**Vì sao Bậc 3 còn đáng cân nhắc:**
+1. **Dữ liệu học còn nhỏ:** 632 cell từ hai bản đồ, so với khoảng 50 bản đồ và 7 000 mẫu trong kế hoạch của hướng dẫn. Khi thêm dữ liệu cùng bản đồ, khoảng cách đảo chiều (+18 thành −12 s).
+2. **Phần đuôi:** công thức dự đoán thấp các cell 150–310 s; mô hình phân vị p90 nhắm đúng phần này, chưa thử.
+3. **Mục tiêu học lệch mục tiêu dùng:** mô hình học sai số từng cell nhưng được dùng để xếp hạng đường bay; học trực tiếp thứ hạng theo cặp đường bay chưa thử.
+4. **Kịch bản giàu hơn:** với π_u không đều, cây camera legacy, tần suất sự kiện, trọng số có tương tác phi tuyến, là chỗ mô hình cây có lợi thế.
+5. **Trần chưa biết:** chưa đo nhiễu lặp lại của một lượt River (cùng đường, khác seed).
 
 ---
 
 ## 4. Hàm mục tiêu của một pass
 
-### 4.1 Định nghĩa
-Với cụm k, n_k critical cell, một pass được chấm bằng
+$$J_k = \sum_{c \in \text{Crit}_k} w_c\,\text{ready}_c + \Bigl(\sum_{c} w_c\Bigr) t^{\text{in}}_k + \theta\, W^{\text{after}}_k \bigl(t^{\text{in}}_k + \text{dur}_k + t^{\text{out}}_k\bigr)$$
 
-$$J_k = \sum_{c \in \text{Crit}_k} \text{ready}_c \;+\; n_k\, t^{\text{in}}_k \;+\; \theta\, N^{\text{after}}_k \left(t^{\text{in}}_k + \text{dur}_k + t^{\text{out}}_k\right)$$
-
-- **ready_c** (giây, từ đầu pass) = min(own_c, dur_k + T̂_River(c)):
-  - **own_c:** lúc cell tự giải mã đủ bộ manh mối mã fountain. BS tính theo kỳ vọng: hợp theo cell của xác suất nghe từng gói dọc pass, tới khi đạt mục tiêu FC (1,05·K_j + 3√(1,05·K_j) mỗi file), cộng thời gian gom trong cell 0,07 + 0,00789 × số gói phải chuyển về CL.
-  - **T̂_River(c):** công thức bước A trên kế hoạch River của *chính pass này*.
-- **dur_k:** thời lượng pass khi bay theo hồ sơ vận tốc (`pass_speed.fit`): giảm tốc, hoặc lượn, sao cho một bản bộ manh mối (4 041 gói) được phát trên cell của cụm.
-- **t_in, t_out:** đoạn nối Dubins (ρ = 255 m) từ pass của cụm trước và tới pass của cụm sau, hoặc từ/về BS với hướng tự do. Uốn pass đổi tư thế đầu/cuối nên đổi luôn các đoạn này.
-- **N_after:** số critical cell của các cụm bay sau cụm k. Mỗi giây thêm vào pass hoặc đoạn nối làm trễ tất cả chúng.
-- **θ:** trọng số của độ trễ lan sang cụm sau; dùng θ = 1.
-
-### 4.2 Vì sao hàm này
-- Số hạng thứ nhất và thứ hai là tổng thời điểm các critical cell của cụm sẵn sàng, tính từ lúc đội 1 rời cụm trước.
-- Số hạng thứ ba là cái giá áp lên các cụm sau.
-- Cực tiểu tổng thời điểm sẵn sàng là mục tiêu đúng vì c\* có thể là critical cell bất kỳ, như tour độ trễ của CHORD.
-
-### 4.3 Liên hệ với quy tắc của draft
-Chèn v giảm J_k khi số giây critical cell tiết kiệm được (w(v)) lớn hơn số giây critical cell bị trễ thêm (θ·ΔL(v) quy ra thời gian, nhân số cell bị ảnh hưởng). Đây chính là w(v)/ΔL(v) ≥ θ khi tiên nghiệm đều.
+- **ready_c = min(own_c, dur_k + T̂_River(c))**, tính từ đầu pass:
+  - own_c: lúc cell tự giải mã bộ manh mối mã fountain dọc pass (kỳ vọng: hợp theo cell của xác suất nghe từng gói, tới mục tiêu 1,05·K_j + 3√(1,05·K_j) mỗi file), cộng thời gian gom nội cell 0,07 + 0,00789 × số gói chuyển về CL;
+  - T̂_River(c): bộ dự đoán §3 trên **kế hoạch River của chính pass này**.
+- **dur_k:** thời lượng pass sau khi giao đủ (§2.2).
+- **t_in, t_out:** đoạn nối Dubins (ρ = 255 m) tới pass trước và pass sau, hoặc từ/về BS với hướng tự do. Uốn pass đổi tư thế đầu/cuối nên đổi luôn hai đoạn này.
+- **W_after:** tổng trọng số critical cell của các cụm bay sau; mỗi giây thêm vào pass hoặc đoạn nối làm trễ tất cả chúng. θ = 1.
+- **Liên hệ với draft:** quy tắc w(v)/ΔL(v) ≥ θ trở thành "chèn nếu J_k giảm", với ΔL đo bằng thời gian. J_k chấm lại cả kế hoạch River của cụm cho từng ứng viên, nên lợi ích của một lần uốn được tính đúng trên cả cụm, không cộng dồn riêng từng cell.
 
 ---
 
-## 5. Thuật toán đã cài
+## 5. Thuật toán
 
 ```text
-Algorithm LM-PASS(k, R, θ, N_after, nb, free)         ▷ BS, per cluster, before take-off
-Input: CHORD's pass γ0 of cluster k, its critical cells Crit_k, neighbours nb = (prev end pose, next start pose)
- 1: base ← EVAL(γ0); cur ← base; pulls ← ∅; line ← none
- 2: if free then                                       ▷ draft Steps 1–2, the CH not required
- 3:     kept ← R-net of Crit_k ordered by base.T_River (longest first), pairwise ≥ R apart
- 4:     for each bearing b ∈ {0°, 30°, …, 150°}:
- 5:         ℓ_b ← straight line at bearing b through the centroid of kept
- 6:         γ_b ← BEND(ℓ_b, kept, R/2, pinned = ∅)
- 7:     cur ← argmin_{γ_b crossing cluster k once} J(EVAL(γ_b)); pulls ← kept; line ← its ℓ_b
- 8: repeat                                             ▷ draft Step 3: greedy insertions
- 9:     Cand ← {c ∈ Crit_k \ pulls : d(c, cur) > R/2}
-10:     for each c ∈ Cand:  γ_c ← BEND(line or γ0, pulls ∪ {c}, R/2, pinned = (free ? ∅ : {CH}))
-11:     c* ← argmin_c J(EVAL(γ_c))   (free: only γ_c crossing once)
-12:     if J(EVAL(γ_c*)) ≥ J(cur) then break
-13:     pulls ← pulls ∪ {c*}; cur ← EVAL(γ_c*)
-14: return cur
+Algorithm LM-TOUR(map, ξ, θ, weights w, wmin)
+ 1: for each cluster k, bearing b ∈ {0°, 30°, …, 150°}:
+ 2:     ℓ_{k,b} ← straight line through CH_k at bearing b, cut to its run over cluster k (lakes < 300 m bridged)
+ 3:     L_{k,b} ← V1 · dur(FIT(ℓ_{k,b}))                 ▷ cost of the leg = its delivery-feasible time
+ 4: (b_k, dir_k, order) ← argmin Σ_k W_k · leave_k        ▷ DTSP-N through the discs B(CH_k, ξ):
+                          Held-Karp over (cluster, leg, direction), Dubins transits (chord_tour.choose)
+ 5: W_after, neighbours nb from order
+ 6: for each cluster k: γ_k ← LM-PASS(k, ℓ_{k,b_k}, nb_k, W_after_k)
+ 7: fly the passes in ns-3; RIVER
+
+Function LM-PASS(k, ℓ, nb, W_after)
+ 1: base ← EVAL(BEND(ℓ, pulls = ∅, pin = CH_k)); cur ← base; pulls ← ∅
+ 2: repeat
+ 3:     Cand ← {c ∈ Crit_k \ pulls : w_c ≥ wmin, dist(c, cur) > ξ}
+ 4:     for c ∈ Cand: γ_c ← BEND(ℓ, pulls ∪ {c}, ξ, pin = CH_k); keep γ_c only if it crosses k once
+ 5:     c* ← argmin_c J(EVAL(γ_c))
+ 6:     if no candidate or J(EVAL(γ_c*)) ≥ J(cur) then break      ▷ benefit saturated
+ 7:     pulls ← pulls ∪ {c*}; cur ← EVAL(γ_c*)
+ 8: return cur
 
 Function EVAL(γ)
- 1: fly γ with the speed profile (slow down or loop until one clue-set copy is sent over the cluster) → dur, packets
- 2: River plan of γ (Axe, Seg, Banks, per-critical-cell windows) → features → T̂_River(c) for every c ∈ Crit_k
- 3: own(c) ← expected fountain decode along γ + in-cell gather;  ready(c) ← min(own(c), dur + T̂_River(c))
+ 1: FIT(γ) → dur, packet positions
+ 2: River plan of γ (Axe, Seg, Bank, per-cell windows) → features x_c → T̂_River(c)
+ 3: own_c ← expected fountain decode along γ (+ in-cell gather); ready_c ← min(own_c, dur + T̂_River(c))
 
-Function J(e) = Σ_c ready(c) + n_k t_in + θ N_after (t_in + dur + t_out)   ▷ t_in, t_out: Dubins links to nb
-
-Algorithm LM-TOUR(map, R, θ, rounds)
- 1: order ← CHORD's tour (latency objective, Dubins links); N_after, nb from order
- 2: for round = 1 … rounds:
- 3:     for each cluster k: γ_k ← LM-PASS(k, R, θ, N_after_k, nb_k, free)
- 4:     fly the new passes (ns-3 pass input), recompute order, N_after, nb
+BEND(ℓ, P, ξ, pin) = meander_lane.bend_lane: Gaussian bumps pull ℓ into every disc B(c, ξ), c ∈ P,
+                     the CH pinned, curvature ≤ 1/ρ
+FIT(γ) = pass_speed.fit: slow down (≥ 25 m/s) or loop (63.7 m at the CH) until 4 041 packets fall on the cluster
 ```
 
-**BEND** là `meander_lane.bend_lane`: cộng các "bướu" Gauss kéo đường về tâm cell, sao cho đường đi vào đĩa B(c, R/2); trong chế độ uốn thì CH được ghim; không giới hạn biên độ.
+- Lệnh: `lm_tour.py plan CHORD_WORK --out LM_WORK --dtspn --weight cl --wmin 1 --xi auto --theta 1 --rounds 1`.
+- Ràng buộc: CH luôn được ghim (pass ns-3 cần đi qua CH); đường cắt mỗi cụm đúng một lần (khe hở do hồ < 300 m), nên mỗi cụm một River.
 
-**Chấm cả nhiệm vụ** (`lm_tour.py score`) chạy đúng đường mã của `l1_rank` cho CHORD (`P+prog-kin-puq-stage-zero-redir-kt-fcd`), 100 lượt bốc lớp 1, với doneS lấy:
-- từ ns-3 (`--mode ns3`): trùng tuyệt đối với `l1_rank` (sai khác 0,0 s trên từng lượt bốc, `c-validate-ns3.md`);
-- hoặc dự đoán bằng công thức (`--mode pred`): dùng cho các pass LM-Tour chưa chạy ns-3.
+![LM-Tour + River, k8-s1, r500](../uav-l2/docs/figures/c4-phase1/c4-phase1-k8-s1-r500-lmtour-mono.png)
 
-**Kiểm chứng chế độ dự đoán** (CHORD, k8-s1): T\* dự đoán 647 / 783 / 870 / 881 s so với ns-3 647 / 784 / 876 / 872 s (open / r500 / r200 / r100). Sai khác ≤ 9 s, đủ để so các pass với nhau.
-
----
-
-## 6. Thực nghiệm
-
-### 6.1 Thiết lập
-- Bản đồ k8-s1 (8 cụm, 45 critical cell), 4 kênh, 100 lượt bốc lớp 1 ghép cặp.
-- So sánh: chênh T\* ghép cặp LM-Tour − CHORD, cả hai chấm bằng River dự đoán, khoảng tin cậy 95 % theo lượt bốc.
-- θ = 1, một vòng (rounds = 1).
-- Ba lượt quét:
-  - **Sweep 1:** chế độ uốn, J_k chưa có đoạn nối (t_in = t_out = 0); R ∈ {200, 450, 800} m.
-  - **Sweep 2:** chế độ uốn, J_k đủ như §4; R ∈ {200, 450, 800} m.
-  - **Sweep 3:** chế độ tự do; R ∈ {450, 800} m. Hai cấu hình (R450 open, R450 r200) chưa chạy xong vì giới hạn 2 giờ của tác vụ nền.
-
-### 6.2 Kết quả
-
-Chênh T\* (LM-Tour − CHORD, s; âm là LM-Tour nhanh hơn) và chênh tour đội 1:
-
-| Cấu hình | open | r500 | r200 | r100 | Δ tour đội 1 (s) |
-|---|---|---|---|---|---|
-| Sweep 1, R = 200 | +2,8 ± 3,3 | +18,0 ± 29,3 | −4,7 ± 15,0 | +9,8 ± 7,9 | +10 … +18 |
-| Sweep 2, R = 200 | −0,8 ± 3,5 | +1,4 ± 5,9 | −7,3 ± 14,5 | −5,3 ± 4,6 | −4 |
-| Sweep 2, R = 450 | −1,2 ± 3,3 | +8,0 ± 27,5 | −1,5 ± 8,1 | **−10,7 ± 7,4** | −12 |
-| Sweep 2, R = 800 | −3,1 ± 3,0 | +14,9 ± 25,0 | +0,6 ± 6,3 | −3,7 ± 4,4 | −7 |
-| Sweep 3, R = 450 | – | +25,1 ± 27,7 | – | **+63,4 ± 33,4** | +99 … +112 |
-| Sweep 3, R = 800 | +10,7 ± 13,8 | +20,7 ± 29,4 | +3,4 ± 24,6 | −0,8 ± 23,7 | +53 … +54 |
-
-T\* tuyệt đối của CHORD (dự đoán): 647 / 783 / 870 / 881 s. Tour đội 1 của CHORD: 782 s.
-
-**Số lần chèn** (tổng trên 8 cụm): sweep 1 5–13, sweep 2 5–7; sweep 3 23–38 (gồm cả các cell giữ lại của R-net).
-
-Ví dụ một cấu hình sweep 2 (r100, R = 450), theo cụm: 0–2 lần chèn mỗi cụm; pass đổi −3 … 0 s; thời điểm sẵn sàng trung bình đổi 0 … −3 s; thời gian River dự đoán đổi 0 … −2 s; 0/45 critical cell tự giải mã được từ pass.
-
-![CHORD và LM-Tour uốn](../uav-l2/docs/figures/lm-k8-s1-r100-R450-chord-vs-lm.png)
-
-*Hình 2: bản đồ k8-s1, kênh r100, sweep 2 R = 450. Đường đen: pass CHORD qua CH (sao trắng); đường đỏ: pass LM-Tour ở những cụm có chèn. Vòng trắng: critical cell. Ô xanh đậm: hồ; ô vuông đen: BS.*
-
-![CHORD và LM-Tour tự do](../uav-l2/docs/figures/lm-free-k8-s1-r100-R800-chord-vs-lm.png)
-
-*Hình 3: như Hình 2, sweep 3 (tự do, R = 800, kênh r100). Pass đỏ không còn đi qua CH, uốn qua nhiều critical cell hơn.*
-
-Thêm: `lm-free-k8-s1-r200-R800-chord-vs-lm.png` (kênh r200).
+*Hình 2: LM-Tour + River, k8-s1, kênh r500. Tour DTSP-N qua các CH (sao), đường qua mỗi cụm ngắn (các vòng lượn là phần bù giao đủ), uốn nhẹ về critical cell; tour 30,8 km, đội 1 bay 699 s.*
 
 ---
 
-## 7. Phân tích: vì sao LM-Tour không hơn CHORD
+## 6. Kết quả
 
-1. **Uốn đường không đổi được lượng River phải chuyển.**
-   - Thời gian River do cluLack quyết định (§3.3), tức tổng lượng dữ liệu các critical cell thiếu.
-   - Uốn pass về gần một critical cell chỉ đổi hops của cell đó (2,3 s mỗi hop) và một phần lackCell của nó. Các cell khác của cụm vẫn thiếu gần như cũ, nên cluLack gần như không đổi.
-   - Kết quả: mỗi lần chèn rút River của cụm 0–5 s.
-2. **Không critical cell nào tự giải mã được nhờ uốn.**
-   - CHORD đã làm chậm mỗi cụm để phát đúng một bản bộ manh mối trên cell của cụm (hồ sơ vận tốc).
-   - Ở r200, r100, một cell nghe được rất ít trong bản đó, nên own_c = ∞ với mọi cell, trước và sau khi uốn.
-   - Ở open, mọi cell đã tự giải mã được trên pass CHORD; River không còn trên đường găng, nên uốn không thêm gì.
-3. **Mọi thay đổi pass đều làm trễ các cụm sau.**
-   - Sweep 1 không tính đoạn nối: uốn làm tour dài thêm 10–18 s và T\* xấu đi ở r100 (+9,8 s). Khi tính đủ đoạn nối (sweep 2), thuật toán gần như chỉ chèn những chỗ rút ngắn được đoạn nối, nên tour giảm 4–12 s, và đó là phần lớn lợi ích nhỏ còn lại.
-   - Chế độ tự do bỏ hướng dây cung CHORD vốn đã được chọn chung với thứ tự tour (CHORD-T), nên tour dài thêm 53–112 s. Với R = 450, R-net giữ nhiều cell hơn, đường uốn nhiều hơn, và T\* ở r100 chậm hơn 63 s.
-4. **Pha 2 chiếm khoảng nửa T\*.** Sau khi báo cáo của c\* về BS, đội 2 còn bay và xác minh khoảng 78 s mỗi cell. Thay đổi thời điểm sẵn sàng vài giây chỉ dịch T\* một phần nhỏ.
-5. **Bằng chứng độc lập từ mục 182:** thay River bằng kéo trực tiếp làm thời gian sẵn sàng của từng cell đổi hàng chục giây (cả hai chiều), nhưng T\* chỉ đổi ≤ 3 % ở 11/12 tổ hợp (`paper/EXPERIMENTS-vi.md` §5.3). Lớp 3 nhanh hơn vài chục giây không chuyển thành T\* nhanh hơn tương ứng.
+### 6.1 Phân tách lợi ích (k8, mức mô hình, 100 lượt bốc ghép cặp)
+T\* so với CHORD + River (s):
 
-**Tóm lại:** trên cluster có sẵn, CHORD-T đã gần tối ưu theo T\*, đúng như mục 159 đã thấy (cắt vừa đủ, uốn, ưu tiên River: T\* 758 / 761 / 761 s, không khác nhau).
+| Kênh | DTSP-N qua CH, không uốn | LM-Tour (có uốn) | phần do uốn | số lần uốn (8 cụm) |
+|---|---|---|---|---|
+| open | −19 ± 35 | −38 ± 31 | −19 ± 26 | 9 |
+| r500 | −82 ± 37 | −93 ± 37 | −11 ± 14 | 10 |
+| r200 | −66 ± 34 | −89 ± 33 | −22 ± 8 | 11 |
+| r100 | −83 ± 34 | −90 ± 34 | −7 ± 7 | 9 |
+
+### 6.2 Chiến dịch 4 (ns-3, khoảng 55 % seed)
+T\* (s), bản đồ k8 / k12 / k16 (8 / 12 / 15 cụm), xếp theo T\* giảm dần. Bảng đầy đủ và số seed từng ô: `paper/TECHREPORT-vi.md` §3.
+
+| Phương án | r = 1 000 m | 500 m | 200 m | 150 m |
+|---|---|---|---|---|
+| Rotary TSP | 2926 / 4122 / 5248 | 2941 / 4165 / 5178 | 2884 / 4165 / 5173 | 2884 / 4227 / 5242 |
+| FC + DTSP-N | 708 / 841 / 1067 | 1060 / 1489 / 1877 | 1893 / 2608 / 3689 | 2192 / 3366 / 4523 |
+| DTSP-N + River | 783 / 821 / 1092 | 915 / 1153 / 1452 | 952 / 1300 / 1669 | 1019 / 1374 / 1658 |
+| CHORD + River | 672 / 758 / 946 | 762 / 1054 / 1190 | 826 / 1117 / 1322 | 839 / 1173 / 1335 |
+| **LM-Tour + River** | **633 / 753 / 917** | **692 / 948 / 1164** | **765 / 1009 / 1229** | **779 / 1063 / 1262** |
+
+Đường bay đội 1: LM-Tour 30,8–31,1 / 46,3–46,5 / 56,1–60,5 km so với CHORD 38,6 / 64,0 / 70,7 km. Thời gian đội 1: LM-Tour 697–708 / 1082–1085 / 1291–1394 s so với CHORD 784 / 1292 / 1437 s.
+
+### 6.3 Pass trong từng cụm (k16, r200, trung bình mỗi cụm)
+
+| Phương án | Độ dài trong cụm (m) | Thời gian trong cụm (s) | Tốc độ (m/s) | Critical cell trong ξ |
+|---|---|---|---|---|
+| DTSP-N + River | 2 438 | 62,4 | 39,6 | 92/92 |
+| CHORD | 2 099 | 43,3 | 48,3 | 42/92 |
+| LM-Tour | 1 560 | 40,5 | 38,5 | 36/92 |
 
 ---
 
-## 8. Đề xuất cho paper
+## 7. Phân tích thiết kế
+1. **Tour làm phần chính.** Thời gian trong cụm bị chốt ở khoảng 40 s bởi ràng buộc giao đủ, nên đường ngắn qua CH không mất gì trong cụm mà rút ngắn được các đoạn nối. Chọn hướng qua CH chung với thứ tự cụm (DTSP-N) cho phần lớn lợi ích (§6.1).
+2. **Bước uốn tinh chỉnh và bão hoà nhanh.** Kéo đường về một cell chỉ đổi hops và một phần lackCell của cell đó, còn cluLack của cả cụm gần như không đổi. Lợi ích bão hoà sau 1–2 lần uốn mỗi cụm, đúng tiêu chí dừng của LM-PASS.
+3. **Chọn đúng landmark quan trọng hơn bay sát nhiều cell.** LM-Tour đưa ít critical cell vào trong ξ nhất (36/92) nhưng nhanh nhất; DTSP-N + River vào mọi đĩa (92/92) nhưng phải bay 62 s mỗi cụm thay vì 40 s. River lo phần còn lại.
+4. **Pha 2 làm loãng lợi ích.** Thời điểm critical cell sẵn sàng của LM-Tour sớm hơn CHORD 58–105 s, nhưng chênh T\* nhỏ hơn, vì đội 2 còn bay và xác minh khoảng 78 s mỗi cell.
 
-### 8.1 Phương án viết
-- **Phương án A (khuyến nghị):** mục V của draft trở thành "Flight design" với CHORD-T (đường thẳng qua CH, hướng chọn chung với tour độ trễ, giảm tốc hoặc lượn để giao đủ). Công thức River dùng làm mô hình hoàn tất River của BS: dự đoán thời gian sẵn sàng của từng critical cell trước giờ bay (MAE 22,8 s trên bản đồ chưa thấy). LM-Tour đưa vào thảo luận như một hướng đã thử và không mang lại lợi ích trên cluster có sẵn, kèm lý do ở §7.
-- **Phương án B:** giữ LM-Tour làm khung tổng quát. Trên cluster có sẵn với tiên nghiệm đều, bước 1–2 của nó rút về CHORD, và bước 3 không tìm được chèn có lợi. Phải nói rõ là kết quả trung tính, không phải cải tiến.
-- **Không được viết:** "LM-Tour rút ngắn nhiệm vụ", "mô hình học cải thiện đường bay", hay bất kỳ con số nào như trong TODO của draft (quét R ∈ {300, 450, 600, 800} cho thấy đánh đổi 1/R và R). Số liệu hiện có không cho thấy đánh đổi đó trên T\*.
+---
 
-### 8.2 Khi nào LM-Tour có thể có ích (chưa thử)
-- **Cluster chưa có sẵn** (bước 1 với GROW): khi đường bay quyết định luôn cách chia cụm. Đây là phần khác biệt thật của draft, nhưng hướng tái cấu trúc cluster (LANE, MEANDER, SWATH) đã thua CHORD-T trên cluster có sẵn.
-- **Trọng số không đều:** tiên nghiệm π theo điểm thấy mục tiêu lần cuối, hoặc cây camera legacy lớn. Khi đó bay sát một cell có π cao có thể đáng giá vì nó là ứng viên c\* chính.
-- **Cụm lớn với River dài** (phần đuôi 150–310 s), nơi đổi cluLack bằng cách phát hai bản sao thay vì uốn.
-
-### 8.3 Đối chiếu với các TODO trong draft
-
-| TODO trong draft | Trạng thái |
-|---|---|
-| (1) cài LM-Tour: khoảng cách đồ thị, GROW, Dubins TSP-N có lấy mẫu hướng, chèn | Đã cài R-net, đường qua đĩa, chèn theo J_k, đoạn nối Dubins. Chưa cài GROW (cluster có sẵn) |
-| (2) trọng số: công thức (năng lực, cỡ cây, π) rồi bộ dự đoán | Bộ dự đoán xong (bước A). Năng lực, cây, π đều như nhau trong giả lập nên chưa dùng |
-| (3) quét R ∈ {300, 450, 600, 800} m ở r ∈ {200, 1000} m | Đã quét R ∈ {200, 450, 800} ở 4 kênh. Không thấy đánh đổi trên T\* |
-| (4) so với CHORD-fixed và tour ngắn nhất | Đã so với CHORD (= CHORD-fixed). Tour ngắn nhất: ablation 20–21/10 (`paper/OVERVIEW-vi.md` §10.2) cho thấy chậm hơn tour độ trễ 22–26 s |
-| (5) hình: R-net, đĩa, tour cơ sở, một lần chèn | Có hình pass (Hình 2, 3). Chưa có hình từng bước R-net và đĩa |
-| Bước D: chạy ns-3 trên pass LM-Tour | Chưa làm, vì mức mô hình không cho thấy lợi ích |
+## 8. Cho paper
+- **Mục V (Flight design):** LM-Tour trên cluster có sẵn = tour DTSP-N qua đĩa B(CH, ξ) với chi phí chặng là thời gian giao đủ, rồi uốn theo J_k tới khi bão hoà. Algorithm 3 cần cập nhật theo §5 (`paper/icc-v5/alg3-lmtour.tex`).
+- **Bộ dự đoán:** công thức ba biến hiệu chỉnh trên ns-3 (MAE 22,8 s trên bản đồ chưa thấy; sai số mức nhiệm vụ ≤ 10–25 s). Bậc 3 trình bày như hướng đã khảo sát: "một bộ hồi quy cây tăng cường kiểu LightGBM, ràng buộc đơn điệu, học trên hai bản đồ chưa chọn đường bay tốt hơn công thức ba biến trên bản đồ thứ ba; mở rộng dữ liệu và học trực tiếp thứ hạng là hướng tiếp theo".
+- **Số liệu:** chờ đủ 10 seed (N ≥ 120). Không lấy riêng seed 1: ở k16, seed 1 cho chênh LM-Tour − CHORD lớn gấp 2–3 lần các seed khác.
 
 ---
 
 ## 9. Tái lập
-
 ```text
-# bước A (từ uav-l2/)
-python3 tools/river_surrogate.py --works FIX/open/k8-s1,...,FIX/r100/k16-s1 --out docs/data/results/river-surrogate
-# bước C: một cấu hình (chế độ uốn; thêm --free cho chế độ tự do)
-python3 tools/lm_tour.py plan FIX/r100/k8-s1 --out LM2/R450/r100/k8-s1 --R 450 --rounds 1
-python3 tools/lm_tour.py score LM2/R450/r100/k8-s1 --mode pred --out LM2/R450-r100-k8
-# CHORD chấm cùng cách
-python3 tools/lm_tour.py score FIX/open/k8-s1,FIX/r500/k8-s1,FIX/r200/k8-s1,FIX/r100/k8-s1 --mode pred --out LM/chord-pred-k8
+# từ gốc repo; CHORD_WORK là thư mục nhiệm vụ CHORD thường (mission.py, không --chordTour)
+python3 uav-l2/tools/river_surrogate.py --works W1,...,W12 --out uav-l2/docs/data/results/river-surrogate   # bộ dự đoán
+python3 uav-l2/tools/lm_tour.py plan CHORD_WORK --out LM_WORK --R 450 --xi auto --theta 1 --rounds 1 \
+  --dtspn --weight cl --wmin 1
+python3 uav-l2/tools/mission.py --clusters K --seed 1 --bin BIN --windowKB 400 --windowAt crit --critRing domain \
+  --axeNear --kinPass --mapRuns --env ENV --riverRepair 20 --schemes rf --work LM_WORK [--runSeed R]
+python3 uav-l2/tools/lm_tour.py score CHORD_WORK,LM_WORK --mode ns3 --out OUT      # hoặc --mode pred
 ```
-
-- Ba lượt quét: `logs/2026-10-25_1500-lm-tour/c-sweep.sh`, `c-sweep2.sh`, `c-sweep3.sh`.
-- Thư mục FIX dựng lại từ `uav-l2/docs/data/results/raw/` (xem `uav-l2/docs/RESULTS-vi.md` §4).
-- Hình: `logs/2026-10-25_1500-lm-tour/lm_fig.py`.
+- Một tác vụ đầy đủ của chiến dịch: `logs/2026-10-27_1714-campaign4/task.sh R ENV K` hoặc `job.sh SCH R ENV K`.
+- Khảo sát Bậc 3: `logs/2026-10-28_t3-surrogate/run.sh ENV`, rồi `t3.py`.

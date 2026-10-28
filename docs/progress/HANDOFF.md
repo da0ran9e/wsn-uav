@@ -1,4 +1,91 @@
-# Handoff · 2026-10-22 (cập nhật 2026-10-28)
+# Handoff · 2026-10-22 (cập nhật 2026-10-29)
+
+## Cập nhật 2026-10-29 · technical report của chiến dịch 4 (`paper/TECHREPORT-vi.md`)
+
+`paper/TECHREPORT-vi.md` là báo cáo kỹ thuật (kết quả, thuật toán, bộ dự đoán của LM-Tour). Phần vận hành của nó nằm ở đây.
+
+### Hạn chế và việc còn lại
+- [ ] Hoàn tất chiến dịch 4 (còn khoảng 160 job). k8 thiếu nhiều nhất.
+- [x] `paper/EXPERIMENTS-vi.md` (§2, §3, §4 E9–E12, §5 chiến dịch 4) và `paper/LMTOUR-vi.md` (viết lại theo thuật toán hiện tại) cập nhật 2026-10-29. Khi có thêm seed, cập nhật bảng §5 của EXPERIMENTS và §6.2 của LMTOUR cùng lúc với TECHREPORT §3.
+- [ ] Viết lại `paper/icc-v5/evaluation-v5.tex` theo khung mục 187 và bảng TECHREPORT §3 (`table.py --tex` đã sinh `paper/icc-v5/table-campaign4.tex`); cập nhật Algorithm 3 (`paper/icc-v5/alg3-lmtour.tex`) theo LMTOUR §5.
+- [x] Khảo sát Bậc 3 lần 1 (TECHREPORT §5.7): J_k tiếp tục dùng Bậc 2.
+- [ ] Bậc 3, nếu tiếp tục: thêm bản đồ vào tập học, mô hình p90, học thứ hạng theo cặp đường bay, đo nhiễu lặp lại của River.
+- [ ] Hình có nhãn cho paper (bản hiện tại không chữ): `logs/2026-10-28_0810-phase1-paths/paths_fig.py`.
+- [ ] Tổng hợp thời điểm giải mã của FC + DTSP-N (`l1-cells.csv`) để có cột tương ứng ở TECHREPORT §3.2 (b).
+- Giới hạn của mô phỏng:
+  - lớp 1 chưa có tiên nghiệm π không đều;
+  - chưa có năng lượng;
+  - cluster có sẵn (k-medoids), chưa có GROW của draft;
+  - 3 bản đồ cố định, nên phương sai giữa bản đồ chưa được đo.
+
+---
+
+### Môi trường và lệnh
+
+#### Đường dẫn
+| Thứ | Ở đâu |
+|---|---|
+| Repo (máy local) | `~/Github/ns-3-dev-git-ns-3.46/src/wsn-uav`, nhánh `claude/document-review-xslwgg` |
+| Build, binary, venv local | `~/Github/ns3-uav-build/{BIN,.venv,runs}`; `./ns3` cần Python 3.10 |
+| Chạy local (k8, seed 1) | `runs/{CP,LMD,DR,LMD0,LMDu,T3v0-5}/<kênh>/k8-s1` |
+| Chiến dịch 4 | `logs/2026-10-27_1714-campaign4/` (README, `table.py`, `ready.py`, `score/R<R>/<kênh>-k<K>/`) |
+| Hình đường bay | `uav-l2/docs/figures/c4-phase1/` (mục lục `INDEX.md`) |
+| Thử nghiệm LM-Tour trên k8 (mục 187) | `logs/2026-10-27_1800-lm-dtspn/` |
+| Kiểm tra Bậc 3 | `logs/2026-10-28_t3-surrogate/` |
+| Không sửa | `src/wsn/`; mã nguồn và binary ns-3 (pass của DTSP-N + River, vốn không đi qua CH, chạy qua `prefly.py`) |
+
+#### Phiên cloud (mục 201)
+- Seed 3–10, mỗi seed một phiên phụ (danh sách trong README chiến dịch). Phiên chính chạy seed 1–2 và gộp bảng.
+- Dấu xong: `score/R<R>/<kênh>-k<K>/done-{cp,lmd,dr}`. Mỗi phiên ghi `done-s<R>.txt`.
+- Khởi động lại một seed: `setsid nohup bash camp2.sh R R &`, theo `CHILD.md`.
+- Container bị thu hồi khi idle đã xảy ra hai lần (README). Lúc 16:22 UTC ngày 28/10, các seed 2, 3, 4, 7, 8, 9, 10 không push khoảng 1,5–2 giờ.
+- **Bẫy vận hành** (`docs/progress/HANDOFF.md`, cập nhật 2026-10-28):
+  - luôn giữ một tác vụ chạy nền chờ `done.txt` có dòng mới (timeout 2 giờ), để container không bị coi là rảnh;
+  - máy mới cần `pip install scikit-learn`;
+  - job có dấu `done-*` được bỏ qua khi chạy lại; pass và River đã xong cũng được bỏ qua;
+  - mỗi seed mất khoảng 10 giờ trên 4 lõi nếu chạy tuần tự, khoảng 5–6 giờ nếu xếp kín bằng hàng đợi job (`camp2.sh` + `job.sh`).
+
+#### Cập nhật `paper/TECHREPORT-vi.md`
+```bash
+cd ~/Github/ns-3-dev-git-ns-3.46/src/wsn-uav && git pull --ff-only
+PY=~/Github/ns3-uav-build/.venv/bin/python
+$PY logs/2026-10-27_1714-campaign4/table.py > /tmp/table.md                       # TECHREPORT §3.1 (bảng chênh ghép cặp in kèm, dùng để kiểm tra)
+# bản đầy đủ, cập nhật luôn CSV, bảng LaTeX và RESULTS-vi.md §7.1:
+# $PY logs/2026-10-27_1714-campaign4/table.py --csv uav-l2/docs/data/results/campaign4.csv \
+#     --tex paper/icc-v5/table-campaign4.tex --results uav-l2/docs/RESULTS-vi.md
+$PY logs/2026-10-27_1714-campaign4/ready.py logs/2026-10-27_1714-campaign4         # TECHREPORT §3.2 (b)
+# TECHREPORT §3.2 (a), §3.3: logs/2026-10-28_0810-phase1-paths/paths.md (hình học, không đổi theo seed)
+# TECHREPORT §5.7: cd logs/2026-10-28_t3-surrogate && $PY t3.py > table.md
+```
+Sau khi cập nhật: sửa TECHREPORT §0 (tiến độ, ngày), §3 (bảng), §3.5 (ổn định), §3.6 (câu cho paper).
+
+---
+
+### Nhật ký phiên bản của `paper/TECHREPORT-vi.md`
+| Ngày | Thay đổi |
+|---|---|
+| 2026-10-29 | Phần hạn chế, môi trường, lệnh, nhật ký và tham số chuyển sang HANDOFF; cập nhật `EXPERIMENTS-vi.md` và viết lại `LMTOUR-vi.md` |
+| 2026-10-28 | Bản 1: chiến dịch 4 khoảng 55 % (commit `9dbd0a1`, cập nhật `5301390`: k8 r500 thêm seed 2); kiểm tra Bậc 3 đang chạy |
+| 2026-10-29 | Bỏ bảng chênh ghép cặp và các đoạn về phiên bản cài đặt trước; §4.2.6 thành phân tích thiết kế; Bậc 3 viết lại thành "còn cân nhắc" |
+| 2026-10-29 | Bỏ Oracle (B7) khỏi khung evaluation và các bảng |
+| 2026-10-29 | Các bảng §3 (và `table.py`) xếp phương án theo T\* giảm dần |
+| 2026-10-29 | §5.6–5.7: khảo sát Bậc 3 (192 lượt River), còn cân nhắc |
+| 2026-10-28 | Soát các commit đã pull: k16-s1 có 15 cụm (§2.2); thêm §3.4 (pass trong từng cụm), nhánh lượn của `pass_speed.fit`, bẫy vận hành và lệnh `table.py` đầy đủ (§8) |
+
+### Tham số chính
+| Tham số | Giá trị |
+|---|---|
+| Cell | lục giác bán kính 100 m; cluster ≤ 80 cell |
+| Bộ manh mối | 400 kB, 12 ảnh, 4 041 gói 99 B, 10 ms/gói (40,4 s) |
+| Đội 1 | 50 m/s, 100 m, nghiêng 45°, ρ = 255 m, R_LOOP = 63,7 m, ±2 m/s² |
+| Đội 2 | 15 m/s; xác minh khoảng 78,1 s (5 s + 1 MB unicast + 0,2 s) |
+| LoRa | airtime 0,4 s, duty cycle 1 % (một bản tin / 40 s) |
+| River | ω = 303 m, `--repair 20`, cửa sổ theo critical cell |
+| LM-Tour | ξ = 255 / 255 / 199 / 99 m; hướng mỗi 30°; θ = 1; wmin = 1; trọng số điểm CL; 1 vòng |
+| DTSP-N + River | hướng mỗi 30°, bán kính cung {63,7; 127,5; 255} m, waypoint trong 0,95 ξ |
+| FC + DTSP-N | ε = 0,05; bán kính nhóm {200, 300, 400} m; 12 góc vào × 2 chiều |
+| Pha 2 | β = 1/4 |
+
 
 
 ## Cập nhật 2026-10-28 · chiến dịch bốn phương án (CLAUDE.md §8 mục 188–196)

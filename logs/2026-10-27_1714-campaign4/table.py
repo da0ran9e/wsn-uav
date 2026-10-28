@@ -24,8 +24,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ENVS = ("open", "r500", "r200", "r100")
 RANGE = {"open": "1 km", "r500": "500 m", "r200": "200 m", "r100": "150 m"}
 MAPS = (8, 12, 16)
-SCHEMES = (("LMD", "LM-Tour + River"), ("CP", "CHORD + River"), ("DR", "DTSP-N + River"), ("DN", "FC + DTSP-N"),
-           ("B1", "No broadcast (rotary TSP)"), ("B7", "Oracle"))
+SCHEMES = (("B1", "No broadcast (rotary TSP)"), ("DN", "FC + DTSP-N"), ("DR", "DTSP-N + River"), ("CP", "CHORD + River"),
+           ("LMD", "LM-Tour + River"))   # rows and columns by T* descending (as at r <= 500 m); Oracle (B7) dropped
+                                         # from the tables (2026-10-29), still loaded
 L1 = {"DN-puq-stage-zero-redir": "DN", "B1": "B1", "B7": "B7", "P+prog-kin-puq-stage-zero-redir-kt-fcd": "CPl1"}
 EST = os.path.join(HERE, "../2026-10-28_0310-dtspn-fix/est")
 T975 = {1: 12.71, 2: 4.30, 3: 3.18, 4: 2.78, 5: 2.57, 6: 2.45, 7: 2.36, 8: 2.31, 9: 2.26, 10: 2.23}
@@ -142,7 +143,7 @@ def main():
     print(f"# Bảng chiến dịch (seed đã xong: {', '.join(f'k{K} {env} {len(seeds[(env, K)])}' for K in MAPS for env in ENVS if (env, K) in seeds)})\n")
     print(f"CHORD chấm bằng `l1_rank` và bằng `lm_tour score` lệch nhau tối đa {gap:.1f} s ở mọi lượt bốc.\n")
     print("T\\* trung bình (s) trên mọi seed và lượt bốc; ngoặc: số seed. Team 1: thời gian bay của đội 1 (s).\n")
-    print("| kênh (r) | bản đồ | " + " | ".join(n for _, n in SCHEMES) + " | team 1 LM / CHORD / DR / DN |")
+    print("| kênh (r) | bản đồ | " + " | ".join(n for _, n in SCHEMES) + " | team 1 DN / DR / CHORD / LM |")
     print("|---|---|" + "---|" * len(SCHEMES) + "---|")
     for env in ENVS:
         for K in MAPS:
@@ -154,10 +155,10 @@ def main():
             t1 = lambda s: (f"{np.mean([np.mean([u for _, u in X[(s, env, K, R)].values()]) for R in have(s)]):.0f}"
                             if have(s) else "–")
             print(f"| {env} ({RANGE[env]}) | k{K} | " + " | ".join(cell(s) for s, _ in SCHEMES)
-                  + f" | {t1('LMD')} / {t1('CP')} / {t1('DR')} / {t1('DN')} | ({len(Rs)})")
+                  + f" | {t1('DN')} / {t1('DR')} / {t1('CP')} / {t1('LMD')} | ({len(Rs)})")
     print("\nChênh ghép cặp so với LM-Tour (s, âm là LM-Tour nhanh hơn), ± nửa khoảng tin cậy 95 % theo trung bình từng "
           "seed; ngoặc: % lượt bốc LM-Tour nhanh hơn.\n")
-    pairs = (("CP", "CHORD"), ("DR", "DTSP-N + River"), ("DN", "FC + DTSP-N"))
+    pairs = (("DN", "FC + DTSP-N"), ("DR", "DTSP-N + River"), ("CP", "CHORD"))
     dl = ["| kênh | bản đồ | " + " | ".join(f"LM − ({n})" for _, n in pairs) + " | (DTSP-N + River) − (FC + DTSP-N) |",
           "|---|---|" + "---|" * (len(pairs) + 1)]
 

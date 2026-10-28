@@ -21,12 +21,12 @@ for d in sorted(glob.glob(f"{H}/score/R*/*-k*")):
             if want is None and s == "DR":   # the pass before item 193, as table.py
                 continue
             X.setdefault((s, env, K, R), []).append(float(r["riverReady"]))
-print("| kênh | K | LM-Tour | CHORD | DTSP-N + River | seed |")
+print("| kênh | K | DTSP-N + River | CHORD | LM-Tour | seed |")   # by T* descending
 print("|---|---|---|---|---|---|")
 for env in ("open", "r500", "r200", "r100"):
     for K in (8, 12, 16):
         Rs = [R for R in range(1, 11) if all((s, env, K, R) in X for s in ("LMD", "CP", "DR"))]
         if not Rs:
             continue
-        v = [np.mean([np.mean(X[(s, env, K, R)]) for R in Rs]) for s in ("LMD", "CP", "DR")]
+        v = [np.mean([np.mean(X[(s, env, K, R)]) for R in Rs]) for s in ("DR", "CP", "LMD")]
         print(f"| {env} | {K} | " + " | ".join(f"{x:.0f}" for x in v) + f" | {len(Rs)} |")

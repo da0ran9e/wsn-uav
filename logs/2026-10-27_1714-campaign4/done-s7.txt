@@ -8,3 +8,5 @@ note s7 2026-10-28_07:57:05: geometry-r1.tar.xz has only CP/open/R1; CP/{r100,r2
 note s7 2026-10-28_08:09:16: geom check (R7/geom-s7.md) r100/r200/r500 k16: only tour.json differs from seed 1, max |diff| 7.3e-12 s on enter/leave times (float round-off; same structure, all non-float values equal, all other files identical). Jobs NOT killed: effect far below the 0.05 s T* tolerance. Main session: say if you still want them stopped.
 R7 open k16 lmd exit 0 2026-10-28_08:13:37
 R7 open k16 cp exit 0 2026-10-28_08:30:09
+R7 r500 k16 cp exit 0 2026-10-28_08:38:09
+R7 r100 k12 lmd exit 1 2026-10-28_08:38:10

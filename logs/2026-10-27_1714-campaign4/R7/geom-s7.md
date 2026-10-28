@@ -1,6 +1,6 @@
 # geom-s7
 
-- Bắt đầu: 2026-10-28 08:30:48, chạy 6 s, mã thoát 1
+- Bắt đầu: 2026-10-28 08:39:11, chạy 7 s, mã thoát 1
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**
@@ -22,7 +22,7 @@ r200 k8 pending
 r200 k12 pending
 r200 k16: 262 files, 1 differ (first: tour.json), 0 missing
 r100 k8 pending
-r100 k12 pending
+r100 k12: 211 files, 1 differ (first: tour.json), 21 missing
 r100 k16: 262 files, 1 differ (first: tour.json), 0 missing
 GEOM FAIL
 ```

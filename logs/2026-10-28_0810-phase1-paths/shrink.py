@@ -1,12 +1,12 @@
 """Shrink the PNGs of a folder in place: RGBA -> an adaptive 256-colour palette (the panels are flat fills and lines,
 so the difference is not visible), about a third of the size.
-    python3 shrink.py DIR
+    python3 shrink.py DIR [PATTERN]   (default *.png)
 """
 import glob, os, sys
 
 from PIL import Image
 
-for p in sorted(glob.glob(os.path.join(sys.argv[1], "*.png"))):
+for p in sorted(glob.glob(os.path.join(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "*.png"))):
     a = os.path.getsize(p)
     im = Image.open(p).convert("RGB")
     im.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(p, optimize=True)

@@ -1956,6 +1956,12 @@ trong lúc chờ, hãy gen cho tôi hình vẽ đường bay của các chiến 
 định kỳ kiểm tra các phiên xem chạy đúng không nhé
 ```
 
+*204. 2026-10-28 · paper · vẽ lại 4 hình đường bay pha 1 của k8, kênh r500, tách riêng từng hình; một màu đường bay nổi bật dùng chung, màu cluster nhạt hơn*
+
+```text
+chọn kênh 500 của bản đồ 8k vẽ cho tôi lần lượt 4 hình lại, tách riêng từng hình ra, không cần phân biệt bằng màu đường bay, chọn màu nổi bật dùng chung, màu cluster nhạt hơn một chút,
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

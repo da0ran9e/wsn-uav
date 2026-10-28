@@ -33,4 +33,12 @@ Hình học không phụ thuộc seed, nên seed 1 đại diện cho mọi seed.
 - DTSP-N + River dài nhất trong ba phương án River, vì đi zigzag vào đĩa của mọi critical cell.
 - FC + DTSP-N ngắn nhất ở kênh open. Khi kênh xấu đi, số vòng lượn quanh nhóm critical cell tăng mạnh, nên đội 1 bay gấp 4–6 lần ở r100.
 
+**Bản một màu (mục 204):**
+- `mono.md`: `mono.py` vẽ bốn hình riêng cho k8-s1, kênh r500.
+  - Mọi đường bay cùng một màu hồng sẫm `#e6007e`.
+  - Màu cụm nhạt hơn: pha thêm 40 % trắng.
+  - Bốn hình dùng chung một khung nhìn.
+- `shrink-mono.md`: nén bốn hình này.
+- Đầu ra: `c4-phase1-k8-s1-r500-{chord,lmtour,dtspn-river,fc-dtspn}-mono.png`.
+
 **Còn dở:** chưa có bản có nhãn cho paper; vẽ bằng `paths_fig.py` nếu cần.

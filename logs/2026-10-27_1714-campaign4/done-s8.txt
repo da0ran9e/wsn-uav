@@ -33,3 +33,8 @@ R8 r200 k16 dr exit 0 2026-10-28_19:18:23
 R8 open k16 lmd exit 0 2026-10-28_19:18:23
 R8 open k16 cp exit 0 2026-10-28_19:18:23
 R8 open k16 dr exit 0 2026-10-28_19:18:23
+R8 r500 k16 cp exit 0 2026-10-28_19:28:12
+R8 r200 k16 cp exit 0 2026-10-28_19:31:30
+R8 r500 k16 dr exit 0 2026-10-28_19:42:00
+R8 r200 k12 lmd exit 0 2026-10-28_19:42:00
+restart 2026-10-28_22:41:12 (sau hết hạn mức; k8 do phiên chính chạy)

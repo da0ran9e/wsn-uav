@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ENVS = ("open", "r500", "r200", "r100")
 RANGE = {"open": "1 km", "r500": "500 m", "r200": "200 m", "r100": "150 m"}
 MAPS = (8, 12, 16)
-SCHEMES = (("LMD", "LM-Tour + River"), ("CP", "CHORD + River"), ("DR", "DTSP-N + River (tạm dừng)"), ("DN", "FC + DTSP-N"),
+SCHEMES = (("LMD", "LM-Tour + River"), ("CP", "CHORD + River"), ("DR", "DTSP-N + River"), ("DN", "FC + DTSP-N"),
            ("B1", "No broadcast (rotary TSP)"), ("B7", "Oracle"))
 L1 = {"DN-puq-stage-zero-redir": "DN", "B1": "B1", "B7": "B7", "P+prog-kin-puq-stage-zero-redir-kt-fcd": "CPl1"}
 T975 = {1: 12.71, 2: 4.30, 3: 3.18, 4: 2.78, 5: 2.57, 6: 2.45, 7: 2.36, 8: 2.31, 9: 2.26, 10: 2.23}
@@ -33,7 +33,11 @@ def load():
         R, env, K, d = int(m[1]), m[2], int(m[3]), os.path.dirname(d)
         for r in csv.DictReader(open(f"{d}/score-ns3.csv")):
             s = next(s for s in ("LMD", "CP", "DR") if f"/{s}/" in r["work"])
-            out.setdefault((s, env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"]))
+            if s != "DR":   # DR rows here are the pass before item 193 (C4/DR-old); the fixed one is in score-dr.csv
+                out.setdefault((s, env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"]))
+        if os.path.exists(f"{d}/done-dr"):
+            for r in csv.DictReader(open(f"{d}/score-dr.csv")):
+                out.setdefault(("DR", env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"]))
         for r in csv.DictReader(open(f"{d}/l1-draws.csv")):
             out.setdefault((L1[r["method"]], env, K, R), {})[int(r["draw"])] = (float(r["Tstar"]), float(r["team1"] or 0))
         a, b = out[("CP", env, K, R)], out[("CPl1", env, K, R)]

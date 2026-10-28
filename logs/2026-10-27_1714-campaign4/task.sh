@@ -2,8 +2,9 @@
 # One task of the campaign (CLAUDE.md §8 items 187-188): simulation seed R, channel ENV, map kK-s1.
 #   CP   CHORD + River       mission.py, plain CHORD (no --chordTour)
 #   LMD  LM-Tour + River     lm_tour.py plan --dtspn --weight cl --wmin 1, its passes in ns-3, River
-#   DR   DTSP-N + River      lm_tour.py plan --dtspnRiver, prefly.py (the CH off the path), ns-3, River; paused at the
-#                            user's request (item 191, a suspected bug): run only with WITH_DR=1
+#   DR   DTSP-N + River      lm_tour.py plan --dtspnRiver, prefly.py (the CH off the path), ns-3, River; the pass
+#                            through every critical cell's disc since item 193 (it reached half of them before; the
+#                            runs before are in C4/DR-old); its own marker done-dr and score-dr.csv; NO_DR=1 skips it
 #   FC + DTSP-N (DN), no broadcast (B1) and oracle (B7): l1_rank on CP's clusters
 # Flags and plans as logs/2026-10-27_1800-lm-dtspn/run.sh and run-dr.sh; --runSeed R shifts every ns-3 mission
 # index by 10^7 (R - 1), the reception realisations and the block of layer-1 draws (100 per seed).
@@ -35,6 +36,7 @@ if [ "$R" != 1 ] && [ ! -e $CP/map.json ] && [ -e $HERE/score/R1/$ENV-k$K/done ]
        -o -name runseed.txt \) -exec rm -f {} +
   step "CP geometry copied from R1"
 fi
+if [ ! -e $OUT/done ]; then
 step "CP mission"
 python3 $T/mission.py $FLAGS --work $CP > $OUT/cp-mission.log 2>&1
 tail -n 3 $OUT/cp-mission.log
@@ -45,26 +47,30 @@ step "LMD plan + mission"
 python3 $T/mission.py $FLAGS --work $LMD > $OUT/lmd-mission.log 2>&1
 tail -n 3 $OUT/lmd-mission.log
 
-WORKS=$CP,$LMD
-if [ -n "$WITH_DR" ]; then
-  step "DR plan + prefly + mission"
-  [ -e $DR/lm.json ] || python3 $T/lm_tour.py plan $CP --out $DR --xi auto --dtspnRiver > $OUT/dr-plan.log 2>&1
-  python3 $HERE/prefly.py $DR $ENV $K 1 $BIN > $OUT/dr-prefly.log 2>&1
-  python3 $T/mission.py $FLAGS --work $DR > $OUT/dr-mission.log 2>&1
-  tail -n 3 $OUT/dr-mission.log
-  WORKS=$WORKS,$DR
-fi
-
 step "score"
-python3 $T/lm_tour.py score $WORKS --mode ns3 --out $OUT/score-ns3 > $OUT/score-ns3.log 2>&1
+python3 $T/lm_tour.py score $CP,$LMD --mode ns3 --out $OUT/score-ns3 > $OUT/score-ns3.log 2>&1
 cat $OUT/score-ns3.log
 python3 $T/l1_rank.py --set $ENV $CP --draws 100 --jobs 1 \
   --methods P+prog-kin-puq-stage-zero-redir-kt-fcd,DN-puq-stage-zero-redir,B1,B7 --out $OUT/l1 > $OUT/l1.log 2>&1
 tail -n 2 $OUT/l1.log
 cp $LMD/lm.json $OUT/lmd.json
-[ -z "$WITH_DR" ] || cp $DR/lm.json $OUT/dr.json
-
 # the pass's per-packet traces are not read by River or the scoring (the bitmaps are)
-for w in ${WORKS//,/ }; do rm -f $w/pass*-raw.csv $w/pass*-strip.csv $w/pass*-track.csv; done
-step "done"
+for w in $CP $LMD; do rm -f $w/pass*-raw.csv $w/pass*-strip.csv $w/pass*-track.csv; done
 touch $OUT/done
+step "done"
+fi
+
+if [ -z "$NO_DR" ] && [ ! -e $OUT/done-dr ]; then
+  step "DR plan + prefly + mission"
+  [ -e $DR/lm.json ] || python3 $T/lm_tour.py plan $CP --out $DR --xi auto --dtspnRiver > $OUT/dr-plan.log 2>&1
+  tail -n 1 $OUT/dr-plan.log
+  python3 $HERE/prefly.py $DR $ENV $K 1 $BIN > $OUT/dr-prefly.log 2>&1
+  python3 $T/mission.py $FLAGS --work $DR > $OUT/dr-mission.log 2>&1
+  tail -n 3 $OUT/dr-mission.log
+  python3 $T/lm_tour.py score $DR --mode ns3 --out $OUT/score-dr > $OUT/score-dr.log 2>&1
+  cat $OUT/score-dr.log
+  cp $DR/lm.json $OUT/dr.json
+  rm -f $DR/pass*-raw.csv $DR/pass*-strip.csv $DR/pass*-track.csv
+  touch $OUT/done-dr
+  step "done (DR)"
+fi

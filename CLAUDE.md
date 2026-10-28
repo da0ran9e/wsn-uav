@@ -1890,6 +1890,12 @@ tôi nghĩ DTSP-N + River có lỗi những cái nào gần xong thì chờ còn
 trong lúc chờ hãy cùng kiểm tra DTSP-N, theo tôi nghĩ, đường DTSP-N đi qua các node trong một cluster sẽ dạng  zigzag do đó sẽ bay chậm hơn CHORD đáng kể, bạn có thể xem qua xem có đúng không
 ```
 
+*193. 2026-10-28 · paper · sửa đường DTSP-N + River cho đi qua mọi critical cell như mô tả*
+
+```text
+vậy sửa đường DTSP-N + River đi qua mọi critical cell như mô tả
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

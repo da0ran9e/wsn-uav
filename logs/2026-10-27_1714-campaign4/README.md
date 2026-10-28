@@ -10,10 +10,12 @@ Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary T
 
 **Đang chạy** (bảng kết quả điền khi xong từng seed).
 
-**DTSP-N + River tạm dừng từ 2026-10-28 02:30 (mục 191):** người dùng nghi phương án này có lỗi.
-- Lúc dừng, cả ba lượt DTSP-N + River đang chạy đều mới bắt đầu (k16 r100, k12 r500: pass hoặc River vừa chạy), nên dừng hết; không lượt nào gần xong.
-- Từ đó `task.sh` chỉ chạy DTSP-N + River khi có `WITH_DR=1`.
-- Số DTSP-N + River của 5 tác vụ đã xong vẫn giữ trong `score/`. Bảng đánh dấu cột này là tạm dừng.
+**DTSP-N + River (mục 191–193):**
+- 02:30: tạm dừng vì người dùng nghi có lỗi.
+- Kiểm tra (`logs/2026-10-28_0240-dtspn-check`) cho thấy pass chỉ vào đĩa của 50–70 % critical cell.
+- 03:00: sửa (`through_crit`, `logs/2026-10-28_0310-dtspn-fix`), rồi khởi động lại chiến dịch.
+- Lượt cũ để ở `C4/DR-old`; dòng DR trong `score-ns3.csv` của 5 tác vụ đầu là bản cũ và bị `table.py` bỏ qua.
+- Bản sửa có dấu riêng `done-dr` và kết quả `score-dr.csv`. Các tác vụ đã có `done` chỉ chạy thêm phần DTSP-N + River.
 
 ## Cách hiểu "10 seed"
 - Bản đồ cố định: k8-s1, k12-s1, k16-s1, giống `uav-l2/docs/data/results/raw/` và `logs/2026-10-27_1800-lm-dtspn/`.

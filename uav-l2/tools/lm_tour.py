@@ -53,7 +53,7 @@ from meander_lane import bend_lane, write_path
 from mission import ENV_LOSS, runseed
 from mission_policy import GAP, R_TURN, tour
 from mission_report import load_map
-from pass_speed import fit
+from pass_speed import R_LOOP, fit
 from river_surrogate import WINDOW, Model, features, mission_plan
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
@@ -289,27 +289,66 @@ def dtspn(cls, bs, wk, xi, step=30):
     return {k: lines[k][c][1] for k, c in picks.items()}, {k: lines[k][c][0] for k, c in picks.items()}, ks, nb
 
 
-def every_crit(c, ln, xi):
-    """--dtspnRiver: the line ln bent into the discs B(v, xi) of the cluster's critical cells, nothing pinned; the
-    cells farther from the line taken first, each kept only if the pass still crosses the cluster once. Rows or
-    None."""
-    far = sorted(c.geo["crit"], key=lambda h: -np.linalg.norm(ln - c.geo["c"][h], axis=1).min())
-    pulls, rows = [], c.rows([], xi, ln)
-    if not c.once(rows):
-        return None
-    for h in far:
-        r = c.rows(pulls + [h], xi, ln)
-        if c.once(r):
-            pulls, rows = pulls + [h], r
-    return rows
+def through_crit(c, b, xi, r):
+    """--dtspnRiver (item 193): a pass that enters the disc B(v, xi) of every critical cell v of the cluster. The
+    cells are taken in their order along bearing b, so the pass zigzags across the cluster without turning back;
+    each gets one waypoint in its disc (at 0.95 xi at most), where the polyline through them cuts the corner most;
+    Dubins arcs of radius r join a straight entry along b (60 m before the first of the cluster's cells), the
+    waypoints and a straight exit along b, the heading at each waypoint (one of 8 around the polyline's) chosen by
+    dynamic programming for the shortest total. The speed profile slows the UAV where r is tighter than R_TURN.
+    Rows, and the largest distance from a critical cell to the pass (m)."""
+    u = np.array([math.cos(math.radians(b)), math.sin(math.radians(b))])
+    V = np.array([c.geo["c"][h] for h in c.geo["crit"]], float)
+    V = V[np.argsort(V @ u)]
+    t = np.array([c.geo["c"][h] for h in c.geo["cells"]], float) @ u
+    ends = lambda W: (W[0] - u * (W[0] @ u - t.min() + 60), W[-1] + u * (t.max() + 60 - W[-1] @ u))
+    W = V.copy()
+    for _ in range(30):
+        e0, e1 = ends(W)
+        A = np.vstack([e0, W, e1])
+        for i in range(len(V)):
+            p, d = A[i], A[i + 2] - A[i]
+            m = p + float(np.clip((V[i] - p) @ d / max(d @ d, 1e-9), 0, 1)) * d
+            off = m - V[i]
+            W[i] = V[i] + off * min(1.0, 0.95 * xi / max(float(np.linalg.norm(off)), 1e-9))
+            A[i + 1] = W[i]
+    A = np.vstack([*ends(W)[:1], W, *ends(W)[1:]])
+    H = [[b * math.pi / 180]] + [[math.atan2(*(A[i + 1] - A[i - 1])[::-1]) + j * math.pi / 4 for j in range(8)]
+                                 for i in range(1, len(A) - 1)] + [[b * math.pi / 180]]
+    cost, back = [[0.0]], []
+    for i in range(1, len(A)):
+        row, arg = [], []
+        for h in H[i]:
+            c_ = [cost[-1][j] + dubins.length((*A[i - 1], g), (*A[i], h), r) for j, g in enumerate(H[i - 1])]
+            arg.append(int(np.argmin(c_)))
+            row.append(min(c_))
+        cost.append(row)
+        back.append(arg)
+    j, hd = 0, [None] * len(A)
+    for i in range(len(A) - 1, -1, -1):
+        hd[i] = H[i][j]
+        if i:
+            j = back[i - 1][j]
+    pts = [tuple(A[0])]
+    for i in range(len(A) - 1):
+        seg, _ = dubins.path((*A[i], hd[i]), (*A[i + 1], hd[i + 1]), r)
+        pts += seg[1:]
+    P = np.array(pts)
+    s_ = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+    dd = np.r_[np.arange(0, s_[-1], 10.0), s_[-1]]
+    Q = np.c_[np.interp(dd, s_, P[:, 0]), np.interp(dd, s_, P[:, 1])]
+    gap = max(float(np.linalg.norm(P - v, axis=1).min()) for v in V)
+    with tempfile.NamedTemporaryFile("w+", suffix=".csv") as f:
+        write_path(f.name, Q, int(np.argmin(np.linalg.norm(Q - c.ch, axis=1))))
+        return list(csv.DictReader(open(f.name))), gap
 
 
 def plan_dr(w, out, xi):
     """Baseline DTSP-N + River (item 187): DN's tour idea, but each cluster crossed once and River fills in. Per
-    cluster a straight line through its critical cells' centroid (a bearing every 30 degrees) bent into the discs
-    B(v, xi) of all of them (every_crit: zigzag, no loop back over its own path, the CH not required), flown as
-    pass_speed.fit flies it; lines, directions and order chosen together, least sum_k n_k leave_k
-    (chord_tour.choose)."""
+    cluster a pass through the discs B(v, xi) of all its critical cells (through_crit, item 193: zigzag along a
+    bearing every 30 degrees, Dubins arcs of radius R_LOOP, 2 R_LOOP or R_TURN; the CH not required), flown as
+    pass_speed.fit flies it; passes crossing the cluster once preferred; passes, directions and order chosen
+    together, least sum_k n_k leave_k (chord_tour.choose)."""
     env, loss, around = context(w)
     if xi == "auto":
         xi = min(OMEGA, R_TURN, R50[env])
@@ -320,8 +359,10 @@ def plan_dr(w, out, xi):
     for k, c in cls.items():
         c.geo = dict(c.geo, crit=M["cl"][k]["P"]["crit"])
         cands[k], rows[k] = [], []
-        opts = [(b, every_crit(c, ln, xi)) for b, ln in zip(range(0, 180, 30), c.lines(c.geo["crit"]))]
-        opts = [o for o in opts if o[1] is not None] or [(None, c.rows0)]   # none crosses once: CHORD's pass
+        opts = [((b, round(rad, 1)), *through_crit(c, b, xi, rad)) for b in range(0, 180, 30)
+                for rad in (R_LOOP, 2 * R_LOOP, R_TURN)]
+        assert all(g <= xi + 1 for _, _, g in opts), (k, max(g for _, _, g in opts))   # every critical cell reached
+        opts = [(b, r) for b, r, _ in opts if c.once(r)] or [(b, r) for b, r, _ in opts]   # once over the cluster preferred
         for b, r in opts:
             new, _, _ = fit(r, c.geo["S"], c.ch, WINDOW)
             p = np.array([[float(x["x"]), float(x["y"])] for x in r])
@@ -332,7 +373,7 @@ def plan_dr(w, out, xi):
     picks, order = choose(tuple(M["bs"]), cands, {k: len(M["cl"][k]["P"]["crit"]) for k in cls})
     build(w, out, {k: rows[k][c][1] for k, c in picks.items()})
     bearing = {k: rows[k][c][0] for k, c in picks.items()}
-    print("dtsp-n + river: " + ", ".join(f"C{k} {bearing[k]} deg" for k, _, _ in order), flush=True)
+    print("dtsp-n + river: " + ", ".join(f"C{k} {bearing[k][0]} deg r {bearing[k][1]} m" for k, _, _ in order), flush=True)
     json.dump(dict(work=os.path.abspath(w), xi=xi, dtspnRiver=True, bearing=bearing, order=[k for k, _, _ in order]),
               open(f"{out}/lm.json", "w"), indent=1)
 

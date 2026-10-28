@@ -369,32 +369,37 @@ Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngo�
 - Cả hai sinh lại bằng `python3 logs/2026-10-27_1714-campaign4/table.py --csv uav-l2/docs/data/results/campaign4.csv --tex paper/icc-v5/table-campaign4.tex`.
 
 ### 7.1. Kết quả (cập nhật dần theo tác vụ)
-**DTSP-N + River tạm dừng từ 2026-10-28 02:30 (mục 191, nghi có lỗi).** Các ô của nó chỉ có số từ 5 tác vụ chạy trước khi dừng. Các tác vụ sau chỉ chạy CHORD, LM-Tour, FC + DTSP-N, B1 và B7.
+**DTSP-N + River đã sửa (mục 191–193).**
+- Bản đầu chỉ uốn nhẹ, chỉ vào đĩa của 50–70 % critical cell.
+- Bản sửa (`through_crit`) đi zigzag qua đĩa của mọi critical cell.
+- Số của bản cũ đã bỏ khỏi bảng. Bản sửa chạy lại cho mọi tác vụ, kể cả các tác vụ đã xong.
+- Chi tiết: `logs/2026-10-28_0240-dtspn-check`, `logs/2026-10-28_0310-dtspn-fix`.
 
 <!-- campaign4:begin (table.py --results) -->
-Cập nhật 2026-10-28 02:33 UTC: 7/120 tác vụ xong (7/12 ô có ít nhất một seed).
+Cập nhật 2026-10-28 02:47 UTC: 8/120 tác vụ xong (8/12 ô có ít nhất một seed).
 
 T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong (1); – : chưa chạy xong.
 
 | phương án | r = 1000 m | 500 m | 200 m | 150 m |
 |---|---|---|---|---|
-| LM-Tour + River | – / – / 807 | – / 905 / 1063 | – / 959 / 1063 | – / 978 / 1093 |
-| CHORD + River | – / – / 872 | – / 1013 / 1150 | – / 1075 / 1257 | – / 1091 / 1278 |
-| DTSP-N + River (tạm dừng) | – / – / 817 | – / – / 1210 | – / 944 / 1172 | – / 980 / – |
-| FC + DTSP-N | – / – / 967 | – / 1389 / 1750 | – / 2481 / 3469 | – / 3248 / 4468 |
-| No broadcast (rotary TSP) | – / – / 5169 | – / 4168 / 5169 | – / 4168 / 5169 | – / 4168 / 5169 |
-| Oracle | – / – / 404 | – / 402 / 404 | – / 402 / 404 | – / 402 / 404 |
+| LM-Tour + River | – / 721 / 807 | – / 905 / 1063 | – / 959 / 1063 | – / 978 / 1093 |
+| CHORD + River | – / 742 / 872 | – / 1013 / 1150 | – / 1075 / 1257 | – / 1091 / 1278 |
+| DTSP-N + River | – / – / – | – / – / – | – / – / – | – / – / – |
+| FC + DTSP-N | – / 805 / 967 | – / 1389 / 1750 | – / 2481 / 3469 | – / 3248 / 4468 |
+| No broadcast (rotary TSP) | – / 4168 / 5169 | – / 4168 / 5169 | – / 4168 / 5169 | – / 4168 / 5169 |
+| Oracle | – / 402 / 404 | – / 402 / 404 | – / 402 / 404 | – / 402 / 404 |
 
 Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng tin cậy 95 % theo trung bình từng seed, khi đã có từ 2 seed). Ngoặc là % lượt bốc phương án đầu nhanh hơn hẳn, các lượt còn lại phần lớn là hoà.
 
 | kênh | bản đồ | LM − (CHORD) | LM − (DTSP-N + River) | LM − (FC + DTSP-N) | (DTSP-N + River) − (FC + DTSP-N) |
 |---|---|---|---|---|---|
-| open | k16 | −66 (54 %) | −11 (53 %) | −160 (70 %) | −150 (72 %) |
+| open | k12 | −21 (34 %) | – | −84 (56 %) | – |
+| open | k16 | −66 (54 %) | – | −160 (70 %) | – |
 | r500 | k12 | −109 (59 %) | – | −484 (82 %) | – |
-| r500 | k16 | −87 (58 %) | −147 (72 %) | −687 (85 %) | −540 (77 %) |
-| r200 | k12 | −116 (61 %) | +16 (40 %) | −1522 (90 %) | −1538 (91 %) |
-| r200 | k16 | −193 (62 %) | −109 (61 %) | −2406 (97 %) | −2297 (97 %) |
-| r100 | k12 | −113 (67 %) | −2 (55 %) | −2270 (89 %) | −2268 (91 %) |
+| r500 | k16 | −87 (58 %) | – | −687 (85 %) | – |
+| r200 | k12 | −116 (61 %) | – | −1522 (90 %) | – |
+| r200 | k16 | −193 (62 %) | – | −2406 (97 %) | – |
+| r100 | k12 | −113 (67 %) | – | −2270 (89 %) | – |
 | r100 | k16 | −185 (63 %) | – | −3375 (94 %) | – |
 <!-- campaign4:end -->
 
@@ -402,14 +407,7 @@ Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng
 - FC + DTSP-N, B1 và B7 trùng đúng với số của mục 2 và mục 6 ở seed 1 (ví dụ DN r200 k16 3469 s, r100 k12 3248 s), vì khoá seed 1 không đổi.
 - CHORD chấm bằng `l1_rank` và bằng `lm_tour score` cho cùng T\* ở mọi lượt bốc (lệch 0,0 s).
 
-**Đọc tạm, sau 5 tác vụ seed 1 (chưa được kết luận):**
-1. LM-Tour nhanh hơn CHORD ở cả 5 ô, 66–193 s (8–15 %). Nó cũng nhanh hơn FC + DTSP-N 160–2406 s.
-2. River là phần làm nên lợi thế so với FC khi kênh hẹp. DTSP-N + River nhanh hơn FC + DTSP-N:
-   - 150 s ở r = 1 km;
-   - 540 s ở r = 500 m;
-   - 1,5–2,3 nghìn s ở r ≤ 200 m.
-3. Giữa LM-Tour và DTSP-N + River chưa phân định:
-   - LM-Tour nhanh hơn rõ ở k16 r500 (147 s) và k16 r200 (109 s);
-   - gần như hoà ở k16 open (−11 s) và k12 r100 (−2 s);
-   - DTSP-N + River nhanh hơn 16 s ở k12 r200.
+**Đọc tạm, seed 1 (chưa được kết luận):**
+1. LM-Tour nhanh hơn CHORD ở mọi ô đã xong, 8–15 %. Nó cũng nhanh hơn FC + DTSP-N từ 80 s (k12 1 km) tới 3,4 nghìn s (k16 r100).
+2. DTSP-N + River: chờ số của bản đã sửa.
 4. Mỗi ô mới có một hiện thực mạng. Theo quy tắc N ≥ 120 và "không tin một seed", cần chờ thêm seed trước khi đưa vào paper.

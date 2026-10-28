@@ -8,3 +8,4 @@ R4 r500 k16 dr exit 1 2026-10-28_07:54:46
 2026-10-28 07:58:05 geometry-r1.tar.xz chỉ có CP/open/R1 (r100/r200/r500/R1 rỗng) -> lmd/dr của các kênh đó exit 1 ngay (thiếu plan-opts.json). Sửa môi trường: dừng hàng đợi, dựng CP/<kênh>/R1 từ open/R1 (deploy tất định: map/cells/nodes trùng khi deploy lại từ đầu), ghi env.txt + plan-opts.json (lossDb theo ENV_LOSS), sinh lại plan*.txt bằng đúng lệnh river_export.py của mission.py (kiểm chứng: sinh lại open k8 trùng 8/8 plan). Phiên chính nên thêm r100/r200/r500/R1 vào tarball.
 2026-10-28 07:58:05 restart
 2026-10-28 08:11:33 geom check (R4/geom-s4.md): GEOM OK, 12/12 ô 0 differ 0 missing (cả plan*.txt tự sinh lại). Đã giải nén lại geometry-r1 đủ 4 kênh từ 0ed2066.
+R4 r100 k16 dr exit 0 2026-10-28_08:51:18

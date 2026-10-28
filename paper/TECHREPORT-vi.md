@@ -1,8 +1,8 @@
 # Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N)
 
-- **Phiên bản:** 2026-10-28, bản 1. Đây là tài liệu sống: mỗi lần chiến dịch có thêm seed, cập nhật §0 và §3 (cách làm trong `docs/progress/HANDOFF.md`).
+- **Phiên bản:** 2026-10-29, bản 2. Đây là tài liệu sống: mỗi lần chiến dịch có thêm seed, cập nhật §0 và §3 (cách làm trong `docs/progress/HANDOFF.md`).
 - **Dữ liệu chụp lúc:** commit `9bce43b` của `origin/claude/document-review-xslwgg` (2026-10-28 22:48 UTC; bảng §3 cập nhật khi dừng chiến dịch ở 81 %, mục 209).
-- **Phạm vi:** toàn bộ quá trình từ mục 186 tới mục 205 của CLAUDE.md §8, cộng phần nền (hệ thống, River, bộ dự đoán) mà các mục này dựa vào.
+- **Phạm vi:** toàn bộ quá trình từ mục 186 tới mục 209 của CLAUDE.md §8, cộng phần nền (hệ thống, River, bộ dự đoán) mà các mục này dựa vào.
 - **Tài liệu gốc nên đọc kèm:**
   - `paper/SYSTEM-vi.md`, `paper/RIVER-vi.md`, `paper/BASELINES-vi.md`, `paper/L1-MODEL-vi.md`: nền;
   - `logs/2026-10-27_1714-campaign4/README.md`: chiến dịch 4;
@@ -66,7 +66,7 @@ R50 là khoảng cách ngang mà ở đó một node nhận được một nửa
 ### 1.4 Đội 1: động học và ràng buộc giao đủ dữ liệu
 - 50 m/s, nghiêng 45°: bán kính quay ρ = R_TURN = 255 m. Vòng hẹp nhất ở vận tốc tối thiểu: R_LOOP = 63,7 m.
 - **Ràng buộc giao đủ (`pass_speed.fit`, mục 157):** mỗi cụm phải được phát **một bản sao trọn bộ manh mối** (4 041 gói, 40,4 s) trên chính các cell của nó. Nếu đường qua cụm ngắn, UAV giảm tốc; nếu giảm tới VMIN vẫn chưa đủ, nó lượn thêm vòng R_LOOP tại CH.
-- **Hệ quả quan trọng cho thiết kế đường bay:** một đường ngắn bay chậm tốn **cùng thời gian trong cụm** như một dây cung dài bay nhanh. Vậy đường qua cụm nên ngắn và đặt sao cho các đoạn nối giữa các cụm ngắn. Đây là lý do tour DTSP-N thắng CHORD (§3, §4.3).
+- **Hệ quả quan trọng cho thiết kế đường bay:** một đường ngắn bay chậm tốn **cùng thời gian trong cụm** như một dây cung dài bay nhanh. Vậy đường qua cụm nên ngắn và đặt sao cho các đoạn nối giữa các cụm ngắn. Đây là lý do tour DTSP-N thắng CHORD (§3.4, §4.2.6).
 
 ---
 
@@ -134,7 +134,7 @@ Mọi bảng trong mục 3 xếp phương án theo T\* **giảm dần** (chậm 
 | CHORD + River | 658 / 814 / 939 | 778 / 1101 / 1196 | 847 / 1161 / 1321 | 872 / 1165 / 1335 |
 | **LM-Tour + River** | **618 / 803 / 911** | **730 / 981 / 1171** | **786 / 1041 / 1237** | **806 / 1054 / 1262** |
 
-**Tương đối (LM-Tour so với phương án khác, %, K = 8 / 12 / 16):**
+**Tương đối (LM-Tour so với phương án khác, %, k8 / k12 / k16):**
 
 | So với | open | r500 | r200 | r100 |
 |---|---|---|---|---|
@@ -202,16 +202,16 @@ Trung bình mỗi cụm, bản đồ k16-s1 (15 cụm, 92 critical cell), kênh 
 
 ### 3.5 Độ ổn định so với seed 1
 
-So seed 1 với trung bình các seed 2–10 đã xong:
-- **LM − DTSP-N + River và CHORD − FC + DTSP-N rất ổn định** (lệch dưới khoảng 80 s). Ví dụ k16 r200: LM − DR ở R1 là −425 s, ở các seed khác −442 ± 74 s.
-- **LM − CHORD ở k16 bị R1 thổi phồng 2–3 lần.**
-  - R1: −66 / −87 / −193 / −185 s.
-  - Các seed khác: −24 / −15 / −74 / −61 s.
-  - k12 giữ nguyên, khoảng −105 đến −110 s ở ba kênh hẹp. k8 có quá ít seed để kết luận.
-- **T\* tuyệt đối:** với mọi phương án có River, các seed khác cao hơn R1 khoảng 60–200 s ở k16 và 50–130 s ở k12, nhưng thấp hơn 30–80 s ở k8.
-  - B7 (đội 2 biết trước c\*, vẫn chấm nội bộ dù đã bỏ khỏi bảng) chỉ lệch ±10 s, nên phần lệch không đến từ lớp 1.
+So seed 1 với trung bình các seed 2–10 đã xong (5–9 seed mỗi ô):
+- **LM − DTSP-N + River và CHORD − FC + DTSP-N ổn định.** Ví dụ k16 r200: LM − DR ở seed 1 là −425 s, ở các seed khác −429 ± 70 s; k12 r200: −296 so với −300 ± 28 s.
+- **LM − CHORD bị seed 1 thổi phồng ở k16 và một phần ở k8:**
+  - k16: seed 1 −66 / −87 / −193 / −185 s, các seed khác −24 / −17 / −72 / −61 s (open / r500 / r200 / r100), tức nhỏ hơn 2–5 lần;
+  - k8: seed 1 −38 / −83 / −84 / −90 s, các seed khác −40 / −42 / −56 / −62 s;
+  - k12 giữ nguyên: seed 1 −21 / −109 / −116 / −113 s, các seed khác −10 / −122 / −121 / −110 s.
+- **T\* tuyệt đối:** với ba phương án có River, các seed khác cao hơn seed 1 khoảng 56–197 s ở k16 và 67–128 s ở k12; ở k8 chênh −53 đến +13 s.
+  - B7 (đội 2 biết trước c\*, vẫn chấm nội bộ dù đã bỏ khỏi bảng) chỉ lệch ±15 s, nên phần lệch không đến từ lớp 1.
   - Phần lệch đến từ hiện thực mạng ns-3 (fading, MAC), đúng biến số mà chiến dịch nhiều seed được thiết kế để bắt.
-- **Hệ quả cho paper:** không viết con số "LM-Tour nhanh hơn CHORD 6–10 %" từ seed 1. Tính lại chênh ghép cặp bằng `table.py` khi đủ seed. Ước lượng hiện tại là 1–11 %, và có ý nghĩa thống kê ở mọi ô trừ open k12, open k16 và r500 k16.
+- **Hệ quả cho paper:** không dùng số của riêng seed 1. Với số hiện tại, LM-Tour nhanh hơn CHORD 1–11 %, có ý nghĩa thống kê (khoảng tin cậy 95 % theo seed không chứa 0) ở 10/12 ô; hai ô còn lại là open k12 (−11 ± 34 s) và r500 k16 (−25 ± 46 s).
 
 ### 3.6 Các câu có thể viết vào paper (theo số hiện tại)
 1. **Toàn hệ thống (VI-A):** LM-Tour + River nhanh hơn FC + DTSP-N 10–14 % ở open, 31–38 % ở r500 và 59–72 % ở r200/r100. Khoảng cách tăng khi kênh xấu đi vì FC phải lượn tới khi từng cell tự nghe đủ.
@@ -593,7 +593,7 @@ Quá trình chọn bộ dự đoán đi từ đơn giản tới phức tạp; m�
 ## 6. Diễn giải chung (phần Discussion)
 
 1. **Hình học tour quan trọng hơn bay sát cell.** Ràng buộc giao đủ biến thời gian trong cụm thành gần như hằng số (khoảng 40 s). Vì vậy thứ thay đổi được là các đoạn nối và thứ tự, và DTSP-N qua CH tối ưu đúng thứ đó.
-2. **River làm phẳng chất lượng kênh.** Từ open sang r100, T\* của LM-Tour chỉ tăng 23–41 %, còn FC + DTSP-N tăng 3–4 lần.
+2. **River làm phẳng chất lượng kênh.** Từ open sang r100, T\* của LM-Tour chỉ tăng 30–39 %, còn FC + DTSP-N tăng 3–4 lần.
 3. **Ở kênh tốt, River ít giá trị.** Ở open, FC + DTSP-N gần ngang và DTSP-N + River còn chậm hơn FC. Paper nên nói rõ River là cơ chế cho kênh xấu.
 4. **Pha 2 chiếm phần lớn T\*:** sau khi c\* báo về, đội 2 còn bay và xác minh khoảng 78 s mỗi cell. Cải tiến lớp 2/3 thêm nữa chỉ dịch T\* một phần nhỏ (mục 182: lớp 3 nhanh hơn vài chục giây chỉ đổi T\* ≤ 3 %).
 5. **Kết quả seed 1 có thể lệch đáng kể** (§3.5). Chỉ chốt số khi đủ 10 seed.

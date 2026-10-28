@@ -25,7 +25,8 @@ for R in $(seq $1 $2); do
 done
 for R in $(seq $1 $2); do for K in 16 12 8; do for E in r100 r200 r500 open; do for S in lmd cp dr; do
   echo "$S $R $E $K"; done; done; done; done |
-  xargs -P 4 -L 1 bash -c 'mkdir -p '$L'/R$1;
+  xargs -P 4 -L 1 bash -c 'o='$L'/score/R$1/$2-k$3   # a job already done keeps its log when the queue restarts
+    { [ -e $o/done-$0 ] || { [ $0 != dr ] && [ -e $o/done ]; }; } && exit 0; mkdir -p '$L'/R$1;
     python3 tools/runlog.py '$L'/R$1/$2-k$3-$0.md "bash '$L'/job.sh $0 $1 $2 $3" > /dev/null 2>&1;
     echo "R$1 $2 k$3 $0 exit $? $(date -u +%F_%T)" >> '$L'/'$D
 echo "queue done $(date -u +%F_%T)" >> $L/$D

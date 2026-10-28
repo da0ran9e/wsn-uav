@@ -44,3 +44,4 @@ R4 r100 k12 lmd exit 0 2026-10-28_19:15:12
 R4 open k16 dr exit 0 2026-10-28_19:15:12
 R4 r100 k12 dr exit 0 2026-10-28_19:15:13
 R4 r500 k16 lmd exit 1 2026-10-28_19:15:54
+LỖI MÃ s4 2026-10-28_19:17:03: R4 r500 k16 lmd exit 1 lần 3, cùng lỗi: lmd-plan.log xong bình thường (round 1 đủ C1–C15); lmd-mission.log: river-bin segfault (-11) ở C10 (--firstRun=31600110 plan10.txt), tất định. Bỏ qua, chờ phiên chính.

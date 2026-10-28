@@ -20,3 +20,4 @@ R8 r200 k12 lmd exit 0 2026-10-28_09:31:46
 restart 2026-10-28_12:47:49 (container khởi động lại sau hết hạn mức; scratchpad còn, GEOM OK)
 R8 r100 k16 dr exit 0 2026-10-28_14:02:08
 R8 r200 k16 lmd exit 0 2026-10-28_14:11:11
+R8 r100 k16 lmd exit 0 2026-10-28_14:17:51

@@ -15,3 +15,4 @@ R1 r100 k16 exit 0 2026-10-28_02:32:55
 R1 open k12 exit 0 2026-10-28_02:42:52
 stopped 2026-10-28_02:45:52 to put the fixed DTSP-N + River in (item 193); old DR folders kept as C4/DR-old
 restart with the fixed DTSP-N + River 2026-10-28_02:46:27
+R1 r200 k16 exit 0 2026-10-28_03:20:10

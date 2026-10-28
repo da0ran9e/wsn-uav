@@ -1,0 +1,8 @@
+2026-10-28 07:56:35 note: child-setup.sh không cài matplotlib; đã pip install matplotlib thủ công rồi check OK (phiên chính có thể thêm vào child-setup.sh)
+R3 r200 k16 lmd exit 1 2026-10-28_07:56:36
+R3 r100 k16 dr exit 1 2026-10-28_07:56:36
+R3 r100 k16 lmd exit 1 2026-10-28_07:56:36
+R3 r200 k16 dr exit 1 2026-10-28_07:56:37
+R3 r500 k16 lmd exit 1 2026-10-28_07:56:37
+R3 r500 k16 dr exit 1 2026-10-28_07:56:38
+note s3 2026-10-28_07:57:32: check OK (sau khi cài matplotlib). Giống s7: geometry-r1.tar.xz chỉ có CP/open/R1, CP/{r100,r200,r500}/R1 rỗng -> lmd/dr kênh r* exit 1 (thiếu plan-opts.json) cho tới khi job cp của ô đó dựng hình học; sẽ chạy lượt camp2.sh thứ hai cho các job lỗi.

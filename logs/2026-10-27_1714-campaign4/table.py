@@ -1,5 +1,5 @@
 """The campaign's table (CLAUDE.md §8 item 188) from score/R<R>/<env>-k<K>/: per scheme, channel and map, the mean
-T* over every seed done (100 layer-1 draws each) and team 1's flight, and the paired differences against LM-Tour,
+T* over the seeds every scheme has done (100 layer-1 draws each) and team 1's flight, and the paired differences against LM-Tour,
 with a 95 % interval over seeds (the seed means, Student t), since the 100 draws of one seed share one ns-3
 network realisation.
 
@@ -95,9 +95,10 @@ def main():
     a = ap.parse_args()
     X, gap = load()
     E = load_est()
-    seeds = defaultdict(set)
+    seeds = defaultdict(set)   # per cell the seeds done by every scheme, so that the means compare the same seeds
     for s, env, K, R in X:
-        seeds[(env, K)].add(R)
+        if all((t, env, K, R) in X for t in ("LMD", "CP", "DR", "DN")):
+            seeds[(env, K)].add(R)
     G = grid(X, seeds, E)
     n = sorted({len(v) for v in seeds.values()})
     gl = ["T\\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong "

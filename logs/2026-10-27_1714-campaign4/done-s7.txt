@@ -1,0 +1,7 @@
+R7 r200 k16 lmd exit 1 2026-10-28_07:56:29
+R7 r100 k16 lmd exit 1 2026-10-28_07:56:29
+R7 r100 k16 dr exit 1 2026-10-28_07:56:29
+R7 r200 k16 dr exit 1 2026-10-28_07:56:30
+R7 r500 k16 lmd exit 1 2026-10-28_07:56:30
+R7 r500 k16 dr exit 1 2026-10-28_07:56:30
+note s7 2026-10-28_07:57:05: geometry-r1.tar.xz has only CP/open/R1; CP/{r100,r200,r500}/R1 empty -> lmd/dr on r* exit 1 (no plan-opts.json) until the cp job of that cell builds the geometry; failed jobs rerun by a second camp2.sh pass. Also matplotlib was missing (child-setup.sh installs only scikit-learn) - installed by hand.

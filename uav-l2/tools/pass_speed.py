@@ -64,6 +64,12 @@ def fit(rows, S, ch, clue):
     loops, base = 0, rows
     if got(timed(rows, own, VMIN)) < clue:   # not even at VMIN: circle at the CH
         side = max((1, -1), key=lambda sd: sum(own((float(r["x"]), float(r["y"]))) for r in with_loops(rows, ich, 1, sd)))
+        if got(timed(with_loops(rows, ich, 1, side), own, VMIN)) <= got(timed(rows, own, VMIN)):
+            # a pass off the CH (DTSP-N + River, item 188) whose vertex nearest the CH has none of S around it:
+            # circle at the vertex over S nearest the CH instead (else the loops never add a packet)
+            ich = min((i for i, r in enumerate(rows) if own((float(r["x"]), float(r["y"])))),
+                      key=lambda i: math.dist((float(rows[i]["x"]), float(rows[i]["y"])), ch))
+            side = max((1, -1), key=lambda sd: sum(own((float(r["x"]), float(r["y"]))) for r in with_loops(rows, ich, 1, sd)))
         while got(timed(base, own, VMIN)) < clue:
             loops += 1
             base = with_loops(rows, ich, loops, side)

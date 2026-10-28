@@ -13,3 +13,6 @@ R5 open k16 lmd exit 0 2026-10-28_08:13:00
 R5 open k16 cp exit 0 2026-10-28_08:26:24
 R5 open k16 dr exit 0 2026-10-28_08:30:34
 R5 r100 k12 lmd exit 0 2026-10-28_09:08:39
+R5 r100 k12 dr exit 0 2026-10-28_09:13:21
+R5 r100 k12 cp exit 0 2026-10-28_09:16:20
+restart 2026-10-28_12:45:08 (máy khởi động lại sau hạn mức)

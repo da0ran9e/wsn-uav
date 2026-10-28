@@ -1,6 +1,6 @@
 # geom-s5
 
-- Bắt đầu: 2026-10-28 08:27:11, chạy 10 s, mã thoát 0
+- Bắt đầu: 2026-10-28 12:45:11, chạy 32 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**
@@ -12,17 +12,17 @@ CAMP_S=/tmp/claude-0/-home-user-wsn-uav/4dd8c2f7-8809-5794-a046-f89872014a2f/scr
 **Kết quả**
 
 ```text
-open k8: 143 files, 0 differ, 0 missing
-open k12: 211 files, 0 differ, 0 missing
-open k16: 262 files, 0 differ, 0 missing
-r500 k8: 143 files, 0 differ, 0 missing
-r500 k12: 211 files, 0 differ, 0 missing
-r500 k16: 262 files, 0 differ, 0 missing
-r200 k8: 143 files, 0 differ, 0 missing
-r200 k12: 211 files, 0 differ, 0 missing
-r200 k16: 262 files, 0 differ, 0 missing
-r100 k8: 143 files, 0 differ, 0 missing
-r100 k12: 211 files, 0 differ, 0 missing
-r100 k16: 262 files, 0 differ, 0 missing
+open k8: 143 files, 0 differ, 0 round-off only, 0 missing
+open k12: 211 files, 0 differ, 0 round-off only, 0 missing
+open k16: 262 files, 0 differ, 0 round-off only, 0 missing
+r500 k8: 143 files, 0 differ, 0 round-off only, 0 missing
+r500 k12: 211 files, 0 differ, 0 round-off only, 0 missing
+r500 k16: 262 files, 0 differ, 0 round-off only, 0 missing
+r200 k8: 143 files, 0 differ, 0 round-off only, 0 missing
+r200 k12: 211 files, 0 differ, 0 round-off only, 0 missing
+r200 k16: 262 files, 0 differ, 0 round-off only, 0 missing
+r100 k8: 143 files, 0 differ, 0 round-off only, 0 missing
+r100 k12: 211 files, 0 differ, 0 round-off only, 0 missing
+r100 k16: 262 files, 0 differ, 0 round-off only, 0 missing
 GEOM OK
 ```

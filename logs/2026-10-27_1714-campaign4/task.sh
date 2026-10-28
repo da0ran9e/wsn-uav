@@ -2,7 +2,8 @@
 # One task of the campaign (CLAUDE.md §8 items 187-188): simulation seed R, channel ENV, map kK-s1.
 #   CP   CHORD + River       mission.py, plain CHORD (no --chordTour)
 #   LMD  LM-Tour + River     lm_tour.py plan --dtspn --weight cl --wmin 1, its passes in ns-3, River
-#   DR   DTSP-N + River      lm_tour.py plan --dtspnRiver, prefly.py (the CH off the path), ns-3, River
+#   DR   DTSP-N + River      lm_tour.py plan --dtspnRiver, prefly.py (the CH off the path), ns-3, River; paused at the
+#                            user's request (item 191, a suspected bug): run only with WITH_DR=1
 #   FC + DTSP-N (DN), no broadcast (B1) and oracle (B7): l1_rank on CP's clusters
 # Flags and plans as logs/2026-10-27_1800-lm-dtspn/run.sh and run-dr.sh; --runSeed R shifts every ns-3 mission
 # index by 10^7 (R - 1), the reception realisations and the block of layer-1 draws (100 per seed).
@@ -44,22 +45,26 @@ step "LMD plan + mission"
 python3 $T/mission.py $FLAGS --work $LMD > $OUT/lmd-mission.log 2>&1
 tail -n 3 $OUT/lmd-mission.log
 
-step "DR plan + prefly + mission"
-[ -e $DR/lm.json ] || python3 $T/lm_tour.py plan $CP --out $DR --xi auto --dtspnRiver > $OUT/dr-plan.log 2>&1
-python3 $HERE/prefly.py $DR $ENV $K 1 $BIN > $OUT/dr-prefly.log 2>&1
-python3 $T/mission.py $FLAGS --work $DR > $OUT/dr-mission.log 2>&1
-tail -n 3 $OUT/dr-mission.log
+WORKS=$CP,$LMD
+if [ -n "$WITH_DR" ]; then
+  step "DR plan + prefly + mission"
+  [ -e $DR/lm.json ] || python3 $T/lm_tour.py plan $CP --out $DR --xi auto --dtspnRiver > $OUT/dr-plan.log 2>&1
+  python3 $HERE/prefly.py $DR $ENV $K 1 $BIN > $OUT/dr-prefly.log 2>&1
+  python3 $T/mission.py $FLAGS --work $DR > $OUT/dr-mission.log 2>&1
+  tail -n 3 $OUT/dr-mission.log
+  WORKS=$WORKS,$DR
+fi
 
 step "score"
-python3 $T/lm_tour.py score $CP,$LMD,$DR --mode ns3 --out $OUT/score-ns3 > $OUT/score-ns3.log 2>&1
+python3 $T/lm_tour.py score $WORKS --mode ns3 --out $OUT/score-ns3 > $OUT/score-ns3.log 2>&1
 cat $OUT/score-ns3.log
 python3 $T/l1_rank.py --set $ENV $CP --draws 100 --jobs 1 \
   --methods P+prog-kin-puq-stage-zero-redir-kt-fcd,DN-puq-stage-zero-redir,B1,B7 --out $OUT/l1 > $OUT/l1.log 2>&1
 tail -n 2 $OUT/l1.log
 cp $LMD/lm.json $OUT/lmd.json
-cp $DR/lm.json $OUT/dr.json
+[ -z "$WITH_DR" ] || cp $DR/lm.json $OUT/dr.json
 
 # the pass's per-packet traces are not read by River or the scoring (the bitmaps are)
-for w in $CP $LMD $DR; do rm -f $w/pass*-raw.csv $w/pass*-strip.csv $w/pass*-track.csv; done
+for w in ${WORKS//,/ }; do rm -f $w/pass*-raw.csv $w/pass*-strip.csv $w/pass*-track.csv; done
 step "done"
 touch $OUT/done

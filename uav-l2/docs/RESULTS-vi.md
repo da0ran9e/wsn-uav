@@ -369,8 +369,10 @@ Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngo�
 - Cả hai sinh lại bằng `python3 logs/2026-10-27_1714-campaign4/table.py --csv uav-l2/docs/data/results/campaign4.csv --tex paper/icc-v5/table-campaign4.tex`.
 
 ### 7.1. Kết quả (cập nhật dần theo tác vụ)
+**DTSP-N + River tạm dừng từ 2026-10-28 02:30 (mục 191, nghi có lỗi).** Các ô của nó chỉ có số từ 5 tác vụ chạy trước khi dừng. Các tác vụ sau chỉ chạy CHORD, LM-Tour, FC + DTSP-N, B1 và B7.
+
 <!-- campaign4:begin (table.py --results) -->
-Cập nhật 2026-10-28 01:59 UTC: 5/120 tác vụ xong (5/12 ô có ít nhất một seed).
+Cập nhật 2026-10-28 02:31 UTC: 5/120 tác vụ xong (5/12 ô có ít nhất một seed).
 
 T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong (1); – : chưa chạy xong.
 
@@ -378,7 +380,7 @@ T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 �
 |---|---|---|---|---|
 | LM-Tour + River | – / – / 807 | – / – / 1063 | – / 959 / 1063 | – / 978 / – |
 | CHORD + River | – / – / 872 | – / – / 1150 | – / 1075 / 1257 | – / 1091 / – |
-| DTSP-N + River | – / – / 817 | – / – / 1210 | – / 944 / 1172 | – / 980 / – |
+| DTSP-N + River (tạm dừng) | – / – / 817 | – / – / 1210 | – / 944 / 1172 | – / 980 / – |
 | FC + DTSP-N | – / – / 967 | – / – / 1750 | – / 2481 / 3469 | – / 3248 / – |
 | No broadcast (rotary TSP) | – / – / 5169 | – / – / 5169 | – / 4168 / 5169 | – / 4168 / – |
 | Oracle | – / – / 404 | – / – / 404 | – / 402 / 404 | – / 402 / – |

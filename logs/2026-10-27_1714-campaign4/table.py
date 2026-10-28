@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ENVS = ("open", "r500", "r200", "r100")
 RANGE = {"open": "1 km", "r500": "500 m", "r200": "200 m", "r100": "150 m"}
 MAPS = (8, 12, 16)
-SCHEMES = (("LMD", "LM-Tour + River"), ("CP", "CHORD + River"), ("DR", "DTSP-N + River"), ("DN", "FC + DTSP-N"),
+SCHEMES = (("LMD", "LM-Tour + River"), ("CP", "CHORD + River"), ("DR", "DTSP-N + River (tạm dừng)"), ("DN", "FC + DTSP-N"),
            ("B1", "No broadcast (rotary TSP)"), ("B7", "Oracle"))
 L1 = {"DN-puq-stage-zero-redir": "DN", "B1": "B1", "B7": "B7", "P+prog-kin-puq-stage-zero-redir-kt-fcd": "CPl1"}
 T975 = {1: 12.71, 2: 4.30, 3: 3.18, 4: 2.78, 5: 2.57, 6: 2.45, 7: 2.36, 8: 2.31, 9: 2.26, 10: 2.23}
@@ -48,8 +48,8 @@ def grid(X, seeds):
     for s, _ in SCHEMES:
         out[s] = {}
         for env in ENVS:
-            v = [np.mean([t for R in sorted(seeds[(env, K)]) for t, _ in X[(s, env, K, R)].values()])
-                 if (env, K) in seeds else None for K in MAPS]
+            v = [np.mean([t for R in sorted(seeds[(env, K)]) if (s, env, K, R) in X for t, _ in X[(s, env, K, R)].values()])
+                 if any((s, env, K, R) in X for R in seeds.get((env, K), ())) else None for K in MAPS]
             out[s][env] = " / ".join("–" if x is None else f"{x:.0f}" for x in v)
     return out
 
@@ -103,10 +103,12 @@ def main():
             if (env, K) not in seeds:
                 continue
             Rs = sorted(seeds[(env, K)])
-            cell = lambda s: np.mean([t for R in Rs for t, _ in X[(s, env, K, R)].values()])
-            t1 = lambda s: np.mean([np.mean([u for _, u in X[(s, env, K, R)].values()]) for R in Rs])
-            print(f"| {env} ({RANGE[env]}) | k{K} | " + " | ".join(f"{cell(s):.0f}" for s, _ in SCHEMES)
-                  + f" | {t1('LMD'):.0f} / {t1('CP'):.0f} / {t1('DR'):.0f} / {t1('DN'):.0f} | ({len(Rs)})")
+            have = lambda s: [R for R in Rs if (s, env, K, R) in X]   # DR is missing where it was paused (item 191)
+            cell = lambda s: f"{np.mean([t for R in have(s) for t, _ in X[(s, env, K, R)].values()]):.0f}" if have(s) else "–"
+            t1 = lambda s: (f"{np.mean([np.mean([u for _, u in X[(s, env, K, R)].values()]) for R in have(s)]):.0f}"
+                            if have(s) else "–")
+            print(f"| {env} ({RANGE[env]}) | k{K} | " + " | ".join(cell(s) for s, _ in SCHEMES)
+                  + f" | {t1('LMD')} / {t1('CP')} / {t1('DR')} / {t1('DN')} | ({len(Rs)})")
     print("\nChênh ghép cặp so với LM-Tour (s, âm là LM-Tour nhanh hơn), ± nửa khoảng tin cậy 95 % theo trung bình từng "
           "seed; ngoặc: % lượt bốc LM-Tour nhanh hơn.\n")
     pairs = (("CP", "CHORD"), ("DR", "DTSP-N + River"), ("DN", "FC + DTSP-N"))
@@ -114,6 +116,9 @@ def main():
           "|---|---|" + "---|" * (len(pairs) + 1)]
 
     def diff(p, q, env, K, Rs):
+        Rs = [R for R in Rs if (p, env, K, R) in X and (q, env, K, R) in X]
+        if not Rs:
+            return "–"
         per = [np.mean([X[(p, env, K, R)][x][0] - X[(q, env, K, R)][x][0] for x in X[(p, env, K, R)]]) for R in Rs]
         allv = [X[(p, env, K, R)][x][0] - X[(q, env, K, R)][x][0] for R in Rs for x in X[(p, env, K, R)]]
         hw = T975.get(len(Rs) - 1, 1.96) * np.std(per, ddof=1) / math.sqrt(len(Rs)) if len(Rs) > 1 else float("nan")

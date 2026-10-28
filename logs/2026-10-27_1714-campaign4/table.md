@@ -4,7 +4,7 @@ T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 �
 |---|---|---|---|---|
 | LM-Tour + River | – / – / 807 | – / – / 1063 | – / 959 / 1063 | – / 978 / – |
 | CHORD + River | – / – / 872 | – / – / 1150 | – / 1075 / 1257 | – / 1091 / – |
-| DTSP-N + River | – / – / 817 | – / – / 1210 | – / 944 / 1172 | – / 980 / – |
+| DTSP-N + River (tạm dừng) | – / – / 817 | – / – / 1210 | – / 944 / 1172 | – / 980 / – |
 | FC + DTSP-N | – / – / 967 | – / – / 1750 | – / 2481 / 3469 | – / 3248 / – |
 | No broadcast (rotary TSP) | – / – / 5169 | – / – / 5169 | – / 4168 / 5169 | – / 4168 / – |
 | Oracle | – / – / 404 | – / – / 404 | – / 402 / 404 | – / 402 / – |
@@ -15,7 +15,7 @@ CHORD chấm bằng `l1_rank` và bằng `lm_tour score` lệch nhau tối đa 0
 
 T\* trung bình (s) trên mọi seed và lượt bốc; ngoặc: số seed. Team 1: thời gian bay của đội 1 (s).
 
-| kênh (r) | bản đồ | LM-Tour + River | CHORD + River | DTSP-N + River | FC + DTSP-N | No broadcast (rotary TSP) | Oracle | team 1 LM / CHORD / DR / DN |
+| kênh (r) | bản đồ | LM-Tour + River | CHORD + River | DTSP-N + River (tạm dừng) | FC + DTSP-N | No broadcast (rotary TSP) | Oracle | team 1 LM / CHORD / DR / DN |
 |---|---|---|---|---|---|---|---|---|
 | open (1 km) | k16 | 807 | 872 | 817 | 967 | 5169 | 404 | 1394 / 1437 / 1449 / 1134 | (1)
 | r500 (500 m) | k16 | 1063 | 1150 | 1210 | 1750 | 5169 | 404 | 1308 / 1437 / 1449 / 2563 | (1)

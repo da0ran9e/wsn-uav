@@ -1878,6 +1878,12 @@ trong lúc chờ điền kết quả vào bảng những gì đã xong nhé
 có kết quả mới chưa
 ```
 
+*191. 2026-10-28 · paper · nghi DTSP-N + River có lỗi: lượt nào gần xong thì chờ, còn lại (chưa chạy hoặc vừa chạy) thì tạm dừng*
+
+```text
+tôi nghĩ DTSP-N + River có lỗi những cái nào gần xong thì chờ còn lại chưa chạy hoặc vừa chạy của DTSP-N + River thì tạm dừng nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

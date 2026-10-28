@@ -97,3 +97,4 @@ R7 open k12 exit 1 2026-10-28_05:17:51
 the R2-R7 lines above failed at once (2026-10-28_05:18:15): mission.py refused a fresh seed-R folder (no runseed.txt read as seed 1); seed check fixed, failed logs removed
 restart seeds 2-10 2026-10-28_05:18:29 (R1 r500 k8 still running on its own)
 R1 r500 k8 exit 0 2026-10-28_05:24:03
+restart after reboot 2026-10-28_05:31:33

@@ -1,6 +1,6 @@
 # geom-s4
 
-- Bắt đầu: 2026-10-28 08:11:12, chạy 10 s, mã thoát 0
+- Bắt đầu: 2026-10-28 09:08:36, chạy 10 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**

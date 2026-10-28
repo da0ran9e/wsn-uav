@@ -29,7 +29,28 @@ Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary T
 - Dấu xong: `done-cp`, `done-lmd`, `done-dr`. Dấu `done` của `task.sh` được hiểu là `done-cp` + `done-lmd`.
 - Điểm số: `score-cp.csv`, `score-lmd.csv`, `score-dr.csv`.
 - `mission.py` giờ chỉ ghi `env.txt`, `runseed.txt`, `plan-opts.json` khi tệp chưa có hoặc khác nội dung. Lý do: LM-Tour và DTSP-N + River đọc các tệp này của thư mục CHORD qua symlink trong lúc CHORD đang chạy.
-- Khởi động lại: `setsid nohup bash camp2.sh 2 10 &`.
+- Khởi động lại: `setsid nohup bash camp2.sh 2 2 &`.
+
+**Nhiều phiên (mục 201, từ 2026-10-28 07:51):**
+- Phiên chính chạy seed 1–2 và gộp bảng. Mỗi seed 3–10 do một phiên cloud phụ chạy (tag `campaign4`), theo `CHILD.md`:
+
+  | Seed | Phiên |
+  |---|---|
+  | 3 | session_018hr7LParHKzoFBDz8LcGXf |
+  | 4 | session_018hr7LQZ2RXGiaV6AkiYcZx |
+  | 5 | session_018hr7LNMHSM2RKh2ujYNhEo |
+  | 6 | session_018hr7LQGgfMzic3FNgkW3De |
+  | 7 | session_018hr7LLt6ndNeQ9ZERW1VCc |
+  | 8 | session_018hr7LPNXsXyaEz1VGjFCQF |
+  | 9 | session_018hr7LQoHuwKF1t8g2VoWaW |
+  | 10 | session_018hr7LPAPcdWuEkXpupA4ER |
+
+- `assigned/R<R>` ghi tên phiên được chạy seed R (`main` hoặc `s<R>`). `job.sh` của phiên khác thoát với mã 3.
+- Bộ chạy di động:
+  - `camp-bin5.tar.xz` là binary đóng băng kèm thư viện. Binary chỉ nạp thư viện trong `lib/` và `pass-lib/` qua `LD_LIBRARY_PATH`; đã kiểm tra bằng `ldd`, không còn tham chiếu nào tới `ns3-dev`.
+  - `geometry-r1.tar.xz` là hình học CHORD của seed 1.
+  - `child-setup.sh` cài đặt; `child-check.sh` bay lại CHORD + River seed 1, kênh 1 km, k8 và phải khớp 100/100 lượt bốc.
+- Mỗi phiên phụ ghi `done-s<R>.txt`, `R<R>/`, `score/R<R>/` và chỉ commit các tệp đó.
 
 ## Cách hiểu "10 seed"
 - Bản đồ cố định: k8-s1, k12-s1, k16-s1, giống `uav-l2/docs/data/results/raw/` và `logs/2026-10-27_1800-lm-dtspn/`.

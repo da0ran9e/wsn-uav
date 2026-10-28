@@ -5,3 +5,7 @@ R5 r200 k16 dr exit 1 2026-10-28_07:54:48
 R5 r500 k16 lmd exit 1 2026-10-28_07:54:49
 R5 r500 k16 dr exit 1 2026-10-28_07:54:49
 note s5 2026-10-28_07:55:39: geometry-r1.tar.xz chỉ có CP/open; với r100/r200/r500 job cp tự dựng lại hình học (seed bản đồ 1, tất định), lmd/dr của các ô đó exit 1 (thiếu plan-opts.json) khi chạy trước cp; sẽ chạy lại camp2.sh khi hàng đợi xong. Đã cài thêm matplotlib (child-setup.sh chưa cài).
+R5 r100 k16 cp exit 241 2026-10-28_08:09:58
+R5 r200 k16 cp exit 241 2026-10-28_08:09:58
+R5 r500 k16 cp exit 241 2026-10-28_08:09:58
+note s5 2026-10-28_08:10:40: child-geom-check: r100/r200/r500 k16 do job cp tự dựng lệch seed 1 ở tour.json (chỉ sai số dấu phẩy động ~1e-12, các mốc enter/leave/length). Đã kill 3 job cp đó (exit 241 ở trên), thay CP/<kênh>/R5/k16-s1 bằng bản chép từ R1 (cách camp2.sh), chép sẵn k12/k8 cho r100/r200/r500 trước khi job cp của chúng chạy. GEOM OK 12/12 ô. 9 job k16 (cp, lmd, dr × r100/r200/r500) sẽ chạy lại ở lượt camp2.sh thứ hai.

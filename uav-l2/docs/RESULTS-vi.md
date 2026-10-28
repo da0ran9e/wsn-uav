@@ -376,7 +376,7 @@ Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngo�
 - Chi tiết: `logs/2026-10-28_0240-dtspn-check`, `logs/2026-10-28_0310-dtspn-fix`.
 
 <!-- campaign4:begin (table.py --results) -->
-Cập nhật 2026-10-28 03:02 UTC: 8/120 tác vụ xong (8/12 ô có ít nhất một seed).
+Cập nhật 2026-10-28 03:12 UTC: 8/120 tác vụ xong (8/12 ô có ít nhất một seed).
 
 T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong (1); – : chưa chạy xong.
 
@@ -384,25 +384,25 @@ T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 �
 |---|---|---|---|---|
 | LM-Tour + River | – / 721 / 807 | – / 905 / 1063 | – / 959 / 1063 | – / 978 / 1093 |
 | CHORD + River | – / 742 / 872 | – / 1013 / 1150 | – / 1075 / 1257 | – / 1091 / 1278 |
-| DTSP-N + River | – / – / – | – / – / – | – / – / 1505* | – / – / – |
+| DTSP-N + River | – / 777* / 980* | – / 1130* / 1362* | – / 1267* / 1505* | – / 1268* / 1576* |
 | FC + DTSP-N | – / 805 / 967 | – / 1389 / 1750 | – / 2481 / 3469 | – / 3248 / 4468 |
 | No broadcast (rotary TSP) | – / 4168 / 5169 | – / 4168 / 5169 | – / 4168 / 5169 | – / 4168 / 5169 |
 | Oracle | – / 402 / 404 | – / 402 / 404 | – / 402 / 404 | – / 402 / 404 |
 
-\* ước lượng mức mô hình của DTSP-N + River đã sửa (mục 193–194): seed 1, River dự đoán bằng bộ surrogate, chưa chạy ns-3; số đo ns-3 thay vào khi tác vụ xong. Cùng cách ước lượng, CHORD và LM-Tour lệch số ns-3 của chúng: k16 r200 +9 / +19 s.
+\* ước lượng mức mô hình của DTSP-N + River đã sửa (mục 193–194): seed 1, River dự đoán bằng bộ surrogate, chưa chạy ns-3; số đo ns-3 thay vào khi tác vụ xong. Cùng cách ước lượng, CHORD và LM-Tour lệch số ns-3 của chúng: k12 open 0 / 0 s, k12 r500 +10 / +4 s, k12 r200 +14 / +12 s, k12 r100 +9 / +7 s, k16 open 0 / 0 s, k16 r500 +3 / −1 s, k16 r200 +9 / +19 s, k16 r100 +7 / −3 s.
 
 Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng tin cậy 95 % theo trung bình từng seed, khi đã có từ 2 seed). Ngoặc là % lượt bốc phương án đầu nhanh hơn hẳn, các lượt còn lại phần lớn là hoà.
 
 | kênh | bản đồ | LM − (CHORD) | LM − (DTSP-N + River) | LM − (FC + DTSP-N) | (DTSP-N + River) − (FC + DTSP-N) |
 |---|---|---|---|---|---|
-| open | k12 | −21 (34 %) | – | −84 (56 %) | – |
-| open | k16 | −66 (54 %) | – | −160 (70 %) | – |
-| r500 | k12 | −109 (59 %) | – | −484 (82 %) | – |
-| r500 | k16 | −87 (58 %) | – | −687 (85 %) | – |
-| r200 | k12 | −116 (61 %) | – | −1522 (90 %) | – |
+| open | k12 | −21 (34 %) | −56* (42 %) | −84 (56 %) | −28* (59 %) |
+| open | k16 | −66 (54 %) | −174* (63 %) | −160 (70 %) | +13* (56 %) |
+| r500 | k12 | −109 (59 %) | −221* (69 %) | −484 (82 %) | −258* (73 %) |
+| r500 | k16 | −87 (58 %) | −300* (79 %) | −687 (85 %) | −388* (60 %) |
+| r200 | k12 | −116 (61 %) | −296* (76 %) | −1522 (90 %) | −1214* (91 %) |
 | r200 | k16 | −193 (62 %) | −422* (75 %) | −2406 (97 %) | −1964* (96 %) |
-| r100 | k12 | −113 (67 %) | – | −2270 (89 %) | – |
-| r100 | k16 | −185 (63 %) | – | −3375 (94 %) | – |
+| r100 | k12 | −113 (67 %) | −284* (81 %) | −2270 (89 %) | −1980* (90 %) |
+| r100 | k16 | −185 (63 %) | −486* (91 %) | −3375 (94 %) | −2892* (86 %) |
 <!-- campaign4:end -->
 
 **Đối chiếu:**
@@ -411,5 +411,10 @@ Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng
 
 **Đọc tạm, seed 1 (chưa được kết luận):**
 1. LM-Tour nhanh hơn CHORD ở mọi ô đã xong: 3 % (k12, 1 km) đến 15 % (k16, r200 và r100). Nó cũng nhanh hơn FC + DTSP-N từ 80 s (k12 1 km) tới 3,4 nghìn s (k16 r100).
-2. DTSP-N + River: chờ số của bản đã sửa.
+2. DTSP-N + River đã sửa, số ước lượng có dấu \*:
+   - chậm hơn LM-Tour 56–486 s (8–31 %) và chậm hơn CHORD ở mọi ô;
+   - nguyên nhân: đường zigzag qua mọi critical cell làm đội 1 bay lâu hơn (k16 r200: 2085 so với 1437 s của CHORD);
+   - nhanh hơn FC + DTSP-N 258–2892 s khi r ≤ 500 m. Phần chênh này là lợi ích của River;
+   - ở 1 km gần hoà FC + DTSP-N (−28 / +13 s), vì cell tự giải mã được trước khi River xong.
+   - Cùng cách ước lượng, CHORD và LM-Tour chỉ lệch số ns-3 của chúng 0–19 s.
 4. Mỗi ô mới có một hiện thực mạng. Theo quy tắc N ≥ 120 và "không tin một seed", cần chờ thêm seed trước khi đưa vào paper.

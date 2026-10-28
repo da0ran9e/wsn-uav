@@ -52,6 +52,11 @@ def load():
     return out, gap
 
 
+def sg(v):
+    """A signed number of seconds, 0 without a sign."""
+    return "0" if abs(v) < 0.5 else f"{v:+.0f}"
+
+
 def load_est():
     """{(scheme, env, K): {draw: T*}}, model level, seed 1: CP, LMD and the fixed DTSP-N + River (DRT as DR)."""
     out = {}
@@ -97,8 +102,8 @@ def main():
     if any(k[0] == "DR" for k in E):
         gl += ["", "\\* ước lượng mức mô hình của DTSP-N + River đã sửa (mục 193–194): seed 1, River dự đoán bằng bộ surrogate, chưa "
                "chạy ns-3; số đo ns-3 thay vào khi tác vụ xong. Cùng cách ước lượng, CHORD và LM-Tour lệch số ns-3 của "
-               "chúng: " + ", ".join(f"k{K} {env} {np.mean(list(E[('CP', env, K)].values())) - np.mean([t for t, _ in X[('CP', env, K, 1)].values()]):+.0f} / "
-                                     f"{np.mean(list(E[('LMD', env, K)].values())) - np.mean([t for t, _ in X[('LMD', env, K, 1)].values()]):+.0f} s"
+               "chúng: " + ", ".join(f"k{K} {env} {sg(np.mean(list(E[('CP', env, K)].values())) - np.mean([t for t, _ in X[('CP', env, K, 1)].values()]))} / "
+                                     f"{sg(np.mean(list(E[('LMD', env, K)].values())) - np.mean([t for t, _ in X[('LMD', env, K, 1)].values()]))} s"
                                      for K in MAPS for env in ENVS if ("CP", env, K) in E and ("CP", env, K, 1) in X).replace("-", "−") + "."]
     print("\n".join(gl) + "\n")
     if a.tex:

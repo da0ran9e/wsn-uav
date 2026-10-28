@@ -18,3 +18,4 @@ restart with the fixed DTSP-N + River 2026-10-28_02:46:27
 R1 r200 k16 exit 0 2026-10-28_03:20:10
 R1 r100 k16 exit 0 2026-10-28_03:24:59
 R1 r500 k16 exit 0 2026-10-28_03:38:39
+R1 open k16 exit 0 2026-10-28_03:42:49

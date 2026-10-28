@@ -1,0 +1,5 @@
+set,size,method,maps,n,Tstar,ci,p90,Tall,rank,first
+open,8,P+prog-kin-puq-stage-zero-redir-kt-fcd,1,100,667.5,88.0,1143.0,10348.7,2.23,0.5
+open,8,DN-puq-stage-zero-redir,1,100,684.0,89.5,1106.8,10360.7,2.24,0.52
+open,8,B1,1,100,2745.0,299.6,4939.7,5477.3,22.76,0.03
+open,8,B7,1,100,304.6,16.6,421.8,,1.0,1.0

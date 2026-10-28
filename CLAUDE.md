@@ -1902,6 +1902,12 @@ vậy sửa đường DTSP-N + River đi qua mọi critical cell như mô tả
 cập nhật bảng số liệu mới, bỏ số liệu cũ của DTSP-N + River đi thay bằng con số ước lượng đánh dâú * theo lượt chạy vừa rồi
 ```
 
+*195. 2026-10-28 · paper · cập nhật bảng hiện tại trước (không chờ hết ước lượng)*
+
+```text
+cập nhật bảng hiện tại trước
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

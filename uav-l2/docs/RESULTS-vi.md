@@ -376,7 +376,7 @@ Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngo�
 - Chi tiết: `logs/2026-10-28_0240-dtspn-check`, `logs/2026-10-28_0310-dtspn-fix`.
 
 <!-- campaign4:begin (table.py --results) -->
-Cập nhật 2026-10-28 02:47 UTC: 8/120 tác vụ xong (8/12 ô có ít nhất một seed).
+Cập nhật 2026-10-28 03:01 UTC: 8/120 tác vụ xong (8/12 ô có ít nhất một seed).
 
 T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong (1); – : chưa chạy xong.
 
@@ -408,6 +408,6 @@ Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng
 - CHORD chấm bằng `l1_rank` và bằng `lm_tour score` cho cùng T\* ở mọi lượt bốc (lệch 0,0 s).
 
 **Đọc tạm, seed 1 (chưa được kết luận):**
-1. LM-Tour nhanh hơn CHORD ở mọi ô đã xong, 8–15 %. Nó cũng nhanh hơn FC + DTSP-N từ 80 s (k12 1 km) tới 3,4 nghìn s (k16 r100).
+1. LM-Tour nhanh hơn CHORD ở mọi ô đã xong: 3 % (k12, 1 km) đến 15 % (k16, r200 và r100). Nó cũng nhanh hơn FC + DTSP-N từ 80 s (k12 1 km) tới 3,4 nghìn s (k16 r100).
 2. DTSP-N + River: chờ số của bản đã sửa.
 4. Mỗi ô mới có một hiện thực mạng. Theo quy tắc N ≥ 120 và "không tin một seed", cần chờ thêm seed trước khi đưa vào paper.

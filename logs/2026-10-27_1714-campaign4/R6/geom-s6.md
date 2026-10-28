@@ -1,6 +1,6 @@
 # geom-s6
 
-- Bắt đầu: 2026-10-28 14:37:46, chạy 8 s, mã thoát 0
+- Bắt đầu: 2026-10-28 14:56:58, chạy 12 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**

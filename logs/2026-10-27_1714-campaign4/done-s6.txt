@@ -1,0 +1,14 @@
+R6 r200 k16 lmd exit 1 2026-10-28_07:55:35
+R6 r100 k16 dr exit 1 2026-10-28_07:55:36
+R6 r100 k16 lmd exit 1 2026-10-28_07:55:36
+R6 r200 k16 dr exit 1 2026-10-28_07:55:36
+R6 r500 k16 lmd exit 1 2026-10-28_07:55:36
+R6 r500 k16 dr exit 1 2026-10-28_07:55:37
+note s6 2026-10-28_07:57:13: như s5 — geometry-r1.tar.xz chỉ có CP/open; lmd/dr của r100/r200/r500 exit 1 (thiếu plan-opts.json) khi chạy trước cp; job cp tự dựng hình học. Đã ngắt và xoá các mission dở, khởi động lại camp2.sh; sẽ chạy lại camp2.sh sau queue done để bù job lỗi. Đã cài thêm matplotlib (child-setup.sh chưa cài).
+restart
+R6 r100 k16 dr exit 4 2026-10-28_07:57:13
+R6 r200 k16 lmd exit 1 2026-10-28_07:57:14
+R6 r100 k16 lmd exit 1 2026-10-28_07:57:14
+R6 r200 k16 dr exit 1 2026-10-28_07:57:15
+R6 r500 k16 lmd exit 1 2026-10-28_07:57:15
+R6 r500 k16 dr exit 1 2026-10-28_07:57:16

@@ -11,3 +11,5 @@ R8 r500 k16 cp exit 241 2026-10-28_08:11:18
 R8 r100 k12 lmd exit 1 2026-10-28_08:11:20
 R8 r100 k12 cp exit 1 2026-10-28_08:11:33
 note s8 2026-10-28_08:11:58: child-geom-check (R8/geom-s8.md): r100/r200/r500 k16 do job cp tự dựng lệch seed 1 ở tour.json. Như s5: đã kill 3 job cp đó, thay CP/<r*>/R8/k{16,12,8}-s1 bằng bản chép từ R1 (cách camp2.sh, runseed=8). GEOM OK 12/12 ô. 9 job k16 r* (cp, lmd, dr) chạy lại ở lượt camp2.sh thứ hai. Lưu ý: camp2.sh lượt một bị pkill nhầm, xargs vẫn chạy nên sẽ không có dòng 'queue done' của lượt một.
+R8 r100 k12 dr exit 143 2026-10-28_08:12:23
+note s8 2026-10-28_08:12:57: r100 k12 lmd/cp (exit 1) và dr (exit 143, đã kill) trùng lúc thay thư mục; đã xoá DR/LMD r100 R8 k12, chép lại CP r100 k12 từ R1; GEOM OK. Ba job này chạy lại ở lượt hai.

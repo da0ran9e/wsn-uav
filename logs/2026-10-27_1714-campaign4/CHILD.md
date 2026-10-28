@@ -33,6 +33,12 @@ L=logs/2026-10-27_1714-campaign4
 2. **Kiểm tra:** `python3 tools/runlog.py $L/R<R>/check-s<R>.md "CAMP_S=$CAMP_S bash $L/child-check.sh"`.
    - Lệnh này bay lại CHORD + River của seed 1, kênh 1 km, bản đồ k8. Phải in `CHECK OK`: 100/100 lượt bốc trùng T\* của phiên chính.
    - Nếu `FAIL`: dừng, ghi lý do vào `done-s<R>.txt`, commit, push rồi kết thúc. Không chạy tiếp.
+2b. **Kiểm tra hình học** (thêm 08:05 ngày 28/10, mục 203): `CAMP_S=$CAMP_S bash $L/child-geom-check.sh <R>`.
+   - Lệnh này so mọi tệp hình học của `CP/<kênh>/R<R>/<bản đồ>` với `geometry-r1.sha256` (seed 1 của phiên chính, đủ 4 kênh). Log được bỏ qua.
+   - Ô chưa được job cp dựng thì in `pending`; tệp còn thiếu (job cp đang chạy) được đếm riêng.
+   - Phải in `GEOM OK`. Ô nào có tệp `differ`: dừng các job của ô đó, ghi vào `done-s<R>.txt`, commit, push.
+   - Chạy lại sau mỗi job cp xong và trước lần commit cuối.
+   - `geometry-r1.tar.xz` từ 08:05 có đủ 4 kênh, `child-setup.sh` cài thêm matplotlib.
 3. **Chạy:** `setsid nohup bash $L/camp2.sh <R> <R> > /dev/null 2>&1 < /dev/null &`.
    - Chạy từ thư mục gốc repo, giữ nguyên các biến `CAMP_*` ở trên.
    - Hàng đợi gồm 36 job (3 phương án × 3 bản đồ × 4 kênh), chạy 4 job cùng lúc, mỗi job `--jobs 1`.

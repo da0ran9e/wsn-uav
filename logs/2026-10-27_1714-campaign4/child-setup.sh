@@ -8,7 +8,7 @@ L=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$CAMP_S/C4"
 tar xJf "$L/camp-bin5.tar.xz" -C "$CAMP_S"
 tar xJf "$L/geometry-r1.tar.xz" -C "$CAMP_S/C4"
-pip install --break-system-packages -q scikit-learn 2>&1 | grep -v WARNING || true
-python3 -c 'import sklearn, numpy, scipy; print("python ok", sklearn.__version__)'
+pip install --break-system-packages -q scikit-learn matplotlib 2>&1 | grep -v WARNING || true
+python3 -c 'import sklearn, numpy, scipy, matplotlib; print("python ok", sklearn.__version__)'
 (cd "$CAMP_S/CAMP-BIN5" && sha256sum deploy-bin pass-bin river-bin | cut -c1-16)   # expect 508c170d 4bb3832e 60a32c12
 ls "$CAMP_S/C4/CP/"*/R1 | head -3

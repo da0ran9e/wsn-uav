@@ -1944,6 +1944,18 @@ bạn có thể tự mở các cloud session mới để giao việc không
 mở thêm 8 phiên
 ```
 
+*202. 2026-10-28 · paper · trong lúc chờ chiến dịch: hình đường bay pha 1 của các chiến thuật trên seed 1*
+
+```text
+trong lúc chờ, hãy gen cho tôi hình vẽ đường bay của các chiến thuật dựa trên seed 1 mô tả đường bay pha 1 nhé,
+```
+
+*203. 2026-10-28 · paper · định kỳ kiểm tra các phiên phụ xem chạy đúng không*
+
+```text
+định kỳ kiểm tra các phiên xem chạy đúng không nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

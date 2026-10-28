@@ -1,0 +1,7 @@
+R5 r200 k16 lmd exit 1 2026-10-28_07:54:48
+R5 r100 k16 dr exit 1 2026-10-28_07:54:48
+R5 r100 k16 lmd exit 1 2026-10-28_07:54:48
+R5 r200 k16 dr exit 1 2026-10-28_07:54:48
+R5 r500 k16 lmd exit 1 2026-10-28_07:54:49
+R5 r500 k16 dr exit 1 2026-10-28_07:54:49
+note s5 2026-10-28_07:55:39: geometry-r1.tar.xz chỉ có CP/open; với r100/r200/r500 job cp tự dựng lại hình học (seed bản đồ 1, tất định), lmd/dr của các ô đó exit 1 (thiếu plan-opts.json) khi chạy trước cp; sẽ chạy lại camp2.sh khi hàng đợi xong. Đã cài thêm matplotlib (child-setup.sh chưa cài).

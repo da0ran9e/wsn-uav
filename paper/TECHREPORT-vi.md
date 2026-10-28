@@ -1,7 +1,7 @@
 # Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N)
 
 - **Phiên bản:** 2026-10-28, bản 1. Đây là tài liệu sống: mỗi lần chiến dịch có thêm seed, cập nhật §0 và §3 (cách làm trong `docs/progress/HANDOFF.md`).
-- **Dữ liệu chụp lúc:** commit `5301390` của `origin/claude/document-review-xslwgg` (2026-10-28 16:32 UTC).
+- **Dữ liệu chụp lúc:** commit `1c299d0` của `origin/claude/document-review-xslwgg` (2026-10-28 19:10 UTC; bảng §3 cập nhật ở mốc 70 %, mục 208).
 - **Phạm vi:** toàn bộ quá trình từ mục 186 tới mục 205 của CLAUDE.md §8, cộng phần nền (hệ thống, River, bộ dự đoán) mà các mục này dựa vào.
 - **Tài liệu gốc nên đọc kèm:**
   - `paper/SYSTEM-vi.md`, `paper/RIVER-vi.md`, `paper/BASELINES-vi.md`, `paper/L1-MODEL-vi.md`: nền;
@@ -14,7 +14,7 @@
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Chiến dịch 4 (4 phương án × 10 seed × 3 bản đồ × 4 kênh) | **khoảng 55 %**. CHORD 68/120, LM-Tour 71/120, DTSP-N + River 64/120 job. Seed 1 đủ 12/12 ô; seed 2–10 mỗi seed 1–11 ô |
+| Chiến dịch 4 (4 phương án × 10 seed × 3 bản đồ × 4 kênh) | **70 %** (252/360 job). CHORD 84/120, LM-Tour 86/120, DTSP-N + River 82/120 job. Seed 1, 3, 5, 6, 7 đủ 12/12 ô; seed 2 còn bản đồ k8; seed 4, 8, 9, 10 tạm dừng (mục 206) |
 | Bảng T\* | §3.1. Mỗi ô chỉ gộp các seed mà **mọi** phương án đều đã xong (ghép cặp) |
 | Phiên cloud | Lúc 16:22 UTC chỉ seed 5 (và có lẽ 6) còn push. Seed 2, 3, 4, 7, 8, 9, 10 im lặng từ 14:19–14:55. Cần kiểm tra (`docs/progress/HANDOFF.md`) |
 | Khảo sát Bậc 3 (bộ dự đoán học bằng cây) | Đã chạy 192 lượt River trên k8. Với dữ liệu hiện có, HGB chưa chọn đường tốt hơn công thức Bậc 2; **còn cân nhắc** (§5.7) |
@@ -110,7 +110,7 @@ R50 là khoảng cách ngang mà ở đó một node nhận được một nửa
 
 ---
 
-## 3. Kết quả thực nghiệm (thăm dò, khoảng 55 % seed)
+## 3. Kết quả thực nghiệm (thăm dò, khoảng 70 % job)
 
 Bảng sinh bằng `python3 logs/2026-10-27_1714-campaign4/table.py` trên dữ liệu đã push.
 
@@ -118,30 +118,30 @@ Số seed đã gộp vào từng ô:
 
 | | open | r500 | r200 | r100 |
 |---|---|---|---|---|
-| k8 | 1 | 2 | 3 | 3 |
-| k12 | 3 | 4 | 4 | 7 |
+| k8 | 5 | 5 | 5 | 6 |
+| k12 | 6 | 6 | 6 | 7 |
 | k16 | 9 | 7 | 8 | 10 |
 
 ### 3.1 T\* (s), bản đồ k8 / k12 / k16 (8 / 12 / 15 cụm)
 
-Mọi bảng trong mục 3 xếp phương án theo T\* **giảm dần** (chậm nhất trước). Thứ tự này theo kênh r ≤ 500 m; ở kênh open, FC + DTSP-N nhanh hơn DTSP-N + River (708 so với 783 s ở k8).
+Mọi bảng trong mục 3 xếp phương án theo T\* **giảm dần** (chậm nhất trước). Thứ tự này theo kênh r ≤ 500 m; ở kênh open, FC + DTSP-N nhanh hơn DTSP-N + River (690 so với 749 s ở k8).
 
 | Phương án | r = 1 000 m (open) | 500 m | 200 m | 150 m (r100) |
 |---|---|---|---|---|
-| Rotary TSP (cận trên) | 2926 / 4122 / 5248 | 2941 / 4165 / 5178 | 2884 / 4165 / 5173 | 2884 / 4227 / 5242 |
-| FC + DTSP-N | 708 / 841 / 1067 | 1060 / 1489 / 1877 | 1893 / 2608 / 3689 | 2192 / 3366 / 4523 |
-| DTSP-N + River | 783 / 821 / 1092 | 915 / 1153 / 1452 | 952 / 1300 / 1669 | 1019 / 1374 / 1658 |
-| CHORD + River | 672 / 758 / 946 | 762 / 1054 / 1190 | 826 / 1117 / 1322 | 839 / 1173 / 1335 |
-| **LM-Tour + River** | **633 / 753 / 917** | **692 / 948 / 1164** | **765 / 1009 / 1229** | **779 / 1063 / 1262** |
+| Rotary TSP (cận trên) | 2821 / 4211 / 5248 | 2821 / 4211 / 5178 | 2821 / 4211 / 5173 | 2809 / 4227 / 5242 |
+| FC + DTSP-N | 690 / 907 / 1067 | 1065 / 1535 / 1877 | 1911 / 2696 / 3689 | 2220 / 3366 / 4523 |
+| DTSP-N + River | 749 / 887 / 1092 | 914 / 1183 / 1452 | 965 / 1330 / 1669 | 1041 / 1374 / 1658 |
+| CHORD + River | 656 / 812 / 946 | 783 / 1095 / 1190 | 849 / 1155 / 1322 | 859 / 1173 / 1335 |
+| **LM-Tour + River** | **618 / 803 / 917** | **732 / 976 / 1164** | **791 / 1037 / 1229** | **800 / 1063 / 1262** |
 
 **Tương đối (LM-Tour so với phương án khác, %, K = 8 / 12 / 16):**
 
 | So với | open | r500 | r200 | r100 |
 |---|---|---|---|---|
-| Rotary TSP (lần nhanh hơn) | 4,6× / 5,5× / 5,7× | 4,3× / 4,4× / 4,4× | 3,8× / 4,1× / 4,2× | 3,7× / 4,0× / 4,2× |
-| FC + DTSP-N | −11 / −10 / −14 | −35 / −36 / −38 | −60 / −61 / −67 | −64 / −68 / −72 |
-| DTSP-N + River | −19 / −8 / −16 | −24 / −18 / −20 | −20 / −22 / −26 | −24 / −23 / −24 |
-| CHORD + River | −6 / −1 / −3 | −9 / −10 / −2 | −7 / −10 / −7 | −7 / −9 / −5 |
+| Rotary TSP (lần nhanh hơn) | 4,6× / 5,2× / 5,7× | 3,9× / 4,3× / 4,4× | 3,6× / 4,1× / 4,2× | 3,5× / 4,0× / 4,2× |
+| FC + DTSP-N | −10 / −11 / −14 | −31 / −36 / −38 | −59 / −62 / −67 | −64 / −68 / −72 |
+| DTSP-N + River | −17 / −9 / −16 | −20 / −17 / −20 | −18 / −22 / −26 | −23 / −23 / −24 |
+| CHORD + River | −6 / −1 / −3 | −6 / −11 / −2 | −7 / −10 / −7 | −7 / −9 / −6 |
 
 ### 3.2 Thời gian hoàn thành pha 1
 
@@ -159,9 +159,9 @@ Mọi bảng trong mục 3 xếp phương án theo T\* **giảm dần** (chậm 
 | Kênh | K | DTSP-N + River | CHORD | LM-Tour |
 |---|---|---|---|---|
 | open | 8 / 12 / 16 | 504 / 713 / 934 | 360 / 566 / 701 | 302 / 473 / 612 |
-| r500 | 8 / 12 / 16 | 524 / 732 / 954 | 403 / 607 / 745 | 338 / 508 / 654 |
-| r200 | 8 / 12 / 16 | 570 / 794 / 1072 | 437 / 643 / 777 | 374 / 546 / 692 |
-| r100 | 8 / 12 / 16 | 632 / 859 / 1066 | 453 / 659 / 796 | 389 / 554 / 705 |
+| r500 | 8 / 12 / 16 | 523 / 732 / 954 | 401 / 607 / 745 | 338 / 508 / 654 |
+| r200 | 8 / 12 / 16 | 571 / 793 / 1072 | 437 / 642 / 777 | 374 / 544 / 692 |
+| r100 | 8 / 12 / 16 | 630 / 859 / 1066 | 453 / 659 / 796 | 390 / 554 / 705 |
 
 - LM-Tour đưa critical cell tới trạng thái sẵn sàng sớm hơn CHORD 58–105 s và sớm hơn DTSP-N + River 186–380 s.
 - Phần chênh này **lớn hơn** phần chênh T\* (§3.1), vì pha 2 (đội 2 bay và xác minh khoảng 78 s mỗi cell) và lớp 1 làm loãng nó.

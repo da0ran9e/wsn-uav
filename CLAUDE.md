@@ -1908,6 +1908,12 @@ cập nhật bảng số liệu mới, bỏ số liệu cũ của DTSP-N + River
 cập nhật bảng hiện tại trước
 ```
 
+*196. 2026-10-28 · paper · xin bảng số liệu mới nhất*
+
+```text
+cho tôi bảng số liệu mới nhất
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

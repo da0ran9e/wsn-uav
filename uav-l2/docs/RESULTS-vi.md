@@ -376,7 +376,7 @@ Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngo�
 - Chi tiết: `logs/2026-10-28_0240-dtspn-check`, `logs/2026-10-28_0310-dtspn-fix`.
 
 <!-- campaign4:begin (table.py --results) -->
-Cập nhật 2026-10-28 04:04 UTC: 8/120 tác vụ xong (8/12 ô có ít nhất một seed).
+Cập nhật 2026-10-28 04:09 UTC: 8/120 tác vụ xong (8/12 ô có ít nhất một seed).
 
 T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong (1); – : chưa chạy xong.
 
@@ -411,10 +411,11 @@ Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng
 
 **Đọc tạm, seed 1 (chưa được kết luận):**
 1. LM-Tour nhanh hơn CHORD ở mọi ô đã xong: 3 % (k12, 1 km) đến 15 % (k16, r200 và r100). Nó cũng nhanh hơn FC + DTSP-N từ 80 s (k12 1 km) tới 3,4 nghìn s (k16 r100).
-2. DTSP-N + River đã sửa, số ước lượng có dấu \*:
-   - chậm hơn LM-Tour 56–486 s (8–44 %) và chậm hơn CHORD ở mọi ô;
+2. DTSP-N + River đã sửa (6 ô đo bằng ns-3, 2 ô ước lượng có dấu \*):
+   - chậm hơn LM-Tour 56–467 s (8–43 %) và chậm hơn CHORD ở mọi ô;
    - nguyên nhân: đường zigzag qua mọi critical cell làm đội 1 bay lâu hơn (k16 r200: 2085 so với 1437 s của CHORD);
-   - nhanh hơn FC + DTSP-N 258–2892 s khi r ≤ 500 m. Phần chênh này là lợi ích của River;
-   - ở 1 km gần hoà FC + DTSP-N (−28 / +13 s), vì cell tự giải mã được trước khi River xong.
+   - nhanh hơn FC + DTSP-N 258–2908 s khi r ≤ 500 m. Phần chênh này là lợi ích của River;
+   - ở 1 km gần hoà FC + DTSP-N (−28\* / +13 s), vì cell tự giải mã được trước khi River xong;
+   - ở các ô đã đo, ước lượng lệch ns-3 0–17 s.
    - Cùng cách ước lượng, CHORD và LM-Tour chỉ lệch số ns-3 của chúng 0–19 s.
 4. Mỗi ô mới có một hiện thực mạng. Theo quy tắc N ≥ 120 và "không tin một seed", cần chờ thêm seed trước khi đưa vào paper.

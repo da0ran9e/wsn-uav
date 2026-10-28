@@ -83,3 +83,6 @@ R3 r200 k8 cp exit 0 2026-10-28_18:10:33
 R3 open k8 lmd exit 0 2026-10-28_18:14:01
 R3 open k8 cp exit 0 2026-10-28_18:14:48
 R3 r500 k8 dr exit 0 2026-10-28_18:15:20
+R3 open k8 dr exit 0 2026-10-28_18:18:54
+queue done 2026-10-28_18:18:54
+seed 3 xong 2026-10-28_18:19:57: 36/36 done-*, GEOM OK

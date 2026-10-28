@@ -228,3 +228,4 @@ R8 r100 k8 dr exit 0 2026-10-28_22:35:40
 R8 r200 k8 lmd exit 0 2026-10-28_22:35:41
 R8 r100 k8 lmd exit 0 2026-10-28_22:40:49
 stopped main 2026-10-28_22:43:54 (CLAUDE.md §8 item 209)
+R8 r100 k8 cp exit 0 2026-10-28_22:46:34 (salvaged after stop: mission and l1 done, score re-run)

@@ -1,0 +1,7 @@
+R9 r100 k16 dr exit 1 2026-10-28_07:58:21
+R9 r200 k16 lmd exit 1 2026-10-28_07:58:21
+R9 r100 k16 lmd exit 1 2026-10-28_07:58:21
+R9 r200 k16 dr exit 1 2026-10-28_07:58:22
+R9 r500 k16 lmd exit 1 2026-10-28_07:58:23
+R9 r500 k16 dr exit 1 2026-10-28_07:58:24
+note s9: geometry-r1.tar.xz chỉ có CP/open/R1; r100/r200/r500 lmd+dr exit 1 (thiếu plan-opts.json của CP lúc khởi động). Sẽ restart camp2.sh sau queue done để chạy lại. Thêm: child-setup.sh thiếu matplotlib (đã cài tay). 2026-10-28_07:59:12

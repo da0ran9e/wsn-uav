@@ -11,3 +11,4 @@ R5 r500 k16 cp exit 241 2026-10-28_08:09:58
 note s5 2026-10-28_08:10:40: child-geom-check: r100/r200/r500 k16 do job cp tự dựng lệch seed 1 ở tour.json (chỉ sai số dấu phẩy động ~1e-12, các mốc enter/leave/length). Đã kill 3 job cp đó (exit 241 ở trên), thay CP/<kênh>/R5/k16-s1 bằng bản chép từ R1 (cách camp2.sh), chép sẵn k12/k8 cho r100/r200/r500 trước khi job cp của chúng chạy. GEOM OK 12/12 ô. 9 job k16 (cp, lmd, dr × r100/r200/r500) sẽ chạy lại ở lượt camp2.sh thứ hai.
 R5 open k16 lmd exit 0 2026-10-28_08:13:00
 R5 open k16 cp exit 0 2026-10-28_08:26:24
+R5 open k16 dr exit 0 2026-10-28_08:30:34

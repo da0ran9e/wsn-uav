@@ -99,7 +99,7 @@ def main():
           f"({'–'.join(map(str, (n[0], n[-1]))) if len(n) > 1 else n[0]}); – : chưa chạy xong.", "",
           "| phương án | r = 1000 m | 500 m | 200 m | 150 m |", "|---|---|---|---|---|"]
     gl += [f"| {name} | " + " | ".join(G[s][e] for e in ENVS) + " |" for s, name in SCHEMES]
-    if any(k[0] == "DR" for k in E):
+    if any("*" in G["DR"][e] for e in ENVS):   # a DTSP-N + River cell still waits for its ns-3 run
         gl += ["", "\\* ước lượng mức mô hình của DTSP-N + River đã sửa (mục 193–194): seed 1, River dự đoán bằng bộ surrogate, chưa "
                "chạy ns-3; số đo ns-3 thay vào khi tác vụ xong. Cùng cách ước lượng, CHORD và LM-Tour lệch số ns-3 của "
                "chúng: " + ", ".join(f"k{K} {env} {sg(np.mean(list(E[('CP', env, K)].values())) - np.mean([t for t, _ in X[('CP', env, K, 1)].values()]))} / "

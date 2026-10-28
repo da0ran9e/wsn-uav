@@ -1,6 +1,6 @@
 # open-k12
 
-- Bắt đầu: 2026-10-28 02:32:21, chạy 631 s, mã thoát 0
+- Bắt đầu: 2026-10-28 04:03:44, chạy 854 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**
@@ -12,18 +12,11 @@ bash logs/2026-10-27_1714-campaign4/task.sh 1 open 12
 **Kết quả**
 
 ```text
-[0 s] CP mission
-  run 1200111 river-full: D 5200, 7/7 critical done, sim 12.9 s, wall 10 s, 19872 hops, 602 MAC give-ups, 0/153 gateway pairs with q < 0.5
-  run 1200110 river-full: D 4629, 6/6 critical done, sim 14.0 s, wall 11 s, 16400 hops, 767 MAC give-ups, 0/181 gateway pairs with q < 0.5
-  run 1200112 river-full: D 4749, 5/5 critical done, sim 14.6 s, wall 8 s, 16006 hops, 580 MAC give-ups, 0/145 gateway pairs with q < 0.5
-[44 s] LMD plan + mission
-  run 1200110 river-full: D 4670, 6/6 critical done, sim 14.0 s, wall 9 s, 15651 hops, 602 MAC give-ups, 0/181 gateway pairs with q < 0.5
-  run 1200111 river-full: D 4669, 7/7 critical done, sim 33.1 s, wall 16 s, 31792 hops, 1093 MAC give-ups, 0/153 gateway pairs with q < 0.5
-  run 1200112 river-full: D 4729, 5/5 critical done, sim 37.0 s, wall 25 s, 54915 hops, 1713 MAC give-ups, 0/163 gateway pairs with q < 0.5
-[523 s] score
-/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/C4/CP/open/R1/k12-s1 [ns3]: T* 742 s (sd 375), team 1 1292 s, mean River ready 566 s
-/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/C4/LMD/open/R1/k12-s1 [ns3]: T* 721 s (sd 376), team 1 1085 s, mean River ready 473 s
-open k12-s1: DN {'radius': 400.0, 'groups': 36, 'size': 1.83, 'visits': 20, 'loops': 9.12, 'env': 'open', 'tour': 912.6809234306481, 'crits': 66, 'complete': 66, 'moved': 2294.0454545454545, 'ready': [409.3485034848485, 830.58415], 'key': 'DN/k12-s1/open'}
-open k12-s1: 12 clusters, 66 critical cells; P+prog-kin-puq-stage-zero-redir-kt-fcd 742, DN-puq-stage-zero-redir 805, B1 4168, B7 402 s
-[631 s] done
+[0 s] DR plan + prefly + mission
+dtsp-n + river: C12 120 deg r 254.9 m, C10 150 deg r 63.7 m, C2 90 deg r 127.5 m, C8 60 deg r 127.5 m, C9 0 deg r 63.7 m, C1 90 deg r 63.7 m, C6 30 deg r 63.7 m, C11 120 deg r 127.5 m, C3 30 deg r 127.5 m, C5 30 deg r 63.7 m, C7 0 deg r 63.7 m, C4 90 deg r 63.7 m
+  run 1200110 river-full: D 6687, 6/6 critical done, sim 3.4 s, wall 2 s, 3218 hops, 113 MAC give-ups, 0/165 gateway pairs with q < 0.5
+  run 1200111 river-full: D 8086, 7/7 critical done, sim 10.6 s, wall 3 s, 8090 hops, 246 MAC give-ups, 0/153 gateway pairs with q < 0.5
+  run 1200112 river-full: D 5345, 5/5 critical done, sim 14.7 s, wall 8 s, 17857 hops, 575 MAC give-ups, 0/156 gateway pairs with q < 0.5
+/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/C4/DR/open/R1/k12-s1 [ns3]: T* 777 s (sd 450), team 1 1553 s, mean River ready 713 s
+[854 s] done (DR)
 ```

@@ -1,0 +1,8 @@
+s10: setup needed pip install matplotlib (child-setup.sh only installs scikit-learn); check OK after that
+R10 r100 k16 lmd exit 1 2026-10-28_07:54:48
+R10 r100 k16 dr exit 1 2026-10-28_07:54:48
+R10 r200 k16 lmd exit 1 2026-10-28_07:54:48
+R10 r200 k16 dr exit 1 2026-10-28_07:54:49
+R10 r500 k16 lmd exit 1 2026-10-28_07:54:49
+R10 r500 k16 dr exit 1 2026-10-28_07:54:50
+s10: geometry-r1.tar.xz has only CP/open (r100/r200/r500 R1 dirs empty) -> lmd/dr failed at once (no plan-opts.json). Queue killed at 07:58; runs restarted with /tmp/claude-0/-home-user-wsn-uav/6b5afae2-0a73-5401-8260-26cc7ce776ce/scratchpad/camp2-s10.sh (copy of camp2.sh: CP mission of each r100/r200/r500 cell builds its geometry in R10, lmd/dr of that cell wait for its plan-opts.json; lm_tour plan skips pass files). Main session: please add the three channels to geometry-r1.tar.xz. 2026-10-28_07:57:27

@@ -1938,6 +1938,12 @@ tính toán hiệu năng và cho chạy nhiều seed nhiều algorithm cùng lú
 bạn có thể tự mở các cloud session mới để giao việc không
 ```
 
+*201. 2026-10-28 · paper · mở thêm 8 phiên cloud (mỗi phiên một seed 3–10; phiên chính seed 2 và gộp bảng)*
+
+```text
+mở thêm 8 phiên
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

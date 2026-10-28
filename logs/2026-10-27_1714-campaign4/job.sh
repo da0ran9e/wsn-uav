@@ -8,11 +8,13 @@
 #   lmd  LM-Tour + River: plan, mission, lm_tour score -> score-lmd.csv
 #   dr   DTSP-N + River: plan, prefly.py, mission, lm_tour score -> score-dr.csv
 # Markers done-cp, done-lmd, done-dr (done from task.sh stands for done-cp and done-lmd).
+# Several sessions share the seeds (item 201): assigned/R<R> names the session (CAMP_ID, main here) that runs seed
+# R; another session's seed exits 3 at once. CAMP_S is the session's scratchpad (binaries in CAMP-BIN5, runs in C4).
 #   bash job.sh SCH R ENV K
 set -e
 SCH=$1; R=$2; ENV=$3; K=$4
-REPO=/home/user/wsn-uav
-S=/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad
+REPO=$(cd "$(dirname "$0")/../.." && pwd)
+S=${CAMP_S:-/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad}
 BIN=$S/CAMP-BIN5
 C=$S/C4
 T=$REPO/uav-l2/tools
@@ -23,6 +25,9 @@ FLAGS="--clusters $K --seed 1 --bin $BIN --windowKB 400 --windowAt crit --critRi
 CP=$C/CP/$ENV/R$R/k$K-s1
 LMD=$C/LMD/$ENV/R$R/k$K-s1
 DR=$C/DR/$ENV/R$R/k$K-s1
+if [ -e $HERE/assigned/R$R ] && [ "$(cat $HERE/assigned/R$R)" != "${CAMP_ID:-main}" ]; then exit 3; fi
+# the same job already running (a queue restarted around it): leave it to that one
+if pgrep -f "job.sh $SCH $R $ENV $K\$" | grep -vqx -e "$$" -e "$PPID"; then exit 4; fi
 mkdir -p $OUT
 if [ -e $OUT/done-$SCH ] || { [ "$SCH" != dr ] && [ -e $OUT/done ]; }; then exit 0; fi
 t0=$(date +%s)

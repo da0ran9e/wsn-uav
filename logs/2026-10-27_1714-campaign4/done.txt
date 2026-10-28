@@ -103,3 +103,12 @@ R2 r200 k16 lmd exit 0 2026-10-28_07:38:12
 R2 r100 k16 lmd exit 0 2026-10-28_07:38:12
 R2 r100 k16 cp exit 0 2026-10-28_07:38:12
 R2 r200 k16 cp exit 0 2026-10-28_07:38:12
+queue restarted for seed 2 only 2026-10-28_07:46:33; seeds 3-10 go to eight new sessions (assigned/, item 201)
+R2 r200 k16 lmd exit 0 2026-10-28_07:46:33
+R2 r100 k16 cp exit 0 2026-10-28_07:46:33
+R2 r100 k16 dr exit 4 2026-10-28_07:46:33
+R2 r100 k16 lmd exit 0 2026-10-28_07:46:33
+R2 r500 k16 lmd exit 4 2026-10-28_07:46:34
+R2 r200 k16 cp exit 0 2026-10-28_07:46:34
+R2 r200 k16 dr exit 4 2026-10-28_07:46:34
+R2 r500 k16 cp exit 4 2026-10-28_07:46:34

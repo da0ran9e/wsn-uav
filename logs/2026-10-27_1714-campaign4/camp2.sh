@@ -4,10 +4,12 @@
 # copied from seed 1 (map, deploy, tour and River plans do not depend on R) with runseed.txt written, so LM-Tour and
 # DTSP-N + River do not wait for CHORD's mission. Order: seed, then the largest map, the harshest channel; per cell
 # LM-Tour, CHORD, DTSP-N + River. One Markdown log per job, one line per finished job in done.txt.
+# Several sessions (item 201): CAMP_S their scratchpad, CAMP_DONE their own done file, CAMP_ID their name in assigned/.
 #   nohup bash camp2.sh FIRST_SEED LAST_SEED &
-cd /home/user/wsn-uav
+cd "$(dirname "$0")/../.."
 L=logs/2026-10-27_1714-campaign4
-C=/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad/C4
+C=${CAMP_S:-/tmp/claude-0/-home-user-wsn-uav/98443ff4-47f6-50e4-8347-73e324c4e08a/scratchpad}/C4
+D=${CAMP_DONE:-done.txt}
 for R in $(seq $1 $2); do
   [ "$R" = 1 ] && continue
   for K in 16 12 8; do for E in r100 r200 r500 open; do
@@ -25,5 +27,5 @@ for R in $(seq $1 $2); do for K in 16 12 8; do for E in r100 r200 r500 open; do 
   echo "$S $R $E $K"; done; done; done; done |
   xargs -P 4 -L 1 bash -c 'mkdir -p '$L'/R$1;
     python3 tools/runlog.py '$L'/R$1/$2-k$3-$0.md "bash '$L'/job.sh $0 $1 $2 $3" > /dev/null 2>&1;
-    echo "R$1 $2 k$3 $0 exit $? $(date -u +%F_%T)" >> '$L'/done.txt'
-echo "queue done $(date -u +%F_%T)" >> $L/done.txt
+    echo "R$1 $2 k$3 $0 exit $? $(date -u +%F_%T)" >> '$L'/'$D
+echo "queue done $(date -u +%F_%T)" >> $L/$D

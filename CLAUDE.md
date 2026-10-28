@@ -1974,6 +1974,12 @@ I hit my usage limit while you were working, but it has reset now. Please contin
 nếu tổng số các job đã hoàn thành chiếm hơn 50% thì có thể tạm dừng một vài seed đang chậm để cố gắng hoàn thành nốt các seed đang gần xong, tiến đến mốc 70% job trước
 ```
 
+*207. 2026-10-28 · quy tắc làm việc · lại hết hạn mức giữa chừng (khoảng 15:00–17:30), đã reset; tiếp tục từ chỗ dừng*
+
+```text
+I hit my usage limit while you were working, but it has reset now. Please continue from where you left off.
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

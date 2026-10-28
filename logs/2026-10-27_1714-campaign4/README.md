@@ -52,6 +52,15 @@ Kèm theo, gần như không tốn thêm: không phát quảng bá (B1, rotary T
   - `child-setup.sh` cài đặt; `child-check.sh` bay lại CHORD + River seed 1, kênh 1 km, k8 và phải khớp 100/100 lượt bốc.
 - Mỗi phiên phụ ghi `done-s<R>.txt`, `R<R>/`, `score/R<R>/` và chỉ commit các tệp đó.
 
+**Hạn mức và ưu tiên (mục 205–207):**
+- Hạn mức của tài khoản hết hai lần: khoảng 09:10–12:30 và 15:00–17:30 ngày 28/10. Cả 9 phiên đều dừng, máy chính khởi động lại.
+- Sau mỗi lần, phiên chính chạy lại hàng đợi và gửi tin khởi động lại cho từng phiên phụ (create_trigger với persistent_session_id).
+- 17:30: đã xong 204/360 job (57 %). Theo mục 206, chỉ chạy tiếp các seed gần xong:
+  - đang chạy: seed 2 (19/36), 3 (23/36), 5 (35/36), 6 (31/36), 7 (17/36);
+  - tạm dừng: seed 4 (11/36), 8 (8/36), 9 (8/36), 10 (16/36).
+- Khi năm seed đang chạy xong đủ, tổng đạt 259/360 (72 %). Lúc đó lịch kiểm tra định kỳ sẽ đánh thức nhóm tạm dừng.
+- Seed tạm dừng không mất gì: scratchpad còn nguyên, nên khi chạy lại, job đã có dấu done-* và pass/River đã xong đều được bỏ qua.
+
 ## Cách hiểu "10 seed"
 - Bản đồ cố định: k8-s1, k12-s1, k16-s1, giống `uav-l2/docs/data/results/raw/` và `logs/2026-10-27_1800-lm-dtspn/`.
 - Seed mô phỏng R = 1…10 (`mission.py --runSeed R`, ghi `runseed.txt` trong thư mục chạy). R thay đổi:

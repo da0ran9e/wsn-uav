@@ -10,3 +10,5 @@ R1 r100 k12 exit 0 2026-10-28_01:01:08
 R1 r200 k12 exit 0 2026-10-28_01:58:08
 R1 r100 k16 exit 143 2026-10-28_02:25:38
 paused DTSP-N + River at the user's request (item 191) 2026-10-28_02:29:54: stopped R1 r100 k16 and r500 k12 at their DR passes, R1 open k12 at its CP River start
+R1 r500 k12 exit 0 2026-10-28_02:32:21
+R1 r100 k16 exit 0 2026-10-28_02:32:55

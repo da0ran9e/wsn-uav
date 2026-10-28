@@ -372,28 +372,30 @@ Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngo�
 **DTSP-N + River tạm dừng từ 2026-10-28 02:30 (mục 191, nghi có lỗi).** Các ô của nó chỉ có số từ 5 tác vụ chạy trước khi dừng. Các tác vụ sau chỉ chạy CHORD, LM-Tour, FC + DTSP-N, B1 và B7.
 
 <!-- campaign4:begin (table.py --results) -->
-Cập nhật 2026-10-28 02:31 UTC: 5/120 tác vụ xong (5/12 ô có ít nhất một seed).
+Cập nhật 2026-10-28 02:33 UTC: 7/120 tác vụ xong (7/12 ô có ít nhất một seed).
 
 T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong (1); – : chưa chạy xong.
 
 | phương án | r = 1000 m | 500 m | 200 m | 150 m |
 |---|---|---|---|---|
-| LM-Tour + River | – / – / 807 | – / – / 1063 | – / 959 / 1063 | – / 978 / – |
-| CHORD + River | – / – / 872 | – / – / 1150 | – / 1075 / 1257 | – / 1091 / – |
+| LM-Tour + River | – / – / 807 | – / 905 / 1063 | – / 959 / 1063 | – / 978 / 1093 |
+| CHORD + River | – / – / 872 | – / 1013 / 1150 | – / 1075 / 1257 | – / 1091 / 1278 |
 | DTSP-N + River (tạm dừng) | – / – / 817 | – / – / 1210 | – / 944 / 1172 | – / 980 / – |
-| FC + DTSP-N | – / – / 967 | – / – / 1750 | – / 2481 / 3469 | – / 3248 / – |
-| No broadcast (rotary TSP) | – / – / 5169 | – / – / 5169 | – / 4168 / 5169 | – / 4168 / – |
-| Oracle | – / – / 404 | – / – / 404 | – / 402 / 404 | – / 402 / – |
+| FC + DTSP-N | – / – / 967 | – / 1389 / 1750 | – / 2481 / 3469 | – / 3248 / 4468 |
+| No broadcast (rotary TSP) | – / – / 5169 | – / 4168 / 5169 | – / 4168 / 5169 | – / 4168 / 5169 |
+| Oracle | – / – / 404 | – / 402 / 404 | – / 402 / 404 | – / 402 / 404 |
 
 Chênh ghép cặp (s; âm là phương án đầu nhanh hơn; ± nửa khoảng tin cậy 95 % theo trung bình từng seed, khi đã có từ 2 seed). Ngoặc là % lượt bốc phương án đầu nhanh hơn hẳn, các lượt còn lại phần lớn là hoà.
 
 | kênh | bản đồ | LM − (CHORD) | LM − (DTSP-N + River) | LM − (FC + DTSP-N) | (DTSP-N + River) − (FC + DTSP-N) |
 |---|---|---|---|---|---|
 | open | k16 | −66 (54 %) | −11 (53 %) | −160 (70 %) | −150 (72 %) |
+| r500 | k12 | −109 (59 %) | – | −484 (82 %) | – |
 | r500 | k16 | −87 (58 %) | −147 (72 %) | −687 (85 %) | −540 (77 %) |
 | r200 | k12 | −116 (61 %) | +16 (40 %) | −1522 (90 %) | −1538 (91 %) |
 | r200 | k16 | −193 (62 %) | −109 (61 %) | −2406 (97 %) | −2297 (97 %) |
 | r100 | k12 | −113 (67 %) | −2 (55 %) | −2270 (89 %) | −2268 (91 %) |
+| r100 | k16 | −185 (63 %) | – | −3375 (94 %) | – |
 <!-- campaign4:end -->
 
 **Đối chiếu:**

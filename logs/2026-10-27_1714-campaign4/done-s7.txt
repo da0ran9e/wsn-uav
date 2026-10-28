@@ -5,3 +5,4 @@ R7 r200 k16 dr exit 1 2026-10-28_07:56:30
 R7 r500 k16 lmd exit 1 2026-10-28_07:56:30
 R7 r500 k16 dr exit 1 2026-10-28_07:56:30
 note s7 2026-10-28_07:57:05: geometry-r1.tar.xz has only CP/open/R1; CP/{r100,r200,r500}/R1 empty -> lmd/dr on r* exit 1 (no plan-opts.json) until the cp job of that cell builds the geometry; failed jobs rerun by a second camp2.sh pass. Also matplotlib was missing (child-setup.sh installs only scikit-learn) - installed by hand.
+note s7 2026-10-28_08:09:16: geom check (R7/geom-s7.md) r100/r200/r500 k16: only tour.json differs from seed 1, max |diff| 7.3e-12 s on enter/leave times (float round-off; same structure, all non-float values equal, all other files identical). Jobs NOT killed: effect far below the 0.05 s T* tolerance. Main session: say if you still want them stopped.

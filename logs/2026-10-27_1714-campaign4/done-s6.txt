@@ -24,3 +24,4 @@ R6 r200 k12 cp exit 241 2026-10-28_08:13:14
 note s6 2026-10-28_08:13:44: geom check (mục 203): r100/r200/r500 k16 tự dựng có tour.json khác seed 1 (sai số làm tròn ≤ 7e-12). Đã dừng các job cp r* k16/k12 đang chạy, thay mọi ô CP/r*/R6 bằng hình học seed 1 (gói mới), xoá LMD/DR r*. Sau đó GEOM OK. Các job r* đã lỗi/bị dừng sẽ chạy ở lượt camp2.sh thứ hai.
 R6 open k16 cp exit 0 2026-10-28_08:26:31
 R6 open k16 dr exit 0 2026-10-28_08:30:24
+R6 r500 k12 lmd exit 0 2026-10-28_08:39:11

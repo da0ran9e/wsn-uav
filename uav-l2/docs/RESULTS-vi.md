@@ -394,7 +394,7 @@ Chênh ghép cặp (s; âm là phương án đầu nhanh hơn). Ngoặc là % l�
 - CHORD chấm bằng `l1_rank` và bằng `lm_tour score` cho cùng T\* ở mọi lượt bốc (lệch 0,0 s).
 
 **Đọc tạm (chưa được kết luận):**
-1. LM-Tour nhanh nhất ở cả 4 ô: hơn CHORD 66–193 s (7–15 %), hơn FC + DTSP-N 160–2406 s.
+1. LM-Tour nhanh nhất ở cả 4 ô: hơn CHORD 66–193 s (8–15 %), hơn FC + DTSP-N 160–2406 s.
 2. River là phần làm nên lợi thế so với FC khi kênh hẹp: DTSP-N + River nhanh hơn FC + DTSP-N 150 s ở 1 km, và 2,3 nghìn s ở r ≤ 200 m.
 3. DTSP-N + River có lúc gần bằng LM-Tour (r100 k12: −2 s; open k16: −11 s), có lúc chậm hơn rõ (r500 k16: −147 s).
 4. Mỗi ô mới có một hiện thực mạng. Theo quy tắc N ≥ 120 và "không tin một seed", cần chờ thêm seed trước khi đưa vào paper.

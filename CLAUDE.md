@@ -1914,6 +1914,12 @@ cập nhật bảng hiện tại trước
 cho tôi bảng số liệu mới nhất
 ```
 
+*197. 2026-10-28 · paper · hỏi tiến độ chiến dịch*
+
+```text
+tiến độ đến đâu rồi
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

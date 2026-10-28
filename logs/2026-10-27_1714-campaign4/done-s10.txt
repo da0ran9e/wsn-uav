@@ -60,3 +60,4 @@ R10 r100 k8 lmd exit 0 2026-10-28_19:52:11
 R10 r100 k8 cp exit 0 2026-10-28_19:55:40
 restart 2026-10-28_22:41:12 (after usage limit; camp2.sh)
 R10 r200 k8 lmd exit 0 2026-10-28_22:45:43
+stopped 2026-10-28_22:47:22 (mục 209)

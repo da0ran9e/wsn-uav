@@ -1,6 +1,6 @@
 # open-k16-cp
 
-- Bắt đầu: 2026-10-28 14:41:32, chạy 0 s, mã thoát 0
+- Bắt đầu: 2026-10-28 19:14:57, chạy 0 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**

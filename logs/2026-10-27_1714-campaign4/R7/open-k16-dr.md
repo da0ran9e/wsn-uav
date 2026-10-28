@@ -1,6 +1,6 @@
 # open-k16-dr
 
-- Bắt đầu: 2026-10-28 13:53:44, chạy 0 s, mã thoát 0
+- Bắt đầu: 2026-10-28 17:35:19, chạy 0 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**

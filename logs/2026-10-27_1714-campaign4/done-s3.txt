@@ -6,3 +6,18 @@ R3 r200 k16 dr exit 1 2026-10-28_07:56:37
 R3 r500 k16 lmd exit 1 2026-10-28_07:56:37
 R3 r500 k16 dr exit 1 2026-10-28_07:56:38
 note s3 2026-10-28_07:57:32: check OK (sau khi cài matplotlib). Giống s7: geometry-r1.tar.xz chỉ có CP/open/R1, CP/{r100,r200,r500}/R1 rỗng -> lmd/dr kênh r* exit 1 (thiếu plan-opts.json) cho tới khi job cp của ô đó dựng hình học; sẽ chạy lượt camp2.sh thứ hai cho các job lỗi.
+R3 r100 k16 cp exit 143 2026-10-28_08:13:18
+R3 r200 k16 cp exit 143 2026-10-28_08:13:18
+R3 r500 k16 cp exit 143 2026-10-28_08:13:18
+R3 r100 k12 lmd exit 1 2026-10-28_08:13:20
+R3 open k16 cp exit 143 2026-10-28_08:13:23
+R3 open k16 lmd exit 143 2026-10-28_08:13:23
+R3 r100 k12 dr exit 1 2026-10-28_08:13:25
+R3 r200 k12 lmd exit 1 2026-10-28_08:13:25
+R3 r200 k12 dr exit 1 2026-10-28_08:13:27
+R3 r500 k12 lmd exit 1 2026-10-28_08:13:29
+R3 r100 k12 cp exit 143 2026-10-28_08:13:37
+R3 r200 k12 cp exit 143 2026-10-28_08:13:37
+R3 r500 k12 cp exit 143 2026-10-28_08:13:37
+R3 r500 k12 dr exit 1 2026-10-28_08:13:40
+note s3 2026-10-28_08:14:58: geom-check (mục 203) báo r{100,200,500} k16 lệch tour.json (job cp tự dựng; chỉ khác chữ số cuối dấu phẩy động ~1e-12, cấu trúc giống). Đã dừng mọi job r* và job open đang chạy (open k16 cp/lmd bị dừng nhầm), thay CP/r*/R3 bằng bản chép từ R1 của tarball mới -> GEOM OK 12/12, rồi khởi động lại camp2.sh 3 3 (exit 143/1 phía trên sẽ chạy lại).

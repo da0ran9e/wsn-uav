@@ -1986,6 +1986,12 @@ I hit my usage limit while you were working, but it has reset now. Please contin
 sau khi chạy đủ 70% hãy update vào bảng số liệu ở paper/TECHREPORT-vi.md (chỉ update những phần tối thiểu)
 ```
 
+*209. 2026-10-28 · paper · dừng các phiên chiến dịch 4 (ở mức 279/360 job) và cập nhật bảng số liệu trong paper/TECHREPORT-vi.md*
+
+```text
+dừng các phiên lại và update file markdown được rồi nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

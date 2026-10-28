@@ -12,3 +12,4 @@ note s5 2026-10-28_08:10:40: child-geom-check: r100/r200/r500 k16 do job cp tự
 R5 open k16 lmd exit 0 2026-10-28_08:13:00
 R5 open k16 cp exit 0 2026-10-28_08:26:24
 R5 open k16 dr exit 0 2026-10-28_08:30:34
+R5 r100 k12 lmd exit 0 2026-10-28_09:08:39

@@ -1,0 +1,32 @@
+T\* trung bình (s), K = 8 / 12 / 16 cụm; mỗi ô 100 lượt bốc lớp 1 × số seed đã xong (1); – : chưa chạy xong.
+
+| phương án | r = 1000 m | 500 m | 200 m | 150 m |
+|---|---|---|---|---|
+| LM-Tour + River | – / – / 807 | – / – / 1063 | – / – / 1063 | – / 978 / – |
+| CHORD + River | – / – / 872 | – / – / 1150 | – / – / 1257 | – / 1091 / – |
+| DTSP-N + River | – / – / 817 | – / – / 1210 | – / – / 1172 | – / 980 / – |
+| FC + DTSP-N | – / – / 967 | – / – / 1750 | – / – / 3469 | – / 3248 / – |
+| No broadcast (rotary TSP) | – / – / 5169 | – / – / 5169 | – / – / 5169 | – / 4168 / – |
+| Oracle | – / – / 404 | – / – / 404 | – / – / 404 | – / 402 / – |
+
+# Bảng chiến dịch (seed đã xong: k12 r100 1, k16 open 1, k16 r500 1, k16 r200 1)
+
+CHORD chấm bằng `l1_rank` và bằng `lm_tour score` lệch nhau tối đa 0.0 s ở mọi lượt bốc.
+
+T\* trung bình (s) trên mọi seed và lượt bốc; ngoặc: số seed. Team 1: thời gian bay của đội 1 (s).
+
+| kênh (r) | bản đồ | LM-Tour + River | CHORD + River | DTSP-N + River | FC + DTSP-N | No broadcast (rotary TSP) | Oracle | team 1 LM / CHORD / DR / DN |
+|---|---|---|---|---|---|---|---|---|
+| open (1 km) | k16 | 807 | 872 | 817 | 967 | 5169 | 404 | 1394 / 1437 / 1449 / 1134 | (1)
+| r500 (500 m) | k16 | 1063 | 1150 | 1210 | 1750 | 5169 | 404 | 1308 / 1437 / 1449 / 2563 | (1)
+| r200 (200 m) | k16 | 1063 | 1257 | 1172 | 3469 | 5169 | 404 | 1293 / 1437 / 1445 / 5567 | (1)
+| r100 (150 m) | k12 | 978 | 1091 | 980 | 3248 | 4168 | 402 | 1082 / 1292 / 1203 / 5078 | (1)
+
+Chênh ghép cặp so với LM-Tour (s, âm là LM-Tour nhanh hơn), ± nửa khoảng tin cậy 95 % theo trung bình từng seed; ngoặc: % lượt bốc LM-Tour nhanh hơn.
+
+| kênh | bản đồ | LM − CHORD | LM − DTSP-N + River | LM − FC + DTSP-N | DTSP-N + River − FC + DTSP-N |
+|---|---|---|---|---|---|
+| open | k16 | -66 (54 %) | -11 (53 %) | -160 (70 %) | -150 (72 %) |
+| r500 | k16 | -87 (58 %) | -147 (72 %) | -687 (85 %) | -540 (77 %) |
+| r200 | k16 | -193 (62 %) | -109 (61 %) | -2406 (97 %) | -2297 (97 %) |
+| r100 | k12 | -113 (67 %) | -2 (55 %) | -2270 (89 %) | -2268 (91 %) |

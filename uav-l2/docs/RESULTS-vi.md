@@ -343,3 +343,58 @@ Chênh lệch ghép cặp so với CHORD (phương án − CHORD, s; trong ngo�
   - k8 dùng các lượt `d` đã có (chạy bằng `CAMP-BIN3`). Chạy lại k8 r200 bằng `CAMP-BIN4` cho 8/8 tệp `r*-d-crit.csv` giống hệt từng byte (`pd-r200-k8-s1-check.md`), vì `--repair` không chạm tới `direct`.
 - **Chấm:** `logs/2026-10-26_0900-baselines/score.sh 1` (CHORD, FC, DN, B4, B1, B7) và `score.sh 2` (Pd); 100 lượt bốc, khoá như mục 3. B4 dùng cùng khoá `CHORDFC/<bản đồ>/<kênh>` với CHORD.
 - **Bảng:** `python3 uav-l2/tools/cmp_table.py uav-l2/docs/data/results/baselines logs/2026-10-26_0900-baselines/l1rank/part1-draws.csv logs/2026-10-26_0900-baselines/l1rank/part2-draws.csv`; bảng cell River/kéo trực tiếp: `logs/2026-10-26_0900-baselines/river_cmp.py`.
+
+## 7. Chiến dịch bốn phương án (CLAUDE.md §8 mục 187–189) · đang chạy
+
+**Khung của mục 187:**
+
+| phương án | nội dung |
+|---|---|
+| LM-Tour + River | đề xuất 2: DTSP-N qua đĩa B(CH, ξ), rồi uốn về các critical cell trọng số cao (`lm_tour.py plan --dtspn --weight cl --wmin 1`) |
+| CHORD + River | đề xuất 1: CHORD thường, tức dây cung dài nhất qua CH, chọn riêng từng cụm, không `--chordTour` |
+| DTSP-N + River | một lượt mỗi cụm, uốn qua mọi critical cell (`--dtspnRiver`, có `prefly.py`) |
+| FC + DTSP-N | DN của mục 2 |
+| No broadcast (rotary TSP) | B1 |
+| Oracle | B7 |
+
+**Thiết lập chạy:**
+- Ba bản đồ k8-s1, k12-s1, k16-s1 (8, 12, 15 cụm), bốn kênh, 10 seed mô phỏng.
+- Seed R dời chỉ số mission ns-3 thêm 10⁷·(R − 1) và có khoá hiện thực hoá riêng, cùng khối 100 lượt bốc lớp 1 riêng. Seed 1 giữ đúng các khoá ở mục 3.
+- Binary `CAMP-BIN5`, đã kiểm chứng cho kết quả giống từng byte với bản lưu trữ.
+- Log: `logs/2026-10-27_1714-campaign4/`.
+
+**Dữ liệu:**
+- Số liệu từng (phương án, kênh, bản đồ, seed): `data/results/campaign4.csv`.
+- Bảng LaTeX cho paper: `paper/icc-v5/table-campaign4.tex`.
+- Cả hai sinh lại bằng `python3 logs/2026-10-27_1714-campaign4/table.py --csv uav-l2/docs/data/results/campaign4.csv --tex paper/icc-v5/table-campaign4.tex`.
+
+### 7.1. Kết quả đến 2026-10-28 01:10 (seed 1, 4/12 ô)
+T\* trung bình (s), K = 8 / 12 / 16 cụm. Mỗi ô là 100 lượt bốc lớp 1 trên **một** hiện thực mạng ns-3; – : chưa chạy xong.
+
+| phương án | r = 1000 m | 500 m | 200 m | 150 m |
+|---|---|---|---|---|
+| LM-Tour + River | – / – / 807 | – / – / 1063 | – / – / 1063 | – / 978 / – |
+| CHORD + River | – / – / 872 | – / – / 1150 | – / – / 1257 | – / 1091 / – |
+| DTSP-N + River | – / – / 817 | – / – / 1210 | – / – / 1172 | – / 980 / – |
+| FC + DTSP-N | – / – / 967 | – / – / 1750 | – / – / 3469 | – / 3248 / – |
+| No broadcast (rotary TSP) | – / – / 5169 | – / – / 5169 | – / – / 5169 | – / 4168 / – |
+| Oracle | – / – / 404 | – / – / 404 | – / – / 404 | – / 402 / – |
+
+Chênh ghép cặp (s; âm là phương án đầu nhanh hơn). Ngoặc là % lượt bốc phương án đầu nhanh hơn hẳn; các lượt còn lại phần lớn là hoà. Cột cuối là lợi ích của River: DTSP-N + River so với FC + DTSP-N.
+
+| kênh | bản đồ | LM − CHORD | LM − (DTSP-N + River) | LM − (FC + DTSP-N) | (DTSP-N + River) − (FC + DTSP-N) |
+|---|---|---|---|---|---|
+| open | k16 | −66 (54 %) | −11 (53 %) | −160 (70 %) | −150 (72 %) |
+| r500 | k16 | −87 (58 %) | −147 (72 %) | −687 (85 %) | −540 (77 %) |
+| r200 | k16 | −193 (62 %) | −109 (61 %) | −2406 (97 %) | −2297 (97 %) |
+| r100 | k12 | −113 (67 %) | −2 (55 %) | −2270 (89 %) | −2268 (91 %) |
+
+**Đối chiếu:**
+- FC + DTSP-N, B1 và B7 trùng đúng với số của mục 2 và mục 6 ở seed 1 (ví dụ DN r200 k16 3469 s, r100 k12 3248 s), vì khoá seed 1 không đổi.
+- CHORD chấm bằng `l1_rank` và bằng `lm_tour score` cho cùng T\* ở mọi lượt bốc (lệch 0,0 s).
+
+**Đọc tạm (chưa được kết luận):**
+1. LM-Tour nhanh nhất ở cả 4 ô: hơn CHORD 66–193 s (7–15 %), hơn FC + DTSP-N 160–2406 s.
+2. River là phần làm nên lợi thế so với FC khi kênh hẹp: DTSP-N + River nhanh hơn FC + DTSP-N 150 s ở 1 km, và 2,3 nghìn s ở r ≤ 200 m.
+3. DTSP-N + River có lúc gần bằng LM-Tour (r100 k12: −2 s; open k16: −11 s), có lúc chậm hơn rõ (r500 k16: −147 s).
+4. Mỗi ô mới có một hiện thực mạng. Theo quy tắc N ≥ 120 và "không tin một seed", cần chờ thêm seed trước khi đưa vào paper.

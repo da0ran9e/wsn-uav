@@ -29,7 +29,7 @@ Hình học không phụ thuộc seed, nên seed 1 đại diện cho mọi seed.
 
 **Nhận xét:**
 - CHORD giống hệt nhau ở mọi kênh: mỗi cụm một dây cung qua CH, thời gian trong cụm cố định khoảng 40 s.
-- LM-Tour ngắn hơn CHORD 10–28 % về quãng đường và 3–16 % về thời gian đội 1. Đường đổi nhẹ theo kênh vì ξ tự chọn theo kênh.
+- LM-Tour ngắn hơn CHORD 14–28 % về quãng đường và 3–16 % về thời gian đội 1. Đường đổi nhẹ theo kênh vì ξ tự chọn theo kênh.
 - DTSP-N + River dài nhất trong ba phương án River, vì đi zigzag vào đĩa của mọi critical cell.
 - FC + DTSP-N ngắn nhất ở kênh open. Khi kênh xấu đi, số vòng lượn quanh nhóm critical cell tăng mạnh, nên đội 1 bay gấp 4–6 lần ở r100.
 

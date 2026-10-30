@@ -426,7 +426,8 @@ def stage_runs(a, W_, K):
             sh([f"{a.bin}/river-bin", f"--nodes=c{k}-nodes-s35.csv", f"--routes=c{k}-routes-s35.csv",
                 f"--gateways=c{k}-gateways-s35.csv", f"--plan=plan{k}.txt", f"--bits=pass{k}-bits",
                 f"--firstRun={mission(k)}", "--runs=1", "--limit=900", "--gwSelect=quality", "--colours=7", *SCHEMES[tag], f"--out=r{k}-{tag}",
-                *([f"--repair={a.riverRepair:g}"] if getattr(a, "riverRepair", 0) and tag == "rf" else []),
+                *([f"--repair={a.riverRepair:g}"] if getattr(a, "riverRepair", 0) and (tag == "rf" or
+                  tag.startswith("t") and os.path.exists(f"{W_}/pages{k}.txt")) else []),   # Trickle: Axe Segs
                 *([f"--pageBreaks=pages{k}.txt"] if tag.startswith("t") and os.path.exists(f"{W_}/pages{k}.txt")
                   else [])],   # page_breaks.py: Trickle pages aligned to the clue images
                f"r{k}-{tag}.log", rivenv)

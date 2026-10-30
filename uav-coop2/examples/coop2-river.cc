@@ -48,7 +48,9 @@
 //                          or completes a page, resets its timer to tImin.
 //                          --tScope=plan: over River's plan cells; paths: only over the Axe cells, the critical
 //                          cells and the cells of the direct-pull paths between them (the reviewer's scope).
-//                          --pageBreaks=FILE: packet indices where an image starts; a page never spans one.
+//                          --pageBreaks=FILE: packet indices where an image starts; a page then spans neither an
+//                          image nor two Axe cells' Segs, and with --repair the Axe cells complete their Seg as in
+//                          River, so every page is complete in some cell (Deluge's advert needs a complete page).
 // Repair (--repair=S > 0, river --prep=full; CLAUDE.md §8 item 169): two gaps closed.
 //   Axe     an Axe cell's gather also takes the packets of its own Seg that none of its nodes heard from an
 //           adjacent cell that holds them (a request, then the packets over that cell pair's gateways)
@@ -1067,6 +1069,8 @@ int main(int argc, char* argv[]) {
         if (scheme == "trickle") {
             for (const Hex& k : plan.crit)
                 for (uint32_t s = 0; s < N; ++s) obj[s] |= needK[k][s];
+            if (!breaks.empty())
+                for (auto& [a, fl] : seg) breaks.insert(fl.first);
             uint32_t n = 0;
             int64_t prev = -1;
             for (uint32_t s = 0; s < N; ++s)

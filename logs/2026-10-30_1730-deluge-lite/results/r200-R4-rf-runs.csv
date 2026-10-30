@@ -1,0 +1,2 @@
+map,regime,seed,scheme,trickle_cfg,n_crit,n_ready,mean_ready_s,max_ready_s,frames_data,frames_adv,frames_req,frames_total,wall_s
+k12,r200,4,RIVER,-,66,66,546.3,1015.1,3929351,0,12605,8700849,2366.8

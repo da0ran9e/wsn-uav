@@ -1998,6 +1998,165 @@ dừng các phiên lại và update file markdown được rồi nhé
 đóng các phiên lại đảm bảo chúng không tự chạy tránh tốn thêm qouta, viết cho tôi một bảng tổng hợp các job chưa done một danh sách ngắn gọn vào handoff
 ```
 
+*211. 2026-10-26 · paper · trả lời ngắn: 100 paired draw là gì; ý nghĩa hai bảng vừa chèn, vì sao số bảng 1 lớn hơn bảng 2*
+
+```text
+trả lời ngắn gọn nhé
+100 paired draw nghĩa là gì 
+hai bảng bạn vừa chèn nên hiểu ý nghĩa như nào, tại sao số bảng 1 to hơn bảng 2
+```
+
+*212. 2026-10-26 · paper · trước đó chưa yêu cầu chạy 100 seed*
+
+```text
+trước đó khi làm thí nghiệm tôi chưa nhắc bạn phải chạy 100 seed
+```
+
+*213. 2026-10-26 · paper · hỏi ngắn: mục đích của 100 paired draw*
+
+```text
+mục đích của nó là gì ngắn gọn
+```
+
+*214. 2026-10-26 · tổng hợp · xuất toàn bộ dữ liệu thực nghiệm thành bảng Excel*
+
+```text
+tôi muốn bạn xuất tất cả dữ liệu thực nghiệm thành các bảng excel được không
+```
+
+*215. 2026-10-30 · paper · bỏ xuất Excel; cập nhật repo và tổng hợp số liệu cho các câu hỏi trong ảnh · kèm ảnh*
+
+```text
+không cần xuất dữ liệu nữa, tôi cần bạn update lại repo và giúp tôi tổng hợp số liệu cho các câu hỏi sau
+```
+
+*216. 2026-10-30 · paper · draft v3.2 để đối chiếu số liệu · kèm PDF*
+
+```text
+@"/root/.claude/uploads/fd83db84-4832-5a0e-be6a-d1201f4d6a60/7a37215f-SigDrop_ICC_draft_v3.2.pdf" đây là paper dự kiến để bạn đối chiếu các số liệu trên
+```
+
+*217. 2026-10-30 · paper · hỏi: số 53 % đã xác nhận chưa*
+
+```text
+số 53% đã xác nhận được chưa
+```
+
+*218. 2026-10-30 · paper · xác nhận số liệu: tour 110–250 km vs 40,9–172,7 km, câu 36/92 cell và 50 %, cách giải thứ tự bay cho bản đồ 15 cụm*
+
+```text
+xác nhận số liệu: tour 110–250 km so với 40.9–172.7 km, câu 36/92 cell và 50%, cách giải thứ tự bay cho map 15 cluster.
+```
+
+*219. 2026-10-30 · paper · hỏi: 50 % xuất hiện ở đâu trong paper*
+
+```text
+50% xuất hiện ở đâu trong paper
+```
+
+*220. 2026-10-30 · paper · kiểm tra tài liệu Deng IoT-J 2024*
+
+```text
+iểm tra tài liệu Deng IoT-J 2024.
+```
+
+*221. 2026-10-30 · paper · đánh giá khả năng nâng cấp theo nhận xét reviewer: so với Deluge/Trickle, cột frame/năng lượng trong Table II*
+
+```text
+đánh giá khả năng nâng cấp paper theo nhận xét sau:
+reviewer ở đây chắc chắn sẽ hỏi: vì sao không so với Deluge/Trickle, và năng lượng hay số frame tiêu thụ là bao nhiêu (W4, W6 trong review trước). Bạn nên bổ sung ít nhất một baseline phổ tán và một cột frame/năng lượng trong Table II.
+```
+
+*222. 2026-10-30 · paper · xem số đang có và ý nghĩa*
+
+```text
+lấy cho tôi xem số đang có và nói cho tôi biết nó đang nói lên điều gì
+```
+
+*223. 2026-10-30 · paper · giải thích Deluge/Trickle trước*
+
+```text
+trước đó tôi muốn bạn giải thích Deluge/Trickle,
+```
+
+*224. 2026-10-30 · paper · số đang có có nâng paper lên hẳn một cấp không, viết thế nào*
+
+```text
+nếu lấy số liệu đang có liệu có nâng được paper lên một cấp khác biệt hẳn không, và nên viết trong paper như nào
+```
+
+*225. 2026-10-30 · paper · nghĩ cách nâng cấp tiết kiệm nhất*
+
+```text
+thử nghĩ một cách nâng cấp tiết kiệm nhất
+```
+
+*226. 2026-10-30 · paper · đặt câu hỏi cho reviewer về tính khả thi học thuật của phương án*
+
+```text
+đặt một câu hỏi cho reviewer vừa rồi về giải pháp này xem có khả thi học thuật không
+```
+
+*227. 2026-10-30 · paper · phản hồi của reviewer (1 bản đồ, 3–5 seed ghép cặp, ưu tiên r100; phạm vi Deluge, tham số Trickle, page theo ảnh; bảng Ground transport on fixed CHORD passes; năng lượng radio và UAV); hỏi bao lâu có dữ liệu*
+
+```text
+đây là phản hồi của reviewer, bạn dự kiến sẽ có dữ liệu sau bao lâu 
+Nhìn chung phương án này đủ chặt cho một bài hội nghị 6 trang, nhưng có ba chỗ cần chỉnh. Nếu không chỉnh, reviewer vẫn có thể bắt lỗi.
+1. Một bản đồ, một seed ở r200/r100: chưa đủ, nhưng không cần đủ 3 bản đồ × 4 regime
+Không ai đòi baseline phụ phải chạy đủ như Table II. Vấn đề nằm ở chỗ chỉ có một seed:
+
+* Bài đã khẳng định “confidence intervals are taken over seeds” cho Table II. Nếu bảng Deluge chỉ có một seed, reviewer sẽ thấy ngay sự chênh lệch về độ chặt.
+* Regime khó chính là nơi River cần chứng minh lợi thế. Nếu chênh lệch T* giữa River và Deluge dưới khoảng 10%, một seed không phân biệt được đó là hiệu ứng thật hay nhiễu.
+
+Mức tối thiểu tôi khuyên:
+
+* Một bản đồ (8 cụm, 45 critical cell) là chấp nhận được nếu trình bày rõ là stress test.
+* 3–5 seed, ghép cặp. Vì River, Deluge và kéo trực tiếp chạy trên cùng một pass, phương sai của hiệu số ghép cặp sẽ nhỏ, nên vài seed là đủ để có khoảng tin cậy.
+* Nếu tài nguyên rất hạn chế, ưu tiên r100 với nhiều seed hơn là r200 + r100 với một seed. r100 là điểm cực trị và là nơi kết luận mạnh nhất.
+* Báo cáo hiệu số ghép cặp kèm số seed River thắng, tương tự cột “(19/20)” trong Table I hiện tại.
+
+Hai chi tiết về tính công bằng mà reviewer WSN sẽ hỏi:
+
+* Phạm vi phát tán của Deluge. Bản Deluge gốc phát tán tới mọi node, còn River chỉ phục vụ critical cell. Nếu không giới hạn Deluge, con số 4,7× frame một phần đến từ việc Deluge làm nhiều việc hơn. Hoặc giới hạn Deluge (node không thuộc đường tới critical cell thì không request), hoặc ghi rõ trong bài và giải thích vì sao Deluge không thể biết trước nên phải phủ hết. Cách giải thích thứ hai thực ra chính là luận điểm của bài, nhưng phải nói ra.
+* Tham số Trickle. Cần ghi I_min, I_max, k và kích thước page. Nên căn page theo ranh giới ảnh để Deluge cũng hưởng tính nguyên tử như River. Thiếu các giá trị này, reviewer sẽ cho là baseline bị cấu hình yếu.
+
+Về cách đọc kết quả: nếu ở r100 Deluge vẫn ngang River về T*, kết luận vẫn đứng được là “cùng thời gian, ít frame hơn ~4,7×, không cần khám phá route”. Đừng cố viết theo hướng River phải nhanh hơn.
+2. Dùng số từ chiến dịch trước trong bảng riêng: chấp nhận được, nên đổi cách đóng khung
+Việc dùng đường bay CHORD thực ra là điểm mạnh nếu đóng khung đúng. So sánh River, kéo trực tiếp và Deluge là so sánh giao thức mặt đất với quỹ đạo cố định, nên giữ quỹ đạo không đổi chính là biến kiểm soát. Gợi ý:
+
+* Gộp với Table I thành một bảng “Ground transport on fixed CHORD passes” gồm ba cột River / Direct pull / Deluge, với các dòng T*, frame, năng lượng radio. Cách này xử lý luôn sự lúng túng của nhãn “earlier campaign” hiện tại: nó trở thành một thí nghiệm có chủ đích chứ không phải số liệu cũ đặt sang một bên.
+* Kiểm tra tính nhất quán tham số giữa chiến dịch cũ và Section III: phiên bản ns-3, Q, mô hình kênh, kích thước cluster. Table I hiện dùng cluster 91 cell, vượt giới hạn “at most 80 cells”. Nếu chiến dịch cũ có điểm khác, liệt kê ngắn trong caption.
+* Nói rõ 16 bản đồ ở môi trường mở từ đâu ra, vì Table II chỉ có 3 bản đồ. Một câu là đủ, ví dụ “16 random clustered maps generated as in [16]”.
+* Nếu các run mới ở r200/r100 dùng setup hiện tại còn số open lấy từ chiến dịch cũ, hãy tách thành hai khối trong bảng với nhãn rõ ràng.
+
+3. Năng lượng: tách radio và UAV là đúng, nhưng mô hình radio hiện tại thiếu phần quan trọng nhất
+Không bắt buộc dùng EnergySource. Theo tôi biết, mainline ns-3 không có radio energy model chính thức cho lr-wpan như WiFi (bạn nên kiểm tra lại với ns-3.46). Một mô hình giải tích dựa trên bộ đếm ns-3 là cách phổ biến và được chấp nhận.
+Nhưng chỉ tính “số frame × năng lượng một frame” thì chưa đủ, vì với 802.15.4 năng lượng TX không phải phần lớn nhất:
+
+* Trên CC2420, dòng RX (khoảng 18,8 mA) còn cao hơn TX ở 0 dBm (khoảng 17,4 mA). Mỗi frame phát đi được nhiều hàng xóm nhận hoặc nghe lỏm.
+* Idle listening thường chiếm ưu thế. Deluge/Trickle buộc radio bật liên tục để nghe advertisement. River có lịch biết trước nên các node không đóng vai trò gì có thể ngủ. Đây là lợi thế năng lượng của River mà phương án hiện tại đang bỏ qua.
+
+Đề xuất: E_radio = N_tx·E_tx + N_rx·E_rx + T_listen·P_listen (+ T_sleep·P_sleep). Lấy N_rx và thời gian ở từng trạng thái từ trace trạng thái PHY của lr-wpan. Cách này về bản chất chính là làm việc của EnergySource nhưng không cần module đó, và nên mô tả như vậy trong bài. Lấy dòng điện từ datasheet CC2420 và trích dẫn.
+Thêm năng lượng theo từng node, không chỉ tổng: River dồn tải lên SPINE, Bank và helper, nên reviewer sẽ hỏi về điểm nóng. Báo cáo cả max per-node lẫn tổng. Tuổi thọ mạng do node nóng nhất quyết định.
+Về UAV: dùng mô hình Zeng–Zhang cho cánh bằng là hợp lý. Có hai điểm:
+
+* Dùng phiên bản có số hạng gia tốc. Ở 25 m/s với bán kính 63,7 m, gia tốc hướng tâm khoảng 1g. Vòng lặp của FC + DTSP-N và các khúc cua Dubins vì thế tốn đáng kể; công suất bay đều sẽ tính thiếu, và tính thiếu nhiều hơn cho FC.
+* Kiểm tra lại hệ số c₁, c₂ trong bài gốc và ghi rõ nguồn.
+* Năng lượng UAV sẽ lớn hơn năng lượng radio mặt đất nhiều bậc độ lớn, nên báo riêng là đúng. Nên chú thích một câu rằng hai đại lượng phục vụ hai ràng buộc khác nhau: sức bền của UAV và tuổi thọ pin của mạng.
+```
+
+*228. 2026-10-30 · paper · hỏi: nếu chạy song song nhiều phiên cloud thì sao*
+
+```text
+nếu có thể chạy song song nhiều luồng cloud thì sao
+```
+
+*229. 2026-10-30 · paper · Claude làm điều phối các phiên cloud; mục tiêu đầu: 2 seed r100 trên một kích thước bản đồ*
+
+```text
+từ giờ bạn sẽ là người điều phối, chỉ huy đội các cloud session khác làm việc song song nhanh nhất có thể, đầu tiên đặt mục tiêu chạy 2 seed cho r100 trước trên kích 1 kích thước bản đồ thôi
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -46,6 +46,9 @@
 //                          lacks asks that neighbour for its missing packets of the lowest such page (one request
 //                          at a time, again after a timeout); a cell that hears a neighbour lack one of its pages,
 //                          or completes a page, resets its timer to tImin.
+//                          --tScope=plan: over River's plan cells; paths: only over the Axe cells, the critical
+//                          cells and the cells of the direct-pull paths between them (the reviewer's scope).
+//                          --pageBreaks=FILE: packet indices where an image starts; a page never spans one.
 // Repair (--repair=S > 0, river --prep=full; CLAUDE.md §8 item 169): two gaps closed.
 //   Axe     an Axe cell's gather also takes the packets of its own Seg that none of its nodes heard from an
 //           adjacent cell that holds them (a request, then the packets over that cell pair's gateways)
@@ -53,7 +56,9 @@
 //           members again for the rest of their groups; a member that lacks one asks its Bank again, and a
 //           Bank that lacks one its Axe cell (an 802.15.4 ACK carries only a sequence number, so a frame can
 //           be taken as delivered on another exchange's ACK and lost)
-// Writes OUT-crit.csv (per run and critical cell) and OUT-runs.csv (per run).
+// Writes OUT-crit.csv (per run and critical cell), OUT-runs.csv (per run) and OUT-energy.csv (per run and node: the
+// time its radios spent transmitting, receiving, listening and off, from the PHY state trace, the frames they
+// began to send and received, and when the last one began to send: after it a node with a planned role is idle).
 
 #include "ns3/core-module.h"
 #include "ns3/lr-wpan-module.h"
@@ -222,7 +227,7 @@ const char* kPhaseName[kPhases] = {"gather", "bankfill", "circlefill", "pull", "
 
 int main(int argc, char* argv[]) {
     std::string nodesCsv, routesCsv, gwCsv, planFile, bits, out = "river-ns3", scheme = "river",
-                                                           prep = "full", trace;
+                                                           prep = "full", trace, tScope = "plan", pageBreaks;
     uint32_t firstRun = 1, runs = 1;
     double limitS = 1800, maxLossDb = 130, share = 400, repairS = 0;
     uint32_t circleMin = 2, circleMax = 12, page = 64, tK = 1;
@@ -242,6 +247,9 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("tImin", "trickle: shortest interval, s", tImin);
     cmd.AddValue("tImax", "trickle: longest interval, s", tImax);
     cmd.AddValue("tK", "trickle: redundancy constant", tK);
+    cmd.AddValue("tScope", "trickle: plan (River's cells) | paths (Axe, critical and direct-pull path cells)", tScope);
+    cmd.AddValue("pageBreaks", "trickle: file of packet indices where an image starts (no page spans one)",
+                 pageBreaks);
     cmd.AddValue("prep", "river only: full | ondemand | adaptive", prep);
     cmd.AddValue("share", "adaptive: packets of the lack per Circle member", share);
     cmd.AddValue("circleMin", "adaptive: fewest Circle members", circleMin);
@@ -259,6 +267,13 @@ int main(int argc, char* argv[]) {
     cmd.Parse(argc, argv);
     CHECK(scheme == "river" || scheme == "direct" || scheme == "trickle");
     CHECK(page > 0 && tK > 0 && 0 < tImin && tImin <= tImax);
+    CHECK(tScope == "plan" || tScope == "paths");
+    std::set<uint32_t> breaks;
+    if (!pageBreaks.empty()) {
+        std::ifstream in(pageBreaks);
+        CHECK(in);
+        for (uint32_t b; in >> b;) breaks.insert(b);
+    }
     CHECK(prep == "full" || prep == "ondemand" || prep == "adaptive");
     CHECK(share > 0 && 1 <= circleMin && circleMin <= circleMax);
     CHECK(colours == 3 || colours == 4 || colours == 7 || colours == 13);
@@ -314,14 +329,17 @@ int main(int argc, char* argv[]) {
     std::set<Hex> used;
     for (auto& x : plan.axe) used.insert(x.a);
     for (auto& x : plan.crit) used.insert(x);
-    for (auto& x : plan.banks) used.insert(x.path.begin(), x.path.end());
-    for (auto& x : plan.circ) {
-        used.insert(x.path.begin(), x.path.end());
-        used.insert(x.k);
+    const bool lean = scheme == "trickle" && tScope == "paths";
+    if (!lean) {
+        for (auto& x : plan.banks) used.insert(x.path.begin(), x.path.end());
+        for (auto& x : plan.circ) {
+            used.insert(x.path.begin(), x.path.end());
+            used.insert(x.k);
+        }
+        for (auto& x : plan.csrc) used.insert(x.path.begin(), x.path.end());
+        for (auto& x : plan.clink) used.insert(x.path.begin(), x.path.end());
     }
-    for (auto& x : plan.csrc) used.insert(x.path.begin(), x.path.end());
-    for (auto& x : plan.clink) used.insert(x.path.begin(), x.path.end());
-    if (scheme == "direct")
+    if (scheme == "direct" || lean)
         for (auto& x : plan.direct) used.insert(x.path.begin(), x.path.end());
     for (const Hex& h : used) CHECK(clOf.count(h));
     for (const Hex& h : used)   // every hop of every path is a real gateway link
@@ -388,9 +406,11 @@ int main(int argc, char* argv[]) {
 
     FILE* fc = std::fopen((out + "-crit.csv").c_str(), "w");
     FILE* fr = std::fopen((out + "-runs.csv").c_str(), "w");
-    CHECK(fc && fr);
+    FILE* fe = std::fopen((out + "-energy.csv").c_str(), "w");
+    CHECK(fc && fr && fe);
     std::fprintf(fc, "run,scheme,q,r,D,lackCL,lackCell,gatherDoneS,doneS,missing,circle\n");
     std::fprintf(fr, "run,scheme,D,simS,wallS,hops,gather,bankfill,circlefill,pull,control,macFail\n");
+    std::fprintf(fe, "run,scheme,node,q,r,cl,radios,txS,rxS,listenS,offS,framesTx,framesRx,lastTxS\n");
 
     for (uint32_t run = firstRun; run < firstRun + runs; ++run) {
         const auto wall0 = std::chrono::steady_clock::now();
@@ -1048,16 +1068,19 @@ int main(int argc, char* argv[]) {
             for (const Hex& k : plan.crit)
                 for (uint32_t s = 0; s < N; ++s) obj[s] |= needK[k][s];
             uint32_t n = 0;
+            int64_t prev = -1;
             for (uint32_t s = 0; s < N; ++s)
                 if (obj[s]) {
-                    pageOf[s] = n / page;
-                    if (n % page == 0) {
+                    auto b = breaks.upper_bound((uint32_t)prev);   // an image starts in (prev, s]
+                    if (pageSize.empty() || pageSize.back() == page || (b != breaks.end() && *b <= s)) {
                         pageSize.push_back(0);
                         pagePk.emplace_back();
                     }
+                    pageOf[s] = (uint32_t)pageSize.size() - 1;
                     pageSize.back()++;
                     pagePk.back().push_back(s);
                     n++;
+                    prev = s;
                 }
             const uint32_t P = (uint32_t)pageSize.size();
             for (auto& [k, v] : gw)
@@ -1188,6 +1211,47 @@ int main(int argc, char* argv[]) {
             Simulator::Schedule(Seconds(10), progress);
         };
 
+        // ---- radio energy: each radio's time per PHY state from the mission start, and its frames ----
+        struct Air {
+            double t[4] = {0, 0, 0, 0}, since = 0;   // sending, receiving, on and idle (listening), off
+            int st = 3;
+            uint64_t tx = 0, rx = 0;
+            double lastTx = -1;
+        };
+        std::vector<Air> air(radios.size());
+        auto settle = [&](size_t ri) {
+            const double t = Simulator::Now().GetSeconds();
+            air[ri].t[air[ri].st] += t - air[ri].since;
+            air[ri].since = t;
+        };
+        for (size_t ri = 0; ri < radios.size(); ++ri) {
+            Ptr<lrwpan::LrWpanPhy> phy = radios[ri].dev->GetPhy();
+            phy->TraceConnectWithoutContext(
+                "TrxStateValue", Callback<void, lrwpan::PhyEnumeration, lrwpan::PhyEnumeration>(
+                                     [&, ri](lrwpan::PhyEnumeration, lrwpan::PhyEnumeration to) {
+                                         settle(ri);
+                                         air[ri].st = to == lrwpan::IEEE_802_15_4_PHY_BUSY_TX   ? 0
+                                                      : to == lrwpan::IEEE_802_15_4_PHY_BUSY_RX ? 1
+                                                      : to == lrwpan::IEEE_802_15_4_PHY_TRX_OFF ||
+                                                              to == lrwpan::IEEE_802_15_4_PHY_FORCE_TRX_OFF
+                                                          ? 3
+                                                          : 2;
+                                     }));
+            phy->TraceConnectWithoutContext("PhyTxBegin",
+                                            Callback<void, Ptr<const Packet>>([&, ri](Ptr<const Packet>) {
+                                                air[ri].tx++;
+                                                air[ri].lastTx = now();
+                                            }));
+            phy->TraceConnectWithoutContext(
+                "PhyRxEnd", Callback<void, Ptr<const Packet>, double>([&, ri](Ptr<const Packet>, double) { air[ri].rx++; }));
+        }
+        Simulator::Schedule(Seconds(kT0), [&] {   // count from the mission start
+            for (size_t ri = 0; ri < radios.size(); ++ri) {
+                settle(ri);
+                std::fill(air[ri].t, air[ri].t + 4, 0.0);
+            }
+        });
+
         // ---- run ----------------------------------------------------------------------
         Simulator::Schedule(Seconds(kT0 / 2), [&] {
             lrwpan::LrWpanSpectrumValueHelper svh;
@@ -1231,6 +1295,26 @@ int main(int argc, char* argv[]) {
                          lackCell[k], gatherDone.count(k) ? gatherDone[k] : -1.0, doneAt.count(k) ? doneAt[k] : -1.0,
                          miss, circleN[k]);
         }
+        std::map<int, std::vector<size_t>> radiosOf;
+        for (size_t ri = 0; ri < radios.size(); ++ri) {
+            settle(ri);
+            radiosOf[radios[ri].node].push_back(ri);
+        }
+        for (auto& [v, rs] : radiosOf) {
+            double t[4] = {0, 0, 0, 0};
+            uint64_t tx = 0, rx = 0;
+            double last = -1;
+            for (size_t ri : rs) {
+                for (int i = 0; i < 4; ++i) t[i] += air[ri].t[i];
+                tx += air[ri].tx;
+                rx += air[ri].rx;
+                last = std::max(last, air[ri].lastTx);
+            }
+            std::fprintf(fe, "%u,%s,%d,%d,%d,%d,%zu,%.4f,%.4f,%.4f,%.4f,%llu,%llu,%.3f\n", run, sch.c_str(), v,
+                         nodes[v].cell.q, nodes[v].cell.r, (int)nodes[v].cl, rs.size(), t[0], t[1], t[2], t[3],
+                         (unsigned long long)tx, (unsigned long long)rx, last);
+        }
+        std::fflush(fe);
         std::fprintf(fr, "%u,%s,%u,%.2f,%.1f,%llu", run, sch.c_str(), Dn, simS, wallS, (unsigned long long)hops);
         for (int p = 0; p < kPhases; ++p) std::fprintf(fr, ",%llu", (unsigned long long)phaseHops[p]);
         std::fprintf(fr, ",%llu\n", (unsigned long long)macFail);
@@ -1255,5 +1339,6 @@ int main(int argc, char* argv[]) {
     }
     std::fclose(fc);
     std::fclose(fr);
+    std::fclose(fe);
     return 0;
 }

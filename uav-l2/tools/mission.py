@@ -42,7 +42,8 @@ ENV_LOSS = {"open": 0.0, "r500": 9.03, "r200": 19.77, "r100": 25.74}
 SCHEMES = {"rf": ["--scheme=river", "--prep=full"],
            "ad12": ["--scheme=river", "--prep=adaptive", "--circleMin=12", "--circleMax=12"],
            "d": ["--scheme=direct"],
-           "t": ["--scheme=trickle"]}   # baseline (item 139); needs a river-bin built with it
+           "t": ["--scheme=trickle"],   # baseline (item 139); needs a river-bin built with it
+           "tp": ["--scheme=trickle", "--tScope=paths"]}   # Trickle on the direct-pull path cells only (reviewer)
 
 
 def runseed(w):
@@ -425,7 +426,9 @@ def stage_runs(a, W_, K):
             sh([f"{a.bin}/river-bin", f"--nodes=c{k}-nodes-s35.csv", f"--routes=c{k}-routes-s35.csv",
                 f"--gateways=c{k}-gateways-s35.csv", f"--plan=plan{k}.txt", f"--bits=pass{k}-bits",
                 f"--firstRun={mission(k)}", "--runs=1", "--limit=900", "--gwSelect=quality", "--colours=7", *SCHEMES[tag], f"--out=r{k}-{tag}",
-                *([f"--repair={a.riverRepair:g}"] if getattr(a, "riverRepair", 0) and tag == "rf" else [])],
+                *([f"--repair={a.riverRepair:g}"] if getattr(a, "riverRepair", 0) and tag == "rf" else []),
+                *([f"--pageBreaks=pages{k}.txt"] if tag.startswith("t") and os.path.exists(f"{W_}/pages{k}.txt")
+                  else [])],   # page_breaks.py: Trickle pages aligned to the clue images
                f"r{k}-{tag}.log", rivenv)
         print("  " + open(f"r{k}-{tag}.log").read().strip().splitlines()[-1] if os.path.exists(f"r{k}-{tag}.log")
               else f"  r{k}-{tag} done before", flush=True)

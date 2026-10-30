@@ -5,8 +5,9 @@
 # images (page_breaks.py). Binaries: CAMP-BIN6 = campaign 4's CAMP-BIN5 with river-bin rebuilt with the per-node
 # PHY state counters (-energy.csv), --tScope and --pageBreaks (same River/direct behaviour, checked on seed 1).
 #   CAMP_S=<scratchpad> bash run.sh R [SCHEMES]      (SCHEMES default d,t,tp; rf always first)
+# Several sessions can share a seed, one SCHEMES set each: logs and the marker are named by it (done-d-t, ...).
 set -e
-R=$1; SCH=${2:-d,t,tp}
+R=$1; SCH=${2:-d,t,tp}; TAG=${SCH//,/-}
 : "${CAMP_S:?set CAMP_S}"
 L=$(cd "$(dirname "$0")" && pwd)
 REPO=$(cd "$L/../.." && pwd)
@@ -28,9 +29,10 @@ python3 $T/mission.py $FLAGS --schemes rf --work $W > $OUT/rf-mission.log 2>&1
 grep "river-full" $OUT/rf-mission.log || tail -3 $OUT/rf-mission.log
 python3 $T/page_breaks.py $W > $OUT/page-breaks.log
 echo "[$(( $(date +%s) - t0 )) s] R$R $SCH"
-python3 $T/mission.py $FLAGS --schemes $SCH --work $W > $OUT/other-mission.log 2>&1
-grep -E "^  run " $OUT/other-mission.log || tail -3 $OUT/other-mission.log
-cp $W/r*-*-crit.csv $W/r*-*-runs.csv $W/r*-*-energy.csv $W/pages*.txt $OUT/ 2>/dev/null || true
-for f in $W/r*-t*.log $W/r*-d.log; do grep -h "^trickle:" $f 2>/dev/null | sed "s|^|$(basename $f): |"; done > $OUT/trickle-pages.txt || true
-echo "[$(( $(date +%s) - t0 )) s] R$R done"
-touch $OUT/done
+python3 $T/mission.py $FLAGS --schemes $SCH --work $W > $OUT/mission-$TAG.log 2>&1
+grep -E "^  run " $OUT/mission-$TAG.log || tail -3 $OUT/mission-$TAG.log
+for t in rf ${SCH//,/ }; do cp $W/r*-$t-crit.csv $W/r*-$t-runs.csv $W/r*-$t-energy.csv $OUT/ 2>/dev/null || true; done
+cp $W/pages*.txt $OUT/
+for t in ${SCH//,/ }; do for f in $W/r*-$t.log; do grep -h "^trickle:\|^plan:" $f 2>/dev/null | sed "s|^|$(basename $f): |"; done; done > $OUT/plan-$TAG.txt || true
+echo "[$(( $(date +%s) - t0 )) s] R$R $SCH done"
+touch $OUT/done-$TAG

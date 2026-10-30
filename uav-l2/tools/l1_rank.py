@@ -27,7 +27,7 @@ named <map> (k4-s1, ...) or k<K>. Per map and draw (paired: the same draw on the
               stage    while waiting it flies towards the P(c*)-weighted centre of the cells not visited yet
 Methods (name = base + options):
   P         River reports;  B4  direct reports only (no cooperation);  P+prog  the direct report first, the River
-            report when it comes (both through the CH's LoRa); Pd, Pd+prog / Pt, Pt+prog  the same with the
+            report when it comes (both through the CH's LoRa); Pd, Pd+prog / Pt, Pt+prog / Ptp, Ptp+prog  the same with the
             direct-pull (r*-d) / Trickle (r*-t, CLAUDE.md §8 item 139) ns-3 runs in place of River's
   options   -grouped (broadcast order by aspect), -equal (no importance: every clue weight 1), -wait, -zero (team 2
             leaves with team 1, at t = 0, and stages towards the critical cells' centre until reports come), -pu,
@@ -372,9 +372,9 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
     light = sum(math.ceil(c["kB"] * 1000 / 99) for c in C)
     for meth in methods:
         base, *opts = meth.split("-")
-        if base in ("P", "B4", "P+prog", "Pd", "Pd+prog", "Pt", "Pt+prog"):
-            sch = "d" if base.startswith("Pd") else "t" if base.startswith("Pt") else "rf"
-            base = base.replace("Pd", "P").replace("Pt", "P")
+        if base in ("P", "B4", "P+prog", "Pd", "Pd+prog", "Pt", "Pt+prog", "Ptp", "Ptp+prog"):
+            sch = {"Pd": "d", "Pt": "t", "Ptp": "tp"}.get(base.split("+")[0], "rf")
+            base = "P" + base[len(base.split("+")[0]):] if sch != "rf" else base
             order = "grouped" if "grouped" in opts else "interleaved"
             wC = Cq if "equal" in opts else C
             tk = next((o for o in opts if o in ("short", "latency", "seam", "kin", "skin", "route")), "l3first")
@@ -485,10 +485,11 @@ def one_work(job):
     Cq = [dict(c, w=1.0) for c in C]
     seqs = {"interleaved": L.order(C, "interleaved"), "grouped": L.order(C, "grouped")}
     K = json.load(open(f"{w}/map.json"))["clusters"]
-    for tag in ("d", "t"):   # no direct-pull (d) or Trickle (t) run on this work folder
+    uses = lambda m, tag: m.split("-")[0].split("+")[0] == "P" + tag
+    for tag in ("d", "t", "tp"):   # no direct-pull (d) or Trickle (t, tp) run on this work folder
         if not all(os.path.exists(f"{w}/r{k}-{tag}-crit.csv") for k in range(1, K + 1)):
-            methods = [m for m in methods if not m.startswith("P" + tag)]
-    M = load_map(w, schemes=("rf",) + tuple(t for t in ("d", "t") if any(m.startswith("P" + t) for m in methods)))
+            methods = [m for m in methods if not uses(m, tag)]
+    M = load_map(w, schemes=("rf",) + tuple(t for t in ("d", "t", "tp") if any(uses(m, t) for m in methods)))
     M["name"], M["rs"] = mapname(w), runseed(w)
     M["windowAt"] = "crit" if any(l.startswith("NEED") for k in range(1, K + 1) for l in open(f"{w}/plan{k}.txt")) \
         else "ch"

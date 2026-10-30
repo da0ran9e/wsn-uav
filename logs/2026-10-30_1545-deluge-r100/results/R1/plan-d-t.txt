@@ -1,0 +1,24 @@
+r1-d.log: plan: 21 Axe, 5 critical, 73 cells and 1535 nodes simulated, 5071 packets
+r2-d.log: plan: 14 Axe, 9 critical, 72 cells and 1554 nodes simulated, 5152 packets
+r3-d.log: plan: 14 Axe, 7 critical, 65 cells and 1341 nodes simulated, 5407 packets
+r4-d.log: plan: 14 Axe, 4 critical, 73 cells and 1528 nodes simulated, 5258 packets
+r5-d.log: plan: 15 Axe, 4 critical, 53 cells and 1155 nodes simulated, 5216 packets
+r6-d.log: plan: 13 Axe, 6 critical, 76 cells and 1633 nodes simulated, 5099 packets
+r7-d.log: plan: 15 Axe, 5 critical, 61 cells and 1232 nodes simulated, 5321 packets
+r8-d.log: plan: 14 Axe, 5 critical, 58 cells and 1292 nodes simulated, 5642 packets
+r1-t.log: plan: 21 Axe, 5 critical, 73 cells and 1535 nodes simulated, 5071 packets
+r1-t.log: trickle: 4040 packets in 83 pages over 73 cells
+r2-t.log: plan: 14 Axe, 9 critical, 72 cells and 1554 nodes simulated, 5152 packets
+r2-t.log: trickle: 4057 packets in 73 pages over 72 cells
+r3-t.log: plan: 14 Axe, 7 critical, 65 cells and 1341 nodes simulated, 5407 packets
+r3-t.log: trickle: 4085 packets in 74 pages over 65 cells
+r4-t.log: plan: 14 Axe, 4 critical, 73 cells and 1528 nodes simulated, 5258 packets
+r4-t.log: trickle: 4216 packets in 78 pages over 73 cells
+r5-t.log: plan: 15 Axe, 4 critical, 53 cells and 1155 nodes simulated, 5216 packets
+r5-t.log: trickle: 4041 packets in 75 pages over 53 cells
+r6-t.log: plan: 13 Axe, 6 critical, 75 cells and 1617 nodes simulated, 5099 packets
+r6-t.log: trickle: 4076 packets in 75 pages over 75 cells
+r7-t.log: plan: 15 Axe, 5 critical, 61 cells and 1232 nodes simulated, 5321 packets
+r7-t.log: trickle: 4195 packets in 78 pages over 61 cells
+r8-t.log: plan: 14 Axe, 5 critical, 58 cells and 1292 nodes simulated, 5642 packets
+r8-t.log: trickle: 4181 packets in 79 pages over 58 cells

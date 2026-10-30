@@ -1,0 +1,12 @@
+c1: pass bits 59fff00e44c88739, D <= 4912 (max per cell 4041), missing 0, done 7/7, sim 132.19 s
+c2: pass bits f9870a3c351b0170, D <= 4403 (max per cell 4041), missing 0, done 6/6, sim 151.19 s
+c3: pass bits f1ded517f8e80f52, D <= 4416 (max per cell 4041), missing 0, done 5/5, sim 91.85 s
+c4: pass bits 5d5851b46c73b0ab, D <= 4647 (max per cell 4041), missing 0, done 3/3, sim 69.43 s
+c5: pass bits 026ef85f20159747, D <= 3228 (max per cell 3228), missing 0, done 6/6, sim 143.20 s
+c6: pass bits bd447062ffe44904, D <= 4868 (max per cell 4041), missing 0, done 4/4, sim 100.81 s
+c7: pass bits 682b2577a80fce23, D <= 4673 (max per cell 4041), missing 0, done 3/3, sim 43.58 s
+c8: pass bits 88950b8c17c83c0d, D <= 5485 (max per cell 4041), missing 0, done 7/7, sim 107.69 s
+c9: pass bits 828db0ad5af2a0cb, D <= 5163 (max per cell 4041), missing 0, done 7/7, sim 109.07 s
+c10: pass bits 5e73e9eedecb24c1, D <= 4539 (max per cell 4041), missing 0, done 6/6, sim 100.97 s
+c11: pass bits 9754540966e2daba, D <= 4653 (max per cell 4041), missing 0, done 7/7, sim 144.95 s
+c12: pass bits 3ab7324f9748f16b, D <= 4571 (max per cell 4041), missing 0, done 5/5, sim 90.28 s

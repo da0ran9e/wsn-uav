@@ -2283,6 +2283,24 @@ Không đổi tham số Trickle sau khi đã thấy kết quả chạy chính.
 Không so readiness của Deluge-lite với FC + DTSP-N (setting khác, như bài đã quy ước).
 ```
 
+*234. 2026-10-30 · paper · hỏi: kéo trực tiếp có nhiều lỗi gói và node hotspot tốn năng lượng hơn do request không lập kế hoạch và retry?*
+
+```text
+chúng ta đang hi vọng kéo trực tiếp sẽ có nhiều lỗi gói và node hotspot tốn năng lượng hơn do request tràn lan không được lập kế hoạch và lỗi gói dẫn đến retry nhiều lần đúng chứ ?
+```
+
+*235. 2026-10-30 · paper · hỏi: phương án 2 (Deluge-lite) chạy xong có cho kết quả lạc quan hơn không*
+
+```text
+trước khi thử lại phương án này, liệu phương án 2 chạy xong có cho kết quả lạc quan hơn không
+```
+
+*236. 2026-10-30 · paper · thử phương án 1 với tình huống bất lợi cho kéo thẳng: kéo trực tiếp thô, không có hạ tầng lập kế hoạch của River/BS*
+
+```text
+trong lúc chờ ta thử phương án 1 với các tình huống không có lợi cho kéo thẳng, ví dụ: hiện tại phương án kéo thẳng vẫn hoạt động trên nền của River với các lập lịch sẵn có từ BS nếu như trước khi có cơ chế river này, việc kéo trực tiếp sẽ thô hơn nhiều
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

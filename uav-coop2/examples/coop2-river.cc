@@ -36,7 +36,9 @@
 //                          nodes send their CL a summary; the CL counts what no node of the cell
 //                          has, takes n = ceil(lack / share) members (--circleMin..--circleMax, rings
 //                          1-2) and asks each for its group's part; members serve as on demand
-//   direct                 each critical cell asks every Axe cell for what it lacks of Seg(a)
+//   direct                 each critical cell asks every Axe cell for what it lacks of Seg(a); --directSeg=false:
+//                          without the BS's Seg table, it asks every Axe cell for all it lacks (copies overlap)
+// --noSchedule: no PECEE grid schedule, every radio sends when it has frames (CSMA/CA only).
 //   trickle                baseline without a plan (CLAUDE.md §8 items 134, 139): Deluge-style dissemination over
 //                          the same cells, radios and gateway pairs. The object is every packet some critical cell
 //                          needs, in pages of --page packets; every cell gathers what its nodes hold of it, then
@@ -237,6 +239,7 @@ int main(int argc, char* argv[]) {
     uint32_t circleMin = 2, circleMax = 12, page = 64, tK = 1;
     double tImin = 1, tImax = 64;
     int colours = 7;
+    bool noSchedule = false, directSeg = true;
     std::string gwSelect = "deploy";
     CommandLine cmd;
     cmd.AddValue("nodes", "deploy-nodes-sS.csv", nodesCsv);
@@ -266,6 +269,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("colours", "cell channels: 3, 4, 7 or 13 colours", colours);
     cmd.AddValue("gwSelect", "gateway pair of each cell pair: deploy (uav-coop, by geometry) | quality "
                  "(the BS picks the best link of the mission)", gwSelect);
+    cmd.AddValue("noSchedule", "no PECEE schedule: every radio contends by CSMA/CA alone", noSchedule);
+    cmd.AddValue("directSeg", "direct: ask each Axe cell only for its Seg (false: for everything lacking)", directSeg);
     cmd.AddValue("out", "output prefix", out);
     cmd.AddValue("trace", "prefix: the first mission's hops, CL arrivals, in-cell routes and gateway pairs",
                  trace);
@@ -498,6 +503,10 @@ int main(int argc, char* argv[]) {
         std::vector<Medium> media;
         std::map<Hex, int> cellMedium;
         auto addRadio = [&](int v, int channel, int medium) {
+            if (noSchedule) {   // a medium of its own: nothing to wait for but CSMA/CA
+                medium = (int)media.size();
+                media.emplace_back();
+            }
             Radio r;
             r.node = v;
             r.medium = medium;
@@ -1038,12 +1047,12 @@ int main(int argc, char* argv[]) {
                 }
             }
         } else if (scheme == "direct") {
-            for (auto& x : plan.axe) needOr(x.a, segMask(x.a));
+            for (auto& x : plan.axe) needOr(x.a, directSeg ? segMask(x.a) : inD);   // no Seg table: all it heard
             for (auto& d : plan.direct) {
                 const int toA = addPath(d.path), toK = addPath(rev(d.path));
                 const Hex k = d.k, a = d.a;
                 auto ask = [&, k, a, toA, toK](bool again) {
-                    auto sm = segMask(a);
+                    auto sm = directSeg ? segMask(a) : std::vector<uint8_t>(N, 1);
                     std::vector<uint32_t> part;
                     for (uint32_t s = 0; s < N; ++s)
                         if (sm[s] && needK[k][s] && !hold(k)[s]) part.push_back(s);

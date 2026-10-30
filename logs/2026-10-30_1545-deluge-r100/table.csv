@@ -1,45 +1,34 @@
 metric,scheme,value
-critical cells done,rf,90.0
-critical cells done,d2,90.0
-critical cells done,t,90.0
-critical cells done,tp,90.0
-"ground ready, s (last critical cell)",rf,118.8875
-"ground ready, s (last critical cell)",d2,120.66
-"ground ready, s (last critical cell)",t,153.824375
-"ground ready, s (last critical cell)",tp,149.785625
-"frames sent, k",rf,954623.1875
-"frames sent, k",d2,848437.25
-"frames sent, k",t,2351289.9375
-"frames sent, k",tp,1795100.6875
-"data hops, k",rf,430795.1875
-"data hops, k",d2,388759.5
-"data hops, k",t,1071055.5625
-"data hops, k",tp,819190.25
-"radio energy CC2420, always on, J",rf,11284.9041440175
-"radio energy CC2420, always on, J",d2,11592.691534365
-"radio energy CC2420, always on, J",t,14771.92683687375
-"radio energy CC2420, always on, J",tp,11060.0404230525
-"radio energy CC2420, scheduled sleep, J",rf,1687.4306479226252
-"radio energy CC2420, scheduled sleep, J",d2,1288.6065191966252
-"radio energy CC2420, scheduled sleep, J",t,14771.92683687375
-"radio energy CC2420, scheduled sleep, J",tp,11060.0404230525
-"radio energy EFR32MG21, scheduled sleep, J",rf,999.5191928650313
-"radio energy EFR32MG21, scheduled sleep, J",d2,780.7662735010313
-"radio energy EFR32MG21, scheduled sleep, J",t,7741.5065629575
-"radio energy EFR32MG21, scheduled sleep, J",tp,5801.680287900001
-"hottest node CC2420, always on, J",rf,20.950737015
-"hottest node CC2420, always on, J",d2,21.355193025000002
-"hottest node CC2420, always on, J",t,27.53414653875
-"hottest node CC2420, always on, J",tp,26.81206598625
-"hottest node CC2420, scheduled sleep, J",rf,19.01912027775
-"hottest node CC2420, scheduled sleep, J",d2,18.8988631605
-"hottest node CC2420, scheduled sleep, J",t,27.53414653875
-"hottest node CC2420, scheduled sleep, J",tp,26.81206598625
-"hottest node EFR32MG21, scheduled sleep, J",rf,10.94187144515625
-"hottest node EFR32MG21, scheduled sleep, J",d2,11.389827837375
-"hottest node EFR32MG21, scheduled sleep, J",t,15.83315785125
-"hottest node EFR32MG21, scheduled sleep, J",tp,15.37736794125
-"mission T*, s",rf,870.4775
-"mission T*, s",d2,873.1030000000001
-"mission T*, s",t,904.3544999999999
-"mission T*, s",tp,901.1514999999999
+critical cells done,rf,225.0
+critical cells done,t,225.0
+critical cells done,tp,225.0
+"ground ready, s (last critical cell)",rf,116.65299999999999
+"ground ready, s (last critical cell)",t,155.67325
+"ground ready, s (last critical cell)",tp,148.9955
+"frames sent, k",rf,957470.7
+"frames sent, k",t,2343763.175
+"frames sent, k",tp,1786214.025
+"data hops, k",rf,432036.775
+"data hops, k",t,1069270.025
+"data hops, k",tp,815365.65
+"radio energy CC2420, always on, J",rf,11059.224013461
+"radio energy CC2420, always on, J",t,14942.7019493475
+"radio energy CC2420, always on, J",tp,11001.0710852955
+"radio energy CC2420, scheduled sleep, J",rf,1693.0355820778502
+"radio energy CC2420, scheduled sleep, J",t,14942.7019493475
+"radio energy CC2420, scheduled sleep, J",tp,11001.0710852955
+"radio energy EFR32MG21, scheduled sleep, J",rf,1002.8636015452126
+"radio energy EFR32MG21, scheduled sleep, J",t,7825.5395603894995
+"radio energy EFR32MG21, scheduled sleep, J",tp,5770.7580381075
+"hottest node CC2420, always on, J",rf,21.2614452165
+"hottest node CC2420, always on, J",t,28.6645572225
+"hottest node CC2420, always on, J",tp,26.9521207575
+"hottest node CC2420, scheduled sleep, J",rf,18.995404713600003
+"hottest node CC2420, scheduled sleep, J",t,28.6645572225
+"hottest node CC2420, scheduled sleep, J",tp,26.9521207575
+"hottest node EFR32MG21, scheduled sleep, J",rf,10.997111781975
+"hottest node EFR32MG21, scheduled sleep, J",t,16.331076219
+"hottest node EFR32MG21, scheduled sleep, J",tp,15.437771544
+"mission T*, s",rf,863.3592
+"mission T*, s",t,906.0514000000001
+"mission T*, s",tp,899.1321999999999

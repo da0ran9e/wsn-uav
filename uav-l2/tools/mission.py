@@ -43,7 +43,8 @@ SCHEMES = {"rf": ["--scheme=river", "--prep=full"],
            "ad12": ["--scheme=river", "--prep=adaptive", "--circleMin=12", "--circleMax=12"],
            "d": ["--scheme=direct"],
            "t": ["--scheme=trickle"],   # baseline (item 139); needs a river-bin built with it
-           "tp": ["--scheme=trickle", "--tScope=paths"]}   # Trickle on the direct-pull path cells only (reviewer)
+           "tp": ["--scheme=trickle", "--tScope=paths"],
+           "d2": ["--scheme=direct"]}   # with --riverRepair: River's Axe gather and stall repairs (reviewer fairness)   # Trickle on the direct-pull path cells only (reviewer)
 
 
 def runseed(w):
@@ -427,7 +428,8 @@ def stage_runs(a, W_, K):
                 f"--gateways=c{k}-gateways-s35.csv", f"--plan=plan{k}.txt", f"--bits=pass{k}-bits",
                 f"--firstRun={mission(k)}", "--runs=1", "--limit=900", "--gwSelect=quality", "--colours=7", *SCHEMES[tag], f"--out=r{k}-{tag}",
                 *([f"--repair={a.riverRepair:g}"] if getattr(a, "riverRepair", 0) and (tag == "rf" or
-                  tag.startswith("t") and os.path.exists(f"{W_}/pages{k}.txt")) else []),   # Trickle: Axe Segs
+                  tag in ("d2",) or tag.startswith("t") and os.path.exists(f"{W_}/pages{k}.txt")) else []),
+                # Trickle: Axe Segs; d2: direct pull with River's repairs
                 *([f"--pageBreaks=pages{k}.txt"] if tag.startswith("t") and os.path.exists(f"{W_}/pages{k}.txt")
                   else [])],   # page_breaks.py: Trickle pages aligned to the clue images
                f"r{k}-{tag}.log", rivenv)

@@ -27,7 +27,7 @@ CHIPS = {
     # radio off with the core in EM2 5.0 uA (96 kB RAM, RTC on LFXO); 3.0 V
     "efr32mg21": dict(V=3.0, tx=33.8e-3, rx=9.4e-3, off=5.0e-6, sleep=5.0e-6),
 }
-PLANNED = ("rf", "d")
+PLANNED = ("rf", "d", "d2")   # d2: direct pull with River's repairs
 ROLES = ("crit", "axe", "bank", "circle", "relay", "other")
 
 C1, C2, M_UAV, G = 9.26e-4, 2250.0, 10.0, 9.80665   # Zeng & Zhang 2017, Sec. VI (m only enters dK)

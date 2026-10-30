@@ -54,6 +54,7 @@
 // Repair (--repair=S > 0, river --prep=full; CLAUDE.md §8 item 169): two gaps closed.
 //   Axe     an Axe cell's gather also takes the packets of its own Seg that none of its nodes heard from an
 //           adjacent cell that holds them (a request, then the packets over that cell pair's gateways)
+//   direct  (--scheme=direct) the same Axe gather, and a stalled critical cell asks its Axe cells again
 //   stalls  a critical cell that still lacks packets and has taken in none for S seconds asks its Circle
 //           members again for the rest of their groups; a member that lacks one asks its Bank again, and a
 //           Bank that lacks one its Axe cell (an 802.15.4 ACK carries only a sequence number, so a frame can
@@ -1037,15 +1038,18 @@ int main(int argc, char* argv[]) {
             for (auto& d : plan.direct) {
                 const int toA = addPath(d.path), toK = addPath(rev(d.path));
                 const Hex k = d.k, a = d.a;
-                afterGather(k, [&, k, a, toA, toK] {
+                auto ask = [&, k, a, toA, toK](bool again) {
                     auto sm = segMask(a);
                     std::vector<uint32_t> part;
                     for (uint32_t s = 0; s < N; ++s)
                         if (sm[s] && needK[k][s] && !hold(k)[s]) part.push_back(s);
+                    if (again && part.empty()) return;
                     send(toA, -1, kControl, [&, a, part, toK] {
                         for (uint32_t s : part) when(a, s, [&, s, toK] { send(toK, (int32_t)s, kPull); });
                     });
-                });
+                };
+                afterGather(k, [ask] { ask(false); });
+                if (repairS > 0) redo[k].push_back([ask] { ask(true); });   // --repair: ask again, as River
             }
         }
         // Trickle state lives for the whole run (callbacks refer to it).

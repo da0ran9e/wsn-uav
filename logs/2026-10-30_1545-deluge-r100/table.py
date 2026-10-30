@@ -2,7 +2,7 @@
 
     python3 table.py [SEEDS...]          (default: every results/R* with all four schemes) -> table.md, table.csv
 
-Per scheme (rf River, d direct pull, t Trickle on River's cells, tp Trickle on the direct-pull path cells), over
+Per scheme (rf River, d2 direct pull with River's Axe-gather and stall repairs (d: without them), t Trickle on River's cells, tp Trickle on the direct-pull path cells), over
 seeds x 8 clusters of map k8-s1, channel r100:
   ready     critical cells done, and the time the last one is done (ground side; 900 s when not done)
   frames    frames sent (PHY TX starts: data, requests, adverts, ACKs, retries) and data hops delivered
@@ -18,9 +18,9 @@ from collections import defaultdict
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, f"{HERE}/../../uav-l2/tools")
 from energy import node_energy
-SCH = ["rf", "d", "t", "tp"]
-NAME = {"rf": "River", "d": "Direct pull", "t": "Deluge (River cells)", "tp": "Deluge (path cells)"}
-L1 = {"rf": "P+prog", "d": "Pd+prog", "t": "Pt+prog", "tp": "Ptp+prog"}
+SCH = ["rf", "d2", "t", "tp"]
+NAME = {"rf": "River", "d": "Direct pull (no repair)", "d2": "Direct pull", "t": "Deluge (River cells)", "tp": "Deluge (path cells)"}
+L1 = {"rf": "P+prog", "d": "Pd+prog", "d2": "Pd2+prog", "t": "Pt+prog", "tp": "Ptp+prog"}
 LIMIT = 900.0
 
 

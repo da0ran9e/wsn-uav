@@ -372,8 +372,8 @@ def missions(M, tours, hold, d, phase, C, Cq, methods, traces=None):
     light = sum(math.ceil(c["kB"] * 1000 / 99) for c in C)
     for meth in methods:
         base, *opts = meth.split("-")
-        if base in ("P", "B4", "P+prog", "Pd", "Pd+prog", "Pt", "Pt+prog", "Ptp", "Ptp+prog"):
-            sch = {"Pd": "d", "Pt": "t", "Ptp": "tp"}.get(base.split("+")[0], "rf")
+        if base in ("P", "B4", "P+prog", "Pd", "Pd+prog", "Pt", "Pt+prog", "Ptp", "Ptp+prog", "Pd2", "Pd2+prog"):
+            sch = {"Pd": "d", "Pd2": "d2", "Pt": "t", "Ptp": "tp"}.get(base.split("+")[0], "rf")
             base = "P" + base[len(base.split("+")[0]):] if sch != "rf" else base
             order = "grouped" if "grouped" in opts else "interleaved"
             wC = Cq if "equal" in opts else C
@@ -486,10 +486,10 @@ def one_work(job):
     seqs = {"interleaved": L.order(C, "interleaved"), "grouped": L.order(C, "grouped")}
     K = json.load(open(f"{w}/map.json"))["clusters"]
     uses = lambda m, tag: m.split("-")[0].split("+")[0] == "P" + tag
-    for tag in ("d", "t", "tp"):   # no direct-pull (d) or Trickle (t, tp) run on this work folder
+    for tag in ("d", "d2", "t", "tp"):   # no direct-pull (d, d2) or Trickle (t, tp) run on this work folder
         if not all(os.path.exists(f"{w}/r{k}-{tag}-crit.csv") for k in range(1, K + 1)):
             methods = [m for m in methods if not uses(m, tag)]
-    M = load_map(w, schemes=("rf",) + tuple(t for t in ("d", "t", "tp") if any(uses(m, t) for m in methods)))
+    M = load_map(w, schemes=("rf",) + tuple(t for t in ("d", "d2", "t", "tp") if any(uses(m, t) for m in methods)))
     M["name"], M["rs"] = mapname(w), runseed(w)
     M["windowAt"] = "crit" if any(l.startswith("NEED") for k in range(1, K + 1) for l in open(f"{w}/plan{k}.txt")) \
         else "ch"

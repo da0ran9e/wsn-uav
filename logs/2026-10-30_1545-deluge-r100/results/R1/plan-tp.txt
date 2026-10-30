@@ -1,0 +1,16 @@
+r1-tp.log: plan: 21 Axe, 5 critical, 62 cells and 1303 nodes simulated, 5071 packets
+r1-tp.log: trickle: 4040 packets in 65 pages over 62 cells
+r2-tp.log: plan: 14 Axe, 9 critical, 55 cells and 1190 nodes simulated, 5152 packets
+r2-tp.log: trickle: 4057 packets in 66 pages over 55 cells
+r3-tp.log: plan: 14 Axe, 7 critical, 52 cells and 1082 nodes simulated, 5407 packets
+r3-tp.log: trickle: 4085 packets in 65 pages over 52 cells
+r4-tp.log: plan: 14 Axe, 4 critical, 56 cells and 1200 nodes simulated, 5258 packets
+r4-tp.log: trickle: 4216 packets in 67 pages over 56 cells
+r5-tp.log: plan: 15 Axe, 4 critical, 46 cells and 1012 nodes simulated, 5216 packets
+r5-tp.log: trickle: 4041 packets in 65 pages over 46 cells
+r6-tp.log: plan: 13 Axe, 6 critical, 60 cells and 1295 nodes simulated, 5099 packets
+r6-tp.log: trickle: 4076 packets in 66 pages over 60 cells
+r7-tp.log: plan: 15 Axe, 5 critical, 33 cells and 639 nodes simulated, 5321 packets
+r7-tp.log: trickle: 4195 packets in 68 pages over 33 cells
+r8-tp.log: plan: 14 Axe, 5 critical, 44 cells and 975 nodes simulated, 5642 packets
+r8-tp.log: trickle: 4181 packets in 68 pages over 44 cells

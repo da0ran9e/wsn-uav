@@ -1,0 +1,8 @@
+r1-d2.log: plan: 21 Axe, 5 critical, 73 cells and 1535 nodes simulated, 5071 packets
+r2-d2.log: plan: 14 Axe, 9 critical, 72 cells and 1554 nodes simulated, 5152 packets
+r3-d2.log: plan: 14 Axe, 7 critical, 65 cells and 1341 nodes simulated, 5407 packets
+r4-d2.log: plan: 14 Axe, 4 critical, 73 cells and 1528 nodes simulated, 5258 packets
+r5-d2.log: plan: 15 Axe, 4 critical, 53 cells and 1155 nodes simulated, 5216 packets
+r6-d2.log: plan: 13 Axe, 6 critical, 76 cells and 1633 nodes simulated, 5099 packets
+r7-d2.log: plan: 15 Axe, 5 critical, 61 cells and 1232 nodes simulated, 5321 packets
+r8-d2.log: plan: 14 Axe, 5 critical, 58 cells and 1292 nodes simulated, 5642 packets

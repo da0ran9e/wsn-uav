@@ -47,7 +47,8 @@
 //                          at a time, again after a timeout); a cell that hears a neighbour lack one of its pages,
 //                          or completes a page, resets its timer to tImin.
 //                          --tScope=plan: over River's plan cells; paths: only over the Axe cells, the critical
-//                          cells and the cells of the direct-pull paths between them (the reviewer's scope).
+//                          cells and the cells of the direct-pull paths between them (the reviewer's scope); all:
+//                          every cell of the cluster (Deluge-lite: it cannot know which cells matter).
 //                          --pageBreaks=FILE: packet indices where an image starts; a page then spans neither an
 //                          image nor two Axe cells' Segs, and with --repair the Axe cells complete their Seg as in
 //                          River, so every page is complete in some cell (Deluge's advert needs a complete page).
@@ -223,8 +224,8 @@ struct Job {
     Hex dst;
 };
 
-enum Phase { kGather, kBankFill, kCircleFill, kPull, kControl, kPhases };
-const char* kPhaseName[kPhases] = {"gather", "bankfill", "circlefill", "pull", "control"};
+enum Phase { kGather, kBankFill, kCircleFill, kPull, kControl, kAdvert, kPhases };
+const char* kPhaseName[kPhases] = {"gather", "bankfill", "circlefill", "pull", "control", "advert"};
 
 }  // namespace
 
@@ -250,7 +251,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("tImin", "trickle: shortest interval, s", tImin);
     cmd.AddValue("tImax", "trickle: longest interval, s", tImax);
     cmd.AddValue("tK", "trickle: redundancy constant", tK);
-    cmd.AddValue("tScope", "trickle: plan (River's cells) | paths (Axe, critical and direct-pull path cells)", tScope);
+    cmd.AddValue("tScope", "trickle: plan (River's cells) | paths (Axe, critical and direct-pull path cells) | all",
+                 tScope);
     cmd.AddValue("pageBreaks", "trickle: file of packet indices where an image starts (no page spans one)",
                  pageBreaks);
     cmd.AddValue("prep", "river only: full | ondemand | adaptive", prep);
@@ -270,7 +272,7 @@ int main(int argc, char* argv[]) {
     cmd.Parse(argc, argv);
     CHECK(scheme == "river" || scheme == "direct" || scheme == "trickle");
     CHECK(page > 0 && tK > 0 && 0 < tImin && tImin <= tImax);
-    CHECK(tScope == "plan" || tScope == "paths");
+    CHECK(tScope == "plan" || tScope == "paths" || tScope == "all");
     std::set<uint32_t> breaks;
     if (!pageBreaks.empty()) {
         std::ifstream in(pageBreaks);
@@ -342,6 +344,8 @@ int main(int argc, char* argv[]) {
         for (auto& x : plan.csrc) used.insert(x.path.begin(), x.path.end());
         for (auto& x : plan.clink) used.insert(x.path.begin(), x.path.end());
     }
+    if (scheme == "trickle" && tScope == "all")
+        for (auto& [h, v] : clOf) used.insert(h);
     if (scheme == "direct" || lean)
         for (auto& x : plan.direct) used.insert(x.path.begin(), x.path.end());
     for (const Hex& h : used) CHECK(clOf.count(h));
@@ -412,7 +416,7 @@ int main(int argc, char* argv[]) {
     FILE* fe = std::fopen((out + "-energy.csv").c_str(), "w");
     CHECK(fc && fr && fe);
     std::fprintf(fc, "run,scheme,q,r,D,lackCL,lackCell,gatherDoneS,doneS,missing,circle\n");
-    std::fprintf(fr, "run,scheme,D,simS,wallS,hops,gather,bankfill,circlefill,pull,control,macFail\n");
+    std::fprintf(fr, "run,scheme,D,simS,wallS,hops,gather,bankfill,circlefill,pull,control,advert,macFail\n");
     std::fprintf(fe, "run,scheme,node,q,r,cl,radios,txS,rxS,listenS,offS,framesTx,framesRx,lastTxS\n");
 
     for (uint32_t run = firstRun; run < firstRun + runs; ++run) {
@@ -1097,7 +1101,7 @@ int main(int argc, char* argv[]) {
                 const std::vector<uint8_t> mine = full[c];
                 for (auto& [b, path] : nbr[c]) {
                     const Hex from = c, to = b;
-                    send(path, -1, kControl, [&, from, to, mine] {
+                    send(path, -1, kAdvert, [&, from, to, mine] {
                         bool more = false, less = false;
                         for (uint32_t p = 0; p < mine.size(); ++p) {
                             if (mine[p] && !full[to][p]) {

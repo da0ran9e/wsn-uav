@@ -2157,6 +2157,132 @@ nếu có thể chạy song song nhiều luồng cloud thì sao
 từ giờ bạn sẽ là người điều phối, chỉ huy đội các cloud session khác làm việc song song nhanh nhất có thể, đầu tiên đặt mục tiêu chạy 2 seed cho r100 trước trên kích 1 kích thước bản đồ thôi
 ```
 
+*230. 2026-10-30 · paper · hỏi tiến độ điều phối deluge-r100*
+
+```text
+tiến độ đến đâu rồi
+```
+
+*231. 2026-10-30 · paper · hỏi dự kiến bao lâu; nếu quá lâu thì làm luôn (chia nhỏ Trickle cho nhiều phiên)*
+
+```text
+dự kiến bao lâu nữa, nếu quá lâu thì làm luôn nhé
+```
+
+*232. 2026-10-30 · paper · hỏi tiến độ và phần trăm công việc*
+
+```text
+tiến độ đến đâu rồi bao nhiêu phần trăm công việc
+```
+
+*233. 2026-10-30 · paper · phương án backup Deluge-lite (SigDrop 2): đọc, nếu cài nhanh thì triển khai luôn với các phiên mới song song; k12, LM-Tour, open/r200, 8 seed, River đối chứng, hai cấu hình Trickle, dl_cells/dl_runs, 6 kiểm tra hợp lệ*
+
+```text
+trong lúc chờ bạn thử đọc qua phương án backup này xem nếu cài đặt nhanh không tốn nhiều thì triển khai luôn với các session mới song song nhé SigDrop 2 — Thiết kế thực nghiệm Deluge-lite (baseline cho track IoT)
+Oct 30, 2026 · @Van
+
+1. Mục tiêu
+Thí nghiệm trả lời một câu hỏi: cùng một lượt bay, nếu thay River bằng phổ tán kiểu Deluge/Trickle dưới mặt đất thì critical cell sẵn sàng muộn hơn bao nhiêu, và tốn bao nhiêu frame? Đây là câu reviewer track IoT & Sensor Networks gần như chắc chắn sẽ hỏi: "UAV bay một lượt rồi để Deluge lan truyền tiếp, sao phải lập kế hoạch?".
+
+Thí nghiệm tách đúng một yếu tố: lập kế hoạch trước khi cất cánh (River) so với tìm dữ liệu thiếu trong lúc chạy (advertise–request). Đường bay, kênh, MAC, bản đồ và in-cell gathering giữ nguyên như River.
+
+Kết quả dự kiến chiếm 3–4 dòng trong Sec. VI, dạng: Deluge-lite trên cùng tour LM-Tour đưa critical cell tới readiness sau X s so với Y s của River (map 12 cluster, open/r200), dùng Z lần số frame. X, Y, Z chỉ được điền từ số An gửi về.
+
+2. Scheme Deluge-lite
+Deluge-lite giữ nguyên mọi thứ của River trừ khâu chuyển dữ liệu giữa các cell. Đó là phiên bản mạnh hơn Deluge gốc (cho phép page không theo thứ tự, NACK theo bitmap), để reviewer không thể nói là baseline yếu.
+
+Thành phần	River (hiện có)	Deluge-lite (mới)
+Đường bay Team 1	Tour LM-Tour	Cùng file tour LM-Tour, cùng seed
+Phát từ UAV, kênh, MAC	Như bài	Giữ nguyên
+In-cell gathering về CL	Có	Giữ nguyên (dùng lại mã)
+Chuyển giữa các cell	Kế hoạch Spine → Bank → Ring lập trước	Advertise–request theo Trickle, không có kế hoạch
+Cell tham gia	Band + Ring quanh critical cell	Mọi cell (Deluge không biết cell nào quan trọng)
+Đường truyền giữa 2 cell kề	CL ↔ gateway ↔ CL như River	Dùng lại đúng lớp này
+Đơn vị dữ liệu. Chia Q = 4,041 gói thành page 64 gói liên tiếp: 63 page đầy và 1 page cuối 9 gói. Mỗi CL giữ bitmap 64 bit các page đã đủ.
+
+Quy tắc chạy (mỗi CL):
+
+Advertise. Theo bộ định thời Trickle, broadcast một frame quảng bá chứa bitmap page đã đủ (8 B). Áp dụng suppression với k = 1: nếu trong khoảng hiện tại đã nghe ≥ 1 quảng bá giống hệt của mình thì không gửi.
+Reset Trickle. Đặt lại khoảng về I_min khi: nghe quảng bá có page mình thiếu, nghe quảng bá thiếu page mình có, hoặc vừa nhận đủ một page mới. Ngoài ra khoảng nhân đôi tới I_max.
+Request. Khi nghe quảng bá có page mình thiếu: chờ ngẫu nhiên trong [0, 200 ms], rồi unicast request cho page có số nhỏ nhất mà mình thiếu và bên kia có. Request mang số page + bitmap 64 bit các gói còn thiếu trong page đó. Nếu trong lúc chờ nghe một request cho cùng page tới cùng bên gửi thì bỏ request của mình.
+Trả lời. Bên được hỏi broadcast các gói trong bitmap thiếu (không MAC ACK, để hàng xóm nghe ké, đúng tinh thần Deluge). Gói mất được phục hồi bằng request lại ở vòng sau.
+Dừng. Kết thúc lần chạy khi mọi critical cell đủ Q gói, hoặc khi chạm horizon (mục 3).
+Tham số Trickle. Tinh chỉnh nhanh trên 1 seed (map k12, open) với 2 cấu hình: (I_min, I_max) = (0.5 s, 8 s) và (2 s, 60 s) (giá trị gốc của Deluge). Chọn cấu hình cho readiness trung bình tốt hơn rồi cố định cho mọi lần chạy chính. Ghi lại cả hai kết quả tinh chỉnh.
+
+3. Phạm vi chạy
+Tổng cộng 2 lần tinh chỉnh + 32 lần chạy chính. Ít hơn thì chưa đủ cặp để có CI, nhiều hơn thì khó kịp 2–3 giờ.
+
+Mục	Giá trị	Ghi chú
+Bản đồ	k12 (899 cell, 12 cluster, 66 critical cell)	Chỉ một bản đồ
+Regime bắt buộc	open, r200	r100 chỉ chạy nếu dư giờ
+Seed ns-3	8 seed, đúng các seed của campaign 4	Để ghép cặp
+Layer-1 draw	Như campaign 4 nếu pipeline cần	Readiness chủ yếu phụ thuộc seed mạng
+Tour	Tour LM-Tour của campaign 4	CHORD chỉ chạy nếu dư giờ
+Scheme	Deluge-lite + River (chạy lại làm đối chứng)	2 regime × 8 seed × 2 scheme = 32
+Horizon	3,600 s tính từ lúc cất cánh	Cell chưa xong → ghi là chưa xong, không bỏ
+Vì sao chạy lại River: để chắc hai scheme dùng cùng bản build và cùng seed. Số River chạy lại phải khớp campaign 4: readiness trung bình của LM-Tour trên k12 là 473 s (open) và 544 s (r200). Lệch nhiều thì dừng lại kiểm tra (mục 5).
+
+4. Metric và file kết quả
+Gửi về hai file CSV và một ghi chú ngắn. Không cần vẽ hình.
+
+Metric cần đo
+
+Readiness của từng critical cell (s, tính từ lúc cất cánh): thời điểm cell giữ đủ Q gói. Chưa xong trước horizon thì để trống và đánh dấu ready=0.
+Frame mặt đất của mỗi lần chạy: đếm mọi lần phát MAC dưới mặt đất, kể cả retransmission, không tính phát từ UAV (giống nhau ở hai scheme). Tách theo loại: data, quảng bá, request (River ghi các loại nó có).
+Thời gian chạy mô phỏng (wall-clock) của mỗi lần chạy, để ước lượng có kịp chạy thêm không.
+File 1, dl_cells.csv: một dòng cho mỗi critical cell trong mỗi lần chạy.
+
+map,regime,seed,scheme,trickle_cfg,cell_id,cluster_id,ready,t_ready_s
+k12,open,1,DL,0.5-8,412,3,1,488.2
+k12,open,1,RIVER,-,412,3,1,471.9
+k12,r200,1,DL,0.5-8,77,0,0,
+File 2, dl_runs.csv: một dòng cho mỗi lần chạy.
+
+map,regime,seed,scheme,trickle_cfg,n_crit,n_ready,mean_ready_s,max_ready_s,frames_data,frames_adv,frames_req,frames_total,wall_s
+k12,open,1,DL,0.5-8,66,66,512.4,733.0,91234,8123,2210,101567,1420
+Các con số trong ví dụ trên chỉ để minh họa định dạng, không phải kết quả.
+
+Ghi chú kèm theo (vài dòng): cấu hình Trickle đã chọn và kết quả 2 lần tinh chỉnh, mọi chỗ cài đặt khác với mục 2, và mọi lần chạy bị lỗi hoặc bỏ.
+
+5. Kiểm tra hợp lệ
+Chỉ tin số liệu khi qua đủ 6 kiểm tra dưới đây. Kiểm tra nào trượt thì ghi vào ghi chú, không tự sửa số.
+
+ River đối chứng khớp campaign 4. Readiness trung bình trên k12 nằm trong ±5% của 473 s (open) và 544 s (r200).
+ Cùng đầu vào từ UAV. Với cùng seed, số gói mỗi cell nhận trực tiếp từ UAV phải giống hệt nhau giữa Deluge-lite và River. Khác nhau nghĩa là tour hoặc seed chưa khớp.
+ Không đếm trùng. Không cell nào có hơn Q = 4,041 gói khác nhau; gói nhận lại lần hai không được tính là gói mới.
+ Deluge-lite chạy hết ở open. Ở regime open, gần như mọi critical cell phải xong trước horizon. Nhiều cell không xong thì nhiều khả năng là lỗi cài đặt, không phải kết quả.
+ Trickle có tác dụng. Số frame quảng bá trên mỗi cell phải giảm dần theo thời gian khi mạng đã ổn định (khoảng Trickle tăng dần tới I_max).
+ Xem một vết chạy. In dòng thời gian của một cluster (thời điểm từng cell đủ page) để thấy dữ liệu lan dần từ dưới đường bay ra ngoài.
+Nếu Deluge-lite nhanh hơn River ở ô nào: chạy lại ô đó với 1 seed khác để chắc, rồi báo thầy ngay. Không tự diễn giải.
+
+6. Lịch 3 giờ và các mốc go/no-go
+Tính từ T0 là lúc An bắt đầu. Hạn cứng T0 + 3 h: tới giờ đó gửi những gì đã có, kể cả khi chưa chạy xong.
+
+T0 → T0 + 45′: cài đặt và chạy thử. Viết Deluge-lite trên nền mã River/direct pull sẵn có. Chạy 1 seed, k12, open, cả Deluge-lite và River.
+Mốc A: qua các kiểm tra "cùng đầu vào từ UAV", "không đếm trùng" và "chạy hết ở open" (mục 5). Không qua, và không sửa được trong 30 phút → báo thầy, dừng thí nghiệm.
+T0 + 45′ → T0 + 1 h 05′: tinh chỉnh Trickle. Chạy 2 cấu hình ở mục 2 trên cùng seed đó, chọn một và cố định.
+T0 + 1 h 05′: ước lượng thời gian. Lấy wall-clock một lần chạy × 32, chia cho số tiến trình chạy song song.
+Mốc B: nếu vượt 90 phút thì cắt theo thứ tự: (a) River đối chứng chỉ chạy 2 seed mỗi regime; (b) giảm còn 6 seed. Không bỏ regime r200.
+T0 + 1 h 05′ → T0 + 2 h 30′: chạy chính song song. Gửi bản CSV tạm khi xong regime open.
+T0 + 2 h 30′ → T0 + 3 h: kiểm tra và gửi. Qua các mục 5 còn lại, gửi 2 file CSV và ghi chú.
+Câu hỏi còn mở cho thầy: giờ muộn nhất phải có số liệu để kịp chèn vào bài trước hạn nộp.
+
+7. Quy tắc dùng kết quả
+Kết quả chỉ vào bài khi qua đủ kiểm tra ở mục 5 và có đủ 2 regime. Thiếu thì bài v4.0 vẫn nộp được, chỉ dùng lập luận ở Related work.
+
+Được làm
+
+Báo cáo trung bình readiness, CI 95% theo seed, chênh lệch ghép cặp so với River, và tỉ số frame.
+Ghi rõ đây là thí nghiệm bổ sung trên một bản đồ, kèm cấu hình Trickle đã chọn.
+Báo cáo trung thực cả khi chênh lệch nhỏ hoặc Deluge-lite thắng ở một ô.
+Không được làm
+
+Không điền số ước lượng hoặc ngoại suy cho ô chưa chạy.
+Không chọn seed theo kết quả. Seed bị lỗi thì báo, không thay bằng seed khác.
+Không đổi tham số Trickle sau khi đã thấy kết quả chạy chính.
+Không so readiness của Deluge-lite với FC + DTSP-N (setting khác, như bài đã quy ước).
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

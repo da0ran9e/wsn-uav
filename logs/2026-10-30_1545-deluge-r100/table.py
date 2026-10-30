@@ -18,7 +18,7 @@ from collections import defaultdict
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, f"{HERE}/../../uav-l2/tools")
 from energy import node_energy
-SCH = ["rf", "d2", "t", "tp"]
+SCH = ["rf", "t", "tp"]   # direct pull dropped from the table (CLAUDE.md §8 item 239)
 NAME = {"rf": "River", "d": "Direct pull (no repair)", "d2": "Direct pull", "t": "Deluge (River cells)", "tp": "Deluge (path cells)"}
 L1 = {"rf": "P+prog", "d": "Pd+prog", "d2": "Pd2+prog", "t": "Pt+prog", "tp": "Ptp+prog"}
 LIMIT = 900.0

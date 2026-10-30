@@ -6,9 +6,9 @@ Per scheme (rf River, d direct pull, t Trickle on River's cells, tp Trickle on t
 seeds x 8 clusters of map k8-s1, channel r100:
   ready     critical cells done, and the time the last one is done (ground side; 900 s when not done)
   frames    frames sent (PHY TX starts: data, requests, adverts, ACKs, retries) and data hops delivered
-  energy    radio energy, CC2420 currents at 3 V (RX 18.8 mA, TX 17.4 mA, idle 0.426 mA; Texas Instruments
-            CC2420 datasheet SWRS041c): always listening as simulated, and planned sleep for rf and d (a node is
-            off after its last frame; Trickle keeps listening for adverts); total and the hottest node
+  energy    radio energy (uav-l2/tools/energy.py, uav-l2/docs/ENERGY-vi.md): CC2420 always listening as simulated,
+            and scheduled sleep for rf and d (a node sleeps after its last frame; Trickle keeps listening for
+            adverts), CC2420 and EFR32MG21 (+10 dBm); total and the hottest node
   T*        mission completion, mean of 100 paired layer-1 draws per seed (l1-draws.csv from score.sh)
 Paired: River minus the scheme, per (seed, cluster) or per (seed, draw), with River's wins.
 """
@@ -16,10 +16,12 @@ import csv, glob, math, os, sys
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, f"{HERE}/../../uav-l2/tools")
+from energy import node_energy
 SCH = ["rf", "d", "t", "tp"]
 NAME = {"rf": "River", "d": "Direct pull", "t": "Deluge (River cells)", "tp": "Deluge (path cells)"}
 L1 = {"rf": "P+prog", "d": "Pd+prog", "t": "Pt+prog", "tp": "Ptp+prog"}
-V, I_TX, I_RX, I_IDLE, LIMIT = 3.0, 17.4e-3, 18.8e-3, 0.426e-3, 900.0
+LIMIT = 900.0
 
 
 def rows(f):
@@ -30,22 +32,15 @@ def cluster(d, k, s):
     crit, runs, en = rows(f"{d}/r{k}-{s}-crit.csv"), rows(f"{d}/r{k}-{s}-runs.csv"), rows(f"{d}/r{k}-{s}-energy.csv")
     if not (crit and runs and en):
         return None
-    sim = float(runs[0]["simS"])
-    e_on, e_plan = [], []
     for n in en:
-        tx, rx, li, off = (float(n[c]) for c in ("txS", "rxS", "listenS", "offS"))
-        on = V * (I_TX * tx + I_RX * (rx + li) + I_IDLE * off)
-        e_on.append(on)
-        if s in ("rf", "d"):   # off after its last frame: the radio's on-time beyond it is idle current
-            last, r = max(float(n["lastTxS"]), 0.0), int(n["radios"])
-            spare = max(r * (sim - last), 0.0)
-            e_plan.append(on - V * (I_RX - I_IDLE) * min(spare, li + rx))
-        else:
-            e_plan.append(on)
+        n["scheme"] = s
+    e_on = [node_energy(n, "cc2420", "on") for n in en]
+    e_plan = [node_energy(n, "cc2420", "sched") for n in en]
+    e_efr = [node_energy(n, "efr32mg21", "sched") for n in en]
     done = [float(c["doneS"]) for c in crit]
     return dict(crit=len(done), done=sum(x >= 0 for x in done), ready=max(x if x >= 0 else LIMIT for x in done),
                 frames=sum(int(n["framesTx"]) for n in en), hops=int(runs[0]["hops"]), eOn=sum(e_on),
-                ePlan=sum(e_plan), hotOn=max(e_on), hotPlan=max(e_plan))
+                ePlan=sum(e_plan), hotOn=max(e_on), hotPlan=max(e_plan), eEfr=sum(e_efr), hotEfr=max(e_efr))
 
 
 def tstar(d):
@@ -103,10 +98,12 @@ def main():
     row("ground ready, s (last critical cell)", "ready", lambda v: f"{v:.0f}")
     row("frames sent, k", "frames", lambda v: f"{v / 1e3:.0f}")
     row("data hops, k", "hops", lambda v: f"{v / 1e3:.0f}")
-    row("radio energy, always on, J", "eOn", lambda v: f"{v:.0f}")
-    row("radio energy, planned sleep, J", "ePlan", lambda v: f"{v:.0f}")
-    row("hottest node, always on, J", "hotOn", lambda v: f"{v:.2f}")
-    row("hottest node, planned sleep, J", "hotPlan", lambda v: f"{v:.2f}")
+    row("radio energy CC2420, always on, J", "eOn", lambda v: f"{v:.0f}")
+    row("radio energy CC2420, scheduled sleep, J", "ePlan", lambda v: f"{v:.0f}")
+    row("radio energy EFR32MG21, scheduled sleep, J", "eEfr", lambda v: f"{v:.0f}")
+    row("hottest node CC2420, always on, J", "hotOn", lambda v: f"{v:.2f}")
+    row("hottest node CC2420, scheduled sleep, J", "hotPlan", lambda v: f"{v:.2f}")
+    row("hottest node EFR32MG21, scheduled sleep, J", "hotEfr", lambda v: f"{v:.2f}")
     row("mission T*, s", None, lambda v: f"{v:.0f}", per="draw")
     lines.append("")
     lines.append("Per-cluster rows are means over (seed, cluster); Δ = River minus the scheme, mean ± 95 % CI; "

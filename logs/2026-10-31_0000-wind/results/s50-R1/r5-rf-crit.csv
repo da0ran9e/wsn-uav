@@ -1,0 +1,5 @@
+run,scheme,q,r,D,lackCL,lackCell,gatherDoneS,doneS,missing,circle
+800105,river-full,8,2,4041,3882,3196,5.98,71.22,0,6
+800105,river-full,11,0,4041,4039,4027,0.08,59.71,0,6
+800105,river-full,12,1,4041,3668,3179,4.74,67.89,0,5
+800105,river-full,12,4,4041,4041,4041,0.00,90.16,0,1

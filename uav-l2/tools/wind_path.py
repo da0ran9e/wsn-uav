@@ -40,7 +40,7 @@ for i, r in enumerate(R):
                              t=f"{t[i-1] + f * (t[i] - t[i-1]):.7f}", part=R[i - 1]["part"], seg=R[i - 1]["seg"]))
     rows.append(dict(r, x=f"{X[i]:.3f}", y=f"{Y[i]:.3f}"))
 with open(dst, "w", newline="") as f:
-    w = csv.DictWriter(f, list(R[0]))
+    w = csv.DictWriter(f, list(R[0]), lineterminator="\n")
     w.writeheader()
     w.writerows(rows)
 print(f"{dst}: cross-track sd {cross.std():.1f} m (max {abs(cross).max():.0f}), along sd {along.std():.1f} m")

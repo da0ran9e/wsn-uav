@@ -18,7 +18,7 @@ for k in 1 2 3 4 5 6 7 8; do
   RUN=$((800100 + k + 10000000 * (R - 1)))
   [ -e pass$k-bits-r1.bin ] && continue
   python3 $T/wind_path.py c$k-path-s35.csv c$k-path-wind.csv $SIG $((1000 * k + R)) >> $OUT/wind-paths.txt
-  LD_LIBRARY_PATH=$BIN/pass-lib $BIN/pass-bin --nodes=c$k-nodes-s35.csv --path=c$k-path-wind.csv --speed=80 --offPlan=true \
+  LD_LIBRARY_PATH=$BIN/pass-lib $BIN/pass-bin --nodes=c$k-nodes-s35.csv --path=c$k-path-wind.csv --speed=200 --offPlan=true \
     --firstRun=$RUN --runs=1 --bits --out=pass$k --lossDb=$LOSS > pass$k.log 2>&1 &
   if [ $(jobs -r | wc -l) -ge ${JOBS:-4} ]; then wait -n; fi
 done

@@ -3,3 +3,6 @@ c2-path-wind.csv: cross-track sd 37.6 m (max 77), along sd 36.6 m
 c3-path-wind.csv: cross-track sd 47.9 m (max 104), along sd 20.2 m
 c4-path-wind.csv: cross-track sd 43.8 m (max 130), along sd 28.8 m
 c5-path-wind.csv: cross-track sd 28.3 m (max 62), along sd 31.8 m
+c6-path-wind.csv: cross-track sd 159.8 m (max 213), along sd 49.3 m
+c7-path-wind.csv: cross-track sd 67.2 m (max 244), along sd 22.2 m
+c8-path-wind.csv: cross-track sd 42.7 m (max 101), along sd 29.6 m

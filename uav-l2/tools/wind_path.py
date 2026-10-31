@@ -3,8 +3,8 @@ flies this one.
 
     python3 tools/wind_path.py IN.csv OUT.csv SIGMA SEED
 
-Cross-track and along-track offsets are white noise smoothed by a Gaussian kernel (10 s), scaled to standard
-deviation SIGMA m (cross) and SIGMA/2 m (along). The time column t is kept, so packet s still leaves at s x 10 ms
+Cross-track and along-track offsets are white noise smoothed by a Gaussian kernel (10 s), scaled to a stationary
+standard deviation of SIGMA m (cross) and SIGMA/2 m (along). The time column t is kept, so packet s still leaves at s x 10 ms
 and the packet count matches the plan; only where it leaves from changes. Vertices are re-split to <= 1.9 m.
 """
 import csv, math, sys
@@ -22,7 +22,7 @@ def smooth(scale):
     g = np.arange(0.0, t[-1] + 1.0, 0.5)
     k = np.exp(-0.5 * (np.arange(-60, 61) * 0.5 / 10.0) ** 2)
     v = np.convolve(rng.standard_normal(len(g) + 120), k, "valid")[: len(g)]
-    return np.interp(t, g, v / v.std() * scale)
+    return np.interp(t, g, v / math.sqrt((k ** 2).sum()) * scale)   # the process sd, not this short sample's
 
 
 tx, ty = np.gradient(x), np.gradient(y)
@@ -32,6 +32,8 @@ cross, along = smooth(sigma), smooth(sigma / 2)
 X, Y = x + along * tx - cross * ty, y + along * ty + cross * tx
 rows = []
 for i, r in enumerate(R):
+    if i and t[i] <= t[i - 1]:   # a joint shared by two parts (same time): keep one vertex
+        continue
     if i:
         d = math.hypot(X[i] - X[i - 1], Y[i] - Y[i - 1])
         for j in range(1, int(math.ceil(d / 1.9))):   # keep vertices <= 2 m apart (the pass checks it)

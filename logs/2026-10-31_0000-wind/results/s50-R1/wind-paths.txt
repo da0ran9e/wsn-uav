@@ -1,8 +1,8 @@
-c1-path-wind.csv: cross-track sd 50.3 m (max 168), along sd 24.7 m
-c2-path-wind.csv: cross-track sd 50.0 m (max 115), along sd 25.0 m
-c3-path-wind.csv: cross-track sd 50.3 m (max 169), along sd 24.9 m
-c4-path-wind.csv: cross-track sd 49.9 m (max 122), along sd 24.4 m
-c5-path-wind.csv: cross-track sd 48.0 m (max 131), along sd 23.3 m
-c6-path-wind.csv: cross-track sd 50.2 m (max 92), along sd 25.0 m
-c7-path-wind.csv: cross-track sd 50.4 m (max 86), along sd 23.9 m
-c8-path-wind.csv: cross-track sd 48.2 m (max 151), along sd 25.2 m
+c1-path-wind.csv: cross-track sd 16.6 m (max 56), along sd 9.1 m
+c2-path-wind.csv: cross-track sd 26.1 m (max 60), along sd 38.5 m
+c3-path-wind.csv: cross-track sd 51.4 m (max 173), along sd 9.1 m
+c4-path-wind.csv: cross-track sd 29.7 m (max 72), along sd 17.0 m
+c5-path-wind.csv: cross-track sd 39.2 m (max 107), along sd 14.8 m
+c6-path-wind.csv: cross-track sd 39.3 m (max 72), along sd 23.3 m
+c7-path-wind.csv: cross-track sd 32.5 m (max 56), along sd 13.6 m
+c8-path-wind.csv: cross-track sd 38.9 m (max 122), along sd 18.3 m

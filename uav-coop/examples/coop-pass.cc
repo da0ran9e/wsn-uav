@@ -135,6 +135,7 @@ double Quantile(std::vector<double> v, double q) {
 int main(int argc, char* argv[]) {
     std::string nodesFile = "deploy-nodes-s35.csv", pathFile = "deploy-path-s35.csv";
     double alt = params::kUavAltM, speed = params::kUavSpeedMps, alpha = params::kA2gAlpha;
+    bool offPlan = false;
     double kFactor = params::kA2gRicianK, txDbm = params::kTxPowerDbm, sens = params::kRxSensDbm;
     double lossDb = 0;
     uint32_t runs = 120, firstRun = 1, seed = 1;
@@ -145,6 +146,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("path", "path CSV from uav-coop-deploy (same spacing)", pathFile);
     cmd.AddValue("alt", "flight altitude, m (also the end of the free-space segment)", alt);
     cmd.AddValue("speed", "ground speed, m/s (a path with column t: the most it may fly)", speed);
+    cmd.AddValue("offPlan", "the path is flown off the planned one (wind_path.py): it need not pass over the CH",
+                 offPlan);
     cmd.AddValue("alpha", "path-loss exponent beyond the free-space segment", alpha);
     cmd.AddValue("K", "Rician K factor", kFactor);
     cmd.AddValue("lossDb", "excess loss on every link, dB (environment, item 163)", lossDb);
@@ -203,7 +206,7 @@ int main(int argc, char* argv[]) {
     for (size_t k = 0; k < nNodes; ++k)
         if (nodes[k].isCH) { CHECK(chIdx == nNodes); chIdx = k; }
     CHECK(chIdx < nNodes);
-    CHECK(nodes[chIdx].dPath < 1.0);                 // the path flies over the CH
+    CHECK(offPlan || nodes[chIdx].dPath < 1.0);      // the path flies over the CH (unless flown off the plan)
 
     std::printf("path %s: %.0f m = %.1f s at %.1f m/s%s, %u packets (one every %.0f ms); altitude "
                 "%.0f m\nnodes %s: %u, CH #%u\nchannel: free space to %.0f m, then alpha %.2f, "

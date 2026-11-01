@@ -111,9 +111,16 @@ Kết luận:
   - khoảng 0,2–0,7 s, so với thời điểm sẵn sàng 112–118 s;
   - chặn trên bi quan (mọi frame của cụm tuần tự, 4 lần thử) là 0,4–4,9 s cho cụm xấu nhất, nên trung bình 8 cụm tăng
     dưới 1 s.
+- **Đính chính (sau câu hỏi của người dùng):**
+  - **Bảng trên chưa tính frame của vòng hỏi lan.** Mỗi lần khởi xướng gửi tới 6–36 cell nằm trong 3 hop qua
+    gateway, tức 39–219 lần phát radio. Tính cả các frame này, chặn trên bi quan (mọi frame tuần tự, 4 lần thử) là
+    **6,6–15,6 s cho cụm xấu nhất**, không phải "dưới 5 s". Trễ theo đường dài nhất không đổi, vì các frame lan
+    song song: khoảng 0,1–0,35 s mỗi chiều.
+  - **Mô phỏng gửi yêu cầu takeover cùng lúc với gom nội cell và sửa từ cell kề**, chứ không chờ hai bước này xong.
+    Thiết kế thật phải chờ, nên thời điểm sẵn sàng ở các cụm có takeover bị đánh giá lạc quan. Phần trễ thêm (thời
+    gian gom và sửa từ cell kề của SPINE cell đó) không tính được từ log.
 - **Câu gợi ý cho bài:** "(holder discovery idealised; a SPINE-initiated query over at most 3 cell hops (≤ 25 radio
-  hops, ≤ 2 frames per reply) adds an estimated 0.2–0.7 s, and under 5 s even if every frame of a cluster were
-  serialised with four attempts)".
+  hops, ≤ 2 frames per reply) adds an estimated 0.2–0.7 s along its longest path; the repair is not sequenced after the adjacent-cell repair in our simulation)". Chưa nên viết "under 5 s".
 - Đây vẫn là ước lượng, không phải số đo. Mô phỏng tường minh (cách 2) và ánh xạ theo đường bay thực (cách 3) để cho
   bản journal.
 

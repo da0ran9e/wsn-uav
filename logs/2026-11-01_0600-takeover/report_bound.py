@@ -70,6 +70,10 @@ def cluster(w, k):
             b = next((c for c in order[1:] if s in heard[c]), None)
             if b: pkts[b].append(s)
         naive = [c for c in order if c not in nb and any(f <= s <= l for s in heard[c])]
+        if pkts:
+            ball = [c for c in order if dist[c] <= 3 and c != a]
+            fr = sum(toh.get((cl[par[c]], c), 3) + hopsCL.get(gw[(par[c], c)], 3) for c in ball)
+            out.append(dict(kind="flood", a=a, b=None, hops=3, radio=fr, frames=1, pkts=len(ball)))
         for b, xs in pkts.items():
             rng = 1 + sum(1 for i in range(1, len(xs)) if xs[i] != xs[i - 1] + 1)
             out.append(dict(kind="oracle", a=a, b=b, hops=dist[b], radio=radio(b), frames=math.ceil(rng / PER), pkts=len(xs)))
@@ -86,6 +90,10 @@ for sig in (50, 100):
         nv = [x for k in rows for x in rows[k] if x["kind"] == "naive"]
         crit = max((x["radio"] * x["frames"] * TAU for x in o), default=0)
         ser = max((sum(x["radio"] * x["frames"] for x in rows[k] if x["kind"] == "oracle") * TAU * RETRY for k in rows), default=0)
+        fl = [x for k in rows for x in rows[k] if x["kind"] == "flood"]
+        serf = max((sum(x["radio"] * x["frames"] for x in rows[k] if x["kind"] in ("oracle", "flood")) * TAU * RETRY for k in rows), default=0)
+        print(f"s{sig} R{R}: floods {len(fl)}, cells per flood {[x['pkts'] for x in fl]}, radio tx per flood {[x['radio'] for x in fl]}, "
+              f"serialised x4 incl. flood {serf:.2f} s")
         L.append(f"| {sig} | {R} | {len(o)} | {len({(x['a']) for x in o})} | {max((x['hops'] for x in o), default=0)} | "
                  f"{max((x['radio'] for x in o), default=0)} | {max((x['frames'] for x in o), default=0)} | {crit:.2f} s | {ser:.2f} s | "
                  f"{len(nv)} báo cáo, hop cell max {max((x['hops'] for x in nv), default=0)} |")

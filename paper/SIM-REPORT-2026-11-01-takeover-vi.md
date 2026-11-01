@@ -124,6 +124,38 @@ Kết luận:
 - Đây vẫn là ước lượng, không phải số đo. Mô phỏng tường minh (cách 2) và ánh xạ theo đường bay thực (cách 3) để cho
   bản journal.
 
+## 4c. Takeover tuần tự, có vòng hỏi lan được mô phỏng (σ = 100 m, 3 seed)
+
+Bản `--takeoverSeq` (tag `rfS`) bỏ hai chỗ lạc quan của bản đầu (`rfT`):
+- SPINE cell chỉ hỏi sau khi gom nội cell và sửa từ cell kề đã xong.
+- Câu hỏi đi lan theo cây BFS trên các liên kết gateway, phủ mọi cell trong 3 hop cell (6–36 cell mỗi lần), bằng frame
+  điều khiển thật, có CSMA, ACK và lịch PECEE.
+- Cell giữ gói trả lời bằng dữ liệu khi câu hỏi tới.
+
+Còn lại một chỗ lý tưởng hoá: cell biết mình giữ gói nào của Seg(*a*) nhờ bit nhận thật. Trong thực tế cell tự tra
+được điều này từ bảng Seg nó đã có, nên chỗ này không phải oracle về thông tin của người khác.
+
+Chỉ 5 cụm có takeover được chạy lại; các cụm khác chạy cùng mã nên dùng lại kết quả `rfT`. Số liệu ở
+`logs/2026-11-01_0600-takeover/compare-seq.md`.
+
+| seed | critical cell xong | sẵn sàng TB 8 cụm (s): danh nghĩa / đồng thời / tuần tự | cụm có takeover: đồng thời → tuần tự (s) | T\* danh nghĩa / đồng thời / tuần tự |
+|---|---|---|---|---|
+| 1 | 45/45 | 126 / 117 / 113 | c3: 111 → 110, c8: 187 → 155 | 892 / 872 / 890 |
+| 2 | 45/45 | 112 / 112 / 112 | c7: 91 → 88 | 849 / 814 / 889 |
+| 3 | 45/45 | 115 / 118 / 118 | c2: 170 → 169, c6: 75 → 76 | 972 / 1027 / 868 |
+
+- **Thứ tự đúng và vòng hỏi lan không làm chậm thời điểm sẵn sàng.** 135/135 critical cell vẫn xong. Sẵn sàng trung
+  bình 112–118 s, ngang danh nghĩa. Ở cụm có takeover, thời điểm sẵn sàng thay đổi −32 đến +1 s: việc hỏi muộn hơn
+  không nằm trên đường găng, vì SPINE cell còn bận phát lại cho Bank trong lúc chờ.
+- **Chi phí frame:** tổng frame phát thay đổi trong khoảng ±3 %; khác biệt này chủ yếu do chạy lại cụm với luồng số
+  ngẫu nhiên khác.
+- **T\* tuần tự − danh nghĩa:** −2 / +40 / −104 s, trung bình −22 ± 184 s (CI theo seed). Sẵn sàng gần như trùng mà T\*
+  vẫn lệch tới ±100 s, đúng là dải nhiễu của lớp 1 đã thấy ở σ = 50 m. Chỉ nên viết "T\* không khác danh nghĩa trong
+  phạm vi nhiễu".
+- **Câu cho bài (thay câu ở mục 4b):** "(the repair waits for the adjacent-cell repair and floods its query over at most
+  3 cell hops as control frames; holders know their share from the Seg table; readiness stays at 112–118 s, σ = 100 m,
+  3 seeds)".
+
 ## 5. Câu gợi ý cho bài (tiếng Anh, SPINE)
 
 > River assigns each SPINE cell the packet range of the *planned* track. With a cross-track error of about one R50,

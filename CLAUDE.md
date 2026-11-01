@@ -2479,6 +2479,48 @@ Hàng σ = 50 m chính là dải nhiễu do mô phỏng thêm node ngoài kế h
 5. Không dùng σ = 200 m làm kết luận chính. Mức này chỉ có 1 seed, và đường bay vượt 1 g trong thời gian ngắn (báo cáo 31/10). Nếu nhắc đến, chỉ để trong ngoặc kèm "one realisation".
 ```
 
+*263. 2026-11-01 · paper · điểm yếu oracle của takeover (độ trễ, frame, mất báo cáo, luận điểm) và ba cách khắc phục: chặn trên từ log, mô phỏng vòng báo cáo, ánh xạ theo đường bay thực*
+
+```text
+## Điểm yếu của oracle
+
+Trong mô phỏng, khi một SPINE cell thiếu gói, nó biết ngay cell nào đang giữ gói đó, vì vị trí người giữ được lấy thẳng từ bit nhận thật. Trong thực tế, thông tin này phải đến từ **vòng báo cáo TAKEOVER** (bước 3–4 của thuật toán): sau khi gom nội cell, mỗi cell giữ gói thuộc đoạn của SPINE cell khác phải gửi báo cáo nhiều chặng về SPINE cell đó. Vòng này không được mô phỏng, nên kết quả bỏ qua bốn thứ:
+
+1. **Độ trễ.** Báo cáo cần thời gian để đi tới nơi. SPINE cell cũng không biết khi nào đã nhận đủ báo cáo, nên trong thực tế phải chờ một cửa sổ W rồi mới gửi yêu cầu. Vì vậy con số "sẵn sàng 112–118 s" là lạc quan. Đây là điểm reviewer dễ bắt nhất.
+2. **Chi phí frame và năng lượng.** Số cell gửi báo cáo có thể nhiều hơn số cặp (SPINE cell, cell giữ) mà mô phỏng đã tính. Ngoài ra, các cell ngoài kế hoạch nằm trên đường báo cáo phải thức để chuyển tiếp. Điều này ảnh hưởng tới giả định "node ngủ sau lần phát cuối" trong phép tính năng lượng.
+3. **Thông tin hoàn hảo.** Oracle không bao giờ mất báo cáo. Trong thực tế, nhiều cell cùng báo cáo ngay sau khi gom nội cell sẽ gây tranh chấp kênh. Một báo cáo bị mất có thể khiến SPINE cell lại thiếu gói, quay về đúng lỗi mà takeover định sửa.
+4. **Luận điểm của bài.** Vòng báo cáo là một dạng trao đổi thông tin lúc chạy. Khi nó chỉ được giả định chứ không được đo, reviewer có thể nghi ngờ cả hai câu "không khám phá nội dung lúc chạy" và "T* bằng mức danh nghĩa".
+
+## Cách khắc phục
+
+**1. Chặn trên chi phí từ log có sẵn. Làm được trước hạn 2/11, không cần chạy mô phỏng mới.**
+Nhờ Agent trích từ log σ = 100 m (3 seed): số cell lẽ ra phải gửi báo cáo, số frame báo cáo cần thiết, và số hop lớn nhất từ cell giữ gói tới SPINE cell. Từ đó tính cận trên của độ trễ vòng báo cáo ≈ số hop lớn nhất × τ_f × số frame, cộng một biên cho tranh chấp kênh. Với τ_f ≈ 5–7 ms và chỉ 2–10 cặp, nhiều khả năng cận này cỡ dưới một giây, rất nhỏ so với 115 s. Nếu đúng như vậy, bài có thể thêm nửa câu:
+> "…(holder discovery idealised; the report round, at most N frames over h hops, would add under X s)."
+
+Lưu ý: SPINE cell chỉ cần chờ cửa sổ W khi nó **tự phát hiện mình thiếu gói** sau bước sửa cũ. Các SPINE cell không thiếu vẫn chạy như bình thường, nên khi bay đúng kế hoạch, W không làm chậm gì cả.
+
+**2. Mô phỏng tường minh vòng báo cáo. Cách khắc phục chuẩn, cho bản journal.**
+- Mỗi cell giữ gói lạ gửi frame TAKEOVER theo đường cell đã tính sẵn, có ACK, kèm độ trễ ngẫu nhiên để tránh nhiều báo cáo dồn cùng lúc.
+- SPINE cell bị thiếu chờ cửa sổ W, tính từ cận ở cách 1, rồi mới gửi yêu cầu.
+- Đo thời điểm sẵn sàng, T*, số frame và số báo cáo bị mất. Chạy σ = 100 m (3 seed), và σ = 50 m để xác nhận bước này vẫn im lặng khi bay đúng kế hoạch.
+
+Agent đã có sẵn đường yêu cầu và dữ liệu, nên chỉ cần thêm một loại frame điều khiển đi trên các đường đó.
+
+**3. Bỏ hẳn việc phải tìm người giữ. Cách gọn nhất về thiết kế.**
+UAV có GPS nên biết đường nó thực sự bay. Ở cuối mỗi lượt qua cụm, UAV phát vài frame liệt kê dãy cell nó thực sự bay qua, kèm chỉ số gói tại mỗi lần chuyển cell. Đây chính là "dấu ranh giới" Agent đã gợi ý, nhưng dùng để **ánh xạ lại Seg theo đường bay thực** thay vì để mọi cell tự báo cáo. Khi đó SPINE cell *a* tính được chính xác đoạn của mình đã rơi vào cell nào, và gửi yêu cầu thẳng tới đó:
+- Không cần vòng báo cáo, không cần cửa sổ chờ.
+- Luận điểm "không khám phá nội dung lúc chạy" giữ nguyên.
+
+Rủi ro còn lại: cell được ánh xạ có thể không nghe đủ mọi gói, vì thu sóng là ngẫu nhiên, nên vẫn cần bước sửa từ cell kề làm dự phòng. Cách này cũng khớp với hướng "đồng bộ lại UAV trong lúc bay" đã nêu ở Conclusion.
+
+## Nên làm gì bây giờ
+
+- **Trước hạn nộp:** làm cách 1 nếu Agent trích số kịp. Nếu không kịp, giữ nguyên cụm "holder discovery idealised; its reporting delay is not counted". Câu đó đã trung thực, đủ để reviewer không cho rằng bạn che giấu.
+- **Bản journal:** làm cách 3 và dùng cách 2 làm baseline so sánh. Kết quả sẽ có dạng "ánh xạ theo đường bay thực, so với báo cáo từ mặt đất, so với oracle", và nó trả lời trọn vẹn điểm yếu này.
+
+Nếu cần, tôi có thể viết sẵn yêu cầu gửi Agent cho cách 1, theo dạng tài liệu giao việc như lần trước.
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -9,4 +9,5 @@
   - mọi critical cell xong ở mọi ô, so với trước: σ100 106/135, σ200 3/45;
   - T\* sau − danh nghĩa (trung bình theo seed): σ100 +0,2 ± 121 s (trước +294 s); sẵn sàng (trung bình 8 cụm) 112–118 s; σ200 chỉ 1 seed, khám phá người giữ là oracle;
   - σ = 50 m: takeover không kích hoạt.
+- **Chặn trên vòng báo cáo** (`report_bound.py` → `report-bound.md`, không chạy mô phỏng mới): σ100 có 2–10 cặp, ≤ 3 hop cell, ≤ 25 hop radio; trễ khoảng 0,1–0,34 s một chiều, ≤ 4,9 s nếu tuần tự hoá ×4; người giữ tự báo thì khoảng 540 báo cáo mỗi seed, kể cả σ = 50 m, nên phải để SPINE cell khởi xướng.
 - **Dở dang:** σ = 200 m mới 1 seed; bản tin TAKEOVER chưa mô phỏng thành frame riêng; năng lượng rfT chưa tính.

@@ -2521,6 +2521,13 @@ Rủi ro còn lại: cell được ánh xạ có thể không nghe đủ mọi g
 Nếu cần, tôi có thể viết sẵn yêu cầu gửi Agent cho cách 1, theo dạng tài liệu giao việc như lần trước.
 ```
 
+*264. 2026-11-01 · paper · hỏi: chặn trên đã tính frame vòng hỏi lan (khoảng 37 cell) chưa; takeover có chờ sửa từ cell kề xong không*
+
+```text
+Vòng hỏi gửi tới mọi cell trong 3 hop (khoảng 37 cell), nên mỗi lần khởi xướng có thể tốn vài chục frame quảng bá. Kịch bản "dưới 5 s" đã tính các frame này chưa?
+	•	Trong mô phỏng, yêu cầu takeover có bắt đầu sau khi bước sửa từ cell kề xong không? Thiết kế thật phải đợi bước đó để biết mình còn thiếu gì.
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

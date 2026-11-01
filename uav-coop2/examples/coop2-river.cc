@@ -85,6 +85,7 @@
 #include <fstream>
 #include <functional>
 #include <map>
+#include <memory>
 #include <random>
 #include <set>
 #include <sstream>
@@ -239,7 +240,7 @@ int main(int argc, char* argv[]) {
     uint32_t circleMin = 2, circleMax = 12, page = 64, tK = 1;
     double tImin = 1, tImax = 64;
     int colours = 7;
-    bool noSchedule = false, directSeg = true, takeover = false;
+    bool noSchedule = false, directSeg = true, takeover = false, takeoverSeq = false;
     std::string gwSelect = "deploy";
     CommandLine cmd;
     cmd.AddValue("nodes", "deploy-nodes-sS.csv", nodesCsv);
@@ -271,6 +272,9 @@ int main(int argc, char* argv[]) {
                  "(the BS picks the best link of the mission)", gwSelect);
     cmd.AddValue("takeover", "with --repair: an Axe cell that no adjacent cell can serve asks the nearest cell of the "
                  "cluster that heard the packet (flown path off the plan; boundary-marker takeover)", takeover);
+    cmd.AddValue("takeoverSeq", "with --takeover: ask only after the in-cell gather and the adjacent repair are done, "
+                 "by a query flooded over the cell tree within 3 cell hops (control frames); holders reply with data",
+                 takeoverSeq);
     cmd.AddValue("noSchedule", "no PECEE schedule: every radio contends by CSMA/CA alone", noSchedule);
     cmd.AddValue("directSeg", "direct: ask each Axe cell only for its Seg (false: for everything lacking)", directSeg);
     cmd.AddValue("out", "output prefix", out);
@@ -610,6 +614,8 @@ int main(int argc, char* argv[]) {
         std::map<Hex, std::vector<double>> at;
         std::map<std::pair<Hex, uint32_t>, std::vector<std::function<void()>>> waiters;
         std::map<Hex, int> gatherLeft;
+        std::map<Hex, int> localLeft;                          // --takeoverSeq: local + adjacent jobs left
+        std::map<Hex, std::function<void()>> launch;           // --takeoverSeq: the query, after them
         std::map<Hex, std::vector<std::function<void()>>> onGathered;
         std::map<Hex, double> gatherDone;
         uint64_t phaseHops[kPhases] = {0}, macFail = 0, hops = 0;
@@ -824,6 +830,7 @@ int main(int argc, char* argv[]) {
                 }
                 n++;
                 forward(best, newJob(-1, (int32_t)s, kGather, [&, c] {
+                            if (localLeft.count(c) && --localLeft[c] == 0) launch[c]();
                             if (--gatherLeft[c] == 0) gathered(c);
                         }), 0);
             }
@@ -832,9 +839,47 @@ int main(int argc, char* argv[]) {
                 send(addPath({c, c2}), -1, kControl, [&, c, data, xs = xs] {
                     for (auto [s, v] : xs)
                         forward(v, newJob(data, (int32_t)s, kGather, [&, c] {
+                                    if (localLeft.count(c) && --localLeft[c] == 0) launch[c]();
                                     if (--gatherLeft[c] == 0) gathered(c);
                                 }), 0);
                 });
+            }
+            if (takeoverSeq && !far.empty()) {   // query flood over the BFS tree, only once local + adjacent are done
+                int depth = 3;
+                std::map<Hex, int> dist{{c, 0}};
+                for (size_t i = 1; i < order.size(); ++i) dist[order[i]] = dist[parent.at(order[i])] + 1;
+                for (auto& [b, xs] : far) depth = std::max(depth, dist[b]);
+                auto kids = std::make_shared<std::map<Hex, std::vector<Hex>>>();
+                for (size_t i = 1; i < order.size(); ++i)
+                    if (dist[order[i]] <= depth) (*kids)[parent.at(order[i])].push_back(order[i]);
+                auto reply = std::make_shared<std::map<Hex, std::pair<int, std::vector<std::pair<uint32_t, int>>>>>();
+                for (auto& [b, xs] : far) {
+                    std::vector<Hex> p{b};
+                    while (p.back() != c) p.push_back(parent.at(p.back()));
+                    (*reply)[b] = {addPath(p), xs};
+                }
+                auto flood = std::make_shared<std::function<void(Hex)>>();
+                *flood = [&, c, kids, reply, flood](Hex x) {
+                    if (!kids->count(x)) return;
+                    for (const Hex& ch : kids->at(x))
+                        send(addPath({x, ch}), -1, kControl, [&, c, ch, reply, flood] {
+                            (*flood)(ch);
+                            if (!reply->count(ch)) return;
+                            const auto& [data, xs] = reply->at(ch);
+                            for (auto [s, v] : xs)
+                                forward(v, newJob(data, (int32_t)s, kGather, [&, c] {
+                                            if (--gatherLeft[c] == 0) gathered(c);
+                                        }), 0);
+                        });
+                };
+                int nf = 0;
+                for (auto& [b, xs] : far) nf += (int)xs.size();
+                localLeft[c] = n - nf;
+                launch[c] = [flood, c] { (*flood)(c); };
+                std::printf("takeover %d:%d: %zu holder cells, query over %zu cells\n", c.q, c.r, far.size(),
+                            (size_t)std::count_if(dist.begin(), dist.end(), [&](auto& e) { return e.second > 0 && e.second <= depth; }));
+                far.clear();
+                if (localLeft[c] == 0) launch[c]();
             }
             for (auto& [b, xs] : far) {   // TAKEOVER: request along the cell path c -> b, data back b -> c
                 std::vector<Hex> p{b};

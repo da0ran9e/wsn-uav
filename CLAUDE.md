@@ -2301,6 +2301,147 @@ trước khi thử lại phương án này, liệu phương án 2 chạy xong c�
 trong lúc chờ ta thử phương án 1 với các tình huống không có lợi cho kéo thẳng, ví dụ: hiện tại phương án kéo thẳng vẫn hoạt động trên nền của River với các lập lịch sẵn có từ BS nếu như trước khi có cơ chế river này, việc kéo trực tiếp sẽ thô hơn nhiều
 ```
 
+*237. 2026-10-30 · paper · thử 1 seed kéo thẳng bỏ cả 3 cơ chế của River*
+
+```text
+giờ chỉ cần thử 1 seed cho kéo thẳng ta sẽ thấy chênh lệch thực sự nếu bỏ cả 3
+```
+
+*238. 2026-10-30 · paper · dừng chạy thử, chờ phương án 2*
+
+```text
+dừng chạy thử đi, ta chờ phương án 2 đến trước
+```
+
+*239. 2026-10-30 · paper · hỏi bao lâu nữa xong*
+
+```text
+dự kiến bao lâu nữa sẽ xong
+```
+
+*240. 2026-10-30 · paper · chạy 1 seed kéo thẳng bỏ 3 cơ chế của River*
+
+```text
+vậy ta chạy thử bản phương án một với kéo thẳng bỏ đi 3 cơ chế của river nhé, chỉ chạy 1 seed để phán đoán tình hình rồi ta sẽ làm tiếp
+```
+
+*241. 2026-10-30 · paper · tạm dừng Deluge-lite, chạy thêm 2–3 seed phương án 1; câu hỏi nhanh cho paper*
+
+```text
+tôi nghĩ ta tạm dừng phương án deluge lite này để tập trung chạy tiếp 2-3 seed cho phương án 1 trước, cân nhắc bỏ baseline kéo trực tiếp nếu thấy kêt quả không tốt
+và tôi cần bạn trả lời nhanh cho tôi các câu hỏi sau phục vụ viết paper: Vì sao có 90 critical cell? / Mốc thời gian của "cell cuối cùng sẵn sàng 119 s" tính từ đâu... / Mô hình nghe của Deluge là luôn bật, hay có low-power listening?
+```
+
+*242. 2026-10-30 · paper · trả lời các câu hỏi trước*
+
+```text
+trả lời các câu hỏi trước
+```
+
+*243. 2026-10-30 · paper · River có nhận gói ngoài slot kế hoạch không*
+
+```text
+Trong lúc mô phỏng, River có nhận gói nào ngoài các slot theo kế hoạch không, ví dụ nghe ké gói của cell khác? ... thêm vế "(no packet outside the planned slots)" vào bài.
+```
+
+*244. 2026-10-30 · paper · bỏ kéo thẳng, chạy 2 seed tiếp, tiết kiệm quota*
+
+```text
+được rồi, bây giờ bỏ qua kéo thẳng, chạy tiếp 2 seed tiếp theo nhanh và tiết kiệm quota nhất có thể
+```
+
+*245. 2026-10-30 · paper · chạy thêm seed 5*
+
+```text
+trong lúc chờ run thêm seed 5
+```
+
+*246. 2026-10-30 · paper · số liệu seed 3 thành một dòng*
+
+```text
+cho tôi số liệu seed 3 thành một dòng trước
+```
+
+*247. 2026-10-30 · paper · hỏi seed 4 lâu hơn dự kiến*
+
+```text
+seed 4 lâu hơn dự kiến ?
+```
+
+*248. 2026-10-30 · paper · Deluge có cùng LM-Tour không*
+
+```text
+Trong mission deployment thì River chạy cùng LM-Tours thế còn Deluge sao nhỉ? Cũng cùng LM-Tour?
+```
+
+*249. 2026-10-30 · paper · tổng hợp seed 3 và 4 cho paper*
+
+```text
+tổng hợp seed 3 và 4 tôi đưa vào paper trước
+```
+
+*250. 2026-10-31 · paper · hai phương án giả lập: sai số quỹ đạo; Deluge-lite 8 seed LM-Tour*
+
+```text
+tôi có 2 phương án giả lập cân nhắc cài đặt thêm như sau bạn nghĩ sao: Thí nghiệm sai số quỹ đạo ... 2 Deluge-lite 8 seed trên LM-Tour ...
+```
+
+*251. 2026-10-31 · paper · chạy 1 seed phương án 1 (sai số quỹ đạo) trước*
+
+```text
+chạy thử 1 seed phương án 1 trước để tiết kiệm tài nguyên, phán đoán xem có nhiều giá trị lập luận trong bài không trước
+```
+
+*252. 2026-10-31 · paper · hỏi tại sao lại chạy Deluge*
+
+```text
+khoan tại sao lại deluge
+```
+
+*253. 2026-10-31 · paper · thử gió chỉ chạy River 1 seed*
+
+```text
+đúng chỉ cần chạy 1 lượt seed River là có thể phán đoán được giá trị nhé, sau đó tôi sẽ quyết định tiếp
+```
+
+*254. 2026-10-31 · paper · chạy song song 2 nhiệm vụ, tiết kiệm token*
+
+```text
+chạy song song 2 nhiệm vụ này nhé, đảm bảo tiết kiệm token
+```
+
+*255. 2026-10-31 · paper · thêm seed ở mức gãy và 50 m; kiểm tra đường lệch còn bay được*
+
+```text
+1. Nếu thấy điểm gãy, thêm 1–2 seed ở mức gãy và ở mức 50 m. Khi đó câu chính trong bài không còn dựa trên một seed duy nhất. 2. Với σ lớn, kiểm tra đường lệch còn bay được không (bán kính quay ≥ 63,7 m, vẫn đủ thời lượng trong mỗi cluster). Một đường lệch phi vật lý sẽ làm điểm gãy trông tệ hơn thực tế.
+```
+
+*256. 2026-10-31 · paper · báo cáo kết quả giả lập (paper/SIM-REPORT-2026-10-31-vi.md): ± 17,8 s, độ lệch thực tế, SPINE*
+
+```text
+xuất cho tôi tài liệu báo cáo kết quả giả lập lượt này cho đủ dữ kiện viết bài, trong đó có vài câu hỏi: 1. "± 17,8 s" là gì? ... 2. Báo độ lệch thực tế, không báo σ danh nghĩa... 3. "Axe cell" là tên trong mã. Trong bài phải dùng SPINE.
+```
+
+*257. 2026-10-31 · paper · ý tưởng đồng bộ thông tin UAV và edge node*
+
+```text
+có ý tưởng nào về việc đồng bộ thông tin UAV và edge node vừa bay qua không, có giúp cải thiện paper không
+```
+
+*258. 2026-10-31 · paper · nói rõ ý tưởng dấu ranh giới*
+
+```text
+nói rõ hơn về ý tưởng UAV không gửi cả quỹ đạo mà chỉ phát một "dấu ranh giới" khi bay qua mỗi ranh giới cell dự kiến. Mỗi cell khi đó tự biết đoạn SPINE thật của mình.
+```
+
+*259. 2026-11-01 · paper · mã giả takeover, cài và chạy thử ở độ lệch gió 200 m*
+
+```text
+theo tôi hiểu đây là một cơ chế bổ trợ cho River để nó có thể tự thích ứng sửa lỗi sai số đường bay
+bạn cho tôi pseudo code đơn giản phần này
+sau đó cài đặt và chạy thử trong trường hợp độ lệch gió 200m phía trên xem cải thiện có tốt không
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

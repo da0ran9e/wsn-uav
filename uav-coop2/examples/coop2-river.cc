@@ -239,7 +239,7 @@ int main(int argc, char* argv[]) {
     uint32_t circleMin = 2, circleMax = 12, page = 64, tK = 1;
     double tImin = 1, tImax = 64;
     int colours = 7;
-    bool noSchedule = false, directSeg = true;
+    bool noSchedule = false, directSeg = true, takeover = false;
     std::string gwSelect = "deploy";
     CommandLine cmd;
     cmd.AddValue("nodes", "deploy-nodes-sS.csv", nodesCsv);
@@ -269,6 +269,8 @@ int main(int argc, char* argv[]) {
     cmd.AddValue("colours", "cell channels: 3, 4, 7 or 13 colours", colours);
     cmd.AddValue("gwSelect", "gateway pair of each cell pair: deploy (uav-coop, by geometry) | quality "
                  "(the BS picks the best link of the mission)", gwSelect);
+    cmd.AddValue("takeover", "with --repair: an Axe cell that no adjacent cell can serve asks the nearest cell of the "
+                 "cluster that heard the packet (flown path off the plan; boundary-marker takeover)", takeover);
     cmd.AddValue("noSchedule", "no PECEE schedule: every radio contends by CSMA/CA alone", noSchedule);
     cmd.AddValue("directSeg", "direct: ask each Axe cell only for its Seg (false: for everything lacking)", directSeg);
     cmd.AddValue("out", "output prefix", out);
@@ -349,7 +351,7 @@ int main(int argc, char* argv[]) {
         for (auto& x : plan.csrc) used.insert(x.path.begin(), x.path.end());
         for (auto& x : plan.clink) used.insert(x.path.begin(), x.path.end());
     }
-    if (scheme == "trickle" && tScope == "all")
+    if ((scheme == "trickle" && tScope == "all") || takeover)
         for (auto& [h, v] : clOf) used.insert(h);
     if (scheme == "direct" || lean)
         for (auto& x : plan.direct) used.insert(x.path.begin(), x.path.end());
@@ -766,6 +768,10 @@ int main(int argc, char* argv[]) {
         };
         // Convention 1: bring what cell c needs from its own nodes to its CL. With --repair, an Axe cell also
         // asks an adjacent cell for the packets of its Seg that none of its own nodes heard.
+        auto rev = [](std::vector<Hex> p) {
+            std::reverse(p.begin(), p.end());
+            return p;
+        };
         auto gather = [&](const Hex& c, const std::vector<uint8_t>& need) {
             auto& h = hold(c);
             const int cl = clOf.at(c);
@@ -773,6 +779,20 @@ int main(int argc, char* argv[]) {
             const auto& etx = etxTo[cl];
             int n = 0;
             std::map<Hex, std::vector<std::pair<uint32_t, int>>> nbr;   // adjacent cell -> (packet, its holder)
+            std::map<Hex, std::vector<std::pair<uint32_t, int>>> far;   // --takeover: holder cell -> (packet, holder)
+            std::vector<Hex> order;                                      // cells by hop distance from c
+            std::map<Hex, Hex> parent;
+            if (takeover && repairS > 0 && seg.count(c)) {
+                order.push_back(c);
+                parent[c] = c;
+                for (size_t i = 0; i < order.size(); ++i)
+                    for (auto [dq, dr] : {std::pair{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, -1}, {-1, 1}}) {
+                        const Hex c2{order[i].q + dq, order[i].r + dr};
+                        if (parent.count(c2) || !used.count(c2) || !gw.count({order[i], c2})) continue;
+                        parent[c2] = order[i];
+                        order.push_back(c2);
+                    }
+            }
             for (uint32_t s = 0; s < N; ++s) {
                 if (!need[s] || h[s]) continue;
                 int best = -1;
@@ -787,6 +807,16 @@ int main(int argc, char* argv[]) {
                                                          [&](int v) { return rx[v][s] != 0; });
                             if (it == members[c2].end()) continue;
                             nbr[c2].push_back({s, *it});
+                            n++;
+                            best = -2;
+                            break;
+                        }
+                    if (best == -1 && !order.empty() && s >= seg[c].first && s <= seg[c].second)
+                        for (size_t i = 1; i < order.size(); ++i) {
+                            const auto& mem = members[order[i]];
+                            const auto it = std::find_if(mem.begin(), mem.end(), [&](int v) { return rx[v][s] != 0; });
+                            if (it == mem.end()) continue;
+                            far[order[i]].push_back({s, *it});
                             n++;
                             break;
                         }
@@ -806,6 +836,18 @@ int main(int argc, char* argv[]) {
                                 }), 0);
                 });
             }
+            for (auto& [b, xs] : far) {   // TAKEOVER: request along the cell path c -> b, data back b -> c
+                std::vector<Hex> p{b};
+                while (p.back() != c) p.push_back(parent.at(p.back()));
+                const int data = addPath(p);
+                send(addPath(rev(p)), -1, kControl, [&, c, data, xs = xs] {
+                    for (auto [s, v] : xs)
+                        forward(v, newJob(data, (int32_t)s, kGather, [&, c] {
+                                    if (--gatherLeft[c] == 0) gathered(c);
+                                }), 0);
+                });
+            }
+            if (!far.empty()) std::printf("takeover %d:%d: %zu holder cells\n", c.q, c.r, far.size());
             gatherLeft[c] = n;
             if (n == 0) gathered(c);
         };
@@ -813,10 +855,6 @@ int main(int argc, char* argv[]) {
             std::vector<uint8_t> m(N, 0);
             for (uint32_t s = seg[a].first; s <= seg[a].second; ++s) m[s] = inD[s];
             return m;
-        };
-        auto rev = [](std::vector<Hex> p) {
-            std::reverse(p.begin(), p.end());
-            return p;
         };
 
         // ---- the scheme ---------------------------------------------------------------

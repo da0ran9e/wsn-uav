@@ -10,7 +10,12 @@ khoảng R50 (≈ 99 m ở r100), các gói của Seg(*a*) rơi vào cell *b* kh
 SPINE cell không bao giờ đủ đoạn của mình. Bank, Ring và critical cell phía sau vì thế đứng chờ tới giới hạn 900 s.
 Ở σ = 200 m, River không sửa lỗi chỉ xong 3/45 critical cell, T\* = 3 576 s (danh nghĩa 892 s).
 
-## 2. Cơ chế (bổ trợ cho River, không thay kế hoạch)
+## 2. Cơ chế (bước sửa dựa trên kế hoạch, không thay kế hoạch)
+
+Takeover **không phải khám phá nội dung lúc chạy**. Mỗi cell tra bảng Seg do BS phát trước khi bay. Nó chỉ báo khi
+đã giữ gói thuộc Seg của một SPINE cell khác, tức là khi đường bay thực lệch khỏi kế hoạch. Khi bay đúng kế hoạch, bước
+này không phát frame nào (σ = 50 m: 0 lần kích hoạt). Như vậy luận điểm "River không cần khám phá nội dung lúc chạy"
+vẫn đúng: takeover là một bước sửa sai lệch so với kế hoạch đã có.
 
 ```
 Algorithm TAKEOVER (River self-adapting to flight-path error)
@@ -35,62 +40,64 @@ Input: Seg(a) for every SPINE cell a (from the BS before take-off); H(c): packet
 - `coop2-river.cc` có cờ `--takeover` (đi cùng `--repair`). Tag `rfT` trong `mission.py` = River `--prep=full --takeover=true --repair=20`.
 - Cell giữ gói được tìm bằng BFS trên các liên kết gateway trong cụm. Yêu cầu là một frame điều khiển đi theo đường
   cell *a*→*b*; dữ liệu về theo đường ngược lại, qua các cặp gateway và lịch PECEE như mọi đường River khác.
-- Mô phỏng dùng biến thể "suy từ mặt đất": vị trí người giữ lấy từ bit nhận thật. Bản tin TAKEOVER (bước 3–4) không
-  được mô phỏng riêng. Chi phí của nó được gộp vào frame yêu cầu, một frame cho mỗi cặp (*a*, *b*).
+- **Khám phá người giữ gói là lý tưởng hoá (oracle):** vị trí người giữ lấy thẳng từ bit nhận thật. Bản tin TAKEOVER
+  (bước 3–4) không được mô phỏng thành frame, và độ trễ của vòng báo cáo không có trong T\*. Chỉ frame yêu cầu
+  *a*→*b* và dữ liệu *b*→*a* được mô phỏng. Bài phải ghi "holder discovery idealised".
 - Takeover cần mọi cell của cụm có trong mô phỏng, vì cell giữ gói có thể nằm ngoài kế hoạch (cụm 1: 1 535 → 1 651 node).
 - Đầu vào giữ nguyên: cùng pass gió (bit nhận của chiến dịch 2026-10-31), cùng bản đồ k8-s1, kênh r100, seed ns-3,
   100 lượt lớp 1 ghép cặp. Binary: `CAMP-BINT` = `CAMP-BINW` + river-bin mới (commit 70ef55e).
 
 ## 4. Kết quả
 
-"Trước" là River trên đường gió, "sau" là River + takeover, "danh nghĩa" là River trên đường dự kiến (cùng seed).
-"Cell cuối" tính từ lúc UAV rời cụm; 900 s nghĩa là có cell không xong. ± của ΔT\* là CI 95 % theo lượt (cùng một mạng).
+- "Trước" là River trên đường gió, "sau" là River + takeover, "danh nghĩa" là River trên đường dự kiến (cùng seed).
+- **Sẵn sàng** dùng đúng định nghĩa của bài (117 s): với mỗi cụm, thời điểm critical cell cuối cùng xong, tính từ lúc
+  UAV rời cụm (900 s nếu chưa xong), rồi lấy trung bình qua 8 cụm. *Bản đầu của báo cáo này lấy cực đại qua các cụm
+  (167–203 s); con số đó đã bỏ.*
+- ± của ΔT\* là CI 95 % theo lượt (cùng một mạng).
 
-| σ (m) | seed | critical cell xong, trước → sau | cell cuối (s) | gói SPINE thiếu | T\* danh nghĩa | T\* trước | T\* sau | ΔT\* sau − trước | lượt sau tốt / xấu hơn |
+| σ (m) | seed | critical cell xong, trước → sau | sẵn sàng (s): danh nghĩa / trước / sau | gói SPINE thiếu | T\* danh nghĩa | T\* trước | T\* sau | T\* sau − danh nghĩa | ΔT\* sau − trước |
 |---|---|---|---|---|---|---|---|---|---|
-| 50 | 1 | 45 → 45 | 187 → 187 | 0 → 0 | 892 | 897 | 874 | −24 ± 138 | 50 / 50 |
-| 50 | 2 | 45 → 45 | 198 → 203 | 0 → 0 | 849 | 845 | 811 | −34 ± 104 | 51 / 49 |
-| 50 | 3 | 45 → 45 | 177 → 167 | 0 → 0 | 972 | 972 | 1 018 | +46 ± 196 | 47 / 53 |
-| 100 | 1 | 33 → **45** | 900 → 188 | 1 487 → 0 | 892 | 1 218 | **872** | −345 ± 199 | 58 / 42 |
-| 100 | 2 | 40 → **45** | 900 → 201 | 9 → 0 | 849 | 955 | **814** | −141 ± 125 | 55 / 45 |
-| 100 | 3 | 33 → **45** | 900 → 182 | 33 → 0 | 972 | 1 423 | **1 027** | −396 ± 231 | 66 / 34 |
-| 200 | 1 | 3 → **45** | 900 → 167 | 19 202 → 0 | 892 | 3 576 | **873** | −2 703 ± 320 | 94 / 6 |
+| 50 | 1 | 45 → 45 | 126 / 115 / 113 | 0 → 0 | 892 | 897 | 874 | −18 | −24 ± 138 |
+| 50 | 2 | 45 → 45 | 112 / 113 / 113 | 0 → 0 | 849 | 845 | 811 | −38 | −34 ± 104 |
+| 50 | 3 | 45 → 45 | 115 / 115 / 114 | 0 → 0 | 972 | 972 | 1 018 | +46 | +46 ± 196 |
+| 100 | 1 | 33 → **45** | 126 / 305 / **117** | 1 487 → 0 | 892 | 1 218 | 872 | −20 | −345 ± 199 |
+| 100 | 2 | 40 → **45** | 112 / 214 / **112** | 9 → 0 | 849 | 955 | 814 | −35 | −141 ± 125 |
+| 100 | 3 | 33 → **45** | 115 / 313 / **118** | 33 → 0 | 972 | 1 423 | 1 027 | +56 | −396 ± 231 |
+| (200) | (1) | (3 → 45) | (126 / 900 / 109) | (19 202 → 0) | (892) | (3 576) | (873) | (−19) | (−2 703 ± 320) |
 
-Tổng theo mức lệch (T\* sau trừ T\* danh nghĩa cùng seed):
-
-| σ (m) | độ lệch ngang thực tế: sd / max (m) | trước | sau |
-|---|---|---|---|
-| 50 | 9–80 / 31–173 | +0,5 s | −3 s (takeover không kích hoạt) |
-| 100 | 18–160 / 62–346 | +294 s (+33 %) | **+0,2 s** |
-| 200 | 67–206 / 223–692 | +2 684 s | **−19 s** |
+**T\* sau trừ T\* danh nghĩa, trung bình theo seed (CI 95 %, t, n = 3):**
+- σ = 100 m: **+0,2 ± 121 s** với takeover (từng seed −20 / −35 / +56); **+294 s** khi không có takeover.
+- σ = 50 m: −3,5 ± 110 s (từng seed −18 / −38 / +46). Ở mức này takeover không kích hoạt, nên hàng này chính là dải
+  nhiễu do việc thêm node ngoài kế hoạch vào mô phỏng làm đổi luồng số ngẫu nhiên của ns-3.
 
 Cách đọc:
 
-- **Takeover đưa River về lại mức danh nghĩa ở mọi mức lệch đã thử.** Mọi critical cell đều xong (135/135 ở σ = 100 m,
-  45/45 ở σ = 200 m) và cell cuối sẵn sàng sau 167–203 s, như trên đường danh nghĩa. T\* chỉ cách danh nghĩa trong
-  phạm vi nhiễu của lớp 1.
-- **Chỉ kích hoạt khi cần.** σ = 50 m: 0 SPINE cell dùng takeover. σ = 100 m: 2–5 cell mỗi seed. σ = 200 m: 42 cell, 83
-  cặp (SPINE cell, cell giữ).
-- **Chi phí rẻ hơn không sửa.** Ở σ = 200 m, số hop dữ liệu giảm từ 6,04 M xuống 3,24 M: không còn cảnh critical cell
-  hỏi lại mãi khi đang kẹt. Ở σ ≤ 100 m, số hop gần như không đổi (±1,3 %).
-- **ΔT\* ở σ = 50 m chỉ là nhiễu.** Takeover không chạy ở đây. T\* khác 24–46 s vì mô phỏng thêm các node ngoài kế hoạch,
-  làm đổi luồng số ngẫu nhiên của ns-3 (thời điểm CSMA, thứ tự xong của từng cell). Lượt tốt/xấu là 50/50, 51/49,
-  47/53, và CI theo lượt (±104–196 s) phủ cả 0. Trong triển khai thật, khi không kích hoạt thì không có gì thay đổi.
+- **σ = 100 m (kết luận chính, 3 seed):**
+  - mọi critical cell đều xong (135/135, trước 106/135);
+  - sẵn sàng 112–118 s, so với danh nghĩa 112–126 s và 214–313 s khi không có takeover;
+  - T\* trung bình bằng mức danh nghĩa. Độ lệch từng seed (−35 đến +56 s) nằm trong cùng dải nhiễu với hàng σ = 50 m.
+    **Không viết "within 20 s".**
+- **Chỉ kích hoạt khi lệch.** σ = 50 m: 0 SPINE cell kích hoạt. σ = 100 m: 2–5 cell mỗi seed.
+- **Số hop không tăng** ở σ ≤ 100 m (±1,3 %).
+- **σ = 200 m chỉ là minh hoạ** (1 realisation, đường bay có lúc vượt 1 g theo báo cáo 31/10). Chỉ nhắc trong ngoặc.
 
 ## 5. Câu gợi ý cho bài (tiếng Anh, SPINE)
 
-> River assigns each SPINE cell the packet range of the *planned* track. A cross-track error of about one R50 (≈100 m)
-> moves part of that range to non-adjacent cells, so the SPINE cell never completes its segment. At σ = 100 m, 21 of
-> 135 critical cells miss the 900 s limit, and T\* grows by 33 %. We add a *takeover* step. A cell that heard packets
-> of another SPINE cell's segment reports them, optionally keyed by boundary markers that the UAV broadcasts at each
-> actual cell change. The SPINE cell then pulls them along the gateway path, and Bank and Ring proceed as planned.
-> With takeover, all critical cells complete at σ = 100 m (3 seeds) and σ = 200 m (cross-track error up to 692 m).
-> T\* stays within 20 s of the on-plan value, and ground hops do not increase. The step is inactive at σ = 50 m.
+> River assigns each SPINE cell the packet range of the *planned* track. With a cross-track error of about one R50,
+> part of that range falls on non-adjacent cells. At σ = 100 m, 29 of 135 critical cells miss the 900 s limit, and T\*
+> grows by 294 s. We add a plan-based *takeover* repair. No content is discovered at run time: each cell checks the
+> Seg table it already holds and reports only packets of another SPINE cell's segment. The step therefore stays silent
+> when the flown track matches the plan. The SPINE cell pulls those packets along its gateway path, and Bank and Ring
+> proceed unchanged. With takeover (holder discovery idealised), all 135 critical cells complete at σ = 100 m
+> (3 seeds), readiness returns to 112–118 s, and mean T\* equals the on-plan value (+0.2 ± 121 s, 95 % CI over seeds).
+> The per-seed deviations lie in the same band as at σ = 50 m, where takeover never triggers (one realisation at
+> σ = 200 m: 45/45 cells, T\* −19 s).
 
 ## 6. Giới hạn
 
 - σ = 200 m mới có 1 seed. Seed 2, 3 cần pass gió mới cho cả River trước và sau (khoảng 2 lượt × 8 cụm).
-- Bản tin TAKEOVER và dấu ranh giới của UAV chưa được mô phỏng thành frame riêng; vị trí người giữ lấy từ bit nhận thật
-  (oracle). Chi phí thực thêm vào khoảng 1 frame điều khiển cho mỗi cặp, tối đa 83 cặp ở σ = 200 m, nhỏ so với 3,2 M hop.
-- ΔT\* theo lượt có phương sai lớn, nên ở σ = 50 m không kết luận được tốt hơn hay xấu hơn; chỉ khẳng định "không đổi".
+- Khám phá người giữ là oracle. Về frame, chi phí có thể nhỏ (khoảng 1 frame điều khiển mỗi cặp, 2–10 cặp ở σ = 100 m).
+  Về thời gian, chi phí chưa đo: vòng báo cáo TAKEOVER chạy sau khi gom nội cell và trước khi sửa SPINE, nên sẽ cộng
+  thêm vào thời điểm sẵn sàng.
+- Ba seed cho CI theo seed rộng (±110–121 s). Chỉ khẳng định "trung bình bằng danh nghĩa", không khẳng định chặt hơn.
 - Năng lượng chưa tính lại cho rfT. Số hop cho thấy không tăng.

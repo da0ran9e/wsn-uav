@@ -2442,6 +2442,43 @@ bạn cho tôi pseudo code đơn giản phần này
 sau đó cài đặt và chạy thử trong trường hợp độ lệch gió 200m phía trên xem cải thiện có tốt không
 ```
 
+*260. 2026-11-01 · paper · takeover tốt hơn thì chạy lại bảng sai số đường bay (tiết kiệm); báo cáo so sánh trước/sau; dưới 500K token*
+
+```text
+sau khi chạy thử thấy kết quả tốt hơn hãy chạy lại bảng thực nghiệm sai số đường bay (đảm bảo tiết kiệm tài nguyên) 
+
+sau khi có toàn bộ dữ liệu, viết một bản báo cáo + so sánh trước và sau khi có cơ chế sửa lỗi này
+chi phí toàn bộ chiến dịch đảm bảo dưới 500K token nhé
+```
+
+*261. 2026-11-01 · paper · hỏi: sao chạy nhanh, có chạy ns-3 không, mới 1 seed?*
+
+```text
+sao chạy nhanh vậy, không cần chạy trên ns3 hay mới chỉ chạy 1 seed
+```
+
+*262. 2026-11-01 · paper · làm rõ trước khi dùng số takeover: định nghĩa "cell cuối" (trung bình 8 cụm, 117 s), không viết "within 20 s", khám phá người giữ là oracle, đóng khung là bước sửa dựa trên kế hoạch, σ = 200 m chỉ trong ngoặc*
+
+```text
+Phải làm rõ trước khi dùng số
+
+1. "Cell cuối" không khớp báo cáo trước. Ở σ = 50 m, cột "trước" ghi 187 / 198 / 177 s, trong khi báo cáo 31/10 cho cùng các lượt chạy là 115 / 113 / 115 s. Báo cáo này còn nói 167–203 s là "như trên đường danh nghĩa", nhưng danh nghĩa trước đó là 112–126 s. Nhiều khả năng định nghĩa đã đổi: trước là trung bình 8 cụm, giờ có lẽ là cực đại qua các cụm. Hãy hỏi Agent cho rõ. Bài v5.1 dùng con số 117 s theo định nghĩa trung bình, nên chưa được đưa 167–203 s vào bài.
+
+2. Câu "T stays within 20 s of the on-plan value" là sai nếu hiểu theo từng seed.* Tính từ bảng, T* sau takeover trừ T* danh nghĩa ở σ = 100 m là −20, −35 và +55 s:
+
+	Seed 1	Seed 2	Seed 3	Trung bình, CI 95% theo seed
+σ = 100 m, sau takeover	−20 s	−35 s	+55 s	≈ 0 ± 120 s
+σ = 50 m, takeover không chạy	−18 s	−38 s	+46 s	≈ −3 s
+
+Hàng σ = 50 m chính là dải nhiễu do mô phỏng thêm node ngoài kế hoạch làm đổi luồng số ngẫu nhiên. Vì vậy cách nói đúng là: trung bình bằng mức danh nghĩa, độ lệch từng seed (−35 đến +55 s) nằm trong cùng dải nhiễu như khi takeover không chạy. Không được viết "within 20 s".
+
+3. Phát hiện người giữ gói là oracle. Vị trí người giữ lấy từ bit nhận thật; bản tin TAKEOVER (bước 3–4) không được mô phỏng thành frame và độ trễ của vòng báo cáo không có trong T*. Chi phí về frame có thể nhỏ, như Agent ước lượng, nhưng chi phí về thời gian chưa được đo. Bài phải ghi rõ "holder discovery idealised".
+
+4. Không mâu thuẫn với luận điểm chính. Bài khẳng định River chạy "không cần khám phá nội dung lúc chạy". Takeover là một dạng khám phá cục bộ, nên cần đóng khung đúng: đây là bước sửa dựa trên kế hoạch, mỗi cell tra bảng Seg đã có, chỉ kích hoạt khi đường bay thực lệch khỏi kế hoạch. Nếu không nói như vậy, reviewer có thể chỉ ra mâu thuẫn.
+
+5. Không dùng σ = 200 m làm kết luận chính. Mức này chỉ có 1 seed, và đường bay vượt 1 g trong thời gian ngắn (báo cáo 31/10). Nếu nhắc đến, chỉ để trong ngoặc kèm "one realisation".
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

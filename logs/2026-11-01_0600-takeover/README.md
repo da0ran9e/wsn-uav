@@ -7,6 +7,6 @@
   lượt trên bản sao thư mục, file rfT đổi tên thành rf), `compare.py` → `compare.md`/`.csv`.
 - **Kết quả** (chi tiết `paper/SIM-REPORT-2026-11-01-takeover-vi.md`):
   - mọi critical cell xong ở mọi ô, so với trước: σ100 106/135, σ200 3/45;
-  - T\* sau trừ danh nghĩa: σ100 +0,2 s (trước +294 s), σ200 −19 s (trước +2 684 s);
+  - T\* sau − danh nghĩa (trung bình theo seed): σ100 +0,2 ± 121 s (trước +294 s); sẵn sàng (trung bình 8 cụm) 112–118 s; σ200 chỉ 1 seed, khám phá người giữ là oracle;
   - σ = 50 m: takeover không kích hoạt.
 - **Dở dang:** σ = 200 m mới 1 seed; bản tin TAKEOVER chưa mô phỏng thành frame riêng; năng lượng rfT chưa tính.

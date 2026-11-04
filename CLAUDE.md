@@ -2540,6 +2540,12 @@ Vòng hỏi gửi tới mọi cell trong 3 hop (khoảng 37 cell), nên mỗi l�
 trước khi phát triển tiếp, tôi nghĩ repo nên được tổ chức lại, cách tổ chức hiện tại chưa tốt đặc biệt là chat log đang ghi trực tiếp vào claude.md, các file tài liệu rời rạc khó theo dõi (có cũ có mới thậm chí không còn dùng hoặc không liên quan). Thử ước tính xem chi phí để tái tổ chức toàn bộ repo này khoảng bao nhiêu token.
 ```
 
+*267. 2026-11-04 · quy tắc làm việc · hỏi: chat log, tài liệu nghiên cứu, visualize, ghi chú nên lưu dạng nào là tối ưu*
+
+```text
+các chat log hoặc tài liệu nghiên cứu, visualize, ghi chú lưu dạng nào là tối ưu nhất
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

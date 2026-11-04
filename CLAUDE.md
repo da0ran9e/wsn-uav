@@ -2534,6 +2534,12 @@ Vòng hỏi gửi tới mọi cell trong 3 hop (khoảng 37 cell), nên mỗi l�
 @"/root/.claude/uploads/98443ff4-47f6-50e4-8347-73e324c4e08a/26717bde-SigDrop_ICC_v5.3_submit.pdf" đây là paper tôi đã chốt để nộp IEEE ICC, bạn xem qua repo để nắm được tiến độ nhé
 ```
 
+*266. 2026-11-04 · quy tắc làm việc · repo nên tổ chức lại (chat log đang ghi thẳng vào CLAUDE.md, tài liệu rời rạc, cũ/mới lẫn lộn); ước tính chi phí token để tái tổ chức toàn bộ*
+
+```text
+trước khi phát triển tiếp, tôi nghĩ repo nên được tổ chức lại, cách tổ chức hiện tại chưa tốt đặc biệt là chat log đang ghi trực tiếp vào claude.md, các file tài liệu rời rạc khó theo dõi (có cũ có mới thậm chí không còn dùng hoặc không liên quan). Thử ước tính xem chi phí để tái tổ chức toàn bộ repo này khoảng bao nhiêu token.
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

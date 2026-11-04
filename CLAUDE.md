@@ -2528,6 +2528,12 @@ Vòng hỏi gửi tới mọi cell trong 3 hop (khoảng 37 cell), nên mỗi l�
 	•	Trong mô phỏng, yêu cầu takeover có bắt đầu sau khi bước sửa từ cell kề xong không? Thiết kế thật phải đợi bước đó để biết mình còn thiếu gì.
 ```
 
+*265. 2026-11-04 · paper · bản paper đã chốt nộp IEEE ICC (SigDrop_ICC_v5.3_submit.pdf, 6 trang); xem repo để nắm tiến độ · kèm PDF*
+
+```text
+@"/root/.claude/uploads/98443ff4-47f6-50e4-8347-73e324c4e08a/26717bde-SigDrop_ICC_v5.3_submit.pdf" đây là paper tôi đã chốt để nộp IEEE ICC, bạn xem qua repo để nắm được tiến độ nhé
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

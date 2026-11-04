@@ -2552,6 +2552,12 @@ các chat log hoặc tài liệu nghiên cứu, visualize, ghi chú lưu dạng 
 ngoài những thứ tôi nêu ra còn có thế tối ưu tổ chức các tệp bằng cách nào nữa không
 ```
 
+*269. 2026-11-04 · quy tắc làm việc · đưa nhánh hiện tại thành main; các nhánh cũ (phiên bản cũ) gộp lại theo cùng một quy tắc tổ chức*
+
+```text
+ngoài ra tôi muốn đưa branch hiện tại thành main, các branch cũ là các phiên bản cũ cũng gộp lại dùng chung một quy tắc tổ chức
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

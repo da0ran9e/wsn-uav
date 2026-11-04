@@ -2558,6 +2558,12 @@ ngoài những thứ tôi nêu ra còn có thế tối ưu tổ chức các tệ
 ngoài ra tôi muốn đưa branch hiện tại thành main, các branch cũ là các phiên bản cũ cũng gộp lại dùng chung một quy tắc tổ chức
 ```
 
+*270. 2026-11-04 · quy tắc làm việc · chưa gộp nhánh, chỉ cần chiến lược tổ chức lại repo; viết tệp hướng dẫn kèm ước lượng chi phí từng bước (`docs/REORG-GUIDE-vi.md`), sẽ nhờ làm sau*
+
+```text
+đúng vậy bạn chưa cần gộp branch tôi chỉ đang nhờ bạn đưa ra các chiến lược để tổ chức lại repo cho tối ưu cho công việc sau này, sau khi trao đổi xong bạn hãy tạo một file guildline hướng dẫn kèm ước lượng chi phí cho từng bước tôi sẽ nhờ bạn thực hiện khi có thời gian
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -10,6 +10,7 @@
 |---|---|---|
 | 1. Tách chat log | [x] 2026-11-05 | 271 mục ở `docs/chatlog/2026-10.md`, `2026-11.md`, `INDEX.md`; khối `text` khớp từng byte |
 | 2. Tách CLAUDE.md | [x] 2026-11-05 | CLAUDE.md 179 kB → khoảng 6 kB; quy tắc uav-sar sang `uav-sar/CLAUDE.md`, wsn-uav cũ sang `models/CLAUDE.md` |
+| 3. Chỉ mục log và mã thí nghiệm | [x] 2026-11-05 | `logs/INDEX.md` (58 thư mục, mã + trạng thái), `docs/EXPERIMENTS-INDEX.md` (11 thí nghiệm đang dùng trong paper v5.3 + tham khảo) |
 
 ## 0. Hiện trạng
 

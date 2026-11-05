@@ -277,3 +277,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 269 | 2026-11-04 | quy tắc làm việc · đưa nhánh hiện tại thành main; các nhánh cũ (phiên bản cũ) gộp lại th… | [2026-11](2026-11.md) |
 | 270 | 2026-11-04 | quy tắc làm việc · chưa gộp nhánh, chỉ cần chiến lược tổ chức lại repo; viết tệp hướng d… | [2026-11](2026-11.md) |
 | 271 | 2026-11-05 | quy tắc làm việc · bắt đầu tái tổ chức repo theo REORG-GUIDE, giữ dưới 500 nghìn token | [2026-11](2026-11.md) |
+| 272 | 2026-11-05 | quy tắc làm việc · làm bước 3 của REORG-GUIDE (chỉ mục log và mã thí nghiệm) | [2026-11](2026-11.md) |

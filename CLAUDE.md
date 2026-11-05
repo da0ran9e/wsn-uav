@@ -113,8 +113,8 @@ repo và ước lượng chi phí từng bước: `docs/REORG-GUIDE-vi.md`.
 |---|---|---|
 | `uav-l2/` | lớp 2 + mô phỏng nhiệm vụ đang làm (CHORD, LM-Tour, River, các baseline); `tools/`, `docs/` | — |
 | `paper/` | tài liệu cho paper SigDrop (ICC), `icc-v5/` LaTeX | — |
-| `logs/` | log chạy chương trình theo `<ngày-giờ>-<tên>/`, mỗi thư mục một README | — |
-| `docs/` | `chatlog/`, `progress/HANDOFF.md`, `REORG-GUIDE-vi.md`, insights | — |
+| `logs/` | log chạy chương trình theo `<ngày-giờ>-<tên>/`, mỗi thư mục một README; chỉ mục `logs/INDEX.md` (thêm một dòng mỗi thư mục mới) | — |
+| `docs/` | `chatlog/`, `progress/HANDOFF.md`, `EXPERIMENTS-INDEX.md` (mã thí nghiệm, số liệu trong paper), `REORG-GUIDE-vi.md`, insights | — |
 | `uav-sar/` | thí nghiệm A2G-RUN, A2G-SWEEP, G2G-CHAIN (mục 1–8) | `uav-sar/CLAUDE.md` |
 | `uav-coop/`, `uav-coop2/` | cơ chế Manifest và River trên một cluster (mục 9–55), đã đóng | — |
 | `models/`, `helper/`, `examples/` | mã wsn-uav cũ (scenario 1–4) | `models/CLAUDE.md` |

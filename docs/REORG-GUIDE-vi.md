@@ -4,6 +4,13 @@
 - **Ngày:** 2026-11-04. Số liệu đo trên commit của nhánh `claude/document-review-xslwgg` cùng ngày.
 - **Cách dùng:** mỗi bước làm được độc lập, theo thứ tự dưới đây. Bước nào xong thì đánh dấu `[x]` và ghi commit.
 
+## Tiến độ
+
+| Bước | Trạng thái | Ghi chú |
+|---|---|---|
+| 1. Tách chat log | [x] 2026-11-05 | 271 mục ở `docs/chatlog/2026-10.md`, `2026-11.md`, `INDEX.md`; khối `text` khớp từng byte |
+| 2. Tách CLAUDE.md | [x] 2026-11-05 | CLAUDE.md 179 kB → khoảng 6 kB; quy tắc uav-sar sang `uav-sar/CLAUDE.md`, wsn-uav cũ sang `models/CLAUDE.md` |
+
 ## 0. Hiện trạng
 
 | Hạng mục | Số đo | Vấn đề |

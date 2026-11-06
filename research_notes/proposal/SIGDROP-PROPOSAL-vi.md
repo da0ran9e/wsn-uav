@@ -187,9 +187,10 @@ critical cell.*
 ### 4.3 Giới hạn còn lại
 
 - **Chiến dịch C4 chưa đủ.** C4 dừng ở 290/360 job, mỗi ô có 6–10 seed, và còn một lỗi segfault tất định ở một ô.
-- **Takeover còn dựa vào oracle.** Cell giữ gói được xác định nhờ đọc bit nhận thật trong mô phỏng. Đường báo cáo dựa
-  trên tọa độ UAV ghi trong header gói chưa được mô phỏng. Mức lệch σ = 200 m mới có một seed, và đường bay khi đó có lúc
-  vượt gia tốc 1 g.
+- **Takeover đã mô phỏng tường minh, nhưng mới ở σ ≤ 100 m.** Bản tuần tự hỏi lan bằng frame thật, sau bước sửa từ
+  cell kề, nên không còn dựa vào oracle; độ trễ của vòng hỏi đã nằm trong kết quả. Mức lệch σ = 200 m mới có một seed,
+  và đường bay khi đó có lúc vượt gia tốc 1 g. Biến thể báo cáo theo tọa độ trong header là cải tiến thiết kế, chưa
+  mô phỏng.
 - **Đối chứng với Deluge chưa trọn.** So sánh với Deluge-lite trên LM-Tour mới chạy được một phần.
 - **Năng lượng UAV chưa kiểm hệ số.** Mô hình Zeng–Zhang chưa đối chiếu c₁, c₂ với bài gốc.
 - **Pha 0 và lớp 1 chỉ ở mức mô hình.** Pha 0 được tính sẵn chứ chưa mô phỏng bằng frame. Lớp 1 chỉ là mô hình điểm khớp.
@@ -200,26 +201,31 @@ Các giới hạn này là lý do cho các nội dung ở mục 7.
 
 ### 5.1 Mục tiêu tổng quát
 
-Xây dựng và kiểm chứng một kiến trúc phân phối truy vấn bằng UAV cho mạng camera IoT, với ba yêu cầu: đạt thời gian
-hoàn thành gần cận dưới lý thuyết, bền vững trước sai lệch thực tế, và chạy được trên phần cứng 802.15.4.
+Xây dựng một lời giải đầy đủ cho cả ba pha: tổ chức mạng, phát truy vấn và xác minh. Lời giải phải có bảo đảm hình
+thức về tính đúng (mọi critical cell nhận đủ dữ liệu) và về thời gian hoàn thành, bền vững trước sai lệch thực tế, và
+được kiểm chứng trên phần cứng 802.15.4.
 
 ### 5.2 Mục tiêu cụ thể
 
-- **MT1:** mô hình hoá bài toán chung, chứng minh độ khó và tìm cận dưới của T\*.
-- **MT2:** hoàn thiện River và cơ chế takeover thành giao thức không dựa vào thông tin oracle.
-- **MT3:** phát triển cách lập quỹ đạo dùng bộ dự đoán học từ mô phỏng, có đánh giá khả năng tổng quát hoá.
-- **MT4:** đánh giá ở quy mô lớn, trên nhiều bản đồ và nhiều kịch bản lỗi.
-- **MT5:** kiểm chứng trên testbed, và trên thực địa nếu có điều kiện.
+- **MT0 (pha 0):** thiết kế và đo chi phí dựng, duy trì lưới cell (CL, gateway, định tuyến, lịch kênh) bằng frame thật.
+- **MT1 (cả ba pha):** mô hình hoá bài toán đầu–cuối, chứng minh độ khó, tìm cận dưới của T\* và các định lý bảo đảm.
+- **MT2 (pha 1, lớp 3):** hoàn thiện River, takeover và biến thể dùng fountain code.
+- **MT3 (pha 1, lớp 2):** lập quỹ đạo có bộ dự đoán, có bảo đảm xấp xỉ và khả năng tổng quát hoá, mở rộng cho nhiều UAV.
+- **MT4 (pha 2):** lập lịch đội xác minh theo điểm nghi vấn, có tính thời gian hover, tải tệp lớn và trễ kênh phản hồi
+  LoRa; liên kết với mô hình lớp 1 để đánh giá xác suất tìm thấy mục tiêu.
+- **MT5:** đánh giá đầu–cuối ở quy mô lớn và kiểm chứng trên phần cứng.
 
 ### 5.3 Câu hỏi nghiên cứu
 
 - **RQ0 (ND0):** dựng và duy trì lưới cell tốn bao nhiêu frame, thời gian và năng lượng, và chi phí đó tăng thế nào
   theo mật độ node?
-- **RQ1 (ND1):** cận dưới của T\* là bao nhiêu, và River cùng LM-Tour cách cận đó bao xa?
-- **RQ2 (ND2):** lập kế hoạch trước có lợi hơn khám phá lúc chạy đến đâu, và trong điều kiện kênh, mật độ nào?
-- **RQ3 (ND2, ND4):** River còn đứng vững tới mức sai lệch đường bay, tỉ lệ node hỏng và độ xấu kênh nào?
-- **RQ4 (ND3):** bộ dự đoán giúp quỹ đạo tốt hơn CHORD bao nhiêu, và có dùng được trên bản đồ chưa thấy không?
-- **RQ5 (ND5):** kết quả mô phỏng còn giữ được bao nhiêu trên phần cứng thật?
+- **RQ1 (ND1):** dưới điều kiện nào River bảo đảm mọi critical cell nhận đủ dữ liệu; cận dưới của T\* là bao nhiêu, và
+  lời giải cách cận đó bao xa?
+- **RQ2 (ND2):** lập kế hoạch trước có lợi hơn khám phá lúc chạy đến đâu, và fountain code thay đổi lợi thế đó thế nào?
+- **RQ3 (ND2, ND4):** lời giải còn đứng vững tới mức sai lệch đường bay, tỉ lệ node hỏng và độ xấu kênh nào?
+- **RQ4 (ND3):** bộ dự đoán giúp quỹ đạo tốt hơn bao nhiêu, và có dùng được trên bản đồ chưa thấy không?
+- **RQ5 (ND6):** thứ tự và cách xác minh ở pha 2 ảnh hưởng thế nào tới thời gian tìm thấy mục tiêu thật?
+- **RQ6 (ND5):** kết quả mô phỏng còn giữ được bao nhiêu trên phần cứng thật?
 
 ### 5.4 Đóng góp dự kiến
 

@@ -285,3 +285,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 277 | 2026-11-06 | đề cương · thêm mục phase 0: tổ chức mạng theo lưới cell | [2026-11](2026-11.md) |
 | 278 | 2026-11-06 | đề cương · viết bản nháp đề cương vào research_notes | [2026-11](2026-11.md) |
 | 279 | 2026-11-06 | đề cương · viết thành đoạn văn, thêm hình | [2026-11](2026-11.md) |
+| 280 | 2026-11-06 | đề cương · fountain code, phần cứng, takeover không oracle, mục tiêu 3 pha, định lý | [2026-11](2026-11.md) |

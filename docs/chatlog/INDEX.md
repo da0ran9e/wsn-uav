@@ -281,3 +281,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 273 | 2026-11-06 | quy tắc làm việc · tái tổ chức bước 4–8, để lại bước 9 | [2026-11](2026-11.md) |
 | 274 | 2026-11-06 | quy tắc làm việc · tạm bỏ bước 6 và 9; hỏi kế hoạch còn lại | [2026-11](2026-11.md) |
 | 275 | 2026-11-06 | quy tắc làm việc · README cho 3 log thiếu, pre-commit hook, kiểm tra nhanh | [2026-11](2026-11.md) |
+| 276 | 2026-11-06 | đề cương · khung đề cương nghiên cứu SigDrop sau ICC, xin góp ý | [2026-11](2026-11.md) |

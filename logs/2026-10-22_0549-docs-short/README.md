@@ -4,7 +4,7 @@
 
 **Đầu ra:**
 - `paper/RIVER-L3-vi.md`: 6 mục, 13 hình, khoảng 450 dòng (trước: 14 mục, 21 hình, khoảng 1 180 dòng). Trang: https://claude.ai/artifact/WpB2R7G7pVpo4QUwjW4DXB (bản 3).
-- `paper/L2-PARTITION-vi.md`: 5 mục, 6 hình, khoảng 220 dòng (trước: 9 mục, 10 hình). Trang: https://claude.ai/artifact/4RMXn44sBxd4YLig4NBhqb (bản 3).
+- `paper/archive/L2-PARTITION-vi.md`: 5 mục, 6 hình, khoảng 220 dòng (trước: 9 mục, 10 hình). Trang: https://claude.ai/artifact/4RMXn44sBxd4YLig4NBhqb (bản 3).
 
 **Giữ lại:**
 - bài toán ngắn;

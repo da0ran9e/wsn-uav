@@ -28,8 +28,8 @@ data/temp/
 visualization/exports/
 
 # Generated simulation logs (LogReset writes dated markdown here) and demo CSVs
-docs/visualize/result/
-docs/visualize/sample-run/
+archive/wsn-uav-legacy/docs/visualize/result/
+archive/wsn-uav-legacy/docs/visualize/sample-run/
 
 # Temporary files
 *.tmp

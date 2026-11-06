@@ -1,4 +1,19 @@
+---
+status: current
+updated: 2026-10-28
+---
 # Handoff · 2026-10-22 (cập nhật 2026-10-29)
+
+## Cập nhật 2026-11-06 · tái tổ chức repo bước 1–8 xong (bước 9 gộp nhánh chờ người dùng)
+
+- Chỉ mục:
+  - `docs/DOCS-INDEX.md`: tài liệu theo trạng thái;
+  - `docs/EXPERIMENTS-INDEX.md`: thí nghiệm;
+  - `logs/INDEX.md`: log;
+  - `docs/chatlog/`: lời gốc.
+- Kiểm tra: `python3 tools/check.py`.
+- Mã wsn-uav cũ chuyển vào `archive/wsn-uav-legacy/`.
+- `uav-coop/`, `uav-coop2/`, `uav-sar/`, `uav-l2/`, `logs/` giữ nguyên chỗ, vì script và symlink ns-3 trỏ tới.
 
 ## Cập nhật 2026-10-28 22:50 UTC · chiến dịch 4 dừng ở 290/360 job (CLAUDE.md §8 mục 209–210)
 
@@ -216,7 +231,7 @@ Sau khi cập nhật: sửa TECHREPORT §0 (tiến độ, ngày), §3 (bảng), 
   - lớp 1: nhận dạng tại critical cell (mô hình điểm cosine);
   - lớp 2: đường bay và chia cluster;
   - **lớp 3: River, đóng góp chính.**
-- Khung bài: `paper/OUTLINE-vi.md`.
+- Khung bài: `paper/archive/OUTLINE-vi.md`.
 
 **Giai đoạn hiện tại:** viết tài liệu nguồn cho paper. Thực nghiệm đang tạm dừng, chờ người dùng duyệt các chiến dịch tiếp theo (mục 3). Phiên 22-10 chỉ làm tài liệu, không chạy ns-3 mới.
 
@@ -229,9 +244,9 @@ Sau khi cập nhật: sửa TECHREPORT §0 (tiến độ, ngày), §3 (bảng), 
 | Lớp | Đã có | Tài liệu chính |
 |---|---|---|
 | 3 · River | Thuật toán 1–4, 2b, 3b, 4b (lập kế hoạch) và G, 5–7, D, S (thực thi). ns-3 với MAC 802.15.4 đầy đủ, lưới kênh 7 màu, gateway kênh riêng. Có các biến thể: Circle chuẩn bị sẵn, Circle khi được hỏi, Circle động, kéo thẳng; cửa sổ quanh CH hoặc theo từng critical cell | `paper/RIVER-L3-vi.md` (rút gọn); `paper/L3-TECHREPORT-vi.md` + `paper/techreport/L3-TECHREPORT-vi.pdf` (32 trang) |
-| 2 · Đường bay, cluster | CHORD: đường thẳng dài nhất qua CH. MEANDER: luồng trắc địa và đường cong uốn qua CH. Đã có chẩn đoán, các bản chỉnh, động học Dubins và chiến dịch bão hoà theo hình dạng cụm | `paper/L2-PARTITION-vi.md`; `paper/l2-techreport/` (IEEE, 4 trang); `uav-l2/docs/{FLIGHTLINE,CURVE,L2-DIAG,SAT}-vi.md` |
+| 2 · Đường bay, cluster | CHORD: đường thẳng dài nhất qua CH. MEANDER: luồng trắc địa và đường cong uốn qua CH. Đã có chẩn đoán, các bản chỉnh, động học Dubins và chiến dịch bão hoà theo hình dạng cụm | `paper/archive/L2-PARTITION-vi.md`; `paper/l2-techreport/` (IEEE, 4 trang); `uav-l2/docs/{FLIGHTLINE,CURVE,L2-DIAG,SAT}-vi.md` |
 | 1 · Nhận dạng | Mô hình điểm tổng quát: độ nhận diện r_j và độ quan trọng w_j cho mỗi manh mối, đối sánh hai bước. Đã cài vào giả lập nhiệm vụ | `paper/L1-MODEL-vi.md`; `uav-l2/docs/L1-MISSION2-vi.md` |
-| Nhiệm vụ | 40 bản đồ (2/4/6/8 cluster), P\*, các baseline B1–B7, subCH, 100 lượt bốc mỗi bản đồ | `paper/BASELINES-vi.md`; `uav-l2/docs/MISSION-vi.md` |
+| Nhiệm vụ | 40 bản đồ (2/4/6/8 cluster), P\*, các baseline B1–B7, subCH, 100 lượt bốc mỗi bản đồ | `paper/archive/BASELINES-vi.md`; `uav-l2/docs/MISSION-vi.md` |
 
 **Số chính đang dùng.** Đây là số thăm dò, chưa đủ để công bố.
 - **River so với kéo thẳng:** từ 4 critical cell trở lên, River ít hơn 20–22 % khung và nhanh hơn ở 19–20/20 lượt. Riêng C3: River xong sau 37,2 s với 89,7 k khung; kéo thẳng 50,3 s với 102,2 k khung.
@@ -261,7 +276,7 @@ Theo quy tắc hiện hành: phải bàn với người dùng trước mọi l�
    - **subCH‑K:** tách K/2 cluster lớn thành K cluster con.
    - Kiểm tra trước bằng hình học (`--geometry`): đúng K cluster, hệ số biến thiên ≤ 0,11. Sau đó mới chạy ns‑3, khoảng 1,5–2 giờ cho mỗi cách chia. Chi tiết: `uav-l2/docs/L2-DIAG-vi.md` §7.
 2. **Chạy lại nhiệm vụ trên 40 bản đồ với cửa sổ theo từng critical cell** cho cả k‑medoids lẫn MEANDER‑K. Đặt MEANDER‑K ở điểm tối ưu (luồng khoảng 8 cell). Xem `uav-l2/docs/SAT-vi.md` §6.
-3. **N ≥ 120 cho mọi số đưa vào bài.** Hiện tất cả là một lượt ns‑3 cho mỗi cluster trên 40 bản đồ. Các chỗ đánh dấu **[cần chạy]** trong `paper/OUTLINE-vi.md`.
+3. **N ≥ 120 cho mọi số đưa vào bài.** Hiện tất cả là một lượt ns‑3 cho mỗi cluster trên 40 bản đồ. Các chỗ đánh dấu **[cần chạy]** trong `paper/archive/OUTLINE-vi.md`.
 4. **Hình cho bản nộp ICC.** Hình 5 và 6 của báo cáo lớp 2 không có nhãn trục, theo quy tắc mục 63. Bản nộp cần vẽ lại có nhãn.
 5. **Bản trang web của báo cáo kỹ thuật lớp 3** chưa dựng. `paper/overview-page/build.py` chưa hiểu cú pháp `{fig:…}`, chú thích bảng `: tab:…` và hình nhiều ảnh của `paper/techreport/build.py`.
 6. **Tham số chưa có nguồn đầy đủ:**
@@ -326,7 +341,7 @@ Theo quy tắc hiện hành: phải bàn với người dùng trước mọi l�
 | File | Vì sao |
 |---|---|
 | `CLAUDE.md` | Thêm mục 122–129 vào §8 |
-| `paper/RIVER-L3-vi.md`, `paper/L2-PARTITION-vi.md` | Tài liệu lớp 3 và lớp 2, rồi rút gọn (mục 122–124) |
+| `paper/RIVER-L3-vi.md`, `paper/archive/L2-PARTITION-vi.md` | Tài liệu lớp 3 và lớp 2, rồi rút gọn (mục 122–124) |
 | `paper/overview-page/build.py`, `template.html` | Dựng trang web cho nhiều tài liệu (`--doc overview\|river-l3\|l2`) |
 | `paper/L3-TECHREPORT-vi.md`, `paper/techreport/{build.py, report.css, L3-TECHREPORT-vi.pdf}` | Báo cáo kỹ thuật lớp 3 và công cụ dựng PDF A4 |
 | `paper/l2-techreport/{l2-techreport.tex, .pdf, make_figs.py, build.sh, figs/}` | Báo cáo IEEE lớp 2; thư mục tự chứa, đưa lên Overleaf được |
@@ -394,4 +409,4 @@ sh paper/l2-techreport/build.sh                                               # 
 2. Lập kế hoạch chiến dịch N ≥ 120 cho các số chính của bài (River so với kéo thẳng; hợp tác; T\* so với baseline), rồi bàn với người dùng trước khi chạy.
 3. Chuẩn bị hình cho bản nộp ICC, có nhãn trục. Hình cho người dùng xem vẫn giữ bản không chữ.
 4. Nếu người dùng cần: dựng bản trang web cho báo cáo kỹ thuật lớp 3; bổ sung nguồn cho các tham số ở mục 3.6.
-5. Viết tiếp các mục của bài ICC từ hai báo cáo kỹ thuật (`paper/OUTLINE-vi.md`).
+5. Viết tiếp các mục của bài ICC từ hai báo cáo kỹ thuật (`paper/archive/OUTLINE-vi.md`).

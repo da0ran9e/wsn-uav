@@ -1,3 +1,7 @@
+---
+status: current
+updated: 2026-10-29
+---
 # LM-Tour: ý tưởng, thuật toán, bộ dự đoán và kết quả
 
 - **Phiên bản:** 2026-10-29. Lời gốc: CLAUDE.md §8 mục 170–175 (bộ dự đoán), 184 (ξ), 187 (thuật toán hiện tại), 188 (chiến dịch 4).

@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-21
+---
 # Lớp 1: đối sánh truy vấn tại nút xử lý — mô hình hệ thống
 
 Lời gốc: CLAUDE.md §8 mục 110–114 (mô hình) và 118 (cách viết). Mã: `uav-l2/tools/l1_model.py` (mô hình điểm, hiệu chỉnh, xác suất), `uav-l2/tools/l1_rank.py` (thời gian và quy tắc thăm). Bản này thay bản ngày 2026‑10‑20; nội dung mô hình không đổi, cách trình bày và ký hiệu được viết lại cho mục System Model của bài báo. Các nguồn đánh số [n] ở §8.
@@ -300,7 +304,7 @@ Các dòng "giả định kịch bản" là tham số của kịch bản, không
 
 ## 7. Giả định và giới hạn
 
-1. Mỗi khía cạnh được so bằng một mô hình đặc trưng riêng. Mọi camera dùng chung các mô hình đó và chung thang điểm đã hiệu chỉnh. Khác biệt giữa thiết bị (mục 88) chưa đưa vào. Nếu cần, mỗi nút chuẩn hoá điểm theo phân phối điểm của chính kho mình trước khi gửi (`L1-VECTOR-vi.md` §3).
+1. Mỗi khía cạnh được so bằng một mô hình đặc trưng riêng. Mọi camera dùng chung các mô hình đó và chung thang điểm đã hiệu chỉnh. Khác biệt giữa thiết bị (mục 88) chưa đưa vào. Nếu cần, mỗi nút chuẩn hoá điểm theo phân phối điểm của chính kho mình trước khi gửi (`archive/L1-VECTOR-vi.md` §3).
 2. Ở người lạ, các khía cạnh độc lập với nhau, trừ nhóm mặc giống. Chưa mô hình góc chụp của crop; ví dụ crop chụp từ phía sau thì không có mặt.
 3. (5) là xấp xỉ khi d lớn. Nó coi phần vuông góc của manh mối như một hướng ngẫu nhiên, nên bỏ qua tương quan giữa các ảnh tham chiếu cùng trích từ một video.
 4. BS biết đúng mô hình khi hiệu chỉnh (14). Thực tế BS phải hiệu chỉnh trên một tập thẩm định.

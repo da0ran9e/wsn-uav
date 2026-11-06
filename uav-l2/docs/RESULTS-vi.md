@@ -1,3 +1,7 @@
+---
+status: current
+updated: 2026-10-28
+---
 # Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182)
 
 Tệp này là nơi lưu số liệu so sánh CHORD (P\*) với các baseline FC, DN (mục 1–5) và Pd, B4, B1, B7 (mục 6). Mỗi lần có thêm lượt chạy thì cập nhật tại đây.

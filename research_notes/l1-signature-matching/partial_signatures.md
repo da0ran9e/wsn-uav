@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-18
+---
 # Partial signature sets: how accuracy drops when a node holds 4/5 or 3/5 reference files
 
 Scope: a UAV delivers 3–5 signature files (about one 512-d fp16 embedding each; each a different view or condition of the target). A camera node matches its own crops against the files it holds and answers YES when the score passes a threshold. Question: what happens to recall at a fixed false-alarm rate when 1 or 2 files are missing, and does it matter which one is missing?

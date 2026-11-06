@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-20
+---
 # Axe cong: Bank theo pháp tuyến cục bộ, và MEANDER (cluster bám địa hình, bay đường cong)
 
 Lời gốc: CLAUDE.md §8 mục 103 (Phần 1–2), mục 104 (Phần 3), mục 106 (Phần 4).

@@ -1,3 +1,7 @@
+---
+status: current
+updated: 2026-10-30
+---
 # Mô hình năng lượng cho bảng "Ground transport on fixed CHORD passes" (CLAUDE.md §8 mục 227, phần 3)
 
 Công cụ: `uav-l2/tools/energy.py` (`radio` cho mạng mặt đất, `uav` cho đội 1). Không cần EnergySource của ns-3:

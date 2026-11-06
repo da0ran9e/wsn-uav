@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-20
+superseded_by: paper/L1-MODEL-vi.md
+---
 # Lớp 1 bằng điểm cosine của từng ảnh (CLAUDE.md §8 mục 110)
 
 Thay cho: điểm vận hành công bố ở `L1-STATEMENT-vi.md` §10–11. Các số công bố ([7], f = 0,1 %, TTR = 82,26 %) giờ chỉ là **một điểm tham chiếu** để đối chiếu giả lập, không còn là đầu vào của mô hình hệ thống.

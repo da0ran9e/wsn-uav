@@ -1,7 +1,11 @@
+---
+status: reference
+updated: 2026-10-20
+---
 # Lớp 1: phát biểu chi tiết, khớp với các công bố
 
 Lời gốc: CLAUDE.md §8 mục 88 (phát biểu) và mục 89 (yêu cầu viết lại).
-Nguồn và nhãn: `reports/Đối sánh signature trên thiết bị biên.md` (gọi tắt là [R2]) và `reports/Nhận dạng tại node biên lớp 1.md` ([R1]). Nhãn [nguồn], [nguồn·trích], [NSX], [mô hình] giữ nguyên nghĩa như trong hai báo cáo.
+Nguồn và nhãn: `reports/l1-signature-matching.md` (gọi tắt là [R2]) và `reports/l1-edge-recognition.md` ([R1]). Nhãn [nguồn], [nguồn·trích], [NSX], [mô hình] giữ nguyên nghĩa như trong hai báo cáo.
 
 ## 1. Phát biểu (bản viết lại)
 

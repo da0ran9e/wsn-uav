@@ -1,3 +1,7 @@
+---
+status: current
+updated: 2026-10-31
+---
 # Báo cáo giả lập 30–31/10/2026: vận chuyển mặt đất trên pass CHORD cố định và sai số quỹ đạo
 
 Tài liệu này gom toàn bộ dữ kiện của hai thí nghiệm bổ sung cho Section VI. Các thí nghiệm này trả lời nhận xét của

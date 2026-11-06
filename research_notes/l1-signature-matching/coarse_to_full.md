@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-18
+---
 # Two-stage search: light signature (coarse filter) → full reference data (confirmation) — how accurate is each stage
 
 Scope: (a) how accurate attribute/coarse filters are and how much they prune; (b) cascade / coarse-to-fine pipelines; (c) accuracy ceilings with full reference data for persons, vehicles and animals; (d) parameters for the simulation. Searched 2026-10-18. Many benchmark numbers come from secondary comparison tables inside later arXiv papers. Each such number is flagged.

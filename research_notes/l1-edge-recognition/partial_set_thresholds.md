@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-15
+---
 # Recall/precision with a partial reference set, and how to set match thresholds at the edge node
 
 Scope: Q10 (accuracy vs fraction of references received, by representation, and vs gallery size) and Q16 (threshold policy, normalisation, fusion, what a node should report). The evidence is split into **[MEASURED]** (published numbers, with source) and **[MODEL]** (my extrapolation, labelled).

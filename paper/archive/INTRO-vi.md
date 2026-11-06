@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-20
+superseded_by: bản nộp ICC v5.3
+---
 # Introduction — keyword
 
 Lời gốc: CLAUDE.md §8 mục 75–76. [ta] = số của ta (cần chạy lại, N ≥ 120). [tr] = cần trích.

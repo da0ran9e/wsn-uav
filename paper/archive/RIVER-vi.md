@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-15
+superseded_by: paper/RIVER-L3-vi.md
+---
 # River — keyword
 
 Lời gốc: CLAUDE.md §8 mục 79. Mã giả: `uav-coop2/docs/L3-vi.md` §3–4.

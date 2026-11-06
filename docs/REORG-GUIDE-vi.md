@@ -11,6 +11,11 @@
 | 1. Tách chat log | [x] 2026-11-05 | 271 mục ở `docs/chatlog/2026-10.md`, `2026-11.md`, `INDEX.md`; khối `text` khớp từng byte |
 | 2. Tách CLAUDE.md | [x] 2026-11-05 | CLAUDE.md 179 kB → khoảng 6 kB; quy tắc uav-sar sang `uav-sar/CLAUDE.md`, wsn-uav cũ sang `models/CLAUDE.md` |
 | 3. Chỉ mục log và mã thí nghiệm | [x] 2026-11-05 | `logs/INDEX.md` (58 thư mục, mã + trạng thái), `docs/EXPERIMENTS-INDEX.md` (11 thí nghiệm đang dùng trong paper v5.3 + tham khảo) |
+| 4. Phân loại tài liệu | [x] 2026-11-06 | 54 tài liệu có YAML `status`; `docs/DOCS-INDEX.md`; 10 bản nháp paper → `paper/archive/`; tài liệu module (uav-sar, uav-coop, uav-coop2) giữ nguyên chỗ |
+| 5. Lưu trữ module cũ | [x] 2026-11-06 | wsn-uav cũ (models, helper, examples, CMakeLists, wscript, docs cũ) → `archive/wsn-uav-legacy/`. **Không** dời `uav-coop/`, `uav-coop2/`: mã ns-3 của chúng là binary deploy/pass/river đang dùng. Đổi tên thư mục có dấu cách trong `research_notes/`, `reports/` |
+| 6. Giảm dung lượng | [~] 2026-11-06 | Chưa làm. Tệp lớn nằm sẵn trong lịch sử git, dời ra Release cũng không giảm `.git` nếu không viết lại lịch sử (thao tác phá huỷ, cần người dùng duyệt). Quy tắc mới: `check.py large` chặn tệp mới trên 5 MB |
+| 7. Một nguồn tham số | [x] 2026-11-06 | `params.yaml` + `tools/params.py` (render/check); bảng `paper/PARAMS-vi.md` tái tạo giống từng byte. Mã chưa đọc `params.yaml` |
+| 8. Kiểm tra tự động | [x] 2026-11-06 | `tools/check.py`, `tools/build_index.py`; chưa cài pre-commit hook |
 
 ## 0. Hiện trạng
 

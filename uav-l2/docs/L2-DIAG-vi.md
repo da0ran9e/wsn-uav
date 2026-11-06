@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-21
+---
 # Vì sao lớp 2 đề xuất (MEANDER) chưa thắng cluster có sẵn
 
 Lời gốc: CLAUDE.md §8 mục 115. Kết quả cấp nhiệm vụ: `L1-MISSION2-vi.md` §5.5.

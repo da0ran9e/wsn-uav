@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-13
+---
 # River trên các cluster của miền có hồ — lượt 1
 
 Lời gốc: CLAUDE.md §8 mục 61–64. Cơ chế River: [`../../uav-coop2/docs/L3-vi.md`](../../uav-coop2/docs/L3-vi.md);

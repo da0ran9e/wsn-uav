@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-22
+superseded_by: paper/LMTOUR-vi.md
+---
 # Lớp 2: phân vùng MEANDER
 
 **Chọn đường bay trước, chia cluster theo đường bay: luồng cong bám địa hình, từng bước với mã giả và hình**
@@ -62,7 +67,7 @@ Algorithm M1  COORDS(Land)
 7: each land piece cut off by a river or a lake gets its own Spine, s and n
 ```
 
-![Địa hình và toạ độ dọc](../uav-l2/docs/figures/meander-k6-s3-b220-w1-step-12.png)
+![Địa hình và toạ độ dọc](../../uav-l2/docs/figures/meander-k6-s3-b220-w1-step-12.png)
 
 *Hình: trái là địa hình; phải là xương sống và toạ độ dọc s.*
 - **Trái:** cell xám là đất có node, ô gạch chéo xanh là hồ, ô vuông đen là BS.
@@ -86,7 +91,7 @@ Algorithm M2  LANES(Land, n, L, Cap, frag)
 5: keep the offset with the lowest cost
 ```
 
-![Toạ độ ngang và các luồng](../uav-l2/docs/figures/meander-k6-s3-b220-w1-step-34.png)
+![Toạ độ ngang và các luồng](../../uav-l2/docs/figures/meander-k6-s3-b220-w1-step-34.png)
 
 *Hình: trái là toạ độ ngang n; phải là các luồng.*
 - **Trái:** đỏ là một phía xương sống, xanh là phía kia; càng đậm càng xa. Nét đen là xương sống. Đường đồng mức của n chạy song song với xương sống, kể cả ở khúc gãy, nơi luồng thẳng sẽ cắt chéo.
@@ -124,7 +129,7 @@ Algorithm M5  ORDER(Clusters, BS)
 4: keep the shortest tour BS → … → BS
 ```
 
-![Mảnh luồng và cluster](../uav-l2/docs/figures/meander-k6-s3-b220-w1-step-56.png)
+![Mảnh luồng và cluster](../../uav-l2/docs/figures/meander-k6-s3-b220-w1-step-56.png)
 
 *Hình: trái là các mảnh luồng trước khi gộp; phải là chín cluster MEANDER.*
 - **Trái:** mỗi mảnh một màu; ô gạch chéo đen là mảnh vụn sẽ bị gộp.
@@ -154,13 +159,13 @@ Algorithm M6  FLIGHTCURVE(k, s, ρ)
 10: return lead-in of length ρ ⊕ Q ⊕ lead-out of length ρ               ▷ straight, along the end tangents
 ```
 
-![Đường bay cong và phủ River](../uav-l2/docs/figures/meander-k6-s3-b220-w1-step-78.png)
+![Đường bay cong và phủ River](../../uav-l2/docs/figures/meander-k6-s3-b220-w1-step-78.png)
 
 *Hình: trái là đường bay và tour; phải là phủ River.*
 - **Trái:** nét đen đậm là đường bay của từng cluster (trước khi uốn qua CH); nét đứt là tour đội 1, đi và về ô vuông BS.
 - **Phải:** xanh đậm là cell cách đường bay của cluster mình ≤ ω = 1,75 cell (trong dải River), xanh nhạt là ngoài dải. MEANDER phủ 88,5 % cell trên bản đồ này.
 
-![Uốn đường bay qua CH](../uav-l2/docs/figures/meander-bend-ch.png)
+![Uốn đường bay qua CH](../../uav-l2/docs/figures/meander-bend-ch.png)
 
 *Hình: uốn đường bay qua CH trên ba cluster của bản đồ nhiệm vụ.*
 - Từ trái sang: CH lệch ít; CH lệch 370 m (cluster chữ L); CH lệch 302 m (cluster chữ U quanh hồ).
@@ -185,7 +190,7 @@ Algorithm M6  FLIGHTCURVE(k, s, ρ)
 
 ## 4. Kết quả và việc tiếp theo
 
-![Cluster có sẵn, LANE và MEANDER trên cùng bản đồ](../uav-l2/docs/figures/meander-k6-s3-b220-w1-compare.png)
+![Cluster có sẵn, LANE và MEANDER trên cùng bản đồ](../../uav-l2/docs/figures/meander-k6-s3-b220-w1-compare.png)
 
 *Hình: bản đồ ví dụ, từ trái sang: cluster có sẵn (k‑medoids, đường thẳng dài nhất qua CH), luồng thẳng (LANE), MEANDER. Xanh đậm là cell trong dải River, xanh nhạt là ngoài dải; nét đen là đường bay.*
 

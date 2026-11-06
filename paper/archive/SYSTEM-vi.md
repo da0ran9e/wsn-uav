@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-20
+superseded_by: bản nộp ICC v5.3
+---
 # System Model — keyword
 
 Lời gốc: CLAUDE.md §8 mục 78; lớp 1 và mục tiêu pha 2 cập nhật theo mục 110–114. Số trong ngoặc là giá trị đang dùng trong mô phỏng.

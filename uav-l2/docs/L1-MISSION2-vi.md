@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-20
+---
 # Nhiệm vụ trọn vẹn với mô hình lớp 1 mới: đề xuất, ablation, baseline
 
 Lời gốc: CLAUDE.md §8 mục 110–114. Mô hình lớp 1 (bản cho System Model): `paper/L1-MODEL-vi.md`.

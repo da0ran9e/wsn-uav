@@ -1,0 +1,589 @@
+# Simulation parameters: the one source for the tables of paper/PARAMS-vi.md (tools/params.py).
+- section: 1. Vô tuyến IEEE 802.15.4 (cả A2G và G2G)
+  rows:
+  - id: R1
+    name: Băng tần, điều chế, tốc độ
+    value: 2,4 GHz, O‑QPSK, 250 kbps
+    where: '`coop-params.h`'
+    label: '[chuẩn]'
+    source: IEEE Std 802.15.4‑2020
+  - id: R2
+    name: PSDU tối đa
+    value: 127 B
+    where: '`coop-params.h` (`kPsduBytes`)'
+    label: '[chuẩn]'
+    source: IEEE 802.15.4
+  - id: R3
+    name: Khung trên không
+    value: 133 B (4 tiền tố + 1 SFD + 1 PHR + 127)
+    where: đặc tả mục 2
+    label: '[chuẩn]'
+    source: IEEE 802.15.4
+  - id: R4
+    name: Thời gian chiếm sóng một khung
+    value: 4,256 ms
+    where: '`coop-params.h`'
+    label: '[suy ra]'
+    source: 133 × 8 / 250 000
+  - id: R5
+    name: Tải hữu ích mỗi gói
+    value: 99 B
+    where: '`PAYLOAD` trong `mission_baselines.py`, `l1_mission.py`'
+    label: '[suy ra]'
+    source: 127 B trừ tiêu đề MAC, bảo mật, FCS (đặc tả mục 2)
+  - id: R6
+    name: Chu kỳ phát của UAV
+    value: 10 ms (một gói mỗi 0,5 m ở 50 m/s)
+    where: '`coop-params.h` (`kSlotS`)'
+    label: '**[giả định]**'
+    source: Đặc tả mục 2 gọi là "khe mặc định 802.15.4", nhưng chuẩn không có khe 10 ms (aBaseSlotDuration = 0,96 ms). Nên ghi là chu kỳ phát chọn ≥ 2,35 × thời gian chiếm sóng
+  - id: R7
+    name: Công suất phát (UAV và node)
+    value: +10 dBm
+    where: '`coop-params.h` (`kTxPowerDbm`)'
+    label: '[chuẩn]'
+    source: Dưới trần 20 dBm EIRP của ETSI EN 300 328
+  - id: R8
+    name: Độ nhạy máy thu
+    value: '−100 dBm (ns-3: PER 1 % ở PSDU 20 B; đo PER 50 % ở 127 B = −101 dBm)'
+    where: '`coop-params.h` (`kRxSensDbm`)'
+    label: '[công bố] **cần trích**'
+    source: Mức của chip đời mới (ví dụ TI CC2652R, datasheet). CC2420 chỉ −95 dBm. **Cần ghi tên chip**
+  - id: R9
+    name: MAC lúc River chạy
+    value: CSMA/CA không khe, ACK, phát lại theo mặc định ns-3 lr-wpan (macMinBE 3, macMaxBE 5, macMaxCSMABackoffs 4, macMaxFrameRetries 3)
+    where: '`uav-coop2/examples/coop2-river.cc`'
+    label: '[chuẩn]'
+    source: Giá trị mặc định của IEEE 802.15.4
+  - id: R10
+    name: Unicast một khung kèm ACK (đội 2)
+    value: 6,88 ms
+    where: '`mission_baselines.py` (`UC_FRAME`)'
+    label: '[suy ra]'
+    source: Khung + IFS + ACK theo chuẩn
+  - id: R11
+    name: Multicast một khung (baseline)
+    value: 10 ms
+    where: '`mission_baselines.py` (`BC_FRAME`)'
+    label: '[thiết kế]'
+    source: Cùng chu kỳ R6
+- section: 2. Kênh truyền
+  rows:
+  - id: C1
+    name: A2G, suy hao đoạn 1
+    value: không gian tự do tới d_ref = H = 100 m (−80,05 dB); FSPL 1 m = 40,05 dB
+    where: '`coop-params.h` (`kFspl1mDb`)'
+    label: '[suy ra]'
+    source: Friis ở 2,4 GHz (đặc tả mục 2)
+  - id: C2
+    name: A2G, số mũ đoạn 2
+    value: α = 3,0 (quét 2,6 và 3,35)
+    where: '`coop-params.h` (`kA2gAlpha`)'
+    label: '[công bố] **cần trích đầy đủ**'
+    source: '"Qiu 2017, A2G bán đô thị, độ cao thấp" theo đặc tả mục 2. Chưa có trích dẫn đầy đủ, chưa kiểm lại số'
+  - id: C3
+    name: A2G, fading
+    value: Rician K = 2, bốc lại mỗi gói
+    where: '`coop-params.h` (`kA2gRicianK`)'
+    label: '**[giả định]**'
+    source: Đặc tả mục 2 không có nguồn. Quyết định số gói nhận ở vùng rìa, tức độ rộng River
+  - id: C4
+    name: A2G trong tính toán baseline
+    value: Nakagami m = 1,8
+    where: '`mission_baselines.py` (`M_NAK`, hàm `per`; dùng cho B3, B8 qua `orbit_per`)'
+    label: '**lệch với C3**'
+    source: Lượt bay dùng Rician K = 2. Thí nghiệm A2G-RUN cho thấy hai mô hình khác nhau ở đuôi fade tới khoảng 50 lần. **Chưa sửa**
+  - id: C5
+    name: A2G, che khuất
+    value: tắt
+    where: đặc tả mục 2
+    label: '[thiết kế]'
+    source: ''
+  - id: C6
+    name: Ăng-ten
+    value: đẳng hướng hai đầu
+    where: đặc tả mục 2
+    label: '[thiết kế]'
+    source: ''
+  - id: C7
+    name: G2G, suy hao
+    value: n = 3,5 từ 1 m
+    where: '`coop-params.h` (`kG2gExponent`)'
+    label: '[công bố]'
+    source: 3GPP TR 38.901, UMi NLoS (35,3 log₁₀ d)
+  - id: C8
+    name: G2G, che khuất
+    value: σ = 7,8 dB, cố định mỗi cặp node, thuận nghịch
+    where: '`coop-params.h` (`kG2gShadowDb`)'
+    label: '[công bố]'
+    source: 3GPP TR 38.901, UMi NLoS (σ = 7,82 dB)
+  - id: C9
+    name: G2G, fading
+    value: Rayleigh (K = 0) theo khối
+    where: '`coop-params.h` (`kG2gRicianK`)'
+    label: '[thiết kế]'
+    source: Bi quan, khớp NLoS của 3GPP
+  - id: C10
+    name: G2G, độ dài khối fading
+    value: 100 ms
+    where: '`coop-params.h` (`kG2gCoherenceS`)'
+    label: '**[giả định]**'
+    source: Node đứng yên, cảnh vật di chuyển. Đã thử 10 ms
+  - id: C11
+    name: Che khuất giữa các cặp
+    value: độc lập
+    where: '`coop2-river.cc`'
+    label: '[giả định]'
+    source: 3GPP có mô hình tương quan không gian, chưa dùng
+  - id: C12
+    name: Ngưỡng bỏ qua liên kết
+    value: MaxLossDb 130 dB
+    where: '`coop2-river.cc` (`maxLossDb`)'
+    label: '[thiết kế]'
+    source: Chỉ để tăng tốc giả lập (dưới độ nhạy rất xa)
+- section: 3. Kênh phản hồi LoRa
+  rows:
+  - id: F1
+    name: Chu kỳ hoạt động
+    value: 1 %
+    where: '`mission_policy.py` (`DUTY`)'
+    label: '[chuẩn]'
+    source: ETSI EN 300 220‑2, băng 868,0–868,6 MHz
+  - id: F2
+    name: Thời gian phát một bản tin
+    value: 0,4 s
+    where: '`mission_policy.py` (`AIR`)'
+    label: '**[giả định]**'
+    source: Phải tính bằng công thức Semtech AN1200.13 theo SF, BW, cỡ gói. Khoảng 0,37 s ứng với khoảng 10 B ở SF10/125 kHz. **Cần chốt SF và cỡ báo cáo**
+  - id: F3
+    name: Khoảng giữa hai lần phát
+    value: 40 s
+    where: '`mission_policy.py` (`GAP`)'
+    label: '[suy ra]'
+    source: F2 / F1
+  - id: F4
+    name: Pha khe LoRa của mỗi CH
+    value: đều trên [0; 40) s, bốc mỗi lần
+    where: '`l1_rank.py`'
+    label: '[giả định] hợp lý'
+    source: ''
+  - id: F5
+    name: Chuyển kết quả tới CH
+    value: 0,1 s mỗi cell
+    where: '`mission_policy.py` (`HOP`)'
+    label: '**[giả định]**'
+    source: Suy từ 802.15.4 được khoảng 15 ms (2 khung mỗi cell); 0,1 s là thận trọng
+- section: 4. Miền, node và cụm
+  rows:
+  - id: M1
+    name: Cell lục giác
+    value: R = 100 m (rộng 173,2 m, diện tích 25 981 m²)
+    where: '`map_gen.py` (`R`), `coop-params.h`'
+    label: '[thiết kế]'
+    source: Mục 9, 11
+  - id: M2
+    name: Cỡ miền
+    value: 80 × K cell mọc ngẫu nhiên (Eden), K = 2–16
+    where: '`restructure.domain`'
+    label: '[thiết kế]'
+    source: Mục 56–57; K lớn để thử kích thước
+  - id: M3
+    name: Độ lồi trước khi khoét hồ
+    value: 0,8
+    where: '`map_gen.py` (`--convexity`)'
+    label: '[thiết kế]'
+    source: Mục 10
+  - id: M4
+    name: Hồ
+    value: K hồ, mỗi hồ 10 cell
+    where: '`restructure.domain`'
+    label: '[thiết kế]'
+    source: Mục 60–61
+  - id: M5
+    name: Dạng dải (chỉ ở thử nghiệm yếu tố)
+    value: xương sống dài, uốn, rộng 2σ (`--shape`)
+    where: '`map_gen.py`'
+    label: '[thiết kế]'
+    source: Mục 147–149; bỏ ở mục 151
+  - id: M6
+    name: Mật độ node
+    value: 1 node / 35 × 35 m
+    where: '`map_gen.py` (`--spacing`), `uav-coop-deploy --spacings=35`'
+    label: '[thiết kế]'
+    source: Mục 9 (20–50 m). `coop-params.h` còn ghi `kSpacingM = 30`, không dùng ở lớp 2
+  - id: M7
+    name: Thuộc tính node
+    value: quan sát, tính toán ~ U[0; 1); giao tiếp ~ U(0; 1]; điểm = tích ba thuộc tính
+    where: '`map_gen.py`'
+    label: '[thiết kế]'
+    source: Mục 10
+  - id: M8
+    name: CH
+    value: node mạnh nhất cách biên ≥ 300 m (hạ dần 200, 100, 0 m nếu cụm mỏng)
+    where: '`coop-params.h` (`kChMarginM`), `mission.py`'
+    label: '[thiết kế]'
+    source: Mục 13
+  - id: M9
+    name: CL
+    value: node mạnh nhất mỗi cell
+    where: '`uav-coop-deploy`'
+    label: '[thiết kế]'
+    source: Mục 10
+  - id: M10
+    name: Tầm liên kết G2G
+    value: 50 m
+    where: '`coop-params.h` (`kLinkRangeM`)'
+    label: '[chọn theo thử nghiệm]'
+    source: 'G2G-CHAIN: dư trung vị 11,5 dB ở 50 m'
+  - id: M11
+    name: BS
+    value: 1 km dưới hộp bao của miền (mặc định); thử thêm đầu xương sống, cạnh, giữa
+    where: '`restructure.bs_point`'
+    label: '[thiết kế]'
+    source: Mục 149
+  - id: M12
+    name: Cụm k-medoids (CHORD-T và các bản cũ)
+    value: ≤ 80 cell; `--count K` khi so với MEANDER (cap nâng cho vừa)
+    where: '`partition.py` (`CAP`), `mission.py`'
+    label: '[thiết kế]'
+    source: ''
+- section: '5. Lớp 3: River'
+  rows:
+  - id: L3-1
+    name: Bề rộng River
+    value: 3,5 cell (nửa bề rộng ω = 1,75 cell ≈ 303 m)
+    where: '`river_plan.py` (`width`), `restructure.py` (`OMEGA`)'
+    label: '[thiết kế]'
+    source: Mục 42 (3–4 cell)
+  - id: L3-2
+    name: Critical cell, ngưỡng toàn cục
+    value: điểm CL > μ + 2σ
+    where: '`river_plan.py` (`kg`)'
+    label: '[thiết kế]'
+    source: Mục 40–41
+  - id: L3-3
+    name: Critical cell, ngưỡng cục bộ
+    value: '> μ + 1σ và lớn nhất trong 2 vòng cell láng giềng thật (cả cell cụm khác)'
+    where: '`river_plan.py` (`kl`, `r`), `--critRing domain`'
+    label: '[thiết kế]'
+    source: Mục 41, 135
+  - id: L3-4
+    name: CH luôn là critical cell
+    value: ''
+    where: '`river_plan.py`'
+    label: '[thiết kế]'
+    source: Mục 41
+  - id: L3-5
+    name: Cửa sổ dữ liệu mỗi critical cell
+    value: 400 kB (4 041 gói), bản sao gần nó nhất dọc Axe
+    where: '`--windowKB 400 --windowAt crit`'
+    label: '[thiết kế]'
+    source: Mục 106, 120; khớp bộ manh mối lớp 1
+  - id: L3-6
+    name: Axe nhận gói ngoài cụm sát biên
+    value: có (`--axeNear`)
+    where: '`river_plan.py`'
+    label: '[thiết kế]'
+    source: Mục 135
+  - id: L3-7
+    name: Banks
+    value: theo pháp tuyến cục bộ của Axe (`--banks local`)
+    where: '`river_export.py`'
+    label: '[thiết kế]'
+    source: Mục 103
+  - id: L3-8
+    name: Số màu kênh lưới cell
+    value: 7 (cùng kênh cách 3 cell); cặp gateway kênh riêng
+    where: '`coop2-river.cc` (`--colours`)'
+    label: '[chọn theo thử nghiệm]'
+    source: Mục 53–54 (đã quét 3/4/7/13). `coop-params.h` còn `kTdmaReuse = 3`, không dùng ở River
+  - id: L3-9
+    name: Chọn cặp gateway
+    value: chất lượng liên kết tốt nhất (BS biết che khuất)
+    where: '`coop2-river.cc` (`--gwSelect quality`)'
+    label: '[thiết kế]'
+    source: ''
+  - id: L3-10
+    name: Lập lịch
+    value: một máy phát mỗi cell và mỗi cặp gateway, xoay vòng, trên MAC R9
+    where: '`coop2-river.cc`'
+    label: '[thiết kế]'
+    source: Mục 51 (lưới PECEE)
+  - id: L3-11
+    name: Giới hạn thời gian River
+    value: 900 s
+    where: '`mission.py` (`--limit=900`)'
+    label: '[thiết kế]'
+    source: ''
+  - id: L3-12
+    name: Circle thích ứng (biến thể ad12)
+    value: mỗi thành viên 400 gói thiếu; 2–12 thành viên
+    where: '`coop2-river.cc` (`share`, `circleMin/Max`)'
+    label: '[thiết kế]'
+    source: Mục 66–67
+  - id: L3-13
+    name: Trickle (baseline)
+    value: trang 64 gói; I_min 1 s; I_max 64 s; k = 1
+    where: '`coop2-river.cc`'
+    label: '[công bố]'
+    source: RFC 6206 (Trickle), Deluge (Hui & Culler, SenSys 2004)
+- section: '6. Lớp 2: đường bay và chia cụm'
+  rows:
+  - id: L2-1
+    name: Độ cao, tốc độ đội 1
+    value: 100 m; 50 m/s
+    where: '`coop-params.h`'
+    label: '[thiết kế]'
+    source: Mục 1. Nên kèm một UAV cánh bằng thực tế làm tham chiếu
+  - id: L2-2
+    name: Góc nghiêng khi rẽ
+    value: 45° (độ nhạy 30°, 60°)
+    where: '`kin_time.py` (`PHIS`)'
+    label: '**[giả định]**'
+    source: Cần nguồn cho UAV cánh bằng cỡ nhỏ
+  - id: L2-3
+    name: Bán kính rẽ tối thiểu
+    value: 254,9 m
+    where: '`coop-params.h` (`kMinTurnRadiusM`)'
+    label: '[suy ra]'
+    source: v² / (g tan φ) với L2-1, L2-2
+  - id: L2-4
+    name: Tốc độ tối thiểu khi giảm tốc
+    value: 25 m/s
+    where: '`kin_time.py` (`VMIN`)'
+    label: '**[giả định]**'
+    source: 'Trên tốc độ thất tốc (mục 38: cánh bằng không hover)'
+  - id: L2-5
+    name: Gia tốc dọc đường bay
+    value: ±2 m/s²
+    where: '`kin_time.py` (`ACC`)'
+    label: '**[giả định]**'
+    source: Cần nguồn
+  - id: L2-6
+    name: Hồ sơ tốc độ
+    value: v ≤ min(50, √(g tan φ / κ)), giới hạn gia tốc, hai lượt tiến/lùi
+    where: '`kin_time.py`'
+    label: '[công bố] dạng'
+    source: Hồ sơ thời gian tối thiểu cổ điển (ràng buộc gia tốc ngang và dọc)
+  - id: L2-7
+    name: Điều kiện giao đủ
+    value: mỗi cụm bay ≥ Q × 10 ms trên cell của nó (40,4 s với 400 kB); thiếu thì giảm tốc tới L2-4, rồi lượn vòng
+    where: '`kin_time.py`'
+    label: '[thiết kế]'
+    source: Mục 144
+  - id: L2-8
+    name: 'CHORD-T: hướng ứng viên'
+    value: quét 0–178°, bước 2°; giữ ≤ 6 hướng cách nhau ≥ 10°, dài ≥ 60 % hướng dài nhất và ≥ 80 % một bộ manh mối
+    where: '`mission.py` (`--chordTour 0.6,0.8`)'
+    label: '[chọn theo thử nghiệm]'
+    source: Mục 136–138 (CLUE 80 % do người dùng chốt)
+  - id: L2-9
+    name: 'CHORD-T: chọn tour'
+    value: tổng độ trễ của critical cell nhỏ nhất, Held-Karp tới 13 cụm, gần đúng (thứ tự + quy hoạch động + dời/2-opt) từ 14 cụm
+    where: '`chord_tour.py` (`EXACT`)'
+    label: '[thiết kế]'
+    source: Mục 149. Held-Karp hiện tại chưa chính xác hoàn toàn với mục tiêu độ trễ
+  - id: L2-10
+    name: 'MEANDER: bề rộng luồng'
+    value: 8 cell (khoảng 1,39 km)
+    where: '`meander_lane.py` (`--lane`)'
+    label: '[chọn theo thử nghiệm]'
+    source: '`SAT-vi.md` (điểm bão hoà 8–10 cell)'
+  - id: L2-11
+    name: 'MEANDER: luồng mỏng'
+    value: luồng < 47 cell (CAPL / 4) gộp vào luồng kề
+    where: '`meander_lane.py`'
+    label: '[thiết kế]'
+    source: ''
+  - id: L2-12
+    name: 'MEANDER: cắt cụm'
+    value: theo độ dài đất dưới đường bay, Axe mỗi cụm ≥ 2,4 km (`--minAxe 2.4`), ≤ 190 cell
+    where: '`meander_lane.py` (`CAPL`, `--minAxe`)'
+    label: '[chọn theo thử nghiệm]'
+    source: 'Mục 149: Axe < 2,02 km thì cụm không nhận đủ bộ manh mối ở 50 m/s'
+  - id: L2-13
+    name: 'MEANDER: cắt theo số cell (bản cũ)'
+    value: ≤ 14 cell dọc luồng (`SPAN`)
+    where: '`meander_lane.py`'
+    label: '[chọn theo thử nghiệm]'
+    source: '`SAT-vi.md`; thay bằng L2-12'
+  - id: L2-14
+    name: 'MEANDER: độ thẳng'
+    value: thang làm mượt 0,5 km (quét 0; 0,5; 1; 2; 4 km; thẳng hẳn)
+    where: '`meander_lane.py` (`--straight`)'
+    label: '[chọn theo thử nghiệm]'
+    source: Mục 151
+  - id: L2-15
+    name: 'MEANDER: kéo về critical cell'
+    value: chỉ cell xa hơn 5 cell; mỗi lần kéo ≤ 1 cell
+    where: '`meander_lane.py` (`--reach 5`, `BEND`)'
+    label: '[thiết kế]'
+    source: Mục 151 (người dùng đặt 5 cell)
+  - id: L2-16
+    name: Nối liền giữa hai cụm
+    value: đầu cụm sau cách cuối cụm trước ≤ 1 km, lệch hướng ≤ 30°
+    where: '`mission_policy.py` (`SEAM_GAP`, `SEAM_DEG`)'
+    label: '[thiết kế]'
+    source: ''
+- section: 7. Nhiệm vụ và đội 2
+  rows:
+  - id: T1
+    name: Tốc độ đội 2 (cánh quay)
+    value: 15 m/s
+    where: '`l1_rank.py` (`V2`)'
+    label: '[thiết kế]'
+    source: Mục 73
+  - id: T2
+    name: Ổn định trước khi phát
+    value: 5 s
+    where: '`mission_baselines.py` (`SETTLE`)'
+    label: '**[giả định]**'
+    source: ''
+  - id: T3
+    name: Tệp xác minh
+    value: 1 MiB (khoảng 20 ảnh tham chiếu)
+    where: '`mission_baselines.py` (`BIG`), `l1_rank.py` (`REF_IMAGES`)'
+    label: '**[giả định]**'
+    source: 'Mục 73: số tạm'
+  - id: T4
+    name: Thời gian xác minh
+    value: 78,1 s = T2 + unicast T3 + đối sánh 20 ảnh
+    where: '`l1_rank.py` (`VERIFY`)'
+    label: '[suy ra]'
+    source: ''
+  - id: T5
+    name: Chính sách đội 2
+    value: xuất phát cùng đội 1, chờ ở tâm có trọng số, đổi đích giữa đường, đi khi p ≥ β·P_U với β = 1/4
+    where: '`l1_rank.py` (`-puq-stage-zero-redir`)'
+    label: '[chọn theo thử nghiệm]'
+    source: '`L1-MODEL-vi.md` (β chọn trên 40 bản đồ)'
+  - id: T6
+    name: Thời gian rời cụm
+    value: 50 m/s đều, hoặc theo động học L2-6/L2-7 (`-kt`)
+    where: '`l1_rank.py`'
+    label: '[thiết kế]'
+    source: Mục 149
+  - id: T7
+    name: Chỉ số chính
+    value: 'T\*: lúc xác minh xong cell có điểm xác minh cao nhất'
+    where: '`l1_rank.py`'
+    label: '[thiết kế]'
+    source: Mục 113–114
+  - id: T8
+    name: Số lần bốc mỗi bản đồ
+    value: '100'
+    where: '`l1_rank.py --draws`'
+    label: '[thiết kế]'
+    source: ''
+  - id: T9
+    name: Đối sánh cố định (mô hình cũ)
+    value: 5 s; lơ lửng 30 s
+    where: '`mission_policy.py` (`MATCH`, `HOVER`)'
+    label: '[giả định]'
+    source: Chỉ còn ở chính sách cũ; T\* hiện dùng T4 và L1-12
+- section: '8. Lớp 1: mô hình điểm'
+  rows:
+  - id: L1-1
+    name: Số crop mỗi camera
+    value: M = 223
+    where: '`l1_model.py` (`M`)'
+    label: '[suy ra]'
+    source: 'Từ điểm vận hành đầu tiên của Li et al. ECCV 2018 (nhận nhầm 0,1 % mỗi crop) và báo nhầm 20 % mỗi camera: ln(0,8)/ln(0,999)'
+  - id: L1-2
+    name: Bộ manh mối
+    value: '12 ảnh: 2 mặt × 24,9 kB, 4 dáng × 49,9 kB, 6 bộ phận × 24,9 kB; 4 036 gói (≤ 4 041 của 400 kB)'
+    where: '`l1_model.py` (`CLUESET`)'
+    label: '[thiết kế]'
+    source: Mục 94, 99 (ảnh 15–50 kB, 3–6 góc cộng crop bộ phận)
+  - id: L1-3
+    name: Độ nhận diện r_j
+    value: mặt 0,80–0,90; dáng 0,88–0,95; bộ phận 0,95–0,99
+    where: '`l1_model.py`'
+    label: '**[giả định]**'
+    source: Giả định kịch bản (mặt khó chụp trung thành nhất)
+  - id: L1-4
+    name: Độ quan trọng w_j (do BS chấm)
+    value: mặt 4; dáng 2; bộ phận 2/3 (khía cạnh 40/40/20 %)
+    where: '`l1_model.py`'
+    label: '[thiết kế]'
+    source: Mục 113–114
+  - id: L1-5
+    name: Số chiều hiệu dụng
+    value: d = 128 (quét 64, 256)
+    where: '`l1_model.py` (`DIM`)'
+    label: '**[giả định]**'
+    source: 'Số chiều nội tại nhỏ hơn danh nghĩa: Ansuini et al., NeurIPS 2019'
+  - id: L1-6
+    name: Độ giống của người lạ (TB / độ lệch)
+    value: mặt 0,10 / 0,10; dáng 0,35 / 0,12; bộ phận 0,45 / 0,15
+    where: '`l1_model.py` (`STRANGER`)'
+    label: '**[giả định]**'
+    source: Thứ tự theo ArcFace (CVPR 2019), BoT re-ID (CVPRW 2019), Ye et al. TPAMI 2022, Lin et al. PR 2019; giá trị là giả định
+  - id: L1-7
+    name: Người mặc giống
+    value: ρ = 2 % (quét 0, 5 %); độ giống bộ phận 0,85 / 0,05
+    where: '`l1_model.py` (`RHO`, `LOOK`)'
+    label: '**[giả định]**'
+    source: 'Tập mở: Li et al. ECCV 2018; Zheng et al. TPAMI 2016'
+  - id: L1-8
+    name: Thứ tự phát manh mối
+    value: xen kẽ theo khía cạnh
+    where: '`l1_model.py` (`order`)'
+    label: '[thiết kế]'
+    source: Mục 113
+  - id: L1-9
+    name: Thiết bị critical cell
+    value: 'Raspberry Pi 5 + Hailo-8L: 257,56 ảnh/s (ResNet-50, batch 8)'
+    where: '`l1_mission.py` (`DEVICES`)'
+    label: '[công bố] yếu'
+    source: Hailo Community benchmark, 06/2024 (chưa bình duyệt)
+  - id: L1-10
+    name: CPU Pi 5 (độ nhạy)
+    value: 79,08 ms mỗi ảnh (ResNet-50 INT8, ONNX Runtime)
+    where: '`l1_mission.py`'
+    label: '[công bố] yếu'
+    source: arXiv:2609.16085, Bảng 2 (chưa rõ nơi đăng)
+  - id: L1-11
+    name: Giải mã, băng thông, MAC
+    value: 5 ms mỗi ảnh; 8 GB/s; 20 GMAC/s; vector 2 048 chiều
+    where: '`l1_mission.py`'
+    label: '**[giả định]** (vector: [công bố] ResNet-50)'
+    source: 'Ảnh hưởng nhỏ: thời gian đối sánh < 0,3 s'
+  - id: L1-12
+    name: Thời gian đối sánh
+    value: L × giải mã + L / thông lượng + tìm trong kho M
+    where: '`l1_mission.match_time`'
+    label: '[suy ra]'
+    source: Mục 95–97
+  - id: L1-13
+    name: Hiệu chuẩn tại BS
+    value: 2 000 camera mô phỏng
+    where: '`l1_model.py`'
+    label: '[thiết kế]'
+    source: ''
+- section: 9. Baseline
+  rows:
+  - id: B-1
+    name: 'B3/B8: bán kính nhóm critical cell'
+    value: 300 m, 500 m
+    where: '`mission_baselines.py` (`RADII`)'
+    label: '[thiết kế]'
+    source: Mục 72
+  - id: B-2
+    name: 'B5 quét luống: bề rộng luống'
+    value: thử 12 → 3 cell, lấy luống rộng nhất mà mọi critical cell đủ manh mối với xác suất ≥ 0,9
+    where: '`l1_rank.py` (`LANES`)'
+    label: '[thiết kế]'
+    source: Mục 134
+  - id: B-3
+    name: B8 bay vòng
+    value: bán kính L2-3 quanh tâm nhóm
+    where: '`l1_rank.py`'
+    label: '[suy ra]'
+    source: ''
+  - id: B-4
+    name: Kênh baseline
+    value: xem C4 (Nakagami, lệch)
+    where: ''
+    label: '**lệch**'
+    source: ''

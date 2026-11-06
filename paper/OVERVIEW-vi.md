@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-21
+superseded_by: paper/TECHREPORT-vi.md
+---
 # Tổng quan nghiên cứu River
 
 **Giao truy vấn tìm kiếm tới mạng camera IoT bằng một lượt bay UAV cánh bằng và hợp tác mặt đất có lập kế hoạch**
@@ -65,7 +70,7 @@
 
 ## 2. Bối cảnh và động cơ
 
-Lời gốc: CLAUDE.md §8 mục 38–39. Chi tiết: `paper/INTRO-vi.md`, `paper/RELATED-vi.md`.
+Lời gốc: CLAUDE.md §8 mục 38–39. Chi tiết: `paper/archive/INTRO-vi.md`, `paper/archive/RELATED-vi.md`.
 
 ### 2.1 Tình huống
 - **Nhiều camera:** một khu đô thị có hàng nghìn thiết bị IoT, mỗi thiết bị phục vụ một mục đích khác nhau: camera an ninh, chuông cửa, máy bán hàng tự động, cả camera hành trình của ô tô.
@@ -126,7 +131,7 @@ flowchart TD
 
 ## 4. Mô hình hệ thống
 
-Lời gốc: mục 9–15, 38–42, 56–61. Chi tiết: `paper/SYSTEM-vi.md`, `uav-coop/docs/DEPLOY-vi.md`, `uav-coop/docs/ROUTING-vi.md`, `uav-l2/docs/MAP-vi.md`.
+Lời gốc: mục 9–15, 38–42, 56–61. Chi tiết: `paper/archive/SYSTEM-vi.md`, `uav-coop/docs/DEPLOY-vi.md`, `uav-coop/docs/ROUTING-vi.md`, `uav-l2/docs/MAP-vi.md`.
 
 ### 4.1 Miền, cell và node
 - **Miền** là vùng đất có node, sinh ngẫu nhiên:
@@ -408,7 +413,7 @@ Algorithm FlightLine(Cluster, ρ)
 
 ## 7. Lớp 3: River (đóng góp chính)
 
-Lời gốc: mục 38–55 (ý tưởng và ns‑3), 66–67 (Circle động), 103 (Axe cong). Đặc tả và mã giả: `uav-coop2/docs/L3-vi.md`. Chạy ns‑3: `uav-coop2/docs/RIVER-NS3-vi.md`. Keyword cho paper: `paper/RIVER-vi.md`.
+Lời gốc: mục 38–55 (ý tưởng và ns‑3), 66–67 (Circle động), 103 (Axe cong). Đặc tả và mã giả: `uav-coop2/docs/L3-vi.md`. Chạy ns‑3: `uav-coop2/docs/RIVER-NS3-vi.md`. Keyword cho paper: `paper/archive/RIVER-vi.md`.
 
 ### 7.1 Nhận xét then chốt
 Đường bay γ, vị trí phát của từng gói, và đường cong tỉ lệ mất gói theo khoảng cách ngang đều biết trước. Vì vậy BS biết trước ai sẽ giữ gì, và lập được kế hoạch hợp tác **trước giờ bay**. Mọi đơn vị là cell; mọi đường đi là cell path cố định.
@@ -611,7 +616,7 @@ Lời gốc: mục 68–73, 111–114. Chi tiết: `uav-l2/docs/L1-MISSION2-vi.m
 
 ## 9. Phương pháp đánh giá
 
-Chi tiết: `uav-l2/docs/L1-MISSION2-vi.md` §1, `paper/BASELINES-vi.md`.
+Chi tiết: `uav-l2/docs/L1-MISSION2-vi.md` §1, `paper/archive/BASELINES-vi.md`.
 
 ### 9.1 Công cụ
 - **Mô phỏng mạng:** ns‑3.46, module `lr-wpan` với MAC 802.15.4 đầy đủ.
@@ -798,8 +803,8 @@ Theo `uav-l2/docs/PARAM-SOURCES-vi.md` §7, xếp theo mức ảnh hưởng:
 1. Chạy lại các số chính với N ≥ 120.
 2. So sánh lớp 2 công bằng: MEANDER‑K và subCH‑K (đang chờ duyệt).
 3. B5: baseline quét luống.
-4. Khảo sát tài liệu cho Related Work. Các mục `[tr]` trong `paper/RELATED-vi.md` chưa có tài liệu cụ thể.
-5. Chốt nơi gửi bài (hội nghị 6 trang hay tạp chí), trọng tâm, tên gọi, và bài PECEE của nhóm để trích (`paper/OUTLINE-vi.md`, phần "Cần chốt").
+4. Khảo sát tài liệu cho Related Work. Các mục `[tr]` trong `paper/archive/RELATED-vi.md` chưa có tài liệu cụ thể.
+5. Chốt nơi gửi bài (hội nghị 6 trang hay tạp chí), trọng tâm, tên gọi, và bài PECEE của nhóm để trích (`paper/archive/OUTLINE-vi.md`, phần "Cần chốt").
 
 ### 11.4 Hướng phát triển (chưa cài)
 - **Xác minh hai bước:** đội 2 gửi trước một phần nhỏ bộ tham chiếu và bỏ dở nếu điểm thấp. Hiện mỗi lần xác minh sai tốn đủ 78 s.
@@ -845,10 +850,10 @@ Mỗi dòng ghi số mục trong CLAUDE.md §8, nơi lưu nguyên văn yêu cầ
 | Đường dẫn | Chứa gì |
 |---|---|
 | `CLAUDE.md` §8 | Nguyên văn mọi yêu cầu của người dùng, mục 1–119. Tham chiếu gốc |
-| `paper/OUTLINE-vi.md` | Khung paper, các câu cần chốt |
-| `paper/INTRO-vi.md`, `RELATED-vi.md`, `SYSTEM-vi.md`, `RIVER-vi.md`, `REST-vi.md`, `BASELINES-vi.md` | Keyword từng phần của paper |
+| `paper/archive/OUTLINE-vi.md` | Khung paper, các câu cần chốt |
+| `paper/archive/INTRO-vi.md`, `archive/RELATED-vi.md`, `archive/SYSTEM-vi.md`, `archive/RIVER-vi.md`, `archive/REST-vi.md`, `archive/BASELINES-vi.md` | Keyword từng phần của paper |
 | `paper/L1-MODEL-vi.md` | **Mô hình lớp 1 bản chốt**: công thức (1)–(24), bảng tham số, tài liệu tham khảo |
-| `paper/L1-STATEMENT-vi.md`, `L1-VECTOR-vi.md`, `MEMO-2026-10-19-L1-vi.md` | Các bản lớp 1 trước, phần bàn về vector và độ chuẩn hoá; giữ để tra cứu |
+| `paper/L1-STATEMENT-vi.md`, `archive/L1-VECTOR-vi.md`, `archive/MEMO-2026-10-19-L1-vi.md` | Các bản lớp 1 trước, phần bàn về vector và độ chuẩn hoá; giữ để tra cứu |
 | `uav-sar/docs/` | Dự án tiền thân; A2G‑RUN, A2G‑SWEEP, G2G‑CHAIN; `STATUS.md` |
 | `uav-coop/` | Module ns‑3: `coop-deploy` (sinh mạng, vai trò, định tuyến), `coop-pass` (lượt bay), tóm tắt nội cell, Manifest. Tham số chung: `models/common/coop-params.h` |
 | `uav-coop2/docs/L3-vi.md` | **Đặc tả River**, mã giả ngắn và đầy đủ |

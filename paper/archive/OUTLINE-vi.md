@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-20
+superseded_by: bản nộp ICC v5.3
+---
 # Khung paper (bản 1) — đại ý từng phần
 
 Lời gốc: CLAUDE.md §8 mục 74, cùng tầm nhìn ở mục 38–39. Bản này chỉ ghi ý chính để anh/chị chỉnh dần. Paper viết bằng tiếng Anh, nên tên mục ghi bằng tiếng Anh.
@@ -83,7 +88,7 @@ Keyword: [`RELATED-vi.md`](RELATED-vi.md).
 ## 3. System Model and Problem
 
 Keyword: [`SYSTEM-vi.md`](SYSTEM-vi.md).
-Lớp 1 (đối sánh signature tại nút), phát biểu chi tiết có nguồn: [`L1-STATEMENT-vi.md`](L1-STATEMENT-vi.md).
+Lớp 1 (đối sánh signature tại nút), phát biểu chi tiết có nguồn: [`L1-STATEMENT-vi.md`](../L1-STATEMENT-vi.md).
 
 - **Mạng mặt đất:**
   - N node không đồng nhất (quan sát, tính toán, giao tiếp).
@@ -111,7 +116,7 @@ Lớp 1 (đối sánh signature tại nút), phát biểu chi tiết có nguồn
 ## 4. Mission Overview
 
 Keyword: [`REST-vi.md`](REST-vi.md).
-Chọn đường bay qua mỗi cluster (mã giả ngắn và đầy đủ): [`../uav-l2/docs/FLIGHTLINE-vi.md`](../uav-l2/docs/FLIGHTLINE-vi.md).
+Chọn đường bay qua mỗi cluster (mã giả ngắn và đầy đủ): [`../../uav-l2/docs/FLIGHTLINE-vi.md`](../../uav-l2/docs/FLIGHTLINE-vi.md).
 
 - Ba pha, ba lớp của Pha 1, và lớp 3 nằm ở đâu trong đó.
 - Hình tổng quan: một bản đồ có các cluster, đường bay đội 1, River, nghi vấn và đường bay đội 2. Có thể lấy một khung từ trang replay.

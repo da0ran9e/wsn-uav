@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-15
+---
 # Edge camera device compute capabilities and feasible recognition pipelines (Layer 1 node tiers)
 
 Scope note: 18 tool calls were used. Benchmarks below are tagged **[V]** = vendor-reported (datasheet / model zoo / vendor blog), **[I]** = independent or community measurement, **[R]** = retailer/marketing copy. Unless stated, inference-only time (no decode, pre- or post-processing). Several devices on the requested list could not be verified within budget; they are listed under Gaps with the commonly quoted figure explicitly marked unverified.

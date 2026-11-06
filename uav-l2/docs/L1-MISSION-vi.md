@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-19
+---
 # Nhiệm vụ P với mô hình đối sánh lớp 1 (tham số M, L, F, f, k)
 
 Lời gốc: CLAUDE.md §8 mục 92–94. Phát biểu lớp 1: `paper/L1-STATEMENT-vi.md` §6–7. Mã: `tools/l1_mission.py`; dựng lại hình học từ dữ liệu đã lưu: `tools/regeom.py`. Log: `logs/2026-10-19_1500-l1-propose/`.

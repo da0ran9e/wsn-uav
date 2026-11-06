@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-20
+superseded_by: bản nộp ICC v5.3
+---
 # Các phần còn lại — keyword
 
 Lời gốc: CLAUDE.md §8 mục 80. [ta] = số thăm dò (cần chạy lại, N ≥ 120).

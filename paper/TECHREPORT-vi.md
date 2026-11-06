@@ -1,10 +1,14 @@
+---
+status: current
+updated: 2026-10-29
+---
 # Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N)
 
 - **Phiên bản:** 2026-10-29, bản 2. Đây là tài liệu sống: mỗi lần chiến dịch có thêm seed, cập nhật §0 và §3 (cách làm trong `docs/progress/HANDOFF.md`).
 - **Dữ liệu chụp lúc:** commit `9bce43b` của `origin/claude/document-review-xslwgg` (2026-10-28 22:48 UTC; bảng §3 cập nhật khi dừng chiến dịch ở 81 %, mục 209).
 - **Phạm vi:** toàn bộ quá trình từ mục 186 tới mục 209 của CLAUDE.md §8, cộng phần nền (hệ thống, River, bộ dự đoán) mà các mục này dựa vào.
 - **Tài liệu gốc nên đọc kèm:**
-  - `paper/SYSTEM-vi.md`, `paper/RIVER-vi.md`, `paper/BASELINES-vi.md`, `paper/L1-MODEL-vi.md`: nền;
+  - `paper/archive/SYSTEM-vi.md`, `paper/archive/RIVER-vi.md`, `paper/archive/BASELINES-vi.md`, `paper/L1-MODEL-vi.md`: nền;
   - `logs/2026-10-27_1714-campaign4/README.md`: chiến dịch 4;
   - `logs/2026-10-28_0810-phase1-paths/README.md`: hình và độ dài đường bay.
 
@@ -273,7 +277,7 @@ Execute (ns-3, 802.15.4, 7-colour channel grid, one gateway per cell pair):
 - *Giữa: xám là mọi gói, đen là cửa sổ quanh CH, mỗi vạch màu là cửa sổ riêng của một critical cell.*
 - *Dưới: thời điểm xong. Chấm rỗng là cửa sổ quanh CH (3–88 s), chấm đặc là cửa sổ riêng (3–25 s).*
 
-Chi tiết và mã giả đầy đủ: `paper/RIVER-vi.md`, `uav-coop2/docs/L3-vi.md` §3–4.
+Chi tiết và mã giả đầy đủ: `paper/archive/RIVER-vi.md`, `uav-coop2/docs/L3-vi.md` §3–4.
 
 ### 4.1 CHORD + River (đề xuất 1)
 

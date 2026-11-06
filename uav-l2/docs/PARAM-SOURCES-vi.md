@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-19
+superseded_by: paper/PARAMS-vi.md
+---
 # Rà soát nguồn gốc tham số giả lập (CLAUDE.md §8 mục 102)
 
 Nhãn:

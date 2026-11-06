@@ -1,6 +1,6 @@
 # 2026-10-22 · Báo cáo kỹ thuật lớp 2 kiểu IEEE (CLAUDE.md §8 mục 127)
 
-**Mục đích:** viết một báo cáo kỹ thuật 3–4 trang theo mẫu IEEE (IEEEtran, hai cột) về lớp 2. Báo cáo gồm ý tưởng cốt lõi, các thủ tục với mã giả kiểu ICC/TWC, hình tuyển chọn (kể cả hình cho từng bước) và vài kết quả đáng kể nhất. Nó là nguồn cho 1–2 mục của bài gửi IEEE ICC, nên được viết bằng tiếng Anh như khung bài (`paper/OUTLINE-vi.md`).
+**Mục đích:** viết một báo cáo kỹ thuật 3–4 trang theo mẫu IEEE (IEEEtran, hai cột) về lớp 2. Báo cáo gồm ý tưởng cốt lõi, các thủ tục với mã giả kiểu ICC/TWC, hình tuyển chọn (kể cả hình cho từng bước) và vài kết quả đáng kể nhất. Nó là nguồn cho 1–2 mục của bài gửi IEEE ICC, nên được viết bằng tiếng Anh như khung bài (`paper/archive/OUTLINE-vi.md`).
 
 **Môi trường:** máy chưa có TeX. Đã cài gói Ubuntu `texlive-latex-base`, `texlive-latex-recommended`, `texlive-publishers` (IEEEtran), `texlive-science` (algorithmicx, siunitx) và `texlive-fonts-recommended`, khoảng 69 MB. Đây là cài đặt hệ thống, không thuộc kho; phiên sau cần cài lại để dựng.
 
@@ -12,7 +12,7 @@
 
 **Đầu vào:** chỉ dùng hình và số đã có, không chạy giả lập mới:
 - hình trong `uav-l2/docs/figures/`;
-- số trong `uav-l2/docs/{CLUSTER-RIVER,FLIGHTLINE,CURVE,L2-DIAG,SAT}-vi.md` và `paper/L2-PARTITION-vi.md`.
+- số trong `uav-l2/docs/{CLUSTER-RIVER,FLIGHTLINE,CURVE,L2-DIAG,SAT}-vi.md` và `paper/archive/L2-PARTITION-vi.md`.
 
 **Đầu ra:** thư mục `paper/l2-techreport/` tự chứa, đưa thẳng lên Overleaf được:
 - `l2-techreport.tex` và `l2-techreport.pdf` (khoảng 1,5 MB);

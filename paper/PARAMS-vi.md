@@ -1,4 +1,10 @@
+---
+status: current
+updated: 2026-10-24
+---
 # Bảng tham số toàn bộ giả lập, để kiểm tra nguồn (CLAUDE.md §8 mục 152)
+
+> Các bảng ở mục 1–9 sinh từ `params.yaml` ở gốc repo bằng `python3 tools/params.py render`; sửa `params.yaml`, không sửa tay bảng.
 
 Các giá trị lấy thẳng từ mã đang chạy (2026-10-24), không phải từ tài liệu cũ. Bảng này tiếp nối `uav-l2/docs/PARAM-SOURCES-vi.md` (mục 102) và thêm các tham số lớp 2 mới (MEANDER kiểu luống, động học bay).
 

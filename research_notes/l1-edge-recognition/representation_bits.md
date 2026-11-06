@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-15
+---
 # Transmitted unit and size of a recognition signature, and the bits needed to keep false alarms low
 
 Scope: what a UAV should broadcast as the "query" (reference signatures for 1 to a few targets) over IEEE 802.15.4 (99 B usable payload per frame), and how many bits each signature needs so that the expected number of false reports per cluster stays at about 1 or below. Matching is done against 10^4 to 10^6 stored crops per node, across hundreds to thousands of nodes.

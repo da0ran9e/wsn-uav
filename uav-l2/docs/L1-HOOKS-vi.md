@@ -1,9 +1,13 @@
+---
+status: history
+updated: 2026-10-16
+---
 # Lớp 1 chạm vào giả lập ở đâu
 
 Lời gốc: CLAUDE.md §8 mục 85.
 
 Nguồn số liệu:
-- Báo cáo `reports/Nhận dạng tại node biên lớp 1.md`. Các nhãn [nguồn], [nguồn·trích], [chưa kiểm], [mô hình] giữ nguyên như trong báo cáo.
+- Báo cáo `reports/l1-edge-recognition.md`. Các nhãn [nguồn], [nguồn·trích], [chưa kiểm], [mô hình] giữ nguyên như trong báo cáo.
 - Phép tính mới trên dữ liệu lượt bay đã có: `uav-l2/tools/l1_files.py` → `data/mission/l1-files.csv`. Phép tính dùng 40 bản đồ, 200 cluster, **1 304 critical cell**, và không chạy ns-3 mới.
 
 ## 1. Bảng đối chiếu: số tạm trong giả lập và điều lớp 1 nói

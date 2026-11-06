@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-14
+---
 # Giả lập trọn nhiệm vụ Pha 1 — từ bản đồ tới khi đội 2 về BS
 
 Lời gốc: CLAUDE.md §8 mục 68. Lõi của giả lập là cơ chế tầng 3 (River, [`../../uav-coop2/docs/L3-vi.md`](../../uav-coop2/docs/L3-vi.md)),

@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-22
+---
 # Chốt propose lớp 2: các vòng thử ngày 2026-10-22
 
 Lời gốc: CLAUDE.md §8 mục 133–136. Log: `logs/2026-10-22_1806-propose-iter/` (vòng 1–6 trên k8-s10 và hai bản đồ kiểm tra), `logs/2026-10-22_1947-swath-validate/` (16 bản đồ). Mã: `tools/swath.py`, `tools/swath_mission.py`, `tools/chord_tour.py`, `tools/mission.py --chordTour`, `tools/l2_metrics.py`, `tools/l2_compare_fig.py`.

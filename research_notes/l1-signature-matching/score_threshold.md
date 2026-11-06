@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-18
+---
 # What a "70–90 % match score" means, and how a fixed YES/NO threshold behaves (persons, vehicles, animals)
 
 Scope note: 19 tool calls were used. Several primary PDFs (ArcFace full paper, the 2507.12107 threshold table, GOM PDF) could not be text-extracted in this environment; numbers below come only from pages actually read. Everything I fitted or derived myself is labelled **[EXTRAPOLATION]**.

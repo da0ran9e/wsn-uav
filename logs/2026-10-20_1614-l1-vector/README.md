@@ -6,7 +6,7 @@
 
 **Đầu ra:**
 - `uav-l2/docs/data/l1/vector.csv`
-- Thiết kế và kết quả: `paper/L1-VECTOR-vi.md`
+- Thiết kế và kết quả: `paper/archive/L1-VECTOR-vi.md`
 
 **Kết quả chính** (d′ = 4, k = 3, thiết bị lệch, tỉ lệ cell thật đứng đầu):
 

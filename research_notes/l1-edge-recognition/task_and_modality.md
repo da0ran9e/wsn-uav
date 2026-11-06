@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-15
+---
 # Recognition task and target modality for an edge camera node receiving a compact query (Layer 1)
 
 Scope: which recognition task (detection / attribute search / 1:1 / open-set 1:N / retrieval-re-ID) and which modality (face, whole-body re-ID, gait, vehicle re-ID, LPR, text/attribute person search) best fits: a UAV pushes a ~100 kB–1 MB query over 802.15.4 into heterogeneous urban cameras, each node scans hours to days of its own footage and returns a few-byte suspicion score over LoRa/satellite.

@@ -104,6 +104,11 @@ chữ (mục 63) để dễ dùng lại; bản có nhãn trục cho paper lưu r
 tên file, mô tả trực quan một câu, lệnh hoặc script sinh ra, tham số chính (bản đồ, seed, binary), ngày, commit.
 Chỉ áp dụng cho ảnh mới; ảnh cũ không đổi tên hay xoá.
 
+**Tài liệu:** mỗi tài liệu trong `paper/`, `uav-l2/docs/`, `docs/progress/`, `research_notes/`, `reports/` mở đầu bằng
+khối YAML `status` (current / reference / superseded / history), `updated`, và `superseded_by` nếu có. Bản cũ chuyển
+vào thư mục `archive/` gần nhất, không xoá. Sau khi thêm hoặc thay tài liệu: `python3 tools/build_index.py`,
+rồi `python3 tools/check.py` (không thêm liên kết hỏng mới, không commit tệp mới trên 5 MB).
+
 **Trạng thái và kế hoạch:** đọc `docs/progress/HANDOFF.md` trước khi làm tiếp việc dở. Kế hoạch tái tổ chức
 repo và ước lượng chi phí từng bước: `docs/REORG-GUIDE-vi.md`.
 
@@ -114,11 +119,13 @@ repo và ước lượng chi phí từng bước: `docs/REORG-GUIDE-vi.md`.
 | `uav-l2/` | lớp 2 + mô phỏng nhiệm vụ đang làm (CHORD, LM-Tour, River, các baseline); `tools/`, `docs/` | — |
 | `paper/` | tài liệu cho paper SigDrop (ICC), `icc-v5/` LaTeX | — |
 | `logs/` | log chạy chương trình theo `<ngày-giờ>-<tên>/`, mỗi thư mục một README; chỉ mục `logs/INDEX.md` (thêm một dòng mỗi thư mục mới) | — |
-| `docs/` | `chatlog/`, `progress/HANDOFF.md`, `EXPERIMENTS-INDEX.md` (mã thí nghiệm, số liệu trong paper), `REORG-GUIDE-vi.md`, insights | — |
+| `docs/` | `chatlog/`, `progress/HANDOFF.md`, `EXPERIMENTS-INDEX.md` (mã thí nghiệm, số liệu trong paper), `DOCS-INDEX.md` (tài liệu theo trạng thái, sinh tự động), `REORG-GUIDE-vi.md`, insights | — |
 | `uav-sar/` | thí nghiệm A2G-RUN, A2G-SWEEP, G2G-CHAIN (mục 1–8) | `uav-sar/CLAUDE.md` |
-| `uav-coop/`, `uav-coop2/` | cơ chế Manifest và River trên một cluster (mục 9–55), đã đóng | — |
-| `models/`, `helper/`, `examples/` | mã wsn-uav cũ (scenario 1–4) | `models/CLAUDE.md` |
-| `tools/` | `runlog.py`, `run_batch.sh` | — |
+| `uav-coop/`, `uav-coop2/` | cơ chế Manifest và River trên một cluster (mục 9–55); tài liệu đã đóng, nhưng mã ns-3 của chúng (`deploy`, `pass`, `river`) vẫn là binary của mô phỏng hiện tại | — |
+| `archive/` | `wsn-uav-legacy/` (mã wsn-uav cũ scenario 1–4, tài liệu và visualize cũ) | `archive/wsn-uav-legacy/models/CLAUDE.md` |
+| `paper/archive/` | bản nháp paper đã bị thay thế | — |
+| `research_notes/`, `reports/` | nghiên cứu lớp 1 (nhận dạng tại node biên, đối sánh signature) | — |
+| `tools/` | `runlog.py`, `run_batch.sh`, `check.py` (liên kết, nhãn trạng thái, INDEX ảnh, tệp lớn), `build_index.py` (`docs/DOCS-INDEX.md`), `params.py` (`params.yaml` → bảng tham số) | — |
 
 ---
 

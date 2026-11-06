@@ -1,9 +1,13 @@
+---
+status: history
+updated: 2026-10-17
+---
 # Lớp 1: câu hỏi nghiên cứu và tham số đang dùng trong giả lập
 
 Lời gốc: CLAUDE.md §8 mục 83, 85, 86.
 
 **Nguồn:**
-- Số đề xuất lấy từ báo cáo `reports/Nhận dạng tại node biên lớp 1.md` và phép tính `L1-HOOKS-vi.md` §2.
+- Số đề xuất lấy từ báo cáo `reports/l1-edge-recognition.md` và phép tính `L1-HOOKS-vi.md` §2.
 - Nhãn [nguồn], [nguồn·trích], [chưa kiểm], [mô hình] giữ nguyên nghĩa như trong báo cáo.
 
 **Cột "Trạng thái":**

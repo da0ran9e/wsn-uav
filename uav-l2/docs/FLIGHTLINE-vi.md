@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-15
+---
 # Chọn đường bay qua mỗi cluster (FlightLine)
 
 Lời gốc: CLAUDE.md §8 mục 82. Ý tưởng gốc: mục 12, 13, 41, 44 (ý 4) và 64.

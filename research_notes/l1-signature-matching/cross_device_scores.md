@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-18
+---
 # Cross-device match-score variation: same recognition model, same reference signatures, different edge devices
 
 Scope: a UAV delivers 3–5 signature files (~4–5 KB, about one 512-d fp16 embedding or a few smaller codes per file). Heterogeneous cameras (HiSilicon/Ambarella/Rockchip SoCs, doorbells, RPi + Hailo/Coral, Jetson) embed their own crops and answer YES if cosine ≥ a fixed threshold in the 0.70–0.90 range. The question is how much the score moves because of the device.

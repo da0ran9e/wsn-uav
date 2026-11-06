@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-22
+---
 # River: hợp tác mặt đất có lập kế hoạch sau một lượt bay UAV
 
 **Lớp 3 của Pha 1: cơ chế, thuật toán, hình từng bước và đánh giá trên ns‑3**

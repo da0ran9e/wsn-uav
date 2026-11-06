@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-22
+---
 # River: cơ chế lớp 3
 
 **Hợp tác mặt đất sau một lượt bay UAV: từng thuật toán, mã giả và hình từng bước**

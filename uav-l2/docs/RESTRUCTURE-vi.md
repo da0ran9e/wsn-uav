@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-17
+---
 # Tái cấu trúc cluster trước nhiệm vụ: chia theo luồng (LANE)
 
 Lời gốc: CLAUDE.md §8 mục 84. Mã: `uav-l2/tools/restructure.py`. Hook vào giả lập trọn nhiệm vụ: `mission.py --partition=lane --lane 4.5` (đã cài, **chưa chạy ns-3**).

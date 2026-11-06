@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-13
+---
 # C3 (cluster vàng) — River từng bước, lượt 1
 
 Lời gốc: CLAUDE.md §8 mục 64–65. Thuật toán: [`../../uav-coop2/docs/L3-vi.md`](../../uav-coop2/docs/L3-vi.md).

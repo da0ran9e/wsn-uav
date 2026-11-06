@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-15
+superseded_by: bản nộp ICC v5.3
+---
 # Related Work — keyword
 
 Lời gốc: CLAUDE.md §8 mục 77. Mỗi nhóm ghi: chủ đề · điểm khác biệt của ta. [tr] = cần tìm tài liệu cụ thể.

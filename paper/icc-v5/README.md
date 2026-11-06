@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-26
+---
 # Draft v5: Algorithm 3 and Evaluation (CLAUDE.md §8 item 184)
 
 Bộ khung cho bản `SigDrop_ICC_draft_v5.pdf`. Chưa chạy thực nghiệm mới (người dùng sắp hết quota).

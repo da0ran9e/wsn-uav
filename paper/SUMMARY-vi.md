@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-26
+superseded_by: paper/TECHREPORT-vi.md
+---
 # Tổng hợp nghiên cứu: giao truy vấn tìm kiếm bằng một lượt bay UAV cánh bằng và hợp tác mặt đất có lập kế hoạch
 
 - **Phiên bản:** 2026-10-26, sau mục 183 của CLAUDE.md §8. Bản này thay `paper/OVERVIEW-vi.md` (21/10) làm bản tổng hợp hiện hành; OVERVIEW vẫn giữ để tra phần lớp 1 và lịch sử trước 21/10.
@@ -44,7 +49,7 @@
 
 ## 2. Bối cảnh và động cơ
 
-Lời gốc: mục 38–39. Chi tiết: `paper/INTRO-vi.md`, `paper/RELATED-vi.md`.
+Lời gốc: mục 38–39. Chi tiết: `paper/archive/INTRO-vi.md`, `paper/archive/RELATED-vi.md`.
 
 - **Camera nhiều, đa dạng, không biết cần tìm gì.** Camera an ninh, chuông cửa, máy bán hàng, camera hành trình; năng lực và chủ sở hữu khác nhau; dữ liệu mới ghi đè dữ liệu cũ.
 - **Không tải dữ liệu về được.** Vùng hoang dã chỉ có LoRa hoặc vệ tinh (vài trăm byte mỗi giờ). Đô thị vướng pháp lý.
@@ -113,7 +118,7 @@ Lời gốc: mục 83–102, 110–114, 118. Chi tiết: `paper/L1-MODEL-vi.md` 
 
 ## 6. Lớp 2: đường bay
 
-Lời gốc: mục 56–64, 70, 82, 84, 103–106, 115–118, 120–121, 133–159. Chi tiết: `paper/L2-PARTITION-vi.md`, `paper/l2-techreport/` (IEEE 4 trang), `uav-l2/docs/PROPOSE-ITER-vi.md`, `SWATH-vi.md`, `SAT-vi.md`.
+Lời gốc: mục 56–64, 70, 82, 84, 103–106, 115–118, 120–121, 133–159. Chi tiết: `paper/archive/L2-PARTITION-vi.md`, `paper/l2-techreport/` (IEEE 4 trang), `uav-l2/docs/PROPOSE-ITER-vi.md`, `SWATH-vi.md`, `SAT-vi.md`.
 
 ### 6.1 Phương án chốt: CHORD-T
 1. **Dây cung qua CH.** Mỗi hướng θ ∈ {0°, 2°, …, 178°} cho một đường thẳng qua CH; ℓ(θ) là chiều dài trong cụm (hồ, khe, cụm khác không tính).
@@ -267,7 +272,7 @@ T\* trung bình (s), k8 / k12 / k16:
 | Ba tài liệu cho paper | `paper/SUMMARY-vi.md`, `paper/EXPERIMENTS-vi.md`, `paper/LMTOUR-vi.md` |
 | Kết quả và seed | `uav-l2/docs/RESULTS-vi.md`; `uav-l2/docs/data/results/` (CSV, bản lưu 12 nhiệm vụ trong `raw/`) |
 | Lớp 1 | `paper/L1-MODEL-vi.md`; mã `uav-l2/tools/l1_model.py` |
-| Lớp 2 | `paper/L2-PARTITION-vi.md`, `paper/l2-techreport/`; mã `uav-l2/tools/{mission,chord_tour,pass_speed,kin_time}.py` |
+| Lớp 2 | `paper/archive/L2-PARTITION-vi.md`, `paper/l2-techreport/`; mã `uav-l2/tools/{mission,chord_tour,pass_speed,kin_time}.py` |
 | Lớp 3 | `paper/L3-TECHREPORT-vi.md`, `paper/techreport/`; ns-3 `uav-coop2/examples/coop2-river.cc`; kế hoạch `uav-coop2/tools/river_plan.py`, `river_export.py` |
 | Nhiệm vụ và chấm | `uav-l2/tools/l1_rank.py`, `cmp_table.py`, `fc_table.py` |
 | Baseline | `uav-l2/tools/fc_baseline.py`, `dn_baseline.py`, `mission_baselines.py` |

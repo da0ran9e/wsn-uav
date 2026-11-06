@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-21
+---
 # Ngưỡng bão hoà và điểm tối ưu theo hình dạng cụm
 
 Lời gốc: CLAUDE.md §8 mục 120–121.

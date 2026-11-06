@@ -1,3 +1,7 @@
+---
+status: current
+updated: 2026-10-29
+---
 # Thực nghiệm, baseline và kết quả
 
 - **Phiên bản:** 2026-10-29. Lời gốc: CLAUDE.md §8 (mục 1–8 kênh, 48–55 River, 68–73 nhiệm vụ, 120–169 lớp 2 và baseline, 182 bảng chung, 183 tài liệu này, 187–188 khung evaluation mới và chiến dịch 4).

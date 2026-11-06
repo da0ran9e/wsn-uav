@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-13
+---
 # Tầng 2 — bước 1: miền bay
 
 Lời gốc: CLAUDE.md §8 mục 56–61.

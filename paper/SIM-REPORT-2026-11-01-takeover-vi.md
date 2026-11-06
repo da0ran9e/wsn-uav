@@ -1,3 +1,7 @@
+---
+status: current
+updated: 2026-11-01
+---
 # Báo cáo mô phỏng 2026-11-01: cơ chế takeover (dấu ranh giới) cho River khi đường bay lệch
 
 Nối tiếp `paper/SIM-REPORT-2026-10-31-vi.md` §3 (thử nghiệm gió). CLAUDE.md §8 mục 257–259 và yêu cầu ngày 2026-11-01.

@@ -1,3 +1,8 @@
+---
+status: superseded
+updated: 2026-10-23
+superseded_by: paper/EXPERIMENTS-vi.md
+---
 # Baseline và ablation — keyword
 
 Lời gốc: CLAUDE.md §8 mục 81; cập nhật theo mục 110–114 (mô hình lớp 1 mới, pha 2 hoàn thành khi xác minh xong c\*).

@@ -8,7 +8,7 @@ glossary tips on every #g-… link, MathJax for the $$…$$ formulas and the fig
             republished to https://claude.ai/artifact/BTcAwySMrwES5tHsLdCKw2
   river-l3  paper/RIVER-L3-vi.md (items 122, 124) -> <out_dir>/river-l3.html,
             republished to https://claude.ai/artifact/WpB2R7G7pVpo4QUwjW4DXB
-  l2        paper/L2-PARTITION-vi.md (items 123, 124) -> <out_dir>/l2-partition.html,
+  l2        paper/archive/L2-PARTITION-vi.md (items 123, 124) -> <out_dir>/l2-partition.html,
             republished to https://claude.ai/artifact/4RMXn44sBxd4YLig4NBhqb
 All write the figures to <out_dir>/fig/*.png.
 """
@@ -36,7 +36,7 @@ DOCS = {
         lede="Hợp tác mặt đất sau một lượt bay UAV: từng thuật toán với mã giả ngắn, mã giả đầy đủ và hình từng bước.",
         chips=[("Phiên bản", "22‑10‑2026"), ("Mọi số liệu:", "thăm dò, N &lt; 120")]),
     "l2": dict(
-        src="L2-PARTITION-vi.md", out="l2-partition.html", figures=6, title="Lớp 2: phân vùng MEANDER",
+        src="archive/L2-PARTITION-vi.md", out="l2-partition.html", figures=6, title="Lớp 2: phân vùng MEANDER",
         eyebrow="Lớp 2 của Pha 1 · bản rút gọn",
         lede="Chọn đường bay trước, rồi chia cluster theo đường bay: luồng cong bám địa hình, từng bước với mã giả "
              "và hình.",

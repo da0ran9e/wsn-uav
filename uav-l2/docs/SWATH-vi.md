@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-10-22
+---
 # SWATH-K: lớp 2 bằng một đường luống liền
 
 Lời gốc: CLAUDE.md §8 mục 115–118, 135–136. Mã: `tools/swath.py` (chia cụm, đường bay), `tools/swath_mission.py` (nhiệm vụ), `tools/dubins.py` (`path_csc`), `tools/mission_policy.py` (tour `skin`), `tools/l2_metrics.py` (chỉ số giao dữ liệu). Log: `logs/2026-10-22_1806-propose-iter/`, `logs/2026-10-22_1947-swath-validate/`.

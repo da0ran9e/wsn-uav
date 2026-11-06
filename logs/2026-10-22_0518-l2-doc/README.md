@@ -3,7 +3,7 @@
 **Mục đích:** một bản giống tài liệu lớp 3 (`paper/RIVER-L3-vi.md`), nhưng cho lớp 2 và ở mức mô tả nhanh: cơ chế phân vùng đề xuất (MEANDER), từng bước với mã giả ngắn và đầy đủ, hình từng bước, kết quả và tình trạng.
 
 **Đầu ra:**
-- `paper/L2-PARTITION-vi.md`: 9 mục, 10 hình.
+- `paper/archive/L2-PARTITION-vi.md`: 9 mục, 10 hình.
 - Trang web: https://claude.ai/artifact/4RMXn44sBxd4YLig4NBhqb (riêng tư cho tới khi được chia sẻ).
 - Bốn hình cặp mới, không chữ: `uav-l2/docs/figures/meander-k6-s3-b220-w1-step-{12,34,56,78}.png`. Mỗi hình là hai ô liền nhau của hình 8 bước có sẵn (`…-steps.png`), lưu riêng để đọc được trên trang.
 

@@ -1,5 +1,5 @@
 """Layer 1 seen from the pass (CLAUDE.md §8 item 85): complete query files a critical cell holds right after the
-pass, before River, for file sizes from the layer-1 report (reports/Nhận dạng tại node biên lớp 1.md).
+pass, before River, for file sizes from the layer-1 report (reports/l1-edge-recognition.md).
 
     python3 tools/l1_files.py --works "W/k*" "W/camp/k*" --out docs/data/mission/l1-files.csv
 

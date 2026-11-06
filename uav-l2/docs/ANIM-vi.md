@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-25
+---
 # Các animation (không chữ trên bản đồ)
 
 Lời gốc: CLAUDE.md §8 mục 71, 86, 87, 105.

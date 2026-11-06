@@ -65,3 +65,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | DLL | [`2026-10-30_1730-deluge-lite`](2026-10-30_1730-deluge-lite/) | Deluge-lite trên LM-Tour, k12 (không README, tạm dừng) | 233, 241 | dở |
 | WND | [`2026-10-31_0000-wind`](2026-10-31_0000-wind/) | sai số quỹ đạo do gió, σ 50/100/200 m | 250–256 | hiện hành (paper §VI) |
 | TKO | [`2026-11-01_0600-takeover`](2026-11-01_0600-takeover/) | River + takeover trên bảng sai số đường bay | 257–264 | hiện hành (paper §IV, §VI) |
+| REORG | [`2026-11-06_0000-reorg`](2026-11-06_0000-reorg/) | tái tổ chức repo bước 4–8: nhãn tài liệu, archive, params.yaml, check.py | 273 | vận hành |

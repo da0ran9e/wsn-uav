@@ -1,3 +1,7 @@
+---
+status: reference
+updated: 2026-10-15
+---
 # Signatures per target and coarse-to-fine query organisation (Q5 and Q9)
 
 Context: a UAV broadcasts the query over IEEE 802.15.4 with 99 B payload per frame. A file is usable only when it arrives complete. This note collects evidence on (Q5) how many reference images or templates one target needs, and (Q9) whether the query can be layered so that partial reception is still useful.

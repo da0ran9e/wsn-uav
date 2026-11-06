@@ -26,5 +26,5 @@
 |---|---|---|---|
 | SAT | Ngưỡng bão hoà theo hình dạng cụm | `logs/2026-10-21_1738-saturation/` | điểm tối ưu dùng cho MEANDER (`uav-l2/docs/SAT-vi.md`) |
 | FCB, BL2 | FC, DN và sáu baseline trước C4 | `logs/2026-10-25_0600-fc-baseline/`, `logs/2026-10-26_0900-baselines/` | bị C4 thay thế; dữ liệu `uav-l2/docs/data/results/{chord-fc,baselines}.csv` |
-| DLL | Deluge-lite trên LM-Tour, k12 | `logs/2026-10-30_1730-deluge-lite/` | tạm dừng (mục 241), chưa có README |
+| DLL | Deluge-lite trên LM-Tour, k12 | `logs/2026-10-30_1730-deluge-lite/` | tạm dừng (mục 241); River 16 lượt, Deluge-lite `dlb` 2 lượt |
 | C4 (phần còn lại) | 70 job chưa xong | `docs/progress/HANDOFF.md` | `lmd 4 r500 16` hỏng tất định (river-bin segfault ở C10) |

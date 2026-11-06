@@ -15,7 +15,7 @@
 | 5. Lưu trữ module cũ | [x] 2026-11-06 | wsn-uav cũ (models, helper, examples, CMakeLists, wscript, docs cũ) → `archive/wsn-uav-legacy/`. **Không** dời `uav-coop/`, `uav-coop2/`: mã ns-3 của chúng là binary deploy/pass/river đang dùng. Đổi tên thư mục có dấu cách trong `research_notes/`, `reports/` |
 | 6. Giảm dung lượng | [~] 2026-11-06 | Chưa làm. Tệp lớn nằm sẵn trong lịch sử git, dời ra Release cũng không giảm `.git` nếu không viết lại lịch sử (thao tác phá huỷ, cần người dùng duyệt). Quy tắc mới: `check.py large` chặn tệp mới trên 5 MB |
 | 7. Một nguồn tham số | [x] 2026-11-06 | `params.yaml` + `tools/params.py` (render/check); bảng `paper/PARAMS-vi.md` tái tạo giống từng byte. Mã chưa đọc `params.yaml` |
-| 8. Kiểm tra tự động | [x] 2026-11-06 | `tools/check.py`, `tools/build_index.py`; chưa cài pre-commit hook |
+| 8. Kiểm tra tự động | [x] 2026-11-06 | `tools/check.py`, `tools/build_index.py`; hook `tools/hooks/pre-commit` (chỉ kiểm tệp được commit, cài bằng `git config core.hooksPath tools/hooks`), 2026-11-06 |
 
 ## 0. Hiện trạng
 

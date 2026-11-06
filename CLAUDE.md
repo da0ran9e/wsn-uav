@@ -107,7 +107,8 @@ Chỉ áp dụng cho ảnh mới; ảnh cũ không đổi tên hay xoá.
 **Tài liệu:** mỗi tài liệu trong `paper/`, `uav-l2/docs/`, `docs/progress/`, `research_notes/`, `reports/` mở đầu bằng
 khối YAML `status` (current / reference / superseded / history), `updated`, và `superseded_by` nếu có. Bản cũ chuyển
 vào thư mục `archive/` gần nhất, không xoá. Sau khi thêm hoặc thay tài liệu: `python3 tools/build_index.py`,
-rồi `python3 tools/check.py` (không thêm liên kết hỏng mới, không commit tệp mới trên 5 MB).
+rồi `python3 tools/check.py` (không thêm liên kết hỏng mới, không commit tệp mới trên 5 MB). Mỗi bản clone mới
+chạy một lần `git config core.hooksPath tools/hooks` để hook pre-commit tự kiểm các tệp được commit.
 
 **Trạng thái và kế hoạch:** đọc `docs/progress/HANDOFF.md` trước khi làm tiếp việc dở. Kế hoạch tái tổ chức
 repo và ước lượng chi phí từng bước: `docs/REORG-GUIDE-vi.md`.

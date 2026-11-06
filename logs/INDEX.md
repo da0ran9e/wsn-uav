@@ -45,8 +45,8 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | A2G | [`2026-10-24_1056-a2g-radius`](2026-10-24_1056-a2g-radius/) | bán kính phát hiệu quả theo môi trường | 158 | tham khảo (paper §III-B) |
 | CHF | [`2026-10-24_1857-chord-fit`](2026-10-24_1857-chord-fit/) | CHORD trên cluster có sẵn, vừa đủ, thứ tự theo River | 159 | lịch sử |
 | RDY | [`2026-10-25_0205-readiness`](2026-10-25_0205-readiness/) | rà soát trước chiến dịch số liệu | 160 | lịch sử |
-| C3a | [`2026-10-25_0237-campaign`](2026-10-25_0237-campaign/) | script chiến dịch 3 (không README) | 161 | lịch sử |
-| C3b | [`2026-10-25_0300-campaign`](2026-10-25_0300-campaign/) | đóng băng binary, thử chạy (không README) | 161 | lịch sử |
+| C3a | [`2026-10-25_0237-campaign`](2026-10-25_0237-campaign/) | script chiến dịch CHORD-T 120 bản đồ, chưa chạy | 161 | lịch sử |
+| C3b | [`2026-10-25_0300-campaign`](2026-10-25_0300-campaign/) | đóng băng binary CAMP-BIN, chạy thử trên k2-s4, k8-s1 | 161 | lịch sử |
 | ENVm | [`2026-10-25_0330-env-modes`](2026-10-25_0330-env-modes/) | ba chế độ kênh R50 ≈ 500/200/100 m | 163 | hiện hành (dùng trong paper) |
 | — | [`2026-10-25_0500-chord-anim`](2026-10-25_0500-chord-anim/) | animation CHORD 8/12/16 cụm | 164 | tham khảo |
 | FCB | [`2026-10-25_0600-fc-baseline`](2026-10-25_0600-fc-baseline/) | baseline FC và DN vs CHORD | 166–168 | bị thay thế bởi C4 |
@@ -62,7 +62,7 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | P1F | [`2026-10-28_0810-phase1-paths`](2026-10-28_0810-phase1-paths/) | hình đường bay pha 1, độ dài tour | 202, 204 | hiện hành (Hình 5) |
 | T3S | [`2026-10-28_t3-surrogate`](2026-10-28_t3-surrogate/) | bộ dự đoán bằng cây so với công thức tuyến tính | — | hiện hành (paper §VI) |
 | DLG | [`2026-10-30_1545-deluge-r100`](2026-10-30_1545-deluge-r100/) | River vs kéo trực tiếp vs Deluge trên pass CHORD, r100 | 227–249 | hiện hành (paper §VI) |
-| DLL | [`2026-10-30_1730-deluge-lite`](2026-10-30_1730-deluge-lite/) | Deluge-lite trên LM-Tour, k12 (không README, tạm dừng) | 233, 241 | dở |
+| DLL | [`2026-10-30_1730-deluge-lite`](2026-10-30_1730-deluge-lite/) | Deluge-lite trên LM-Tour, k12: River 16 lượt, dlb 2 lượt, tạm dừng | 233, 241 | dở |
 | WND | [`2026-10-31_0000-wind`](2026-10-31_0000-wind/) | sai số quỹ đạo do gió, σ 50/100/200 m | 250–256 | hiện hành (paper §VI) |
 | TKO | [`2026-11-01_0600-takeover`](2026-11-01_0600-takeover/) | River + takeover trên bảng sai số đường bay | 257–264 | hiện hành (paper §IV, §VI) |
 | REORG | [`2026-11-06_0000-reorg`](2026-11-06_0000-reorg/) | tái tổ chức repo bước 4–8: nhãn tài liệu, archive, params.yaml, check.py | 273 | vận hành |

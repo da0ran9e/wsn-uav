@@ -1,0 +1,8 @@
+#!/bin/sh
+# Pre-commit check (docs/REORG-GUIDE-vi.md step 8): broken links, missing status front matter, new images missing
+# from their figures/INDEX.md, files over 5 MB, all in the staged files only. Install once per clone:
+#   git config core.hooksPath tools/hooks
+# Skip once with git commit --no-verify.
+cd "$(git rev-parse --show-toplevel)" || exit 0
+command -v python3 >/dev/null || exit 0
+python3 tools/check.py --staged || { echo "pre-commit: fix the items above, or commit with --no-verify"; exit 1; }

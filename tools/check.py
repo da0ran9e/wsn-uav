@@ -5,8 +5,9 @@
   large    tracked files over the size limit
 docs/chatlog/ (verbatim user text) and logs/ (run records) are not link-checked.
 
-    python3 tools/check.py [links|status|index|large ...] [--limit-mb 5]
-Exit code 1 when anything is reported.
+    python3 tools/check.py [links|status|index|large ...] [--limit-mb 5] [--staged]
+--staged checks only the files staged for commit (the pre-commit hook, tools/hooks/pre-commit), so problems
+that predate a commit do not block it. Exit code 1 when anything is reported.
 """
 import argparse, os, re, subprocess, sys
 from urllib.parse import unquote
@@ -86,8 +87,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("checks", nargs="*", default=["links", "status", "index", "large"])
     ap.add_argument("--limit-mb", type=float, default=5)
+    ap.add_argument("--staged", action="store_true")
     a = ap.parse_args()
     files = tracked()
+    if a.staged:
+        out = subprocess.run(["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"], cwd=ROOT,
+                             capture_output=True, text=True).stdout
+        files = [f for f in out.split("\0") if f]
     found = 0
     for c in a.checks:
         rows = large(files, a.limit_mb) if c == "large" else globals()[c](files)

@@ -287,3 +287,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 279 | 2026-11-06 | đề cương · viết thành đoạn văn, thêm hình | [2026-11](2026-11.md) |
 | 280 | 2026-11-06 | đề cương · fountain code, phần cứng, takeover không oracle, mục tiêu 3 pha, định lý | [2026-11](2026-11.md) |
 | 281 | 2026-11-07 | đề cương · fountain code: gói trùng vô ích, cần k gói riêng biệt | [2026-11](2026-11.md) |
+| 282 | 2026-11-07 | đề cương · fountain code: số gói cần với K = 1234, cách báo thiếu | [2026-11](2026-11.md) |

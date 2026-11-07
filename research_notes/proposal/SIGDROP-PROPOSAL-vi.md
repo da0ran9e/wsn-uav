@@ -147,13 +147,37 @@ Bảng dưới định vị đề tài so với các nhóm trên (bản nháp, c
 
 ## 4. Kết quả bước đầu
 
-### 4.1 Bài ICC 2027
+### 4.1 Bài ICC 2027 và các đóng góp chính
 
-Bài SigDrop gửi IEEE ICC 2027 (bản v5.3, LaTeX ở `paper/icc-v5/`) trình bày ba đóng góp:
-- cơ chế River;
-- hai thiết kế quỹ đạo là CHORD (đường thẳng qua CH) và LM-Tour (tour DTSP-N qua các CH, uốn về các landmark trọng số
-  cao nhờ một bộ dự đoán thời gian River);
-- đánh giá trên ns-3.46 với lớp lr-wpan đầy đủ (MAC 802.15.4, CSMA/ACK) và lịch kênh 7 màu cho các cặp gateway.
+Bài SigDrop gửi IEEE ICC 2027 (bản v5.3, LaTeX ở `paper/icc-v5/`) có bốn đóng góp.
+
+**Kiến trúc phát truy vấn một lượt, lập kế hoạch trước.**
+- Mạng được tổ chức sẵn thành lưới cell lục giác. Mỗi cell có một CL, mỗi cặp cell kề có một cặp gateway, và các cặp
+  gateway dùng lịch kênh 7 màu.
+- Trước khi cất cánh, trạm gốc tính được cell nào nghe được đoạn gói nào, nhờ biết trước đường bay và nhịp phát. Từ đó
+  nó giao cho từng cell một vai trò.
+- UAV cánh bằng chỉ bay qua mỗi cụm một lần. Phân phối dưới mặt đất diễn ra theo kế hoạch, không cần khám phá nội dung
+  lúc chạy.
+
+**Cơ chế River (lớp 3).**
+- **SPINE:** các cell nằm dưới đường bay. Mỗi SPINE cell được giao một đoạn gói Seg, phát theo thứ tự UAV bay qua.
+- **Bank:** dựng theo đường vuông góc với SPINE, nhận dữ liệu từ SPINE.
+- **Ring:** các cell quanh mỗi critical cell, lấy dữ liệu từ Bank theo các đường cell đã lập sẵn. Kích thước Ring tuỳ
+  lượng dữ liệu critical cell còn thiếu.
+- **Sửa lỗi** gồm ba bước: SPINE cell lấy bù đoạn của mình từ cell kề; critical cell hỏi lại khi đứng yên quá lâu; và
+  takeover khi đường bay thật lệch khỏi kế hoạch.
+
+**Hai thiết kế quỹ đạo (lớp 2).**
+- **CHORD:** mỗi cụm một đường thẳng qua CH, theo hướng có đoạn nằm trong cụm dài nhất. Đường được cắt vừa đủ dữ liệu,
+  uốn nhẹ về các critical cell gần đó, và nối các cụm bằng đường Dubins.
+- **LM-Tour:** dựng tour DTSP-N qua đĩa bán kính ξ quanh các CH. Sau đó uốn dần tour về các landmark có trọng số cao,
+  tới khi lợi ích bão hoà. Lợi ích được đánh giá bằng một bộ dự đoán thời gian River học từ chính dữ liệu ns-3.
+
+**Mô hình nhiệm vụ đầu–cuối.**
+- **Lớp 1:** mỗi node có một kho ảnh mang điểm khớp ngẫu nhiên. Ảnh tham chiếu có trọng số độ quan trọng do trạm gốc
+  chấm. Critical cell đối sánh xong thì gửi điểm cao nhất về trạm gốc qua LoRa.
+- **Pha 2:** đội UAV thứ hai thăm các cell theo điểm nghi vấn.
+- **T\*:** thời điểm xác minh xong cell có điểm cao nhất.
 
 ![Khái niệm River: SPINE dưới đường bay và các dải cell hai bên](../../uav-coop2/docs/figures/concept-river.png)
 
@@ -165,14 +189,63 @@ ra hai bên là Bank và vùng phục vụ.*
 *Hình 4. Ring: các cell quanh một critical cell, mỗi cell đảm nhận một phần dữ liệu còn thiếu, lấy từ Bank theo đường
 cell đã lập sẵn.*
 
-### 4.2 Kết quả chính
+### 4.2 Thuật toán đã có
+
+Bài ICC trình bày bốn thuật toán dạng mã giả:
+- **Lập bảng Seg tại trạm gốc:** mỗi SPINE cell được phục vụ đoạn gói nào.
+- **Thiết lập River:** chọn Bank theo pháp tuyến của SPINE, chọn critical cell và Ring.
+- **CHORD:** chọn hướng, cắt, uốn và nối các cụm.
+- **LM-Tour:** DTSP-N qua các CH rồi uốn về landmark, với tham số ξ.
+
+Sau bài ICC, ba phần được bổ sung:
+- **Takeover:** sau bước sửa từ cell kề, SPINE cell còn thiếu gói sẽ hỏi lan trong 3 hop cell bằng frame điều khiển;
+  cell giữ gói trả lời bằng dữ liệu.
+- **Biến thể takeover theo tọa độ trong header:** cell dưới đường bay thật tự báo cho SPINE cell bị ảnh hưởng.
+- **Bộ dự đoán thời gian River dạng cây,** dùng trong LM-Tour.
+
+### 4.3 Đo lường
+
+Năm nhóm chỉ số:
+- **T\*:** chỉ số chính. Lấy trung bình trên 100 lượt bốc lớp 1 ghép cặp mỗi seed, để tách nhiễu của lớp 1 khỏi khác
+  biệt giữa các phương án.
+- **Thời điểm sẵn sàng:** với mỗi cụm, lúc critical cell cuối cùng nhận đủ, tính từ khi UAV rời cụm; sau đó lấy trung
+  bình qua các cụm. Kèm theo là tỉ lệ critical cell nhận đủ trước giới hạn 900 s.
+- **Số frame phát dưới mặt đất:** gồm dữ liệu, yêu cầu, quảng bá, ACK và phát lại.
+- **Năng lượng radio:** tính từ thời gian mỗi node ở các trạng thái PHY (phát, nhận, nghe, tắt). Có hai chip (CC2420,
+  EFR32MG21) và hai chế độ: luôn nghe, và ngủ theo lịch sau frame cuối của mình. Báo cáo cả tổng và node nóng nhất.
+- **Năng lượng và quãng bay của UAV:** theo mô hình Zeng–Zhang cho cánh bằng.
+
+### 4.4 Thiết lập giả lập
+
+**Mô phỏng.**
+- ns-3.46 với lớp lr-wpan đầy đủ: PHY 802.15.4 2,4 GHz, MAC CSMA/CA không khe có ACK, mỗi node một thiết bị.
+- Lịch kênh 7 màu cho các cặp gateway, theo lưới PECEE.
+
+**Kênh.**
+- **A2G:** suy hao hai đoạn neo tại độ cao bay, fading Nakagami (m = 1,8) bốc lại mỗi gói.
+- Bốn mức môi trường thêm suy hao 0 / 9,0 / 19,8 / 25,7 dB. Bán kính 50 % tương ứng khoảng 1 015 / 498 / 199 / 99 m
+  (Hình 2).
+- **G2G:** suy hao log-distance, kèm shadowing và fading gắn với từng cặp node.
+
+**Kịch bản.**
+- Bản đồ là miền không lồi có hồ, chia thành 8, 12 và 15 cụm; mỗi cụm tối đa 80 cell lục giác R = 100 m.
+- Truy vấn khoảng 400 KB, Q ≈ 4 041 gói, phát 10 ms một gói.
+- UAV bay theo hồ sơ tốc độ có giới hạn góc nghiêng 45°.
+
+**Cách chạy.**
+- Lượt bay của UAV được mô phỏng trước, ghi lại node nào nhận gói nào.
+- Sau đó, phần phân phối dưới mặt đất của từng cụm chạy riêng trên kết quả đó.
+- Phương án nhận cùng lượt bay, cùng kênh và cùng seed để so sánh ghép cặp.
+- Sai lệch quỹ đạo do gió được tạo bằng nhiễu trắng làm mượt, lệch ngang thực tế lên tới vài trăm mét.
+
+### 4.5 Kết quả chính
 
 | Thí nghiệm | Thiết lập | Kết quả |
 |---|---|---|
-| C4 | 3 bản đồ (8/12/15 cụm) × 4 kênh × tới 10 seed | LM-Tour + River nhanh nhất trong các phương án thực tế: nhanh hơn CHORD + River 1–11 %, DTSP-N + River 10–26 %, FC + DTSP-N 10–72 %. Ở r200/r100, các phương án có River nhanh hơn FC + DTSP-N 49–72 % |
-| LMT, T3S | 812 critical cell của C4 | Bộ dự đoán thời gian River dạng cây có sai số 26,2 s, so với 45,9 s của công thức tuyến tính |
-| DLG | cùng lượt CHORD, k8, r100, 5 seed | So với Deluge: sẵn sàng 117 so với 149–156 s, ít frame hơn 1,9–2,5 lần, ít năng lượng radio hơn 6,5–8,8 lần khi ngủ theo lịch; T\* nhanh hơn 36–43 s, thắng 5/5 seed |
-| WND, TKO | gió σ = 50/100/200 m, 3 seed | Ở σ = 100 m (lệch ngang tới 346 m), River không sửa lỗi chỉ xong 106/135 cell, T\* +294 s. Có takeover tuần tự: 135/135 cell, sẵn sàng 112–118 s, T\* bằng danh nghĩa trong phạm vi nhiễu (−22 ± 184 s) |
+| C4 | 3 bản đồ × 4 kênh | LM-Tour + River nhanh nhất trong các phương án thực tế: nhanh hơn CHORD + River 1–11 %, DTSP-N + River 10–26 %, FC + DTSP-N 10–72 %. Ở r200/r100, các phương án có River nhanh hơn FC + DTSP-N 49–72 % |
+| LMT, T3S | 812 critical cell | Bộ dự đoán thời gian River dạng cây sai số 26,2 s, so với 45,9 s của công thức tuyến tính |
+| DLG | cùng lượt CHORD, k8, r100, 5 seed | So với Deluge: sẵn sàng 117 so với 149–156 s; ít frame hơn 1,9–2,5 lần; ít năng lượng radio hơn 6,5–8,8 lần khi ngủ theo lịch, nhưng ngang nhau khi luôn nghe; T\* nhanh hơn 36–43 s, thắng 5/5 seed |
+| WND, TKO | gió σ = 50/100 m, 3 seed | Ở σ = 100 m (lệch ngang tới 346 m), không có takeover chỉ 106/135 cell xong, T\* +294 s. Takeover tuần tự: 135/135 cell, sẵn sàng 112–118 s, T\* bằng danh nghĩa trong phạm vi nhiễu (−22 ± 184 s) |
 
 ![Đường bay pha 1 của bốn phương án ở bốn mức kênh trên bản đồ 8 cụm](../../uav-l2/docs/figures/c4-phase1/c4-phase1-k8-s1-grid.png)
 
@@ -184,18 +257,61 @@ critical cell.*
 
 *Hình 6. Ba cách phân phối dưới mặt đất trên cùng một lượt bay: River, kéo trực tiếp và Trickle.*
 
-### 4.3 Giới hạn còn lại
+### 4.6 Hạn chế về logic, tính thực tế và độ chắc của lập luận
 
-- **Chiến dịch C4 chưa đủ.** C4 dừng ở 290/360 job, mỗi ô có 6–10 seed, và còn một lỗi segfault tất định ở một ô.
-- **Takeover đã mô phỏng tường minh, nhưng mới ở σ ≤ 100 m.** Bản tuần tự hỏi lan bằng frame thật, sau bước sửa từ
-  cell kề, nên không còn dựa vào oracle; độ trễ của vòng hỏi đã nằm trong kết quả. Mức lệch σ = 200 m mới có một seed,
-  và đường bay khi đó có lúc vượt gia tốc 1 g. Biến thể báo cáo theo tọa độ trong header là cải tiến thiết kế, chưa
-  mô phỏng.
-- **Đối chứng với Deluge chưa trọn.** So sánh với Deluge-lite trên LM-Tour mới chạy được một phần.
-- **Năng lượng UAV chưa kiểm hệ số.** Mô hình Zeng–Zhang chưa đối chiếu c₁, c₂ với bài gốc.
-- **Pha 0 và lớp 1 chỉ ở mức mô hình.** Pha 0 được tính sẵn chứ chưa mô phỏng bằng frame. Lớp 1 chỉ là mô hình điểm khớp.
+Mục này chỉ nêu các điểm yếu về lập luận và giả định. Những phần chỉ thiếu thời gian chạy thì không nêu ở đây.
 
-Các giới hạn này là lý do cho các nội dung ở mục 7.
+**Kế hoạch và mô phỏng dùng cùng một mô hình kênh.**
+- Trạm gốc lập kế hoạch (SPINE, độ rộng River, Seg) dựa trên mô hình xác suất nhận gói, và mô phỏng cũng chạy đúng mô
+  hình đó. Kết quả vì vậy đánh giá quá cao độ chính xác của kế hoạch.
+- Ngoài đời, kênh thật lệch khỏi mô hình lập kế hoạch. Sai lệch này chưa được đo riêng; thử nghiệm gió mới chỉ kiểm
+  phần sai lệch về quỹ đạo.
+
+**Các cụm được mô phỏng tách rời, và phân phối mặt đất chỉ bắt đầu sau khi UAV rời cụm.**
+- Không có nhiễu giữa các cụm, không có hợp tác xuyên cụm, và gói UAV phát không va chạm với lưu lượng dưới đất.
+- Trong thực tế, cụm vừa được bay qua sẽ trao đổi dữ liệu đúng lúc UAV phát cho cụm kế bên.
+- Mốc "sẵn sàng tính từ lúc UAV rời cụm" cũng bỏ qua khả năng bắt đầu phân phối sớm hơn.
+
+**Pha 0 được coi là miễn phí và cố định.**
+- Chi phí bầu CL, chọn gateway, phát bảng định tuyến và đồng bộ lịch kênh không được tính.
+- Mạng được coi là đứng yên, không node hỏng, mọi thiết bị đều hợp tác. Giả định cuối mâu thuẫn với chính bối cảnh
+  thiết bị thuộc nhiều chủ sở hữu.
+- Toàn bộ node được coi là thức để nghe UAV trong lượt bay. Điều này cần một cơ chế đánh thức đúng giờ, chưa được mô tả.
+
+**Lớp 1 và pha 2 chỉ là mô hình trừu tượng.**
+- Phân bố điểm khớp và trọng số manh mối là giả định; thời gian đối sánh lấy từ số liệu công bố.
+- Chỉ có một mục tiêu, và điểm nghi vấn thật luôn nằm ở một critical cell.
+- Đội 2 được mô hình bằng thời gian bay, hover và tải tệp cố định; trễ LoRa là một hằng số.
+- T\* vì vậy nhạy với các giả định này: chênh lệch ±100 s giữa các seed chủ yếu đến từ lớp 1, không phải từ mạng.
+
+**Mô hình kênh lạc quan ở chỗ fading.**
+- Fading được giữ không đổi trong một gói. Nhưng ở tốc độ bay, thời gian kết hợp của kênh (khoảng 1 ms) ngắn hơn thời
+  gian chiếm sóng của gói (4,3 ms).
+- Kết quả mất gói A2G vì vậy lạc quan. Giới hạn này đã được ghi nhận từ thí nghiệm A2G-RUN nhưng chưa được hiệu chỉnh.
+
+**Lợi thế năng lượng của River phụ thuộc giả định ngủ.**
+- Khi mọi node luôn nghe, năng lượng radio của River và Deluge ngang nhau.
+- Mức lợi 6,5–8,8 lần chỉ xuất hiện khi giả định node ngủ ngay sau frame cuối của mình. Con số này là một chặn tính sau
+  khi chạy, không phải cơ chế ngủ được mô phỏng, nên cần phát biểu thận trọng.
+
+**So sánh giữa các phương án chưa hoàn toàn cùng điều kiện.**
+- FC được mô hình với fountain code lý tưởng (ε = 5 %).
+- CHORD và LM-Tour dùng bộ manh mối mã fountain ở mức mô hình nhiệm vụ, nhưng River trong ns-3 vẫn vận chuyển gói gốc.
+- Một số ô của LM-Tour là ước lượng mức mô hình (thời gian River lấy từ bộ dự đoán), không phải số chạy ns-3.
+
+**Bộ dự đoán được học và kiểm tra trên cùng các bản đồ.**
+- Chưa có kiểm định trên bản đồ chưa thấy, nên lợi thế của LM-Tour có thể một phần đến từ việc khớp quá mức.
+- Điều kiện "uốn tới khi lợi ích bão hoà" là heuristic, chưa có bảo đảm.
+
+**Một số lựa chọn thiết kế thuận lợi cho đề xuất.**
+- CH được chọn là node mạnh nhất, cách biên ít nhất 300 m. Thử với CH ở vị trí ngẫu nhiên cho thấy kết quả kém đi rõ.
+- Critical cell do trạm gốc chọn theo năng lực, nhưng chưa có lý do lý thuyết cho số lượng và vị trí của chúng.
+
+**Lập luận "lập kế hoạch tốt hơn khám phá" mới dựa trên thực nghiệm.**
+- Chưa có định lý về tính đầy đủ, cận dưới hay độ lợi theo chất lượng kênh. Các con số đến từ một số ít bản đồ và một
+  cách cấu hình Deluge.
+- Nếu Deluge được tinh chỉnh tốt hơn (Deluge-lite), khoảng cách về thời gian có thể thu hẹp. Khi đó luận điểm phải dựa
+  vào số frame và việc không cần khám phá, thay vì thời gian.
 
 ## 5. Mục tiêu và câu hỏi nghiên cứu
 

@@ -297,3 +297,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 289 | 2026-11-08 | đề cương · đưa kế hoạch ND1 vào proposal, nhắc lại định lý dự kiến | [2026-11](2026-11.md) |
 | 290 | 2026-11-08 | đề cương · viết kỹ các ND, vẽ hình minh hoạ | [2026-11](2026-11.md) |
 | 291 | 2026-11-08 | đề cương · lịch kế hoạch đặt ở mục 9, không nằm trong ND | [2026-11](2026-11.md) |
+| 292 | 2026-11-08 | đề cương · hỏi "mô hình đóng băng" là gì | [2026-11](2026-11.md) |

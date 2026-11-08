@@ -18,3 +18,13 @@ p:has(> img) { page-break-inside: avoid; break-after: avoid; margin-bottom: 0; }
 p:has(> img) + p { page-break-before: avoid; margin-top: 2pt; font-size: 9.5pt; }
 math[display="block"] { margin: 6pt 0; overflow-wrap: normal; }
 math { font-family: "Latin Modern Math", math; font-size: 1.05em; }
+header#title-block-header { text-align: center; margin: 30mm 0 12mm; }
+header#title-block-header h1.title { font-size: 24pt; margin-bottom: 8pt; }
+header#title-block-header p.subtitle { font-family: "Inter", "DejaVu Sans", sans-serif; font-size: 12pt; color: #444; }
+nav#TOC { page-break-after: always; font-size: 10pt; }
+nav#TOC h2 { border: 0; }
+nav#TOC ul { list-style: none; padding-left: 12pt; }
+nav#TOC > ul { padding-left: 0; }
+nav#TOC a { color: #1a1a1a; text-decoration: none; }
+nav#TOC > ul > li { margin-top: 4pt; font-weight: bold; }
+nav#TOC > ul > li li { font-weight: normal; }

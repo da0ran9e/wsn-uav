@@ -13,6 +13,55 @@ repo; ảnh cũ còn chữ tiếng Việt, bản cuối sẽ vẽ lại không c
 
 ---
 
+## Bảng ký hiệu và chữ viết tắt
+
+**Ký hiệu**
+
+| Ký hiệu | Ý nghĩa |
+|---|---|
+| $G=(V,E)$ | đồ thị cell: đỉnh là cell lục giác, cạnh là cặp gateway giữa hai cell kề |
+| $R$ | bán kính cell lục giác (≥ 100 m) |
+| $c_e$ | dung lượng của cặp gateway $e$ (gói/s) |
+| $K$ | tập critical cell (CH là một phần tử của $K$) |
+| $Q$ | số gói của truy vấn (khoảng 4 041 gói cho 400 KB) |
+| $\tau$ | chu kỳ phát gói của UAV (10 ms) |
+| $\gamma,\ \gamma'$ | quỹ đạo dự kiến và quỹ đạo thật |
+| $\bar e$ | độ lệch ngang lớn nhất giữa quỹ đạo thật và dự kiến |
+| $\sigma$ | độ lệch chuẩn của mô hình gió dùng để sinh quỹ đạo thật |
+| $p(d)$ | xác suất một node nhận được gói khi cách điểm phát $d$ theo phương ngang |
+| $R_{50}$ | khoảng cách ngang mà tại đó $p(d)=0{,}5$; đặc trưng cho mức môi trường |
+| $p_k,\ n_k$ | xác suất critical cell $k$ nhận gói ở vị trí UAV thuận lợi nhất; số gói $k$ nhận khi UAV bay ngang |
+| $\varepsilon$ | phần dư của fountain code (cần $Q(1+\varepsilon)$ gói mã khác nhau) |
+| $T^\star$ | thời gian hoàn thành nhiệm vụ (tới khi xác minh xong cell có điểm cao nhất) |
+| $T_{\text{bay}},\ T_{\text{đất}}$ | thời gian bay pha 1; thời gian phân phối dưới mặt đất (thời điểm sẵn sàng) |
+| $\mathrm{Seg}(a)$ | đoạn gói giao cho SPINE cell $a$ |
+| $N(a)$ | tập cell kề của cell $a$ |
+| $w,\ \delta,\ h(\bar e)$ | ngưỡng lệch, xác suất thất bại, và bán kính hỏi (hop cell) trong Mệnh đề B |
+| $S,\ c(S)$ | một lát cắt của đồ thị cell và tổng dung lượng của nó (Mệnh đề D) |
+| $X,\ H(X)$ | mẫu nhận gói (node nào giữ gói nào) và entropy của nó (Định lý C) |
+| $\xi$ | bán kính đĩa quanh CH trong tour DTSP-N của LM-Tour |
+
+**Chữ viết tắt và thuật ngữ**
+
+| Viết tắt | Ý nghĩa |
+|---|---|
+| UAV | phương tiện bay không người lái |
+| BS | trạm gốc |
+| CH, CL | trưởng cụm (cluster head); trưởng cell (cell leader) |
+| Critical cell | cell có node đủ mạnh để đối sánh, cần nhận đủ truy vấn |
+| SPINE, Bank, Ring | các vai trò của River: cell dưới đường bay; dải cell nhận từ SPINE; vòng cell quanh critical cell |
+| River | cơ chế phân phối dữ liệu dưới mặt đất theo kế hoạch |
+| Takeover | bước sửa lỗi của River khi quỹ đạo thật lệch khỏi kế hoạch |
+| CHORD, LM-Tour | hai thiết kế quỹ đạo pha 1 (đường thẳng qua CH; tour DTSP-N uốn về landmark) |
+| FC | baseline dùng fountain code, không hợp tác mặt đất |
+| DTSP-N | bài toán người du lịch Dubins với vùng lân cận |
+| A2G, G2G | liên kết không–đất; liên kết đất–đất |
+| PER | tỉ lệ mất gói |
+| PECEE | cơ chế phân cụm đàn hồi, nguồn gốc của lưới cell |
+| TSCH | lập lịch theo khe thời gian và nhảy kênh trong IEEE 802.15.4 |
+| ETX | số lần truyền kỳ vọng của một liên kết |
+| LoRa | đường truyền tầm xa tốc độ thấp dùng cho kênh phản hồi |
+
 ## 1. Tóm tắt
 
 Sau một sự việc như trẻ đi lạc hay cần truy vết một đối tượng, hàng nghìn camera IoT trong khu vực có thể đã ghi lại
@@ -95,40 +144,40 @@ cách duy nhất để khai thác các camera sẵn có trong thời gian ngắn
 ## 3. Tổng quan nghiên cứu
 
 **Phổ tán dữ liệu trong WSN.**
-- Deluge (Hui & Culler, 2004) và MNP phát lại mã hoặc dữ liệu lớn bằng cơ chế quảng bá, yêu cầu theo page.
-- Trickle (Levis 2004, RFC 6206) điều tiết tần suất quảng bá để tiết kiệm năng lượng.
+- Deluge [7] và MNP [28] phát lại mã hoặc dữ liệu lớn bằng cơ chế quảng bá, yêu cầu theo page.
+- Trickle [8], [9] điều tiết tần suất quảng bá để tiết kiệm năng lượng.
 - Đặc điểm chung: không có kế hoạch, mọi node đều phải nhận đủ, và nút thắt là năng lượng nghe kênh.
 
 **Mã hoá.**
-- Fountain code (LT, Raptor) bỏ được yêu cầu nhận đúng từng gói, nên hợp với kênh quảng bá có mất gói.
-- Network coding được dùng để tăng hiệu quả phổ tán.
+- Fountain code (LT [10], Raptor [11], RaptorQ [12]) bỏ được yêu cầu nhận đúng từng gói, nên hợp với kênh quảng bá có mất gói.
+- Network coding [13] được dùng để tăng hiệu quả phổ tán.
 - Chúng tôi dùng fountain code làm baseline mạnh nhất cho trường hợp không hợp tác.
 
 **UAV multicast và phân phối dữ liệu bằng UAV.**
-- UAV làm trạm phát hoặc trạm chuyển tiếp đã được nghiên cứu rộng, phần lớn xét tối ưu công suất và quỹ đạo cho thông
-  lượng.
-- Hướng data ferrying và DTN (message ferrying, Zhao 2004) dùng phương tiện di động để mang dữ liệu giữa các vùng mất
+- UAV làm trạm phát hoặc trạm chuyển tiếp đã được nghiên cứu rộng [1], [2], phần lớn xét tối ưu công suất và quỹ đạo
+  cho thông lượng [6] hoặc cho thời gian hoàn thành multicast [4]; chiều ngược lại là UAV thu dữ liệu từ WSN [5], [26].
+- Hướng data ferrying và DTN (message ferrying [14]) dùng phương tiện di động để mang dữ liệu giữa các vùng mất
   kết nối.
 - Điểm khác ở đây: UAV phát một lần, còn mạng mặt đất hoàn tất việc phân phối.
 
 **Lập quỹ đạo UAV.**
-- Bài toán thăm các vùng tròn quanh mục tiêu với ràng buộc Dubins là DTSP-N, một bài toán NP-khó. Đã có nhiều thuật
-  toán xấp xỉ.
+- Bài toán thăm các vùng tròn quanh mục tiêu với ràng buộc Dubins là DTSP-N [15], [16], một bài toán NP-khó. Đã có
+  nhiều thuật toán xấp xỉ.
 - CHORD và LM-Tour kế thừa hướng này. Khác biệt là chúng tối ưu cho thời gian hoàn thành ở mặt đất, không chỉ cho độ dài
   đường bay.
 
 **Kênh A2G.**
-- Mô hình xác suất LoS theo góc ngẩng (Al-Hourani 2014).
-- Suy hao hai đoạn và fading Rician/Nakagami theo đo đạc ở độ cao thấp (Qiu 2017) là cơ sở cho bốn mức môi trường dùng
+- Mô hình xác suất LoS theo góc ngẩng [17]; tổng quan kênh A2G ở [18].
+- Suy hao hai đoạn và fading Rician/Nakagami theo đo đạc ở độ cao thấp [27] là cơ sở cho bốn mức môi trường dùng
   trong mô phỏng.
 
 **Tổ chức mạng và lập lịch.**
-- Phân cụm phân cấp (LEACH, HEED) và lưới địa lý (GAF) là nền của việc chia mạng thành cell.
-- Lập lịch theo khe và kênh (TSCH, 6TiSCH theo RFC 9030) cùng tô màu kênh là nền cho lịch các cặp gateway.
-- PECEE (elastic clustering) là nguồn gốc trực tiếp của lưới cell trong đề tài.
+- Phân cụm phân cấp (LEACH [19], HEED [20]) và lưới địa lý (GAF [21]) là nền của việc chia mạng thành cell.
+- Lập lịch theo khe và kênh (TSCH trong IEEE 802.15.4 [23], 6TiSCH [22]) cùng tô màu kênh là nền cho lịch các cặp gateway.
+- PECEE (elastic clustering) **[cần bổ sung trích dẫn]** là nguồn gốc trực tiếp của lưới cell trong đề tài.
 
 **Tìm kiếm tại node biên (lớp 1).**
-- Re-ID trong kịch bản mở (open-world, ví dụ trên Market-1501) cho điểm vận hành để đánh đổi giữa bỏ sót và báo nhầm.
+- Re-ID trong kịch bản mở [24] (tổng quan ở [25]) cho điểm vận hành để đánh đổi giữa bỏ sót và báo nhầm.
 - Đề tài không giải bài toán nhận dạng, chỉ dùng mô hình điểm khớp trích từ các công bố này (`research_notes/l1-*`).
 
 **Học máy cho lập quỹ đạo.**
@@ -873,5 +922,38 @@ Mỗi mốc là một mục của J1 ở trạng thái viết xong được.
 ## Phụ lục
 
 - **Tham số:** bảng tham số sinh từ `params.yaml` bằng `python3 tools/params.py`.
-- **Tài liệu tham khảo:** **[cần lập]** từ mục 3 và danh mục của bài ICC; mọi trích dẫn ở mục 3 cần kiểm tra lại.
+- **Tài liệu tham khảo:** xem danh mục cuối tài liệu.
 - **Nguồn lực:** máy chạy mô phỏng (cloud), thiết bị testbed **[cần chốt]**, UAV và giấy phép bay nếu làm ND5 bậc 3.
+
+## Tài liệu tham khảo
+
+Danh mục ban đầu, lấy từ mục 3 và danh mục của bài ICC. Các mục ghi **[cần kiểm tra]** chưa được đối chiếu với bản gốc.
+
+1. Y. Zeng, R. Zhang, T. J. Lim, "Wireless communications with unmanned aerial vehicles: Opportunities and challenges," *IEEE Commun. Mag.*, 2016.
+2. M. Mozaffari *et al.*, "A tutorial on UAVs for wireless networks," *IEEE Commun. Surveys Tuts.*, 2019.
+3. Y. Zeng, R. Zhang, "Energy-efficient UAV communication with trajectory optimization," *IEEE Trans. Wireless Commun.*, 2017.
+4. Y. Zeng, X. Xu, R. Zhang, "Trajectory design for completion time minimization in UAV-enabled multicasting," *IEEE Trans. Wireless Commun.*, 2018.
+5. C. Zhan, Y. Zeng, R. Zhang, "Energy-efficient data collection in UAV enabled wireless sensor network," *IEEE Wireless Commun. Lett.*, 2018.
+6. Q. Wu, Y. Zeng, R. Zhang, "Joint trajectory and communication design for multi-UAV enabled wireless networks," *IEEE Trans. Wireless Commun.*, 2018.
+7. J. W. Hui, D. Culler, "The dynamic behavior of a data dissemination protocol for network programming at scale," *ACM SenSys*, 2004.
+8. P. Levis *et al.*, "Trickle: A self-regulating algorithm for code propagation and maintenance in wireless sensor networks," *USENIX NSDI*, 2004.
+9. P. Levis *et al.*, "The Trickle algorithm," IETF RFC 6206, 2011.
+10. M. Luby, "LT codes," *IEEE FOCS*, 2002.
+11. A. Shokrollahi, "Raptor codes," *IEEE Trans. Inf. Theory*, 2006.
+12. M. Luby *et al.*, "RaptorQ forward error correction scheme for object delivery," IETF RFC 6330, 2011.
+13. T. Ho *et al.*, "A random linear network coding approach to multicast," *IEEE Trans. Inf. Theory*, 2006.
+14. W. Zhao, M. Ammar, E. Zegura, "A message ferrying approach for data delivery in sparse mobile ad hoc networks," *ACM MobiHoc*, 2004. **[cần kiểm tra]**
+15. L. E. Dubins, "On curves of minimal length with a constraint on average curvature, and with prescribed initial and terminal positions and tangents," *Amer. J. Math.*, vol. 79, no. 3, pp. 497–516, 1957.
+16. J. T. Isaacs, D. J. Klein, J. P. Hespanha, "Algorithms for the traveling salesman problem with neighborhoods involving a Dubins vehicle," *ACC*, 2011. **[cần kiểm tra]**
+17. A. Al-Hourani, S. Kandeepan, S. Lardner, "Optimal LAP altitude for maximum coverage," *IEEE Wireless Commun. Lett.*, 2014.
+18. W. Khawaja *et al.*, "A survey of air-to-ground propagation channel modeling for unmanned aerial vehicles," *IEEE Commun. Surveys Tuts.*, 2019.
+19. W. B. Heinzelman, A. P. Chandrakasan, H. Balakrishnan, "Energy-efficient communication protocol for wireless microsensor networks," *HICSS*, 2000. **[cần kiểm tra]**
+20. O. Younis, S. Fahmy, "HEED: A hybrid, energy-efficient, distributed clustering approach for ad hoc sensor networks," *IEEE Trans. Mobile Comput.*, 2004. **[cần kiểm tra]**
+21. Y. Xu, J. Heidemann, D. Estrin, "Geography-informed energy conservation for ad hoc routing," *ACM MobiCom*, 2001. **[cần kiểm tra]**
+22. P. Thubert (Ed.), "An architecture for IPv6 over the TSCH mode of IEEE 802.15.4," IETF RFC 9030, 2021. **[cần kiểm tra]**
+23. *IEEE Standard for Low-Rate Wireless Networks*, IEEE Std 802.15.4-2020, 2020.
+24. X. Li, A. Wu, W.-S. Zheng, "Adversarial open-world person re-identification," *ECCV*, 2018.
+25. M. Ye *et al.*, "Deep learning for person re-identification: A survey and outlook," *IEEE TPAMI*, 2022.
+26. K.-V. Nguyen *et al.*, "Efficient multi-UAV assisted data gathering schemes …," *IEEE Trans. Ind. Informat.*, 2023. **[cần kiểm tra]**
+27. Qiu *et al.*, đo đạc kênh không–đất ở độ cao thấp, 2017. **[cần kiểm tra: chưa có thông tin đầy đủ]**
+28. S. S. Kulkarni, L. Wang, "MNP: Multihop network reprogramming service for sensor networks," *IEEE ICDCS*, 2005. **[cần kiểm tra]**

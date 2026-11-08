@@ -292,3 +292,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 284 | 2026-11-07 | đề cương · định lý khả thi và phát biểu có giá trị nghiên cứu | [2026-11](2026-11.md) |
 | 285 | 2026-11-08 | đề cương · thảo luận pha 0 (bản sửa của người dùng) | [2026-11](2026-11.md) |
 | 286 | 2026-11-08 | đề cương · kết quả dự kiến: tạp chí trước, bài hội nghị nhỏ | [2026-11](2026-11.md) |
+| 287 | 2026-11-08 | đề cương · kế hoạch tập trung vào bài journal | [2026-11](2026-11.md) |

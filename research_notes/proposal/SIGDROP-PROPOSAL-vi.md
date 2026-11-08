@@ -580,28 +580,66 @@ cùng tệp tham số `params.yaml`, để người khác tái lập được m�
 
 ### 9.1 Các giai đoạn
 
-Kế hoạch tính từ tháng 12/2026, sau khi bài ICC đã nộp.
+Kế hoạch xoay quanh một mục tiêu: **nộp J1 vào khoảng tháng 07/2027.** Mỗi giai đoạn hoàn thành một phần của J1, theo
+đúng thứ tự các mục của bài. Bài hội nghị chỉ là sản phẩm phụ: khi một phần của J1 đã có kết quả hẹp, tự đứng được,
+thì tách ra nộp, không mở thêm việc riêng cho chúng. J2 và các nội dung phần cứng để sau khi J1 đã nộp. Kế hoạch tính từ
+tháng 12/2026.
 
-- **Giai đoạn 1 (12/2026–02/2027):** tập trung vào ND1 (mô hình và cận dưới) và hoàn tất chiến dịch C4. Đây cũng là lúc
-  trả lời phản biện của ICC.
-- **Giai đoạn 2 (01–04/2027):** dành cho ND2: takeover theo tọa độ header, so sánh với Deluge-lite, và năng lượng có
-  lịch ngủ thật.
-- **Giai đoạn 3 (03–06/2027):** chạy đánh giá quy mô lớn và độ bền vững (ND4), viết và nộp J1.
-- **Giai đoạn 4 (04–08/2027):** mô phỏng pha 0 bằng frame (ND0) và dựng testbed bậc 1–2 (ND5).
-- **Giai đoạn 5 (07–12/2027):** ND3 (bộ dự đoán tổng quát hoá, nhiều UAV), thử bay bậc 3 nếu có điều kiện, viết J2 nếu ND5 kịp, nộp các bài hội nghị C3–C5.
+**Giai đoạn 1 (12/2026–02/2027): phần mô hình và lý thuyết của J1 (ND1).**
+- Phát biểu bài toán đầu–cuối và chứng minh bổ đề NP-khó.
+- Phát biểu và chứng minh định lý A (điểm giao giữa hợp tác và bay vòng), mệnh đề B (ngưỡng lệch của takeover) và cận
+  dưới D, trên mô hình đơn giản.
+- Vẽ đường lý thuyết chồng lên số liệu ns-3 sẵn có (C4, WND, TKO) để kiểm tra sớm.
+- Song song: trả lời phản biện ICC.
 
-Các giai đoạn gối nhau có chủ đích. Phần mô phỏng chạy trong lúc viết phân tích, nhờ cách chạy song song nhiều phiên đã
-dùng ở chiến dịch C4.
+**Giai đoạn 2 (01–04/2027): phần giao thức của J1 (ND2).** Giải quyết các hạn chế về tính thực tế đã nêu ở mục 4.6:
+- takeover theo tọa độ trong header;
+- gateway một radio;
+- lịch ngủ được mô phỏng thật;
+- kênh thật lệch khỏi mô hình lập kế hoạch;
+- cho phép phân phối mặt đất bắt đầu trong lúc UAV còn bay qua cụm kế bên.
+- Hoàn tất so sánh với Deluge-lite.
+- **Sản phẩm phụ:** khoảng 03/2027, nếu phần takeover đã đủ thì nộp C1.
+
+**Giai đoạn 3 (03–05/2027): phần quỹ đạo, pha 0 và pha 2 của J1 (ND3 và các mô hình liên quan).**
+- Kiểm định bộ dự đoán trên bản đồ chưa thấy, và hoàn thiện LM-Tour.
+- Mô hình chi phí pha 0: quy tắc chọn R, gom topo và phát kế hoạch.
+- Mô hình lịch đội xác minh ở pha 2.
+- **Sản phẩm phụ:** C4 nếu phần bộ dự đoán đủ mới.
+
+**Giai đoạn 4 (04–06/2027): phần đánh giá của J1 (ND4).**
+- Đóng băng binary.
+- Chạy chiến dịch cuối: ba cỡ bản đồ, mỗi cỡ 10 bản đồ, đủ seed, cùng các kịch bản bền vững.
+- Viết bản thảo hoàn chỉnh và rà soát nội bộ.
+
+**Giai đoạn 5 (07/2027): nộp J1.**
+- Dành thời gian và quota tính toán cho vòng phản biện, thường sau 3–6 tháng, vì có thể phải chạy thêm thí nghiệm.
+
+**Sau khi nộp J1 (08–12/2027).**
+- ND5 (testbed, PX4 SITL) và ND0 bằng frame thật, làm nền cho J2.
+- Các bài hội nghị còn lại (C2, C3, C5), tách từ phần đã làm.
+
+Các giai đoạn 1–4 gối nhau có chủ đích. Lý thuyết được viết trong lúc mô phỏng giao thức chạy, nhờ cách chạy song song
+nhiều phiên đã dùng ở C4.
 
 ### 9.2 Mốc kiểm tra
 
-- **Cuối giai đoạn 1:** có cận dưới của T\* và khoảng cách từ LM-Tour tới cận đó trên ba bản đồ. Mục tiêu ban đầu là
-  LM-Tour cách cận dưới không quá 30 %; con số sẽ chốt lại khi có cận.
-- **Cuối giai đoạn 2:** takeover không dùng oracle đưa 100 % critical cell tới sẵn sàng ở σ = 100 m với 5 seed, và
-  không chậm hơn danh nghĩa quá 10 %. Cũng ở mốc này, River phải nhanh hơn Deluge-lite ít nhất 15 % ở r100, hoặc ít
-  frame hơn ít nhất 2 lần nếu thời gian ngang nhau.
-- **Cuối giai đoạn 3:** có bảng độ bền vững đủ 10 seed và đã nộp J1.
-- **Cuối giai đoạn 4:** có chi phí pha 0 theo mật độ, và River đã chạy trên testbed.
+Mỗi mốc là một mục của J1 ở trạng thái viết xong được.
+
+- **Cuối giai đoạn 1: xong mục mô hình và lý thuyết.**
+  - Có phát biểu và chứng minh A, B, D.
+  - Đường lý thuyết của A khớp xu hướng của C4 theo R50. Đường của B dự đoán đúng việc takeover không kích hoạt ở
+    σ = 50 m và có kích hoạt ở σ = 100 m.
+  - Có khoảng cách từ LM-Tour tới cận dưới trên ba bản đồ; mục tiêu ban đầu là không quá 30 %.
+- **Cuối giai đoạn 2: xong mục giao thức.**
+  - Takeover theo tọa độ trong header đưa 100 % critical cell tới sẵn sàng ở σ = 100 m (5 seed), không chậm hơn danh
+    nghĩa quá 10 %.
+  - Có kết quả gateway một radio.
+  - River nhanh hơn Deluge-lite ít nhất 15 % ở r100, hoặc ít frame hơn ít nhất 2 lần nếu thời gian ngang nhau.
+- **Cuối giai đoạn 3: xong mục quỹ đạo và các mô hình pha 0, pha 2.**
+  - Sai số bộ dự đoán trên bản đồ chưa thấy không vượt quá 1,5 lần sai số trên bản đồ đã học.
+- **Cuối giai đoạn 4: bản thảo J1 hoàn chỉnh.**
+  - Có bảng kết quả chính và bảng độ bền vững, đủ seed.
 
 ## 10. Rủi ro và phương án dự phòng
 

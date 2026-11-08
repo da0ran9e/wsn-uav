@@ -7,5 +7,5 @@ pandoc _src.md -f gfm-gfm_auto_identifiers -t latex --top-level-division=section
 python3 post.py
 xelatex -interaction=nonstopmode main.tex >/dev/null || true
 xelatex -interaction=nonstopmode main.tex >/dev/null || true
-cp main.pdf SigDrop-proposal-v1.pdf
+mv main.pdf SigDrop-proposal-v1.pdf
 rm -f _src.md body_raw.tex main.aux main.log main.out main.toc

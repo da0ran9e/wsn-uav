@@ -9,7 +9,7 @@ dưới mặt đất có kế hoạch.
 
 Bản nháp viết theo khung người dùng đưa ngày 2026-11-06 (`docs/chatlog/2026-11.md`, mục 276–279). Số liệu ở mục 4 lấy
 từ `docs/EXPERIMENTS-INDEX.md`. Chỗ ghi **[cần chốt]** là chỗ người dùng cần quyết định. Hình dùng lại ảnh đã có trong
-repo; ảnh cũ còn chữ tiếng Việt, bản cuối sẽ vẽ lại không chữ. Bản LaTeX v1 dựng từ tệp này: `v1/` (`v1/build.sh`, kết quả `v1/SigDrop-proposal-v1.pdf`).
+repo; ảnh cũ còn chữ tiếng Việt, bản cuối sẽ vẽ lại không chữ.
 
 ---
 
@@ -481,43 +481,49 @@ radio; cơ chế đánh thức. Các kết quả này đi vào phần mô hình 
 
 ND1 trả lời RQ1 và là phần lõi của J1.
 
-**Mô hình chung.** Mọi kết quả dưới đây dựa trên một mô hình hình thức, được chốt trong hai tuần đầu.
-- **Mạng:** đồ thị cell G = (V, E). Mỗi đỉnh là một cell lục giác bán kính R. Mỗi cạnh là một cặp gateway có dung lượng
-  c_e (gói/s). Tập critical cell là K ⊆ V.
-- **Truy vấn:** Q gói, UAV phát một gói mỗi τ giây.
-- **Quỹ đạo:** γ là đường bay dự kiến, γ′ là đường bay thật. Gói s được phát tại γ′(sτ). Độ lệch ngang lớn nhất là
-  e = sup_t |γ′(t) − γ(t)|.
-- **Kênh A2G:** một node nhận được gói với xác suất p(d), với d là khoảng cách ngang tới điểm UAV phát gói đó. p(d) lấy
-  từ mô hình hai đoạn kèm fading Nakagami, đặc trưng bởi R50.
-- **Giả định A1:** các lần nhận gói độc lập với nhau. Giả định này lạc quan, được nêu rõ trong bài.
-- **Thời gian nhiệm vụ:** T\* = T_bay + T_mặt đất + T_đối sánh + T_LoRa + T_pha 2. Các kết quả chỉ so sánh hai thành
-  phần đầu; các thành phần còn lại chung cho mọi phương án.
+**Mô hình chung.** Mọi kết quả dưới đây dựa trên một mô hình hình thức, được chốt trong hai tuần đầu của ND1. Trước khi
+chốt, mô hình được đối chiếu với `params.yaml` và với bit nhận thật trong log.
 
-Mô hình được đối chiếu với `params.yaml` và với bit nhận thật trong log trước khi chốt.
+- **Mạng:** đồ thị cell $G=(V,E)$. Mỗi đỉnh là một cell lục giác bán kính $R$. Mỗi cạnh $e\in E$ là một cặp gateway có
+  dung lượng $c_e$ (gói/s). Tập critical cell là $K\subseteq V$.
+- **Truy vấn:** $Q$ gói; UAV phát một gói mỗi $\tau$ giây.
+- **Quỹ đạo:** $\gamma$ là đường bay dự kiến, $\gamma'$ là đường bay thật. Gói $s$ được phát tại $\gamma'(s\tau)$. Độ
+  lệch ngang lớn nhất là $\bar e=\sup_t\lVert\gamma'(t)-\gamma(t)\rVert$.
+- **Kênh A2G:** một node nhận được gói với xác suất $p(d)$, trong đó $d$ là khoảng cách ngang tới điểm UAV phát gói đó.
+  $p(d)$ lấy từ mô hình hai đoạn kèm fading Nakagami, đặc trưng bởi $R_{50}$.
+- **Giả định A1:** các lần nhận gói độc lập với nhau. Giả định này lạc quan và được nêu rõ trong bài.
+- **Thời gian nhiệm vụ:**
+  $T^\star=T_{\text{bay}}+T_{\text{đất}}+T_{\text{đối sánh}}+T_{\text{LoRa}}+T_{\text{pha 2}}$. Các kết quả chỉ so sánh
+  hai thành phần đầu; các thành phần còn lại chung cho mọi phương án.
 
-**Các kết quả dự kiến.** Phát biểu dưới đây là dạng dự kiến, sẽ được chỉnh khi chứng minh.
+**Các kết quả dự kiến.** Các phát biểu dưới đây là dạng dự kiến, sẽ được chỉnh khi chứng minh.
 
-- **Bổ đề L1 (độ khó).** Bài toán chọn quỹ đạo và kế hoạch để T\* nhỏ nhất là NP-khó.
-  - Chứng minh: quy từ DTSP-N, bằng cách cho Q rất nhỏ và dung lượng mặt đất vô hạn. Bài toán khi đó chỉ còn tìm tour
-    Dubins ngắn nhất qua đĩa các CH.
+**Bổ đề L1 (độ khó).** Bài toán chọn quỹ đạo và kế hoạch để $T^\star$ nhỏ nhất là NP-khó.
+*Hướng chứng minh:* quy từ DTSP-N. Cho $Q$ rất nhỏ và dung lượng mặt đất vô hạn, bài toán chỉ còn tìm tour Dubins ngắn
+nhất qua đĩa các CH.
 
-- **Định lý A (điểm giao giữa hợp tác và bay vòng).** Gọi p_k là xác suất critical cell k nhận được một gói ở vị trí
-  thuận lợi nhất của UAV, và ε là phần dư của fountain code.
-  - **Thời gian của FC** thoả T_FC ≥ T_tour,FC + Σ_{k∈K} τ·[Q(1 + ε)/p_k − n_k], với n_k là số gói k đã nhận khi UAV bay
-    ngang.
-  - **Thời gian của River** thoả T_River ≤ T_tour,1 lượt + T_mặt đất, với T_mặt đất bị chặn như ở mệnh đề D.
-  - **Điều kiện đủ để River thắng:** về phải của bất đẳng thức FC lớn hơn về phải của bất đẳng thức River.
-  - **Tiệm cận:** T_FC/T_River tăng theo cỡ 1/p_min khi R50 giảm; tỉ số tiến về 1 khi R50 lớn hơn bề rộng cụm.
-  - Định lý giải thích hiện tượng đã đo: ở kênh open hai phương án gần ngang nhau, ở r200/r100 River nhanh hơn 49–72 %.
-    Nó cũng cho người thiết kế một quy tắc: khi nào nên đầu tư vào hợp tác mặt đất.
+**Định lý A (điểm giao giữa hợp tác và bay vòng).** Gọi $p_k$ là xác suất critical cell $k$ nhận được một gói ở vị trí
+thuận lợi nhất của UAV, $n_k$ là số gói $k$ đã nhận khi UAV bay ngang, và $\varepsilon$ là phần dư của fountain code.
+Khi đó
 
-- **Mệnh đề B (ngưỡng lệch của takeover).** Gọi w là khoảng cách lớn nhất từ điểm phát tới tập a ∪ N(a) (SPINE cell a
-  và các cell kề), sao cho tập này vẫn có node nhận gói với xác suất ≥ p_min. w phụ thuộc R và R50.
-  - **(i) Dưới ngưỡng:** nếu e < w − √3·R/2, takeover không phải kích hoạt, với xác suất ≥ 1 − δ.
-  - **(ii) Trên ngưỡng:** nếu e ≥ w, mọi gói thiếu của Seg(a) nằm trong h(e) = ⌈(e − w)/(√3·R)⌉ + 1 hop cell tính từ a.
-    Vòng hỏi trong bán kính h(e) là đủ, và số frame của nó có chặn trên tương ứng.
-  - Mệnh đề giải thích vì sao không có lần kích hoạt nào ở σ = 50 m nhưng có ở σ = 100 m. Bán kính hỏi 3 hop trở thành
-    một hệ quả thay vì một con số chọn tay.
+$$T_{\mathrm{FC}}\;\ge\;T^{\mathrm{FC}}_{\text{tour}}+\sum_{k\in K}\tau\Big[\frac{Q(1+\varepsilon)}{p_k}-n_k\Big]^{+},\qquad T_{\mathrm{River}}\;\le\;T^{\text{1 lượt}}_{\text{tour}}+T_{\text{đất}},$$
+
+với $T_{\text{đất}}$ bị chặn như ở Mệnh đề D. River nhanh hơn FC khi vế phải thứ nhất lớn hơn vế phải thứ hai. Hơn nữa,
+$T_{\mathrm{FC}}/T_{\mathrm{River}}$ tăng theo cỡ $1/p_{\min}$ khi $R_{50}$ giảm, và tiến về 1 khi $R_{50}$ lớn hơn bề
+rộng cụm. Định lý giải thích hiện tượng đã đo: ở kênh open hai phương án gần ngang nhau, ở r200/r100 River nhanh hơn
+49–72 %. Nó cũng cho người thiết kế một quy tắc: khi nào nên đầu tư vào hợp tác mặt đất.
+
+**Mệnh đề B (ngưỡng lệch của takeover).** Gọi $w$ là khoảng cách lớn nhất từ điểm phát tới tập $a\cup N(a)$ (SPINE cell
+$a$ và các cell kề), sao cho tập này vẫn có node nhận gói với xác suất không nhỏ hơn $p_{\min}$; $w$ phụ thuộc $R$ và
+$R_{50}$.
+
+- (i) Nếu $\bar e< w-\tfrac{\sqrt3}{2}R$ thì takeover không phải kích hoạt, với xác suất ít nhất $1-\delta$.
+- (ii) Nếu $\bar e\ge w$ thì mọi gói thiếu của $\mathrm{Seg}(a)$ nằm trong
+  $h(\bar e)=\lceil(\bar e-w)/(\sqrt3R)\rceil+1$ hop cell tính từ $a$. Vòng hỏi trong bán kính $h(\bar e)$ là đủ, và số
+  frame của nó có chặn trên tương ứng.
+
+Mệnh đề giải thích vì sao không có lần kích hoạt nào ở σ = 50 m nhưng có ở σ = 100 m. Bán kính hỏi 3 hop trở thành một
+hệ quả thay vì một con số chọn tay (Hình 9).
 
 ![Ngưỡng lệch của takeover](../../docs/figures/proposal/prop-b-deviation-threshold.png)
 
@@ -525,17 +531,19 @@ Mô hình được đối chiếu với `params.yaml` và với bit nhận thậ
 phủ được. Đường liền: quỹ đạo thật lệch một đoạn e (mũi tên hai đầu). Khi e vượt ngưỡng, gói rơi vào cell ngoài vùng đó
 (cam) và takeover phải kéo về (mũi tên đỏ).*
 
-- **Mệnh đề D (cận dưới thời điểm sẵn sàng).** Với mọi giao thức phân phối dưới mặt đất:
-  T_mặt đất ≥ max_{k∈K} max_{lát cắt S tách k khỏi nơi giữ dữ liệu} [thiếu_k(S)/c(S)] + h_min(k)·t_hop,
-  với c(S) là tổng dung lượng các cạnh của lát cắt và h_min(k) là số hop tối thiểu tới k.
-  - Sẽ thử chứng minh River đạt cận này nhân một hằng số khi các cặp gateway dùng kênh riêng. Nếu chưa chứng minh được,
-    chỉ báo khoảng cách đo được.
+**Mệnh đề D (cận dưới thời điểm sẵn sàng).** Với mọi giao thức phân phối dưới mặt đất,
 
-- **Định lý C (giá trị thông tin của kế hoạch), có điều kiện.** Gọi X là mẫu nhận gói (node nào giữ gói nào).
-  - Với lớp giao thức chỉ dùng thông tin cục bộ, chi phí điều khiển của mọi giao thức khám phá là Ω(H(X)) bit.
-  - Chi phí của River kèm takeover là O(H(X | kế hoạch)). Đại lượng này tăng theo độ lệch quỹ đạo e.
-  - C chỉ đưa vào J1 nếu thử nghiệm ở tuần 9–10 cho thấy H(X | kế hoạch) ≪ H(X) ở quỹ đạo danh nghĩa và đại lượng này
-    tăng cùng chiều với số frame điều khiển đo được. Nếu không, C để thành hướng mở.
+$$T_{\text{đất}}\;\ge\;\max_{k\in K}\;\max_{S}\;\frac{\mathrm{thiếu}_k(S)}{c(S)}\;+\;h_{\min}(k)\,t_{\text{hop}},$$
+
+trong đó $S$ chạy trên các lát cắt tách $k$ khỏi nơi giữ dữ liệu, $c(S)$ là tổng dung lượng các cạnh của lát cắt, và
+$h_{\min}(k)$ là số hop tối thiểu tới $k$. Sẽ thử chứng minh River đạt cận này nhân một hằng số khi các cặp gateway dùng
+kênh riêng. Nếu chưa chứng minh được, chỉ báo khoảng cách đo được.
+
+**Định lý C (giá trị thông tin của kế hoạch, có điều kiện).** Gọi $X$ là mẫu nhận gói (node nào giữ gói nào). Với lớp
+giao thức chỉ dùng thông tin cục bộ, chi phí điều khiển của mọi giao thức khám phá là $\Omega(H(X))$ bit. Chi phí của
+River kèm takeover là $O(H(X\mid\text{kế hoạch}))$, và đại lượng này tăng theo $\bar e$. Định lý C chỉ đưa vào J1 nếu
+thử nghiệm ở tuần 9–10 cho thấy $H(X\mid\text{kế hoạch})\ll H(X)$ ở quỹ đạo danh nghĩa, và đại lượng này tăng cùng chiều
+với số frame điều khiển đo được. Nếu không, nó để thành hướng mở.
 
 **Kiểm chứng.** Mỗi kết quả có một script trong `uav-l2/tools/theory/` và một hình đặt đường lý thuyết chồng lên số liệu
 ns-3 sẵn có. Giai đoạn này gần như không cần chạy ns-3 mới.

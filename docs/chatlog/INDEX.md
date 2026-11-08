@@ -300,3 +300,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 292 | 2026-11-08 | đề cương · hỏi "mô hình đóng băng" là gì | [2026-11](2026-11.md) |
 | 293 | 2026-11-08 | đề cương · đổi "đóng băng" thành "chốt"; xuất PDF | [2026-11](2026-11.md) |
 | 294 | 2026-11-08 | đề cương · dựng proposal v1 dạng LaTeX | [2026-11](2026-11.md) |
+| 295 | 2026-11-08 | đề cương · bỏ bản LaTeX, sửa bản PDF từ markdown | [2026-11](2026-11.md) |

@@ -14,3 +14,7 @@ figure { margin: 0; page-break-inside: avoid; }
 code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.5pt; background: #f3f3f3; padding: 0 2pt; }
 hr { border: 0; border-top: 1px solid #ddd; margin: 10pt 0; }
 em { color: #333; }
+p:has(> img) { page-break-inside: avoid; break-after: avoid; margin-bottom: 0; }
+p:has(> img) + p { page-break-before: avoid; margin-top: 2pt; font-size: 9.5pt; }
+math[display="block"] { margin: 6pt 0; overflow-wrap: normal; }
+math { font-family: "Latin Modern Math", math; font-size: 1.05em; }

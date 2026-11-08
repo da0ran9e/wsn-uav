@@ -507,17 +507,73 @@ Bậc 1 và 2 đã đủ để trả lời RQ5 ở mức chấp nhận được 
 
 ### 8.1 Bài báo
 
-| Bài | Nội dung | Nơi gửi | Thời điểm |
-|---|---|---|---|
-| B0 | Bài SigDrop (đã nộp) | IEEE ICC 2027 | kết quả khoảng 01/2027 |
-| B1 | Bản mở rộng: mô hình và cận dưới (ND1), River và takeover hoàn chỉnh (ND2), đánh giá quy mô lớn (ND4) | IEEE TWC hoặc IEEE IoT-J **[cần chốt]** | khoảng 06/2027 |
-| B2 | Pha 0 và takeover trên testbed (ND0, ND5) | SECON, IPSN hoặc INFOCOM **[cần chốt]** | khoảng 09/2027 |
-| B3 | Lập quỹ đạo có bộ dự đoán và nhiều UAV (ND3) | tạp chí như IEEE TMC **[cần chốt]** | khoảng cuối 2027 |
+Ưu tiên của giai đoạn sau ICC là **bài tạp chí**: một bài chính trình bày lời giải đầy đủ, và nếu kịp, một bài thứ hai
+về triển khai. Các kết quả nhỏ, tự đứng được, sẽ được tách thành bài hội nghị rank B hoặc A- (cỡ ICC trở xuống).
+
+Tách bài phải tuân theo chính sách của IEEE: bài tạp chí mở rộng từ bài hội nghị cần có phần mới đáng kể, nên mỗi
+bài hội nghị chỉ dùng một kết quả hẹp và không lặp lại phần lõi của bài tạp chí.
+
+**Bài tạp chí**
+
+**J1. Bài chính: lời giải đầy đủ cho phát truy vấn bằng UAV cánh bằng** (nơi gửi: IEEE TMC hoặc IEEE IoT-J, phương án
+dự phòng IEEE TVT **[cần chốt]**; nộp khoảng 06–07/2027). Bài là bản mở rộng có hệ thống từ bài ICC, gồm năm phần.
+- **Mô hình và lý thuyết (ND1).** Bài toán đầu–cuối cho ba pha, kèm:
+  - bổ đề NP-khó;
+  - định lý điểm giao giữa hợp tác mặt đất và bay vòng (định lý A): khi nào River thắng FC, theo R50, số critical cell
+    và kích thước truy vấn;
+  - mệnh đề ngưỡng lệch của takeover (định lý B);
+  - cận dưới của thời điểm sẵn sàng theo lát cắt nhỏ nhất của đồ thị cell (định lý D).
+  - Mỗi kết quả lý thuyết đều có hình đặt đường lý thuyết chồng lên số liệu ns-3.
+- **Giao thức (ND2).** River hoàn chỉnh, gồm:
+  - takeover theo tọa độ trong header;
+  - năng lượng có lịch ngủ thật được mô phỏng;
+  - bản một radio cho gateway, bên cạnh bản đa radio;
+  - so sánh đầy đủ với Deluge-lite.
+- **Quỹ đạo (ND3).** CHORD và LM-Tour, với bộ dự đoán đã kiểm định trên bản đồ chưa thấy.
+- **Pha 0 và pha 2 ở mức mô hình.** Chi phí dựng lưới và phát kế hoạch; lịch đội xác minh có hover, tải tệp lớn và trễ
+  LoRa.
+- **Đánh giá quy mô lớn (ND4).** Ba cỡ bản đồ, mỗi cỡ 10 bản đồ, đủ seed. Độ bền vững trước gió, node hỏng và sai lệch
+  mô hình kênh.
+
+Đóng góp mà bài này nhắm tới là: một kiến trúc có bảo đảm hình thức, quy tắc thiết kế cho biết khi nào hợp tác mặt đất
+đáng giá, và đánh giá packet-level ở quy mô lớn.
+
+**J2. Bài triển khai: từ mô phỏng tới phần cứng** (nơi gửi: IEEE IoT-J hoặc ACM TOSN **[cần chốt]**; khoảng cuối 2027,
+nếu ND5 kịp). Nội dung gồm:
+- dựng pha 0 bằng frame thật;
+- River và takeover trên testbed 802.15.4;
+- PX4 SITL ghép ns-3 để kiểm quỹ đạo;
+- so sánh PER, thời điểm sẵn sàng và năng lượng giữa phần cứng và mô phỏng;
+- hiệu chỉnh mô hình kênh G2G từ số đo thật.
+
+**Bài hội nghị tách từ kết quả nhỏ**
+
+Danh sách hội nghị dưới đây là gợi ý theo chủ đề. Rank cần kiểm tra lại theo CORE hoặc danh mục của đơn vị trước khi
+chọn.
+
+- **C1. River tự thích ứng với sai lệch quỹ đạo.** Takeover tuần tự và takeover theo tọa độ trong header, so với oracle
+  và với River không sửa lỗi. Thí nghiệm gió σ 50–200 m, kèm ngưỡng lệch ở định lý B. Nơi gửi: IEEE WCNC hoặc IEEE VTC.
+  Đây là bài sẵn nhất, vì số liệu gần đủ.
+- **C2. Lập kế hoạch hay khám phá trong phổ tán dữ liệu.** River so với Deluge-lite, về số frame, năng lượng và node
+  nóng nhất. Có thể kèm khung "giá trị thông tin của kế hoạch" (định lý C, ở dạng sơ bộ). Nơi gửi: DCOSS-IoT, IEEE MASS
+  hoặc IEEE ISCC.
+- **C3. Tổ chức mạng theo lưới cell cho phân phối có kế hoạch.** Quy tắc chọn R theo mật độ, chi phí dựng và bảo trì
+  pha 0, gateway một radio so với đa radio, giới hạn 16 kênh. Nơi gửi: IEEE PIMRC hoặc IEEE LCN.
+- **C4. Lập quỹ đạo UAV nhờ bộ dự đoán học từ mô phỏng.** LM-Tour, bộ dự đoán dạng cây và khả năng tổng quát hoá sang
+  bản đồ mới. Nơi gửi: IEEE VTC, hoặc workshop về học máy cho mạng tại ICC/GLOBECOM.
+- **C5. River dùng fountain code.** Phân công theo dải ID, cell đã giải mã sinh gói mới, so sánh với River gói gốc. Nơi
+  gửi: IEEE WCNC hoặc workshop tại ICC.
+
+Thứ tự đề xuất:
+1. Nộp C1 sớm nhất, khoảng đầu 2027.
+2. Sau đó C2 và C4.
+3. C3 và C5 khi các nội dung tương ứng xong.
+
+J1 sẽ dẫn các bài hội nghị này và nêu rõ phần mới của nó.
 
 ### 8.2 Mã nguồn và dữ liệu
 
-Bộ mô phỏng ns-3 (`uav-coop/`, `uav-coop2/`) và công cụ lập quỹ đạo (`uav-l2/tools/`) sẽ được công khai khi bài tạp chí
-đầu tiên được chấp nhận. Kèm theo là bộ dữ liệu bản đồ, lượt bay, bit nhận và kết quả các chiến dịch dưới dạng CSV,
+Bộ mô phỏng ns-3 (`uav-coop/`, `uav-coop2/`) và công cụ lập quỹ đạo (`uav-l2/tools/`) sẽ được công khai khi J1 được chấp nhận. Kèm theo là bộ dữ liệu bản đồ, lượt bay, bit nhận và kết quả các chiến dịch dưới dạng CSV,
 cùng tệp tham số `params.yaml`, để người khác tái lập được mọi bảng và hình.
 
 ## 9. Kế hoạch thực hiện **[cần chốt]**
@@ -530,9 +586,9 @@ Kế hoạch tính từ tháng 12/2026, sau khi bài ICC đã nộp.
   trả lời phản biện của ICC.
 - **Giai đoạn 2 (01–04/2027):** dành cho ND2: takeover theo tọa độ header, so sánh với Deluge-lite, và năng lượng có
   lịch ngủ thật.
-- **Giai đoạn 3 (03–06/2027):** chạy đánh giá quy mô lớn và độ bền vững (ND4), viết và nộp B1.
+- **Giai đoạn 3 (03–06/2027):** chạy đánh giá quy mô lớn và độ bền vững (ND4), viết và nộp J1.
 - **Giai đoạn 4 (04–08/2027):** mô phỏng pha 0 bằng frame (ND0) và dựng testbed bậc 1–2 (ND5).
-- **Giai đoạn 5 (07–12/2027):** ND3 (bộ dự đoán tổng quát hoá, nhiều UAV), thử bay bậc 3 nếu có điều kiện, viết B2 và B3.
+- **Giai đoạn 5 (07–12/2027):** ND3 (bộ dự đoán tổng quát hoá, nhiều UAV), thử bay bậc 3 nếu có điều kiện, viết J2 nếu ND5 kịp, nộp các bài hội nghị C3–C5.
 
 Các giai đoạn gối nhau có chủ đích. Phần mô phỏng chạy trong lúc viết phân tích, nhờ cách chạy song song nhiều phiên đã
 dùng ở chiến dịch C4.
@@ -544,7 +600,7 @@ dùng ở chiến dịch C4.
 - **Cuối giai đoạn 2:** takeover không dùng oracle đưa 100 % critical cell tới sẵn sàng ở σ = 100 m với 5 seed, và
   không chậm hơn danh nghĩa quá 10 %. Cũng ở mốc này, River phải nhanh hơn Deluge-lite ít nhất 15 % ở r100, hoặc ít
   frame hơn ít nhất 2 lần nếu thời gian ngang nhau.
-- **Cuối giai đoạn 3:** có bảng độ bền vững đủ 10 seed và đã nộp B1.
+- **Cuối giai đoạn 3:** có bảng độ bền vững đủ 10 seed và đã nộp J1.
 - **Cuối giai đoạn 4:** có chi phí pha 0 theo mật độ, và River đã chạy trên testbed.
 
 ## 10. Rủi ro và phương án dự phòng

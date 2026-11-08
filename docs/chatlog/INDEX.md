@@ -290,3 +290,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 282 | 2026-11-07 | đề cương · fountain code: số gói cần với K = 1234, cách báo thiếu | [2026-11](2026-11.md) |
 | 283 | 2026-11-07 | đề cương · mục kết quả ICC: đóng góp, đo lường, thuật toán, giả lập, hạn chế | [2026-11](2026-11.md) |
 | 284 | 2026-11-07 | đề cương · định lý khả thi và phát biểu có giá trị nghiên cứu | [2026-11](2026-11.md) |
+| 285 | 2026-11-08 | đề cương · thảo luận pha 0 (bản sửa của người dùng) | [2026-11](2026-11.md) |

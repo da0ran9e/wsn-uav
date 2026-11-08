@@ -294,3 +294,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 286 | 2026-11-08 | đề cương · kết quả dự kiến: tạp chí trước, bài hội nghị nhỏ | [2026-11](2026-11.md) |
 | 287 | 2026-11-08 | đề cương · kế hoạch tập trung vào bài journal | [2026-11](2026-11.md) |
 | 288 | 2026-11-08 | đề cương · kế hoạch chi tiết 2–3 tháng cho lý thuyết và mô hình (ND1) | [2026-11](2026-11.md) |
+| 289 | 2026-11-08 | đề cương · đưa kế hoạch ND1 vào proposal, nhắc lại định lý dự kiến | [2026-11](2026-11.md) |

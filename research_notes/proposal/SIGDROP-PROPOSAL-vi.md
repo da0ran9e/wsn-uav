@@ -437,17 +437,86 @@ Kích thước cell so với tầm phát và số màu kênh sẽ được quét
 ND0 nối với các thử nghiệm tái cấu trúc cụm theo quỹ đạo trước đây (LANE, MEANDER): đánh giá lại chúng khi chi phí dựng
 pha 0 đã được tính vào.
 
-### 7.2 ND1. Mô hình hoá bài toán và cận dưới
+### 7.2 ND1. Mô hình hoá bài toán và các kết quả lý thuyết
 
-ND1 phát biểu bài toán tối ưu chung với ba biến cùng lúc: tour của UAV, cách phân công đoạn dữ liệu (Seg) cho các SPINE
-cell, và lịch truyền của River. Từ đó chứng minh bài toán là NP-khó bằng cách quy về DTSP-N.
+ND1 trả lời RQ1 và là phần lõi của J1. Nó thực hiện trong khoảng 12 tuần đầu sau ICC (12/2026–02/2027).
 
-Cận dưới của T\* được dựng từ hai phần:
-- **Phần bay:** tour Dubins ngắn nhất đi qua vùng lân cận các CH.
-- **Phần mặt đất:** dòng cực đại trên đồ thị cell, với dung lượng mỗi cạnh lấy theo thông lượng thực đo của cặp gateway.
+**Mô hình chung.** Mọi kết quả dưới đây dựa trên một mô hình hình thức, được chốt trong hai tuần đầu.
+- **Mạng:** đồ thị cell G = (V, E). Mỗi đỉnh là một cell lục giác bán kính R. Mỗi cạnh là một cặp gateway có dung lượng
+  c_e (gói/s). Tập critical cell là K ⊆ V.
+- **Truy vấn:** Q gói, UAV phát một gói mỗi τ giây.
+- **Quỹ đạo:** γ là đường bay dự kiến, γ′ là đường bay thật. Gói s được phát tại γ′(sτ). Độ lệch ngang lớn nhất là
+  e = sup_t |γ′(t) − γ(t)|.
+- **Kênh A2G:** một node nhận được gói với xác suất p(d), với d là khoảng cách ngang tới điểm UAV phát gói đó. p(d) lấy
+  từ mô hình hai đoạn kèm fading Nakagami, đặc trưng bởi R50.
+- **Giả định A1:** các lần nhận gói độc lập với nhau. Giả định này lạc quan, được nêu rõ trong bài.
+- **Thời gian nhiệm vụ:** T\* = T_bay + T_mặt đất + T_đối sánh + T_LoRa + T_pha 2. Các kết quả chỉ so sánh hai thành
+  phần đầu; các thành phần còn lại chung cho mọi phương án.
 
-Song song, một mô hình giải tích cho thời điểm sẵn sàng của River sẽ được xây dựng và đối chiếu với bộ dự đoán học từ
-mô phỏng. Mô hình giải tích giải thích được vì sao bộ dự đoán đúng, còn bộ dự đoán cho biết mô hình bỏ sót điều gì.
+Mô hình được đối chiếu với `params.yaml` và với bit nhận thật trong log trước khi đóng băng.
+
+**Các kết quả dự kiến.** Phát biểu dưới đây là dạng dự kiến, sẽ được chỉnh khi chứng minh.
+
+- **Bổ đề L1 (độ khó).** Bài toán chọn quỹ đạo và kế hoạch để T\* nhỏ nhất là NP-khó.
+  - Chứng minh: quy từ DTSP-N, bằng cách cho Q rất nhỏ và dung lượng mặt đất vô hạn. Bài toán khi đó chỉ còn tìm tour
+    Dubins ngắn nhất qua đĩa các CH.
+
+- **Định lý A (điểm giao giữa hợp tác và bay vòng).** Gọi p_k là xác suất critical cell k nhận được một gói ở vị trí
+  thuận lợi nhất của UAV, và ε là phần dư của fountain code.
+  - **Thời gian của FC** thoả T_FC ≥ T_tour,FC + Σ_{k∈K} τ·[Q(1 + ε)/p_k − n_k], với n_k là số gói k đã nhận khi UAV bay
+    ngang.
+  - **Thời gian của River** thoả T_River ≤ T_tour,1 lượt + T_mặt đất, với T_mặt đất bị chặn như ở mệnh đề D.
+  - **Điều kiện đủ để River thắng:** về phải của bất đẳng thức FC lớn hơn về phải của bất đẳng thức River.
+  - **Tiệm cận:** T_FC/T_River tăng theo cỡ 1/p_min khi R50 giảm; tỉ số tiến về 1 khi R50 lớn hơn bề rộng cụm.
+  - Định lý giải thích hiện tượng đã đo: ở kênh open hai phương án gần ngang nhau, ở r200/r100 River nhanh hơn 49–72 %.
+    Nó cũng cho người thiết kế một quy tắc: khi nào nên đầu tư vào hợp tác mặt đất.
+
+- **Mệnh đề B (ngưỡng lệch của takeover).** Gọi w là khoảng cách lớn nhất từ điểm phát tới tập a ∪ N(a) (SPINE cell a
+  và các cell kề), sao cho tập này vẫn có node nhận gói với xác suất ≥ p_min. w phụ thuộc R và R50.
+  - **(i) Dưới ngưỡng:** nếu e < w − √3·R/2, takeover không phải kích hoạt, với xác suất ≥ 1 − δ.
+  - **(ii) Trên ngưỡng:** nếu e ≥ w, mọi gói thiếu của Seg(a) nằm trong h(e) = ⌈(e − w)/(√3·R)⌉ + 1 hop cell tính từ a.
+    Vòng hỏi trong bán kính h(e) là đủ, và số frame của nó có chặn trên tương ứng.
+  - Mệnh đề giải thích vì sao không có lần kích hoạt nào ở σ = 50 m nhưng có ở σ = 100 m. Bán kính hỏi 3 hop trở thành
+    một hệ quả thay vì một con số chọn tay.
+
+- **Mệnh đề D (cận dưới thời điểm sẵn sàng).** Với mọi giao thức phân phối dưới mặt đất:
+  T_mặt đất ≥ max_{k∈K} max_{lát cắt S tách k khỏi nơi giữ dữ liệu} [thiếu_k(S)/c(S)] + h_min(k)·t_hop,
+  với c(S) là tổng dung lượng các cạnh của lát cắt và h_min(k) là số hop tối thiểu tới k.
+  - Sẽ thử chứng minh River đạt cận này nhân một hằng số khi các cặp gateway dùng kênh riêng. Nếu chưa chứng minh được,
+    chỉ báo khoảng cách đo được.
+
+- **Định lý C (giá trị thông tin của kế hoạch), có điều kiện.** Gọi X là mẫu nhận gói (node nào giữ gói nào).
+  - Với lớp giao thức chỉ dùng thông tin cục bộ, chi phí điều khiển của mọi giao thức khám phá là Ω(H(X)) bit.
+  - Chi phí của River kèm takeover là O(H(X | kế hoạch)). Đại lượng này tăng theo độ lệch quỹ đạo e.
+  - C chỉ đưa vào J1 nếu thử nghiệm ở tuần 9–10 cho thấy H(X | kế hoạch) ≪ H(X) ở quỹ đạo danh nghĩa và đại lượng này
+    tăng cùng chiều với số frame điều khiển đo được. Nếu không, C để thành hướng mở.
+
+**Kiểm chứng.** Mỗi kết quả có một script trong `uav-l2/tools/theory/` và một hình đặt đường lý thuyết chồng lên số liệu
+ns-3 sẵn có. Giai đoạn này gần như không cần chạy ns-3 mới.
+- A: tỉ số T_FC/T_River theo R50, so với các ô của C4.
+- B: số lần kích hoạt takeover và số hop tới cell giữ gói theo e, so với WND và TKO.
+- D: thời điểm sẵn sàng đo được so với cận, theo từng cụm. c_e lấy từ thông lượng thực đo của các cặp gateway.
+- C: entropy ước lượng từ bit nhận, đặt cạnh số frame điều khiển của DLG và TKO.
+
+**Lịch 12 tuần.**
+
+| Tuần | Việc | Mốc |
+|---|---|---|
+| 1–2 | Mô hình, ký hiệu, giả định; bổ đề L1 | Mô hình đóng băng |
+| 3–5 | Định lý A và kiểm chứng | A xong |
+| 5–7 | Mệnh đề B và kiểm chứng | B xong |
+| 7–9 | Mệnh đề D và kiểm chứng | D xong |
+| 9–10 | Thử nghiệm quyết định cho C | Làm hoặc bỏ C |
+| 10–12 | Viết mục System model (khoảng 2 trang) và Analysis (3–4 trang) của J1, rà soát, thử phản ví dụ | Bản nháp hoàn chỉnh |
+
+Nếu chỉ có 2 tháng: bỏ C (để sau J1) và viết dần theo từng mốc. Thứ tự ưu tiên khi thiếu thời gian là A, B, L1, D.
+
+**Rủi ro riêng của ND1.**
+- **Giả định A1 làm cận lỏng ở kênh xấu.** Khắc phục: phát biểu dạng một chiều (chặn dưới cho FC, chặn trên cho River),
+  để kết luận vẫn đứng được.
+- **Một chứng minh kẹt quá một tuần.** Khắc phục: hạ xuống trường hợp đặc biệt (lưới đều, một cụm, kênh đĩa), còn trường
+  hợp tổng quát ghi thành giả thuyết, có kiểm chứng số.
+- **FC trong mô phỏng là bản lý tưởng.** Định lý A phải so với đúng bản này, và nêu rõ điều đó trong bài.
 
 ### 7.3 ND2. Giao thức River và takeover
 

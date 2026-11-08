@@ -419,27 +419,67 @@ chia thành các gói 802.15.4.
 
 ### 7.1 ND0. Tổ chức mạng theo lưới cell (pha 0)
 
-Pha 0 là nền móng cho mọi cơ chế phía sau. Hiện tại nó được tính sẵn như sau:
-- **Lưới và vai trò.** Mạng được chia thành lưới lục giác có R = 100 m. Mỗi cell chọn một CL (node có năng lực tốt
-  nhất), và mỗi cặp cell kề nhau có đúng một cặp gateway.
-- **Định tuyến.** Mỗi node giữ bảng định tuyến PECEE: next hop tới CL của cell mình và tới từng cell kề.
-- **Lịch kênh.** Các cặp gateway được xếp lịch theo lưới 7 màu, sao cho hai cell dùng chung kênh cách nhau ít nhất 3 cell.
-- **Cụm và vai trò của BS.** Cụm có tối đa 80 cell. Trạm gốc chọn CH và các critical cell.
+**Mục tiêu.** ND0 biến pha 0 từ một bước "tính sẵn, miễn phí" thành một giao thức có chi phí đo được và một quy tắc
+thiết kế rõ ràng. Nó trả lời RQ0.
+
+**Hiện trạng.** Trong mô phỏng hiện tại, pha 0 được tính sẵn tại trạm gốc:
+- **Lưới và vai trò.** Mạng được chia thành lưới lục giác bán kính R ≥ 100 m, chọn theo mật độ và kích thước mạng. Mỗi
+  cell chọn một CL (node có năng lực tốt nhất). Mỗi cặp cell kề có đúng một cặp gateway, là cặp node có liên kết tốt
+  nhất qua cạnh chung.
+- **Định tuyến.** Mỗi node giữ bảng định tuyến PECEE: next hop tới CL của cell mình (theo ETX nhỏ nhất) và tới từng cell
+  kề.
+- **Lịch kênh.** Lưu lượng trong cell dùng 7 kênh, xếp theo lưới 7 màu, sao cho hai cell cùng kênh cách nhau ít nhất 3
+  bước cell. Mỗi cặp gateway dùng một kênh riêng trong 9 kênh còn lại, không trùng với cặp nào ở gần. Node gateway có
+  radio riêng cho kênh cặp, tức là một giả định đa radio.
+- **Cụm và vai trò của trạm gốc.** Mỗi cụm có tối đa 80 cell. Trạm gốc chọn CH và các critical cell, rồi phát kế hoạch
+  xuống trước mỗi nhiệm vụ.
 
 ![Lưới cell, kênh theo màu và các cặp gateway](../../uav-coop2/docs/figures/ns3-setup.png)
 
 *Hình 7. Pha 0 trong mô phỏng hiện tại. Trái: kênh của mỗi cell theo lưới 7 màu và các cặp gateway (đoạn đen; đoạn đỏ
 là cặp yếu). Phải: phóng to quanh CH, mỗi node nối về CL theo đường có ETX nhỏ nhất.*
 
-ND0 sẽ mô phỏng việc dựng pha 0 bằng frame thật: bầu CL, chọn gateway theo chất lượng liên kết, phát bảng định tuyến.
-Từ đó đo chi phí theo số node và mật độ. Nội dung này cũng xét cách duy trì cấu trúc khi node hỏng hoặc khi có node mới.
-Kích thước cell so với tầm phát và số màu kênh sẽ được quét để tìm điểm cân bằng giữa thông lượng và nhiễu. Cuối cùng,
-ND0 nối với các thử nghiệm tái cấu trúc cụm theo quỹ đạo trước đây (LANE, MEANDER): đánh giá lại chúng khi chi phí dựng
-pha 0 đã được tính vào.
+**Nội dung nghiên cứu.**
+
+- **Quy tắc chọn R.** R tác động tới mọi lớp phía sau, theo hai chiều ngược nhau.
+  - R lớn: mỗi cell có nhiều node hơn, nên gom nội cell nhiều hop hơn và CL tải nặng hơn. Đổi lại, River đi qua ít cell
+    hơn.
+  - R nhỏ: phải có đủ node để mỗi cạnh chung luôn có cặp gateway liên kết tốt.
+  - Ngoài ra, độ rộng River tính theo cell và tỉ lệ R50/R cũng thay đổi theo R.
+
+  ND0 phát biểu R là nghiệm của một ràng buộc: R nhỏ nhất sao cho mỗi cell có ít nhất n_min node, và mỗi cạnh chung có
+  ít nhất một cặp node với xác suất liên kết ≥ q. Sau đó quét R để xem T\* thay đổi thế nào.
+- **Chi phí dựng và phát kế hoạch.** Pha 0 có hai loại chi phí, xem Hình 8.
+  - Chi phí một lần: trạm gốc gom topo lên (vị trí, năng lực, chất lượng liên kết), rồi phát cấu trúc lưới xuống.
+  - Chi phí lặp lại trước mỗi nhiệm vụ: phát bảng Seg, vai trò Bank/Ring và các đường cell tới từng cell.
+
+  Cả hai sẽ được mô phỏng bằng frame thật và đo theo số node, mật độ và kích thước cụm.
+- **Gateway một radio và giới hạn kênh.**
+  - Thay giả định đa radio bằng bản một radio: node gateway chia thời gian giữa kênh cell và kênh cặp, rồi đo River chậm
+    đi bao nhiêu.
+  - 802.15.4 ở 2,4 GHz chỉ có 16 kênh, nên khi mạng dày sẽ phải dùng lại kênh. Cần đo ảnh hưởng của việc này.
+- **Đồng bộ và đánh thức.** Lịch kênh cần đồng hồ chung. Node phải thức đúng lúc UAV bay qua, nếu không sẽ phải thức suốt
+  nhiệm vụ. ND0 thiết kế một cơ chế đánh thức theo lịch bay mà trạm gốc phát trong kế hoạch, và tính cả sai số đồng hồ.
+- **Bền vững của cấu trúc.**
+  - Cạnh không có cặp gateway (qua hồ hoặc vùng thưa) làm hai cell kề không nối với nhau.
+  - Mỗi cạnh chỉ có một cặp gateway, nên cặp này vừa là điểm hỏng đơn vừa là nút cổ chai.
+  - CL là điểm nóng năng lượng.
+
+  ND0 xét cặp gateway dự phòng, luân phiên vai trò CL, và cách sửa cấu trúc cục bộ khi node hỏng hoặc có node mới.
+- **Liên hệ với tái cấu trúc cụm.** Các thử nghiệm LANE và MEANDER trước đây sẽ được đánh giá lại khi chi phí dựng pha 0
+  đã được tính vào.
+
+![Luồng thông tin của pha 0: báo cáo topo lên trạm gốc, kế hoạch xuống từng cell](../../docs/figures/proposal/nd0-phase0-topology-and-plan-flow.png)
+
+*Hình 8. Hai luồng thông tin của pha 0. Mũi tên chấm: các cell báo topo lên trạm gốc (hình thoi). Mũi tên liền: trạm gốc
+phát kế hoạch xuống trước mỗi nhiệm vụ. Chấm xám là CL; đoạn đen là cặp gateway giữa hai cell kề.*
+
+**Đầu ra.** Quy tắc chọn R; chi phí pha 0 tách thành phần một lần và phần mỗi nhiệm vụ; độ chậm khi gateway chỉ có một
+radio; cơ chế đánh thức. Các kết quả này đi vào phần mô hình của J1 và vào C3.
 
 ### 7.2 ND1. Mô hình hoá bài toán và các kết quả lý thuyết
 
-ND1 trả lời RQ1 và là phần lõi của J1. Nó thực hiện trong khoảng 12 tuần đầu sau ICC (12/2026–02/2027).
+ND1 trả lời RQ1 và là phần lõi của J1.
 
 **Mô hình chung.** Mọi kết quả dưới đây dựa trên một mô hình hình thức, được chốt trong hai tuần đầu.
 - **Mạng:** đồ thị cell G = (V, E). Mỗi đỉnh là một cell lục giác bán kính R. Mỗi cạnh là một cặp gateway có dung lượng
@@ -479,6 +519,12 @@ Mô hình được đối chiếu với `params.yaml` và với bit nhận thậ
   - Mệnh đề giải thích vì sao không có lần kích hoạt nào ở σ = 50 m nhưng có ở σ = 100 m. Bán kính hỏi 3 hop trở thành
     một hệ quả thay vì một con số chọn tay.
 
+![Ngưỡng lệch của takeover](../../docs/figures/proposal/prop-b-deviation-threshold.png)
+
+*Hình 9. Mệnh đề B. Đường đứt: quỹ đạo dự kiến qua các SPINE cell (xanh đậm). Xanh nhạt: vùng mà bước sửa từ cell kề còn
+phủ được. Đường liền: quỹ đạo thật lệch một đoạn e (mũi tên hai đầu). Khi e vượt ngưỡng, gói rơi vào cell ngoài vùng đó
+(cam) và takeover phải kéo về (mũi tên đỏ).*
+
 - **Mệnh đề D (cận dưới thời điểm sẵn sàng).** Với mọi giao thức phân phối dưới mặt đất:
   T_mặt đất ≥ max_{k∈K} max_{lát cắt S tách k khỏi nơi giữ dữ liệu} [thiếu_k(S)/c(S)] + h_min(k)·t_hop,
   với c(S) là tổng dung lượng các cạnh của lát cắt và h_min(k) là số hop tối thiểu tới k.
@@ -498,79 +544,152 @@ ns-3 sẵn có. Giai đoạn này gần như không cần chạy ns-3 mới.
 - D: thời điểm sẵn sàng đo được so với cận, theo từng cụm. c_e lấy từ thông lượng thực đo của các cặp gateway.
 - C: entropy ước lượng từ bit nhận, đặt cạnh số frame điều khiển của DLG và TKO.
 
-**Lịch 12 tuần.**
-
-| Tuần | Việc | Mốc |
-|---|---|---|
-| 1–2 | Mô hình, ký hiệu, giả định; bổ đề L1 | Mô hình đóng băng |
-| 3–5 | Định lý A và kiểm chứng | A xong |
-| 5–7 | Mệnh đề B và kiểm chứng | B xong |
-| 7–9 | Mệnh đề D và kiểm chứng | D xong |
-| 9–10 | Thử nghiệm quyết định cho C | Làm hoặc bỏ C |
-| 10–12 | Viết mục System model (khoảng 2 trang) và Analysis (3–4 trang) của J1, rà soát, thử phản ví dụ | Bản nháp hoàn chỉnh |
-
-Nếu chỉ có 2 tháng: bỏ C (để sau J1) và viết dần theo từng mốc. Thứ tự ưu tiên khi thiếu thời gian là A, B, L1, D.
-
-**Rủi ro riêng của ND1.**
-- **Giả định A1 làm cận lỏng ở kênh xấu.** Khắc phục: phát biểu dạng một chiều (chặn dưới cho FC, chặn trên cho River),
-  để kết luận vẫn đứng được.
-- **Một chứng minh kẹt quá một tuần.** Khắc phục: hạ xuống trường hợp đặc biệt (lưới đều, một cụm, kênh đĩa), còn trường
-  hợp tổng quát ghi thành giả thuyết, có kiểm chứng số.
-- **FC trong mô phỏng là bản lý tưởng.** Định lý A phải so với đúng bản này, và nêu rõ điều đó trong bài.
-
 ### 7.3 ND2. Giao thức River và takeover
 
-Trọng tâm đầu tiên là đưa takeover về dạng triển khai được. Mỗi gói do UAV phát mang tọa độ thật của UAV trong header.
-Sau khi gom nội cell, cell nào nhận được gói phát ngay trên mình nhưng thuộc đoạn của một SPINE cell khác sẽ gửi một báo
-cáo ngắn cho SPINE cell đó. SPINE cell sau đó kéo phần còn thiếu thẳng từ cell này; bước hỏi lan chỉ để dự phòng. Khi bay
-đúng kế hoạch, cơ chế này không phát frame nào. Nó sẽ được so sánh với cách SPINE cell tự hỏi lan và với oracle.
+**Mục tiêu.** ND2 đưa River từ bản chạy được trong mô phỏng thành giao thức dùng được ngoài thực tế. Nó gỡ các giả định
+lạc quan đã nêu ở mục 4.6, và trả lời RQ2 và một phần RQ3.
 
-Các câu hỏi phụ đã ghi nhận trong quá trình làm cũng thuộc ND2:
-- độ rộng River tối ưu;
-- cách ghép các Ring khi hai critical cell nằm cạnh nhau;
-- cách dựng Bank theo pháp tuyến cục bộ khi SPINE bị cong.
+**Takeover theo tọa độ trong header.** Mỗi gói UAV phát mang tọa độ thật của UAV. Sau khi gom nội cell, cell nào nhận
+được gói phát ngay trên mình nhưng gói đó thuộc đoạn của một SPINE cell khác sẽ gửi một báo cáo ngắn: chỉ một đoạn chỉ
+số [min, max] tới SPINE cell đó. SPINE cell kéo phần còn thiếu thẳng từ cell này; bước hỏi lan chỉ để dự phòng (Hình 10).
 
-ND2 cũng thay phép tính năng lượng sau khi chạy bằng mô phỏng node thật sự tắt radio theo lịch. Cuối cùng, nó hoàn tất
-so sánh với Deluge-lite (page không theo thứ tự, NACK theo bitmap) trên LM-Tour.
+Khi bay đúng kế hoạch, cơ chế này không phát frame nào. Nó sẽ được mô phỏng đầy đủ và so với hai bản đã có: SPINE cell tự
+hỏi lan, và oracle. Chỉ số so sánh là thời điểm sẵn sàng, số frame điều khiển, và tỉ lệ critical cell nhận đủ theo độ
+lệch e.
+
+![Takeover theo tọa độ trong header](../../docs/figures/proposal/nd2-takeover-header-report.png)
+
+*Hình 10. Takeover theo tọa độ trong header. Đường đứt là quỹ đạo dự kiến, đi qua các SPINE cell (xanh đậm); đường liền là
+quỹ đạo thật. Các cell cam nằm dưới quỹ đạo thật và nhận gói thuộc đoạn của SPINE cell. Mũi tên chấm: báo cáo từ cell cam
+tới SPINE cell. Mũi tên cam: dữ liệu kéo về. Mũi tên xanh: SPINE cell tiếp tục phục vụ critical cell (đỏ) theo kế hoạch.*
+
+**Gỡ các giả định lạc quan.**
+- **Kênh lệch mô hình.** Trạm gốc lập kế hoạch bằng một mô hình kênh, nhưng mô phỏng chạy trên một kênh khác: lệch số mũ
+  suy hao, lệch R50, có tương quan theo thời gian. Từ đó đo River suy giảm thế nào, và takeover bù được bao nhiêu.
+- **Phân phối chồng với lượt bay.** Cho phép cụm vừa được bay qua bắt đầu phân phối trong lúc UAV phát cho cụm kế bên.
+  Mô phỏng cả nhiễu giữa lưu lượng mặt đất và gói UAV.
+- **Lịch ngủ thật.** Node tắt radio theo kế hoạch thay vì tính năng lượng sau khi chạy. Đo năng lượng thật và kiểm tra
+  River vẫn đúng hạn.
+- **Gateway một radio.** Dùng kết quả của ND0 để chạy River với gateway chia thời gian giữa hai kênh.
+
+**River dùng fountain code.** Mỗi ảnh được mã thành một khối riêng. SPINE cell, Bank và Ring phụ trách các dải ID gói mã
+riêng. Cell đã giải mã được ảnh thì tự sinh gói mã mới, nên không gây trùng lặp và bên nhận chỉ cần báo còn thiếu bao
+nhiêu. So sánh với River vận chuyển gói gốc, về thời gian, số frame và nhu cầu dùng takeover.
+
+**Các câu hỏi phụ đã ghi nhận.**
+- Độ rộng River tối ưu theo R50 và mật độ.
+- Cách ghép các Ring khi hai critical cell nằm cạnh nhau.
+- Cách dựng Bank theo pháp tuyến cục bộ khi SPINE cong.
+
+**So sánh đầy đủ với Deluge-lite.** Bản Deluge mạnh hơn: page không theo thứ tự, NACK theo bitmap, cùng lượt bay LM-Tour.
+Hai cấu hình Trickle được tinh chỉnh trước, rồi cố định trước khi chạy chính.
+
+**Đầu ra.** Giao thức River hoàn chỉnh, gồm takeover theo header và biến thể fountain code, kèm số đo dưới các giả định
+thực tế hơn. Đây là phần giao thức của J1, và là nội dung của C1, C2, C5.
 
 ### 7.4 ND3. Thiết kế quỹ đạo và surrogate
 
+**Mục tiêu.** ND3 làm cho LM-Tour có cơ sở vững hơn và tổng quát hơn. Nó trả lời RQ4.
+
 **Bộ dự đoán thời gian River.**
-- Mở rộng thêm đặc trưng về hình dạng cụm và chất lượng kênh G2G.
-- Kiểm định chéo theo từng bản đồ để đo khả năng tổng quát hoá sang bản đồ chưa thấy.
-
-**LM-Tour.**
-- Chọn bán kính đĩa ξ theo môi trường.
-- Làm rõ điều kiện dừng khi lợi ích uốn về landmark đã bão hoà.
-- Đưa ràng buộc gia tốc 1 g và năng lượng UAV vào hàm mục tiêu.
-
-**Nhiều UAV ở pha 1.** Mở rộng bài toán sang trường hợp này, kèm cách chia cụm cho từng UAV.
+- **Kiểm định theo bản đồ.** Học trên một tập bản đồ, kiểm trên bản đồ chưa thấy. Báo sai số theo từng mức kênh.
+- **Đặc trưng.** Thêm đặc trưng về hình dạng cụm (độ dài SPINE, bề rộng, số critical cell ngoài River) và về chất lượng
+  cặp gateway.
+- **Mô hình giải tích.** So bộ dự đoán với mô hình giải tích từ ND1, để biết phần nào giải thích được bằng lý thuyết và
+  phần nào chỉ học được từ dữ liệu.
 
 ![So sánh thời gian River dự đoán với thời gian đo bằng ns-3 trên 812 critical cell](../../uav-l2/docs/figures/lm-surrogate-pred-vs-ns3.png)
 
-*Hình 8. Bộ dự đoán thời gian River: mỗi chấm là một critical cell (812 cell, 3 bản đồ × 4 kênh). Trục ngang là thời
+*Hình 11. Bộ dự đoán thời gian River: mỗi chấm là một critical cell (812 cell, 3 bản đồ × 4 kênh). Trục ngang là thời
 gian ns-3 đo được, trục dọc là thời gian dự đoán.*
+
+**LM-Tour.**
+- **Bán kính đĩa ξ.** Chọn ξ theo R50 bằng quy tắc thay cho dò tay.
+- **Điều kiện dừng.** Làm rõ khi nào việc uốn về landmark đã bão hoà. Nếu thay lợi ích bằng một hàm phủ có trọng số,
+  bước uốn tham lam có thể có bảo đảm xấp xỉ. Đây là định lý tuỳ chọn, chỉ làm nếu ND1 còn thời gian.
+- **Động học và năng lượng.** Đưa ràng buộc gia tốc 1 g và năng lượng UAV (mô hình có số hạng gia tốc, đã đối chiếu hệ số
+  c₁, c₂) vào hàm mục tiêu.
+- **CH ở vị trí bất kỳ.** Đánh giá khi CH không phải node tốt nhất, vì thử trước đây cho thấy kết quả kém đi rõ.
+
+**Nhiều UAV ở pha 1.** Chia các cụm cho nhiều UAV để T\* nhỏ nhất, có xét chồng lấn thời gian phân phối mặt đất giữa các
+cụm.
+
+**Đầu ra.** LM-Tour có quy tắc chọn tham số, bộ dự đoán đã kiểm định trên bản đồ mới, và bản nhiều UAV. Đây là phần quỹ
+đạo của J1, và là nội dung của C4.
 
 ### 7.5 ND4. Đánh giá mô phỏng quy mô lớn
 
-ND4 có ba phần việc.
-- **Hoàn tất chiến dịch C4 và mở rộng:** mỗi cỡ bản đồ chạy 10 bản đồ, đủ 10 seed.
-- **Đánh giá độ bền vững** trước bốn loại sai lệch:
-  - gió lệch quỹ đạo σ từ 50 tới 200 m, đủ seed;
-  - 5–20 % node hỏng ngẫu nhiên sau khi lập kế hoạch;
-  - kênh thực tế khác với mô hình dùng để lập kế hoạch;
-  - vật cản, nếu đưa vào phạm vi.
-- **Khả năng mở rộng của ns-3:** cụm tới khoảng 2 000 node; nếu cần thì dùng mô phỏng song song.
+**Mục tiêu.** ND4 cho J1 một bộ số liệu đủ rộng và đủ chặt để kết luận không phụ thuộc vào một bản đồ hay một seed. Nó
+trả lời phần còn lại của RQ3.
 
-### 7.6 ND5. Kiểm chứng thực địa (nếu có điều kiện)
+**Thiết kế chiến dịch.**
+- Ba cỡ bản đồ (8, 12, 15 cụm), mỗi cỡ 10 bản đồ, mỗi bản đồ đủ 10 seed.
+- Bốn mức kênh.
+- Các phương án: LM-Tour + River (đề xuất), CHORD + River, DTSP-N + River, FC + DTSP-N, Deluge-lite.
+- Binary đóng băng trước khi chạy và không đổi trong suốt chiến dịch.
 
-Kiểm chứng đi theo ba bậc, chi phí tăng dần.
-- **Bậc 1:** testbed 802.15.4 thật (FIT IoT-LAB, hoặc 20–50 node nRF52840 trong phòng thí nghiệm). Chạy River với lịch
-  thật; một node phát di động đóng vai UAV. Mục tiêu là đo PER thật để hiệu chỉnh mô hình kênh G2G.
-- **Bậc 2:** ghép PX4 SITL với ns-3 để kiểm quỹ đạo và động học bay.
-- **Bậc 3:** bay thật trên một cụm khoảng 30 node, chỉ khi có giấy phép bay.
+**Độ bền vững.** Bốn loại sai lệch được thêm vào lần lượt, mỗi loại một trục:
+- gió lệch quỹ đạo, σ 50–200 m, đủ seed, chỉ giữ các quỹ đạo bay được (gia tốc ≤ 1 g);
+- 5–20 % node hỏng ngẫu nhiên sau khi đã lập kế hoạch;
+- kênh thật khác mô hình lập kế hoạch;
+- vật cản, nếu đưa vào phạm vi.
 
-Bậc 1 và 2 đã đủ để trả lời RQ5 ở mức chấp nhận được cho bài tạp chí.
+Với mỗi trục, báo T\*, tỉ lệ critical cell nhận đủ và chi phí sửa lỗi (frame takeover).
+
+**Khả năng mở rộng.** Đo thời gian mô phỏng theo số node, tới cụm khoảng 2 000 node. Nếu ns-3 chạy quá chậm, cân nhắc mô
+phỏng song song (MPI), hoặc giản lược MAC ở phần không nằm trên đường găng.
+
+**Thống kê.** Mọi so sánh đều ghép cặp. Báo CI 95 % theo seed và số seed mà đề xuất thắng. Mỗi kết quả lý thuyết của ND1
+có hình đặt đường lý thuyết chồng lên số liệu của chiến dịch này.
+
+**Đầu ra.** Bảng kết quả chính và bảng độ bền vững của J1, cùng bộ dữ liệu công khai.
+
+### 7.6 ND5. Kiểm chứng trên phần cứng (nếu có điều kiện)
+
+**Mục tiêu.** ND5 kiểm tra kết quả mô phỏng còn giữ được bao nhiêu trên phần cứng thật, và dùng số đo thật để hiệu chỉnh
+mô hình kênh. Nó trả lời RQ6. Kiểm chứng đi theo ba bậc, chi phí tăng dần.
+
+- **Bậc 1: testbed 802.15.4.**
+  - Phần cứng: FIT IoT-LAB, hoặc 20–50 node nRF52840 / CC2652 trong phòng thí nghiệm, cộng vài máy cỡ Raspberry Pi làm
+    critical cell.
+  - Firmware: Contiki-NG, RIOT hoặc Zephyr.
+  - Thí nghiệm: chạy River với lịch kênh thật; một node phát di động đóng vai UAV.
+  - Đo PER G2G, thời điểm sẵn sàng và năng lượng, rồi so với ns-3 trên cùng topo.
+- **Bậc 2: PX4 SITL ghép ns-3.** Kiểm quỹ đạo CHORD và LM-Tour với động học bay thật của UAV cánh bằng: giới hạn góc
+  nghiêng, ảnh hưởng của gió, sai số GPS ghi vào header.
+- **Bậc 3: bay thật trên một cụm khoảng 30 node.**
+  - Phần cứng: UAV có Pixhawk và radio 802.15.4 gắn ngoài.
+  - Điều kiện: chỉ làm khi có giấy phép bay và bãi thử.
+
+Bậc 1 và 2 đã đủ cho một bài tạp chí. Bậc 3 là phần thêm nếu có điều kiện.
+
+**Đầu ra.** Số đo PER và năng lượng thật, mô hình kênh G2G đã hiệu chỉnh, và so sánh giữa phần cứng và mô phỏng. Đây là
+nội dung chính của J2.
+
+### 7.7 ND6. Pha 2: lịch xác minh
+
+**Mục tiêu.** ND6 đưa pha 2 từ một mô hình thời gian đơn giản thành một bài toán lập lịch có cơ sở, để T\* phản ánh đúng
+nhiệm vụ đầu–cuối. Nó trả lời RQ5.
+
+**Mô hình.** Sau khi đối sánh, mỗi critical cell gửi điểm cao nhất về trạm gốc qua LoRa. Kênh này có giới hạn chu kỳ
+phát, nên các báo cáo về muộn khác nhau. Đội UAV cánh quay bay tới các cell nghi vấn. Ở mỗi cell, UAV hover để tải tệp
+xác minh lớn và chờ đối sánh. Nhiệm vụ xong khi đã xác minh cell có điểm cao nhất.
+
+**Nội dung nghiên cứu.**
+- **Thứ tự thăm.** So thăm theo điểm, theo TSP thuần, và theo một tiêu chí kết hợp điểm với quãng bay (Hình 12). Có xét
+  việc điểm số đến muộn qua LoRa: đội 2 có nên xuất phát trước khi nhận đủ báo cáo không.
+- **Liên kết với lớp 1.** Dùng mô hình điểm khớp và trọng số manh mối để tính xác suất mục tiêu thật nằm ở mỗi cell. Từ
+  đó tính xác suất tìm thấy mục tiêu theo thời gian, thay vì chỉ một con số T\*.
+- **Nhiều mục tiêu, nhiều UAV.** Mở rộng cho nhiều mục tiêu hoặc mục tiêu di chuyển để lại vệt qua nhiều camera, và cho
+  nhiều UAV xác minh.
+
+![Đội 2 thăm các cell nghi vấn theo điểm](../../docs/figures/proposal/nd6-phase2-score-ordered-visits.png)
+
+*Hình 12. Pha 2: các cell nghi vấn tô đậm và vòng tròn lớn theo điểm số. UAV cánh quay xuất phát từ trạm gốc (hình thoi)
+và thăm các cell theo thứ tự điểm giảm dần.*
+
+**Đầu ra.** Thuật toán lập lịch xác minh và mô hình xác suất tìm thấy theo thời gian. Phần này đi vào mô hình đầu–cuối
+của J1, ở mức mô hình, chưa chạy ns-3.
 
 ## 8. Kết quả dự kiến và sản phẩm
 
@@ -661,6 +780,19 @@ tháng 12/2026.
 - Vẽ đường lý thuyết chồng lên số liệu ns-3 sẵn có (C4, WND, TKO) để kiểm tra sớm.
 - Song song: trả lời phản biện ICC.
 
+**Chi tiết giai đoạn 1 (ND1, 12 tuần).**
+
+| Tuần | Việc | Mốc |
+|---|---|---|
+| 1–2 | Mô hình, ký hiệu, giả định; bổ đề L1 | Mô hình đóng băng |
+| 3–5 | Định lý A và kiểm chứng | A xong |
+| 5–7 | Mệnh đề B và kiểm chứng | B xong |
+| 7–9 | Mệnh đề D và kiểm chứng | D xong |
+| 9–10 | Thử nghiệm quyết định cho C | Làm hoặc bỏ C |
+| 10–12 | Viết mục System model (khoảng 2 trang) và Analysis (3–4 trang) của J1, rà soát, thử phản ví dụ | Bản nháp hoàn chỉnh |
+
+Nếu chỉ có 2 tháng: bỏ C (để sau J1) và viết dần theo từng mốc. Thứ tự ưu tiên khi thiếu thời gian là A, B, L1, D.
+
 **Giai đoạn 2 (01–04/2027): phần giao thức của J1 (ND2).** Giải quyết các hạn chế về tính thực tế đã nêu ở mục 4.6:
 - takeover theo tọa độ trong header;
 - gateway một radio;
@@ -724,6 +856,11 @@ Mỗi mốc là một mục của J1 ở trạng thái viết xong được.
   ghép cặp để cần ít seed hơn.
 - **Mô hình kênh lệch xa thực tế.** Quét độ nhạy theo số mũ suy hao và tham số Nakagami; khi có testbed thì hiệu chỉnh
   bằng PER đo thật.
+- **(ND1) Giả định A1 làm cận lỏng ở kênh xấu.** Khắc phục: phát biểu dạng một chiều (chặn dưới cho FC, chặn trên cho River),
+  để kết luận vẫn đứng được.
+- **(ND1) Một chứng minh kẹt quá một tuần.** Khắc phục: hạ xuống trường hợp đặc biệt (lưới đều, một cụm, kênh đĩa), còn trường
+  hợp tổng quát ghi thành giả thuyết, có kiểm chứng số.
+- **(ND1) FC trong mô phỏng là bản lý tưởng.** Định lý A phải so với đúng bản này, và nêu rõ điều đó trong bài.
 
 ## Phụ lục
 

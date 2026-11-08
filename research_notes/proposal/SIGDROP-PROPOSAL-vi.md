@@ -397,7 +397,7 @@ chia thành các gói 802.15.4.
 
 **Công cụ.**
 - Mô phỏng chính chạy trên ns-3.46 với lớp lr-wpan.
-- Mỗi chiến dịch dùng một bộ binary đóng băng, ghi sha256 trong log.
+- Mỗi chiến dịch dùng một bộ binary đã chốt, ghi sha256 trong log.
 - Lập quỹ đạo và mô hình lớp 1 viết bằng Python.
 - Mọi tham số tập trung trong `params.yaml`.
 
@@ -493,7 +493,7 @@ ND1 trả lời RQ1 và là phần lõi của J1.
 - **Thời gian nhiệm vụ:** T\* = T_bay + T_mặt đất + T_đối sánh + T_LoRa + T_pha 2. Các kết quả chỉ so sánh hai thành
   phần đầu; các thành phần còn lại chung cho mọi phương án.
 
-Mô hình được đối chiếu với `params.yaml` và với bit nhận thật trong log trước khi đóng băng.
+Mô hình được đối chiếu với `params.yaml` và với bit nhận thật trong log trước khi chốt.
 
 **Các kết quả dự kiến.** Phát biểu dưới đây là dạng dự kiến, sẽ được chỉnh khi chứng minh.
 
@@ -626,7 +626,7 @@ trả lời phần còn lại của RQ3.
 - Ba cỡ bản đồ (8, 12, 15 cụm), mỗi cỡ 10 bản đồ, mỗi bản đồ đủ 10 seed.
 - Bốn mức kênh.
 - Các phương án: LM-Tour + River (đề xuất), CHORD + River, DTSP-N + River, FC + DTSP-N, Deluge-lite.
-- Binary đóng băng trước khi chạy và không đổi trong suốt chiến dịch.
+- Binary được chốt trước khi chạy và không đổi trong suốt chiến dịch.
 
 **Độ bền vững.** Bốn loại sai lệch được thêm vào lần lượt, mỗi loại một trục:
 - gió lệch quỹ đạo, σ 50–200 m, đủ seed, chỉ giữ các quỹ đạo bay được (gia tốc ≤ 1 g);
@@ -784,7 +784,7 @@ tháng 12/2026.
 
 | Tuần | Việc | Mốc |
 |---|---|---|
-| 1–2 | Mô hình, ký hiệu, giả định; bổ đề L1 | Mô hình đóng băng |
+| 1–2 | Mô hình, ký hiệu, giả định; bổ đề L1 | Chốt mô hình |
 | 3–5 | Định lý A và kiểm chứng | A xong |
 | 5–7 | Mệnh đề B và kiểm chứng | B xong |
 | 7–9 | Mệnh đề D và kiểm chứng | D xong |

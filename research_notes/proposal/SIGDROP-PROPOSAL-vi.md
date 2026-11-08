@@ -9,7 +9,7 @@ dưới mặt đất có kế hoạch.
 
 Bản nháp viết theo khung người dùng đưa ngày 2026-11-06 (`docs/chatlog/2026-11.md`, mục 276–279). Số liệu ở mục 4 lấy
 từ `docs/EXPERIMENTS-INDEX.md`. Chỗ ghi **[cần chốt]** là chỗ người dùng cần quyết định. Hình dùng lại ảnh đã có trong
-repo; ảnh cũ còn chữ tiếng Việt, bản cuối sẽ vẽ lại không chữ.
+repo; ảnh cũ còn chữ tiếng Việt, bản cuối sẽ vẽ lại không chữ. Bản LaTeX v1 dựng từ tệp này: `v1/` (`v1/build.sh`, kết quả `v1/SigDrop-proposal-v1.pdf`).
 
 ---
 

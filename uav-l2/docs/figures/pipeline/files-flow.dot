@@ -1,0 +1,105 @@
+// Files of one ns-3 mission and how they interact (uav-l2/docs/PIPELINE-vi.md).
+// Render: dot -Tsvg files-flow.dot -o files-flow.svg && dot -Tpng -Gdpi=110 files-flow.dot -o files-flow.png
+digraph G {
+  rankdir=TB; newrank=true; nodesep=0.3; ranksep=0.45;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, fillcolor="#ffffff", color="#888888"];
+  edge [fontname="Helvetica", fontsize=9, color="#555555"];
+
+  subgraph cluster_run { label="Chạy chiến dịch\nlogs/2026-10-27_1714-campaign4/"; style="rounded,filled"; fillcolor="#f2f2f2"; color="#bbbbbb"; fontname="Helvetica";
+    camp2 [label="camp2.sh\nhàng đợi, 4 job song song"];
+    job   [label="job.sh SCH R ENV K\ncp | lmd | dr"];
+    prefly[label="prefly.py\n(DTSP-N + River)"];
+  }
+
+  subgraph cluster_py { label="Python điều phối — uav-l2/tools/"; style="rounded,filled"; fillcolor="#e8f0fb"; color="#9bb4d9"; fontname="Helvetica";
+    mission [label="mission.py\nbước 1–5", fillcolor="#cfe0f7", penwidth=2];
+    mapgen  [label="map_gen.py\nmiền, node"];
+    part    [label="partition.py\nrestructure.py · subch.py\nchia cụm"];
+    tour    [label="tour_heur.py · chord_tour.py\nthứ tự cụm"];
+    pspeed  [label="pass_speed.py\n→ kin_time.py\nhồ sơ vận tốc"];
+    lmtour  [label="lm_tour.py\nplan: LM-Tour, DTSP-N\nscore: readiness, T*", fillcolor="#cfe0f7", penwidth=2];
+    surr    [label="river_surrogate.py\nbộ dự đoán T_River"];
+    policy  [label="mission_policy.py\nmission_report.py"];
+    meander [label="meander_lane.py · dubins.py"];
+  }
+
+  subgraph cluster_plan { label="Kế hoạch River — uav-coop2/tools/"; style="rounded,filled"; fillcolor="#e9f6ec"; color="#9ccfa8"; fontname="Helvetica";
+    rexport [label="river_export.py"];
+    rplan   [label="river_plan.py\nAxe/Seg, Bank, cửa sổ, Circle"];
+  }
+
+  subgraph cluster_ns3 { label="Binary ns-3 (CAMP-BIN5)"; style="rounded,filled"; fillcolor="#fdf0e2"; color="#e0b27a"; fontname="Helvetica";
+    deploy [label="deploy-bin\nuav-coop/examples/coop-deploy.cc", fillcolor="#fbdcb8"];
+    pass   [label="pass-bin\nuav-coop/examples/coop-pass.cc\n+ coop-a2g.h", fillcolor="#fbdcb8"];
+    river  [label="river-bin\nuav-coop2/examples/coop2-river.cc", fillcolor="#fbdcb8"];
+    models [label="uav-coop/models/common/\ncoop-params.h · deploy · hex-grid\nrouting · path · region · dubins", shape=note];
+    rplancc[label="uav-coop2/models/\nriver-plan.cc/.h", shape=note];
+  }
+
+  subgraph cluster_work { label="Thư mục WORK (một bản đồ × kênh × seed)"; style="rounded,filled"; fillcolor="#fbf7dc"; color="#d6c96b"; fontname="Helvetica";
+    node [shape=folder, fillcolor="#fffbe6"];
+    fmap   [label="map.json\nc{k}-cells.csv · c{k}-nodesin.csv"];
+    fdep   [label="c{k}-nodes / path / routes /\ngateways-s35.csv · c{k}-bearing.json"];
+    ftour  [label="tour.json\nc{k}-speed.json"];
+    fbits  [label="pass{k}-bits-r1.bin\nnode nào nhận gói nào"];
+    fplan  [label="plan{k}.txt"];
+    frun   [label="r{k}-{tag}-runs / crit /\nenergy.csv"];
+  }
+
+  subgraph cluster_score { label="Chấm điểm và bảng"; style="rounded,filled"; fillcolor="#f3eafa"; color="#bfa3d9"; fontname="Helvetica";
+    l1rank [label="l1_rank.py\nlớp 1 + đội 2, 100 lượt bốc\n(chấm cả FC + DTSP-N)"];
+    l1mod  [label="l1_model.py · fc_baseline.py\ndn_baseline.py · mission_baselines.py"];
+    fscore [label="score/R*/ENV-kK/\nscore-*.csv · l1-*.csv", shape=folder, fillcolor="#fffbe6"];
+    table  [label="table.py · techreport.py\nready.py"];
+    out    [label="campaign4.csv · table-campaign4.tex\nRESULTS-vi.md · TECHREPORT-vi.md", shape=note];
+  }
+
+  // run
+  camp2 -> job [label="mỗi job"];
+  job -> mission [label="cp: bước 1–5"];
+  job -> lmtour  [label="lmd/dr: plan"];
+  job -> prefly  [label="dr"];
+  prefly -> mission [style=dashed];
+  lmtour -> mission [label="thư mục mới:\nbước 4–5"];
+
+  // mission stages
+  mission -> mapgen [style=dashed]; mission -> part [style=dashed]; mission -> tour [style=dashed];
+  mission -> pspeed [label="--kinPass"];
+  mission -> deploy [label="bước 2", penwidth=1.6];
+  mission -> pass   [label="bước 4", penwidth=1.6];
+  mission -> rexport [label="bước 5a"];
+  mission -> river  [label="bước 5b\nmỗi phương án", penwidth=1.6];
+  rexport -> rplan [style=dashed];
+  mission -> rplan [style=dashed];
+
+  // lm_tour helpers
+  lmtour -> surr [style=dashed]; lmtour -> policy [style=dashed]; lmtour -> meander [style=dashed];
+  lmtour -> pspeed [style=dashed]; surr -> policy [style=dashed];
+
+  // binaries' sources
+  deploy -> models [style=dashed, arrowhead=none]; pass -> models [style=dashed, arrowhead=none];
+  river -> models [style=dashed, arrowhead=none]; river -> rplancc [style=dashed, arrowhead=none];
+
+  // files written / read
+  mapgen -> fmap [style=dotted, color="#b59a1c"];
+  fmap -> deploy [style=dotted, color="#b59a1c"];
+  deploy -> fdep [style=dotted, color="#b59a1c"];
+  tour -> ftour [style=dotted, color="#b59a1c"]; pspeed -> ftour [style=dotted, color="#b59a1c"];
+  fdep -> pass [style=dotted, color="#b59a1c"]; ftour -> pass [style=dotted, color="#b59a1c"];
+  pass -> fbits [style=dotted, color="#b59a1c"];
+  fdep -> rexport [style=dotted, color="#b59a1c"]; rexport -> fplan [style=dotted, color="#b59a1c"];
+  fplan -> river [style=dotted, color="#b59a1c"]; fbits -> river [style=dotted, color="#b59a1c"];
+  river -> frun [style=dotted, color="#b59a1c"];
+
+  // scoring
+  job -> l1rank [label="cp"];
+  frun -> lmtour [style=dotted, color="#b59a1c", label="score"];
+  frun -> l1rank [style=dotted, color="#b59a1c"]; fbits -> l1rank [style=dotted, color="#b59a1c"];
+  l1rank -> l1mod [style=dashed];
+  lmtour -> fscore [style=dotted, color="#b59a1c"]; l1rank -> fscore [style=dotted, color="#b59a1c"];
+  fscore -> table [style=dotted, color="#b59a1c"]; table -> out;
+
+  { rank=same; camp2; job; prefly; }
+  legend [shape=plaintext, label=<<table border="0" cellborder="0" cellspacing="2"><tr><td align="left"><b>Chú thích</b></td></tr><tr><td align="left">───▶ gọi chạy</td></tr><tr><td align="left">- - -▶ import / include</td></tr><tr><td align="left"><font color="#b59a1c">·······▶ ghi / đọc tệp</font></td></tr></table>>];
+  { rank=same; legend; camp2; }
+}

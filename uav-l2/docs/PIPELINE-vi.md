@@ -8,6 +8,8 @@ Tài liệu này mô tả cách các script Python và ba binary ns-3 nối vớ
 
 ## 1. Tổng quan
 
+Sơ đồ chi tiết theo tệp: [`figures/pipeline/files-flow.svg`](figures/pipeline/files-flow.svg) (nguồn `files-flow.dot`).
+
 ```mermaid
 flowchart TD
   subgraph PY["Python: uav-l2/tools/mission.py (điều phối, mỗi bước có đầu ra thì bỏ qua)"]

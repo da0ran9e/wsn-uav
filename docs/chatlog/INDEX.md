@@ -304,3 +304,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 296 | 2026-11-08 | đề cương · mục lục, bảng ký hiệu, tài liệu tham khảo | [2026-11](2026-11.md) |
 | 297 | 2026-11-09 | uav-l2 · xem lại cấu trúc thực thi luồng ns-3 (PIPELINE-vi.md) | [2026-11](2026-11.md) |
 | 298 | 2026-11-09 | uav-l2 · sơ đồ các file và cách chúng tương tác | [2026-11](2026-11.md) |
+| 299 | 2026-11-09 | uav-l2 · sơ đồ file dạng markdown trong chat | [2026-11](2026-11.md) |

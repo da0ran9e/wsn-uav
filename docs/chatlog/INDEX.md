@@ -302,3 +302,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 294 | 2026-11-08 | đề cương · dựng proposal v1 dạng LaTeX | [2026-11](2026-11.md) |
 | 295 | 2026-11-08 | đề cương · bỏ bản LaTeX, sửa bản PDF từ markdown | [2026-11](2026-11.md) |
 | 296 | 2026-11-08 | đề cương · mục lục, bảng ký hiệu, tài liệu tham khảo | [2026-11](2026-11.md) |
+| 297 | 2026-11-09 | uav-l2 · xem lại cấu trúc thực thi luồng ns-3 (PIPELINE-vi.md) | [2026-11](2026-11.md) |

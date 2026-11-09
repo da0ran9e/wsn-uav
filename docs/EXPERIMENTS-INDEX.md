@@ -2,6 +2,7 @@
 
 - **Trạng thái:** hiện hành, 2026-11-05.
 - **Phạm vi:** các thí nghiệm có số liệu đang dùng trong paper SigDrop (bản nộp ICC v5.3), cùng vài thí nghiệm tham khảo. Mọi thư mục log, kể cả lịch sử, xem `logs/INDEX.md`.
+- **Luồng chạy một nhiệm vụ** (mission.py → deploy/pass/river-bin → chấm điểm): `uav-l2/docs/PIPELINE-vi.md`.
 - **Quy ước:** mã thí nghiệm dùng chung cho thư mục log, CSV, tài liệu và hình. Khi tạo thí nghiệm mới, đặt mã và thêm một dòng ở đây.
 
 ## Đang dùng trong paper

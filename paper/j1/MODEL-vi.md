@@ -4,7 +4,7 @@ updated: 2026-11-10
 ---
 # J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1)
 
-Bản nháp mục **System model** của bài tạp chí J1, theo kế hoạch ND1 trong
+Bản nháp **thử nghiệm** mục **System model** của bài tạp chí J1 (chưa chốt, không thay đổi đề cương; sổ thử nghiệm: `ND1-TRIAL-vi.md`), theo kế hoạch ND1 trong
 `research_notes/proposal/SIGDROP-PROPOSAL-vi.md` (mục 7.2 và 9). Đây là kết quả ngày 1 (ký hiệu và giả định); kết quả
 kiểm chứng ngày 2–4 ở mục 6. Log: `logs/2026-11-10_1000-nd1-week1/`.
 
@@ -78,7 +78,7 @@ tròn quanh tâm mỗi nhóm cho tới khi mọi thành viên đủ gói.
 
 ## 5. Kết quả lý thuyết dự kiến
 
-Phát biểu dự kiến của L1, A, B, D, C xem mục 7.2 của đề cương. Sau tuần 1, định lý A được chỉnh như sau:
+Phát biểu dự kiến của L1, A, B, D, C xem mục 7.2 của đề cương. Sau tuần 1, đề xuất (chưa đưa vào đề cương) chỉnh định lý A như sau:
 - p_k là **xác suất nhận ở mức cell** P_k, lấy trung bình trên quỹ đạo lượn của nhóm.
 - Định lý được phát biểu là một **chặn dưới** cho T_FC, và do đó là một **điều kiện đủ** để River thắng.
 

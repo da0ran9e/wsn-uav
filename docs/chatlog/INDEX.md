@@ -307,3 +307,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 299 | 2026-11-09 | uav-l2 · sơ đồ file dạng markdown trong chat | [2026-11](2026-11.md) |
 | 300 | 2026-11-09 | uav-l2 · hỏi vai trò của mỗi file mã nguồn | [2026-11](2026-11.md) |
 | 301 | 2026-11-10 | đề cương · tuần đầu ND1: việc gì cho kết quả sớm nhất | [2026-11](2026-11.md) |
+| 302 | 2026-11-10 | ND1 · làm tiến độ ngày 1–4 | [2026-11](2026-11.md) |

@@ -551,8 +551,8 @@ chốt, mô hình được đối chiếu với `params.yaml` và với bit nh�
 *Hướng chứng minh:* quy từ DTSP-N. Cho $Q$ rất nhỏ và dung lượng mặt đất vô hạn, bài toán chỉ còn tìm tour Dubins ngắn
 nhất qua đĩa các CH.
 
-**Định lý A (điểm giao giữa hợp tác và bay vòng).** Gọi $p_k$ là xác suất critical cell $k$ nhận được một gói ở vị trí
-thuận lợi nhất của UAV, $n_k$ là số gói $k$ đã nhận khi UAV bay ngang, và $\varepsilon$ là phần dư của fountain code.
+**Định lý A (điểm giao giữa hợp tác và bay vòng).** Gọi $p_k$ là xác suất critical cell $k$ nhận được một gói (ở mức
+cell: ít nhất một node của cell nghe được) khi UAV lượn ở vị trí thuận lợi nhất, $n_k$ là số gói $k$ đã nhận khi UAV bay ngang, và $\varepsilon$ là phần dư của fountain code.
 Khi đó
 
 $$T_{\mathrm{FC}}\;\ge\;T^{\mathrm{FC}}_{\text{tour}}+\sum_{k\in K}\tau\Big[\frac{Q(1+\varepsilon)}{p_k}-n_k\Big]^{+},\qquad T_{\mathrm{River}}\;\le\;T^{\text{1 lượt}}_{\text{tour}}+T_{\text{đất}},$$

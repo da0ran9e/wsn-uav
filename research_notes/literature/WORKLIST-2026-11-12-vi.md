@@ -51,7 +51,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 29 | Joint_Rate_and_Coverage_Design_for_UAV-Enabled_Wireless_Networks_with_Underlaid_D2D_Communications.pdf | (theo tác giả) 2020-d2d | ★★ | partial | uav-coverage, ground-coop | `miao2020-d2d` | ✓ |
 | 30 | Fixed-Wing-UAV-Coverage-Path-Planning-Based-on-Turning-Span-Selection.pdf | (theo tác giả) 2025-turnspan | ★ | abstract | uav-coverage | `li2025-turnspan` | ✓ |
 | 31 | 978-3-540-77690-1_17.pdf | liang2008-typhoon | ★ | abstract (chỉ có 2 trang) | dissemination | `liang2008-typhoon` | ✓ |
-| 32 | shkel2001.pdf | shkel2001-dubinsset | ★ | abstract | dtsp | | |
+| 32 | shkel2001.pdf | shkel2001-dubinsset | ★ | abstract | dtsp | `shkel2001-dubinsset` | ✓ |
 | 33 | ma2006.pdf | ma2006-receding | ★ | abstract | dtsp | | |
 | 34 | faigl2017.pdf | faigl2017-ceop | ★ | abstract | orienteering | | |
 | 35 | vana2017.pdf | vana2017-budget | ★ | abstract | orienteering, uav-collection | | |

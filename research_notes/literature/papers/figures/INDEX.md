@@ -4,6 +4,8 @@ Hình gốc của các bài (có chữ, ngoại lệ của mục 63), chỉ nh�
 
 | Tệp | Mô tả | Lệnh | Tham số | Ngày | Commit |
 |---|---|---|---|---|---|
+| `gallager1976-protocol-fig4.png` | Tỉ lệ thông tin giao thức trên thông tin có ích theo δ cho ε = 0,1; 0,05; 0,01 (Fig. 4, tr. 4) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TIT.1976.1055588 | 2026-11-12 | xem git log |
+| `gallager1976-protocol-fig5.png` | Bit giao thức về thời điểm bắt đầu mỗi thông điệp theo αd: cận dưới và hai chiến lược (Fig. 5, tr. 7) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TIT.1976.1055588 | 2026-11-12 | xem git log |
 | `hui2004-deluge-fig2.png` | Pipeline bốn chặng: A và D phát hai trang khác nhau cùng lúc, cần cách ba chặng (Fig. 2, tr. 5) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1145/1031495.1031506 | 2026-11-12 | xem git log |
 | `hui2004-deluge-fig4.png` | Số liệu testbed 75 nút: thời gian theo số trang, phân bố thời gian xong, tỉ lệ loại gói, tốc độ quảng bá, số yêu cầu, độ dư thu (Fig. 4, tr. 8) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1145/1031495.1031506 | 2026-11-12 | xem git log |
 | `hui2004-deluge-fig6.png` | Lan một trang trên lưới 20 × 20, cách 15′ (a–d) và 10′ (e–h) (Fig. 6, tr. 9) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1145/1031495.1031506 | 2026-11-12 | xem git log |

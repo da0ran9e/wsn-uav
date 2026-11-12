@@ -52,6 +52,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `control-overhead` · chi phí điều khiển, giới hạn thông tin giao thức
 
+- [gallager1976-protocol](gallager1976-protocol.md) ★★★ · Dùng lý thuyết rate–distortion chứng minh mỗi thông điệp cần ít nhất H(M) − log₂(1 − e^{−αd}) bit giao thức (thông tin độ dài + thông tin thời điểm bắt đầu, phụ thuộc chỉ vào tích αd), địa chỉ chỉ là một cách mã hoá thông tin thời điểm; hai chiến lược gom hàng đợi đạt gần cận khi số cặp nguồn–đích lớn.
 - [hui2004-deluge](hui2004-deluge.md) ★★★ · Deluge phổ biến đối tượng dữ liệu lớn (ảnh chương trình) tới mọi nút WSN đa chặng bằng quảng bá kiểu Trickle, chia trang để pipeline, NACK chọn lọc; đạt ~90 B/s (1/9 tốc độ radio) trên 75 nút, gói điều khiển 18 %, và cho mô hình thời gian E[T_obj] = min(dn, d+3(n−1))·(E[T_page]+D).
 
 ## `testbed` · thực nghiệm phần cứng, testbed

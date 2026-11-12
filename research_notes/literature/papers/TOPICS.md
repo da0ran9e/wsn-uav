@@ -18,6 +18,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [leny2007-highdensity](leny2007-highdensity.md) ★★ · Bản hội nghị trước của Le Ny 2012: phác thảo chứng minh DTSP (tour và path) NP-khó từ phép quy Papadimitriou; mọi thuật toán theo thứ tự ETSP tối ưu có hệ số xấp xỉ Ω(n) khi điểm dày; thuật toán cố định hướng + ATSP cho hệ số O(min{(1 + ρ/ε) log n, (1 + ρ/ε)²}).
 - [rathinam2007-multivehicle](rathinam2007-multivehicle.md) ★★ · Với các mục tiêu cách nhau (và cách điểm xuất phát) ≥ 2r, giải TSP Euclid bằng Christofides rồi nối liên tiếp bằng đường LS/RS (hướng tại mục tiêu tự do) cho xấp xỉ hằng số 4,56 với một xe; nhiều xe dùng MST có cạnh 0 giữa các xe, nhân đôi cạnh, đi Euler, cho hệ số 6,07; mục tiêu là tổng quãng đường.
 - [ma2006-receding](ma2006-receding.md) ★ · Mở rộng bài toán Dubins hai điểm sang hướng cuối tự do và bài toán ba điểm liên tiếp (hai điểm sau chưa biết hướng), dùng lời giải ba điểm theo kiểu cuộn (receding horizon) để nối đường qua dãy waypoint; khi chưa biết thứ tự thì lấy thứ tự ETSP gần đúng rồi chạy thuật toán cuộn — tốt hơn Alternating Algorithm và RAA.
+- [nayak2023-minmax](nayak2023-minmax.md) ★ · MD-GmTSP: m xe Dubins, mỗi điểm chọn một trong h hướng rời rạc (one-in-a-set), tối thiểu độ dài tour dài nhất; MILP giải bằng CPLEX cho 16 instance TSPLIB (16–137 thành phố) nhưng không mở rộng được; heuristic chèn + VNS (GVNS tốt nhất) trong 600 s; GNN + học tăng cường tốt ở instance nhỏ, VNS tốt nhất ở instance lớn.
 - [shkel2001-dubinsset](shkel2001-dubinsset.md) ★ · Thay vì tính cả 6 đường Dubins rồi so, chia hướng đầu α và cuối β theo góc phần tư (16 lớp a_ij, gộp thành nhóm tương đương) và dùng hàm chuyển S_ij để chọn trực tiếp đường ngắn nhất từ bảng quyết định (Fig. 12); làm đầy đủ cho "trường hợp đường dài" (hai cặp đường tròn quay ở hai đầu không giao nhau).
 
 ## `dtspn` · Dubins TSP với lân cận
@@ -52,6 +53,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [babel2020-dtspheur](babel2020-dtspheur.md) ★★ · Tối ưu hướng cho một chuỗi điểm có thứ tự bằng rời rạc hoá hướng + đường ngắn nhất trên mạng phụ (DSPP), rồi dựng thứ tự bằng ETSP (Optimized Headings), mở rộng tour mở (Greedy-k-extend) hoặc chèn vào tour đóng (Nearest/Farthest/Cheapest/Random-k-insert); chất lượng ngang thuật toán GTSP của Le Ny 2012 nhưng nhanh hơn nhiều, chạy được hàng nghìn điểm.
 - [helsgaun2000-lkh](helsgaun2000-lkh.md) ★★ · LKH dùng bước cơ bản 5-opt tuần tự, tập ứng viên thu hẹp bằng độ đo α-nearness (phân tích độ nhạy trên 1-tree nhỏ nhất, cải thiện bằng tối ưu subgradient), chỉ cần 5 cạnh α-gần nhất mỗi nút; tìm được tối ưu cho mọi bài đã giải (tới 13 509 thành phố), bài 100 thành phố < 1 s, 1000 thành phố < 1 phút (2000); ATSP được giải qua biến đổi Jonker–Volgenant n → 2n nút.
 - [noon1993-gtsp](noon1993-gtsp.md) ★★ · Biến GTSP bất đối xứng (m tập nút rời nhau, chọn đúng một nút mỗi tập) thành ATSP chuẩn trên cùng số nút: nối các nút trong mỗi tập thành chu trình cạnh 0, dời đầu mỗi cạnh liên tập sang nút đứng trước, cộng hằng lớn β vào mọi cạnh liên tập; lời giải ATSP có giá < (m + 1)β cho lời giải GTSP tối ưu.
+- [nayak2023-minmax](nayak2023-minmax.md) ★ · MD-GmTSP: m xe Dubins, mỗi điểm chọn một trong h hướng rời rạc (one-in-a-set), tối thiểu độ dài tour dài nhất; MILP giải bằng CPLEX cho 16 instance TSPLIB (16–137 thành phố) nhưng không mở rộng được; heuristic chèn + VNS (GVNS tốt nhất) trong 600 s; GNN + học tăng cường tốt ở instance nhỏ, VNS tốt nhất ở instance lớn.
 
 ## `orienteering` · orienteering, giới hạn quãng bay
 
@@ -129,6 +131,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 ## `multi-uav` · nhiều UAV
 
 - [rathinam2007-multivehicle](rathinam2007-multivehicle.md) ★★ · Với các mục tiêu cách nhau (và cách điểm xuất phát) ≥ 2r, giải TSP Euclid bằng Christofides rồi nối liên tiếp bằng đường LS/RS (hướng tại mục tiêu tự do) cho xấp xỉ hằng số 4,56 với một xe; nhiều xe dùng MST có cạnh 0 giữa các xe, nhân đôi cạnh, đi Euler, cho hệ số 6,07; mục tiêu là tổng quãng đường.
+- [nayak2023-minmax](nayak2023-minmax.md) ★ · MD-GmTSP: m xe Dubins, mỗi điểm chọn một trong h hướng rời rạc (one-in-a-set), tối thiểu độ dài tour dài nhất; MILP giải bằng CPLEX cho 16 instance TSPLIB (16–137 thành phố) nhưng không mở rộng được; heuristic chèn + VNS (GVNS tốt nhất) trong 600 s; GNN + học tăng cường tốt ở instance nhỏ, VNS tốt nhất ở instance lớn.
 
 ## `testbed` · thực nghiệm phần cứng, testbed
 

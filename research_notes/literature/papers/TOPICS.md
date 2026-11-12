@@ -23,6 +23,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [isaacs2011-dtspn](isaacs2011-dtspn.md) ★★★ · Hai thuật toán cho Dubins TSP với lân cận (DTSPN): vùng rời nhau thì lấy một mẫu mỗi vùng cho hệ số xấp xỉ không phụ thuộc số vùng; vùng chồng nhau thì lấy mẫu rồi biến GTSP có nhóm chồng nhau sang ATSP (Noon–Bean), tour ngắn tới gần một nửa so với RCM.
 - [babel2017-obstacles](babel2017-obstacles.md) ★★ · Đặt bài toán CTSPO (DTSP + tránh chướng ngại), dùng mạng "Mikado" (đường thẳng ngẫu nhiên nối bằng clothoid) để tìm đường bay được, tối ưu hướng bay qua bằng đồ thị phụ p hướng/điểm và đường ngắn nhất, dựng tour bằng chèn dần (NEARIN, FARIN, RANDIN, CHEAPIN); kèm câu "DTSP-N NP-khó vì khi vùng co về điểm thì về DTSP".
 - [obermeyer2009-recon](obermeyer2009-recon.md) ★★ · Quy bài toán chụp ảnh mọi mục tiêu tĩnh (bị địa hình che) về PVDTSP: tìm tour Dubins kín ngắn nhất đi qua ít nhất một điểm trong mỗi đa giác vùng nhìn thấy; giải bằng thuật toán di truyền mã hoá (thứ tự, điểm trên biên đa giác, hướng), tour ngắn gần một nửa so với tìm ngẫu nhiên cùng thời gian.
+- [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
 
 ## `np-hard` · kết quả về độ khó
 
@@ -48,6 +49,10 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [helsgaun2000-lkh](helsgaun2000-lkh.md) ★★ · LKH dùng bước cơ bản 5-opt tuần tự, tập ứng viên thu hẹp bằng độ đo α-nearness (phân tích độ nhạy trên 1-tree nhỏ nhất, cải thiện bằng tối ưu subgradient), chỉ cần 5 cạnh α-gần nhất mỗi nút; tìm được tối ưu cho mọi bài đã giải (tới 13 509 thành phố), bài 100 thành phố < 1 s, 1000 thành phố < 1 phút (2000); ATSP được giải qua biến đổi Jonker–Volgenant n → 2n nút.
 - [noon1993-gtsp](noon1993-gtsp.md) ★★ · Biến GTSP bất đối xứng (m tập nút rời nhau, chọn đúng một nút mỗi tập) thành ATSP chuẩn trên cùng số nút: nối các nút trong mỗi tập thành chu trình cạnh 0, dời đầu mỗi cạnh liên tập sang nút đứng trước, cộng hằng lớn β vào mọi cạnh liên tập; lời giải ATSP có giá < (m + 1)β cho lời giải GTSP tối ưu.
 
+## `orienteering` · orienteering, giới hạn quãng bay
+
+- [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
+
 ## `uav-multicast` · UAV phát dữ liệu chung xuống mặt đất
 
 - [zeng2018-multicast](zeng2018-multicast.md) ★★★ · UAV phát một file chung (RLNC) cho K trạm mặt đất; chặn dưới xác suất giải được đưa ràng buộc về "thời gian kết nối tối thiểu trong bán kính D", quỹ đạo tối ưu gồm các đoạn thẳng, waypoint chọn qua đặt trạm ảo (VBS) + TSP + tối ưu lồi, tốc độ qua LP.
@@ -56,6 +61,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [nekrasov2019-aerial154](nekrasov2019-aerial154.md) ★★★ · Đo thực 9 giờ bay (quadcopter, XBee3 802.15.4 2,4 GHz, 13 độ cao 9–122 m, cự ly ngang tới > 250 m): RSSI gần như không đổi theo cấu hình nhưng PRR thay đổi mạnh; PRR tốt nhất ở ~46 m, giảm ~5 %/25 m sau 50 m, gói xa nhất thu được ở 297 m dù hãng quảng cáo 1200 m.
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
+- [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
 
 ## `uav-coverage` · phủ vùng, đặt vị trí UAV làm trạm gốc
 

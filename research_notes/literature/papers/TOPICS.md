@@ -70,6 +70,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [alhourani2014-lap](alhourani2014-lap.md) ★★★ · Mô hình suy hao không–đất trung bình = FSPL + η theo nhóm LoS/NLoS, xác suất LoS theo góc ngẩng xấp xỉ bằng hàm S P(LoS, θ) = 1/(1 + a·exp(−b(θ − a))) với a, b khớp theo tham số đô thị ITU (α, β, γ); bán kính phủ R(h) có cực đại, góc ngẩng tối ưu θ_OPT không phụ thuộc PL_max.
 - [miao2020-d2d](miao2020-d2d.md) ★★ · UAV treo ở tâm vùng (cao 100 m) phục vụ trực tiếp tối đa M người dùng; người dùng khác nhận lại qua D2D một chặng (≤ 10 m) từ người đã được UAV phục vụ (ràng buộc nhân quả thông tin); tối đa ω·tổng tốc độ + (1 − ω)·số người được phục vụ, bài nhị phân NP-khó được nới thành LP giải bằng CVX.
+- [li2025-turnspan](li2025-turnspan.md) ★ · Phủ ruộng bằng các luống song song (boustrophedon) cho UAV cánh bằng; khi khoảng cách luống d khác 2R, chọn "bước nhảy" (bỏ qua bao nhiêu luống) ở mỗi lần quay theo ba chiến lược (d = 2R, d < 2R, d > 2R) để rút ngắn tổng đường quay; tối ưu thứ tự bằng pointer network + actor–critic (TSS), tốt hơn TBF và IBF.
 
 ## `ground-coop` · hợp tác mặt đất sau khi UAV phát (D2D, chuyển tiếp)
 

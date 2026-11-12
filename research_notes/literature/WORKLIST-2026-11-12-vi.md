@@ -20,7 +20,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 
 | # | File PDF | Khoá đề xuất | Mức | Đọc | Chủ đề gợi ý | Khoá dùng | Xong |
 |---|---|---|---|---|---|---|---|
-| 1 | hui2004.pdf | hui2004-deluge | ★★★ | full | dissemination, control-overhead | | |
+| 1 | hui2004.pdf | hui2004-deluge | ★★★ | full | `hui2004-deluge` | ✓ |
 | 2 | gallager1976.pdf | gallager1976-protocol | ★★★ | full | control-overhead | | |
 | 3 | minsky2003.pdf | minsky2003-setrecon | ★★★ | full | control-overhead | | |
 | 4 | du2017.pdf | du2017-pando | ★★★ | full | dissemination, coding | | |

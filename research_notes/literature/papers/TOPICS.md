@@ -14,6 +14,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [techy2009-wind](techy2009-wind.md) ★★★ · Trong gió đều V_w < V_a, quay tốc độ tối đa vẽ ra đường trochoid trong hệ mặt đất; đường cực trị gồm trochoid và đoạn thẳng (BSB, BBB); LSL/RSR giải tường minh, LSR/RSL/BBB giải bằng tìm nghiệm số; điều kiện cần mới: mỗi đoạn trochoid kéo dài < 2 vòng; có cực trị không ứng với đường Dubins nào trong hệ không khí.
 - [babel2017-obstacles](babel2017-obstacles.md) ★★ · Đặt bài toán CTSPO (DTSP + tránh chướng ngại), dùng mạng "Mikado" (đường thẳng ngẫu nhiên nối bằng clothoid) để tìm đường bay được, tối ưu hướng bay qua bằng đồ thị phụ p hướng/điểm và đường ngắn nhất, dựng tour bằng chèn dần (NEARIN, FARIN, RANDIN, CHEAPIN); kèm câu "DTSP-N NP-khó vì khi vùng co về điểm thì về DTSP".
 - [dubins1957-curves](dubins1957-curves.md) ★★ · Định nghĩa "độ cong trung bình ≤ 1/R" bằng điều kiện Lipschitz của vectơ tiếp tuyến, chứng minh đường ngắn nhất (R-geodesic) luôn tồn tại, và (Định lý I) trong mặt phẳng nó gồm nhiều nhất ba đoạn: cung–thẳng–cung (CSC) hoặc ba cung (CCC) bán kính R, hoặc đoạn con của chúng; ba là số tối thiểu (có R-geodesic loại CCC).
+- [leny2007-highdensity](leny2007-highdensity.md) ★★ · Bản hội nghị trước của Le Ny 2012: phác thảo chứng minh DTSP (tour và path) NP-khó từ phép quy Papadimitriou; mọi thuật toán theo thứ tự ETSP tối ưu có hệ số xấp xỉ Ω(n) khi điểm dày; thuật toán cố định hướng + ATSP cho hệ số O(min{(1 + ρ/ε) log n, (1 + ρ/ε)²}).
 
 ## `dtspn` · Dubins TSP với lân cận
 
@@ -24,12 +25,14 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [leny2012-dtsp](leny2012-dtsp.md) ★★★ · Chứng minh Dubins TSP (tour và path) NP-khó bằng phép quy từ TSP Euclid có phóng to; chỉ ra heuristic theo thứ tự Euclid kém tối ưu cỡ Ω(n); đề xuất thuật toán rời rạc hoá hướng qua GTSP → ATSP.
 - [babel2017-obstacles](babel2017-obstacles.md) ★★ · Đặt bài toán CTSPO (DTSP + tránh chướng ngại), dùng mạng "Mikado" (đường thẳng ngẫu nhiên nối bằng clothoid) để tìm đường bay được, tối ưu hướng bay qua bằng đồ thị phụ p hướng/điểm và đường ngắn nhất, dựng tour bằng chèn dần (NEARIN, FARIN, RANDIN, CHEAPIN); kèm câu "DTSP-N NP-khó vì khi vùng co về điểm thì về DTSP".
+- [leny2007-highdensity](leny2007-highdensity.md) ★★ · Bản hội nghị trước của Le Ny 2012: phác thảo chứng minh DTSP (tour và path) NP-khó từ phép quy Papadimitriou; mọi thuật toán theo thứ tự ETSP tối ưu có hệ số xấp xỉ Ω(n) khi điểm dày; thuật toán cố định hướng + ATSP cho hệ số O(min{(1 + ρ/ε) log n, (1 + ρ/ε)²}).
 
 ## `approx-bound` · hệ số xấp xỉ, cận trên và cận dưới của tour
 
 - [isaacs2011-dtspn](isaacs2011-dtspn.md) ★★★ · Hai thuật toán cho Dubins TSP với lân cận (DTSPN): vùng rời nhau thì lấy một mẫu mỗi vùng cho hệ số xấp xỉ không phụ thuộc số vùng; vùng chồng nhau thì lấy mẫu rồi biến GTSP có nhóm chồng nhau sang ATSP (Noon–Bean), tour ngắn tới gần một nửa so với RCM.
 - [leny2012-dtsp](leny2012-dtsp.md) ★★★ · Chứng minh Dubins TSP (tour và path) NP-khó bằng phép quy từ TSP Euclid có phóng to; chỉ ra heuristic theo thứ tự Euclid kém tối ưu cỡ Ω(n); đề xuất thuật toán rời rạc hoá hướng qua GTSP → ATSP.
 - [savla2008-dtsp](savla2008-dtsp.md) ★★★ · Ba kết quả cho DTSP: (1) trường hợp xấu nhất độ dài tour tăng tuyến tính theo n, ALTERNATING ALGORITHM (giữ thứ tự ETSP, bỏ xen kẽ cạnh) xấp xỉ hằng số khi khoảng cách điểm bị chặn dưới, kèm cận điểm–điểm D ≤ E + κπρ; (2) điểm ngẫu nhiên đều: tour cỡ n^{2/3}, RECURSIVE BEAD-TILING đạt hằng số với xác suất 1; (3) DTRP: thời gian hệ thống cỡ λ² (Euclid chỉ cỡ λ).
+- [leny2007-highdensity](leny2007-highdensity.md) ★★ · Bản hội nghị trước của Le Ny 2012: phác thảo chứng minh DTSP (tour và path) NP-khó từ phép quy Papadimitriou; mọi thuật toán theo thứ tự ETSP tối ưu có hệ số xấp xỉ Ω(n) khi điểm dày; thuật toán cố định hướng + ATSP cho hệ số O(min{(1 + ρ/ε) log n, (1 + ρ/ε)²}).
 
 ## `tsp-solver` · bộ giải TSP, biến đổi GTSP sang ATSP
 

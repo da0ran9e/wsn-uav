@@ -56,7 +56,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 34 | faigl2017.pdf | faigl2017-ceop | ★ | abstract | orienteering | `faigl2017-ceop` | ✓ |
 | 35 | vana2017.pdf | vana2017-budget | ★ | abstract | orienteering, uav-collection | `vana2017-budget` | ✓ |
 | 36 | sensors-23-06432.pdf | (theo tác giả) 2023-minmax | ★ | abstract | dtsp, multi-uav | `nayak2023-minmax` | ✓ |
-| 37 | sensors-23-02560-v2.pdf | (theo tác giả) 2023-coverage | ★ | abstract | uav-coverage, multi-uav | | |
+| 37 | sensors-23-02560-v2.pdf | (theo tác giả) 2023-coverage | ★ | abstract | uav-coverage, multi-uav | `li2023-coverage` | ✓ |
 | 38 | 1-s2.0-S2214914725000170-main.pdf | (theo tác giả) 2025-fwcoverage | ★ | abstract | uav-coverage, multi-uav | | |
 | 39 | Deep_Reinforcement_Learning_for_AoI_Minimization_in_UAV-Aided_Data_Collection_for_WSN_and_IoT_Applications_A_Survey.pdf | (theo tác giả) 2024-aoi | ★ | abstract | uav-collection | | |
 | 40 | An_Optimized_LTE-Based_Technique_for_Drone_Base_Station_Dynamic_3D_Placement_and_Resource_Allocation_in_Delay-Sensitive_M2M_Networks.pdf | (theo tác giả) 2023-lte | ★ | abstract | uav-coverage | | |

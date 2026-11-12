@@ -60,7 +60,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 38 | 1-s2.0-S2214914725000170-main.pdf | (theo tác giả) 2025-fwcoverage | ★ | abstract | uav-coverage, multi-uav | `wang2025-fwcoverage` | ✓ |
 | 39 | Deep_Reinforcement_Learning_for_AoI_Minimization_in_UAV-Aided_Data_Collection_for_WSN_and_IoT_Applications_A_Survey.pdf | (theo tác giả) 2024-aoi | ★ | abstract | uav-collection | `amodu2024-aoi` | ✓ |
 | 40 | An_Optimized_LTE-Based_Technique_for_Drone_Base_Station_Dynamic_3D_Placement_and_Resource_Allocation_in_Delay-Sensitive_M2M_Networks.pdf | (theo tác giả) 2023-lte | ★ | abstract | uav-coverage | `fahim2023-lte` | ✓ |
-| 41 | Coverage_Maximization_for_Heterogeneous_Aerial_Networks.pdf | (theo tác giả) 2022-hetcov | ★ | abstract | uav-coverage | | |
+| 41 | Coverage_Maximization_for_Heterogeneous_Aerial_Networks.pdf | (theo tác giả) 2022-hetcov | ★ | abstract | uav-coverage | `zhai2022-hetcov` | ✓ |
 | 42 | Coverage_Optimization_for_Reliable_UAV-Assisted_5G_6G_Communication_Systems.pdf | (theo tác giả) 2025-covopt | ★ | abstract | uav-coverage | | |
 | 43 | Energy_and_Service-Priority_aware_Trajectory_Design_for_UAV-BSs_using_Double_Q-Learning.pdf | (theo tác giả) 2021-dql | ★ | abstract | uav-coverage | | |
 | 44 | Multi-UAV_Assisted_Network_Coverage_Optimization_for_Rescue_Operations_using_Reinforcement_Learning.pdf | (theo tác giả) 2023-rescue | ★ | abstract | uav-coverage, multi-uav, sar | | |

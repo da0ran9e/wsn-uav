@@ -84,6 +84,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [li2023-coverage](li2023-coverage.md) ★ · Chia môi trường đã biết thành ô phủ; EDM giải chính xác bằng MILP (đồ thị điểm đầu–cuối của các dải phủ, cạnh là đường Dubins) cho đường phủ ngắn nhất ở cảnh nhỏ; CDM heuristic dùng mô hình "tín dụng" cân tải giữa robot và chia cây để giảm độ phức tạp ở cảnh lớn; thử trên mô hình UAV cánh bằng độ trung thực cao.
 - [li2025-turnspan](li2025-turnspan.md) ★ · Phủ ruộng bằng các luống song song (boustrophedon) cho UAV cánh bằng; khi khoảng cách luống d khác 2R, chọn "bước nhảy" (bỏ qua bao nhiêu luống) ở mỗi lần quay theo ba chiến lược (d = 2R, d < 2R, d > 2R) để rút ngắn tổng đường quay; tối ưu thứ tự bằng pointer network + actor–critic (TSS), tốt hơn TBF và IBF.
 - [wang2025-fwcoverage](wang2025-fwcoverage.md) ★ · Mô hình DCCPP (phủ kín động) cho nhiều UAV cánh bằng: lồi hoá vùng, chia đường thành đường thao tác (quét), đường vào và đường chuyển vùng (nối bằng Dubins), phân vùng cho UAV bằng tham lam theo chỉ số phân bổ, tối ưu tổ hợp bằng quy hoạch động cải tiến (IDP), rồi nâng lên 3D theo địa hình bằng hạ độ cao; kiểm chứng mô phỏng và bán vật lý thực tế hỗn hợp.
+- [zhai2022-hetcov](zhai2022-hetcov.md) ★ · Một trạm gốc độ cao lớn (HABS) bay quỹ đạo tròn và nhiều trạm gốc độ cao thấp (LABS) đứng yên; tìm độ cao tối ưu LABS bằng chia đôi theo đặc tính kênh A2G, vị trí ngang LABS bằng thuật toán bầy đàn hạt + cá, bán kính bay của HABS bằng thuật toán co khoảng ngẫu nhiên, nhằm tối đa số người dùng được phủ.
 
 ## `ground-coop` · hợp tác mặt đất sau khi UAV phát (D2D, chuyển tiếp)
 
@@ -117,6 +118,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [zeng2018-multicast](zeng2018-multicast.md) ★★★ · UAV phát một file chung (RLNC) cho K trạm mặt đất; chặn dưới xác suất giải được đưa ràng buộc về "thời gian kết nối tối thiểu trong bán kính D", quỹ đạo tối ưu gồm các đoạn thẳng, waypoint chọn qua đặt trạm ảo (VBS) + TSP + tối ưu lồi, tốc độ qua LP.
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
 - [gudmundson1991-shadow](gudmundson1991-shadow.md) ★★ · Shadow fading (dB) mô hình Gauss quanh trung bình K₁ − K₂ log d với tự tương quan mũ theo khoảng cách R(k) = σ²a^{|k|}, a = ε_D^{vT/D}; khớp tốt ở ngoại ô (σ = 7,5 dB, tương quan 0,82 ở 100 m) nhưng kém ở vi tế bào đô thị (σ = 4,3 dB, tương quan 0,3 ở 10 m).
+- [zhai2022-hetcov](zhai2022-hetcov.md) ★ · Một trạm gốc độ cao lớn (HABS) bay quỹ đạo tròn và nhiều trạm gốc độ cao thấp (LABS) đứng yên; tìm độ cao tối ưu LABS bằng chia đôi theo đặc tính kênh A2G, vị trí ngang LABS bằng thuật toán bầy đàn hạt + cá, bán kính bay của HABS bằng thuật toán co khoảng ngẫu nhiên, nhằm tối đa số người dùng được phủ.
 
 ## `trajectory-error` · lệch quỹ đạo, gió, bám đường
 

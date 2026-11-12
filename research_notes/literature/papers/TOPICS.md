@@ -85,6 +85,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [doddavenkatappa2013-splash](doddavenkatappa2013-splash.md) ★★ · Splash bỏ hẳn tranh chấp kênh bằng "tree pipelining": mỗi tầng của cây thu thập phát đồng thời cùng gói (giao thoa xây dựng) trên kênh riêng; ba vòng phát (đổi mật độ người phát, đổi kênh, vòng 3 là gói XOR) rồi khôi phục cục bộ; 32 KB trong ~25 s trên 139 nút, nhanh hơn DelugeT2 trung bình 21×.
 - [ferrari2012-lwb](ferrari2012-lwb.md) ★★ · LWB biến mạng đa chặng thành "bus chung": mọi trao đổi là một lần flood Glossy, các flood được lập lịch toàn cục theo vòng do một nút host tính và phát; không giữ trạng thái topo nên chịu được nhiễu, hỏng nút và nút di động; hỗ trợ 1–nhiều, nhiều–1, nhiều–nhiều với >99 % gói và duty cycle thấp.
 - [kulkarni2005-mnp](kulkarni2005-mnp.md) ★★ · MNP chọn người phát bằng cạnh tranh tham lam theo số yêu cầu khác nhau (ReqCtr) để mỗi vùng lân cận chỉ có một nguồn phát, pipeline theo đoạn, cho nút "ngủ" khi hàng xóm phát đoạn không cần — giảm ~38 % thời gian bật radio do nghe rỗi so với để radio luôn bật như Deluge.
+- [liang2008-typhoon](liang2008-typhoon.md) ★ · Typhoon phát dữ liệu bằng unicast có ACK (khôi phục mất gói nhanh) nhưng các nút khác nghe lén (snooping) để nhận cùng lúc, đặt bộ hẹn giờ theo không gian để nút xa nguồn ưu tiên chuyển tiếp, và đổi kênh để giảm khoảng cách tái dùng không gian từ ba xuống hai chặng; nhanh và tiết kiệm năng lượng hơn Deluge tới 3 lần, rõ nhất ở mạng thưa, mất gói nhiều.
 
 ## `coding` · fountain code, RLNC, network coding
 

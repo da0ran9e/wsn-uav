@@ -29,7 +29,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (69): còn đúng, dùng để tra cứu nền
+## Tham khảo (74): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -61,16 +61,19 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/amodu2024-aoi.md`](../research_notes/literature/papers/amodu2024-aoi.md) | Amodu et al. 2024 · Khảo sát học tăng cường sâu để tối thiểu AoI khi UAV thu dữ liệu WSN/IoT | 2026-11-12 |  |
 | [`research_notes/literature/papers/babel2017-obstacles.md`](../research_notes/literature/papers/babel2017-obstacles.md) | Babel 2017 · Tour TSP có ràng buộc độ cong cho giám sát trên không khi có chướng ngại | 2026-11-12 |  |
 | [`research_notes/literature/papers/babel2020-dtspheur.md`](../research_notes/literature/papers/babel2020-dtspheur.md) | Babel 2020 · Heuristic mới cho Dubins TSP | 2026-11-12 |  |
+| [`research_notes/literature/papers/bensaoud2025-covopt.md`](../research_notes/literature/papers/bensaoud2025-covopt.md) | Ben Saoud, Nasraoui 2025 · Tối ưu vùng phủ cho hệ thống 5G/6G có UAV hỗ trợ | 2026-11-12 |  |
 | [`research_notes/literature/papers/dargie2021-lqe.md`](../research_notes/literature/papers/dargie2021-lqe.md) | Dargie, Wen 2021 · Mô hình ước lượng chất lượng liên kết khi triển khai chung UAV và WSN | 2026-11-12 |  |
 | [`research_notes/literature/papers/doddavenkatappa2013-splash.md`](../research_notes/literature/papers/doddavenkatappa2013-splash.md) | Doddavenkatappa, Chan, Leong 2013 · Splash: phổ biến dữ liệu nhanh bằng giao thoa xây dựng | 2026-11-12 |  |
 | [`research_notes/literature/papers/du2017-pando.md`](../research_notes/literature/papers/du2017-pando.md) | Du, Liando, Zhang, Li 2017 · Pando: phổ biến dữ liệu bằng fountain code trên pipeline giao thoa xây dựng | 2026-11-12 |  |
 | [`research_notes/literature/papers/dubins1957-curves.md`](../research_notes/literature/papers/dubins1957-curves.md) | Dubins 1957 · Đường ngắn nhất với ràng buộc độ cong trung bình và hướng đầu–cuối cho trước | 2026-11-12 |  |
+| [`research_notes/literature/papers/fahim2023-lte.md`](../research_notes/literature/papers/fahim2023-lte.md) | Fahim, Gadallah 2023 · Đặt vị trí 3D động và cấp phát tài nguyên LTE cho trạm gốc drone phục vụ M2M nhạy trễ | 2026-11-12 |  |
 | [`research_notes/literature/papers/faigl2017-ceop.md`](../research_notes/literature/papers/faigl2017-ceop.md) | Faigl, Pěnička 2017 · Bài toán orienteering "đủ gần" với xe Dubins (CEDOP) | 2026-11-12 |  |
 | [`research_notes/literature/papers/ferrari2012-lwb.md`](../research_notes/literature/papers/ferrari2012-lwb.md) | Ferrari, Zimmerling, Mottola, Thiele 2012 · LWB: bus không dây công suất thấp | 2026-11-12 |  |
 | [`research_notes/literature/papers/gallager1976-protocol.md`](../research_notes/literature/papers/gallager1976-protocol.md) | Gallager 1976 · Giới hạn cơ bản của thông tin giao thức trong mạng dữ liệu | 2026-11-12 |  |
 | [`research_notes/literature/papers/ghaderi2008-ncrel.md`](../research_notes/literature/papers/ghaderi2008-ncrel.md) | Ghaderi, Towsley, Kurose 2008 · Lợi ích độ tin cậy của network coding trong mạng không dây mất gói | 2026-11-12 |  |
 | [`research_notes/literature/papers/gudmundson1991-shadow.md`](../research_notes/literature/papers/gudmundson1991-shadow.md) | Gudmundson 1991 · Mô hình tương quan cho shadow fading | 2026-11-12 |  |
 | [`research_notes/literature/papers/helsgaun2000-lkh.md`](../research_notes/literature/papers/helsgaun2000-lkh.md) | Helsgaun 2000 · LKH: cài đặt hiệu quả heuristic Lin–Kernighan | 2026-11-12 |  |
+| [`research_notes/literature/papers/hoseini2021-dql.md`](../research_notes/literature/papers/hoseini2021-dql.md) | Hoseini et al. 2021 · Thiết kế quỹ đạo UAV-BS theo năng lượng và ưu tiên dịch vụ bằng Double Q-Learning | 2026-11-12 |  |
 | [`research_notes/literature/papers/hui2004-deluge.md`](../research_notes/literature/papers/hui2004-deluge.md) | Hui, Culler 2004 · Deluge: phổ biến dữ liệu lớn trong WSN đa chặng | 2026-11-12 |  |
 | [`research_notes/literature/papers/isaacs2011-dtspn.md`](../research_notes/literature/papers/isaacs2011-dtspn.md) | Isaacs, Klein, Hespanha 2011 · Algorithms for the TSP with neighborhoods involving a Dubins vehicle | 2026-11-12 |  |
 | [`research_notes/literature/papers/kulkarni2005-mnp.md`](../research_notes/literature/papers/kulkarni2005-mnp.md) | Kulkarni, Wang 2005 · MNP: dịch vụ lập trình lại đa chặng cho mạng cảm biến | 2026-11-12 |  |
@@ -88,6 +91,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/nelson2007-vfield.md`](../research_notes/literature/papers/nelson2007-vfield.md) | Nelson, Barber, McLain, Beard 2007 · Bám đường bằng trường vector cho máy bay nhỏ | 2026-11-12 |  |
 | [`research_notes/literature/papers/noon1993-gtsp.md`](../research_notes/literature/papers/noon1993-gtsp.md) | Noon, Bean 1993 · Phép biến đổi hiệu quả GTSP sang ATSP | 2026-11-12 |  |
 | [`research_notes/literature/papers/obermeyer2009-recon.md`](../research_notes/literature/papers/obermeyer2009-recon.md) | Obermeyer 2009 · Lập đường cho UAV trinh sát mục tiêu mặt đất trong địa hình | 2026-11-12 |  |
+| [`research_notes/literature/papers/oubbati2023-rescue.md`](../research_notes/literature/papers/oubbati2023-rescue.md) | Oubbati et al. 2023 · Tối ưu vùng phủ bằng nhiều UAV cho cứu hộ dùng học tăng cường | 2026-11-12 |  |
 | [`research_notes/literature/papers/park2007-guidance.md`](../research_notes/literature/papers/park2007-guidance.md) | Park, Deyst, How 2007 · Hiệu năng và ổn định Lyapunov của luật dẫn bám đường phi tuyến (L1) | 2026-11-12 |  |
 | [`research_notes/literature/papers/penicka2017-dopn.md`](../research_notes/literature/papers/penicka2017-dopn.md) | Pěnička, Faigl, Váňa, Saska 2017 · Bài toán orienteering Dubins có lân cận (DOPN) | 2026-11-12 |  |
 | [`research_notes/literature/papers/penicka2019-datacoll.md`](../research_notes/literature/papers/penicka2019-datacoll.md) | Pěnička, Faigl, Saska, Váňa 2019 · Lập kế hoạch thu dữ liệu với khoảng cảm nhận khác 0 cho UAV có giới hạn quãng bay và độ cong (bản tạp chí DOPN) | 2026-11-12 |  |
@@ -99,6 +103,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/vana2017-budget.md`](../research_notes/literature/papers/vana2017-budget.md) | Váňa, Faigl, Sláma, Pěnička 2017 · Lập kế hoạch thu dữ liệu với mô hình máy bay Dubins và ngân sách quãng bay | 2026-11-12 |  |
 | [`research_notes/literature/papers/wang2025-fwcoverage.md`](../research_notes/literature/papers/wang2025-fwcoverage.md) | Wang, Zhang, Li, Zhang 2025 · Lập đường phủ 3D phối hợp cho nhiều UAV cánh bằng ở vùng phức tạp | 2026-11-12 |  |
 | [`research_notes/literature/papers/zeng2018-multicast.md`](../research_notes/literature/papers/zeng2018-multicast.md) | Zeng, Xu, Zhang 2018 · Trajectory design for completion time minimization in UAV-enabled multicasting | 2026-11-12 |  |
+| [`research_notes/literature/papers/zhai2022-hetcov.md`](../research_notes/literature/papers/zhai2022-hetcov.md) | Zhai et al. 2022 · Tối đa vùng phủ cho mạng không trung không đồng nhất | 2026-11-12 |  |
 | [`uav-l2/docs/ANIM-vi.md`](../uav-l2/docs/ANIM-vi.md) | Các animation (không chữ trên bản đồ) | 2026-10-25 |  |
 | [`uav-l2/docs/FLIGHTLINE-vi.md`](../uav-l2/docs/FLIGHTLINE-vi.md) | Chọn đường bay qua mỗi cluster (FlightLine) | 2026-10-15 |  |
 | [`uav-l2/docs/SAT-vi.md`](../uav-l2/docs/SAT-vi.md) | Ngưỡng bão hoà và điểm tối ưu theo hình dạng cụm | 2026-10-21 |  |

@@ -84,6 +84,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 ## `trajectory-error` · lệch quỹ đạo, gió, bám đường
 
 - [techy2009-wind](techy2009-wind.md) ★★★ · Trong gió đều V_w < V_a, quay tốc độ tối đa vẽ ra đường trochoid trong hệ mặt đất; đường cực trị gồm trochoid và đoạn thẳng (BSB, BBB); LSL/RSR giải tường minh, LSR/RSL/BBB giải bằng tìm nghiệm số; điều kiện cần mới: mỗi đoạn trochoid kéo dài < 2 vòng; có cực trị không ứng với đường Dubins nào trong hệ không khí.
+- [nelson2007-vfield](nelson2007-vfield.md) ★★ · Dựng trường hướng đi mong muốn quanh đường thẳng và quỹ đạo tròn, điều khiển theo hướng đi (course) đo bằng GPS nên sai số tiệm cận về 0 khi gió không đổi (chứng minh Lyapunov, có bản sliding mode); bay thử: sai số trung bình < 1 sải cánh cho đường thẳng/quỹ đạo tròn, < 3 sải cánh khi đổi hướng liên tục, kể cả gió 50 % tốc độ không khí.
 
 ## `control-overhead` · chi phí điều khiển, giới hạn thông tin giao thức
 
@@ -102,3 +103,4 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
 - [doddavenkatappa2013-splash](doddavenkatappa2013-splash.md) ★★ · Splash bỏ hẳn tranh chấp kênh bằng "tree pipelining": mỗi tầng của cây thu thập phát đồng thời cùng gói (giao thoa xây dựng) trên kênh riêng; ba vòng phát (đổi mật độ người phát, đổi kênh, vòng 3 là gói XOR) rồi khôi phục cục bộ; 32 KB trong ~25 s trên 139 nút, nhanh hơn DelugeT2 trung bình 21×.
 - [ferrari2012-lwb](ferrari2012-lwb.md) ★★ · LWB biến mạng đa chặng thành "bus chung": mọi trao đổi là một lần flood Glossy, các flood được lập lịch toàn cục theo vòng do một nút host tính và phát; không giữ trạng thái topo nên chịu được nhiễu, hỏng nút và nút di động; hỗ trợ 1–nhiều, nhiều–1, nhiều–nhiều với >99 % gói và duty cycle thấp.
+- [nelson2007-vfield](nelson2007-vfield.md) ★★ · Dựng trường hướng đi mong muốn quanh đường thẳng và quỹ đạo tròn, điều khiển theo hướng đi (course) đo bằng GPS nên sai số tiệm cận về 0 khi gió không đổi (chứng minh Lyapunov, có bản sliding mode); bay thử: sai số trung bình < 1 sải cánh cho đường thẳng/quỹ đạo tròn, < 3 sải cánh khi đổi hướng liên tục, kể cả gió 50 % tốc độ không khí.

@@ -44,7 +44,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 22 | rathinam2007.pdf | rathinam2007-multivehicle | ★★ | partial | dtsp, multi-uav, approx-bound | `rathinam2007-multivehicle` | ✓ |
 | 23 | s10732-020-09440-2.pdf | (theo tác giả) 2020-dtspheur | ★★ | partial | dtsp, tsp-solver | `babel2020-dtspheur` | ✓ |
 | 24 | noon1993.pdf | noon1993-gtsp | ★★ | partial | tsp-solver | `noon1993-gtsp` | ✓ |
-| 25 | helsgaun2000.pdf | helsgaun2000-lkh | ★★ | partial | tsp-solver | | |
+| 25 | helsgaun2000.pdf | helsgaun2000-lkh | ★★ | partial | tsp-solver | `helsgaun2000-lkh` | ✓ |
 | 26 | obermeyer2009.pdf | obermeyer2009-recon | ★★ | partial | dtspn | | |
 | 27 | penicka2017.pdf | penicka2017-dopn | ★★ | partial | orienteering, dtspn | | |
 | 28 | 10.1007@s10514-019-09844-5.pdf | (theo tác giả) 2019-datacoll | ★★ | partial | orienteering, uav-collection | | |

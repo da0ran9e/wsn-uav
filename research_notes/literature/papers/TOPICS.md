@@ -64,6 +64,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 ## `a2g-channel` · kênh không–đất
 
 - [alhourani2014-lap](alhourani2014-lap.md) ★★★ · Mô hình suy hao không–đất trung bình = FSPL + η theo nhóm LoS/NLoS, xác suất LoS theo góc ngẩng xấp xỉ bằng hàm S P(LoS, θ) = 1/(1 + a·exp(−b(θ − a))) với a, b khớp theo tham số đô thị ITU (α, β, γ); bán kính phủ R(h) có cực đại, góc ngẩng tối ưu θ_OPT không phụ thuộc PL_max.
+- [matolak2017-a2g](matolak2017-a2g.md) ★★★ · Đo kênh A2G băng L (968 MHz) và C (5060 MHz) bằng máy bay S-3B ở 500–1000 m trên trạm mặt đất (anten 20 m) tại ngoại ô và cận đô thị: suy hao theo log-distance mũ 1,5–2,0, σ ≤ 3,2 dB, chênh 4,6 dB theo hướng bay; fading Rician K ≈ 12–14 dB (L), 27–29 dB (C); trễ RMS trung bình 10–60 ns, tối đa ~4 μs; mô hình TDL với tối đa 7 tia gián đoạn.
 - [zeng2018-multicast](zeng2018-multicast.md) ★★★ · UAV phát một file chung (RLNC) cho K trạm mặt đất; chặn dưới xác suất giải được đưa ràng buộc về "thời gian kết nối tối thiểu trong bán kính D", quỹ đạo tối ưu gồm các đoạn thẳng, waypoint chọn qua đặt trạm ảo (VBS) + TSP + tối ưu lồi, tốc độ qua LP.
 
 ## `control-overhead` · chi phí điều khiển, giới hạn thông tin giao thức
@@ -76,3 +77,4 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [du2017-pando](du2017-pando.md) ★★★ · Pando phát luồng gói LT (fountain) liên tục qua cây pipeline dùng giao thoa xây dựng (Glossy) và đa kênh (PIP), giải mã xen trong khoảng rỗi CPU, dừng bằng phản hồi "im lặng" RSSI; đạt tin cậy 100 % và nhanh hơn Splash 3,5× (Indriya), nhanh hơn Deluge ~32,7×.
 - [hui2004-deluge](hui2004-deluge.md) ★★★ · Deluge phổ biến đối tượng dữ liệu lớn (ảnh chương trình) tới mọi nút WSN đa chặng bằng quảng bá kiểu Trickle, chia trang để pipeline, NACK chọn lọc; đạt ~90 B/s (1/9 tốc độ radio) trên 75 nút, gói điều khiển 18 %, và cho mô hình thời gian E[T_obj] = min(dn, d+3(n−1))·(E[T_page]+D).
+- [matolak2017-a2g](matolak2017-a2g.md) ★★★ · Đo kênh A2G băng L (968 MHz) và C (5060 MHz) bằng máy bay S-3B ở 500–1000 m trên trạm mặt đất (anten 20 m) tại ngoại ô và cận đô thị: suy hao theo log-distance mũ 1,5–2,0, σ ≤ 3,2 dB, chênh 4,6 dB theo hướng bay; fading Rician K ≈ 12–14 dB (L), 27–29 dB (C); trễ RMS trung bình 10–60 ns, tối đa ~4 μs; mô hình TDL với tối đa 7 tia gián đoạn.

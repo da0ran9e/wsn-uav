@@ -24,6 +24,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [babel2017-obstacles](babel2017-obstacles.md) ★★ · Đặt bài toán CTSPO (DTSP + tránh chướng ngại), dùng mạng "Mikado" (đường thẳng ngẫu nhiên nối bằng clothoid) để tìm đường bay được, tối ưu hướng bay qua bằng đồ thị phụ p hướng/điểm và đường ngắn nhất, dựng tour bằng chèn dần (NEARIN, FARIN, RANDIN, CHEAPIN); kèm câu "DTSP-N NP-khó vì khi vùng co về điểm thì về DTSP".
 - [obermeyer2009-recon](obermeyer2009-recon.md) ★★ · Quy bài toán chụp ảnh mọi mục tiêu tĩnh (bị địa hình che) về PVDTSP: tìm tour Dubins kín ngắn nhất đi qua ít nhất một điểm trong mỗi đa giác vùng nhìn thấy; giải bằng thuật toán di truyền mã hoá (thứ tự, điểm trên biên đa giác, hướng), tour ngắn gần một nửa so với tìm ngẫu nhiên cùng thời gian.
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
+- [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
 
 ## `np-hard` · kết quả về độ khó
 
@@ -52,6 +53,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 ## `orienteering` · orienteering, giới hạn quãng bay
 
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
+- [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
 
 ## `uav-multicast` · UAV phát dữ liệu chung xuống mặt đất
 
@@ -62,6 +64,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [nekrasov2019-aerial154](nekrasov2019-aerial154.md) ★★★ · Đo thực 9 giờ bay (quadcopter, XBee3 802.15.4 2,4 GHz, 13 độ cao 9–122 m, cự ly ngang tới > 250 m): RSSI gần như không đổi theo cấu hình nhưng PRR thay đổi mạnh; PRR tốt nhất ở ~46 m, giảm ~5 %/25 m sau 50 m, gói xa nhất thu được ở 297 m dù hãng quảng cáo 1200 m.
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
+- [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
 
 ## `uav-coverage` · phủ vùng, đặt vị trí UAV làm trạm gốc
 

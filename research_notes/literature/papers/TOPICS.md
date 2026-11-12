@@ -11,6 +11,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [leny2012-dtsp](leny2012-dtsp.md) ★★★ · Chứng minh Dubins TSP (tour và path) NP-khó bằng phép quy từ TSP Euclid có phóng to; chỉ ra heuristic theo thứ tự Euclid kém tối ưu cỡ Ω(n); đề xuất thuật toán rời rạc hoá hướng qua GTSP → ATSP.
 - [savla2008-dtsp](savla2008-dtsp.md) ★★★ · Ba kết quả cho DTSP: (1) trường hợp xấu nhất độ dài tour tăng tuyến tính theo n, ALTERNATING ALGORITHM (giữ thứ tự ETSP, bỏ xen kẽ cạnh) xấp xỉ hằng số khi khoảng cách điểm bị chặn dưới, kèm cận điểm–điểm D ≤ E + κπρ; (2) điểm ngẫu nhiên đều: tour cỡ n^{2/3}, RECURSIVE BEAD-TILING đạt hằng số với xác suất 1; (3) DTRP: thời gian hệ thống cỡ λ² (Euclid chỉ cỡ λ).
+- [techy2009-wind](techy2009-wind.md) ★★★ · Trong gió đều V_w < V_a, quay tốc độ tối đa vẽ ra đường trochoid trong hệ mặt đất; đường cực trị gồm trochoid và đoạn thẳng (BSB, BBB); LSL/RSR giải tường minh, LSR/RSL/BBB giải bằng tìm nghiệm số; điều kiện cần mới: mỗi đoạn trochoid kéo dài < 2 vòng; có cực trị không ứng với đường Dubins nào trong hệ không khí.
 - [babel2017-obstacles](babel2017-obstacles.md) ★★ · Đặt bài toán CTSPO (DTSP + tránh chướng ngại), dùng mạng "Mikado" (đường thẳng ngẫu nhiên nối bằng clothoid) để tìm đường bay được, tối ưu hướng bay qua bằng đồ thị phụ p hướng/điểm và đường ngắn nhất, dựng tour bằng chèn dần (NEARIN, FARIN, RANDIN, CHEAPIN); kèm câu "DTSP-N NP-khó vì khi vùng co về điểm thì về DTSP".
 
 ## `dtspn` · Dubins TSP với lân cận
@@ -71,6 +72,10 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [matolak2017-a2g](matolak2017-a2g.md) ★★★ · Đo kênh A2G băng L (968 MHz) và C (5060 MHz) bằng máy bay S-3B ở 500–1000 m trên trạm mặt đất (anten 20 m) tại ngoại ô và cận đô thị: suy hao theo log-distance mũ 1,5–2,0, σ ≤ 3,2 dB, chênh 4,6 dB theo hướng bay; fading Rician K ≈ 12–14 dB (L), 27–29 dB (C); trễ RMS trung bình 10–60 ns, tối đa ~4 μs; mô hình TDL với tối đa 7 tia gián đoạn.
 - [nekrasov2019-aerial154](nekrasov2019-aerial154.md) ★★★ · Đo thực 9 giờ bay (quadcopter, XBee3 802.15.4 2,4 GHz, 13 độ cao 9–122 m, cự ly ngang tới > 250 m): RSSI gần như không đổi theo cấu hình nhưng PRR thay đổi mạnh; PRR tốt nhất ở ~46 m, giảm ~5 %/25 m sau 50 m, gói xa nhất thu được ở 297 m dù hãng quảng cáo 1200 m.
 - [zeng2018-multicast](zeng2018-multicast.md) ★★★ · UAV phát một file chung (RLNC) cho K trạm mặt đất; chặn dưới xác suất giải được đưa ràng buộc về "thời gian kết nối tối thiểu trong bán kính D", quỹ đạo tối ưu gồm các đoạn thẳng, waypoint chọn qua đặt trạm ảo (VBS) + TSP + tối ưu lồi, tốc độ qua LP.
+
+## `trajectory-error` · lệch quỹ đạo, gió, bám đường
+
+- [techy2009-wind](techy2009-wind.md) ★★★ · Trong gió đều V_w < V_a, quay tốc độ tối đa vẽ ra đường trochoid trong hệ mặt đất; đường cực trị gồm trochoid và đoạn thẳng (BSB, BBB); LSL/RSR giải tường minh, LSR/RSL/BBB giải bằng tìm nghiệm số; điều kiện cần mới: mỗi đoạn trochoid kéo dài < 2 vòng; có cực trị không ứng với đường Dubins nào trong hệ không khí.
 
 ## `control-overhead` · chi phí điều khiển, giới hạn thông tin giao thức
 

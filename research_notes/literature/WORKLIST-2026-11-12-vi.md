@@ -30,7 +30,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 8 | al-hourani2014.pdf | alhourani2014-lap | ★★★ | full | a2g-channel, uav-coverage | `alhourani2014-lap` | ✓ |
 | 9 | matolak2017.pdf | matolak2017-a2g | ★★★ | full | a2g-channel | `matolak2017-a2g` | ✓ |
 | 10 | nekrasov2019.pdf | nekrasov2019-aerial154 | ★★★ | full | uav-collection, a2g-channel, testbed | `nekrasov2019-aerial154` | ✓ |
-| 11 | techy2009.pdf | techy2009-wind | ★★★ | full | trajectory-error, dtsp | | |
+| 11 | techy2009.pdf | techy2009-wind | ★★★ | full | trajectory-error, dtsp | `techy2009-wind` | ✓ |
 | 12 | 02_kulkarnis_mnp.pdf | kulkarni2005-mnp | ★★ | partial | dissemination | | |
 | 13 | FZMT2012.pdf | ferrari2012-lwb | ★★ | partial | dissemination, testbed | | |
 | 14 | infocom-reliability.pdf | (theo tác giả) 2008-ncrel | ★★ | partial | coding | | |

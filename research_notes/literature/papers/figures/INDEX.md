@@ -4,6 +4,9 @@ Hình gốc của các bài (có chữ, ngoại lệ của mục 63), chỉ nh�
 
 | Tệp | Mô tả | Lệnh | Tham số | Ngày | Commit |
 |---|---|---|---|---|---|
+| `du2017-pando-fig5.png` | Lịch khe TX/RX của nguồn và ba tầng khi phổ biến đối tượng 16 gói, kèm phản hồi im lặng (Fig. 5, tr. 6) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TNET.2016.2614707 | 2026-11-12 | xem git log |
+| `du2017-pando-fig8.png` | Tiến trình tin cậy theo thời gian trên Indriya: Pando, Splash, Splash không tính mã hoá (Fig. 8, tr. 10) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TNET.2016.2614707 | 2026-11-12 | xem git log |
+| `du2017-pando-fig12.png` | Thời gian phổ biến của các bản Pando bật từng kỹ thuật so với Splash (Fig. 12, tr. 12) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TNET.2016.2614707 | 2026-11-12 | xem git log |
 | `gallager1976-protocol-fig4.png` | Tỉ lệ thông tin giao thức trên thông tin có ích theo δ cho ε = 0,1; 0,05; 0,01 (Fig. 4, tr. 4) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TIT.1976.1055588 | 2026-11-12 | xem git log |
 | `gallager1976-protocol-fig5.png` | Bit giao thức về thời điểm bắt đầu mỗi thông điệp theo αd: cận dưới và hai chiến lược (Fig. 5, tr. 7) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TIT.1976.1055588 | 2026-11-12 | xem git log |
 | `hui2004-deluge-fig2.png` | Pipeline bốn chặng: A và D phát hai trang khác nhau cùng lúc, cần cách ba chặng (Fig. 2, tr. 5) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1145/1031495.1031506 | 2026-11-12 | xem git log |

@@ -23,7 +23,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 1 | hui2004.pdf | hui2004-deluge | ★★★ | full | dissemination, control-overhead | `hui2004-deluge` | ✓ |
 | 2 | gallager1976.pdf | gallager1976-protocol | ★★★ | full | control-overhead | `gallager1976-protocol` | ✓ |
 | 3 | minsky2003.pdf | minsky2003-setrecon | ★★★ | full | control-overhead | `minsky2003-setrecon` | ✓ |
-| 4 | du2017.pdf | du2017-pando | ★★★ | full | dissemination, coding | | |
+| 4 | du2017.pdf | du2017-pando | ★★★ | full | dissemination, coding | `du2017-pando` | ✓ |
 | 5 | IEEE_WTran08_Stojanovic_Wu_Sharif_Starobinski_rev4.pdf | stojanovic2009-nccoop | ★★★ | full | coding, ground-coop | | |
 | 6 | savla2008.pdf | savla2008-dtsp | ★★★ | full | dtsp, approx-bound | | |
 | 7 | babel2017.pdf | babel2017-obstacles | ★★★ | full | dtsp, dtspn, np-hard | | |

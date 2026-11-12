@@ -40,10 +40,12 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `dissemination` · phổ biến dữ liệu và mã trong WSN
 
+- [du2017-pando](du2017-pando.md) ★★★ · Pando phát luồng gói LT (fountain) liên tục qua cây pipeline dùng giao thoa xây dựng (Glossy) và đa kênh (PIP), giải mã xen trong khoảng rỗi CPU, dừng bằng phản hồi "im lặng" RSSI; đạt tin cậy 100 % và nhanh hơn Splash 3,5× (Indriya), nhanh hơn Deluge ~32,7×.
 - [hui2004-deluge](hui2004-deluge.md) ★★★ · Deluge phổ biến đối tượng dữ liệu lớn (ảnh chương trình) tới mọi nút WSN đa chặng bằng quảng bá kiểu Trickle, chia trang để pipeline, NACK chọn lọc; đạt ~90 B/s (1/9 tốc độ radio) trên 75 nút, gói điều khiển 18 %, và cho mô hình thời gian E[T_obj] = min(dn, d+3(n−1))·(E[T_page]+D).
 
 ## `coding` · fountain code, RLNC, network coding
 
+- [du2017-pando](du2017-pando.md) ★★★ · Pando phát luồng gói LT (fountain) liên tục qua cây pipeline dùng giao thoa xây dựng (Glossy) và đa kênh (PIP), giải mã xen trong khoảng rỗi CPU, dừng bằng phản hồi "im lặng" RSSI; đạt tin cậy 100 % và nhanh hơn Splash 3,5× (Indriya), nhanh hơn Deluge ~32,7×.
 - [minsky2003-setrecon](minsky2003-setrecon.md) ★★★ · Biểu diễn tập bằng đa thức đặc trưng, gửi giá trị tại m̄ điểm để nội suy hàm hữu tỉ χ_Δa/χ_Δb và tìm hiệu đối xứng; chi phí (m̄+1)(b+1)−1 bit, gần cận dưới thông tin mb − m lg m; bản không tương tác cho phép một bản tin quảng bá sửa cho nhiều client thiếu các tập khác nhau.
 - [zeng2018-multicast](zeng2018-multicast.md) ★★★ · UAV phát một file chung (RLNC) cho K trạm mặt đất; chặn dưới xác suất giải được đưa ràng buộc về "thời gian kết nối tối thiểu trong bán kính D", quỹ đạo tối ưu gồm các đoạn thẳng, waypoint chọn qua đặt trạm ảo (VBS) + TSP + tối ưu lồi, tốc độ qua LP.
 
@@ -59,4 +61,5 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `testbed` · thực nghiệm phần cứng, testbed
 
+- [du2017-pando](du2017-pando.md) ★★★ · Pando phát luồng gói LT (fountain) liên tục qua cây pipeline dùng giao thoa xây dựng (Glossy) và đa kênh (PIP), giải mã xen trong khoảng rỗi CPU, dừng bằng phản hồi "im lặng" RSSI; đạt tin cậy 100 % và nhanh hơn Splash 3,5× (Indriya), nhanh hơn Deluge ~32,7×.
 - [hui2004-deluge](hui2004-deluge.md) ★★★ · Deluge phổ biến đối tượng dữ liệu lớn (ảnh chương trình) tới mọi nút WSN đa chặng bằng quảng bá kiểu Trickle, chia trang để pipeline, NACK chọn lọc; đạt ~90 B/s (1/9 tốc độ radio) trên 75 nút, gói điều khiển 18 %, và cho mô hình thời gian E[T_obj] = min(dn, d+3(n−1))·(E[T_page]+D).

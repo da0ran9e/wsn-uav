@@ -148,6 +148,10 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [oubbati2023-rescue](oubbati2023-rescue.md) ★ · MARLF: nhóm UAV làm trạm gốc bay, giữ liên kết với nhau và với trạm mặt đất, theo dõi các thành viên cứu hộ di chuyển khó đoán; học quỹ đạo tiết kiệm năng lượng bằng MADDPG để tối đa số người được phủ và thông lượng; tốt hơn các phương pháp cơ sở (ví dụ 20 thành viên, 7 UAV).
 - [wang2025-fwcoverage](wang2025-fwcoverage.md) ★ · Mô hình DCCPP (phủ kín động) cho nhiều UAV cánh bằng: lồi hoá vùng, chia đường thành đường thao tác (quét), đường vào và đường chuyển vùng (nối bằng Dubins), phân vùng cho UAV bằng tham lam theo chỉ số phân bổ, tối ưu tổ hợp bằng quy hoạch động cải tiến (IDP), rồi nâng lên 3D theo địa hình bằng hạ độ cao; kiểm chứng mô phỏng và bán vật lý thực tế hỗn hợp.
 
+## `wsn-gathering` · gom dữ liệu trong WSN
+
+- [tan2003-pedap](tan2003-pedap.md) ★ · PEDAP định tuyến gom dữ liệu theo cây khung nhỏ nhất (MST) với tổng hợp tại nút, PEDAP-PA là bản có tính năng lượng còn lại để cân tải; tuổi thọ mạng hơn LEACH 4–20 lần và hơn PEGASIS (định tuyến chuỗi) khoảng 3 lần, kể cả khi trạm gốc ở giữa vùng.
+
 ## `testbed` · thực nghiệm phần cứng, testbed
 
 - [du2017-pando](du2017-pando.md) ★★★ · Pando phát luồng gói LT (fountain) liên tục qua cây pipeline dùng giao thoa xây dựng (Glossy) và đa kênh (PIP), giải mã xen trong khoảng rỗi CPU, dừng bằng phản hồi "im lặng" RSSI; đạt tin cậy 100 % và nhanh hơn Splash 3,5× (Indriya), nhanh hơn Deluge ~32,7×.

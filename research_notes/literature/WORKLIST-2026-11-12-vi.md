@@ -65,7 +65,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 43 | Energy_and_Service-Priority_aware_Trajectory_Design_for_UAV-BSs_using_Double_Q-Learning.pdf | (theo tác giả) 2021-dql | ★ | abstract | uav-coverage | `hoseini2021-dql` | ✓ |
 | 44 | Multi-UAV_Assisted_Network_Coverage_Optimization_for_Rescue_Operations_using_Reinforcement_Learning.pdf | (theo tác giả) 2023-rescue | ★ | abstract | uav-coverage, multi-uav, sar | `oubbati2023-rescue` | ✓ |
 | 45 | UAV-Assisted_Cellular_Communication_Joint_Trajectory_and_Coverage_Optimization.pdf | (theo tác giả) 2021-cellular | ★ | abstract | uav-coverage | `li2021-cellular` | ✓ |
-| 46 | tan2003.pdf | tan2003-pegasis | ★ | abstract | wsn-gathering | | |
+| 46 | tan2003.pdf | tan2003-pegasis | ★ | abstract | wsn-gathering | `tan2003-pedap` | ✓ |
 
 Mức sao là đề xuất. Nếu đọc xong thấy khác thì sửa `relevance` trong ghi chú, giữ thứ tự làm như bảng.
 

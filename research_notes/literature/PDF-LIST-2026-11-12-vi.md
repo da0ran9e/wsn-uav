@@ -75,6 +75,8 @@ bổ đề L1 và cho việc đo khoảng cách tối ưu của CHORD và LM-Tou
 Còn thiếu toàn bộ ưu tiên 1 của nhóm B trừ Le Ny 2012 (Wang 2020, Stojanovic 2009, Gallager 1976, LWB, Al-Hourani 2014,
 Techy–Woolsey 2009), và toàn bộ ưu tiên 2.
 
+Ghi chú đọc 32 PDF này, kèm DOI từng bài: `NOTES-DRIVE-PDF-vi.md`.
+
 ## Về việc đưa PDF lên repo
 
 Repo `da0ran9e/wsn-uav` đang **public**. Bài của IEEE, ACM, Springer, AIAA, Elsevier thuộc bản quyền nhà xuất bản, nên

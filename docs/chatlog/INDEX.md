@@ -314,3 +314,5 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 306 | 2026-11-12 | nghiên cứu · được vượt ngân sách thêm khoảng 150K token | [2026-11](2026-11.md) |
 | 307 | 2026-11-12 | nghiên cứu · danh sách PDF cần lấy; bản quyền khi đưa paper lên repo | [2026-11](2026-11.md) |
 | 308 | 2026-11-12 | nghiên cứu · kiểm thư mục Drive PDF so với danh sách | [2026-11](2026-11.md) |
+| 309 | 2026-11-12 | nghiên cứu · đọc PDF trong Drive, ghi chú; danh sách DOI còn thiếu | [2026-11](2026-11.md) |
+| 310 | 2026-11-12 | nghiên cứu · DOI cho 32 PDF trong Drive | [2026-11](2026-11.md) |

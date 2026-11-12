@@ -4,6 +4,9 @@ Hình gốc của các bài (có chữ, ngoại lệ của mục 63), chỉ nh�
 
 | Tệp | Mô tả | Lệnh | Tham số | Ngày | Commit |
 |---|---|---|---|---|---|
+| `babel2017-obstacles-fig5.png` | Đồ thị phụ tối ưu hướng bay qua: mỗi landmark một cột p đỉnh, đường ngắn nhất S → T (Fig. 5, tr. 5) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1016/j.ejor.2017.03.067 | 2026-11-12 | xem git log |
+| `babel2017-obstacles-fig11.png` | Độ dài tour theo gia tốc ngang tối đa cho bốn heuristic, so với relaxed CTSPO và ETSPO (Fig. 11, tr. 9) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1016/j.ejor.2017.03.067 | 2026-11-12 | xem git log |
+| `babel2017-obstacles-fig17.png` | Tour ETSPO và CTSPO với a = 10 và 20 m/s² trong kịch bản nhiều chướng ngại dài hẹp (Fig. 17, tr. 11) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1016/j.ejor.2017.03.067 | 2026-11-12 | xem git log |
 | `du2017-pando-fig5.png` | Lịch khe TX/RX của nguồn và ba tầng khi phổ biến đối tượng 16 gói, kèm phản hồi im lặng (Fig. 5, tr. 6) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TNET.2016.2614707 | 2026-11-12 | xem git log |
 | `du2017-pando-fig8.png` | Tiến trình tin cậy theo thời gian trên Indriya: Pando, Splash, Splash không tính mã hoá (Fig. 8, tr. 10) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TNET.2016.2614707 | 2026-11-12 | xem git log |
 | `du2017-pando-fig12.png` | Thời gian phổ biến của các bản Pando bật từng kỹ thuật so với Splash (Fig. 12, tr. 12) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/TNET.2016.2614707 | 2026-11-12 | xem git log |

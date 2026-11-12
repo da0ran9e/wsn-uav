@@ -12,7 +12,7 @@ giúp. **Không commit PDF vào repo** (repo đang public, xem mục cuối). Đ
 
 | | Bài | Nguồn mở | Dùng cho |
 |---|---|---|---|
-| [ ] | Zeng, Xu, Zhang, Trajectory design for completion time minimization in UAV-enabled multicasting, IEEE TWC 2018 | arXiv 1708.06478 | baseline FC, định lý A |
+| [x] | Zeng, Xu, Zhang, Trajectory design for completion time minimization in UAV-enabled multicasting, IEEE TWC 2018 | arXiv 1708.06478 | baseline FC, định lý A |
 | [ ] | Courtade, Wesel, Coded cooperative data exchange in multihop networks, IEEE TIT 2014 | arXiv 1203.3445 | định lý D, C |
 | [ ] | Swapna, Eryilmaz, Shroff, Throughput-delay analysis of RLNC for wireless broadcasting, IEEE TIT 2013 | arXiv 1101.3724 | định lý A |
 | [ ] | Haeupler, Analyzing network coding gossip made easy, STOC 2011 | arXiv 1010.0558 | định lý D |
@@ -23,7 +23,7 @@ giúp. **Không commit PDF vào repo** (repo đang public, xem mục cuối). Đ
 | [ ] | Bacco et al., UAV–802.15.4 testbed, 2018 | postprint ISTI-CNR | kênh thực địa |
 | [ ] | Váňa, Faigl, On the Dubins TSP with neighborhoods, IROS 2015 | comrob.fel.cvut.cz | L1, CHORD |
 | [ ] | Gandhi, Parthasarathy, Mishra, Minimizing broadcast latency and redundancy in ad hoc networks, MobiHoc 2003 | sigmobile.org | định lý D |
-| [ ] | Isaacs, Klein, Hespanha, Algorithms for the TSP with neighborhoods involving a Dubins vehicle, ACC 2011 | ntnu.no | L1, CHORD |
+| [x] | Isaacs, Klein, Hespanha, Algorithms for the TSP with neighborhoods involving a Dubins vehicle, ACC 2011 | ntnu.no | L1, CHORD |
 | [ ] | Wang, Abouzeid, overhead tối thiểu của link-state routing, INFOCOM 2008 | ecse.rpi.edu | định lý C |
 | [ ] | MobileDeluge, IEEE MASS 2014 | xiaozhon.github.io | định vị đóng góp |
 
@@ -34,7 +34,7 @@ giúp. **Không commit PDF vào repo** (repo đang public, xem mục cuối). Đ
 | | Bài | DOI / nguồn | Vì sao |
 |---|---|---|---|
 | [ ] | Wang, Zhang, Chen et al., Graph-based file dispatching protocol with D2D-enhanced UAV-NOMA communications in large-scale networks, IEEE IoT-J 7(9):8615–8630, 2020 | 10.1109/JIOT.2020.2994549 | rủi ro trùng lặp lớn nhất |
-| [ ] | Le Ny, Feron, Frazzoli, On the Dubins traveling salesman problem, IEEE TAC 57(1):265–270, 2012 | 10.1109/TAC.2011.2166311 | bổ đề L1: điều gì đã được chứng minh |
+| [x] | Le Ny, Feron, Frazzoli, On the Dubins traveling salesman problem, IEEE TAC 57(1):265–270, 2012 | 10.1109/TAC.2011.2166311 | bổ đề L1: điều gì đã được chứng minh |
 | [ ] | Stojanovic, Wu, Sharif, Starobinski, Data dissemination in wireless broadcast channels: network coding versus cooperation, IEEE TWC 2009 | chưa có DOI | crossover một chặng, tiền lệ của định lý A |
 | [ ] | Gallager, Basic limits on protocol information in data communication networks, IEEE TIT 1976 | 10.1109/TIT.1976.1055588 | định lý C |
 | [ ] | Ferrari, Zimmerling, Mottola, Thiele, Low-power wireless bus (LWB), ACM SenSys 2012 | chưa có DOI | lịch tập trung, gần River nhất |
@@ -58,6 +58,22 @@ giúp. **Không commit PDF vào repo** (repo đang public, xem mục cuối). Đ
 | [ ] | Minsky, Trachtenberg, Zippel, Set reconciliation, IEEE TIT 2003 | 10.1109/TIT.2003.815784 | định lý C, phía đạt được |
 | [ ] | Ghaderi, Towsley, Kurose, Reliability gain of network coding in lossy wireless networks, INFOCOM 2008 | ieeexplore 4509879 | định lý A, số hạng log |
 | [ ] | Gudmundson, correlation model for shadow fading, Electronics Letters 1991 | 10.1049/el:19911328 | tương quan che khuất |
+
+## C. Đã có trong thư mục Drive của người dùng (kiểm 2026-11-12)
+
+Thư mục Drive có 32 PDF, tải được từ session (link chia sẻ công khai). Ba bài trùng danh sách trên (đã đánh [x]): Le Ny
+2012, Zeng 2018 (arXiv 1708.06478), Isaacs 2011. Phần còn lại chủ yếu là Dubins TSP và phủ vùng bằng UAV, hữu ích cho
+bổ đề L1 và cho việc đo khoảng cách tối ưu của CHORD và LM-Tour:
+- Dubins TSP và DTSP-N: dubins1957, leny2007, ma2006, noon1993, obermeyer2009, rathinam2007, savla2008, shkel2001,
+  tan2003, faigl2017, penicka2017, vana2017, helsgaun2000 (LKH), Babel 2017 (EJOR, tour giới hạn độ cong cho giám sát
+  trên không), J. Heuristics 2020 (heuristic mới cho DTSP), Sensors 23:6432 (Dubins MinMax TSP), Sensors 23:2560 (phủ vùng
+  nhiều robot Dubins), Autonomous Robots 2019 (thu dữ liệu với UAV giới hạn độ cong và khoảng cách cảm nhận), Xu–Liang–Lin
+  2015 (IEEE TC, xấp xỉ min-max cycle cover);
+- phủ vùng và đặt vị trí UAV: Defence Technology 2025 (phủ vùng 3D nhiều UAV cánh bằng), Fixed-wing coverage path
+  planning (turning span), và 8 bài về coverage, trajectory, DRL cho UAV-BS và thu dữ liệu WSN.
+
+Còn thiếu toàn bộ ưu tiên 1 của nhóm B trừ Le Ny 2012 (Wang 2020, Stojanovic 2009, Gallager 1976, LWB, Al-Hourani 2014,
+Techy–Woolsey 2009), và toàn bộ ưu tiên 2.
 
 ## Về việc đưa PDF lên repo
 

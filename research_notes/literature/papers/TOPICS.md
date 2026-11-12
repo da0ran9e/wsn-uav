@@ -67,6 +67,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [minsky2003-setrecon](minsky2003-setrecon.md) ★★★ · Biểu diễn tập bằng đa thức đặc trưng, gửi giá trị tại m̄ điểm để nội suy hàm hữu tỉ χ_Δa/χ_Δb và tìm hiệu đối xứng; chi phí (m̄+1)(b+1)−1 bit, gần cận dưới thông tin mb − m lg m; bản không tương tác cho phép một bản tin quảng bá sửa cho nhiều client thiếu các tập khác nhau.
 - [stojanovic2009-nccoop](stojanovic2009-nccoop.md) ★★★ · Trạm gốc phát tệp K gói cho N máy thu qua kênh on/off độc lập (xác suất mất p_e): round-robin tốn K·log_{1/p_e}N; RLC tốn log_{1/p_e}N khi K cố định nhưng ≈ (1 + 1/log(1/p_e))K khi K ≳ (log N)^r; hợp tác hai giai đoạn với M = (log N)^r nút chuyển tiếp đạt 2K(1 + o(1)) với mọi K.
 - [zeng2018-multicast](zeng2018-multicast.md) ★★★ · UAV phát một file chung (RLNC) cho K trạm mặt đất; chặn dưới xác suất giải được đưa ràng buộc về "thời gian kết nối tối thiểu trong bán kính D", quỹ đạo tối ưu gồm các đoạn thẳng, waypoint chọn qua đặt trạm ảo (VBS) + TSP + tối ưu lồi, tốc độ qua LP.
+- [ghaderi2008-ncrel](ghaderi2008-ncrel.md) ★★ · Một điểm truy cập phát cho K máy thu mất gói Bernoulli(p) độc lập: ARQ cần E[N] = Θ(log K) lần phát mỗi gói, NC với khối lớn chỉ cần 1/(1 − p) = Θ(1), nên lợi ích là Θ(log K); trên cây cao h: so với ARQ từng chặng Θ(log K), ARQ đầu–cuối Θ(c^{h−1} log K), FEC đầu–cuối Θ(c^h), c = 1/(1 − p).
 
 ## `a2g-channel` · kênh không–đất
 

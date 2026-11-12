@@ -110,6 +110,12 @@ vào thư mục `archive/` gần nhất, không xoá. Sau khi thêm hoặc thay 
 rồi `python3 tools/check.py` (không thêm liên kết hỏng mới, không commit tệp mới trên 5 MB). Mỗi bản clone mới
 chạy một lần `git config core.hooksPath tools/hooks` để hook pre-commit tự kiểm các tệp được commit.
 
+**Ghi chú bài báo (mục 311):** mỗi bài một file `research_notes/literature/papers/<key>.md` theo khuôn mục cố định,
+mọi khẳng định có `(tr. N)`, dòng quan trọng mở đầu bằng nhãn `[GĐ] [ĐN] [KQ] [TT] [TS] [SỐ] [TRÍCH] [NX]` để grep; 2–4
+hình tiêu biểu cắt bằng `tools/papers/pdf_extract.py`, chép vào `papers/figures/` (được commit). PDF và chữ trích toàn văn
+không commit. Sau khi thêm ghi chú: `python3 tools/papers/paper_index.py` (sinh `INDEX.md`, `TOPICS.md`, INDEX hình).
+Quy trình đầy đủ, khuôn, nhãn và bộ chủ đề: `research_notes/literature/METHOD-vi.md`; bài mẫu `papers/leny2012-dtsp.md`.
+
 **Trạng thái và kế hoạch:** đọc `docs/progress/HANDOFF.md` trước khi làm tiếp việc dở. Kế hoạch tái tổ chức
 repo và ước lượng chi phí từng bước: `docs/REORG-GUIDE-vi.md`.
 

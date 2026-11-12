@@ -316,3 +316,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 308 | 2026-11-12 | nghiên cứu · kiểm thư mục Drive PDF so với danh sách | [2026-11](2026-11.md) |
 | 309 | 2026-11-12 | nghiên cứu · đọc PDF trong Drive, ghi chú; danh sách DOI còn thiếu | [2026-11](2026-11.md) |
 | 310 | 2026-11-12 | nghiên cứu · DOI cho 32 PDF trong Drive | [2026-11](2026-11.md) |
+| 311 | 2026-11-12 | nghiên cứu · phương pháp ghi chú bài báo + 3 bài mẫu, hình commit vào repo | [2026-11](2026-11.md) |

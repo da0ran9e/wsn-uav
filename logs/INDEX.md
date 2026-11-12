@@ -69,3 +69,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-10_1000-nd1-week1/` | ND1 tuần 1: mô hình, kiểm mô hình kênh và định lý A trên dữ liệu có sẵn |
 | `2026-11-10_1400-nd1-day5/` | ND1 ngày 5 (thử nghiệm): bổ đề L1, kiểm mệnh đề B trên dữ liệu gió |
 | `2026-11-12_0900-lit-search/` | 8 phiên tìm tài liệu song song cho kế hoạch sau ICC |
+| `2026-11-12_1400-paper-notes/` | Ghi chú chi tiết bài báo: công cụ, phương pháp, 3 bài mẫu |

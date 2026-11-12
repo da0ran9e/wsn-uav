@@ -10,6 +10,9 @@ vòng, [TOUR] CHORD và LM-Tour, [ĐV] định vị đóng góp. Cách đọc: t
 đọc kỹ phần phát biểu và chứng minh, các bài khác chủ yếu đọc abstract, mở đầu và kết luận. PDF không được commit (xem
 `PDF-LIST-2026-11-12-vi.md`).
 
+Ghi chú chi tiết theo khuôn mới (mục 311) nằm ở `papers/`, danh mục `papers/INDEX.md`; đến nay có Le Ny 2012, Zeng 2018,
+Isaacs 2011. File này giữ vai trò tổng quan cho 32 bài.
+
 ## 1. Điều rút ra quan trọng nhất
 
 - **Bổ đề L1 viết được chính xác.** Le Ny–Feron–Frazzoli 2012 (Định lý 2) chứng minh Dubins TSP (bản tour và bản path)

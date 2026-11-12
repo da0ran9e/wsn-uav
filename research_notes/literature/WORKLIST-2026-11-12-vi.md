@@ -54,7 +54,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 32 | shkel2001.pdf | shkel2001-dubinsset | ★ | abstract | dtsp | `shkel2001-dubinsset` | ✓ |
 | 33 | ma2006.pdf | ma2006-receding | ★ | abstract | dtsp | `ma2006-receding` | ✓ |
 | 34 | faigl2017.pdf | faigl2017-ceop | ★ | abstract | orienteering | `faigl2017-ceop` | ✓ |
-| 35 | vana2017.pdf | vana2017-budget | ★ | abstract | orienteering, uav-collection | | |
+| 35 | vana2017.pdf | vana2017-budget | ★ | abstract | orienteering, uav-collection | `vana2017-budget` | ✓ |
 | 36 | sensors-23-06432.pdf | (theo tác giả) 2023-minmax | ★ | abstract | dtsp, multi-uav | | |
 | 37 | sensors-23-02560-v2.pdf | (theo tác giả) 2023-coverage | ★ | abstract | uav-coverage, multi-uav | | |
 | 38 | 1-s2.0-S2214914725000170-main.pdf | (theo tác giả) 2025-fwcoverage | ★ | abstract | uav-coverage, multi-uav | | |

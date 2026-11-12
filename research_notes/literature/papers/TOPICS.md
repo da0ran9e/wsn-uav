@@ -58,6 +58,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
 - [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
 - [faigl2017-ceop](faigl2017-ceop.md) ★ · CEDOP (cùng bài toán với DOPN: chọn điểm, thứ tự, waypoint trong đĩa bán kính δ và hướng sao cho đường Dubins ≤ T_max và tổng thưởng lớn nhất) được giải bằng bản đồ tự tổ chức (SOM); kết quả kém VNS một chút, nhất là trên lưới đều (Set 64, 66), nhưng nhẹ tính hơn nhiều.
+- [vana2017-budget](vana2017-budget.md) ★ · DA-OP: orienteering cho mô hình Dubins airplane 3D (độ cong và góc chúc ngóc bị chặn), điểm mục tiêu ở độ cao khác nhau; lấy mẫu đều hướng tiếp cận và giải bằng Randomized VNS; thử trên benchmark OP sửa thêm độ cao.
 
 ## `uav-multicast` · UAV phát dữ liệu chung xuống mặt đất
 
@@ -70,6 +71,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
 - [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
 - [faigl2017-ceop](faigl2017-ceop.md) ★ · CEDOP (cùng bài toán với DOPN: chọn điểm, thứ tự, waypoint trong đĩa bán kính δ và hướng sao cho đường Dubins ≤ T_max và tổng thưởng lớn nhất) được giải bằng bản đồ tự tổ chức (SOM); kết quả kém VNS một chút, nhất là trên lưới đều (Set 64, 66), nhưng nhẹ tính hơn nhiều.
+- [vana2017-budget](vana2017-budget.md) ★ · DA-OP: orienteering cho mô hình Dubins airplane 3D (độ cong và góc chúc ngóc bị chặn), điểm mục tiêu ở độ cao khác nhau; lấy mẫu đều hướng tiếp cận và giải bằng Randomized VNS; thử trên benchmark OP sửa thêm độ cao.
 
 ## `uav-coverage` · phủ vùng, đặt vị trí UAV làm trạm gốc
 

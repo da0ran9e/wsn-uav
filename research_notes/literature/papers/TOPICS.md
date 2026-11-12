@@ -69,11 +69,13 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 ## `uav-coverage` · phủ vùng, đặt vị trí UAV làm trạm gốc
 
 - [alhourani2014-lap](alhourani2014-lap.md) ★★★ · Mô hình suy hao không–đất trung bình = FSPL + η theo nhóm LoS/NLoS, xác suất LoS theo góc ngẩng xấp xỉ bằng hàm S P(LoS, θ) = 1/(1 + a·exp(−b(θ − a))) với a, b khớp theo tham số đô thị ITU (α, β, γ); bán kính phủ R(h) có cực đại, góc ngẩng tối ưu θ_OPT không phụ thuộc PL_max.
+- [miao2020-d2d](miao2020-d2d.md) ★★ · UAV treo ở tâm vùng (cao 100 m) phục vụ trực tiếp tối đa M người dùng; người dùng khác nhận lại qua D2D một chặng (≤ 10 m) từ người đã được UAV phục vụ (ràng buộc nhân quả thông tin); tối đa ω·tổng tốc độ + (1 − ω)·số người được phục vụ, bài nhị phân NP-khó được nới thành LP giải bằng CVX.
 
 ## `ground-coop` · hợp tác mặt đất sau khi UAV phát (D2D, chuyển tiếp)
 
 - [stojanovic2009-nccoop](stojanovic2009-nccoop.md) ★★★ · Trạm gốc phát tệp K gói cho N máy thu qua kênh on/off độc lập (xác suất mất p_e): round-robin tốn K·log_{1/p_e}N; RLC tốn log_{1/p_e}N khi K cố định nhưng ≈ (1 + 1/log(1/p_e))K khi K ≳ (log N)^r; hợp tác hai giai đoạn với M = (log N)^r nút chuyển tiếp đạt 2K(1 + o(1)) với mọi K.
 - [zeng2018-multicast](zeng2018-multicast.md) ★★★ · UAV phát một file chung (RLNC) cho K trạm mặt đất; chặn dưới xác suất giải được đưa ràng buộc về "thời gian kết nối tối thiểu trong bán kính D", quỹ đạo tối ưu gồm các đoạn thẳng, waypoint chọn qua đặt trạm ảo (VBS) + TSP + tối ưu lồi, tốc độ qua LP.
+- [miao2020-d2d](miao2020-d2d.md) ★★ · UAV treo ở tâm vùng (cao 100 m) phục vụ trực tiếp tối đa M người dùng; người dùng khác nhận lại qua D2D một chặng (≤ 10 m) từ người đã được UAV phục vụ (ràng buộc nhân quả thông tin); tối đa ω·tổng tốc độ + (1 − ω)·số người được phục vụ, bài nhị phân NP-khó được nới thành LP giải bằng CVX.
 
 ## `dissemination` · phổ biến dữ liệu và mã trong WSN
 

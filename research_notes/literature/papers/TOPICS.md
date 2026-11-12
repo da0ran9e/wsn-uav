@@ -10,6 +10,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 ## `dtsp` · Dubins TSP và biến thể
 
 - [leny2012-dtsp](leny2012-dtsp.md) ★★★ · Chứng minh Dubins TSP (tour và path) NP-khó bằng phép quy từ TSP Euclid có phóng to; chỉ ra heuristic theo thứ tự Euclid kém tối ưu cỡ Ω(n); đề xuất thuật toán rời rạc hoá hướng qua GTSP → ATSP.
+- [savla2008-dtsp](savla2008-dtsp.md) ★★★ · Ba kết quả cho DTSP: (1) trường hợp xấu nhất độ dài tour tăng tuyến tính theo n, ALTERNATING ALGORITHM (giữ thứ tự ETSP, bỏ xen kẽ cạnh) xấp xỉ hằng số khi khoảng cách điểm bị chặn dưới, kèm cận điểm–điểm D ≤ E + κπρ; (2) điểm ngẫu nhiên đều: tour cỡ n^{2/3}, RECURSIVE BEAD-TILING đạt hằng số với xác suất 1; (3) DTRP: thời gian hệ thống cỡ λ² (Euclid chỉ cỡ λ).
 
 ## `dtspn` · Dubins TSP với lân cận
 
@@ -23,6 +24,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [isaacs2011-dtspn](isaacs2011-dtspn.md) ★★★ · Hai thuật toán cho Dubins TSP với lân cận (DTSPN): vùng rời nhau thì lấy một mẫu mỗi vùng cho hệ số xấp xỉ không phụ thuộc số vùng; vùng chồng nhau thì lấy mẫu rồi biến GTSP có nhóm chồng nhau sang ATSP (Noon–Bean), tour ngắn tới gần một nửa so với RCM.
 - [leny2012-dtsp](leny2012-dtsp.md) ★★★ · Chứng minh Dubins TSP (tour và path) NP-khó bằng phép quy từ TSP Euclid có phóng to; chỉ ra heuristic theo thứ tự Euclid kém tối ưu cỡ Ω(n); đề xuất thuật toán rời rạc hoá hướng qua GTSP → ATSP.
+- [savla2008-dtsp](savla2008-dtsp.md) ★★★ · Ba kết quả cho DTSP: (1) trường hợp xấu nhất độ dài tour tăng tuyến tính theo n, ALTERNATING ALGORITHM (giữ thứ tự ETSP, bỏ xen kẽ cạnh) xấp xỉ hằng số khi khoảng cách điểm bị chặn dưới, kèm cận điểm–điểm D ≤ E + κπρ; (2) điểm ngẫu nhiên đều: tour cỡ n^{2/3}, RECURSIVE BEAD-TILING đạt hằng số với xác suất 1; (3) DTRP: thời gian hệ thống cỡ λ² (Euclid chỉ cỡ λ).
 
 ## `tsp-solver` · bộ giải TSP, biến đổi GTSP sang ATSP
 

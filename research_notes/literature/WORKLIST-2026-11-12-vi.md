@@ -25,7 +25,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 3 | minsky2003.pdf | minsky2003-setrecon | ★★★ | full | control-overhead | `minsky2003-setrecon` | ✓ |
 | 4 | du2017.pdf | du2017-pando | ★★★ | full | dissemination, coding | `du2017-pando` | ✓ |
 | 5 | IEEE_WTran08_Stojanovic_Wu_Sharif_Starobinski_rev4.pdf | stojanovic2009-nccoop | ★★★ | full | coding, ground-coop | `stojanovic2009-nccoop` | ✓ |
-| 6 | savla2008.pdf | savla2008-dtsp | ★★★ | full | dtsp, approx-bound | | |
+| 6 | savla2008.pdf | savla2008-dtsp | ★★★ | full | dtsp, approx-bound | `savla2008-dtsp` | ✓ |
 | 7 | babel2017.pdf | babel2017-obstacles | ★★★ | full | dtsp, dtspn, np-hard | | |
 | 8 | al-hourani2014.pdf | alhourani2014-lap | ★★★ | full | a2g-channel, uav-coverage | | |
 | 9 | matolak2017.pdf | matolak2017-a2g | ★★★ | full | a2g-channel | | |

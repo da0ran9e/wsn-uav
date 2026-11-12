@@ -62,7 +62,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 40 | An_Optimized_LTE-Based_Technique_for_Drone_Base_Station_Dynamic_3D_Placement_and_Resource_Allocation_in_Delay-Sensitive_M2M_Networks.pdf | (theo tác giả) 2023-lte | ★ | abstract | uav-coverage | `fahim2023-lte` | ✓ |
 | 41 | Coverage_Maximization_for_Heterogeneous_Aerial_Networks.pdf | (theo tác giả) 2022-hetcov | ★ | abstract | uav-coverage | `zhai2022-hetcov` | ✓ |
 | 42 | Coverage_Optimization_for_Reliable_UAV-Assisted_5G_6G_Communication_Systems.pdf | (theo tác giả) 2025-covopt | ★ | abstract | uav-coverage | `bensaoud2025-covopt` | ✓ |
-| 43 | Energy_and_Service-Priority_aware_Trajectory_Design_for_UAV-BSs_using_Double_Q-Learning.pdf | (theo tác giả) 2021-dql | ★ | abstract | uav-coverage | | |
+| 43 | Energy_and_Service-Priority_aware_Trajectory_Design_for_UAV-BSs_using_Double_Q-Learning.pdf | (theo tác giả) 2021-dql | ★ | abstract | uav-coverage | `hoseini2021-dql` | ✓ |
 | 44 | Multi-UAV_Assisted_Network_Coverage_Optimization_for_Rescue_Operations_using_Reinforcement_Learning.pdf | (theo tác giả) 2023-rescue | ★ | abstract | uav-coverage, multi-uav, sar | | |
 | 45 | UAV-Assisted_Cellular_Communication_Joint_Trajectory_and_Coverage_Optimization.pdf | (theo tác giả) 2021-cellular | ★ | abstract | uav-coverage | | |
 | 46 | tan2003.pdf | tan2003-pegasis | ★ | abstract | wsn-gathering | | |

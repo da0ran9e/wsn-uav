@@ -27,6 +27,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [obermeyer2009-recon](obermeyer2009-recon.md) ★★ · Quy bài toán chụp ảnh mọi mục tiêu tĩnh (bị địa hình che) về PVDTSP: tìm tour Dubins kín ngắn nhất đi qua ít nhất một điểm trong mỗi đa giác vùng nhìn thấy; giải bằng thuật toán di truyền mã hoá (thứ tự, điểm trên biên đa giác, hướng), tour ngắn gần một nửa so với tìm ngẫu nhiên cùng thời gian.
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
 - [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
+- [faigl2017-ceop](faigl2017-ceop.md) ★ · CEDOP (cùng bài toán với DOPN: chọn điểm, thứ tự, waypoint trong đĩa bán kính δ và hướng sao cho đường Dubins ≤ T_max và tổng thưởng lớn nhất) được giải bằng bản đồ tự tổ chức (SOM); kết quả kém VNS một chút, nhất là trên lưới đều (Set 64, 66), nhưng nhẹ tính hơn nhiều.
 
 ## `np-hard` · kết quả về độ khó
 
@@ -56,6 +57,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
 - [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
+- [faigl2017-ceop](faigl2017-ceop.md) ★ · CEDOP (cùng bài toán với DOPN: chọn điểm, thứ tự, waypoint trong đĩa bán kính δ và hướng sao cho đường Dubins ≤ T_max và tổng thưởng lớn nhất) được giải bằng bản đồ tự tổ chức (SOM); kết quả kém VNS một chút, nhất là trên lưới đều (Set 64, 66), nhưng nhẹ tính hơn nhiều.
 
 ## `uav-multicast` · UAV phát dữ liệu chung xuống mặt đất
 
@@ -67,6 +69,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
 - [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
+- [faigl2017-ceop](faigl2017-ceop.md) ★ · CEDOP (cùng bài toán với DOPN: chọn điểm, thứ tự, waypoint trong đĩa bán kính δ và hướng sao cho đường Dubins ≤ T_max và tổng thưởng lớn nhất) được giải bằng bản đồ tự tổ chức (SOM); kết quả kém VNS một chút, nhất là trên lưới đều (Set 64, 66), nhưng nhẹ tính hơn nhiều.
 
 ## `uav-coverage` · phủ vùng, đặt vị trí UAV làm trạm gốc
 

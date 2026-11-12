@@ -36,7 +36,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 14 | infocom-reliability.pdf | (theo tác giả) 2008-ncrel | ★★ | partial | coding | `ghaderi2008-ncrel` | ✓ |
 | 15 | nsdi13-final22.pdf | (theo tác giả) 2011-chandiv | ★★ | partial | a2g-channel, testbed | `doddavenkatappa2013-splash` | ✓ |
 | 16 | main.pdf | (theo tác giả) 2021-lqe | ★★ | partial | uav-collection, a2g-channel | `dargie2021-lqe` | ✓ |
-| 17 | gudmundson1991.pdf | gudmundson1991-shadow | ★★ | partial | a2g-channel | | |
+| 17 | gudmundson1991.pdf | gudmundson1991-shadow | ★★ | partial | a2g-channel | `gudmundson1991-shadow` | ✓ |
 | 18 | nelson2007.pdf | nelson2007-vfield | ★★ | partial | trajectory-error | | |
 | 19 | park2007.pdf | park2007-guidance | ★★ | partial | trajectory-error | | |
 | 20 | dubins1957.pdf | dubins1957-curves | ★★ | partial | dtsp | | |

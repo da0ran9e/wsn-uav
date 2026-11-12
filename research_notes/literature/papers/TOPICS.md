@@ -79,6 +79,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [nekrasov2019-aerial154](nekrasov2019-aerial154.md) ★★★ · Đo thực 9 giờ bay (quadcopter, XBee3 802.15.4 2,4 GHz, 13 độ cao 9–122 m, cự ly ngang tới > 250 m): RSSI gần như không đổi theo cấu hình nhưng PRR thay đổi mạnh; PRR tốt nhất ở ~46 m, giảm ~5 %/25 m sau 50 m, gói xa nhất thu được ở 297 m dù hãng quảng cáo 1200 m.
 - [zeng2018-multicast](zeng2018-multicast.md) ★★★ · UAV phát một file chung (RLNC) cho K trạm mặt đất; chặn dưới xác suất giải được đưa ràng buộc về "thời gian kết nối tối thiểu trong bán kính D", quỹ đạo tối ưu gồm các đoạn thẳng, waypoint chọn qua đặt trạm ảo (VBS) + TSP + tối ưu lồi, tốc độ qua LP.
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
+- [gudmundson1991-shadow](gudmundson1991-shadow.md) ★★ · Shadow fading (dB) mô hình Gauss quanh trung bình K₁ − K₂ log d với tự tương quan mũ theo khoảng cách R(k) = σ²a^{|k|}, a = ε_D^{vT/D}; khớp tốt ở ngoại ô (σ = 7,5 dB, tương quan 0,82 ở 100 m) nhưng kém ở vi tế bào đô thị (σ = 4,3 dB, tương quan 0,3 ở 10 m).
 
 ## `trajectory-error` · lệch quỹ đạo, gió, bám đường
 

@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (16): nguồn số liệu và mô tả đang dùng
+## Hiện hành (19): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -18,14 +18,17 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
 | [`research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md`](../research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md) | Tổng hợp tìm tài liệu cho kế hoạch tiếp theo (2026-11-12) | 2026-11-12 |  |
+| [`research_notes/literature/METHOD-vi.md`](../research_notes/literature/METHOD-vi.md) | Phương pháp ghi chú bài báo | 2026-11-12 |  |
 | [`research_notes/literature/NOTES-DRIVE-PDF-vi.md`](../research_notes/literature/NOTES-DRIVE-PDF-vi.md) | Ghi chú đọc 32 PDF trong thư mục Drive (2026-11-12) | 2026-11-12 |  |
 | [`research_notes/literature/PDF-LIST-2026-11-12-vi.md`](../research_notes/literature/PDF-LIST-2026-11-12-vi.md) | Danh sách PDF cần đọc (từ đợt tìm tài liệu 2026-11-12) | 2026-11-12 |  |
+| [`research_notes/literature/papers/INDEX.md`](../research_notes/literature/papers/INDEX.md) | Danh mục ghi chú bài báo | 2026-11-12 |  |
+| [`research_notes/literature/papers/TOPICS.md`](../research_notes/literature/papers/TOPICS.md) | Chủ đề → bài | 2026-11-12 |  |
 | [`research_notes/proposal/SIGDROP-PROPOSAL-vi.md`](../research_notes/proposal/SIGDROP-PROPOSAL-vi.md) | Đề cương nghiên cứu SigDrop (bản nháp) | 2026-11-06 |  |
 | [`uav-l2/docs/ENERGY-vi.md`](../uav-l2/docs/ENERGY-vi.md) | Mô hình năng lượng cho bảng "Ground transport on fixed CHORD passes" (CLAUDE.md §8 mục 227, phần 3) | 2026-10-30 |  |
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (27): còn đúng, dùng để tra cứu nền
+## Tham khảo (30): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -53,6 +56,9 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/2026-11-12/06-deployment.md`](../research_notes/literature/2026-11-12/06-deployment.md) | 06 — Triển khai thực tế: phần cứng camera IoT, testbed, UAV+WSN, pha 0 | 2026-11-12 |  |
 | [`research_notes/literature/2026-11-12/07-venues.md`](../research_notes/literature/2026-11-12/07-venues.md) | 07 — Hội nghị, tạp chí và lịch nộp bài cho SigDrop (tra cứu ngày 2026-11-12) | 2026-11-12 |  |
 | [`research_notes/literature/2026-11-12/08-ref-check.md`](../research_notes/literature/2026-11-12/08-ref-check.md) | 08 · Kiểm tra danh mục tài liệu tham khảo của đề cương SigDrop | 2026-11-12 |  |
+| [`research_notes/literature/papers/isaacs2011-dtspn.md`](../research_notes/literature/papers/isaacs2011-dtspn.md) | Isaacs, Klein, Hespanha 2011 · Algorithms for the TSP with neighborhoods involving a Dubins vehicle | 2026-11-12 |  |
+| [`research_notes/literature/papers/leny2012-dtsp.md`](../research_notes/literature/papers/leny2012-dtsp.md) | Le Ny, Feron, Frazzoli 2012 · On the Dubins traveling salesman problem | 2026-11-12 |  |
+| [`research_notes/literature/papers/zeng2018-multicast.md`](../research_notes/literature/papers/zeng2018-multicast.md) | Zeng, Xu, Zhang 2018 · Trajectory design for completion time minimization in UAV-enabled multicasting | 2026-11-12 |  |
 | [`uav-l2/docs/ANIM-vi.md`](../uav-l2/docs/ANIM-vi.md) | Các animation (không chữ trên bản đồ) | 2026-10-25 |  |
 | [`uav-l2/docs/FLIGHTLINE-vi.md`](../uav-l2/docs/FLIGHTLINE-vi.md) | Chọn đường bay qua mỗi cluster (FlightLine) | 2026-10-15 |  |
 | [`uav-l2/docs/SAT-vi.md`](../uav-l2/docs/SAT-vi.md) | Ngưỡng bão hoà và điểm tối ưu theo hình dạng cụm | 2026-10-21 |  |

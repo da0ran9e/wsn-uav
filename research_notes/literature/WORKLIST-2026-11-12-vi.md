@@ -41,7 +41,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 19 | park2007.pdf | park2007-guidance | ★★ | partial | trajectory-error | `park2007-guidance` | ✓ |
 | 20 | dubins1957.pdf | dubins1957-curves | ★★ | partial | dtsp | `dubins1957-curves` | ✓ |
 | 21 | leny2007.pdf | leny2007-highdensity | ★★ | partial | dtsp, np-hard | `leny2007-highdensity` | ✓ |
-| 22 | rathinam2007.pdf | rathinam2007-multivehicle | ★★ | partial | dtsp, multi-uav, approx-bound | | |
+| 22 | rathinam2007.pdf | rathinam2007-multivehicle | ★★ | partial | dtsp, multi-uav, approx-bound | `rathinam2007-multivehicle` | ✓ |
 | 23 | s10732-020-09440-2.pdf | (theo tác giả) 2020-dtspheur | ★★ | partial | dtsp, tsp-solver | | |
 | 24 | noon1993.pdf | noon1993-gtsp | ★★ | partial | tsp-solver | | |
 | 25 | helsgaun2000.pdf | helsgaun2000-lkh | ★★ | partial | tsp-solver | | |

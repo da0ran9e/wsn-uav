@@ -4,6 +4,9 @@ Hình gốc của các bài (có chữ, ngoại lệ của mục 63), chỉ nh�
 
 | Tệp | Mô tả | Lệnh | Tham số | Ngày | Commit |
 |---|---|---|---|---|---|
+| `alhourani2014-lap-fig1.png` | Lan truyền LAP–mặt đất: đoạn FSPL rồi đoạn đô thị gây suy hao thêm; góc ngẩng θ và khoảng cách r (Fig. 1, tr. 2) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/LWC.2014.2342736 | 2026-11-12 | xem git log |
+| `alhourani2014-lap-fig2.png` | Xác suất LoS theo góc ngẩng cho bốn môi trường và đường S khớp (Fig. 2, tr. 3) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/LWC.2014.2342736 | 2026-11-12 | xem git log |
+| `alhourani2014-lap-fig5.png` | Bán kính phủ theo độ cao LAP cho bốn môi trường, điểm tối ưu đánh dấu (Fig. 5, tr. 4) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1109/LWC.2014.2342736 | 2026-11-12 | xem git log |
 | `babel2017-obstacles-fig5.png` | Đồ thị phụ tối ưu hướng bay qua: mỗi landmark một cột p đỉnh, đường ngắn nhất S → T (Fig. 5, tr. 5) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1016/j.ejor.2017.03.067 | 2026-11-12 | xem git log |
 | `babel2017-obstacles-fig11.png` | Độ dài tour theo gia tốc ngang tối đa cho bốn heuristic, so với relaxed CTSPO và ETSPO (Fig. 11, tr. 9) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1016/j.ejor.2017.03.067 | 2026-11-12 | xem git log |
 | `babel2017-obstacles-fig17.png` | Tour ETSPO và CTSPO với a = 10 và 20 m/s² trong kịch bản nhiều chướng ngại dài hẹp (Fig. 17, tr. 11) | `tools/papers/pdf_extract.py` (cắt theo chú thích) | 10.1016/j.ejor.2017.03.067 | 2026-11-12 | xem git log |

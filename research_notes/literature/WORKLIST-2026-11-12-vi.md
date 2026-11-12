@@ -27,7 +27,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 5 | IEEE_WTran08_Stojanovic_Wu_Sharif_Starobinski_rev4.pdf | stojanovic2009-nccoop | ★★★ | full | coding, ground-coop | `stojanovic2009-nccoop` | ✓ |
 | 6 | savla2008.pdf | savla2008-dtsp | ★★★ | full | dtsp, approx-bound | `savla2008-dtsp` | ✓ |
 | 7 | babel2017.pdf | babel2017-obstacles | ★★★ | full | dtsp, dtspn, np-hard | `babel2017-obstacles` | ✓ |
-| 8 | al-hourani2014.pdf | alhourani2014-lap | ★★★ | full | a2g-channel, uav-coverage | | |
+| 8 | al-hourani2014.pdf | alhourani2014-lap | ★★★ | full | a2g-channel, uav-coverage | `alhourani2014-lap` | ✓ |
 | 9 | matolak2017.pdf | matolak2017-a2g | ★★★ | full | a2g-channel | | |
 | 10 | nekrasov2019.pdf | nekrasov2019-aerial154 | ★★★ | full | uav-collection, a2g-channel, testbed | | |
 | 11 | techy2009.pdf | techy2009-wind | ★★★ | full | trajectory-error, dtsp | | |

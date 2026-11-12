@@ -45,7 +45,7 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 23 | s10732-020-09440-2.pdf | (theo tác giả) 2020-dtspheur | ★★ | partial | dtsp, tsp-solver | `babel2020-dtspheur` | ✓ |
 | 24 | noon1993.pdf | noon1993-gtsp | ★★ | partial | tsp-solver | `noon1993-gtsp` | ✓ |
 | 25 | helsgaun2000.pdf | helsgaun2000-lkh | ★★ | partial | tsp-solver | `helsgaun2000-lkh` | ✓ |
-| 26 | obermeyer2009.pdf | obermeyer2009-recon | ★★ | partial | dtspn | | |
+| 26 | obermeyer2009.pdf | obermeyer2009-recon | ★★ | partial | dtspn | `obermeyer2009-recon` | ✓ |
 | 27 | penicka2017.pdf | penicka2017-dopn | ★★ | partial | orienteering, dtspn | | |
 | 28 | 10.1007@s10514-019-09844-5.pdf | (theo tác giả) 2019-datacoll | ★★ | partial | orienteering, uav-collection | | |
 | 29 | Joint_Rate_and_Coverage_Design_for_UAV-Enabled_Wireless_Networks_with_Underlaid_D2D_Communications.pdf | (theo tác giả) 2020-d2d | ★★ | partial | uav-coverage, ground-coop | | |

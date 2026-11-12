@@ -312,3 +312,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 304 | 2026-11-10 | ND1 · hỏi River thắng Deluge có phải nhờ control overhead | [2026-11](2026-11.md) |
 | 305 | 2026-11-12 | nghiên cứu · nhiều phiên tìm tài liệu song song (15 phút) | [2026-11](2026-11.md) |
 | 306 | 2026-11-12 | nghiên cứu · được vượt ngân sách thêm khoảng 150K token | [2026-11](2026-11.md) |
+| 307 | 2026-11-12 | nghiên cứu · danh sách PDF cần lấy; bản quyền khi đưa paper lên repo | [2026-11](2026-11.md) |

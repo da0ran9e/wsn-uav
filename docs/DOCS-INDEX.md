@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (13): nguồn số liệu và mô tả đang dùng
+## Hiện hành (14): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -17,12 +17,13 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
+| [`research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md`](../research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md) | Tổng hợp tìm tài liệu cho kế hoạch tiếp theo (2026-11-12) | 2026-11-12 |  |
 | [`research_notes/proposal/SIGDROP-PROPOSAL-vi.md`](../research_notes/proposal/SIGDROP-PROPOSAL-vi.md) | Đề cương nghiên cứu SigDrop (bản nháp) | 2026-11-06 |  |
 | [`uav-l2/docs/ENERGY-vi.md`](../uav-l2/docs/ENERGY-vi.md) | Mô hình năng lượng cho bảng "Ground transport on fixed CHORD passes" (CLAUDE.md §8 mục 227, phần 3) | 2026-10-30 |  |
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (19): còn đúng, dùng để tra cứu nền
+## Tham khảo (27): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -42,6 +43,14 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/l1-signature-matching/cross_device_scores.md`](../research_notes/l1-signature-matching/cross_device_scores.md) | Cross-device match-score variation: same recognition model, same reference signatures, different edge devices | 2026-10-18 |  |
 | [`research_notes/l1-signature-matching/partial_signatures.md`](../research_notes/l1-signature-matching/partial_signatures.md) | Partial signature sets: how accuracy drops when a node holds 4/5 or 3/5 reference files | 2026-10-18 |  |
 | [`research_notes/l1-signature-matching/score_threshold.md`](../research_notes/l1-signature-matching/score_threshold.md) | What a "70–90 % match score" means, and how a fixed YES/NO threshold behaves (persons, vehicles, animals) | 2026-10-18 |  |
+| [`research_notes/literature/2026-11-12/01-uav-dissemination.md`](../research_notes/literature/2026-11-12/01-uav-dissemination.md) | 01 — Phát tán dữ liệu từ UAV xuống mạng mặt đất, multicast UAV, phát tán mã, DTSP-N | 2026-11-12 |  |
+| [`research_notes/literature/2026-11-12/02-code-dissemination.md`](../research_notes/literature/2026-11-12/02-code-dissemination.md) | 02 — Phát tán dữ liệu lớn / mã trong WSN-IoT: state of the art và baseline công bằng cho River | 2026-11-12 |  |
+| [`research_notes/literature/2026-11-12/03-theory.md`](../research_notes/literature/2026-11-12/03-theory.md) | 03 — Cơ sở lý thuyết cho phần theory của SigDrop (L1, A, B, C, D) | 2026-11-12 |  |
+| [`research_notes/literature/2026-11-12/04-a2g-channel.md`](../research_notes/literature/2026-11-12/04-a2g-channel.md) | 04 — Kênh không–đất (A2G) cho 802.15.4 2.4 GHz từ UAV: kiểm tra mô hình SigDrop và giả định A1 | 2026-11-12 |  |
+| [`research_notes/literature/2026-11-12/05-wind-deviation.md`](../research_notes/literature/2026-11-12/05-wind-deviation.md) | 05 — Lệch quỹ đạo do gió của UAV cánh cố định, và các cơ chế giống takeover | 2026-11-12 |  |
+| [`research_notes/literature/2026-11-12/06-deployment.md`](../research_notes/literature/2026-11-12/06-deployment.md) | 06 — Triển khai thực tế: phần cứng camera IoT, testbed, UAV+WSN, pha 0 | 2026-11-12 |  |
+| [`research_notes/literature/2026-11-12/07-venues.md`](../research_notes/literature/2026-11-12/07-venues.md) | 07 — Hội nghị, tạp chí và lịch nộp bài cho SigDrop (tra cứu ngày 2026-11-12) | 2026-11-12 |  |
+| [`research_notes/literature/2026-11-12/08-ref-check.md`](../research_notes/literature/2026-11-12/08-ref-check.md) | 08 · Kiểm tra danh mục tài liệu tham khảo của đề cương SigDrop | 2026-11-12 |  |
 | [`uav-l2/docs/ANIM-vi.md`](../uav-l2/docs/ANIM-vi.md) | Các animation (không chữ trên bản đồ) | 2026-10-25 |  |
 | [`uav-l2/docs/FLIGHTLINE-vi.md`](../uav-l2/docs/FLIGHTLINE-vi.md) | Chọn đường bay qua mỗi cluster (FlightLine) | 2026-10-15 |  |
 | [`uav-l2/docs/SAT-vi.md`](../uav-l2/docs/SAT-vi.md) | Ngưỡng bão hoà và điểm tối ưu theo hình dạng cụm | 2026-10-21 |  |

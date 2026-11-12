@@ -309,3 +309,5 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 301 | 2026-11-10 | đề cương · tuần đầu ND1: việc gì cho kết quả sớm nhất | [2026-11](2026-11.md) |
 | 302 | 2026-11-10 | ND1 · làm tiến độ ngày 1–4 | [2026-11](2026-11.md) |
 | 303 | 2026-11-10 | ND1 · thử nghiệm ghi file riêng, không sửa đề cương; thử ngày 5 | [2026-11](2026-11.md) |
+| 304 | 2026-11-10 | ND1 · hỏi River thắng Deluge có phải nhờ control overhead | [2026-11](2026-11.md) |
+| 305 | 2026-11-12 | nghiên cứu · nhiều phiên tìm tài liệu song song (15 phút) | [2026-11](2026-11.md) |

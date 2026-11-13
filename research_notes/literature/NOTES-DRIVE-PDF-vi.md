@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-12
+updated: 2026-11-13
 ---
 # Ghi chú đọc 32 PDF trong thư mục Drive (2026-11-12)
 
@@ -10,8 +10,8 @@ vòng, [TOUR] CHORD và LM-Tour, [ĐV] định vị đóng góp. Cách đọc: t
 đọc kỹ phần phát biểu và chứng minh, các bài khác chủ yếu đọc abstract, mở đầu và kết luận. PDF không được commit (xem
 `PDF-LIST-2026-11-12-vi.md`).
 
-Ghi chú chi tiết theo khuôn mới (mục 311) nằm ở `papers/`, danh mục `papers/INDEX.md`; đến nay có Le Ny 2012, Zeng 2018,
-Isaacs 2011. File này giữ vai trò tổng quan cho 32 bài.
+Ghi chú chi tiết theo khuôn mới (mục 311) nằm ở `papers/`, danh mục `papers/INDEX.md` và `papers/TOPICS.md`; từ 2026-11-12
+có đủ 49 bài (50 PDF trong Drive, trừ một bản trùng và bản arXiv của Zeng 2018). File này giữ vai trò tổng quan.
 
 ## 1. Điều rút ra quan trọng nhất
 
@@ -39,6 +39,39 @@ Isaacs 2011. File này giữ vai trò tổng quan cho 32 bài.
 - **Nhóm bài orienteering cho UAV cánh bằng** (Pěnička 2017, Faigl 2017, Váňa 2017, Autonomous Robots 2019) giải bài toán
   thu dữ liệu có giới hạn quãng bay, với vùng nhận là đĩa quanh mỗi node. Chúng hữu ích nếu SigDrop có ràng buộc pin của
   UAV, và cho thấy cách mô hình "vùng nghe" bằng đĩa là chuẩn trong tài liệu.
+
+### Bổ sung 2026-11-12: 18 PDF mới (ghi chú chi tiết ở `papers/`)
+
+- **[C] Giá trị thông tin của kế hoạch có hai nguồn trích chặt.** Gallager 1976 (`gallager1976-protocol`) coi thông tin
+  điều khiển là mã nguồn của sự bất định về thời điểm và độ dài, nên giảm được khi chấp nhận trễ. Minsky 2003
+  (`minsky2003-setrecon`) cho cận dưới cỡ m·b − m·lg m bit để hai bên đối soát m phần tử khác nhau khi không có lịch biết
+  trước. Hai kết quả này cho phép phát biểu định lượng: kế hoạch River (BS biết gói nào rơi xuống cell nào) đưa chi phí
+  khám phá về gần 0, còn Deluge phải trả chi phí đó. Cả hai bài dùng mô hình điểm–điểm, không có quảng bá từ UAV, nên chỉ
+  dựng định lý "tương tự", không áp thẳng.
+- **[D] và baseline Deluge.** Hui–Culler 2004 (`hui2004-deluge`) có mô hình thời gian lan theo số chặng và nêu câu hỏi mở
+  về cận dưới tốc độ phổ biến, mới có giới hạn 1/3 do không gian. Đây là chỗ đặt cận min-cut của SigDrop. Bài cũng có các
+  mốc để so chi phí điều khiển: 18 % frame điều khiển, độ dư 3,35×.
+- **[A] Crossover có tiền lệ trực tiếp.** Stojanovic et al. 2009 (`stojanovic2009-nccoop`) chứng minh có ngưỡng: dưới
+  ngưỡng thì hợp tác thắng, trên ngưỡng thì network coding thắng (theo K so với log N và theo xác suất mất gói). Thời gian
+  tới nút tệ nhất của bản mã hoá có đuôi cỡ log N. Định lý A của SigDrop (FC so với River) có thể phát biểu song song và
+  trích bài này.
+- **[FC] Fountain code trong phổ biến WSN.** Pando (`du2017-pando`) là bằng chứng thực nghiệm mạnh cho FC: mất đuôi dài
+  khi mọi gói đều mới; hiệu suất LT 89 % với 16 gói là mốc chọn ε. Ghaderi 2008 (`ghaderi2008-ncrel`) và Stojanovic
+  2009 cho lợi ích độ tin cậy của mã hoá theo số người nhận.
+- **[KÊNH] Mô hình kênh A2G có nguồn.**
+  - Al-Hourani 2014 (`alhourani2014-lap`): xác suất LoS dạng S theo góc ngẩng, là mô hình cần trích.
+  - Matolak 2017 (`matolak2017-a2g`): khi có LoS thì shadowing nhỏ (σ khoảng 2,6–3,2 dB) và K-factor lớn, nên mất gói chủ yếu do khoảng cách và che khuất.
+  - Nekrasov 2019 (`nekrasov2019-aerial154`): đo 802.15.4 từ UAV, PRR giảm dần theo cự ly như một "đĩa mềm", và RSSI không dự đoán được mất gói. Kết quả này ủng hộ việc mô hình hoá bằng xác suất nhận gói theo khoảng cách.
+  - Gudmundson 1991 (`gudmundson1991-shadow`): mô hình tương quan shadowing.
+  - Lưu ý: số đo của Matolak ở độ cao và cự ly lớn hơn SigDrop nhiều, nên chỉ dùng định tính.
+- **[GIÓ] Lệch quỹ đạo.** Techy–Woolsey 2009 (`techy2009-wind`): trong gió, đường Dubins thành trochoid. Với gió 5 m/s,
+  mỗi vòng quay trôi cỡ 110 m, tức cùng cỡ bán kính cell, nên cần takeover hoặc biên an toàn. Nelson 2007 và Park 2007 là
+  hai luật bám đường chuẩn để mô hình UAV bám đường trong gió.
+- **[L1] Bổ sung nguồn cho bổ đề độ khó.** Savla 2008 (`savla2008-dtsp`) Định lý 3.4 là nguồn của cận DTSP ≤ ETSP + κπρn
+  mà Le Ny 2012 dùng; với ρ = 63,7 m thì κπρ khoảng 532 m mỗi chặng. Câu "co vùng" của Babel 2017 (`babel2017-obstacles`)
+  chỉ là câu tổng quan, nên phép quy cho bản có lân cận phải tự viết.
+- **Lưu ý khi đọc ghi chú:** vài dòng `[NX]` gọi kế hoạch biết trước là "Manifest". Trong SigDrop hiện tại đó là kế
+  hoạch River (Manifest là cơ chế cũ ở `uav-coop/`).
 
 ## 2. Dubins TSP: nền tảng và độ khó
 

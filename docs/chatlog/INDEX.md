@@ -319,3 +319,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 311 | 2026-11-12 | nghiên cứu · phương pháp ghi chú bài báo + 3 bài mẫu, hình commit vào repo | [2026-11](2026-11.md) |
 | 312 | 2026-11-12 | nghiên cứu · tiếp tục ghi chú các PDF trong Drive theo mục 311 | [2026-11](2026-11.md) |
 | 313 | 2026-11-12 | nghiên cứu · phạm vi C, chạy tuần tự (WORKLIST) | [2026-11](2026-11.md) |
+| 314 | 2026-11-13 | nghiên cứu · hỏi tiến độ ghi chú 46 PDF | [2026-11](2026-11.md) |

@@ -82,7 +82,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/li2021-cellular.md`](../research_notes/literature/papers/li2021-cellular.md) | Li, Zhang, Ji, Li 2021 · UAV hỗ trợ mạng tế bào: tối ưu chung quỹ đạo và vùng phủ | 2026-11-12 |  |
 | [`research_notes/literature/papers/li2023-coverage.md`](../research_notes/literature/papers/li2023-coverage.md) | Li et al. 2023 · Lập đường phủ cho nhiều robot Dubins: chính xác và heuristic | 2026-11-12 |  |
 | [`research_notes/literature/papers/li2025-turnspan.md`](../research_notes/literature/papers/li2025-turnspan.md) | Li et al. 2025 · Lập đường phủ cho UAV cánh bằng bằng chọn bước nhảy khi quay | 2026-11-12 |  |
-| [`research_notes/literature/papers/liang2008-typhoon.md`](../research_notes/literature/papers/liang2008-typhoon.md) | Liang, Musăloiu-E., Terzis 2008 · Typhoon: phổ biến dữ liệu tin cậy trong WSN | 2026-11-12 |  |
+| [`research_notes/literature/papers/liang2008-typhoon.md`](../research_notes/literature/papers/liang2008-typhoon.md) | Liang, Musăloiu-E., Terzis 2008 · Typhoon: phổ biến dữ liệu tin cậy trong WSN | 2026-11-13 |  |
 | [`research_notes/literature/papers/ma2006-receding.md`](../research_notes/literature/papers/ma2006-receding.md) | Ma, Castañón 2006 · Lập kế hoạch cuộn cho Dubins TSP | 2026-11-12 |  |
 | [`research_notes/literature/papers/matolak2017-a2g.md`](../research_notes/literature/papers/matolak2017-a2g.md) | Matolak, Sun 2017 · Kênh không–đất cho UAS, phần III: ngoại ô và cận đô thị | 2026-11-12 |  |
 | [`research_notes/literature/papers/miao2020-d2d.md`](../research_notes/literature/papers/miao2020-d2d.md) | Miao, Liao, Zhao 2020 · Thiết kế chung tốc độ và vùng phủ cho mạng UAV có D2D | 2026-11-12 |  |

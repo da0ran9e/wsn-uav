@@ -17,5 +17,5 @@
 - `tools/check.py`: không có lỗi mới (5 / 0 / 77 / 3 là các lỗi có từ trước).
 
 **Còn dở:**
-- `liang2008-typhoon` chỉ dựa trên 2 trang xem trước; cần bản đầy đủ.
+- ~~`liang2008-typhoon` chỉ dựa trên 2 trang xem trước~~: đã ghi chú lại từ bản đủ 18 trang ngày 2026-11-13 (`logs/2026-11-13_typhoon-note/`).
 - Vài dòng `[NX]` gọi kế hoạch River là "Manifest" (tên cơ chế cũ); chưa sửa.

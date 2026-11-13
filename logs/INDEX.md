@@ -71,3 +71,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-12_0900-lit-search/` | 8 phiên tìm tài liệu song song cho kế hoạch sau ICC |
 | `2026-11-12_1400-paper-notes/` | Ghi chú chi tiết bài báo: công cụ, phương pháp, 3 bài mẫu |
 | `2026-11-12_1717-paper-notes/` | Ghi chú 46 PDF trong Drive (phiên phụ, WORKLIST), bước kết thúc do phiên chính làm |
+| `2026-11-13_typhoon-note/` | Ghi chú lại Typhoon (Liang 2008) từ bản đủ 18 trang |

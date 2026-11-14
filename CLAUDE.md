@@ -139,8 +139,10 @@ repo và ước lượng chi phí từng bước: `docs/REORG-GUIDE-vi.md`.
 ## 8. Cách viết tiếng Việt (mục 316)
 
 Áp dụng cho mọi câu trả lời và tài liệu viết bằng tiếng Việt. Bản đầy đủ do người dùng viết nằm ở
-`docs/chatlog/2026-11.md` mục 316. Các file `references/*.md`, `scan.py`, `check_facts.py` mà bản đó nhắc tới không có
-trong repo.
+`docs/chatlog/2026-11.md` mục 316. Tài liệu đi kèm (mục 317) ở `docs/style/`: `patterns.md` (danh mục 65 dấu hiệu, có ví
+dụ trước/sau), `slides.md` (slide, lời thuyết trình, tài liệu dài), `chat.md` (tin nhắn cá nhân hoá), `sources.md`
+(nguồn). Chỗ nào các file đó nhắc `references/X.md` thì là `docs/style/X.md`. Repo không có `scan.py`,
+`check_facts.py` và thư mục `examples/`, nên các bước soát bằng máy quét phải làm bằng mắt.
 
 ### Mở và kết
 - Vào thẳng câu trả lời. Không "Chắc chắn rồi!", "Câu hỏi rất hay!", không nhắc lại câu hỏi, không mở bằng "Dưới đây
@@ -220,7 +222,9 @@ trong repo.
   "chưa chắc".
 - Khi sửa văn của người khác: một dấu hiệu yếu đứng riêng thì không cần sửa; không sửa trích dẫn, tên riêng, lời chào và
   ký tên trong thư, giọng vùng miền có sẵn, văn bản viết trước 30/11/2022.
-- Slide và lời thuyết trình, tài liệu dài nhiều trang, bài mạng xã hội, tin nhắn cá nhân hoá có quy tắc riêng ở mục 316.
+- Viết hoặc sửa slide, lời thuyết trình, đề xuất hay báo cáo nhiều trang thì đọc `docs/style/slides.md`. Tin nhắn cá
+  nhân hoá thì đọc `docs/style/chat.md`. Sửa văn dài thì rà theo `docs/style/patterns.md`, nhất là nhóm I (cả bài) và
+  nhóm K (văn dịch).
 
 ---
 

@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (20): nguồn số liệu và mô tả đang dùng
+## Hiện hành (21): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -17,6 +17,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
+| [`paper/j1/PLAN-TRACKS-vi.md`](../paper/j1/PLAN-TRACKS-vi.md) | Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật | 2026-11-14 |  |
 | [`research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md`](../research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md) | Tổng hợp tìm tài liệu cho kế hoạch tiếp theo (2026-11-12) | 2026-11-12 |  |
 | [`research_notes/literature/METHOD-vi.md`](../research_notes/literature/METHOD-vi.md) | Phương pháp ghi chú bài báo | 2026-11-12 |  |
 | [`research_notes/literature/NOTES-DRIVE-PDF-vi.md`](../research_notes/literature/NOTES-DRIVE-PDF-vi.md) | Ghi chú đọc 32 PDF trong thư mục Drive (2026-11-12) | 2026-11-13 |  |

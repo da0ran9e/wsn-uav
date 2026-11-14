@@ -329,3 +329,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 321 | 2026-11-14 | kế hoạch · mục tiêu gần: phát biểu bài toán tối ưu pha 1 | [2026-11](2026-11.md) |
 | 322 | 2026-11-14 | kế hoạch · chuẩn bị gì để tự viết phát biểu bài toán pha 1 | [2026-11](2026-11.md) |
 | 323 | 2026-11-14 | kế hoạch · bàn bối cảnh bài toán pha 1 | [2026-11](2026-11.md) |
+| 324 | 2026-11-14 | bối cảnh · trả lời 4 câu (critical cell, địa hình, quy mô, nhiều truy vấn); chốt vào file mô tả | [2026-11](2026-11.md) |

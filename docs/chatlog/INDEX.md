@@ -328,3 +328,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 320 | 2026-11-14 | kế hoạch · checklist hai nhánh paper/j1/PLAN-TRACKS-vi.md | [2026-11](2026-11.md) |
 | 321 | 2026-11-14 | kế hoạch · mục tiêu gần: phát biểu bài toán tối ưu pha 1 | [2026-11](2026-11.md) |
 | 322 | 2026-11-14 | kế hoạch · chuẩn bị gì để tự viết phát biểu bài toán pha 1 | [2026-11](2026-11.md) |
+| 323 | 2026-11-14 | kế hoạch · bàn bối cảnh bài toán pha 1 | [2026-11](2026-11.md) |

@@ -321,3 +321,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 313 | 2026-11-12 | nghiên cứu · phạm vi C, chạy tuần tự (WORKLIST) | [2026-11](2026-11.md) |
 | 314 | 2026-11-13 | nghiên cứu · hỏi tiến độ ghi chú 46 PDF | [2026-11](2026-11.md) |
 | 315 | 2026-11-13 | nghiên cứu · ghi chú lại Typhoon từ bản đủ | [2026-11](2026-11.md) |
+| 316 | 2026-11-14 | quy tắc · cách viết tiếng Việt tự nhiên, thêm thành CLAUDE.md §8 | [2026-11](2026-11.md) |

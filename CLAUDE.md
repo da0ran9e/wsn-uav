@@ -116,7 +116,8 @@ hình tiêu biểu cắt bằng `tools/papers/pdf_extract.py`, chép vào `paper
 không commit. Sau khi thêm ghi chú: `python3 tools/papers/paper_index.py` (sinh `INDEX.md`, `TOPICS.md`, INDEX hình).
 Quy trình đầy đủ, khuôn, nhãn và bộ chủ đề: `research_notes/literature/METHOD-vi.md`; bài mẫu `papers/leny2012-dtsp.md`.
 
-**Trạng thái và kế hoạch:** đọc `docs/progress/HANDOFF.md` trước khi làm tiếp việc dở. Kế hoạch tái tổ chức
+**Trạng thái và kế hoạch:** đọc `docs/progress/HANDOFF.md` trước khi làm tiếp việc dở. Việc cho J1 chia hai nhánh lý
+thuyết và kỹ thuật trong `paper/j1/PLAN-TRACKS-vi.md`: nhận việc, báo cáo ngắn và đánh dấu xong ngay trong file đó. Kế hoạch tái tổ chức
 repo và ước lượng chi phí từng bước: `docs/REORG-GUIDE-vi.md`.
 
 ## 7. Bản đồ repo

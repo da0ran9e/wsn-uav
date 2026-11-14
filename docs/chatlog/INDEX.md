@@ -325,3 +325,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 317 | 2026-11-14 | quy tắc · file tham khảo của quy tắc viết tiếng Việt, lưu ở docs/style/ | [2026-11](2026-11.md) |
 | 318 | 2026-11-14 | kế hoạch · giữ khuôn §5; xem bản kế hoạch người dùng tự viết | [2026-11](2026-11.md) |
 | 319 | 2026-11-14 | kế hoạch · chia hai nhánh lý thuyết và kỹ thuật song song | [2026-11](2026-11.md) |
+| 320 | 2026-11-14 | kế hoạch · checklist hai nhánh paper/j1/PLAN-TRACKS-vi.md | [2026-11](2026-11.md) |

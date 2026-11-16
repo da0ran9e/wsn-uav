@@ -4,7 +4,8 @@
     python3 bound_nc.py C4_CP_DIR CAMPAIGN4_CSV SCORE_DIR OUT_PREFIX
 
 For a radius D and a set S of critical cells whose centres are pairwise more than 2D apart,
-    T >= [ Tp (1-delta) Q sum_{k in S} 1/pbar_k + (MST(S + BS) - 2 D |S|)^+ / vmax ] / (1 + sum_{k in S} p_k(D)/pbar_k)
+    T >= min{ [ Tp (1-delta) Q sum_{k in S} 1/pbar_k + (MST(S + BS) - 2 D |S|)^+ / vmax ] / (1 + sum_{k in S} p_k(D)/pbar_k),
+              Tp (1-delta) Q / max_{k in S} p_k(D) }      (the second term: before it, no cell of S can be served from outside its disc)
 with pbar_k = sup_x P_k(x) and p_k(D) = sup_{|x - c_k| >= D} P_k(x) (cell-level reception, any code, any trajectory).
 The script maximises the bound over D and over greedy choices of S. Measured: FC + DTSP-N team-1 time (its last
 completion), CHORD / LM-Tour flight time and mean critical-cell ready time (ns-3, campaign 4).
@@ -43,6 +44,7 @@ def bound(cells, bs, L):
             mst = minimum_spanning_tree(cdist(pts, pts)).sum()
             num = TP * (1 - DELTA) * Q * np.sum(1 / pbar[S]) + max(mst - 2 * D * len(S), 0.0) / VMAX
             T = num / (1 + np.sum(pD[S] / pbar[S]))
+            T = min(T, TP * (1 - DELTA) * Q / max(pD[S].max(), 1e-12))   # below this time every cell of S must be visited
             if T > best[0]: best = (T, D, len(S))
     return best, pbar
 

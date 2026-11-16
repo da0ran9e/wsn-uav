@@ -1,0 +1,89 @@
+\section{Introduction}
+UAVs inspect power lines, map crops, deliver medicine and extend cellular coverage after disasters
+\cite{zeng2016mag,mozaffari2019}. Most of these uses make an existing service faster or cheaper. UAVs also enable
+operations that did not exist before because no infrastructure could support them: urgent, one-off missions in places
+where the network is weak.
+
+Searching for a missing person is such a mission. A lost hiker or a missing child has often walked past many cameras
+installed by different owners at different times. A few of them, or an edge box attached to them, can run a neural
+matcher; most are legacy devices that only record. None knows whom to look for. Where an AI camera has broadband, the
+query can simply be sent to it; our concern is the large remainder in mountain resorts, parks and along rural roads, where
+devices are linked only by low-power radios and footage cannot be uploaded. We therefore push a compact query down
+instead of pulling footage up. In a network built by many owners the AI nodes run different embedding models whose
+vectors are not comparable \cite{shen2020}; the query must carry reference images so that each node embeds them with its
+own model. We use $L=12$ images, about 400\,kB, i.e., $Q=4041$ packets, as the nominal case.
+
+\textbf{Challenge.} A fixed-wing UAV covers a large area but cannot hover; it crosses each cluster once. One copy of the
+query takes about 2\,km of flight. If the air-to-ground (A2G) range is about 1\,km (open land), nodes far from the path
+still receive many packets, but scattered, so few complete an image. If the range is 100--200\,m (canopy, tall buildings),
+a cell hears only the few hundred packets emitted while the UAV is overhead. Either way the AI nodes, which are rarely on
+the path, cannot assemble the query alone. The classical answers are to make the UAV dwell near every receiver until it
+has decoded a rateless code \cite{zeng2018multicast,luby2002}, or to let the ground disseminate the object epidemically
+\cite{hui2004,levis2004}. The first costs airtime at every receiver; the second discovers at run time what the base
+station (BS) could have known in advance.
+
+\textbf{Key insight.} Packet $s$ is emitted at a point $\gamma(d_0+s\Delta)$ of a path $\gamma$ that the BS designs.
+Before take-off the BS therefore knows which segment of the stream lands on which cell, and can plan both the path and the
+ground cooperation: \emph{the flight geometry is the transmission schedule}.
+
+\textbf{Contributions.} This paper extends our conference version \todo{cite ICC 2027 submission} with a formal problem
+statement, fundamental limits, a repair mechanism for trajectory errors and a substantially larger evaluation.
+\begin{enumerate}
+\item \emph{Formulation and complexity.} We state single-pass query delivery as a joint choice of a curvature-constrained
+trajectory and a ground forwarding schedule, and prove that it is NP-hard already without ground links
+(Section~\ref{sec:problem}).
+\item \emph{Limits of non-cooperative delivery.} For every scheme in which a camera uses only what its own cell hears,
+we prove that the completion time is at least $(1-\delta)\,Q\,\Tp\,\Lambda^\star$, where $\Lambda^\star$ is a fractional
+covering number of the critical cells under the reception footprint, obtained from a linear programme. The bound holds
+for any trajectory, any code and correlated fading, and yields a sufficient condition under which ground cooperation
+is strictly faster, including the case of no-fly zones (Section~\ref{sec:limits}).
+\item \emph{River.} A pre-planned, cell-level transport, \spine{}\,$\to$\,Bank\,$\to$\,Ring\,$\to$\,critical cell, that
+needs no route or content discovery, together with \emph{takeover}, a repair that restores delivery when the real
+trajectory deviates from the plan, a characterisation of when it is triggered, and a single-radio lower bound against
+which we measure River's ground time (Section~\ref{sec:river}).
+\item \emph{Flight design.} \chord{} and \lmtour{}, which choose the path for the ground transport rather than for
+coverage, the latter guided by a surrogate of River's completion time learned from ns-3 (Section~\ref{sec:flight}).
+\item \emph{Evaluation} in ns-3 with a full 802.15.4 MAC over three maps, four A2G regimes and up to ten network
+realisations per setting: mission time, the measured schemes against the proven limits, frames and radio energy
+against Deluge and planned direct pulling, and robustness to trajectory error (Section~\ref{sec:eval}).
+\end{enumerate}
+
+\section{Related Work}\label{sec:related}
+\textbf{UAV-enabled multicasting.} UAV trajectories are routinely optimised jointly with communication
+\cite{zeng2016mag,mozaffari2019,wu2018,zeng2017energy}. Closest to our baseline, Zeng \emph{et al.}
+\cite{zeng2018multicast} minimise the time for every ground terminal to recover a common file, coded with random linear
+network coding, directly from a rotary-wing UAV. They lower-bound the recovery probability by the time the UAV spends
+within a distance $D$ of each terminal, which turns the design into a waypoint problem, and they name a subsequent
+device-to-device sharing phase as future work. Sharing among users after an aerial multicast has since been studied for
+one-hop D2D links in cellular settings \cite{wang2020d2d,miao2020}. We consider the opposite end of the design space: a
+fixed-wing UAV that cannot dwell, receivers that are a known subset of a multi-hop 802.15.4 mesh, and cooperation that is
+planned from the trajectory before take-off. Our lower bound (Theorem~\ref{thm:cover}) applies to the whole class of
+direct-reception designs, including \cite{zeng2018multicast}.
+
+\textbf{Bulk dissemination in sensor networks.} Deluge \cite{hui2004} and Trickle \cite{levis2004} spread an object to
+every node by advertise--request epidemics. MNP lets nodes sleep while neighbours send segments they do not need
+\cite{kulkarni2005}; Typhoon uses unicast with snooping and channel switching \cite{liang2008}; Splash and Pando build on
+constructive interference and reach an order of magnitude lower dissemination time than Deluge on testbeds
+\cite{doddavenkatappa2013,du2017}; the Low-Power Wireless Bus schedules all communication centrally over synchronous
+floods \cite{ferrari2012}. All of them start from a sink and target every node. River differs in where the data enters
+(a known segment at every cell under the path), in whom it targets (a few critical cells) and in that the complete
+forwarding plan follows from the flight geometry. Fountain and network codes \cite{luby2002,shokrollahi2006,ho2006}
+relax \emph{which} packets are needed but not \emph{where} they are; River is compatible with both. For a single
+broadcast channel, Stojanovic \emph{et al.} \cite{stojanovic2009} compare coded retransmission with cooperation among
+receivers and find a crossover in the erasure probability; our crossover is geometric and involves the trajectory.
+
+\textbf{Curvature-constrained routing.} The Dubins traveling salesman problem (DTSP) is NP-hard \cite{leny2012}; with
+neighbourhoods (DTSPN) it is solved in practice by sampling entry configurations and transforming the resulting
+generalised TSP into an asymmetric TSP \cite{isaacs2011,noon1993,obermeyer2009}, and data-collection variants add travel
+budgets \cite{penicka2019}. Our tours use these building blocks, but the objective is the readiness time of the ground
+transport rather than tour length.
+
+\textbf{A2G channels and flight accuracy.} Low-altitude A2G propagation depends strongly on environment and elevation
+angle \cite{khawaja2019,alhourani2014,matolak2017}, and field measurements of 2.4\,GHz 802.15.4 links from UAVs report
+ranges well below nominal \cite{nekrasov2019}. We therefore treat the range as a regime parameter. Small fixed-wing
+aircraft follow planned paths within metres under moderate wind \cite{park2007,nelson2007}; turns planned in still air
+are distorted by wind \cite{techy2009}, which motivates the repair of Section~\ref{sec:takeover}.
+
+\textbf{Person search at the edge.} Face recognition and person re-identification compare a probe with stored crops by
+cosine similarity of learned embeddings \cite{schroff2015,deng2019,ye2022}; embeddings of different models are
+incompatible \cite{shen2020}. We use these results only to define the query and the value of partial data.

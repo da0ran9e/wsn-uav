@@ -1,6 +1,10 @@
+---
+status: history
+updated: 2026-11-16
+---
 # bound-lp
 
-- Bắt đầu: 2026-11-16 05:32:18, chạy 172 s, mã thoát 0
+- Bắt đầu: 2026-11-16 06:29:29, chạy 178 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**

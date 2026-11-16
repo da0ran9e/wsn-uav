@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-11-16
+---
 # fig-tstar
 
 - Bắt đầu: 2026-11-16 05:37:11, chạy 2 s, mã thoát 0

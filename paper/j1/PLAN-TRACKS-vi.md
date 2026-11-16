@@ -38,6 +38,10 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
 
 ## Nhánh lý thuyết
 
+> 2026-11-16: bản thảo journal v1 ở `draft-v1/` (xem `draft-v1/README-vi.md`) đã có bản đầu của L1 (Định lý 1, NP-khó),
+> một kết quả thay cho L2 (chặn phủ Λ\*, Định lý 2), L3 (Mệnh đề 3 và bán kính hỏi thích nghi) và một phần L4 (chặn một
+> radio, chưa có chặn trên cho River). Các ô bên dưới chưa đánh dấu xong vì bản thảo còn chờ đánh giá.
+
 - [ ] **L1** Phát biểu bài toán tối ưu; bổ đề NP-khó theo khuôn Le Ny 2012 (Định lý 2)
   - Đầu vào: `research_notes/literature/papers/leny2012-dtsp.md`, phác thảo ở `paper/j1/ND1-TRIAL-vi.md`. Đầu ra: mục
     Problem formulation trong `paper/j1/`.

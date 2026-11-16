@@ -106,6 +106,10 @@ Script: `uav-l2/tools/theory/channel_check.py`. Dữ liệu: các lượt bay hi
 
 ### 6.2 Định lý A (ngày 3–4)
 
+> **Đính chính 2026-11-16.** Cột T_River của phép kiểm này cộng `team1` với `riverReady`, trong khi `riverReady` đã tính
+> từ lúc cất cánh. T_River vì vậy bị thổi phồng và các tỉ số đo dưới đây thấp hơn thật. Phép kiểm được thay bằng chặn phủ
+> (Định lý 2) trong `draft-v1/README-vi.md`.
+
 Script: `uav-l2/tools/theory/theorem_a.py`. So với FC + DTSP-N và CHORD + River của chiến dịch C4 (3 bản đồ × 4 kênh).
 
 Cách tính dự đoán:

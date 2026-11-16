@@ -1,3 +1,7 @@
+---
+status: history
+updated: 2026-11-16
+---
 # takeover-radius
 
 - Bắt đầu: 2026-11-16 05:28:12, chạy 10 s, mã thoát 0

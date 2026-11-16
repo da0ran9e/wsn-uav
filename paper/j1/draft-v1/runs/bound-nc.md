@@ -1,6 +1,10 @@
+---
+status: history
+updated: 2026-11-16
+---
 # bound-nc
 
-- Bắt đầu: 2026-11-16 05:13:38, chạy 73 s, mã thoát 0
+- Bắt đầu: 2026-11-16 06:28:46, chạy 37 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**

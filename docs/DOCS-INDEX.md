@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (21): nguồn số liệu và mô tả đang dùng
+## Hiện hành (23): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -15,9 +15,11 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/SIM-REPORT-2026-10-31-vi.md`](../paper/SIM-REPORT-2026-10-31-vi.md) | Báo cáo giả lập 30–31/10/2026: vận chuyển mặt đất trên pass CHORD cố định và sai số quỹ đạo | 2026-10-31 |  |
 | [`paper/SIM-REPORT-2026-11-01-takeover-vi.md`](../paper/SIM-REPORT-2026-11-01-takeover-vi.md) | Báo cáo mô phỏng 2026-11-01: cơ chế takeover (dấu ranh giới) cho River khi đường bay lệch | 2026-11-01 |  |
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
+| [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-14 |  |
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
 | [`paper/j1/PLAN-TRACKS-vi.md`](../paper/j1/PLAN-TRACKS-vi.md) | Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật | 2026-11-14 |  |
+| [`paper/j1/draft-v1/REQUEST-vi.md`](../paper/j1/draft-v1/REQUEST-vi.md) | Yêu cầu của người dùng cho bản thảo journal v1 | 2026-11-16 |  |
 | [`research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md`](../research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md) | Tổng hợp tìm tài liệu cho kế hoạch tiếp theo (2026-11-12) | 2026-11-12 |  |
 | [`research_notes/literature/METHOD-vi.md`](../research_notes/literature/METHOD-vi.md) | Phương pháp ghi chú bài báo | 2026-11-12 |  |
 | [`research_notes/literature/NOTES-DRIVE-PDF-vi.md`](../research_notes/literature/NOTES-DRIVE-PDF-vi.md) | Ghi chú đọc 32 PDF trong thư mục Drive (2026-11-12) | 2026-11-13 |  |
@@ -129,10 +131,15 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/archive/SYSTEM-vi.md`](../paper/archive/SYSTEM-vi.md) | System Model — keyword | 2026-10-20 | bản nộp ICC v5.3 |
 | [`uav-l2/docs/PARAM-SOURCES-vi.md`](../uav-l2/docs/PARAM-SOURCES-vi.md) | Rà soát nguồn gốc tham số giả lập (CLAUDE.md §8 mục 102) | 2026-10-19 | paper/PARAMS-vi.md |
 
-## Lịch sử (13): thử nghiệm hoặc hướng đã đóng, giữ để tra lại
+## Lịch sử (18): thử nghiệm hoặc hướng đã đóng, giữ để tra lại
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
+| [`paper/j1/draft-v1/runs/bound-lp.md`](../paper/j1/draft-v1/runs/bound-lp.md) | bound-lp | 2026-11-16 |  |
+| [`paper/j1/draft-v1/runs/bound-nc.md`](../paper/j1/draft-v1/runs/bound-nc.md) | bound-nc | 2026-11-16 |  |
+| [`paper/j1/draft-v1/runs/fig-tstar.md`](../paper/j1/draft-v1/runs/fig-tstar.md) | fig-tstar | 2026-11-16 |  |
+| [`paper/j1/draft-v1/runs/ground-lb.md`](../paper/j1/draft-v1/runs/ground-lb.md) | ground-lb | 2026-11-16 |  |
+| [`paper/j1/draft-v1/runs/takeover-radius.md`](../paper/j1/draft-v1/runs/takeover-radius.md) | takeover-radius | 2026-11-16 |  |
 | [`uav-l2/docs/CLUSTER-C3-vi.md`](../uav-l2/docs/CLUSTER-C3-vi.md) | C3 (cluster vàng) — River từng bước, lượt 1 | 2026-10-13 |  |
 | [`uav-l2/docs/CLUSTER-RIVER-vi.md`](../uav-l2/docs/CLUSTER-RIVER-vi.md) | River trên các cluster của miền có hồ — lượt 1 | 2026-10-13 |  |
 | [`uav-l2/docs/CURVE-vi.md`](../uav-l2/docs/CURVE-vi.md) | Axe cong: Bank theo pháp tuyến cục bộ, và MEANDER (cluster bám địa hình, bay đường cong) | 2026-10-20 |  |

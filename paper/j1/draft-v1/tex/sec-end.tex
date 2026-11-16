@@ -1,0 +1,171 @@
+\section{Discussion and Limitations}\label{sec:discussion}
+\textbf{What the theory does and does not show.} Theorem~\ref{thm:cover} bounds a class of schemes from below; it does
+not bound River from above. The comparison in Table~\ref{tab:bounds} therefore pairs a proven limit with measured
+flight times. The limit certifies the advantage of cooperation for $R_{50}\le200$\,m on our maps and is silent at longer
+range, where the measured advantage (31--38\,\% at 498\,m) rests on the comparison with one concrete baseline. A matching
+upper bound for River needs a model of contention on shared cells; the regression \eqref{eq:surrogate} suggests its
+form (a term in the cluster's total lack) but is not a proof.
+
+\textbf{Distance from the ground bound.} River completes a critical cell about five times later than the single-radio
+bound, and planned direct pulling does no better. The flows towards the critical cells of a cluster carry the same
+segments separately. Forwarding each segment once along a tree that branches towards the Rings, or merging the Rings of
+nearby critical cells, should remove most of the term in the cluster's total lack; we have not simulated it.
+
+\textbf{Channel model.} Fading is redrawn independently for every packet and nodes fade independently. Our limits do not
+need the first assumption, but the simulated reception maps do. Around a ground node the scatterers are local, so the
+fading of consecutive packets emitted 0.25--0.5\,m apart is correlated in reality, and shadowing is correlated over tens
+of metres \cite{gudmundson1991}, i.e., within a cell; field measurements also show shorter ranges for a moving UAV
+\cite{nekrasov2019}. Correlation lowers the cell-level diversity that \eqref{eq:pcell} assumes and should favour
+cooperation further, since the \spine{} needs only its own overhead segment; this is to be verified with a correlated
+channel calibrated on public measurements \todo{run}.
+
+\textbf{Baselines.} FC+DTSP-N is evaluated with the channel model rather than a packet-level pass, with an ideal code;
+both choices favour it. Deluge runs without low-power listening and with a classical parameterisation; modern
+synchronous-transmission protocols \cite{doddavenkatappa2013,du2017,ferrari2012} disseminate faster than Deluge on
+testbeds but cannot be reproduced in ns-3's lr-wpan model. A duty-cycled Deluge restricted to River's target set and a
+channel-switching unicast protocol in the style of \cite{liang2008} are the comparisons still missing \todo{run}.
+
+\textbf{Trajectory error.} The deviation model is synthetic. A model driven by flight dynamics (path-following guidance,
+steady wind and turbulence), with along-track error mapped to packet positions, would replace it \todo{run}. Holder
+discovery is idealised in the first takeover implementation and uses a fixed radius in the second; the adaptive radius
+is evaluated offline only.
+
+\textbf{Scope.} The phase-0 organisation is assumed in place and its cost is not charged to River; since the network
+serves many queries, that cost should be amortised and reported per query. One UAV serves the area; a park-scale
+deployment calls for several, which turns the tour into a multi-vehicle min--max problem. The event-pull direction and
+the matching layer are unchanged from the conference version. Results are for one deployment density and one query size.
+
+\section{Conclusion}
+In a single-pass UAV broadcast the flight path is the transmission schedule, so the base station can plan the ground's
+cooperation before take-off. We showed that designs without cooperation are limited by a fractional covering number of
+the receivers that grows by an order of magnitude as the air-to-ground range shrinks, while a single pass pays the query
+airtime once per cluster. River realises the cooperation as a pre-planned transport with a repair that keeps the plan
+valid under trajectory error, and \lmtour{} designs the flight for it. In ns-3 the combination is 59--72\,\% faster than
+fountain-coded loitering at ranges of 200\,m and below, completes its flight before the proven limit of non-cooperative
+delivery, and needs about half the frames of an epidemic protocol. The remaining distance to the single-radio bound on
+the ground, a correlated channel and multi-UAV operation are the next steps.
+
+\appendices
+\section{Proof of Theorem~\ref{thm:nphard}}\label{app:nphard}
+We reduce Exact Cover to the restricted problem: constant speed $v$, turning radius $\rho$, a ground graph without
+edges, every critical cell consisting of a single node, and deterministic reception (a node hears a packet if and only
+if the horizontal distance to the UAV is at most $\xi$, with $\xi\ge\Delta/2=v\Tp/2$), and $Q=1$.
+
+Papadimitriou \cite{papadimitriou1977} maps an instance of Exact Cover to a set $P$ of $n$ points in the plane and a
+number $L$, in polynomial time, such that the shortest Euclidean tour through $P$ has length at most $L$ if the instance
+has a solution and at least $L+g$ otherwise, for a constant gap $g>0$ \cite{leny2012}. Savla \emph{et al.}
+\cite{savla2008} show that the shortest Dubins tour through any $n$ points exceeds the shortest Euclidean tour by at most
+$Cn$, with $C$ proportional to $\rho$. Let $\lambda$ be an integer with $\lambda g>Cn+2n\xi$ and let $\lambda P$ be the
+scaled point set. Place one critical cell at every point of $\lambda P$, the BS at one of them, and set
+$T=(\lambda L+Cn)/v$.
+
+If Exact Cover has a solution, there is a Dubins tour through all points of $\lambda P$ of length at most
+$\lambda L+Cn$. Flown at speed $v$ it ends by time $T$. It passes through the centre of every disc $B(x,\xi)$,
+$x\in\lambda P$, hence contains an arc of length at least $2\xi\ge\Delta$ inside the disc, on which at least one packet is
+emitted; the single node at $x$ receives it and is complete.
+
+If Exact Cover has no solution, consider any plan under which all cells complete and the UAV returns to the BS. Its
+ground track is a closed curve that enters every disc $B(x,\xi)$. Adding to it, at each disc, a detour to the centre and
+back of length at most $2\xi$ gives a closed curve through all points of $\lambda P$, of length at least
+$\lambda(L+g)$. The track is therefore longer than $\lambda(L+g)-2n\xi>\lambda L+Cn$ and cannot be flown by time $T$.
+
+The construction is polynomial, so the restricted problem, and hence (P0), is NP-hard. \hfill\IEEEQED
+
+\section{Proof of Proposition~\ref{prop:pack}}\label{app:pack}
+Let $n\le T/\Tp$ be the number of packets emitted by time $T$, and $n_k$ the number emitted while the UAV is within $D$ of
+$c_k$, for $k\in S$. All nodes of cell $k$ lie within $D$ of $c_k$ for the radii considered, so $P_k$ is non-increasing
+along rays from $c_k$ outside this disc and $p_k(D)$ is attained on its boundary. As in the proof of
+Theorem~\ref{thm:cover}, $(1-\delta)Q\le\mathbb{E}[N_k]\le n_k\bar p_k+n\,p_k(D)$, so
+\[
+n_k\ \ge\ \bigl((1-\delta)Q-(T/\Tp)\,p_k(D)\bigr)/\bar p_k .
+\]
+If $T\ge(1-\delta)Q\Tp/\max_{k\in S}p_k(D)$ there is nothing to prove. Otherwise the right-hand side is positive for
+every $k\in S$, so $n_k>0$: the UAV enters every disc.
+The discs are disjoint, so the UAV spends at least $\Tp\sum_{k\in S}n_k$ inside them. Outside the discs, the track
+consists of pieces that join two discs, or a disc and the BS; a piece joining discs $i$ and $j$ is at least
+$\lVert c_i-c_j\rVert-2D$ long. Since the track starts at the BS and visits every disc, these pieces
+connect all of them, and their total length is at least the weight of a spanning tree under these lengths, which is at
+least $W(S)-2D|S|$. Hence $T\ge\Tp\sum_{k\in S}n_k+(W(S)-2D|S|)^+/v_{\max}$; substituting the bound on $n_k$ and
+solving for $T$ gives the first term of \eqref{eq:pack}. \hfill\IEEEQED
+
+\begin{thebibliography}{99}\footnotesize
+\bibitem{zeng2016mag} Y. Zeng, R. Zhang, and T. J. Lim, ``Wireless communications with unmanned aerial vehicles:
+Opportunities and challenges,'' \emph{IEEE Commun. Mag.}, vol. 54, no. 5, pp. 36--42, May 2016.
+\bibitem{mozaffari2019} M. Mozaffari, W. Saad, M. Bennis, Y.-H. Nam, and M. Debbah, ``A tutorial on UAVs for wireless
+networks: Applications, challenges, and open problems,'' \emph{IEEE Commun. Surveys Tuts.}, vol. 21, no. 3,
+pp. 2334--2360, 2019.
+\bibitem{shen2020} Y. Shen, Y. Xiong, W. Xia, and S. Soatto, ``Towards backward-compatible representation learning,'' in
+\emph{Proc. IEEE/CVF CVPR}, 2020.
+\bibitem{zeng2018multicast} Y. Zeng, X. Xu, and R. Zhang, ``Trajectory design for completion time minimization in
+UAV-enabled multicasting,'' \emph{IEEE Trans. Wireless Commun.}, vol. 17, no. 4, pp. 2233--2246, Apr. 2018.
+\bibitem{luby2002} M. Luby, ``LT codes,'' in \emph{Proc. IEEE FOCS}, 2002, pp. 271--280.
+\bibitem{hui2004} J. W. Hui and D. Culler, ``The dynamic behavior of a data dissemination protocol for network
+programming at scale,'' in \emph{Proc. ACM SenSys}, 2004, pp. 81--94.
+\bibitem{levis2004} P. Levis, N. Patel, D. Culler, and S. Shenker, ``Trickle: A self-regulating algorithm for code
+propagation and maintenance in wireless sensor networks,'' in \emph{Proc. USENIX NSDI}, 2004.
+\bibitem{wu2018} Q. Wu, Y. Zeng, and R. Zhang, ``Joint trajectory and communication design for multi-UAV enabled wireless
+networks,'' \emph{IEEE Trans. Wireless Commun.}, vol. 17, no. 3, pp. 2109--2121, Mar. 2018.
+\bibitem{zeng2017energy} Y. Zeng and R. Zhang, ``Energy-efficient UAV communication with trajectory optimization,''
+\emph{IEEE Trans. Wireless Commun.}, vol. 16, no. 6, pp. 3747--3760, Jun. 2017.
+\bibitem{wang2020d2d} \todo{first author's initials} Wang, R. Zhang, C. Chen \emph{et al.}, ``Graph-based file
+dispatching protocol with D2D-enhanced UAV-NOMA communications in large-scale networks,'' \emph{IEEE Internet Things J.},
+vol. 7, no. 9, pp. 8615--8630, 2020. \todo{read full text; cited from the abstract only}
+\bibitem{miao2020} J. Miao, Q. Liao, and Z. Zhao, ``Joint rate and coverage design for UAV-enabled wireless networks with
+underlaid D2D communications,'' in \emph{Proc. IEEE ICCC}, 2020, pp. 815--819.
+\bibitem{kulkarni2005} S. S. Kulkarni and L. Wang, ``MNP: Multihop network reprogramming service for sensor networks,''
+in \emph{Proc. IEEE ICDCS}, 2005.
+\bibitem{liang2008} C.-J. M. Liang, R. Mus\u{a}loiu-E., and A. Terzis, ``Typhoon: A reliable data dissemination
+protocol for wireless sensor networks,'' in \emph{Proc. EWSN}, LNCS 4913, 2008, pp. 268--285.
+\bibitem{doddavenkatappa2013} M. Doddavenkatappa, M. C. Chan, and B. Leong, ``Splash: Fast data dissemination with
+constructive interference in wireless sensor networks,'' in \emph{Proc. USENIX NSDI}, 2013, pp. 269--282.
+\bibitem{du2017} W. Du, J. C. Liando, H. Zhang, and M. Li, ``Pando: Fountain-enabled fast data dissemination with
+constructive interference,'' \emph{IEEE/ACM Trans. Netw.}, vol. 25, no. 2, 2017.
+\bibitem{ferrari2012} F. Ferrari, M. Zimmerling, L. Mottola, and L. Thiele, ``Low-power wireless bus,'' in \emph{Proc.
+ACM SenSys}, 2012.
+\bibitem{shokrollahi2006} A. Shokrollahi, ``Raptor codes,'' \emph{IEEE Trans. Inf. Theory}, vol. 52, no. 6,
+pp. 2551--2567, Jun. 2006.
+\bibitem{ho2006} T. Ho \emph{et al.}, ``A random linear network coding approach to multicast,'' \emph{IEEE Trans. Inf.
+Theory}, vol. 52, no. 10, pp. 4413--4430, Oct. 2006.
+\bibitem{stojanovic2009} I. Stojanovic, Z. Wu, M. Sharif, and D. Starobinski, ``Data dissemination in wireless broadcast
+channels: Network coding versus cooperation,'' \emph{IEEE Trans. Wireless Commun.}, vol. 8, no. 4, pp. 1726--1732, 2009.
+\bibitem{leny2012} J. Le Ny, E. Feron, and E. Frazzoli, ``On the Dubins traveling salesman problem,'' \emph{IEEE Trans.
+Autom. Control}, vol. 57, no. 1, pp. 265--270, Jan. 2012.
+\bibitem{isaacs2011} J. T. Isaacs, D. J. Klein, and J. P. Hespanha, ``Algorithms for the traveling salesman problem with
+neighborhoods involving a Dubins vehicle,'' in \emph{Proc. American Control Conf.}, 2011, pp. 1704--1709.
+\bibitem{noon1993} C. E. Noon and J. C. Bean, ``An efficient transformation of the generalized traveling salesman
+problem,'' \emph{INFOR}, vol. 31, no. 1, pp. 39--44, 1993.
+\bibitem{obermeyer2009} K. J. Obermeyer, ``Path planning for a UAV performing reconnaissance of static ground targets in
+terrain,'' in \emph{Proc. AIAA Guidance, Navigation, and Control Conf.}, 2009.
+\bibitem{penicka2019} R. P\v{e}ni\v{c}ka, J. Faigl, M. Saska, and P. V\'a\v{n}a, ``Data collection planning with
+non-zero sensing distance for a budget and curvature constrained unmanned aerial vehicle,'' \emph{Auton. Robots},
+vol. 43, pp. 1937--1956, 2019.
+\bibitem{khawaja2019} W. Khawaja, I. Guvenc, D. W. Matolak, U.-C. Fiebig, and N. Schneckenburger, ``A survey of
+air-to-ground propagation channel modeling for unmanned aerial vehicles,'' \emph{IEEE Commun. Surveys Tuts.}, vol. 21,
+no. 3, pp. 2361--2391, 2019.
+\bibitem{alhourani2014} A. Al-Hourani, S. Kandeepan, and S. Lardner, ``Optimal LAP altitude for maximum coverage,''
+\emph{IEEE Wireless Commun. Lett.}, vol. 3, no. 6, pp. 569--572, Dec. 2014.
+\bibitem{matolak2017} D. W. Matolak and R. Sun, ``Air--ground channel characterization for unmanned aircraft
+systems---Part III: The suburban and near-urban environments,'' \emph{IEEE Trans. Veh. Technol.}, vol. 66, no. 8, 2017.
+\bibitem{nekrasov2019} M. Nekrasov, R. Allen, I. Artamonova, and E. Belding, ``Optimizing 802.15.4 outdoor IoT sensor
+networks for aerial data collection,'' \emph{Sensors}, vol. 19, no. 16, 3479, 2019.
+\bibitem{park2007} S. Park, J. Deyst, and J. P. How, ``Performance and Lyapunov stability of a nonlinear path-following
+guidance method,'' \emph{J. Guid. Control Dyn.}, vol. 30, no. 6, pp. 1718--1728, 2007.
+\bibitem{nelson2007} D. R. Nelson, D. B. Barber, T. W. McLain, and R. W. Beard, ``Vector field path following for
+miniature air vehicles,'' \emph{IEEE Trans. Robot.}, vol. 23, no. 3, pp. 519--529, Jun. 2007.
+\bibitem{techy2009} L. Techy and C. A. Woolsey, ``Minimum-time path planning for unmanned aerial vehicles in steady
+uniform winds,'' \emph{J. Guid. Control Dyn.}, vol. 32, no. 6, pp. 1736--1746, 2009.
+\bibitem{schroff2015} F. Schroff, D. Kalenichenko, and J. Philbin, ``FaceNet: A unified embedding for face recognition
+and clustering,'' in \emph{Proc. IEEE CVPR}, 2015.
+\bibitem{deng2019} J. Deng, J. Guo, N. Xue, and S. Zafeiriou, ``ArcFace: Additive angular margin loss for deep face
+recognition,'' in \emph{Proc. IEEE/CVF CVPR}, 2019.
+\bibitem{ye2022} M. Ye \emph{et al.}, ``Deep learning for person re-identification: A survey and outlook,'' \emph{IEEE
+Trans. Pattern Anal. Mach. Intell.}, vol. 44, no. 6, pp. 2872--2893, 2022.
+\bibitem{tr38901} 3GPP, ``Study on channel model for frequencies from 0.5 to 100 GHz,'' TR 38.901.
+\bibitem{etsi220} ETSI EN 300 220-2 V3.2.1, 2018.
+\bibitem{papadimitriou1977} C. H. Papadimitriou, ``The Euclidean travelling salesman problem is NP-complete,''
+\emph{Theor. Comput. Sci.}, vol. 4, no. 3, pp. 237--244, 1977.
+\bibitem{savla2008} K. Savla, E. Frazzoli, and F. Bullo, ``Traveling salesperson problems for the Dubins vehicle,''
+\emph{IEEE Trans. Autom. Control}, vol. 53, no. 6, pp. 1378--1391, Jul. 2008.
+\bibitem{gudmundson1991} M. Gudmundson, ``Correlation model for shadow fading in mobile radio systems,'' \emph{Electron.
+Lett.}, vol. 27, no. 23, pp. 2145--2146, 1991.
+\end{thebibliography}

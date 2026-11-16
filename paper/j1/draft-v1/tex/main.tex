@@ -1,0 +1,69 @@
+% SigDrop journal draft v1 (2026-11-16). Build: ./build.sh  -> main.pdf
+% Every number is traced in ../README-vi.md (measured in ns-3 / computed from logs / carried over from the ICC draft).
+\documentclass[journal,10pt]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{cite}
+\usepackage{xcolor}
+\usepackage{url}
+\graphicspath{{../figs/}}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\Tp}{T_{\mathrm p}}
+\newcommand{\spine}{\textsc{Spine}}
+\newcommand{\lmtour}{\textsc{LM-Tour}}
+\newcommand{\chord}{\textsc{Chord}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+
+\begin{document}
+\title{Flight Geometry Is the Schedule: Pre-Planned Ground Cooperation for Single-Pass UAV Query Delivery to Edge-Camera Networks}
+\author{\todo{authors and affiliations}%
+\thanks{Draft v1 of the journal version (2026-11-16). A preliminary version was submitted to IEEE ICC 2027.}}
+\maketitle
+
+\begin{abstract}
+To find a missing person quickly, a search query---a set of reference images of several hundred kilobytes---must reach
+the few AI-capable cameras of a large IoT network that has no broadband backhaul. A fixed-wing UAV can broadcast the
+query over IEEE 802.15.4, but it crosses each cluster once, and its air-to-ground range varies from about 1\,km over open
+land to below 100\,m under canopy. We observe that in a single-pass broadcast the flight geometry \emph{is} the
+transmission schedule: before take-off the base station knows which segment of the packet stream is emitted above which
+cell, and can plan both the path and the ground cooperation. This paper develops that idea into a complete system and a
+theory of when it pays off. We formulate joint trajectory and ground-transport design and show it is NP-hard. We prove a
+lower bound on the completion time of \emph{every} scheme in which cameras rely only on what their own cell hears from the
+UAV, whatever its trajectory and code: the time is at least the query airtime multiplied by a fractional covering number
+$\Lambda^\star$ of the cameras, computed by a linear programme, whereas a single pass needs the query airtime once per
+cluster. On our maps $\Lambda^\star$ grows from 4--7 over open land to 35--76 at 100\,m range. On the system side,
+\textsc{River} is a pre-planned cell-level transport (\spine{} $\to$ Bank $\to$ Ring $\to$ critical cell) with a
+\emph{takeover} repair that keeps the plan valid under trajectory error, and \lmtour{} designs the flight for the ground
+transport using a surrogate learned from ns-3. In ns-3 with a full 802.15.4 MAC, on maps of 8--15 clusters,
+\lmtour{}+\textsc{River} shortens the mission by 59--72\,\% against fountain-coded loitering when the range is 200\,m or
+less, finishes its whole flight before the proven limit of non-cooperative delivery, needs 1.9--2.5$\times$ fewer frames
+than Deluge, and under 100\,m cross-track error the takeover completes every camera with unchanged mean mission time.
+\end{abstract}
+\begin{IEEEkeywords}
+UAV, single-pass broadcast, IEEE 802.15.4, cooperative dissemination, Dubins traveling salesman problem, lower bounds,
+edge AI, search and rescue.
+\end{IEEEkeywords}
+
+\input{sec-intro}
+\input{sec-model}
+\input{sec-theory}
+\input{sec-river}
+\input{sec-flight}
+\input{sec-eval}
+\input{sec-end}
+
+\end{document}

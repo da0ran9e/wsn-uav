@@ -54,7 +54,8 @@ SCHEMES = {"rf": ["--scheme=river", "--prep=full"],
            "dR": ["--scheme=direct", "--directSeg=false", "--noSchedule=true", "--gwSelect=deploy"],   # raw
            "rfN": ["--scheme=river", "--prep=full", "--noSchedule=true"],
            "rfT": ["--scheme=river", "--prep=full", "--takeover=true"],
-           "rfS": ["--scheme=river", "--prep=full", "--takeover=true", "--takeoverSeq=true"]}   # takeover after the adjacent repair, query flooded   # River with boundary-marker takeover (wind)   # River without the schedule   # with --riverRepair: River's Axe gather and stall repairs (reviewer fairness)   # Trickle on the direct-pull path cells only (reviewer)
+           "rfS": ["--scheme=river", "--prep=full", "--takeover=true", "--takeoverSeq=true"],
+           "rfX": ["--scheme=river", "--prep=full", "--tree=true"]}   # shared trees Bank -> members (J1 draft)   # takeover after the adjacent repair, query flooded   # River with boundary-marker takeover (wind)   # River without the schedule   # with --riverRepair: River's Axe gather and stall repairs (reviewer fairness)   # Trickle on the direct-pull path cells only (reviewer)
 
 
 def runseed(w):
@@ -437,7 +438,7 @@ def stage_runs(a, W_, K):
             sh([f"{a.bin}/river-bin", f"--nodes=c{k}-nodes-s35.csv", f"--routes=c{k}-routes-s35.csv",
                 f"--gateways=c{k}-gateways-s35.csv", f"--plan=plan{k}.txt", f"--bits=pass{k}-bits",
                 f"--firstRun={mission(k)}", "--runs=1", "--limit=900", "--gwSelect=quality", "--colours=7", *SCHEMES[tag], f"--out=r{k}-{tag}",
-                *([f"--repair={a.riverRepair:g}"] if getattr(a, "riverRepair", 0) and (tag in ("rf", "rfN", "rfT", "rfS") or
+                *([f"--repair={a.riverRepair:g}"] if getattr(a, "riverRepair", 0) and (tag in ("rf", "rfN", "rfT", "rfS", "rfX") or
                   tag in ("d2", "dS", "dN") or tag.startswith(("t", "dl")) and os.path.exists(f"{W_}/pages{k}.txt")) else []),
                 # Trickle: Axe Segs; d2: direct pull with River's repairs
                 *([f"--pageBreaks=pages{k}.txt"] if tag.startswith(("t", "dl")) and os.path.exists(f"{W_}/pages{k}.txt")

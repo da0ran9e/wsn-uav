@@ -39,6 +39,12 @@
 //   direct                 each critical cell asks every Axe cell for what it lacks of Seg(a); --directSeg=false:
 //                          without the BS's Seg table, it asks every Axe cell for all it lacks (copies overlap)
 // --noSchedule: no PECEE grid schedule, every radio sends when it has frames (CSMA/CA only).
+// --tree (river --prep=full): shared trees. All the Circle members that fetch Seg(a) from the same Bank b are served
+//   over one tree rooted at b (the union of their planned cell paths, each later path grafted at the last cell it
+//   shares with the tree). Relays are the root, the members and the cells where the tree branches; a relay keeps what
+//   passes at its CL. A member asks its parent relay for what it lacks; a relay asks its own parent only for what it
+//   neither holds nor has asked for, and forwards each packet once to every child that asked. A segment thus crosses a
+//   shared cell once instead of once per critical cell.
 //   trickle                baseline without a plan (CLAUDE.md §8 items 134, 139): Deluge-style dissemination over
 //                          the same cells, radios and gateway pairs. The object is every packet some critical cell
 //                          needs, in pages of --page packets; every cell gathers what its nodes hold of it, then
@@ -240,7 +246,7 @@ int main(int argc, char* argv[]) {
     uint32_t circleMin = 2, circleMax = 12, page = 64, tK = 1;
     double tImin = 1, tImax = 64;
     int colours = 7;
-    bool noSchedule = false, directSeg = true, takeover = false, takeoverSeq = false;
+    bool noSchedule = false, directSeg = true, takeover = false, takeoverSeq = false, tree = false;
     std::string gwSelect = "deploy";
     CommandLine cmd;
     cmd.AddValue("nodes", "deploy-nodes-sS.csv", nodesCsv);
@@ -276,6 +282,8 @@ int main(int argc, char* argv[]) {
                  "by a query flooded over the cell tree within 3 cell hops (control frames); holders reply with data",
                  takeoverSeq);
     cmd.AddValue("noSchedule", "no PECEE schedule: every radio contends by CSMA/CA alone", noSchedule);
+    cmd.AddValue("tree", "river --prep=full: one shared tree per (Axe cell, Bank) instead of one path per Circle "
+                 "member; relays keep and forward each packet once per child", tree);
     cmd.AddValue("directSeg", "direct: ask each Axe cell only for its Seg (false: for everything lacking)", directSeg);
     cmd.AddValue("out", "output prefix", out);
     cmd.AddValue("trace", "prefix: the first mission's hops, CL arrivals, in-cell routes and gateway pairs",
@@ -294,6 +302,7 @@ int main(int argc, char* argv[]) {
     CHECK(share > 0 && 1 <= circleMin && circleMin <= circleMax);
     CHECK(colours == 3 || colours == 4 || colours == 7 || colours == 13);
     CHECK(gwSelect == "deploy" || gwSelect == "quality");
+    CHECK(!tree || (scheme == "river" && prep == "full"));
 
     // ---- static inputs ----------------------------------------------------------
     const Plan plan = uavcoop2::ReadPlan(planFile);
@@ -933,6 +942,17 @@ int main(int argc, char* argv[]) {
         // --repair state lives for the whole run (callbacks refer to it)
         std::map<Hex, std::vector<std::function<void()>>> redo;   // a critical cell's requests again
         std::map<std::pair<Hex, Hex>, std::pair<int, int>> bankPath;   // (a, b) -> (a -> b, b -> a)
+        // --tree state (callbacks refer to it)
+        struct Tree {
+            Hex a, b;                                    // Seg(a) from Bank b, the root
+            std::map<Hex, Hex> par;                      // cell -> parent cell
+            std::map<Hex, Hex> up;                       // relay -> parent relay
+            std::map<Hex, std::pair<int, int>> edge;     // relay -> (path parent relay -> it, path it -> parent relay)
+        };
+        std::map<std::pair<Hex, Hex>, Tree> trees;       // (a, b)
+        std::map<Hex, std::vector<uint8_t>> reqd;        // relay -> packets it has asked a parent for
+        std::function<void(const Tree*, Hex, Hex, std::vector<uint32_t>)> ask;   // at relay x, child c asks for X
+        std::function<void(const Tree*, Hex, std::vector<uint32_t>)> reask;      // --repair: x still lacks X
         if (scheme == "river") {
             for (auto& x : plan.axe) needOr(x.a, segMask(x.a));
             // --repair: Bank b asks its Axe cell a again for packet s
@@ -960,6 +980,85 @@ int main(int argc, char* argv[]) {
                         for (uint32_t s : lack) when(a, s, [&, s, fwd] { send(fwd, (int32_t)s, kBankFill); });
                     });
                 });
+            }
+            if (tree) {
+                std::map<std::pair<Hex, Hex>, std::vector<const uavcoop2::PlanCirc*>> byAB;
+                for (auto& t : plan.circ) byAB[{t.a, t.b}].push_back(&t);
+                uint64_t asPaths = 0, asTrees = 0, relays = 0;
+                for (auto& [ab, ts] : byAB) {
+                    Tree& T = trees[ab];
+                    T.a = ab.first;
+                    T.b = ab.second;
+                    T.par[T.b] = T.b;
+                    auto byLen = ts;
+                    std::stable_sort(byLen.begin(), byLen.end(),
+                                     [](auto* x, auto* y) { return x->path.size() < y->path.size(); });
+                    std::set<Hex> dest;
+                    for (auto* t : byLen) {
+                        const auto& P = t->path;
+                        CHECK(P.front() == T.b && P.back() == t->m);
+                        size_t i = P.size() - 1;
+                        while (!T.par.count(P[i])) --i;   // the last cell of P already in the tree (P[0] is)
+                        for (size_t j = i + 1; j < P.size(); ++j) T.par[P[j]] = P[j - 1];
+                        if (dest.insert(t->m).second) asPaths += P.size() - 1;
+                    }
+                    asTrees += T.par.size() - 1;
+                    std::map<Hex, int> kids;
+                    for (auto& [x, p] : T.par)
+                        if (x != T.b) kids[p]++;
+                    auto relay = [&](const Hex& x) { return x == T.b || dest.count(x) || kids[x] >= 2; };
+                    for (auto& [x, p] : T.par) {
+                        if (x == T.b || !relay(x)) continue;
+                        std::vector<Hex> upP{x};
+                        Hex cur = p;
+                        upP.push_back(cur);
+                        while (!relay(cur)) {
+                            cur = T.par.at(cur);
+                            upP.push_back(cur);
+                        }
+                        checkPath(upP);
+                        T.up[x] = cur;
+                        T.edge[x] = {addPath(rev(upP)), addPath(upP)};
+                        relays++;
+                    }
+                }
+                if (run == firstRun)
+                    std::printf("tree: %zu trees, %llu relays below the roots, %llu cell hops as member paths, %llu as "
+                                "trees\n", trees.size(), (unsigned long long)relays, (unsigned long long)asPaths,
+                                (unsigned long long)asTrees);
+                ask = [&](const Tree* T, Hex x, Hex c, std::vector<uint32_t> X) {
+                    const int down = T->edge.at(c).first;
+                    auto& rq = reqd[x];
+                    if (rq.empty()) rq.assign(N, 0);
+                    std::vector<uint32_t> more;
+                    for (uint32_t s : X) {
+                        if (x != T->b && !hold(x)[s] && !rq[s]) {
+                            rq[s] = 1;
+                            more.push_back(s);
+                        }
+                        when(x, s, [&, s, down] { send(down, (int32_t)s, kCircleFill); });
+                    }
+                    if (more.empty()) return;
+                    const Hex p = T->up.at(x);
+                    send(T->edge.at(x).second, -1, kControl, [&, T, p, x, more] { ask(T, p, x, more); });
+                };
+                reask = [&, refill](const Tree* T, Hex x, std::vector<uint32_t> X) {
+                    if (x == T->b) {
+                        for (uint32_t s : X)
+                            if (T->b != T->a && !hold(x)[s]) refill(T->a, T->b, s);
+                        return;
+                    }
+                    const Hex p = T->up.at(x);
+                    const int down = T->edge.at(x).first;
+                    send(T->edge.at(x).second, -1, kControl, [&, T, p, down, X] {
+                        std::vector<uint32_t> Y;
+                        for (uint32_t s : X) {
+                            if (!hold(p)[s]) Y.push_back(s);
+                            when(p, s, [&, s, down] { send(down, (int32_t)s, kCircleFill); });
+                        }
+                        if (!Y.empty()) reask(T, p, Y);
+                    });
+                };
             }
             // Circle members, and Algorithm 7 at each critical cell.
             std::map<std::pair<Hex, Hex>, std::vector<const uavcoop2::PlanCirc*>> tasks;   // (k, m)
@@ -992,7 +1091,23 @@ int main(int argc, char* argv[]) {
                             std::vector<uint32_t> X;
                             for (uint32_t s = 0; s < N; ++s)
                                 if (sm[s] && group[s] && !hold(m)[s]) X.push_back(s);
-                            fetch(i, X);
+                            if (!tree) {
+                                fetch(i, X);
+                                continue;
+                            }
+                            const Tree* T = &trees.at({ts[i]->a, ts[i]->b});
+                            if (m == T->b) continue;   // the member is the Bank itself: BANKFILL brings it
+                            auto& rq = reqd[m];
+                            if (rq.empty()) rq.assign(N, 0);
+                            std::vector<uint32_t> more;
+                            for (uint32_t s : X)
+                                if (!rq[s]) {
+                                    rq[s] = 1;
+                                    more.push_back(s);
+                                }
+                            if (more.empty()) continue;
+                            const Hex p = T->up.at(m);
+                            send(T->edge.at(m).second, -1, kControl, [&, T, p, m, more] { ask(T, p, m, more); });
                         }
                     });
                 }
@@ -1019,6 +1134,10 @@ int main(int argc, char* argv[]) {
                                 if (X[i].empty()) continue;
                                 const Hex a = ts[i]->a, b = ts[i]->b;
                                 const int fwd = src[i].first;
+                                if (tree) {
+                                    reask(&trees.at({a, b}), m, X[i]);
+                                    continue;
+                                }
                                 send(src[i].second, -1, kControl, [&, a, b, fwd, xs = X[i], refill] {
                                     for (uint32_t s : xs) {
                                         if (b != a && !hold(b)[s]) refill(a, b, s);

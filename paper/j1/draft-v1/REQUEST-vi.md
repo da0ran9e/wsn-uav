@@ -21,3 +21,9 @@ mạch chính của paper; mô phỏng phải giữ đúng tính chính xác*
 ```text
 với công việc này tôi cho phép bạn sáng tạo thuật toán mới trong khuôn khổ cải tiến công trình hiện tại, chỉ cần bám vào mạch chính của paper. nhưng giả lập cần giữ đúng tính chính xác.
 ```
+
+*2026-11-16 · tiếp tục phát triển bài báo với thêm 800K token; ví dụ: cài thuật toán cây dùng chung vào ns-3 và chạy thử*
+
+```text
+tiếp tục phát triển bài báo, tôi cho bạn 800k tokens nữa, làm tiếp các công việc ví dụ: cài đặt thuật toán cây dùng chung vào ns-3 và chạy thử
+```

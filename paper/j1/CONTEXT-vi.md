@@ -82,8 +82,8 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - e. Vì sao không phát truy vấn từ trạm gốc qua mạng mặt đất (đa chặng 802.15.4) hay qua LoRa: cần một phép tính thời
   gian để đưa vào bài.
 - f. Số sự cố trong vòng đời mạng (để chia chi phí pha 0).
-- g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327), mật độ node thường gặp (mục 329).
-  Đối chiếu ở mục 7 và 8.
+- g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327), mật độ node thường gặp (mục 329),
+  kích thước vùng đô thị và kênh có hợp với đô thị không (mục 332). Đối chiếu ở mục 7, 8, 9.
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 
@@ -147,3 +147,39 @@ Nhận xét:
 - Ứng với cell R = 100 m: 820 node/km² cho khoảng 21 node một cell, 400 cho khoảng 10, 100 cho khoảng 2–3.
 - Đề xuất ba mức để chạy và báo cáo: khoảng 820 (mức ICC), khoảng 400 (kiểu SmartSantander) và khoảng 100 (kiểu Dryad).
   Mức 100 cần quyết thêm chuyện R và băng tần (mục 7).
+
+## 9. Nếu đặt kịch bản ở đô thị: kích thước và kênh (2026-11-17, mục 332)
+
+Nguồn ghi ở từng ý: [repo] là tài liệu hoặc log đã có trong repo, [web] là tra mới hôm nay.
+
+**Kích thước.** SmartSantander trải khoảng 35 km², lõi thí điểm 6 km² chia 22 vùng, mỗi vùng một gateway đặt trên cao,
+tức khoảng 0,27 km² mỗi vùng; khoảng 2 000 thiết bị 802.15.4, chừng 90 thiết bị mỗi gateway [web]. CitySee trải khoảng
+100 km² [web]. Bản đồ k8 (16 km², 8 cụm khoảng 2 km²) vừa cỡ một quận hay một thành phố nhỏ. Cụm đô thị thật nhỏ hơn
+cụm của bài khoảng 7 lần về diện tích, còn số node mỗi gateway (90–100) gần với Dryad.
+
+**Độ cao bay.** H = 100 m nằm dưới giới hạn 120 m của EU và Mỹ (kiến thức chung, chưa trích nguồn). Khu cao tầng trên
+100 m thì không bay được ở độ cao này. UAV cánh bằng bay BVLOS trên khu đông người là rào cản pháp lý lớn; đô thị thường
+dùng cánh quay.
+
+**Kênh A2G.** Mô hình đang dùng: không gian tự do tới 100 m, sau đó số mũ 3, Rician K = 2 bốc lại mỗi gói, cộng suy hao
+môi trường cố định η = 0 / 9,03 / 19,77 / 25,74 dB cho R50 = 1016 / 498 / 199 / 99 m [repo: `logs/2026-10-25_0330-env-modes/`].
+Mô hình đô thị Al-Hourani 2014 (xác suất LoS theo góc ngẩng) cho R50 ≈ 660 m (ngoại ô), 350–360 m (đô thị), 235–245 m
+(đô thị dày), 45 m (cao tầng) [repo: `logs/2026-10-24_1056-a2g-radius/`, tính lại hôm nay ra cùng số]. Vậy về tầm phủ, bốn
+chế độ của bài trải đúng dải ngoại ô tới giữa đô thị dày và cao tầng. Lệch nằm ở hình dạng [repo: `04-a2g-channel.md`
+mục 1]:
+- η cố định không phụ thuộc góc ngẩng. Ở đô thị, gần thiên đỉnh gần như luôn LoS (P_LoS ≈ 0,97 ở cự ly ngang 100 m), xa
+  hơn thì chủ yếu NLoS (0,12 ở 500 m), nên đường p(d) thật dốc hơn: mô hình bi quan gần UAV, lạc quan ở xa.
+- Trạng thái LoS/NLoS phải nhất quán theo không gian cho từng node dọc lượt bay; hiện fading bốc độc lập mỗi gói.
+- Thiếu shadowing log-normal (đo ở A2G đô thị σ ≈ 2,8–5,4 dB). K = 2 bi quan cho LoS (đo 12–29 dB), lạc quan cho NLoS.
+
+**Kênh G2G.** Mô hình đang dùng là 3GPP TR 38.901 UMi NLoS (35,3 log₁₀ d, σ = 7,8 dB cố định mỗi cặp, Rayleigh theo khối
+100 ms) [repo: `params.yaml` C7–C10], tức vốn là mô hình phố đô thị, hợp với đô thị hơn hợp với rừng. Không tính shadowing,
+xác suất qua một liên kết là 0,93 ở 50 m, 0,75 ở 75 m, 0,45 ở 100 m (tính hôm nay). Số mũ đo ở phố 2,4 GHz nằm trong
+khoảng 2–5 tuỳ hình dạng phố [web]. Các chỗ chưa khớp:
+- UMi viết cho trạm cao 10 m tới máy 1,5 m; 3GPP dùng lại cho D2D ở 1,5 m nhưng chính các tài liệu D2D ghi rằng kênh đối
+  xứng máy–máy không hợp với mô hình bất đối xứng này [web].
+- Không có trạng thái LoS: hai node cùng một phố có LoS (UMi LoS khoảng 22 log₁₀ d, tầm xa hơn nhiều), còn hai node cách
+  một dãy nhà gần như không nối được. Mô hình hiện coi mọi cặp như nhau cộng nhiễu σ độc lập [repo: C11 che khuất độc lập].
+- Liên thông thật đi theo lưới phố. Lưới cell lục giác R = 100 m với cặp gateway giữa mọi cell kề có thể gãy ở chỗ hai
+  cell bị khối nhà ngăn.
+- SmartSantander đặt repeater và gateway trên cột đèn, đèn tín hiệu [web]; node đặt cao 3–6 m có kênh tốt hơn node sát đất.

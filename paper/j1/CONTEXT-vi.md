@@ -82,7 +82,8 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - e. Vì sao không phát truy vấn từ trạm gốc qua mạng mặt đất (đa chặng 802.15.4) hay qua LoRa: cần một phép tính thời
   gian để đưa vào bài.
 - f. Số sự cố trong vòng đời mạng (để chia chi phí pha 0).
-- g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327). Đối chiếu ban đầu ở mục 7.
+- g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327), mật độ node thường gặp (mục 329).
+  Đối chiếu ở mục 7 và 8.
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 
@@ -113,3 +114,36 @@ Nhận xét:
   và độ cao tốt nhất khoảng 45 m (Nekrasov 2019). Repo chưa có tài liệu nào về mật độ node của triển khai thật.
 - Sức bền một chuyến: tour k8 dài 30,3 km cho 8 cụm, bay khoảng 760 s. Với 1,5 h bay (trừ quãng về) thì một UAV làm được
   cỡ 50 cụm, khoảng 100 km², nếu các cụm giống k8. Đây là ngoại suy tuyến tính, chưa chạy bộ lập tour để kiểm.
+
+## 8. Mật độ node trong triển khai thật (2026-11-17, mục 329)
+
+Repo chưa có tài liệu nào về mật độ triển khai, nên mọi số dưới đây lấy từ internet (đoạn trích tìm kiếm, chưa đọc toàn
+văn). Mật độ do tôi chia số node cho diện tích nêu trong nguồn. Để so: bài dùng khoảng 820 node/km² (21 node một cell
+R = 100 m, diện tích cell 0,026 km²).
+
+| Triển khai | Loại | Số node, diện tích | Mật độ (node/km²) | Nguồn |
+|---|---|---|---|---|
+| Ô vườn táo Trentino | nông nghiệp, ô nhỏ | 27 điểm đo trên 0,5 ha | khoảng 5 400 | sites.unipa.it (CSBE 2010) |
+| ExScal (Florida, 2004) | quân sự, phát hiện xâm nhập, chạy ngắn ngày | hơn 1 000 node trên 1,3 km × 0,3 km | khoảng 2 600 | Arora et al., Computer Networks 2005 |
+| SmartSantander (lõi, giai đoạn thí điểm) | đô thị | hơn 10 000 node dự kiến trên 6 km² | khoảng 1 700 | rcrwireless.com |
+| **Bài này (k8)** | rừng, camera và cảm biến | 13 086 node trên 16 km² | **khoảng 820** | — |
+| SmartSantander (toàn thành phố) | đô thị | 15 000–20 000 node trên khoảng 35 km² | 430–570 | telecomstechnews.com, nesta.org.uk |
+| Camera CCTV, thành phố dày nhất | đô thị, camera công cộng | 573,8 camera mỗi dặm vuông | khoảng 220 | comparitech.com |
+| Dryad Silvanet | rừng, cảm biến cháy | 1 node mỗi ha; thí điểm 91 node trên 78 ha | 100–120 | dryad.net |
+| Ô ForestGEO | rừng, camera bẫy ảnh, ô nghiên cứu | 49–50 camera trên 1 km² | khoảng 50 | LJMU 2024 |
+| CitySee (Vô Tích) | đô thị, CO₂ | khoảng 1 200 node trên khoảng 100 km² | khoảng 12 | Mao et al., INFOCOM 2012 |
+| Lưới camera bẫy ảnh cảnh quan | rừng | 1 camera mỗi km² (TEAM: 1 mỗi 2 km²; Parks Canada: 1 mỗi 100 km²) | 0,01–1 | Apostle Islands, Parks Canada |
+| Yêu cầu mMTC của IMT-2020 | chỉ tiêu dung lượng, không phải triển khai | 10⁶ thiết bị mỗi km² | 1 000 000 | ITU-R M.2410 |
+
+Thêm: một khảo sát triển khai WSN quan trắc môi trường ghi 80 % số triển khai có không quá 50 node; PermaSense mỗi điểm
+khoảng 20 node; GreenOrbs tới 330 node trong rừng (không rõ diện tích).
+
+Nhận xét:
+- Triển khai dài hạn trên diện rộng ngoài trời nằm trong khoảng 10–600 node/km². Trên 1 000 node/km² chỉ gặp ở ô nhỏ
+  vài ha hoặc thử nghiệm quân sự ngắn ngày.
+- Mật độ 820 node/km² của bài nằm ở đầu trên: ngang mức trung bình một thành phố thông minh dày (SmartSantander), gấp
+  khoảng 8 lần mạng cảm biến rừng thương mại (Dryad), gấp khoảng 4 lần thành phố có nhiều CCTV nhất, và gấp hàng trăm lần
+  lưới camera bẫy ảnh trong rừng.
+- Ứng với cell R = 100 m: 820 node/km² cho khoảng 21 node một cell, 400 cho khoảng 10, 100 cho khoảng 2–3.
+- Đề xuất ba mức để chạy và báo cáo: khoảng 820 (mức ICC), khoảng 400 (kiểu SmartSantander) và khoảng 100 (kiểu Dryad).
+  Mức 100 cần quyết thêm chuyện R và băng tần (mục 7).

@@ -107,5 +107,9 @@ Nhận xét:
 - Ở mật độ Dryad (1 node/ha), cell R = 100 m chỉ còn khoảng 2–3 node, quá ít cho P_k và cho cặp gateway. Muốn giữ
   khoảng 20 node một cell thì R phải lên khoảng 250–300 m, mà tầm G2G 2,4 GHz trong rừng ngắn hơn thế; Dryad dùng băng
   sub-GHz. Đây là chỗ câu hỏi a (giữ hay tăng R) dính với mật độ và băng tần.
+- Tài liệu sẵn trong repo (`research_notes/literature/2026-11-12/06-deployment.md`) bổ sung: camera bẫy ảnh thông minh
+  gửi qua LoRa rồi Iridium (Gabon) và camera phân loại loài tại biên gửi qua LoRaWAN (Computers 2022) là tiền lệ thật cho
+  camera AI nối mạng trong rừng; tầm A2G 802.15.4 thực tế khi UAV di chuyển chỉ còn khoảng 1/3 tầm danh định (Bacco 2018)
+  và độ cao tốt nhất khoảng 45 m (Nekrasov 2019). Repo chưa có tài liệu nào về mật độ node của triển khai thật.
 - Sức bền một chuyến: tour k8 dài 30,3 km cho 8 cụm, bay khoảng 760 s. Với 1,5 h bay (trừ quãng về) thì một UAV làm được
   cỡ 50 cụm, khoảng 100 km², nếu các cụm giống k8. Đây là ngoại suy tuyến tính, chưa chạy bộ lập tour để kiểm.

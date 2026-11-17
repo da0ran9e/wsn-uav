@@ -116,6 +116,12 @@ hình tiêu biểu cắt bằng `tools/papers/pdf_extract.py`, chép vào `paper
 không commit. Sau khi thêm ghi chú: `python3 tools/papers/paper_index.py` (sinh `INDEX.md`, `TOPICS.md`, INDEX hình).
 Quy trình đầy đủ, khuôn, nhãn và bộ chủ đề: `research_notes/literature/METHOD-vi.md`; bài mẫu `papers/leny2012-dtsp.md`.
 
+**Tra cứu thông tin (mục 328):** câu hỏi cần dữ kiện (số liệu triển khai thật, tham số, tài liệu liên quan) thì tìm trong
+tài liệu đã ghi chú trong repo trước: `research_notes/literature/papers/` (grep theo nhãn, `TOPICS.md`),
+`research_notes/literature/2026-11-12/`, `LIT-SYNTHESIS-*.md`; chỉ tìm trên internet cho phần repo chưa có. Trả lời ghi rõ
+ý nào lấy từ repo, ý nào từ internet. Gặp tài liệu mới nhiều thông tin hữu ích hay sát chủ đề thì nhắc người dùng thêm ghi
+chú cho nó (nêu tên, link, lý do), không tự ghi chú khi chưa được yêu cầu.
+
 **Trạng thái và kế hoạch:** đọc `docs/progress/HANDOFF.md` trước khi làm tiếp việc dở. Việc cho J1 chia hai nhánh lý
 thuyết và kỹ thuật trong `paper/j1/PLAN-TRACKS-vi.md`: nhận việc, báo cáo ngắn và đánh dấu xong ngay trong file đó. Kế hoạch tái tổ chức
 repo và ước lượng chi phí từng bước: `docs/REORG-GUIDE-vi.md`.

@@ -183,3 +183,7 @@ khoảng 2–5 tuỳ hình dạng phố [web]. Các chỗ chưa khớp:
 - Liên thông thật đi theo lưới phố. Lưới cell lục giác R = 100 m với cặp gateway giữa mọi cell kề có thể gãy ở chỗ hai
   cell bị khối nhà ngăn.
 - SmartSantander đặt repeater và gateway trên cột đèn, đèn tín hiệu [web]; node đặt cao 3–6 m có kênh tốt hơn node sát đất.
+- Ghi chú bài báo vừa thêm (session khác, cùng ngày) bổ sung [repo: `papers/sanchez2014-smartsantander.md`,
+  `papers/liu2013-greenorbs.md`]: node SmartSantander gắn cột đèn dùng hai module XBee-Pro 2,4 GHz, node dồn dày nhất ở
+  vùng trung tâm khoảng 1 km² (tr. 10); ở GreenOrbs dưới 10 % số node gánh 80 % lưu lượng (tr. 8), cùng loại với nút cổ
+  chai ở cell Bank mà trace River cho thấy.

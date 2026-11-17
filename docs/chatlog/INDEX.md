@@ -336,3 +336,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 328 | 2026-11-17 | quy tắc · tra ghi chú trong repo trước internet; nhắc ghi chú tài liệu mới | [2026-11](2026-11.md) |
 | 329 | 2026-11-17 | bối cảnh · tra mật độ node trong triển khai thật | [2026-11](2026-11.md) |
 | 330 | 2026-11-17 | nghiên cứu · ghi chú thêm GreenOrbs và mạng camera Natura 2000 | [2026-11](2026-11.md) |
+| 331 | 2026-11-17 | nghiên cứu · ghi chú thêm ExScal, SmartSantander, CitySee | [2026-11](2026-11.md) |

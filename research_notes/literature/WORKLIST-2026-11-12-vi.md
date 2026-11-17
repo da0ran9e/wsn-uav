@@ -69,12 +69,15 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 
 ## Bổ sung ngoài Drive
 
-Người dùng gửi PDF qua chat (mục 330, 2026-11-17), không nằm trong thư mục Drive.
+Người dùng gửi PDF qua chat (mục 330–331, 2026-11-17), không nằm trong thư mục Drive.
 
 | # | File PDF | Khoá dùng | Mức | Đọc | Chủ đề | Xong |
 |---|---|---|---|---|---|---|
 | 47 | DoesWirelessSensorNetworkScale_AMeasurementStudyonGreenOrbs.pdf | `liu2013-greenorbs` | ★★ | full | deployment, wsn-gathering, testbed | ✓ |
 | 48 | Development_of_a_cost-efficient_automated_wildlife_camera_network_in_a_European_Natura_2000_site.pdf | `kissling2024-wildcam` | ★★ | full | deployment, testbed | ✓ |
+| 49 | ExScal.pdf (mục 331) | `arora2005-exscal` | ★★ | full | deployment, wsn-gathering, testbed | ✓ |
+| 50 | COMNET-D-12-497R1-final-submitted.pdf (mục 331) | `sanchez2014-smartsantander` | ★ | partial | deployment, testbed | ✓ |
+| 51 | liu2013.pdf (mục 331; CitySee, khác bài GreenOrbs) | `liu2013-citysee` | ★ | full | deployment, wsn-gathering, testbed | ✓ |
 
 Mức sao là đề xuất. Nếu đọc xong thấy khác thì sửa `relevance` trong ghi chú, giữ thứ tự làm như bảng.
 

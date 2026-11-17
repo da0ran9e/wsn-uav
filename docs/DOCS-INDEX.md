@@ -33,7 +33,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (76): còn đúng, dùng để tra cứu nền
+## Tham khảo (78): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -80,6 +80,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/hoseini2021-dql.md`](../research_notes/literature/papers/hoseini2021-dql.md) | Hoseini et al. 2021 · Thiết kế quỹ đạo UAV-BS theo năng lượng và ưu tiên dịch vụ bằng Double Q-Learning | 2026-11-12 |  |
 | [`research_notes/literature/papers/hui2004-deluge.md`](../research_notes/literature/papers/hui2004-deluge.md) | Hui, Culler 2004 · Deluge: phổ biến dữ liệu lớn trong WSN đa chặng | 2026-11-12 |  |
 | [`research_notes/literature/papers/isaacs2011-dtspn.md`](../research_notes/literature/papers/isaacs2011-dtspn.md) | Isaacs, Klein, Hespanha 2011 · Algorithms for the TSP with neighborhoods involving a Dubins vehicle | 2026-11-12 |  |
+| [`research_notes/literature/papers/kissling2024-wildcam.md`](../research_notes/literature/papers/kissling2024-wildcam.md) | Kissling et al. 2024 · Mạng camera động vật hoang dã tự động, chi phí thấp ở một khu Natura 2000 | 2026-11-17 |  |
 | [`research_notes/literature/papers/kulkarni2005-mnp.md`](../research_notes/literature/papers/kulkarni2005-mnp.md) | Kulkarni, Wang 2005 · MNP: dịch vụ lập trình lại đa chặng cho mạng cảm biến | 2026-11-12 |  |
 | [`research_notes/literature/papers/leny2007-highdensity.md`](../research_notes/literature/papers/leny2007-highdensity.md) | Le Ny, Frazzoli, Feron 2007 · DTSP khi mật độ điểm cao (bản hội nghị) | 2026-11-12 |  |
 | [`research_notes/literature/papers/leny2012-dtsp.md`](../research_notes/literature/papers/leny2012-dtsp.md) | Le Ny, Feron, Frazzoli 2012 · On the Dubins traveling salesman problem | 2026-11-12 |  |
@@ -87,6 +88,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/li2023-coverage.md`](../research_notes/literature/papers/li2023-coverage.md) | Li et al. 2023 · Lập đường phủ cho nhiều robot Dubins: chính xác và heuristic | 2026-11-12 |  |
 | [`research_notes/literature/papers/li2025-turnspan.md`](../research_notes/literature/papers/li2025-turnspan.md) | Li et al. 2025 · Lập đường phủ cho UAV cánh bằng bằng chọn bước nhảy khi quay | 2026-11-12 |  |
 | [`research_notes/literature/papers/liang2008-typhoon.md`](../research_notes/literature/papers/liang2008-typhoon.md) | Liang, Musăloiu-E., Terzis 2008 · Typhoon: phổ biến dữ liệu tin cậy trong WSN | 2026-11-13 |  |
+| [`research_notes/literature/papers/liu2013-greenorbs.md`](../research_notes/literature/papers/liu2013-greenorbs.md) | Liu, He, Li, Wang, Liu, Li 2013 · Mạng cảm biến có mở rộng được không? Đo đạc trên GreenOrbs | 2026-11-17 |  |
 | [`research_notes/literature/papers/ma2006-receding.md`](../research_notes/literature/papers/ma2006-receding.md) | Ma, Castañón 2006 · Lập kế hoạch cuộn cho Dubins TSP | 2026-11-12 |  |
 | [`research_notes/literature/papers/matolak2017-a2g.md`](../research_notes/literature/papers/matolak2017-a2g.md) | Matolak, Sun 2017 · Kênh không–đất cho UAS, phần III: ngoại ô và cận đô thị | 2026-11-12 |  |
 | [`research_notes/literature/papers/miao2020-d2d.md`](../research_notes/literature/papers/miao2020-d2d.md) | Miao, Liao, Zhao 2020 · Thiết kế chung tốc độ và vùng phủ cho mạng UAV có D2D | 2026-11-12 |  |

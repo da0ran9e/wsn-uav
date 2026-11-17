@@ -4,7 +4,7 @@ updated: 2026-11-17
 ---
 # J1 · Bối cảnh, thực thể và tham số của bài toán
 
-File mô tả chung cho J1 (chatlog mục 323–326). Đây là bản thử nghiệm, chốt dần qua thảo luận, không sửa đề cương. Phần
+File mô tả chung cho J1 (chatlog mục 323–327). Đây là bản thử nghiệm, chốt dần qua thảo luận, không sửa đề cương. Phần
 phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa trên file này. Mỗi mục ghi trạng thái: **chốt**
 (người dùng đã quyết), **đề xuất** (Claude đề xuất, chờ duyệt), **mở** (còn phải bàn).
 
@@ -12,7 +12,7 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 
 | Mục | Nội dung | Trạng thái |
 |---|---|---|
-| Vùng nhiệm vụ | Khu vực địa hình phức tạp (núi, rừng, thung lũng) cỡ một vườn quốc gia: vài trăm tới hơn một nghìn km². Ví dụ để tính: Cúc Phương khoảng 222 km², Phong Nha–Kẻ Bàng khoảng 1 233 km² (cần kiểm số liệu) | chốt (quy mô), mở (con số cụ thể) |
+| Vùng nhiệm vụ | Khu vực địa hình phức tạp (núi, rừng, thung lũng) trong một vườn quốc gia. Vì J1 chỉ xét một UAV, vùng thử nghiệm thu lại vừa đủ cho một UAV làm trong một chuyến bay (mục 327); ước lượng ở mục 7 | chốt |
 | Vì sao khó | Địa hình che khuất và tán rừng làm kênh từ trên không xuống yếu và biến động; vùng không có mạng di động | chốt |
 | Thiết bị | Nhiều thiết bị IoT có sẵn: camera, cảm biến; phần lớn là node yếu, một số node mạnh chạy được AI | chốt |
 | Sự cố | Bất kỳ sự cố nào cần tìm kiếm (người lạc, truy vết đối tượng); mạng phục vụ nhiều lượt truy vấn trong suốt vòng đời | chốt |
@@ -52,8 +52,8 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 
 | Tham số | Bản hội nghị (ICC) | J1 | Trạng thái |
 |---|---|---|---|
-| Diện tích vùng | 617 cell ≈ 16 km² (bản đồ k8) | 200–1 200 km² | chốt (cỡ), mở (con số) |
-| Số cell nếu phủ kín | 617 | khoảng 8 000–47 000 (diện tích một cell ≈ 0,026 km²), nếu giữ R = 100 m | mở (giữ R hay tăng R) |
+| Diện tích vùng | 617 cell ≈ 16 km² (bản đồ k8) | vừa một chuyến bay của một UAV; ước lượng thô khoảng 100 km², cỡ 50 cụm (mục 7) | chốt (nguyên tắc), mở (con số) |
+| Số cell | 617 | khoảng 4 000 nếu 100 km² và giữ R = 100 m | mở (giữ R hay tăng R) |
 | Mật độ node | khoảng 21 node một cell (13 086 node) | tạm giữ như bản hội nghị; chỉnh dần theo kết quả thực nghiệm, hoặc chạy và công bố kết quả ở vài mức mật độ (mục 326) | chốt (tạm thời) |
 | Số CC | 45 CC trên 8 cụm (k8) | theo bài toán chọn CC | mở |
 | Kênh A2G | mô hình hai đoạn, thêm suy hao môi trường cố định, Rician K = 2 | thêm che khuất tương quan, fading tương quan, phụ thuộc góc ngẩng (việc K1) | đề xuất |
@@ -75,10 +75,37 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 ## 6. Câu hỏi mở
 
 - a. Giữ R = 100 m hay tăng R? (mật độ đã trả lời ở mục 326: tạm giữ, thử vài mức)
-- b. Điểm cất hạ cánh (một trạm hay nhiều trạm) và thời gian bay tối đa một chuyến của một UAV?
+- b. Đã trả lời (mục 327): một chuyến bay, vùng thu lại cho vừa. Còn mở: chọn sức bền bao nhiêu (mục 7 gợi ý 1,5 h).
 - c. Đã trả lời (mục 326): một UAV; nhiều UAV để sau, mục tiêu min-max, phối hợp chứ không chia việc.
 - d. Mục tiêu tìm kiếm điển hình là gì (người lạc, động vật, đối tượng)? Câu trả lời quyết định mỗi phút chậm trễ đáng
   giá bao nhiêu.
 - e. Vì sao không phát truy vấn từ trạm gốc qua mạng mặt đất (đa chặng 802.15.4) hay qua LoRa: cần một phép tính thời
   gian để đưa vào bài.
 - f. Số sự cố trong vòng đời mạng (để chia chi phí pha 0).
+- g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327). Đối chiếu ban đầu ở mục 7.
+
+## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
+
+Mật độ và cụm của bài: bản đồ k8 có 13 086 node trên 617 cell (≈ 16 km²), tức khoảng 820 node mỗi km² hay một node trên
+0,12 ha; 8 cụm, mỗi cụm khoảng 77 cell ≈ 2 km² và 1 600 node.
+
+| Hệ thống thật | Mật độ, khoảng cách | Đơn vị giống "cụm" | Kết nối lên trên | Nguồn |
+|---|---|---|---|---|
+| Dryad Silvanet (cảm biến cháy rừng, mesh) | khoảng 1 node mỗi ha (100 node/km²), cách nhau tới 300 m; thí điểm Lebanon 91 node trên 78 ha | mesh gateway phục vụ khoảng 100 node (≈ 1 km²); 20 mesh gateway mỗi border gateway | LoRa mesh 2–10 km giữa các gateway | dryad.net (datasheet Mesh Gateway, Wildfire Sensor) |
+| GreenOrbs (WSN rừng, Trung Quốc) | tới 330 node trong rừng | — | — | Liu et al., IEEE TPDS 2013 |
+| Lưới camera bẫy ảnh | 1 camera/km² (cảnh quan), 50/km² (ô nghiên cứu ForestGEO, cách 140 m), 1 camera/2 km² (TEAM), 1 camera/100 km² (Parks Canada) | — | phần lớn không nối mạng; Natura 2000 Hà Lan có 65 camera 4G cách 1 km | Apostle Islands (arXiv 1703.10726), LJMU 2024 |
+| Camera AI tại biên (TrailGuard AI, Instant Detect 2.0) | không tìm thấy số lượng triển khai | một gateway LoRa gom nhiều camera rồi lên vệ tinh | LoRa, Iridium hoặc 4G | resolve.ngo, zsl.org |
+| UAV cánh bằng VTOL loại nhỏ | sức bền 1–3 h, bay 60–75 km/h, 100–200 km mỗi chuyến | — | — | trang sản phẩm JOUAV CW-15, YANGDA Mapird |
+
+Nhận xét:
+- Kiến trúc của bài (cell có CL, cụm có CH nối LoRa lên trạm) có bản tương ứng thật ở Dryad: một gateway gom khoảng 100
+  node trên chừng 1 km², gateway nối nhau bằng LoRa vài km. Cụm 1–2 km² vì vậy là cỡ hợp lý cho "vùng một gateway phục
+  vụ".
+- Mật độ của bài cao hơn Dryad khoảng 8 lần và cao hơn mọi lưới camera rất nhiều. Tôi chưa tìm thấy triển khai thật nào
+  vừa dày cỡ 800 node/km² vừa có camera nối mesh 802.15.4. Kịch bản của bài vì vậy là giả định hướng tới, cần lập luận
+  trong bài (node rẻ dày đặc cộng một ít camera AI), hoặc chạy thêm mức mật độ kiểu Dryad.
+- Ở mật độ Dryad (1 node/ha), cell R = 100 m chỉ còn khoảng 2–3 node, quá ít cho P_k và cho cặp gateway. Muốn giữ
+  khoảng 20 node một cell thì R phải lên khoảng 250–300 m, mà tầm G2G 2,4 GHz trong rừng ngắn hơn thế; Dryad dùng băng
+  sub-GHz. Đây là chỗ câu hỏi a (giữ hay tăng R) dính với mật độ và băng tần.
+- Sức bền một chuyến: tour k8 dài 30,3 km cho 8 cụm, bay khoảng 760 s. Với 1,5 h bay (trừ quãng về) thì một UAV làm được
+  cỡ 50 cụm, khoảng 100 km², nếu các cụm giống k8. Đây là ngoại suy tuyến tính, chưa chạy bộ lập tour để kiểm.

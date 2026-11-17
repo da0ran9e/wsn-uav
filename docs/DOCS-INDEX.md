@@ -132,7 +132,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/archive/SYSTEM-vi.md`](../paper/archive/SYSTEM-vi.md) | System Model — keyword | 2026-10-20 | bản nộp ICC v5.3 |
 | [`uav-l2/docs/PARAM-SOURCES-vi.md`](../uav-l2/docs/PARAM-SOURCES-vi.md) | Rà soát nguồn gốc tham số giả lập (CLAUDE.md §8 mục 102) | 2026-10-19 | paper/PARAMS-vi.md |
 
-## Lịch sử (21): thử nghiệm hoặc hướng đã đóng, giữ để tra lại
+## Lịch sử (23): thử nghiệm hoặc hướng đã đóng, giữ để tra lại
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -140,6 +140,8 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/j1/draft-v1/runs/bound-nc.md`](../paper/j1/draft-v1/runs/bound-nc.md) | bound-nc | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/fig-tstar.md`](../paper/j1/draft-v1/runs/fig-tstar.md) | fig-tstar | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/ground-lb.md`](../paper/j1/draft-v1/runs/ground-lb.md) | ground-lb | 2026-11-16 |  |
+| [`paper/j1/draft-v1/runs/lb-compare-seed1.md`](../paper/j1/draft-v1/runs/lb-compare-seed1.md) | lb-compare-seed1 | 2026-11-17 |  |
+| [`paper/j1/draft-v1/runs/lb-seed1.md`](../paper/j1/draft-v1/runs/lb-seed1.md) | River variants on DLG seed 1: balanced plan (lb), balanced plan with shared trees (lbs), shared trees (rfX) | 2026-11-17 |  |
 | [`paper/j1/draft-v1/runs/takeover-radius.md`](../paper/j1/draft-v1/runs/takeover-radius.md) | takeover-radius | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/tree-lb-b0.1.md`](../paper/j1/draft-v1/runs/tree-lb-b0.1.md) | tree-lb-b0.1 | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/tree-lb-b0.3.md`](../paper/j1/draft-v1/runs/tree-lb-b0.3.md) | tree-lb-b0.3 | 2026-11-16 |  |

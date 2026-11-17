@@ -331,3 +331,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 323 | 2026-11-14 | kế hoạch · bàn bối cảnh bài toán pha 1 | [2026-11](2026-11.md) |
 | 324 | 2026-11-14 | bối cảnh · trả lời 4 câu (critical cell, địa hình, quy mô, nhiều truy vấn); chốt vào file mô tả | [2026-11](2026-11.md) |
 | 325 | 2026-11-14 | bối cảnh · phủ đều ngẫu nhiên, dữ liệu ở AI node, nhiều UAV | [2026-11](2026-11.md) |
+| 326 | 2026-11-17 | bối cảnh · gói việc bản thảo; mật độ tạm giữ, một UAV, nhiều UAV phải phối hợp (min-max) | [2026-11](2026-11.md) |

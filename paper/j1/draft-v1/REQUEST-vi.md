@@ -27,3 +27,6 @@ với công việc này tôi cho phép bạn sáng tạo thuật toán mới tro
 ```text
 tiếp tục phát triển bài báo, tôi cho bạn 800k tokens nữa, làm tiếp các công việc ví dụ: cài đặt thuật toán cây dùng chung vào ns-3 và chạy thử
 ```
+
+*2026-11-17 · gói lại việc bản thảo, quay về bàn bối cảnh. Nguyên văn ở `docs/chatlog/2026-11.md` mục 326, vì phần
+lớn tin nhắn là trả lời câu hỏi bối cảnh*

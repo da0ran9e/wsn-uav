@@ -1,12 +1,12 @@
 ---
 status: current
-updated: 2026-11-16
+updated: 2026-11-17
 ---
 # Bản thảo journal v1 (J1): hướng dẫn đánh giá
 
 Thư mục này chứa toàn bộ việc "nâng bản ICC lên bản journal dự kiến" theo yêu cầu ở `REQUEST-vi.md`. Bản thảo viết bằng
-tiếng Anh, khuôn IEEEtran, 12 trang: `tex/main.pdf`. Đây là bản để cùng đánh giá, chưa phải bản nộp. Không có lượt chạy
-ns-3 mới nào: mọi số đo lấy từ các chiến dịch đã có, phần mới là lý thuyết, phân tích trên log sẵn có và cách trình bày.
+tiếng Anh, khuôn IEEEtran, 12 trang: `tex/main.pdf`. Đây là bản để cùng đánh giá, chưa phải bản nộp. Số đo trong PDF lấy từ
+các chiến dịch đã có. Lượt ns-3 mới duy nhất là thử thuật toán vận chuyển mặt đất mới (mục 9 bên dưới), chưa đưa vào PDF.
 
 ## Cấu trúc thư mục
 
@@ -44,6 +44,28 @@ Dựng lại PDF: `paper/j1/draft-v1/tex/build.sh`.
    từ frame điều khiển mà từ dữ liệu dư và từ việc lập kế hoạch; kéo trực tiếp có kế hoạch ngang River ở r100.
 7. **Số C4 thay cho số ước lượng** của bản v5: LM-Tour giờ là số đo ns-3, có khoảng tin cậy theo seed.
 8. **Tổng quan tài liệu viết lại** theo đợt tìm tài liệu ngày 12/11 và các ghi chú bài báo.
+9. **Thuật toán mới cho lớp mặt đất, đã chạy ns-3 (một seed).** Trace từng hop của River (seed 1, cụm 1) cho thấy nút cổ
+   chai nằm ở cell Bank và cell trung chuyển dọc dải River (bận 0,72–0,98), còn môi trường của critical cell chỉ bận
+   0,18–0,79. Hai cơ chế mới:
+   - Cây dùng chung (`--tree` trong `uav-coop2/examples/coop2-river.cc`): các đường Bank → thành viên Ring của cùng một
+     đoạn SPINE ghép thành cây, mỗi gói đi qua một nhánh chung một lần, yêu cầu gom ở các nút rẽ nhánh.
+   - Lập kế hoạch cân tải (`uav-coop2/tools/river_lb.py`): chọn lại Bank (một trong hai Bank của SPINE cell) và đường
+     cell cho từng luồng Bank → thành viên, cực tiểu hoá tổng (tải + Δ)^6, tức một hàm xấp xỉ tải lớn nhất. Mô hình tải
+     khớp với trace (R² 0,89): 1,7 frame mỗi gói ở cell trung chuyển, 1,5 ở Bank và thành viên, 1 ở mỗi cặp gateway.
+     Tuỳ chọn `--members` chọn lại cả thành viên Ring nhận đoạn, `--lp` giải nới lỏng tuyến tính để có chặn dưới của tải
+     lớn nhất (cụm 1 và 4: lời giải cách chặn 0–5 %). Chỉ thay dòng CIRC của kế hoạch, chạy trên cùng binary.
+
+   Kết quả trên 8 cụm, seed 1 của DLG (k8, r100, cùng pass và cùng chỉ số mission với River gốc), `figs/lb-seed1.md`:
+
+   | Biến thể | doneS trung bình | critical cell cuối mỗi cụm | frame | xong cuối nhiệm vụ (từ cất cánh) |
+   |---|---|---|---|---|
+   | River gốc | 101,2 s | 125,7 s | — | 770 s |
+   | Cây dùng chung | −16 % | −22 % | −23 % | 693 s |
+   | Cân tải | −18 % | −24 % | 0 % | 707 s |
+   | Cân tải + cây dùng chung | −26 % | −31 % | −24 % | 703 s |
+
+   Cả 45/45 critical cell đều xong ở mọi biến thể. Hệ số so với chặn một radio giảm từ 5,1 xuống 4,1 (trung vị). Cụm
+   chậm nhất (cụm 8) giảm từ 248 s xuống 80 s. Đây mới là một seed; chưa chạy 4 seed còn lại, chưa thử `--members`.
 
 ## Nguồn của từng nhóm số
 
@@ -84,10 +106,10 @@ Dựng lại PDF: `paper/j1/draft-v1/tex/build.sh`.
    so với baseline đo được. Nó chỉ chứng nhận được lợi thế ở R50 ≤ 200 m.
 2. **Chưa có chặn trên cho River.** Bài nói thẳng điều này ở mục IX. Hệ số 5 lần so với chặn một radio là điểm yếu
    phản biện sẽ hỏi.
-3. **Hướng thuật toán mới đáng làm nhất, chưa mô phỏng:** chuyển mỗi đoạn SPINE một lần theo cây dùng chung rồi rẽ
-   nhánh về các Ring, thay vì mỗi critical cell một luồng riêng. Công thức (8) cho thấy số hạng "tổng lượng thiếu của cả
-   cụm" (4,26 ms mỗi gói) là phần lớn thời gian River; cây dùng chung nhắm đúng số hạng đó. Việc này cần sửa mã ns-3 nên
-   tôi không làm trong đợt này.
+3. **Cây dùng chung và lập kế hoạch cân tải** (mục 9) đã chạy ns-3 trên một seed: nhanh hơn River gốc 26 % (trung bình)
+   và 31 % (critical cell cuối mỗi cụm). Đoạn Discussion trong PDF còn quy khoảng cách 5 lần cho luồng trùng lặp; trace
+   cho thấy nguyên nhân chính là tải dồn vào Bank và cell trung chuyển, cần sửa lại. Muốn đưa vào bài thì chạy đủ 5 seed
+   (khoảng 1,5 giờ cho 120 lượt, 4 nhân) bằng `analysis/run_lb.sh`, rồi `analysis/lb_compare.py`.
 4. **Bối cảnh vườn quốc gia, nhiều UAV, AI node** (`paper/j1/CONTEXT-vi.md`) chưa được đưa vào bản thảo, vì chưa chốt và
    chưa có số liệu. Bản thảo giữ kịch bản của bản ICC.
 5. Tên bài giữ như bản ICC.

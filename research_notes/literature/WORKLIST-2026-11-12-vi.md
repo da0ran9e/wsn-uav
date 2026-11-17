@@ -67,6 +67,15 @@ Theo chat log mục 312–313: ghi chú mọi bài trong thư mục Drive theo `
 | 45 | UAV-Assisted_Cellular_Communication_Joint_Trajectory_and_Coverage_Optimization.pdf | (theo tác giả) 2021-cellular | ★ | abstract | uav-coverage | `li2021-cellular` | ✓ |
 | 46 | tan2003.pdf | tan2003-pegasis | ★ | abstract | wsn-gathering | `tan2003-pedap` | ✓ |
 
+## Bổ sung ngoài Drive
+
+Người dùng gửi PDF qua chat (mục 330, 2026-11-17), không nằm trong thư mục Drive.
+
+| # | File PDF | Khoá dùng | Mức | Đọc | Chủ đề | Xong |
+|---|---|---|---|---|---|---|
+| 47 | DoesWirelessSensorNetworkScale_AMeasurementStudyonGreenOrbs.pdf | `liu2013-greenorbs` | ★★ | full | deployment, wsn-gathering, testbed | ✓ |
+| 48 | Development_of_a_cost-efficient_automated_wildlife_camera_network_in_a_European_Natura_2000_site.pdf | `kissling2024-wildcam` | ★★ | full | deployment, testbed | ✓ |
+
 Mức sao là đề xuất. Nếu đọc xong thấy khác thì sửa `relevance` trong ghi chú, giữ thứ tự làm như bảng.
 
 ## Quy tắc chạy

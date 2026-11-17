@@ -72,3 +72,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-12_1400-paper-notes/` | Ghi chú chi tiết bài báo: công cụ, phương pháp, 3 bài mẫu |
 | `2026-11-12_1717-paper-notes/` | Ghi chú 46 PDF trong Drive (phiên phụ, WORKLIST), bước kết thúc do phiên chính làm |
 | `2026-11-13_typhoon-note/` | Ghi chú lại Typhoon (Liang 2008) từ bản đủ 18 trang |
+| `2026-11-17_1614-greenorbs-wildcam-notes/` | Ghi chú GreenOrbs (Liu 2013) và mạng camera 4G Natura 2000 (Kissling 2024) |

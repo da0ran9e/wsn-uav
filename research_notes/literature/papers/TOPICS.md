@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-13
+updated: 2026-11-17
 ---
 # Chủ đề → bài
 
@@ -151,6 +151,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `wsn-gathering` · gom dữ liệu trong WSN
 
+- [liu2013-greenorbs](liu2013-greenorbs.md) ★★ · Đo một mạng TelosB thu gom đa chặng (CTP) tới 330 node trong rừng suốt 29 ngày: dưới 10 % node nghẽn gánh 80 % lưu lượng và gây 61 % số gói mất, link vật lý ổn định nhưng tải cao thì yield rơi từ hơn 60 % xuống dưới 10 %, còn bảng định tuyến cố định cho yield ngang CTP động.
 - [tan2003-pedap](tan2003-pedap.md) ★ · PEDAP định tuyến gom dữ liệu theo cây khung nhỏ nhất (MST) với tổng hợp tại nút, PEDAP-PA là bản có tính năng lượng còn lại để cân tải; tuổi thọ mạng hơn LEACH 4–20 lần và hơn PEGASIS (định tuyến chuỗi) khoảng 3 lần, kể cả khi trạm gốc ở giữa vùng.
 
 ## `testbed` · thực nghiệm phần cứng, testbed
@@ -162,7 +163,9 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
 - [doddavenkatappa2013-splash](doddavenkatappa2013-splash.md) ★★ · Splash bỏ hẳn tranh chấp kênh bằng "tree pipelining": mỗi tầng của cây thu thập phát đồng thời cùng gói (giao thoa xây dựng) trên kênh riêng; ba vòng phát (đổi mật độ người phát, đổi kênh, vòng 3 là gói XOR) rồi khôi phục cục bộ; 32 KB trong ~25 s trên 139 nút, nhanh hơn DelugeT2 trung bình 21×.
 - [ferrari2012-lwb](ferrari2012-lwb.md) ★★ · LWB biến mạng đa chặng thành "bus chung": mọi trao đổi là một lần flood Glossy, các flood được lập lịch toàn cục theo vòng do một nút host tính và phát; không giữ trạng thái topo nên chịu được nhiễu, hỏng nút và nút di động; hỗ trợ 1–nhiều, nhiều–1, nhiều–nhiều với >99 % gói và duty cycle thấp.
+- [kissling2024-wildcam](kissling2024-wildcam.md) ★★ · Lắp 65 camera bẫy ảnh 4G chạy pin mặt trời trên 34 km² đụn cát ven biển Hà Lan (lưới 1 camera mỗi km², thêm tuyến khảo sát và cặp trong/ngoài rào), ảnh tự gửi về cổng dữ liệu rồi qua AI nhận loài; tổng chi phí 10 năm thấp hơn bẫy ảnh truyền thống 43 %.
 - [liang2008-typhoon](liang2008-typhoon.md) ★★ · Typhoon phổ biến đối tượng lớn tới mọi nút bằng bắt tay yêu cầu trang, truyền unicast có ACK từng gói kèm nghe lén, ưu tiên nút xa nguồn chuyển tiếp và đổi kênh ngẫu nhiên cho từng lần truyền trang; nhanh hơn Deluge tới khoảng 3× ở mạng thưa và mất gói nhiều, đổi lại lưu lượng điều khiển và dữ liệu gấp khoảng 3×.
+- [liu2013-greenorbs](liu2013-greenorbs.md) ★★ · Đo một mạng TelosB thu gom đa chặng (CTP) tới 330 node trong rừng suốt 29 ngày: dưới 10 % node nghẽn gánh 80 % lưu lượng và gây 61 % số gói mất, link vật lý ổn định nhưng tải cao thì yield rơi từ hơn 60 % xuống dưới 10 %, còn bảng định tuyến cố định cho yield ngang CTP động.
 - [nelson2007-vfield](nelson2007-vfield.md) ★★ · Dựng trường hướng đi mong muốn quanh đường thẳng và quỹ đạo tròn, điều khiển theo hướng đi (course) đo bằng GPS nên sai số tiệm cận về 0 khi gió không đổi (chứng minh Lyapunov, có bản sliding mode); bay thử: sai số trung bình < 1 sải cánh cho đường thẳng/quỹ đạo tròn, < 3 sải cánh khi đổi hướng liên tục, kể cả gió 50 % tốc độ không khí.
 - [park2007-guidance](park2007-guidance.md) ★★ · Luật dẫn L1: gia tốc ngang lệnh a_s = 2V²/L₁·sin η (V tốc độ mặt đất, η góc giữa vận tốc và đoạn L₁ tới điểm tham chiếu trên đường); quanh đường thẳng tương đương PD với ζ = 0,707, ω_n = √2·V/L₁; có tính dự đoán khi bám cung tròn, tự thích nghi với tốc độ mặt đất do gió; ổn định tiệm cận Lyapunov kể cả khi bão hoà gia tốc; bay thử sai số RMS 1,6 m trên quỹ đạo tròn.
 
@@ -170,3 +173,8 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [oubbati2023-rescue](oubbati2023-rescue.md) ★ · MARLF: nhóm UAV làm trạm gốc bay, giữ liên kết với nhau và với trạm mặt đất, theo dõi các thành viên cứu hộ di chuyển khó đoán; học quỹ đạo tiết kiệm năng lượng bằng MADDPG để tối đa số người được phủ và thông lượng; tốt hơn các phương pháp cơ sở (ví dụ 20 thành viên, 7 UAV).
 - [wang2025-fwcoverage](wang2025-fwcoverage.md) ★ · Mô hình DCCPP (phủ kín động) cho nhiều UAV cánh bằng: lồi hoá vùng, chia đường thành đường thao tác (quét), đường vào và đường chuyển vùng (nối bằng Dubins), phân vùng cho UAV bằng tham lam theo chỉ số phân bổ, tối ưu tổ hợp bằng quy hoạch động cải tiến (IDP), rồi nâng lên 3D theo địa hình bằng hạ độ cao; kiểm chứng mô phỏng và bán vật lý thực tế hỗn hợp.
+
+## `deployment` · triển khai thật ngoài hiện trường: quy mô, mật độ, diện tích, chi phí vận hành
+
+- [kissling2024-wildcam](kissling2024-wildcam.md) ★★ · Lắp 65 camera bẫy ảnh 4G chạy pin mặt trời trên 34 km² đụn cát ven biển Hà Lan (lưới 1 camera mỗi km², thêm tuyến khảo sát và cặp trong/ngoài rào), ảnh tự gửi về cổng dữ liệu rồi qua AI nhận loài; tổng chi phí 10 năm thấp hơn bẫy ảnh truyền thống 43 %.
+- [liu2013-greenorbs](liu2013-greenorbs.md) ★★ · Đo một mạng TelosB thu gom đa chặng (CTP) tới 330 node trong rừng suốt 29 ngày: dưới 10 % node nghẽn gánh 80 % lưu lượng và gây 61 % số gói mất, link vật lý ổn định nhưng tải cao thì yield rơi từ hơn 60 % xuống dưới 10 %, còn bảng định tuyến cố định cho yield ngang CTP động.

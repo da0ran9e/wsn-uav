@@ -156,6 +156,7 @@ Trường `topics` chỉ dùng các mã dưới đây; `paper_index.py` cảnh b
 | `wsn-gathering` | gom dữ liệu trong WSN |
 | `testbed` | thực nghiệm phần cứng, testbed |
 | `sar` | bối cảnh tìm kiếm cứu nạn, thảm hoạ |
+| `deployment` | triển khai thật ngoài hiện trường: quy mô, mật độ, diện tích, chi phí vận hành |
 
 ## 7. Mức liên quan và độ sâu đọc
 

@@ -335,3 +335,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 327 | 2026-11-17 | bối cảnh · thu vùng vừa một UAV; hỏi môi trường thật và cỡ cụm | [2026-11](2026-11.md) |
 | 328 | 2026-11-17 | quy tắc · tra ghi chú trong repo trước internet; nhắc ghi chú tài liệu mới | [2026-11](2026-11.md) |
 | 329 | 2026-11-17 | bối cảnh · tra mật độ node trong triển khai thật | [2026-11](2026-11.md) |
+| 330 | 2026-11-17 | nghiên cứu · ghi chú thêm GreenOrbs và mạng camera Natura 2000 | [2026-11](2026-11.md) |

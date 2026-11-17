@@ -338,3 +338,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 330 | 2026-11-17 | nghiên cứu · ghi chú thêm GreenOrbs và mạng camera Natura 2000 | [2026-11](2026-11.md) |
 | 331 | 2026-11-17 | nghiên cứu · ghi chú thêm ExScal, SmartSantander, CitySee | [2026-11](2026-11.md) |
 | 332 | 2026-11-17 | bối cảnh · kích thước vùng đô thị; kênh A2G, G2G có hợp lý không | [2026-11](2026-11.md) |
+| 333 | 2026-11-17 | bối cảnh · pháp lý UAV đô thị; mật độ và kênh G2G, giãn cách tối đa của lưới cell | [2026-11](2026-11.md) |

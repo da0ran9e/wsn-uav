@@ -83,7 +83,8 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   gian để đưa vào bài.
 - f. Số sự cố trong vòng đời mạng (để chia chi phí pha 0).
 - g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327), mật độ node thường gặp (mục 329),
-  kích thước vùng đô thị và kênh có hợp với đô thị không (mục 332). Đối chiếu ở mục 7, 8, 9.
+  kích thước vùng đô thị và kênh có hợp với đô thị không (mục 332), pháp lý UAV đô thị và giãn cách node
+  tối đa (mục 333). Đối chiếu ở mục 7–11.
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 
@@ -187,3 +188,48 @@ khoảng 2–5 tuỳ hình dạng phố [web]. Các chỗ chưa khớp:
   `papers/liu2013-greenorbs.md`]: node SmartSantander gắn cột đèn dùng hai module XBee-Pro 2,4 GHz, node dồn dày nhất ở
   vùng trung tâm khoảng 1 km² (tr. 10); ở GreenOrbs dưới 10 % số node gánh 80 % lưu lượng (tr. 8), cùng loại với nút cổ
   chai ở cell Bank mà trace River cho thấy.
+
+## 10. Mật độ node và lưới cell G2G (2026-11-17, mục 333)
+
+Tính Monte Carlo trên đúng kênh G2G của mô phỏng (10 dBm, số mũ 3,5, che khuất 7,8 dB mỗi cặp, Rayleigh; liên kết dùng được
+khi q ≥ 0,5, tốt khi q ≥ 0,9), cell R = 100 m, một cell giữa và 6 cell kề, 400 lần bốc. Script
+`paper/j1/analysis/g2g_density.py`, log `logs/2026-11-17_1500-g2g-density/`.
+
+| Giãn cách s | node/km² | node/cell | cell rỗng | cell liên thông không cần cầu | cặp cell kề có gateway dùng được / tốt | q gateway tốt nhất (trung vị) |
+|---|---|---|---|---|---|---|
+| 20 m | 2 500 | 65 | 0 % | 100 % | 100 % / 100 % | 1,000 |
+| 35 m (bài) | 816 | 21 | 0 % | 100 % | 100 % / 100 % | 0,998 |
+| 50 m | 400 | 10 | 0 % | 98 % | 99,8 % / 93 % | 0,987 |
+| 60 m | 278 | 7 | 0 % | 90 % | 98 % / 77 % | 0,967 |
+| 70 m | 204 | 5 | 0 % | 84 % | 90 % / 58 % | 0,928 |
+| 85 m | 138 | 3,6 | 3,5 % | 74 % | 70 % / 35 % | 0,817 |
+| 100 m | 100 | 2,6 | 5,8 % | 72 % | 53 % / 22 % | 0,679 |
+
+Nhận xét:
+- Giãn cách tối đa để lưới cell còn nguyên là khoảng 50–60 m (280–400 node/km², 7–10 node một cell). Từ 70 m, 10 % cặp
+  cell kề không còn gateway dùng được; từ 85 m lưới vỡ rõ. Bản ROUTING của uav-coop (tầm hình học 50 m) cũng thấy ở
+  giãn cách 50 m phải thêm 375 liên kết bắc cầu, 20 cầu dài hơn 100 m [repo: `uav-coop/docs/ROUTING-vi.md`].
+- Giới hạn này do tầm G2G quyết định (liên kết dùng được tới khoảng 96 m khi không có che khuất), không do R. Tăng R chỉ
+  thêm node vào cell, không làm hai node cách 100 m nối được nhau. Mức kiểu Dryad (100 node/km²) vì vậy không chạy được
+  với radio 2,4 GHz 10 dBm hiện tại dù tăng R; phải đổi radio (sub-GHz, công suất cao hơn) hoặc mô hình kênh.
+- Khi lưới còn liên thông, chi phí truyền trong cell gần như không đổi theo mật độ: hop trung vị 56–63 m, ETX khoảng 1,9
+  mỗi 100 m ở mọi giãn cách. Mật độ cao hơn chỉ thêm lựa chọn cặp gateway (q tốt nhất 0,998 so với 0,93) và độ bền khi
+  node hỏng. Mô hình không tính tranh chấp CSMA giữa nhiều node trong cell (mỗi cell một môi trường, một máy phát) và
+  không tính che khuất tương quan, vốn làm lợi ích chọn cặp nhỏ đi.
+- Mật độ còn quyết định xác suất nhận ở mức cell P_k của pha bay (ít node thì P_k thấp hơn); chưa tính ở đây.
+
+## 11. Pháp lý UAV ở đô thị (2026-11-17, mục 333, tra web)
+
+- Mỹ: luật BVLOS Part 108 gửi OIRA ngày 10/7/2026, tới tháng 11/2026 chưa ban hành; FAA mong ban hành trước cuối 2026,
+  áp dụng đầy đủ có thể sau đó khoảng một năm. Hiện bay ngoài tầm nhìn vẫn phải xin miễn trừ từng trường hợp.
+- EU: quy định U-space 2021/664 áp dụng từ 26/1/2023, nhưng tới nay mới có rất ít vùng U-space thật (một nguồn công nghiệp
+  nói chỉ một vùng hạn chế); Đức dự kiến trình luật chỉ định vùng U-space cuối 2026.
+- Trung Quốc: Luật Hàng không dân dụng sửa đổi có chương riêng cho UAV, hiệu lực 1/7/2026; chiến lược "kinh tế tầm thấp"
+  (dưới 3 000 m) khoảng 1,5 nghìn tỉ nhân dân tệ năm 2025, 2,7 triệu gói giao bằng UAV năm 2024; đồng thời Bắc Kinh siết
+  quy định địa phương.
+- Việt Nam: Luật Phòng không nhân dân 2024 (hiệu lực 1/7/2025) buộc đăng ký UAV; Nghị định 288/2025/NĐ-CP (hiệu lực
+  5/11/2025) quản lý tàu bay không người lái, theo một nguồn thì cấp phép bay trong khu cấm bay chỉ cho bay công vụ. Số
+  hiệu nghị định xử phạt (282 hay 288) lẫn lộn giữa các nguồn, cần đối chiếu văn bản gốc.
+- Xu hướng chung là mở đường cho bay thường xuyên ngoài tầm nhìn qua đăng ký, định danh từ xa và quản lý không lưu tầm
+  thấp (UTM, U-space), không phải bỏ bớt quản lý. Với bài: nhiệm vụ tìm kiếm cứu nạn hay an ninh là bay công vụ, nhóm dễ
+  được cấp phép nhất, kể cả ở đô thị.

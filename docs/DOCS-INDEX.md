@@ -33,7 +33,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (78): còn đúng, dùng để tra cứu nền
+## Tham khảo (81): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -63,6 +63,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/2026-11-12/08-ref-check.md`](../research_notes/literature/2026-11-12/08-ref-check.md) | 08 · Kiểm tra danh mục tài liệu tham khảo của đề cương SigDrop | 2026-11-12 |  |
 | [`research_notes/literature/papers/alhourani2014-lap.md`](../research_notes/literature/papers/alhourani2014-lap.md) | Al-Hourani, Kandeepan, Lardner 2014 · Độ cao tối ưu của nền tảng bay thấp để phủ sóng lớn nhất | 2026-11-12 |  |
 | [`research_notes/literature/papers/amodu2024-aoi.md`](../research_notes/literature/papers/amodu2024-aoi.md) | Amodu et al. 2024 · Khảo sát học tăng cường sâu để tối thiểu AoI khi UAV thu dữ liệu WSN/IoT | 2026-11-12 |  |
+| [`research_notes/literature/papers/arora2005-exscal.md`](../research_notes/literature/papers/arora2005-exscal.md) | Arora et al. 2005 · ExScal: mạng cảm biến không dây quy mô cực lớn | 2026-11-17 |  |
 | [`research_notes/literature/papers/babel2017-obstacles.md`](../research_notes/literature/papers/babel2017-obstacles.md) | Babel 2017 · Tour TSP có ràng buộc độ cong cho giám sát trên không khi có chướng ngại | 2026-11-12 |  |
 | [`research_notes/literature/papers/babel2020-dtspheur.md`](../research_notes/literature/papers/babel2020-dtspheur.md) | Babel 2020 · Heuristic mới cho Dubins TSP | 2026-11-12 |  |
 | [`research_notes/literature/papers/bensaoud2025-covopt.md`](../research_notes/literature/papers/bensaoud2025-covopt.md) | Ben Saoud, Nasraoui 2025 · Tối ưu vùng phủ cho hệ thống 5G/6G có UAV hỗ trợ | 2026-11-12 |  |
@@ -88,6 +89,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/li2023-coverage.md`](../research_notes/literature/papers/li2023-coverage.md) | Li et al. 2023 · Lập đường phủ cho nhiều robot Dubins: chính xác và heuristic | 2026-11-12 |  |
 | [`research_notes/literature/papers/li2025-turnspan.md`](../research_notes/literature/papers/li2025-turnspan.md) | Li et al. 2025 · Lập đường phủ cho UAV cánh bằng bằng chọn bước nhảy khi quay | 2026-11-12 |  |
 | [`research_notes/literature/papers/liang2008-typhoon.md`](../research_notes/literature/papers/liang2008-typhoon.md) | Liang, Musăloiu-E., Terzis 2008 · Typhoon: phổ biến dữ liệu tin cậy trong WSN | 2026-11-13 |  |
+| [`research_notes/literature/papers/liu2013-citysee.md`](../research_notes/literature/papers/liu2013-citysee.md) | Liu, Mao, He, Liu, Gong, Wang 2013 · CitySee: không chỉ là một mạng cảm biến | 2026-11-17 |  |
 | [`research_notes/literature/papers/liu2013-greenorbs.md`](../research_notes/literature/papers/liu2013-greenorbs.md) | Liu, He, Li, Wang, Liu, Li 2013 · Mạng cảm biến có mở rộng được không? Đo đạc trên GreenOrbs | 2026-11-17 |  |
 | [`research_notes/literature/papers/ma2006-receding.md`](../research_notes/literature/papers/ma2006-receding.md) | Ma, Castañón 2006 · Lập kế hoạch cuộn cho Dubins TSP | 2026-11-12 |  |
 | [`research_notes/literature/papers/matolak2017-a2g.md`](../research_notes/literature/papers/matolak2017-a2g.md) | Matolak, Sun 2017 · Kênh không–đất cho UAS, phần III: ngoại ô và cận đô thị | 2026-11-12 |  |
@@ -103,6 +105,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/penicka2017-dopn.md`](../research_notes/literature/papers/penicka2017-dopn.md) | Pěnička, Faigl, Váňa, Saska 2017 · Bài toán orienteering Dubins có lân cận (DOPN) | 2026-11-12 |  |
 | [`research_notes/literature/papers/penicka2019-datacoll.md`](../research_notes/literature/papers/penicka2019-datacoll.md) | Pěnička, Faigl, Saska, Váňa 2019 · Lập kế hoạch thu dữ liệu với khoảng cảm nhận khác 0 cho UAV có giới hạn quãng bay và độ cong (bản tạp chí DOPN) | 2026-11-12 |  |
 | [`research_notes/literature/papers/rathinam2007-multivehicle.md`](../research_notes/literature/papers/rathinam2007-multivehicle.md) | Rathinam, Sengupta, Darbha 2007 · Phân bổ mục tiêu cho nhiều xe có ràng buộc góc quay | 2026-11-12 |  |
+| [`research_notes/literature/papers/sanchez2014-smartsantander.md`](../research_notes/literature/papers/sanchez2014-smartsantander.md) | Sanchez et al. 2014 · SmartSantander: thử nghiệm IoT trên testbed thành phố thông minh | 2026-11-17 |  |
 | [`research_notes/literature/papers/savla2008-dtsp.md`](../research_notes/literature/papers/savla2008-dtsp.md) | Savla, Frazzoli, Bullo 2008 · Bài toán người du lịch cho xe Dubins | 2026-11-12 |  |
 | [`research_notes/literature/papers/shkel2001-dubinsset.md`](../research_notes/literature/papers/shkel2001-dubinsset.md) | Shkel, Lumelsky 2001 · Phân loại tập Dubins | 2026-11-12 |  |
 | [`research_notes/literature/papers/stojanovic2009-nccoop.md`](../research_notes/literature/papers/stojanovic2009-nccoop.md) | Stojanovic, Wu, Sharif, Starobinski 2009 · Phổ biến qua kênh quảng bá: network coding hay hợp tác | 2026-11-12 |  |

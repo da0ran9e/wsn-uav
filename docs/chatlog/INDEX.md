@@ -341,3 +341,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 333 | 2026-11-17 | bối cảnh · pháp lý UAV đô thị; mật độ và kênh G2G, giãn cách tối đa của lưới cell | [2026-11](2026-11.md) |
 | 334 | 2026-11-18 | bối cảnh · tiếp tục bàn bối cảnh | [2026-11](2026-11.md) |
 | 335 | 2026-11-18 | bối cảnh · không bó vào mật độ; kênh phức tạp dần; tìm người; giải bài chọn critical cell | [2026-11](2026-11.md) |
+| 336 | 2026-11-18 | kế hoạch · xem phần việc kỹ thuật của kế hoạch J1 | [2026-11](2026-11.md) |

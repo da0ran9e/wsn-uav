@@ -134,7 +134,7 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
     (5) chạy lại với tập tối ưu. Đầu ra: `assign.csv`, tập critical cell, đường đánh đổi, T\* so với Algorithm 3.
   - μ chưa có nguồn đo (mục 338): dùng mô hình theo bậc thiết bị của K12 và quét độ nhạy. Bước (1) làm được ngay.
   - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
-  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+  - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c); làm B2, B0, B1, B3 trước, B4 chờ duyệt · Báo cáo:
 - [ ] **K10** Mật độ phụ 400 và 280 node/km² (giãn cách 50 và 60 m, CONTEXT mục 4 và 10)
   - `uav-l2/tools/map_gen.py --spacing`; kiểm deploy, partition và chọn cặp gateway với cell 7–10 node, rồi chạy pha 1.
     Đầu ra: T\*, P_k mức cell và số cặp gateway theo mật độ.
@@ -142,7 +142,7 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
 - [ ] **K11** Cây dùng chung và lập kế hoạch cân tải (`--tree`, `uav-coop2/tools/river_lb.py`) đủ 5 seed của DLG (k8, r100)
   - Đầu vào: `paper/j1/draft-v1/analysis/run_lb.sh`, `lb_compare.py`, kết quả seed 1 ở `paper/j1/draft-v1/figs/lb-seed1.md`.
     Đầu ra: bảng 5 seed thay bảng một seed trong `paper/j1/draft-v1/README-vi.md` mục 9.
-  - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c) · Báo cáo:
+  - Trạng thái: chờ (tạm bỏ qua để làm K9, mục 341; cần build ns-3.46 có `--tree`) · Phiên: 2026-11-18 (session_01Anfb7c) · Báo cáo:
 
 - [ ] **K12** Khảo sát bộ nhớ và đối sánh ở node (chatlog mục 338, CONTEXT mục 14): lượng ảnh và khung có người mỗi giờ của
   camera đô thị, dung lượng nhớ của node camera rẻ, chính sách lưu của hệ phân tích video tại biên; mô hình μ (thời gian

@@ -90,3 +90,28 @@ Thứ tự: B0 và B2 làm song song ngay; B1 sau B0; B3 sau B1, B2; B4 cần du
 2. Tỉ lệ thời gian luồng nền được dùng (đề xuất 10–20 %).
 3. Duyệt B4: khoảng 4–5 giờ ns-3 trên 4 nhân của container hiện tại (bản build ns-3 và dữ liệu C4 vẫn còn trong container
    này; container mới thì phải build lại).
+
+## 8. Nhận xét kỹ thuật trước khi chạy (2026-11-18, chatlog mục 340–341)
+
+Đây là các giả thuyết cần thử nghiệm để chốt, chưa phải kết luận (mục 341). Mỗi điểm kèm cách kiểm trong các bước B1–B5.
+
+1. **Đối sánh lúc truy vấn có thể gần bằng 0 cả ở D1, D2.** AI node trích đặc trưng ngay khi ảnh tới (trước sự cố) và giữ
+   chỉ mục vector; lúc truy vấn chỉ trích đặc trưng bộ ảnh tham chiếu, so cosine (vài ms với 10⁵ vector) và kiểm lại một
+   nhóm ứng viên đầu bảng, không phụ thuộc M_k. Khi đó giá của ít critical cell nằm ở hai ràng buộc nền: AI node theo kịp
+   tốc độ ảnh tới (ρ × số camera × thời gian trích ≤ năng lực tính) và luồng nền G2G. Kiểm: B3 mô hình hai chế độ, trích
+   trước (mặc định) và trích lúc truy vấn (AI node ngủ để tiết kiệm pin), so đường đánh đổi của hai chế độ.
+2. **Loại dữ liệu đổi cả pha 2.** Vector do node thường trích bằng mô hình nhẹ (D3) kém chính xác hơn vector AI node trích
+   từ ảnh cắt (D2), nên nhiều ứng viên sai hơn và đội 2 thăm nhiều cell hơn. Kiểm: B5 thêm độ chính xác theo phương án
+   làm đầu vào của `l1_rank.py` (số liệu ở `research_notes/l1-signature-matching/`, `reports/l1-signature-matching.md`).
+3. **Surrogate T̂_River tính riêng từng critical cell, không thấy tranh chấp ở cell Bank và cell trung chuyển dùng
+   chung.** Bớt critical cell thì tải chung giảm phi tuyến. Kiểm: B3 dùng thêm mô hình tải mức cell của
+   `uav-coop2/tools/river_lb.py` (R² 0,89 với trace) làm thành phần thứ hai cho T_giao (tải lớn nhất × thời gian một khung);
+   B4 so cả hai với ns-3.
+4. **Tập critical cell đi vào cả tour, không chỉ kế hoạch River.** Algorithm 3 có bản sao `critical()` ở
+   `uav-l2/tools/meander_lane.py`, gọi ở `mission.py` (uốn chord) và `meander_lane.py`; `lm_tour.py` cũng chấm điểm theo
+   critical cell của thư mục CHORD. Kiểm: B2 nối `--crit` vào cả bước dựng tour, hồi quy giống từng byte cả file tour lẫn kế
+   hoạch.
+5. **D0 không cùng hệ với D1–D3.** Ở D0 camera của node thường không bao giờ được tìm. Kiểm: bảng kết quả thêm cột tỉ lệ camera
+   được tìm; D0 là mốc, không xếp hạng chung.
+6. **Hạ tầng.** Mục 7.3 đúng cho container của phiên viết kế hoạch; container khác phải build lại ns-3.46 (khoảng 30–45 phút,
+   dùng chung cho K11). B4 nên chờ K11 vì K11 quyết định binary và kế hoạch River.

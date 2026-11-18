@@ -23,19 +23,10 @@ Also: the largest assignment distance (cell hops; node hops about 2.7 per cell f
 second the busiest AI node must take in at rho = 200, fcam = 0.3.
 Writes OUT_PREFIX.csv (one row per AI set) and OUT_PREFIX.md (rho_max table).
 """
-import argparse, collections, csv, json, math, os
+import argparse, collections, csv, json, math, os, sys
 
 PKT, HT, HE, TAU = 99, 1.7, 1.5, 6.5e-3
 SIZES = {"D1": 40_000, "D2": 10_000, "D3": 528}
-
-ap = argparse.ArgumentParser()
-ap.add_argument("work"); ap.add_argument("out")
-ap.add_argument("--n", default="8,16,24,32,48,64,96,128")
-ap.add_argument("--fcam", default="0.1,0.3,1")
-ap.add_argument("--umax", default="0.1,0.2")
-A = ap.parse_args()
-W = A.work
-K = json.load(open(f"{W}/map.json"))["clusters"]
 
 
 def bfs(src, adj):
@@ -49,7 +40,7 @@ def bfs(src, adj):
 
 
 class Cluster:
-    def __init__(s, k):
+    def __init__(s, W, k):
         nodes = list(csv.DictReader(open(f"{W}/c{k}-nodes-s35.csv")))
         s.n = collections.Counter((int(x["q"]), int(x["r"])) for x in nodes)
         s.cells = sorted(s.n)
@@ -109,48 +100,60 @@ class Cluster:
         return fr, far, into
 
 
-cls = {k: Cluster(k) for k in range(1, K + 1)}
-import sys
-sys.path[:0] = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../uav-l2/tools"),
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../uav-coop2/tools")]
-from mission_report import load_map  # noqa: E402
-M = load_map(W, schemes=())
-alg3 = {k: list(M["cl"][k]["P"]["crit"]) for k in cls}
-total = sum(len(c.cells) for c in cls.values())
-sets = []
-for N in map(int, A.n.split(",")):
-    sets.append((f"N{N}", {k: c.medoids(max(1, round(N * len(c.cells) / total))) for k, c in cls.items()}))
-sets.append(("alg3", alg3))
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("work"); ap.add_argument("out")
+    ap.add_argument("--n", default="8,16,24,32,48,64,96,128")
+    ap.add_argument("--fcam", default="0.1,0.3,1")
+    ap.add_argument("--umax", default="0.1,0.2")
+    A = ap.parse_args()
+    W = A.work
+    K = json.load(open(f"{W}/map.json"))["clusters"]
+    cls = {k: Cluster(W, k) for k in range(1, K + 1)}
+    sys.path[:0] = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../uav-l2/tools"),
+                    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../uav-coop2/tools")]
+    from mission_report import load_map  # noqa: E402
+    M = load_map(W, schemes=())
+    alg3 = {k: list(M["cl"][k]["P"]["crit"]) for k in cls}
+    total = sum(len(c.cells) for c in cls.values())
+    sets = []
+    for N in map(int, A.n.split(",")):
+        sets.append((f"N{N}", {k: c.medoids(max(1, round(N * len(c.cells) / total))) for k, c in cls.items()}))
+    sets.append(("alg3", alg3))
 
-rows = []
-for name, S in sets:
-    u_max, far, into_max = 0.0, 0, 0.0
-    for k, c in cls.items():
-        fr, f, into = c.load(S[k])
-        u_max = max(u_max, max(fr.values()) * TAU)
-        far = max(far, f)
-        into_max = max(into_max, max(into.values()))
-    row = dict(set=name, ai=sum(map(len, S.values())), u_unit=u_max, far_cells=far, nodes_max=into_max)
-    rows.append(row)
+    rows = []
+    for name, S in sets:
+        u_max, far, into_max = 0.0, 0, 0.0
+        for k, c in cls.items():
+            fr, f, into = c.load(S[k])
+            u_max = max(u_max, max(fr.values()) * TAU)
+            far = max(far, f)
+            into_max = max(into_max, max(into.values()))
+        row = dict(set=name, ai=sum(map(len, S.values())), u_unit=u_max, far_cells=far, nodes_max=into_max)
+        rows.append(row)
 
-fc = [float(x) for x in A.fcam.split(",")]
-um = [float(x) for x in A.umax.split(",")]
-with open(A.out + ".csv", "w") as f:
-    w = csv.writer(f)
-    w.writerow(["set", "ai_cells", "u_per_Bps_per_node", "far_cells", "nodes_into_busiest_ai"] +
-               [f"rho_max_{d}_f{x:g}_u{u:g}" for d in SIZES for x in fc for u in um])
-    for r in rows:
-        w.writerow([r["set"], r["ai"], f"{r['u_unit']:.6g}", r["far_cells"], r["nodes_max"]] +
-                   [f"{u / (r['u_unit'] * x * SIZES[d]) * 3600:.4g}" for d in SIZES for x in fc for u in um])
-with open(A.out + ".md", "w") as f:
-    f.write(f"# Background flow to AI nodes: largest rho (people/h per camera) under the duty budget\n\n"
-            f"Map {os.path.basename(W.rstrip('/'))}, {total} cells, {sum(sum(c.n.values()) for c in cls.values())} nodes. "
-            f"Budget umax, camera share fcam. far: largest assignment distance in cells.\n\n")
-    for u in um:
-        for x in fc:
-            f.write(f"\n## umax {u:g}, fcam {x:g}\n\n| set | AI cells | far (cells) | nodes into busiest AI | "
-                    + " | ".join(f"rho_max {d}" for d in SIZES) + " |\n|" + "---|" * (4 + len(SIZES)) + "\n")
-            for r in rows:
-                f.write(f"| {r['set']} | {r['ai']} | {r['far_cells']} | {r['nodes_max']} | "
-                        + " | ".join(f"{u / (r['u_unit'] * x * SIZES[d]) * 3600:.3g}" for d in SIZES) + " |\n")
-print(open(A.out + ".md").read())
+    fc = [float(x) for x in A.fcam.split(",")]
+    um = [float(x) for x in A.umax.split(",")]
+    with open(A.out + ".csv", "w") as f:
+        w = csv.writer(f)
+        w.writerow(["set", "ai_cells", "u_per_Bps_per_node", "far_cells", "nodes_into_busiest_ai"] +
+                   [f"rho_max_{d}_f{x:g}_u{u:g}" for d in SIZES for x in fc for u in um])
+        for r in rows:
+            w.writerow([r["set"], r["ai"], f"{r['u_unit']:.6g}", r["far_cells"], r["nodes_max"]] +
+                       [f"{u / (r['u_unit'] * x * SIZES[d]) * 3600:.4g}" for d in SIZES for x in fc for u in um])
+    with open(A.out + ".md", "w") as f:
+        f.write(f"# Background flow to AI nodes: largest rho (people/h per camera) under the duty budget\n\n"
+                f"Map {os.path.basename(W.rstrip('/'))}, {total} cells, {sum(sum(c.n.values()) for c in cls.values())} nodes. "
+                f"Budget umax, camera share fcam. far: largest assignment distance in cells.\n\n")
+        for u in um:
+            for x in fc:
+                f.write(f"\n## umax {u:g}, fcam {x:g}\n\n| set | AI cells | far (cells) | nodes into busiest AI | "
+                        + " | ".join(f"rho_max {d}" for d in SIZES) + " |\n|" + "---|" * (4 + len(SIZES)) + "\n")
+                for r in rows:
+                    f.write(f"| {r['set']} | {r['ai']} | {r['far_cells']} | {r['nodes_max']} | "
+                            + " | ".join(f"{u / (r['u_unit'] * x * SIZES[d]) * 3600:.3g}" for d in SIZES) + " |\n")
+    print(open(A.out + ".md").read())
+
+
+if __name__ == "__main__":
+    main()

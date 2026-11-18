@@ -4,7 +4,7 @@ updated: 2026-11-18
 ---
 # J1 · Bối cảnh, thực thể và tham số của bài toán
 
-File mô tả chung cho J1 (chatlog mục 323–327). Đây là bản thử nghiệm, chốt dần qua thảo luận, không sửa đề cương. Phần
+File mô tả chung cho J1 (chatlog mục 323–335). Đây là bản thử nghiệm, chốt dần qua thảo luận, không sửa đề cương. Phần
 phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa trên file này. Mỗi mục ghi trạng thái: **chốt**
 (người dùng đã quyết), **đề xuất** (Claude đề xuất, chờ duyệt), **mở** (còn phải bàn).
 
@@ -12,11 +12,11 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 
 | Mục | Nội dung | Trạng thái |
 |---|---|---|
-| Vùng nhiệm vụ | Khu vực địa hình phức tạp (núi, rừng, thung lũng) trong một vườn quốc gia. Vì J1 chỉ xét một UAV, vùng thử nghiệm thu lại vừa đủ cho một UAV làm trong một chuyến bay (mục 327); ước lượng ở mục 7 | chốt |
-| Vì sao khó | Địa hình che khuất và tán rừng làm kênh từ trên không xuống yếu và biến động; vùng không có mạng di động | chốt |
+| Vùng nhiệm vụ | Vùng rộng có mạng IoT dày đặc (camera, cảm biến), không gắn với một loại địa hình hay mật độ cụ thể (mục 335). Môi trường khác nhau đi vào bài qua mô hình kênh, và kênh là phần sẽ làm phức tạp dần. Vì J1 chỉ xét một UAV, vùng thử nghiệm thu lại vừa đủ cho một UAV làm trong một chuyến bay (mục 327) | chốt |
+| Vì sao khó | Kênh từ trên không xuống bị che khuất (địa hình, tán cây, nhà cửa) nên yếu và biến động; không có hạ tầng di động đủ băng thông để đẩy truy vấn | chốt |
 | Thiết bị | Nhiều thiết bị IoT có sẵn: camera, cảm biến; phần lớn là node yếu, một số node mạnh chạy được AI | chốt |
-| Sự cố | Bất kỳ sự cố nào cần tìm kiếm (người lạc, truy vết đối tượng); mạng phục vụ nhiều lượt truy vấn trong suốt vòng đời | chốt |
-| Phân bố thiết bị | Rải ngẫu nhiên, càng đều càng tốt, phủ cả vùng (mục 325). Mật độ tạm giữ như bản hội nghị, xem mục 4 | chốt |
+| Sự cố | Mục tiêu điển hình là tìm người (mục 335): truy vấn là bộ ảnh tham chiếu của người cần tìm, AI node đối sánh với ảnh camera đã gửi về; mạng phục vụ nhiều lượt truy vấn trong suốt vòng đời | chốt |
+| Phân bố thiết bị | Rải ngẫu nhiên, càng đều càng tốt, phủ cả vùng (mục 325). Mật độ giữ như bản hội nghị (khoảng 816 node/km²) như giả định hướng tới: mạng dày chưa phổ biến nhưng nhiều khả năng sớm có (mục 335); chạy thêm vài mức để xem độ nhạy | chốt |
 | Vì sao cần UAV | Qua LoRa mất ít nhất 1,8 h; qua mạng mặt đất từ trạm gốc thì nhanh nhất cỡ 1–2,5 phút nếu giao thức đồng bộ tốt nhất mở rộng được tới 50–95 chặng, còn giao thức thường mất 20 phút tới hàng giờ (mục 12) | đề xuất (đã có phép tính) |
 
 ## 2. Thực thể
@@ -42,8 +42,8 @@ Trạm gốc chọn một số AI node trong số các node mạnh, ở pha 0. T
 (cây che, địa hình, che khuất), và các AI node không được quá gần nhau. Cell chứa AI node được chọn là CC. Bài toán
 chọn này giống bài toán đặt cơ sở (mở cửa hàng nhượng quyền sao cho tổng lợi ích lớn mà các cửa hàng không giành khách
 của nhau). Trong tài liệu đây là họ facility location có ràng buộc khoảng cách tối thiểu, gần với p-dispersion và
-maximum coverage (cần tra cứu thêm). **Trạng thái:** chốt (cách hiểu), mở (hàm mục tiêu cụ thể, J1 coi tập CC là đầu
-vào hay giải luôn).
+maximum coverage (cần tra cứu thêm). **Trạng thái:** chốt (cách hiểu; J1 giải luôn bài này, mục 335), đề xuất (phát biểu ở
+mục 13).
 
 ## 4. Tham số
 
@@ -54,9 +54,9 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 |---|---|---|---|
 | Diện tích vùng | 617 cell ≈ 16 km² (bản đồ k8) | vừa một chuyến bay của một UAV; ước lượng thô khoảng 100 km², cỡ 50 cụm (mục 7) | chốt (nguyên tắc), mở (con số) |
 | Số cell | 617 | khoảng 4 000 nếu 100 km² và giữ R = 100 m | mở (giữ R hay tăng R) |
-| Mật độ node | khoảng 21 node một cell (13 086 node) | tạm giữ như bản hội nghị; chỉnh dần theo kết quả thực nghiệm, hoặc chạy và công bố kết quả ở vài mức mật độ (mục 326) | chốt (tạm thời) |
-| Số CC | 45 CC trên 8 cụm (k8) | theo bài toán chọn CC | mở |
-| Kênh A2G | mô hình hai đoạn, thêm suy hao môi trường cố định, Rician K = 2 | thêm che khuất tương quan, fading tương quan, phụ thuộc góc ngẩng (việc K1) | đề xuất |
+| Mật độ node | khoảng 21 node một cell (13 086 node) | giữ khoảng 816 node/km² làm mức chính (hướng tới, mục 335); thêm 400 và 280 node/km² để xem độ nhạy (vẫn trong vùng lưới cell liên thông, mục 10) | chốt (mức chính), đề xuất (mức phụ) |
+| Số CC | 45 CC trên 8 cụm (k8), cho sẵn theo bản đồ | J1 giải bài chọn CC (mục 335), số CC là một phần lời giải | chốt |
+| Kênh A2G, G2G | A2G hai đoạn + suy hao môi trường cố định, Rician K = 2; G2G 3GPP UMi NLoS | làm phức tạp dần theo từng bước (mục 335): LoS phụ thuộc góc ngẩng, che khuất tương quan, fading tương quan, cấu trúc phố hay địa hình cho G2G (mục 9; việc K1) | chốt (hướng), đề xuất (thứ tự bước) |
 | UAV cánh bằng | 1 chiếc, 25–50 m/s, H = 100 m, ρ = 63,7 m | vẫn 1 chiếc, giữ động học; thời gian bay tối đa một chuyến và điểm cất hạ cánh còn mở | chốt (1 UAV) |
 | Số truy vấn trong vòng đời mạng | 1 | nhiều; dùng để chia chi phí pha 0 | chốt (nhiều), mở (bao nhiêu) |
 
@@ -74,11 +74,11 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 
 ## 6. Câu hỏi mở
 
-- a. Giữ R = 100 m hay tăng R? (mật độ đã trả lời ở mục 326: tạm giữ, thử vài mức)
+- a. Giữ R = 100 m: mục 10 cho thấy giới hạn giãn cách do tầm G2G quyết định, không do R; mật độ chính giữ như bản hội
+  nghị (mục 335).
 - b. Đã trả lời (mục 327): một chuyến bay, vùng thu lại cho vừa. Còn mở: chọn sức bền bao nhiêu (mục 7 gợi ý 1,5 h).
 - c. Đã trả lời (mục 326): một UAV; nhiều UAV để sau, mục tiêu min-max, phối hợp chứ không chia việc.
-- d. Mục tiêu tìm kiếm điển hình là gì (người lạc, động vật, đối tượng)? Câu trả lời quyết định mỗi phút chậm trễ đáng
-  giá bao nhiêu.
+- d. Đã trả lời (mục 335): tìm người.
 - e. Vì sao không phát truy vấn từ trạm gốc qua mạng mặt đất hay qua LoRa: phép tính ở mục 12 (mục 334). Còn mở: cách
   bài đối đáp với kiểu flood đồng bộ (Pando).
 - f. Số sự cố trong vòng đời mạng (để chia chi phí pha 0).
@@ -274,3 +274,36 @@ Nhận xét:
   ở độ sâu lớn và qua địa hình che khuất, và năng lượng (flood gửi 400 KB tới mọi node, River chỉ dùng các cell trên
   đường và quanh critical cell). ns-3 lr-wpan không mô phỏng được giao thoa xây dựng của Glossy, nên so trực tiếp phải
   dùng mô hình hoặc số đo của các bài trên.
+
+## 13. Bài chọn critical cell: phát biểu đề xuất (2026-11-18, mục 335)
+
+J1 giải cả bài chọn critical cell (mục 335). Đây là đề xuất để bàn, chưa chốt.
+
+**Bối cảnh tìm người.** Trước sự cố, node thường gửi ảnh camera về AI node phụ trách. Khi có sự cố, trạm gốc phát truy
+vấn (ảnh tham chiếu của người cần tìm); mỗi AI node nhận đủ truy vấn rồi đối sánh với ảnh nó giữ, báo điểm về trạm gốc.
+Thời gian quan trọng là lúc AI node cuối cùng đối sánh xong, vì người cần tìm có thể ở vùng của bất kỳ AI node nào.
+
+**Biến và dữ liệu.** Tập ứng viên V_s (node mạnh, năng lực c_v, bộ nhớ M_v, tốc độ đối sánh μ_v); node thường V_o, mỗi
+node u sinh d_u ảnh trong cửa sổ lưu W; khoảng cách chặng h(u, v) trên đồ thị G2G. Biến y_v ∈ {0, 1} (mở AI node v), x_uv
+∈ {0, 1} (giao node u cho v). Cell chứa ít nhất một AI node mở là critical cell.
+
+**Ràng buộc.** Mỗi node thường giao cho đúng một AI node mở, cách không quá H chặng (giới hạn luồng nền); tổng ảnh giao
+cho v không vượt M_v; hai AI node mở cách nhau ít nhất D_min (ý "không giành khách nhau" ở mục 3; có thể bỏ nếu ràng
+buộc bộ nhớ và chặng đã đủ giữ chúng tách nhau).
+
+**Mục tiêu.** Cực tiểu thời điểm xong của lượt truy vấn: max_k [T_giao,k(K) + T_đối sánh,k], trong đó T_giao,k là lúc
+critical cell k nhận đủ truy vấn (phụ thuộc cả tập K qua tour và River), T_đối sánh,k = (ảnh giao cho k) / μ_k.
+
+**Đánh đổi chính.** Ít critical cell thì việc giao truy vấn nhẹ (ít Ring, Λ\* nhỏ, River ngắn) nhưng mỗi AI node giữ nhiều
+ảnh hơn nên đối sánh lâu hơn, luồng nền đi xa hơn, cần nhiều bộ nhớ hơn. Nhiều critical cell thì ngược lại. Vì vậy có số
+critical cell tối ưu ở giữa; đặt chúng gần đường bay hay gần nhau cũng làm giao nhanh hơn nhưng làm đối sánh lệch tải.
+
+**Cách giải đề xuất.** T_giao,k(K) không có dạng đóng, nên tách hai tầng: (1) pha 0 chọn K bằng một hàm thay thế cho
+T_giao (công thức surrogate T̂_River đã khớp từ số đo, hoặc khoảng cách tới đường bay và lượng thiếu dự kiến), cộng
+T_đối sánh, giải bằng heuristic kiểu facility location có sức chứa (tìm kiếm cục bộ đổi mở/đóng); (2) pha 1 giữ nguyên
+CHORD/LM-Tour + River cho tập K đã chọn, đo T\* bằng ns-3. Bài chọn K chứa facility location có sức chứa nên NP-khó
+(trích chuẩn khi viết).
+
+**Cần quyết hoặc cần số liệu:** tốc độ đối sánh μ (thời gian đối sánh một ảnh trên node mạnh; chưa có số re-ID trên MCU,
+xem `research_notes/literature/2026-11-12/06-deployment.md`), lượng ảnh mỗi camera trong cửa sổ W, giá trị H và có giữ
+D_min hay không, và mục tiêu dùng max (như đề xuất) hay có trọng số theo xác suất người ở vùng đó.

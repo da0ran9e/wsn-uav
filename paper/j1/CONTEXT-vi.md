@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-17
+updated: 2026-11-18
 ---
 # J1 · Bối cảnh, thực thể và tham số của bài toán
 
@@ -17,7 +17,7 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 | Thiết bị | Nhiều thiết bị IoT có sẵn: camera, cảm biến; phần lớn là node yếu, một số node mạnh chạy được AI | chốt |
 | Sự cố | Bất kỳ sự cố nào cần tìm kiếm (người lạc, truy vết đối tượng); mạng phục vụ nhiều lượt truy vấn trong suốt vòng đời | chốt |
 | Phân bố thiết bị | Rải ngẫu nhiên, càng đều càng tốt, phủ cả vùng (mục 325). Mật độ tạm giữ như bản hội nghị, xem mục 4 | chốt |
-| Vì sao cần UAV | Truy vấn khoảng 400 KB không đẩy được qua LoRa hay phát đa chặng từ trạm gốc trong thời gian chấp nhận được | đề xuất (cần một phép tính thời gian) |
+| Vì sao cần UAV | Qua LoRa mất ít nhất 1,8 h; qua mạng mặt đất từ trạm gốc thì nhanh nhất cỡ 1–2,5 phút nếu giao thức đồng bộ tốt nhất mở rộng được tới 50–95 chặng, còn giao thức thường mất 20 phút tới hàng giờ (mục 12) | đề xuất (đã có phép tính) |
 
 ## 2. Thực thể
 
@@ -79,8 +79,8 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - c. Đã trả lời (mục 326): một UAV; nhiều UAV để sau, mục tiêu min-max, phối hợp chứ không chia việc.
 - d. Mục tiêu tìm kiếm điển hình là gì (người lạc, động vật, đối tượng)? Câu trả lời quyết định mỗi phút chậm trễ đáng
   giá bao nhiêu.
-- e. Vì sao không phát truy vấn từ trạm gốc qua mạng mặt đất (đa chặng 802.15.4) hay qua LoRa: cần một phép tính thời
-  gian để đưa vào bài.
+- e. Vì sao không phát truy vấn từ trạm gốc qua mạng mặt đất hay qua LoRa: phép tính ở mục 12 (mục 334). Còn mở: cách
+  bài đối đáp với kiểu flood đồng bộ (Pando).
 - f. Số sự cố trong vòng đời mạng (để chia chi phí pha 0).
 - g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327), mật độ node thường gặp (mục 329),
   kích thước vùng đô thị và kênh có hợp với đô thị không (mục 332), pháp lý UAV đô thị và giãn cách node
@@ -233,3 +233,44 @@ Nhận xét:
 - Xu hướng chung là mở đường cho bay thường xuyên ngoài tầm nhìn qua đăng ký, định danh từ xa và quản lý không lưu tầm
   thấp (UTM, U-space), không phải bỏ bớt quản lý. Với bài: nhiệm vụ tìm kiếm cứu nạn hay an ninh là bay công vụ, nhóm dễ
   được cấp phép nhất, kể cả ở đô thị.
+
+## 12. Vì sao cần UAV: gửi truy vấn qua LoRa hay qua mạng mặt đất mất bao lâu (2026-11-18, mục 334)
+
+Truy vấn 400 KB (409 600 B). Mốc so sánh: trên bản đồ k8, r100, critical cell cuối cùng của CHORD + River xong khoảng
+746 s (12,4 phút) sau khi cất cánh [repo: `paper/j1/draft-v1/`].
+
+**LoRa từ trạm gốc tới các CH** (thời gian phát theo công thức Semtech, BW 125 kHz, CR 4/5, gói lớn nhất của từng SF; giả
+định lạc quan: mọi CH nằm trong tầm, một lần phát tới tất cả, không mất gói):
+
+| SF, cỡ gói | Thời gian phát thuần | Chu kỳ 10 % (băng 869,4–869,65 MHz) | Chu kỳ 1 % (băng 868,0–868,6 MHz) |
+|---|---|---|---|
+| SF7, 222 B | 10,7 phút | 1,8 h | 17,9 h |
+| SF9, 115 B | 36,5 phút | 6,1 h | 61 h |
+| SF12, 51 B | 5,5 h | 55 h | 23 ngày |
+
+SF7 có tầm ngắn nhất, nên trường hợp tốt nhất 1,8 h khó giữ được ở địa hình che khuất. Tới CH rồi vẫn còn phải truyền mặt
+đất trong cụm như River. LoRa vì vậy chỉ hợp để gửi kết quả vài byte về trạm gốc (đúng vai trò hiện có).
+
+**Mạng mặt đất 802.15.4 từ trạm gốc.** Trên k8, trạm gốc cách cell gần nhất 1,08 km, tức không có đường mặt đất nếu không
+thêm trạm chuyển tiếp. Critical cell cách trạm gốc 1,1–6,3 km (trung vị 3,7 km), 18 cell (trung vị) tới 35 cell; với
+khoảng 2,7 chặng node mỗi cell (1,7 trong cell cộng 1 qua cặp gateway, số đo trace River) là khoảng 50–95 chặng [mới tính].
+Tốc độ phổ biến của các giao thức đã đo, quy ra 400 KB (gấp 12,5 lần tệp 32 KB) [repo: ghi chú bài báo]:
+
+| Giao thức | Số đo gốc | Quy ra 400 KB | Testbed |
+|---|---|---|---|
+| Pando (flood đồng bộ + fountain) | 32 KB trong 5,7–11,4 s | 1,2–2,4 phút | FlockLab 31 nút, Indriya 99 nút |
+| Splash (flood đồng bộ, pipeline cây) | 32 KB trong khoảng 25 s | khoảng 5 phút | Indriya 139 nút, tới 9 chặng |
+| Typhoon | 20 KB trong 54–75 s | 18–25 phút | TOSSIM lưới 20 × 20; 22 mote |
+| Deluge gốc | 88,4 B/s | khoảng 77 phút | 75 Mica2-dot |
+| DelugeT2 (quy đổi trên Indriya) | 32 KB khoảng 373 s | khoảng 78 phút | Indriya |
+
+Nhận xét:
+- Mọi số trên đo ở mạng tới khoảng 9 chặng; mạng của bài sâu 50–95 chặng. Tôi chưa thấy số đo của flood đồng bộ (Pando,
+  Splash) ở độ sâu đó. Ghi chú GreenOrbs cho thấy tỉ lệ gói tới đích rơi từ 0,72 (1 chặng) xuống 0,12 (8 chặng) ở mạng
+  công suất thấp trong rừng, và CitySee ghi tải dồn quanh sink ở mạng 21 chặng [repo].
+- Giao thức CSMA thường (Typhoon, Deluge) cần 20 phút tới hơn một giờ, chậm hơn UAV nhiều.
+- Flood đồng bộ kiểu Pando là đối thủ thật: nếu nó giữ được tốc độ ở 50–95 chặng thì nhanh ngang hoặc hơn UAV. Lập luận
+  của bài khi đó phải dựa vào: không có đường mặt đất từ trạm gốc (phải dựng chuỗi chuyển tiếp), độ bền của flood đồng bộ
+  ở độ sâu lớn và qua địa hình che khuất, và năng lượng (flood gửi 400 KB tới mọi node, River chỉ dùng các cell trên
+  đường và quanh critical cell). ns-3 lr-wpan không mô phỏng được giao thoa xây dựng của Glossy, nên so trực tiếp phải
+  dùng mô hình hoặc số đo của các bài trên.

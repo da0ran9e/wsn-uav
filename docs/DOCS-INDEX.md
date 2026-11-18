@@ -15,7 +15,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/SIM-REPORT-2026-10-31-vi.md`](../paper/SIM-REPORT-2026-10-31-vi.md) | Báo cáo giả lập 30–31/10/2026: vận chuyển mặt đất trên pass CHORD cố định và sai số quỹ đạo | 2026-10-31 |  |
 | [`paper/SIM-REPORT-2026-11-01-takeover-vi.md`](../paper/SIM-REPORT-2026-11-01-takeover-vi.md) | Báo cáo mô phỏng 2026-11-01: cơ chế takeover (dấu ranh giới) cho River khi đường bay lệch | 2026-11-01 |  |
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
-| [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-17 |  |
+| [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-18 |  |
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
 | [`paper/j1/PLAN-TRACKS-vi.md`](../paper/j1/PLAN-TRACKS-vi.md) | Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật | 2026-11-14 |  |

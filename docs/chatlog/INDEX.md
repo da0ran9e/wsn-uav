@@ -345,3 +345,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 337 | 2026-11-18 | kế hoạch · sửa PLAN-TRACKS (K9, K10, K11, tách K1); nhận K11 LB 5 seed | [2026-11](2026-11.md) |
 | 338 | 2026-11-18 | bối cảnh · đô thị cao tầng; mục tiêu tổng pha 1 + pha 2; bỏ D_min; bộ nhớ camera và chính sách giữ/bỏ | [2026-11](2026-11.md) |
 | 339 | 2026-11-18 | kế hoạch · kế hoạch chi tiết thử phương án dữ liệu gửi về AI node và số critical cell | [2026-11](2026-11.md) |
+| 340 | 2026-11-18 | kế hoạch · kế hoạch mới cho đánh đổi số critical cell (PLAN-K9-DATA) | [2026-11](2026-11.md) |

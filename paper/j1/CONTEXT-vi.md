@@ -87,7 +87,8 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   tối đa (mục 333). Đối chiếu ở mục 7–11.
 - h. Đã trả lời (mục 343): hướng 1 (node chỉ có 802.15.4) và hướng 4 (giữ dữ liệu tại chỗ). Lập luận ở mục 15.
 - i. (mục 342) Ai sở hữu và vận hành mạng, ai chạy pha 0, thiết bị của chủ khác nhau có tham gia không.
-- j. (mục 342) Người cần tìm di chuyển: cửa sổ thời gian truy vấn, ảnh bao lâu thì hết giá trị, giới hạn thời gian nhiệm vụ.
+- j. Phần lớn đã trả lời (mục 344): không giới hạn thời gian, tìm tới khi thấy (chỉ bị chặn bởi năng lượng UAV); camera
+  trả lời "thấy người trông giống mục tiêu". Còn mở: độ dài cửa sổ truy vấn (mục 16).
 - k. (mục 342) Pha 2 ở đô thị cao tầng: UAV cánh quay bay thấp giữa nhà, xác minh nghĩa là gì (tới chỗ camera, nhận ảnh
   cắt qua UAV, hay báo người đến hiện trường).
 - l. (mục 342) Vận hành UAV ở đô thị: điểm cất cánh, độ cao bay khi có nhà cao hơn 100–120 m, vùng cấm bay, sức bền.
@@ -374,3 +375,37 @@ riêng tư (hướng 4). Kịch bản là khu đô thị nhiều chuông cửa, 
   nói rõ căn cứ (tình huống khẩn cấp, chủ thiết bị đồng ý khi tham gia).
 - Câu i có hướng trả lời: chủ thiết bị tham gia một mạng dùng chung kiểu Sidewalk, một bên vận hành (thành phố hay nhà cung
   cấp) chạy pha 0.
+
+## 16. Cửa sổ truy vấn, kiểu trả lời của camera, giới hạn thời gian (2026-11-18, mục 344)
+
+**Đã chốt:** nhiệm vụ không giới hạn thời gian, tìm tới khi thấy, chỉ bị chặn bởi năng lượng (sức bền) của UAV. Camera trả
+lời "tôi thấy người (hay vật) trông giống mục tiêu", tức một điểm giống, đúng như mô hình lớp 1 hiện có (`paper/L1-MODEL-vi.md`:
+node báo điểm cao nhất của nó).
+
+**Cửa sổ 1–2 giờ so với 1 ngày.** Tính trên mô hình có sẵn trong repo (`uav-l2/tools/l1_mission.py`: điểm người lạ ~ N(0, 1),
+điểm mục tiêu ~ N(4,43; 1,30) khớp từ Market-1501, vector ResNet-50 2048 chiều fp16, `match_time`). Ví dụ một AI node
+phụ trách 100 camera, mỗi camera 60 người/h (giả định minh hoạ, chờ khảo sát ở K12):
+
+| Cửa sổ | Số người trong kho M | Thời gian tìm khi đã có vector | Chỉ mục | Trích vector khi truy vấn tới (Hailo / Pi 5 CPU) | Ngưỡng để 10 % AI node báo nhầm | Xác suất bắt được mục tiêu: 1 ảnh / 3 ảnh |
+|---|---|---|---|---|---|---|
+| 1 h | 6 000 | 3 ms | 25 MB | 0,4 phút / 0,13 h | 4,15 | 0,59 / 0,93 |
+| 2 h | 12 000 | 6 ms | 49 MB | 0,8 phút / 0,26 h | 4,31 | 0,54 / 0,90 |
+| 6 h | 36 000 | 18 ms | 147 MB | 2,3 phút / 0,79 h | 4,54 | 0,47 / 0,85 |
+| 24 h | 144 000 | 74 ms | 590 MB | 9,3 phút / 3,2 h | 4,83 | 0,38 / 0,76 |
+
+Nhận xét:
+- Nếu vector được tính ngay khi ảnh tới (ở camera hay ở AI node), thời gian tìm chỉ vài chục ms và chỉ mục vài trăm MB, nên
+  cửa sổ dài không làm chậm. Nếu chỉ trích vector khi truy vấn tới thì cửa sổ 1 ngày tốn 9 phút trên Hailo, hơn 3 giờ trên
+  CPU. Vì vậy D1/D2 nên trích vector dần khi ảnh tới.
+- Cái mất thật khi cửa sổ dài là độ phân biệt: kho càng nhiều người lạ thì người lạ giống nhất càng giống, phải nâng ngưỡng
+  để giữ cùng tỉ lệ báo nhầm, nên xác suất bắt được mục tiêu từ một ảnh giảm từ 0,59 (1 h) xuống 0,38 (24 h). Có nhiều ảnh
+  của mục tiêu thì đỡ hơn (0,93 xuống 0,76 với 3 ảnh).
+- Cửa sổ dài thấy được nhiều chỗ người đó từng qua, nhưng lần thấy cũ ít giúp tìm người ở hiện tại. Đề xuất: báo cáo kèm
+  thời điểm thấy (thêm vài byte), trạm gốc xếp hạng nghi vấn theo cả độ giống lẫn độ mới; pha 2 xác minh lần thấy mới nhất
+  trước.
+- Số liệu mô hình khớp từ bộ dữ liệu phòng thí nghiệm, nên độ phân biệt ngoài thực tế có thể kém hơn; xu hướng (dài hơn thì
+  phân biệt kém hơn) vẫn đúng.
+
+**Hệ quả cho mục tiêu.** Không giới hạn thời gian thì mục tiêu là tối thiểu thời gian tới khi xác minh đúng người (T1 + T2
+như mục 13), với ràng buộc sức bền của hai UAV; nếu một chuyến không đủ thì cần mô hình hạ cánh thay pin. Còn mở: cửa sổ
+truy vấn mặc định (đề xuất 2 giờ, quét 1–24 giờ ở K12/K9).

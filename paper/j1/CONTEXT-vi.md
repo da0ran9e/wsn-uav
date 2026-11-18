@@ -88,7 +88,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - h. Đã trả lời (mục 343): hướng 1 (node chỉ có 802.15.4) và hướng 4 (giữ dữ liệu tại chỗ). Lập luận ở mục 15.
 - i. (mục 342) Ai sở hữu và vận hành mạng, ai chạy pha 0, thiết bị của chủ khác nhau có tham gia không.
 - j. Phần lớn đã trả lời (mục 344): không giới hạn thời gian, tìm tới khi thấy (chỉ bị chặn bởi năng lượng UAV); camera
-  trả lời "thấy người trông giống mục tiêu". Còn mở: độ dài cửa sổ truy vấn (mục 16).
+  trả lời "thấy người trông giống mục tiêu". Cửa sổ mặc định 2 giờ (mục 345).
 - k. (mục 342) Pha 2 ở đô thị cao tầng: UAV cánh quay bay thấp giữa nhà, xác minh nghĩa là gì (tới chỗ camera, nhận ảnh
   cắt qua UAV, hay báo người đến hiện trường).
 - l. (mục 342) Vận hành UAV ở đô thị: điểm cất cánh, độ cao bay khi có nhà cao hơn 100–120 m, vùng cấm bay, sức bền.
@@ -407,5 +407,30 @@ Nhận xét:
   phân biệt kém hơn) vẫn đúng.
 
 **Hệ quả cho mục tiêu.** Không giới hạn thời gian thì mục tiêu là tối thiểu thời gian tới khi xác minh đúng người (T1 + T2
-như mục 13), với ràng buộc sức bền của hai UAV; nếu một chuyến không đủ thì cần mô hình hạ cánh thay pin. Còn mở: cửa sổ
-truy vấn mặc định (đề xuất 2 giờ, quét 1–24 giờ ở K12/K9).
+như mục 13), với ràng buộc sức bền của hai UAV; nếu một chuyến không đủ thì cần mô hình hạ cánh thay pin. Cửa sổ truy vấn
+mặc định 2 giờ, quét 1–24 giờ ở K12/K9 (chốt, mục 345).
+
+## 17. Pha 2 ở đô thị cao tầng: xác minh nghĩa là gì (2026-11-18, mục 345, đề xuất để bàn)
+
+Mô hình pha 2 hiện có [repo: `uav-l2/tools/mission_baselines.py`, `l1_rank.py`]: UAV cánh quay 15 m/s, lơ lửng ở 100 m trên
+cell nghi vấn, chờ ổn định 5 s, gửi bộ tham chiếu đầy đủ R (khoảng 20 ảnh, 1 MB) bằng unicast 802.15.4 tới CL (10 592 khung,
+khoảng 73 s), cell đối sánh lại với R; tổng khoảng 78 s mỗi lần xác minh. Pha 2 xong khi xác minh tới cell thật.
+
+Bốn cách xác minh:
+
+| Mã | Cách | Ảnh có rời thiết bị không | Thời gian mỗi nghi vấn (tính trên mô hình repo) | Cần UAV đội 2 |
+|---|---|---|---|---|
+| V1 | UAV mang R (1 MB) tới node, node đối sánh lại, chỉ báo điểm mới (mô hình hiện tại) | không | bay + khoảng 78 s | có, phải tới gần |
+| V2 | Node gửi ảnh cắt nghi vấn (5–15 KB) về trạm gốc qua LoRa của CH, người vận hành xác nhận | có, chỉ ảnh nghi vấn | 1,3–3,9 phút ở chu kỳ 10 %, 13–39 phút ở 1 %; chờ hàng đợi LoRa | không |
+| V3 | UAV bay ngang thu ảnh cắt nghi vấn (0,4–1 s qua 802.15.4), gửi về trạm gốc qua đường truyền của UAV | có, chỉ ảnh nghi vấn | bay + khoảng 1 s, không cần lơ lửng lâu | có, chỉ cần đi ngang |
+| V4 | UAV tới vị trí lần thấy mới nhất, nhìn bằng camera của chính nó | không (ảnh của UAV) | bay + thời gian quan sát | có |
+
+Nhận xét:
+- Ở khu cao tầng, tầm A2G chỉ còn khoảng 45 m (Al-Hourani, mục 9), nên lơ lửng ở 100 m để gửi 1 MB như V1 hiện nay gần như
+  không qua được; UAV phải hạ thấp vào lòng phố gần node, chậm và khó về pháp lý. V1 trong mô hình hiện tại vì vậy lạc quan
+  cho đô thị cao tầng.
+- V2 bỏ hẳn đội 2 nếu chu kỳ LoRa cho phép, nhưng chậm khi nhiều nghi vấn cùng chờ một CH, và chỉ giữ được hướng 4 một phần.
+- V3 nhanh nhất về thời gian ở mỗi điểm và hợp với UAV khó tới sát node, đổi lại ảnh nghi vấn rời thiết bị.
+- V4 chỉ có ích khi lần thấy rất mới; người đã đi khỏi thì vô ích, và đây là việc của đội cứu hộ hơn là của mạng.
+- Hướng 4 (giữ dữ liệu tại chỗ) chọn V1; nếu chấp nhận ảnh nghi vấn rời thiết bị trong tình huống khẩn cấp thì V3 hoặc V2.
+  So sánh V1, V2, V3 trên tổng thời gian hai pha là một thí nghiệm rẻ (mô hình, không cần ns-3).

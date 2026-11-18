@@ -133,6 +133,7 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
     cell (ít đến nhiều) trên cùng bản đồ, đo T\* pha 1 bằng ns-3 và thời gian pha 2 bằng mô hình đội 2, vẽ đường đánh đổi;
     (5) chạy lại với tập tối ưu. Đầu ra: `assign.csv`, tập critical cell, đường đánh đổi, T\* so với Algorithm 3.
   - μ chưa có nguồn đo (mục 338): dùng mô hình theo bậc thiết bị của K12 và quét độ nhạy. Bước (1) làm được ngay.
+  - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K10** Mật độ phụ 400 và 280 node/km² (giãn cách 50 và 60 m, CONTEXT mục 4 và 10)
   - `uav-l2/tools/map_gen.py --spacing`; kiểm deploy, partition và chọn cặp gateway với cell 7–10 node, rồi chạy pha 1.
@@ -148,10 +149,12 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   đối sánh) theo bậc thiết bị và theo loại dữ liệu gửi về AI node (ảnh gốc, ảnh cắt người, vector đặc trưng)
   - Đầu vào: `research_notes/l1-edge-recognition/edge_devices.md`, `research_notes/literature/2026-11-12/06-deployment.md`.
     Tra repo trước rồi mới lên internet (CLAUDE.md mục 328). Đầu ra: bảng tham số cho K9 và một đề xuất chính sách giữ/bỏ.
+  - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K13** Pha 2 trong J1 (chatlog mục 338): mục tiêu chung là tối thiểu tổng thời gian pha 1 + pha 2. Đưa mô hình đội 2
   (UAV cánh quay, `uav-l2/docs/MISSION-vi.md`, `mission_policy.py`) vào cùng đường đo với pha 1, báo T_pha1 + T_pha2
   - Đầu ra: thời gian hai pha theo từng bản đồ và từng tập critical cell (dùng cho K9); báo L1 để đưa vào phát biểu bài toán.
+  - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 
 ## Điểm gặp

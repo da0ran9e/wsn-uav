@@ -85,6 +85,15 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327), mật độ node thường gặp (mục 329),
   kích thước vùng đô thị và kênh có hợp với đô thị không (mục 332), pháp lý UAV đô thị và giãn cách node
   tối đa (mục 333). Đối chiếu ở mục 7–11.
+- h. (mục 342) Ở đô thị hiện đại nhiều camera đã có WiFi hay 4G: vì sao không đẩy truy vấn qua Internet mà phải dùng UAV?
+  Các hướng trả lời: node chỉ có 802.15.4 (rẻ, không nối Internet); nhiều chủ sở hữu, không có nền tảng chung để gửi
+  tới mọi thiết bị; hạ tầng hỏng sau thảm hoạ; giữ dữ liệu tại chỗ vì pháp lý (đề cương mục 1 đã nêu cho dữ liệu thô).
+- i. (mục 342) Ai sở hữu và vận hành mạng, ai chạy pha 0, thiết bị của chủ khác nhau có tham gia không.
+- j. (mục 342) Người cần tìm di chuyển: cửa sổ thời gian truy vấn, ảnh bao lâu thì hết giá trị, giới hạn thời gian nhiệm vụ.
+- k. (mục 342) Pha 2 ở đô thị cao tầng: UAV cánh quay bay thấp giữa nhà, xác minh nghĩa là gì (tới chỗ camera, nhận ảnh
+  cắt qua UAV, hay báo người đến hiện trường).
+- l. (mục 342) Vận hành UAV ở đô thị: điểm cất cánh, độ cao bay khi có nhà cao hơn 100–120 m, vùng cấm bay, sức bền.
+- m. (mục 342) Nguồn điện của node: cắm điện lưới hay pin; quyết định năng lượng có phải ràng buộc không.
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 

@@ -347,3 +347,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 339 | 2026-11-18 | kế hoạch · kế hoạch chi tiết thử phương án dữ liệu gửi về AI node và số critical cell | [2026-11](2026-11.md) |
 | 340 | 2026-11-18 | kế hoạch · kế hoạch mới cho đánh đổi số critical cell (PLAN-K9-DATA) | [2026-11](2026-11.md) |
 | 341 | 2026-11-18 | kế hoạch · ghi nhận xét trước khi chạy; bắt đầu cài đặt K9, tạm bỏ K11 | [2026-11](2026-11.md) |
+| 342 | 2026-11-18 | bối cảnh · bàn tiếp các khía cạnh khác | [2026-11](2026-11.md) |

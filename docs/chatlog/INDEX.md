@@ -342,3 +342,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 334 | 2026-11-18 | bối cảnh · tiếp tục bàn bối cảnh | [2026-11](2026-11.md) |
 | 335 | 2026-11-18 | bối cảnh · không bó vào mật độ; kênh phức tạp dần; tìm người; giải bài chọn critical cell | [2026-11](2026-11.md) |
 | 336 | 2026-11-18 | kế hoạch · xem phần việc kỹ thuật của kế hoạch J1 | [2026-11](2026-11.md) |
+| 337 | 2026-11-18 | kế hoạch · sửa PLAN-TRACKS (K9, K10, K11, tách K1); nhận K11 LB 5 seed | [2026-11](2026-11.md) |

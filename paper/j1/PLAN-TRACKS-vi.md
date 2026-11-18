@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-14
+updated: 2026-11-18
 ---
 # Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật
 
@@ -32,6 +32,7 @@ schema thì sửa bảng này trước rồi báo ở việc liên quan.
 | `holders.csv` | map, seed, cluster, packet, q, r (cell giữ gói sau lượt bay) |
 | `track.csv` | map, seed, cluster, packet, x, y, x_plan, y_plan (điểm phát thật và dự kiến) |
 | `runs.csv` | map, seed, scheme, channel, wind, T_star_s, readiness_mean_s, frames_total, energy_J |
+| `assign.csv` | map, seed, node, ai_node, hops (node thường giao cho AI node nào, cách bao nhiêu chặng; dùng cho K9) |
 
 Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gió và takeover (`logs/2026-10-31_0000-wind/`,
 `logs/2026-11-01_0600-takeover/`), Deluge (`logs/2026-10-30_1545-deluge-r100/`).
@@ -73,19 +74,36 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
 
 ## Nhánh kỹ thuật
 
-- [ ] **K1** Kênh có tương quan: fading tương quan theo thời gian, che khuất log-normal tương quan không gian, hiệu chỉnh
-  bằng dữ liệu Dryad (doi:10.25349/D9KS3W)
-  - Đầu vào: `research_notes/literature/2026-11-12/04-a2g-channel.md`. Đầu ra: mô hình kênh mới trong ns-3, lượt bay
-    hiệu chỉnh, CSV theo schema chung. Cần bàn chi phí trước khi chạy.
+> 2026-11-18 (chatlog mục 336–337): sửa theo các quyết định ở mục 326–335 (`paper/j1/CONTEXT-vi.md`). Thêm K9 (chọn critical
+> cell), K10 (mật độ), K11 (LB 5 seed); tách K1 thành ba bậc vì kênh làm phức tạp dần; K3 không còn chờ L3. Thứ tự đề xuất:
+> K11, K9 (phần nối `river_plan.py` trước, solver khi có số), K1a, K10, K3, rồi K6, K5, K4, K1b, K1c, K7.
+>
+> Hạ tầng: container cloud mới không có bản build ns-3. `logs/2026-10-27_1714-campaign4/camp-bin5.tar.xz` có binary và thư
+> viện CAMP-BIN5 nhưng không có header, nên binary có mã mới (như `--tree`) phải build lại ns-3.46 hoặc chạy trên máy người
+> dùng. Tính thời gian build vào chi phí khi bàn trước lúc chạy.
+
+- [ ] **K1a** Kênh A2G bậc 1: xác suất LoS theo góc ngẩng (Al-Hourani 2014), trạng thái LoS cố định cho mỗi node trong một
+  lượt bay, che khuất log-normal tương quan không gian (Gudmundson 1991); giữ chế độ η cố định cũ để so với số C4
+  - Đầu vào: `research_notes/literature/2026-11-12/04-a2g-channel.md`, `papers/alhourani2014-lap.md`,
+    `papers/gudmundson1991-shadow.md`, CONTEXT mục 9. Chỉ sửa `uav-coop/examples/coop-pass.cc` (PHY, rẻ). Đầu ra: mô hình
+    mới, R50 theo chế độ, lượt bay hiệu chỉnh, CSV theo schema chung. Cần bàn chi phí trước khi chạy.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+- [ ] **K1b** Kênh bậc 2: fading tương quan theo thời gian (theo khối thời gian kết hợp thay vì bốc mỗi gói); hiệu chỉnh
+  bằng dữ liệu Dryad (doi:10.25349/D9KS3W) nếu dùng được
+  - Phụ thuộc: K1a. Trạng thái: chờ K1a · Phiên: · Báo cáo:
+- [ ] **K1c** Kênh G2G có LoS/NLoS theo cấu trúc (phố, khối nhà, địa hình), thay che khuất độc lập mỗi cặp
+  - Cần bản đồ vật cản và sửa `Link` trong `uav-coop2/examples/coop2-river.cc`; nặng, có thể để sau J1. Đầu vào: CONTEXT
+    mục 9.
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K2** Quỹ đạo sinh từ động lực bay: dẫn đường L1, gió đều 0–15 m/s cộng nhiễu loạn Dryden; có sai số dọc đường bay
   - Đầu vào: `uav-l2/tools/wind_path.py`, `research_notes/literature/2026-11-12/05-wind-deviation.md`. Đầu ra: bộ
     sinh quỹ đạo mới, `track.csv`.
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K3** Takeover với bán kính hỏi động theo h(ē); ghép Ring của các critical cell gần nhau
-  - Phụ thuộc: L3 (công thức h(ē)). Đầu vào: `uav-coop2/examples/coop2-river.cc` (`--takeoverSeq`). Đầu ra: số frame,
-    thời điểm sẵn sàng so với bản 3 hop cố định.
-  - Trạng thái: chờ L3 · Phiên: · Báo cáo:
+  - Công thức h = ⌈ê/(√3·R)⌉ + 1 và cách ước ê đã có, đánh giá ngoại tuyến ở `paper/j1/draft-v1/` (README mục 5); L3 chỉ
+    còn cần cho chứng minh. Đầu vào: `uav-coop2/examples/coop2-river.cc` (`--takeoverSeq`). Đầu ra: số frame, thời điểm
+    sẵn sàng so với bản 3 hop cố định.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K4** Baseline công bằng: Deluge có low-power listening, cùng tập cell đích, quét Imin và cỡ page; một bản kiểu
   Typhoon
   - Đầu vào: `logs/2026-10-30_1545-deluge-r100/`, `research_notes/literature/2026-11-12/02-code-dissemination.md`.
@@ -96,15 +114,31 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K6** Tour tham chiếu để đo CHORD và LM-Tour cách tối ưu bao xa: lấy mẫu, biến đổi Noon–Bean, giải bằng LKH (theo
   Isaacs 2011)
-  - Chỉ chạy Python. Đầu vào: `research_notes/literature/papers/isaacs2011-dtspn.md`. Đầu ra: tỉ số độ dài tour trên
-    các bản đồ C4.
+  - Chỉ chạy Python, nhưng container chưa có LKH (cài trước). Đầu vào: `research_notes/literature/papers/isaacs2011-dtspn.md`.
+    Đầu ra: tỉ số độ dài tour trên các bản đồ C4.
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K7** Đo chi phí pha 0 trong ns-3: số frame và thời gian dựng lưới cell, CL, cặp gateway, bảng định tuyến, lịch kênh
   - Phụ thuộc: L5 (đại lượng cần đo). Đầu ra: số đo để so với mô hình L5.
   - Trạng thái: chờ L5 · Phiên: · Báo cáo:
 - [ ] **K8** Nếu kịp: năng lượng cho AI trên node (khoảng 0,2–1,6 mJ mỗi lần suy luận theo tài liệu); surrogate cho
   LM-Tour
+  - Phần tốc độ đối sánh μ của AI node chuyển sang K9 (cần ngay cho bài chọn critical cell).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+- [ ] **K9** Chọn critical cell theo CONTEXT mục 13 (facility location có sức chứa, ràng buộc H chặng và D_min, mục tiêu
+  min-max thời điểm xong), thay Algorithm 3 (score vượt μ + 2σ) của `uav-coop2/tools/river_plan.py`
+  - Các bước: (1) `river_plan.py` và `mission.py` nhận tập critical cell từ file ngoài; (2) thêm thuộc tính AI node
+    (M_v, μ_v) và lượng ảnh d_u vào bản đồ; (3) solver Python dùng surrogate T̂_River cho T_giao; (4) chạy lại pha 1 với
+    tập mới. Đầu ra: `assign.csv`, tập critical cell, T\* so với Algorithm 3.
+  - Chờ người dùng quyết: μ, d_u, H, có giữ D_min không, mục tiêu max hay có trọng số. Bước (1) làm được ngay.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+- [ ] **K10** Mật độ phụ 400 và 280 node/km² (giãn cách 50 và 60 m, CONTEXT mục 4 và 10)
+  - `uav-l2/tools/map_gen.py --spacing`; kiểm deploy, partition và chọn cặp gateway với cell 7–10 node, rồi chạy pha 1.
+    Đầu ra: T\*, P_k mức cell và số cặp gateway theo mật độ.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+- [ ] **K11** Cây dùng chung và lập kế hoạch cân tải (`--tree`, `uav-coop2/tools/river_lb.py`) đủ 5 seed của DLG (k8, r100)
+  - Đầu vào: `paper/j1/draft-v1/analysis/run_lb.sh`, `lb_compare.py`, kết quả seed 1 ở `paper/j1/draft-v1/figs/lb-seed1.md`.
+    Đầu ra: bảng 5 seed thay bảng một seed trong `paper/j1/draft-v1/README-vi.md` mục 9.
+  - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c) · Báo cáo:
 
 ## Điểm gặp
 

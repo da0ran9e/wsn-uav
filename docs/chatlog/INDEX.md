@@ -349,3 +349,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 341 | 2026-11-18 | kế hoạch · ghi nhận xét trước khi chạy; bắt đầu cài đặt K9, tạm bỏ K11 | [2026-11](2026-11.md) |
 | 342 | 2026-11-18 | bối cảnh · bàn tiếp các khía cạnh khác | [2026-11](2026-11.md) |
 | 342 | 2026-11-18 | kế hoạch · đồng ý đề xuất sau B1, làm tiếp B3 | [2026-11](2026-11.md) |
+| 343 | 2026-11-18 | bối cảnh · lý do cần UAV: node chỉ có 802.15.4 và giữ dữ liệu tại chỗ | [2026-11](2026-11.md) |

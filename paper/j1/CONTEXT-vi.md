@@ -17,7 +17,7 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 | Thiết bị | Nhiều thiết bị IoT có sẵn: camera, cảm biến; phần lớn là node yếu, một số node mạnh chạy được AI | chốt |
 | Sự cố | Mục tiêu điển hình là tìm người (mục 335): truy vấn là bộ ảnh tham chiếu của người cần tìm, AI node đối sánh với ảnh camera đã gửi về; mạng phục vụ nhiều lượt truy vấn trong suốt vòng đời | chốt |
 | Phân bố thiết bị | Rải ngẫu nhiên, càng đều càng tốt, phủ cả vùng (mục 325). Mật độ giữ như bản hội nghị (khoảng 816 node/km²) như giả định hướng tới: mạng dày chưa phổ biến nhưng nhiều khả năng sớm có (mục 335); chạy thêm vài mức để xem độ nhạy | chốt |
-| Vì sao cần UAV | Qua LoRa mất ít nhất 1,8 h; qua mạng mặt đất từ trạm gốc thì nhanh nhất cỡ 1–2,5 phút nếu giao thức đồng bộ tốt nhất mở rộng được tới 50–95 chặng, còn giao thức thường mất 20 phút tới hàng giờ (mục 12) | đề xuất (đã có phép tính) |
+| Vì sao cần UAV | Hai lý do (mục 343): node rẻ chỉ có radio 802.15.4, không nối Internet; dữ liệu phải ở lại thiết bị vì quyền riêng tư, chỉ điểm số vài byte rời node. Qua LoRa mất ít nhất 1,8 h, qua mạng mặt đất từ trạm gốc xem mục 12. Chi tiết ở mục 15 | chốt (lý do), đề xuất (lập luận) |
 
 ## 2. Thực thể
 
@@ -85,9 +85,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327), mật độ node thường gặp (mục 329),
   kích thước vùng đô thị và kênh có hợp với đô thị không (mục 332), pháp lý UAV đô thị và giãn cách node
   tối đa (mục 333). Đối chiếu ở mục 7–11.
-- h. (mục 342) Ở đô thị hiện đại nhiều camera đã có WiFi hay 4G: vì sao không đẩy truy vấn qua Internet mà phải dùng UAV?
-  Các hướng trả lời: node chỉ có 802.15.4 (rẻ, không nối Internet); nhiều chủ sở hữu, không có nền tảng chung để gửi
-  tới mọi thiết bị; hạ tầng hỏng sau thảm hoạ; giữ dữ liệu tại chỗ vì pháp lý (đề cương mục 1 đã nêu cho dữ liệu thô).
+- h. Đã trả lời (mục 343): hướng 1 (node chỉ có 802.15.4) và hướng 4 (giữ dữ liệu tại chỗ). Lập luận ở mục 15.
 - i. (mục 342) Ai sở hữu và vận hành mạng, ai chạy pha 0, thiết bị của chủ khác nhau có tham gia không.
 - j. (mục 342) Người cần tìm di chuyển: cửa sổ thời gian truy vấn, ảnh bao lâu thì hết giá trị, giới hạn thời gian nhiệm vụ.
 - k. (mục 342) Pha 2 ở đô thị cao tầng: UAV cánh quay bay thấp giữa nhà, xác minh nghĩa là gì (tới chỗ camera, nhận ảnh
@@ -350,3 +348,29 @@ Nhận xét:
   thì, nhưng node thường phải tự chạy phát hiện và trích đặc trưng. Lựa chọn này đổi hẳn μ và đánh đổi số critical cell.
 - Cần khảo sát thêm (việc K12): lượng ảnh, khung có người mỗi giờ của camera đô thị; chính sách lưu của hệ thống phân tích
   video tại biên; dung lượng nhớ của node camera rẻ.
+
+## 15. Lý do cần UAV ở đô thị hiện đại (2026-11-18, mục 343)
+
+Người dùng chọn hai lý do: node rẻ chỉ có 802.15.4, không nối Internet (hướng 1), và dữ liệu ở lại thiết bị vì quyền
+riêng tư (hướng 4). Kịch bản là khu đô thị nhiều chuông cửa, camera quan sát, máy bán hàng tự động.
+
+**Tiền lệ thật** [web, trừ chỗ ghi repo]:
+- 802.15.4 đã có sẵn trong nhà thông minh: Thread chạy trên IEEE 802.15.4 ở 2,4 GHz, là tầng mạng của các thiết bị Matter
+  công suất thấp; nhiều loa thông minh làm border router.
+- Nhưng mạng Thread hiện là mạng riêng của từng nhà: tối đa 32 router mỗi mạng, thiết bị ngủ (chạy pin) không chuyển tiếp
+  cho ai. Mạng của bài (13 086 node, mọi node chuyển tiếp) vì vậy không phải Thread nguyên bản mà là một mạng dùng chung cấp
+  khu phố.
+- Mạng dùng chung giữa thiết bị của nhiều chủ đã có: Amazon Sidewalk dùng chuông cửa, loa của người dân làm cầu nối, công
+  bố phủ khoảng 90 % dân số Mỹ năm 2023; nó cũng bị phê phán vì bật mặc định (opt-out) và vì chuyện chính quyền xin truy cập
+  camera chuông cửa. Đây là tiền lệ cho câu i (sở hữu, tham gia) và cho mặt pháp lý của hướng 4.
+- Cách phân phối tệp hiện nay trên Thread/LwM2M là unicast CoAP từng thiết bị [repo: `02-code-dissemination.md`], tức
+  chưa có cơ chế đẩy một tệp lớn tới nhiều thiết bị như bài đặt ra.
+
+**Hệ quả cho mô hình:**
+- Chỉ node cắm điện chuyển tiếp; node chạy pin (một phần chuông cửa) chỉ nhận. Mật độ node chuyển tiếp vì vậy thấp hơn mật
+  độ thiết bị. Ví dụ 30 % chạy pin thì còn khoảng 570 node chuyển tiếp/km², vẫn trên mức 400 mà lưới cell còn liên thông
+  (mục 10). Đề xuất thêm tỉ lệ node chạy pin làm tham số.
+- Hướng 4 cho phép trạm gốc chỉ nhận điểm số. Pha 2 (xác minh) là lúc duy nhất ảnh của người nghi vấn rời thiết bị, nên cần
+  nói rõ căn cứ (tình huống khẩn cấp, chủ thiết bị đồng ý khi tham gia).
+- Câu i có hướng trả lời: chủ thiết bị tham gia một mạng dùng chung kiểu Sidewalk, một bên vận hành (thành phố hay nhà cung
+  cấp) chạy pha 0.

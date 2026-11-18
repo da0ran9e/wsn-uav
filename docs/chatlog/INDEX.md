@@ -343,3 +343,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 335 | 2026-11-18 | bối cảnh · không bó vào mật độ; kênh phức tạp dần; tìm người; giải bài chọn critical cell | [2026-11](2026-11.md) |
 | 336 | 2026-11-18 | kế hoạch · xem phần việc kỹ thuật của kế hoạch J1 | [2026-11](2026-11.md) |
 | 337 | 2026-11-18 | kế hoạch · sửa PLAN-TRACKS (K9, K10, K11, tách K1); nhận K11 LB 5 seed | [2026-11](2026-11.md) |
+| 338 | 2026-11-18 | bối cảnh · đô thị cao tầng; mục tiêu tổng pha 1 + pha 2; bỏ D_min; bộ nhớ camera và chính sách giữ/bỏ | [2026-11](2026-11.md) |

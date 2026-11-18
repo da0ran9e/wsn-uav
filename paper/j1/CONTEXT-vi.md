@@ -4,7 +4,7 @@ updated: 2026-11-18
 ---
 # J1 · Bối cảnh, thực thể và tham số của bài toán
 
-File mô tả chung cho J1 (chatlog mục 323–335). Đây là bản thử nghiệm, chốt dần qua thảo luận, không sửa đề cương. Phần
+File mô tả chung cho J1 (chatlog mục 323–338). Đây là bản thử nghiệm, chốt dần qua thảo luận, không sửa đề cương. Phần
 phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa trên file này. Mỗi mục ghi trạng thái: **chốt**
 (người dùng đã quyết), **đề xuất** (Claude đề xuất, chờ duyệt), **mở** (còn phải bàn).
 
@@ -12,8 +12,8 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 
 | Mục | Nội dung | Trạng thái |
 |---|---|---|
-| Vùng nhiệm vụ | Vùng rộng có mạng IoT dày đặc (camera, cảm biến), không gắn với một loại địa hình hay mật độ cụ thể (mục 335). Môi trường khác nhau đi vào bài qua mô hình kênh, và kênh là phần sẽ làm phức tạp dần. Vì J1 chỉ xét một UAV, vùng thử nghiệm thu lại vừa đủ cho một UAV làm trong một chuyến bay (mục 327) | chốt |
-| Vì sao khó | Kênh từ trên không xuống bị che khuất (địa hình, tán cây, nhà cửa) nên yếu và biến động; không có hạ tầng di động đủ băng thông để đẩy truy vấn | chốt |
+| Vùng nhiệm vụ | Đô thị hiện đại (mục 338): càng hiện đại thì mạng IoT càng dày, nhưng nhà cao tầng và hạ tầng làm kênh A2G kém đi nhiều. Kênh là phần sẽ làm phức tạp dần. Vì J1 chỉ xét một UAV, vùng thử nghiệm thu lại vừa đủ cho một UAV làm trong một chuyến bay (mục 327) | chốt |
+| Vì sao khó | Nhà cao tầng và hạ tầng che khuất kênh từ trên không xuống, nên kênh yếu và biến động; đô thị càng hiện đại thì càng dày node nhưng kênh A2G càng kém (mục 338) | chốt |
 | Thiết bị | Nhiều thiết bị IoT có sẵn: camera, cảm biến; phần lớn là node yếu, một số node mạnh chạy được AI | chốt |
 | Sự cố | Mục tiêu điển hình là tìm người (mục 335): truy vấn là bộ ảnh tham chiếu của người cần tìm, AI node đối sánh với ảnh camera đã gửi về; mạng phục vụ nhiều lượt truy vấn trong suốt vòng đời | chốt |
 | Phân bố thiết bị | Rải ngẫu nhiên, càng đều càng tốt, phủ cả vùng (mục 325). Mật độ giữ như bản hội nghị (khoảng 816 node/km²) như giả định hướng tới: mạng dày chưa phổ biến nhưng nhiều khả năng sớm có (mục 335); chạy thêm vài mức để xem độ nhạy | chốt |
@@ -25,7 +25,7 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 |---|---|---|
 | Trạm gốc (BS) | Lập kế hoạch pha 0, pha 1 (tour và kế hoạch River), nhận kết quả qua LoRa | chốt |
 | UAV cánh bằng (đội 1) | J1 xét một UAV phát truy vấn ở pha 1. Nhiều UAV để sau, chỉ khi có cơ chế phối hợp thật (mục 326), xem mục 5 | chốt |
-| UAV cánh quay (đội 2) | Đến xác minh các cell nghi vấn ở pha 2 | chốt (ngoài phạm vi J1) |
+| UAV cánh quay (đội 2) | Đến xác minh các cell nghi vấn ở pha 2. J1 xét cả pha 2: mục tiêu chung là tối thiểu tổng thời gian pha 1 và pha 2 (mục 338). Mô hình pha 2 hiện có: `uav-l2/docs/MISSION-vi.md` (15 m/s, tour qua các nghi vấn, lơ lửng 30 s mỗi điểm) | chốt |
 | Node thường | Camera hoặc cảm biến yếu, ghi dữ liệu và gửi dữ liệu về AI node phụ trách nó (trước khi có truy vấn); chuyển tiếp gói 802.15.4 | chốt (mục 325) |
 | Node mạnh (AI node) | Node đủ năng lực chạy đối sánh; giữ dữ liệu cần đối sánh do các node thường gửi về | chốt (mục 325) |
 | Cell | Ô lục giác bán kính R; mỗi cell có một CL | chốt |
@@ -289,10 +289,12 @@ node u sinh d_u ảnh trong cửa sổ lưu W; khoảng cách chặng h(u, v) tr
 
 **Ràng buộc.** Mỗi node thường giao cho đúng một AI node mở, cách không quá H chặng (giới hạn luồng nền); tổng ảnh giao
 cho v không vượt M_v; hai AI node mở cách nhau ít nhất D_min (ý "không giành khách nhau" ở mục 3; có thể bỏ nếu ràng
-buộc bộ nhớ và chặng đã đủ giữ chúng tách nhau).
+buộc bộ nhớ và chặng đã đủ giữ chúng tách nhau). Mục 338: bỏ D_min, chỉ dùng giới hạn chặng H và bộ nhớ.
 
-**Mục tiêu.** Cực tiểu thời điểm xong của lượt truy vấn: max_k [T_giao,k(K) + T_đối sánh,k], trong đó T_giao,k là lúc
-critical cell k nhận đủ truy vấn (phụ thuộc cả tập K qua tour và River), T_đối sánh,k = (ảnh giao cho k) / μ_k.
+**Mục tiêu.** Pha 1 xong ở max_k [T_giao,k(K) + T_đối sánh,k], trong đó T_giao,k là lúc critical cell k nhận đủ truy vấn
+(phụ thuộc cả tập K qua tour và River), T_đối sánh,k = (ảnh giao cho k) / μ_k. Mục tiêu chung của bài là tối thiểu tổng
+thời gian pha 1 và pha 2 (mục 338): pha 2 bắt đầu khi trạm gốc nhận đủ báo cáo qua LoRa và kết thúc khi UAV cánh quay
+xác minh xong người cần tìm, nên tập K còn ảnh hưởng pha 2 qua vị trí các nghi vấn so với trạm gốc.
 
 **Đánh đổi chính.** Ít critical cell thì việc giao truy vấn nhẹ (ít Ring, Λ\* nhỏ, River ngắn) nhưng mỗi AI node giữ nhiều
 ảnh hơn nên đối sánh lâu hơn, luồng nền đi xa hơn, cần nhiều bộ nhớ hơn. Nhiều critical cell thì ngược lại. Vì vậy có số
@@ -304,6 +306,38 @@ T_đối sánh, giải bằng heuristic kiểu facility location có sức chứ
 CHORD/LM-Tour + River cho tập K đã chọn, đo T\* bằng ns-3. Bài chọn K chứa facility location có sức chứa nên NP-khó
 (trích chuẩn khi viết).
 
-**Cần quyết hoặc cần số liệu:** tốc độ đối sánh μ (thời gian đối sánh một ảnh trên node mạnh; chưa có số re-ID trên MCU,
-xem `research_notes/literature/2026-11-12/06-deployment.md`), lượng ảnh mỗi camera trong cửa sổ W, giá trị H và có giữ
-D_min hay không, và mục tiêu dùng max (như đề xuất) hay có trọng số theo xác suất người ở vùng đó.
+**Cần quyết hoặc cần số liệu:** tốc độ đối sánh μ (chưa có nguồn đo re-ID đầu cuối, mục 338; repo có số thành phần và mô
+hình suy ra theo bậc thiết bị ở `research_notes/l1-edge-recognition/edge_devices.md`), lượng ảnh mỗi camera trong cửa sổ
+W và chính sách giữ/bỏ (mục 14), giá trị H. Đánh đổi số critical cell làm thành việc kỹ thuật K9 (mục 338).
+
+## 14. Bộ nhớ node và chính sách giữ/bỏ dữ liệu (2026-11-18, mục 338)
+
+**Đã có trong repo** [`research_notes/l1-edge-recognition/edge_devices.md`, ngày 2026-10-15]:
+- Lưu trữ: luồng 2 Mbit/s ≈ 21,6 GB/ngày, thẻ 128 GB giữ khoảng 5,5 ngày ghi liên tục; nhà sản xuất khác ghi 128 GB ≈ 16
+  ngày ở 1080p; quy tắc chung 1–2 tuần trước khi ghi đè. Thẻ 32–256 GB giữ khoảng 1,5–20 ngày ở 1–2 Mbit/s.
+- Đối sánh (mô hình suy ra, chưa đo đầu cuối): lấy mẫu 1 khung/s, khoảng 2 người mỗi khung. Bậc MCU (ESP32-S3) xử lý
+  khoảng 1–2 giờ video mỗi giờ tính; chip camera 1–2 TOPS khoảng 6–12; máy nhỏ kèm bộ tăng tốc (Pi 5 + Hailo-8L, RK3588)
+  khoảng 30–60; Jetson Orin Nano khoảng 50–150. Ví dụ quét 132 h video mất 11–22 h ở bậc chip camera, 2–4 h ở bậc
+  Hailo, 66–130 h ở ESP32-S3. Chưa có số đo re-ID người (OSNet) trên thiết bị nào.
+- Bộ nhớ truy vấn: 1 MB là nhỏ với mọi bậc từ chip camera trở lên; node SmartSantander chỉ có 8 KB SRAM nhưng có thẻ SD
+  2 GB [`papers/sanchez2014-smartsantander.md`].
+
+**Bốn loại dữ liệu trên một node** (đề xuất, để bàn):
+
+| Dữ liệu | Ở đâu | Cỡ | Đề xuất giữ/bỏ |
+|---|---|---|---|
+| Ghi hình của chính camera | mọi node camera | phần lớn bộ nhớ (GB) | ghi vòng, bỏ cái cũ nhất (cách camera đang làm) |
+| Dữ liệu node phụ thuộc gửi về | AI node | tổng luồng của các node giao cho nó trong cửa sổ W | theo thời gian, giữ W giờ gần nhất; ưu tiên khung có người |
+| Truy vấn (400 KB) | critical cell và cell River (SPINE, Bank, Ring) | 400 KB, hoặc một đoạn | ghim, không bị ghi đè cho tới khi nhiệm vụ xong; cell trung chuyển xoá khi River xong |
+| Bộ đệm chuyển tiếp | node trên đường | vài gói | hàng đợi MAC như hiện tại |
+
+Nhận xét:
+- Truy vấn 400 KB nhỏ so với thẻ nhớ vài GB, nên chỗ chật là RAM của node yếu (vài KB) và cửa sổ W ở AI node, không phải
+  chỗ chứa truy vấn.
+- Với tìm người, ảnh mới nhất có giá trị nhất, nên giữ theo thời gian (FIFO) là tự nhiên; giữ theo nội dung (khung có
+  người, ảnh cắt người) cho W dài hơn nhiều với cùng bộ nhớ.
+- Lựa chọn ảnh hưởng lớn nhất: node thường gửi về AI node cái gì. Ảnh gốc làm luồng nền G2G nặng và đối sánh chậm. Ảnh cắt
+  người nhẹ hơn nhiều. Vector đặc trưng (512 chiều INT8 = 512 B mỗi người) thì đối sánh chỉ là tính cosine, gần như tức
+  thì, nhưng node thường phải tự chạy phát hiện và trích đặc trưng. Lựa chọn này đổi hẳn μ và đánh đổi số critical cell.
+- Cần khảo sát thêm (việc K12): lượng ảnh, khung có người mỗi giờ của camera đô thị; chính sách lưu của hệ thống phân tích
+  video tại biên; dung lượng nhớ của node camera rẻ.

@@ -46,6 +46,7 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
 - [ ] **L1** Phát biểu bài toán tối ưu; bổ đề NP-khó theo khuôn Le Ny 2012 (Định lý 2)
   - Đầu vào: `research_notes/literature/papers/leny2012-dtsp.md`, phác thảo ở `paper/j1/ND1-TRIAL-vi.md`. Đầu ra: mục
     Problem formulation trong `paper/j1/`.
+  - Mục tiêu chung: tối thiểu tổng thời gian pha 1 + pha 2; tập critical cell là biến (chatlog mục 335, 338).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **L2** Định lý A bản chặt: biên an toàn theo file, số gói nhận khi bay ngang, số hạng √(Q ln m), trích Zeng 2018
   - Đầu vào: `uav-l2/tools/theory/theorem_a.py`, dữ liệu C4. Kiểm lại trên kênh K1 khi có. Đầu ra: phát biểu và chứng
@@ -124,12 +125,14 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   LM-Tour
   - Phần tốc độ đối sánh μ của AI node chuyển sang K9 (cần ngay cho bài chọn critical cell).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
-- [ ] **K9** Chọn critical cell theo CONTEXT mục 13 (facility location có sức chứa, ràng buộc H chặng và D_min, mục tiêu
-  min-max thời điểm xong), thay Algorithm 3 (score vượt μ + 2σ) của `uav-coop2/tools/river_plan.py`
+- [ ] **K9** Chọn critical cell và đánh đổi số critical cell theo CONTEXT mục 13 (facility location có sức chứa, ràng buộc
+  H chặng và bộ nhớ, không dùng D_min; mục tiêu chung là tổng thời gian pha 1 + pha 2, chatlog mục 338), thay Algorithm 3
+  (score vượt μ + 2σ) của `uav-coop2/tools/river_plan.py`
   - Các bước: (1) `river_plan.py` và `mission.py` nhận tập critical cell từ file ngoài; (2) thêm thuộc tính AI node
-    (M_v, μ_v) và lượng ảnh d_u vào bản đồ; (3) solver Python dùng surrogate T̂_River cho T_giao; (4) chạy lại pha 1 với
-    tập mới. Đầu ra: `assign.csv`, tập critical cell, T\* so với Algorithm 3.
-  - Chờ người dùng quyết: μ, d_u, H, có giữ D_min không, mục tiêu max hay có trọng số. Bước (1) làm được ngay.
+    (M_v, μ_v) và lượng dữ liệu d_u vào bản đồ; (3) solver Python dùng surrogate T̂_River cho T_giao; (4) quét số critical
+    cell (ít đến nhiều) trên cùng bản đồ, đo T\* pha 1 bằng ns-3 và thời gian pha 2 bằng mô hình đội 2, vẽ đường đánh đổi;
+    (5) chạy lại với tập tối ưu. Đầu ra: `assign.csv`, tập critical cell, đường đánh đổi, T\* so với Algorithm 3.
+  - μ chưa có nguồn đo (mục 338): dùng mô hình theo bậc thiết bị của K12 và quét độ nhạy. Bước (1) làm được ngay.
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K10** Mật độ phụ 400 và 280 node/km² (giãn cách 50 và 60 m, CONTEXT mục 4 và 10)
   - `uav-l2/tools/map_gen.py --spacing`; kiểm deploy, partition và chọn cặp gateway với cell 7–10 node, rồi chạy pha 1.
@@ -139,6 +142,17 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Đầu vào: `paper/j1/draft-v1/analysis/run_lb.sh`, `lb_compare.py`, kết quả seed 1 ở `paper/j1/draft-v1/figs/lb-seed1.md`.
     Đầu ra: bảng 5 seed thay bảng một seed trong `paper/j1/draft-v1/README-vi.md` mục 9.
   - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c) · Báo cáo:
+
+- [ ] **K12** Khảo sát bộ nhớ và đối sánh ở node (chatlog mục 338, CONTEXT mục 14): lượng ảnh và khung có người mỗi giờ của
+  camera đô thị, dung lượng nhớ của node camera rẻ, chính sách lưu của hệ phân tích video tại biên; mô hình μ (thời gian
+  đối sánh) theo bậc thiết bị và theo loại dữ liệu gửi về AI node (ảnh gốc, ảnh cắt người, vector đặc trưng)
+  - Đầu vào: `research_notes/l1-edge-recognition/edge_devices.md`, `research_notes/literature/2026-11-12/06-deployment.md`.
+    Tra repo trước rồi mới lên internet (CLAUDE.md mục 328). Đầu ra: bảng tham số cho K9 và một đề xuất chính sách giữ/bỏ.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+- [ ] **K13** Pha 2 trong J1 (chatlog mục 338): mục tiêu chung là tối thiểu tổng thời gian pha 1 + pha 2. Đưa mô hình đội 2
+  (UAV cánh quay, `uav-l2/docs/MISSION-vi.md`, `mission_policy.py`) vào cùng đường đo với pha 1, báo T_pha1 + T_pha2
+  - Đầu ra: thời gian hai pha theo từng bản đồ và từng tập critical cell (dùng cho K9); báo L1 để đưa vào phát biểu bài toán.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 
 ## Điểm gặp
 
@@ -150,6 +164,6 @@ việc đổi hướng.
 
 ## Để sau J1
 
-Pha 2 (UAV cánh quay thăm mục tiêu biết dần, trọng số cập nhật online); chọn CL, CH, CGW bằng supervised learning; thời
+Pha 2 với mục tiêu biết dần và trọng số cập nhật online (bản cơ bản của pha 2 đã vào J1 ở K13); chọn CL, CH, CGW bằng supervised learning; thời
 gian chạy AI theo CPU và bộ nhớ; mô phỏng bộ nhớ và buffer; mục "Phát triển layer 2 của pha 1 kết hợp tối ưu thời điểm
 thăm của pha 2" (người dùng chưa viết xong).

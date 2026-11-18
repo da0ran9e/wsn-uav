@@ -34,3 +34,17 @@ B0–B3.
   về một AI node).
 - Hệ quả: D1, D2 không khả thi ở mọi ρ thật trên 802.15.4; D3 chỉ chịu được phố vắng tới phố thường nếu có khoảng 100 AI cell
   trở lên. Ở mức ρ khả thi, năng lực tính của AI node không bị chạm (N = 8: khoảng 2 bản ghi mỗi giây vào AI node bận nhất).
+
+## Giai đoạn 4 (B3): chọn critical cell cho D3 (đang làm)
+
+- Script `paper/j1/analysis/cc_select.py`: River theo surrogate C4 (công thức, mỗi critical cell thêm vào làm cả cụm chậm hơn
+  qua cluLack), mạng nền theo `bg_load.py` (ngân sách 10 / 20 %, 30 % node là camera, 528 B mỗi người, giới hạn 5 cell); số
+  critical cell ít nhất còn khả thi (nhân đôi rồi chia đôi m), đặt chỗ bằng tìm kiếm cục bộ. Tập chọn ghi ở
+  `data/crit-<thư mục>-u<ngân sách>-rho<ρ>.csv` (dùng với `mission.py --crit`).
+- Lần chạy đầu (bản tính tải bằng vòng lặp Python) bị dừng ở giới hạn 1 giờ; bản hiện tại tính sẵn tải của mọi cặp (AI cell,
+  cell), kiểm trùng với `bg_load.Cluster.load` ngay trong script, nhanh hơn 50–100 lần.
+- k8 r100 (`data/cc-r100-R1-k8-s1.md`): ngân sách 10 %, ρ = 20 / 50 / 100 / 200 cần 24 / 34 / 69 / 161 critical cell, T1 mô
+  hình 661 / 674 / 728 / 906 s; Algorithm 3 (45 cell) có T1 753 s và vi phạm giới hạn chặng (xa nhất 8 cell). r200 cùng số cell,
+  T1 thấp hơn 7–30 s. Đối chiếu với kế hoạch River thật: lệch 0,00 s.
+- Còn chạy: k12 và k16 ở r100. Surrogate khớp trên 4–9 critical cell mỗi cụm; tập 20 cell mỗi cụm nằm ngoài vùng khớp, B4 cần
+  kiểm bằng ns-3.

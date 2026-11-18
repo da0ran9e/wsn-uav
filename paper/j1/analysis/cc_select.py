@@ -24,10 +24,12 @@ way for comparison. Writes OUT_DIR/cc-<map>.md and .csv, and the chosen sets as 
 """
 import argparse, csv, json, math, os, sys
 
+import numpy as np
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path[:0] = [HERE, f"{HERE}/../../../uav-l2/tools", f"{HERE}/../../../uav-coop2/tools"]
 import river_surrogate as RS  # noqa: E402
-from bg_load import TAU, Cluster  # noqa: E402
+from bg_load import HE, HT, PKT, TAU, Cluster  # noqa: E402
 from mission_report import load_map  # noqa: E402
 from river_plan import hear_model, load_around  # noqa: E402
 
@@ -48,13 +50,67 @@ def t_cluster(S, terms, d):
     return max(terms[h][0] for h in S) + d * sum(terms[h][1] for h in S)
 
 
-def busy(cl, S):
-    fr, far, _ = cl.load(S)
-    return max(fr.values()) * TAU, far
+class Fast:
+    """bg_load.Cluster's load with every (AI cell, cell) path's frames precomputed: busy(S) in a few array operations,
+    the same numbers as Cluster.load (checked in main)."""
+
+    def __init__(s, cl):
+        s.cl, s.cells = cl, cl.cells
+        n = len(s.cells)
+        s.D = np.array([[cl.d[a].get(h, 99) for h in s.cells] for a in s.cells], float)
+        xy = np.array([cl.xy.get(h, (0, 0)) for h in s.cells])
+        s.key = s.D + np.linalg.norm(xy[:, None] - xy[None], axis=2) * 1e-6   # ties: the nearer centre
+        s.w = np.array([cl.n[h] for h in s.cells], float)
+        media, s.C = {}, {}
+        rows = []
+        for i, a in enumerate(s.cells):
+            for j, h in enumerate(s.cells):
+                if s.D[i, j] >= 99:
+                    continue
+                p, v = cl.path(h, a), cl.n[h] / PKT
+                for t, c in enumerate(p):
+                    rows.append((i, j, media.setdefault(c, len(media)), v * (HE if t in (0, len(p) - 1) else HT)))
+                for x, y in zip(p, p[1:]):
+                    rows.append((i, j, media.setdefault(tuple(sorted((x, y))), len(media)), v))
+        s.C = np.zeros((n, n, len(media)))
+        for i, j, k, v in rows:
+            s.C[i, j, k] += v
+        s.idx = {h: i for i, h in enumerate(s.cells)}
+
+    def busy(s, S):
+        I = np.array([s.idx[h] for h in S])
+        a = I[np.argmin(s.key[I], axis=0)]
+        far = int(s.D[a, np.arange(len(s.cells))].max())
+        return float(s.C[a, np.arange(len(s.cells))].sum(0).max()) * TAU, far
+
+    def medoids(s, m):
+        S = []
+        for _ in range(m):   # greedy, then swaps; weighted by node count, cell-hop metric
+            cur = s.D[S].min(0) if S else np.full(len(s.cells), 1e9)
+            gain = (s.w * np.minimum(cur, s.D)).sum(1)
+            gain[S] = np.inf
+            S.append(int(np.argmin(gain)))
+        cost = lambda T: float((s.w * s.D[T].min(0)).sum())
+        best, better = cost(S), True
+        while better:
+            better = False
+            for i in range(len(S)):
+                for c in range(len(s.cells)):
+                    if c in S:
+                        continue
+                    T = S[:i] + [c] + S[i + 1:]
+                    v = cost(T)
+                    if v < best - 1e-9:
+                        S, best, better = T, v, True
+        return sorted(s.cells[i] for i in S)
+
+
+def busy(fc, S):
+    return fc.busy(S)
 
 
 def search(cl, terms, d, m, cap, hmax):
-    """Local search from the k-medoids placement of m cells: (feasible, T, busy per unit rate, far, S)."""
+    """Local search from the k-medoids placement of m cells: (feasible, T, busy per unit rate, far, S); cl a Fast."""
     S = cl.medoids(m)
 
     def score(S):
@@ -98,7 +154,15 @@ def main():
     d = coef[3]
     leave = {l["cluster"]: l["leave"] for l in json.load(open(f"{W}/tour.json"))["legs"]}
     K = len(M["cl"])
-    cls = {k: Cluster(W, k) for k in M["cl"]}
+    slow = {k: Cluster(W, k) for k in M["cl"]}
+    cls = {k: Fast(c) for k, c in slow.items()}
+    rng = np.random.default_rng(0)   # the fast load is Cluster.load's
+    for k, c in cls.items():
+        for m in (1, 3, 8):
+            S = [c.cells[i] for i in rng.choice(len(c.cells), m, replace=False)]
+            fr, far, _ = slow[k].load(S)
+            u, f2 = c.busy(S)
+            assert abs(u - max(fr.values()) * TAU) < 1e-9 * max(1, u) and far == f2, (k, S)
     terms = {k: cell_terms(M["cl"][k]["geo"], around, loss, hear, coef) for k in M["cl"]}
     alg3 = {k: list(M["cl"][k]["P"]["crit"]) for k in M["cl"]}
     rows = []

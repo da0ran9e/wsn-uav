@@ -49,6 +49,8 @@ B0–B3.
 - k12 và k16 ở r100 (`data/cc-r100-R1-k12-s1.md`, `...-k16-s1.md`), ngân sách 10 %, ρ = 20 / 50 / 100 / 200: k12 cần 32 / 52 / 98 /
   220 critical cell, T1 992 / 1005 / 1061 / 1147 s (Algorithm 3: 66 cell, 1021 s); k16 cần 49 / 64 / 123 / 275, T1 1162 / 1168 /
   1235 / 1362 s (Algorithm 3: 92 cell, 1232 s). Algorithm 3 vi phạm giới hạn chặng trên cả ba bản đồ. Ở ρ ≤ 50 tập mới nhanh hơn
-  Algorithm 3 trên cả ba bản đồ; từ ρ = 100 thì chậm hơn hoặc ngang, vì cần nhiều critical cell hơn.
+  Algorithm 3 trên cả ba bản đồ; ở ρ = 100 nhanh hơn trên k8, ngang trên k16, chậm hơn trên k12; ở ρ = 200 chậm hơn trên cả ba,
+  vì cần nhiều critical cell hơn. So sánh này chưa công bằng cho tập mới: Algorithm 3 không chở nổi luồng nền ở các mức ρ đó
+  (B1: chỉ tới khoảng 18 người/h trên k8).
 - Surrogate khớp trên 4–9 critical cell mỗi cụm; tập tới 20 critical cell mỗi cụm nằm ngoài vùng khớp, B4 cần kiểm bằng ns-3.
 - Chưa làm: T2 (pha 2) chưa vào hàm mục tiêu, để B5.

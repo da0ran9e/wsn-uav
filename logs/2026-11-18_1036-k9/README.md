@@ -15,3 +15,10 @@ B0–B3.
   tour không đổi; đưa một tập khác (bỏ một cell mỗi cụm, thêm một cell) thì kế hoạch và báo cáo theo đúng tập đó. Đạt 12/12.
 - Lỗi gặp và sửa: thư mục thử dùng symlink `d{k}` nên `d{k}/..` trỏ về thư mục gốc; `load` giờ tìm `crit.csv` theo tên
   (`os.path.normpath`), không qua symlink.
+
+## Giai đoạn 2 (B0): tham số
+
+- Đầu ra: `paper/j1/K9-PARAMS-vi.md` (ρ, cỡ dữ liệu D1–D3, thời gian xử lý theo bậc thiết bị, độ chính xác OSNet theo cỡ, tham
+  số mạng). Phần lớn lấy từ repo (`research_notes/l1-edge-recognition/`, `research_notes/l1-signature-matching/`); web cho ρ
+  (hai đoạn trích tìm kiếm) và bảng 6 của OSNet (đọc trang ar5iv).
+- Còn là ước lượng: cỡ JPEG khung và ảnh cắt, thời gian OSNet x0,25 trên MCU, tỉ lệ node là camera, ρ mức thấp và giữa.

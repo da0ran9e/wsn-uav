@@ -22,3 +22,15 @@ B0–B3.
   số mạng). Phần lớn lấy từ repo (`research_notes/l1-edge-recognition/`, `research_notes/l1-signature-matching/`); web cho ρ
   (hai đoạn trích tìm kiếm) và bảng 6 của OSNet (đọc trang ar5iv).
 - Còn là ước lượng: cỡ JPEG khung và ảnh cắt, thời gian OSNet x0,25 trên MCU, tỉ lệ node là camera, ρ mức thấp và giữa.
+
+## Giai đoạn 3 (B1): luồng nền về AI node
+
+- Script `paper/j1/analysis/bg_load.py`; kết quả `data/b1-k8.{md,csv}`, `data/b1-k12.*`, `data/b1-k16.*`; lệnh ở
+  `b1-bg-load-*.md`. Kênh r100 (luồng nền không phụ thuộc kênh A2G), mô hình tải của `river_lb.py`.
+- Tập AI cell: k-medoids theo số chặng cell trong từng cụm, N = 8…128, cộng tập Algorithm 3. Mỗi cụm giữ mesh riêng.
+- Kết quả (k8, ngân sách 10 % thời gian, 30 % node là camera): ρ lớn nhất mà môi trường bận nhất còn chịu được là 0,2–1,9
+  người/h với D1, 0,7–7,7 với D2, 13–145 với D3 khi N tăng từ 8 lên 128. Môi trường bận nhất là cell của AI node. k12, k16 cùng
+  cỡ. Tập Algorithm 3 (45 cell) chỉ ngang N = 16 medoids, vì các critical cell của nó dồn cục (xa nhất 8 cell, 1 269 node đổ
+  về một AI node).
+- Hệ quả: D1, D2 không khả thi ở mọi ρ thật trên 802.15.4; D3 chỉ chịu được phố vắng tới phố thường nếu có khoảng 100 AI cell
+  trở lên. Ở mức ρ khả thi, năng lực tính của AI node không bị chạm (N = 8: khoảng 2 bản ghi mỗi giây vào AI node bận nhất).

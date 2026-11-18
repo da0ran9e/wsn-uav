@@ -75,3 +75,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-17_1614-greenorbs-wildcam-notes/` | Ghi chú GreenOrbs (Liu 2013) và mạng camera 4G Natura 2000 (Kissling 2024) |
 | `2026-11-17_1620-exscal-santander-citysee-notes/` | Ghi chú ExScal (Arora 2005), SmartSantander (Sanchez 2014), CitySee (Liu 2013) |
 | `2026-11-17_1500-g2g-density/` | Mật độ node và lưới cell G2G, giãn cách tối đa (Monte Carlo) |
+| `2026-11-18_1036-k9/` | K9: chọn critical cell, đánh đổi số critical cell (B2 nối `crit.csv`, ...) |

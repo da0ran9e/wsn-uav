@@ -7,7 +7,8 @@ Algorithm 1  Axe (cells crossed, in flight order) and Seg(a) per packet index
 Algorithm 2  Bank_+-(a) and Path_+-(a): perpendiculars to the Axe's sum vector, +-omega
              (banks="local", CLAUDE.md §8 item 103: perpendiculars to the flight path where it crosses a,
              the inner side cut at the local radius of curvature, so curved Axes keep their Banks at omega)
-Algorithm 3  critical cells: the CH's cell, global outliers, local outliers
+Algorithm 3  critical cells: the CH's cell, global outliers, local outliers; or, with a mission folder's crit.csv
+             (load_crit; J1 task K9), the cells listed there that belong to the cluster
 Algorithm 4  Circle: Neig(k) ordered along u, the Axe cut into consecutive groups, each
              Seg(a) of a group fetched from a's Bank on the side nearer the member
 Adaptive Circle (CLAUDE.md §8 items 66-67): for every size n up to the cells of rings 1-2, the
@@ -95,7 +96,9 @@ def load(deploy, path_csv):
     nodes = list(csv.DictReader(open(os.path.join(deploy, "deploy-nodes-s35.csv"))))
     rows = list(csv.DictReader(open(path_csv)))
     path = np.array([[float(q["x"]), float(q["y"])] for q in rows])
-    return dict(c=c, w=w, R=R, cells=sel, S=set(sel), nodes=nodes, path=path, uav=packets(rows))   # packet s at uav[s]
+    # crit_cells: the mission folder holding deploy (its d{k}/), found by name (normpath), not through a d{k} symlink
+    return dict(c=c, w=w, R=R, cells=sel, S=set(sel), nodes=nodes, path=path, uav=packets(rows),   # packet s at uav[s]
+                crit_cells=load_crit(os.path.normpath(os.path.join(deploy, ".."))))
 
 
 def cellpath(src, dst, allowed, c):
@@ -121,6 +124,13 @@ def detour(b, m, k, S, c):
         return cellpath(b, m, S - {k}, c)
     except AssertionError:
         return cellpath(b, m, S, c)
+
+
+def load_crit(w):
+    """The critical cells chosen outside the plan (J1 task K9: q,r rows of the mission folder's crit.csv, cells of
+    every cluster), or None: Algorithm 3 picks them."""
+    f = os.path.join(w, "crit.csv")
+    return {(int(x["q"]), int(x["r"])) for x in csv.DictReader(open(f))} if os.path.exists(f) else None
 
 
 def load_around(path):
@@ -234,6 +244,8 @@ def plan(geo, width=3.5, kg=2.0, kl=1.0, r=2, banks="parallel", reentry=False, w
         near = [ref[g] for k in range(1, r + 1) for g in ring(h, k) if g in ref]
         if v > mu + kl * sd and v >= max(near):
             crit.add(h)
+    if geo.get("crit_cells") is not None:   # K9: the set chosen outside, this cluster's part of it
+        crit = {h for h in geo["crit_cells"] if h in S}
     crit = sorted(crit)
     need = {k: need[k] for k in crit} if need else {}
     if need:   # only the critical cells' own windows, and only the Axe cells they cover, stay in the plan

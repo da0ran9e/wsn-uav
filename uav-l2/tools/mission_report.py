@@ -29,7 +29,7 @@ import numpy as np
 from map_gen import W, cell_at, centre, corners, strip_text
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
-from river_plan import load_around, packets, plan  # noqa: E402
+from river_plan import load_around, load_crit, packets, plan  # noqa: E402
 
 MATCH, LORA, AIR, V2, HOVER = 5.0, 30.0, 0.4, 15.0, 30.0
 SCHEMES = ("rf", "ad12", "d")
@@ -49,6 +49,7 @@ def load_map(w, schemes=SCHEMES, with_bits=True):
     owner = {(int(r["q"]), int(r["r"])): int(r["cluster"]) for r in csv.DictReader(open(f"{w}/clusters.csv"))}
     cl = {}
     around = load_around(f"{w}/domain-cl.csv") if os.path.exists(f"{w}/domain-cl.csv") else None   # item 135
+    crit_cells = load_crit(w)   # K9: critical cells chosen outside the plan, or None
     opts = json.load(open(f"{w}/plan-opts.json")) if os.path.exists(f"{w}/plan-opts.json") else {}
     near, near_loss = opts.get("axeNear", False), opts.get("lossDb")   # near_loss: item 163
     for k in range(1, m["clusters"] + 1):
@@ -60,7 +61,8 @@ def load_map(w, schemes=SCHEMES, with_bits=True):
         path = np.array([[float(q["x"]), float(q["y"])] for q in prow])
         part = np.array([int(q["part"]) for q in prow])   # 0 lead-in, 1 entry -> CH, 2 CH -> exit, 3 lead-out
         uav = packets(prow)   # packet s at uav[s] (with column t, the speed profile; item 157)
-        geo = dict(c=c, w=W, R=W / math.sqrt(3), cells=sel, S=set(sel), nodes=nodes, path=path, part=part, uav=uav)
+        geo = dict(c=c, w=W, R=W / math.sqrt(3), cells=sel, S=set(sel), nodes=nodes, path=path, part=part, uav=uav,
+                   crit_cells=crit_cells)
         res = {t: {(int(r["q"]), int(r["r"])): r for r in csv.DictReader(open(f"{w}/r{k}-{t}-crit.csv"))}
                for t in schemes}
         runs = {t: next(csv.DictReader(open(f"{w}/r{k}-{t}-runs.csv"))) for t in schemes}

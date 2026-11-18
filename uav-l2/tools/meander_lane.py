@@ -49,7 +49,7 @@ from swath_mission import stage_deploy
 import dubins
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../uav-coop2/tools"))
-from river_plan import load_around, ring  # noqa: E402
+from river_plan import load_around, load_crit, ring  # noqa: E402
 
 CAPL, SPAN = 190, 14
 OMEGA, BEND = 3.5 / 2 * W, W
@@ -328,8 +328,11 @@ def stage_core(W_, K):
             f.write("q,r\n" + "".join(f"{q},{r}\n" for q, r in under))
 
 
-def critical(nodes, around, kg=2.0, kl=1.0, r=2):
-    """river_plan.plan's Algorithm 3 (critical cells do not depend on the path)."""
+def critical(nodes, around, kg=2.0, kl=1.0, r=2, crit_cells=None):
+    """river_plan.plan's Algorithm 3 (critical cells do not depend on the path); with crit_cells (a mission folder's
+    crit.csv, J1 task K9) the cluster's cells listed there instead."""
+    if crit_cells is not None:
+        return sorted({(int(x["q"]), int(x["r"])) for x in nodes if x["isCL"] == "1"} & set(crit_cells))
     sc = {(int(x["q"]), int(x["r"])): float(x["score"]) for x in nodes if x["isCL"] == "1"}
     mu, sd = np.mean(list(sc.values())), np.std(list(sc.values()))
     chn = next(x for x in nodes if x["isCH"] == "1")
@@ -409,7 +412,7 @@ def stage_curve(W_, K, reach=OMEGA):
         ch[k] = np.array([float(x["x"]), float(x["y"])])
         lat = {(int(x["q"]), int(x["r"])): np.array([float(x["cx"]), float(x["cy"])])
                for x in csv.DictReader(open(f"{W_}/c{k}-lattice.csv"))}
-        crit[k] = [lat[h] for h in critical(nodes, around)]
+        crit[k] = [lat[h] for h in critical(nodes, around, crit_cells=load_crit(W_))]
     out = {}
     for a, b in lanes:
         ks = [k for k in range(1, K + 1) if a - 1e-6 <= span[k - 1][0] and span[k - 1][1] <= b + 1e-6]

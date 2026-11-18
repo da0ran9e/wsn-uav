@@ -29,7 +29,7 @@ from map_gen import cell_at, centre
 from partition import partition
 from restructure import bs_point, domain, lane_partition
 from subch import subch_partition
-from river_plan import hexdist, load, load_around, plan  # noqa: E402 (subch puts uav-coop2/tools on the path)
+from river_plan import hexdist, load, load_around, load_crit, plan  # noqa: E402 (subch puts uav-coop2/tools on the path)
 from tour_heur import order_segments
 from chord_tour import choose
 
@@ -294,7 +294,7 @@ def stage_bend(a, W_, K):
         ch = np.array([float(x["x"]), float(x["y"])])
         lat = {(int(r["q"]), int(r["r"])): np.array([float(r["cx"]), float(r["cy"])])
                for r in csv.DictReader(open(f"{W_}/c{k}-lattice.csv"))}
-        pulls = [lat[h] for h in critical(nodes, around) if not np.allclose(lat[h], ch, atol=W)
+        pulls = [lat[h] for h in critical(nodes, around, crit_cells=load_crit(W_)) if not np.allclose(lat[h], ch, atol=W)
                  and np.min(np.linalg.norm(P - lat[h], axis=1)) <= a.bendCrit * W]
         if getattr(a, "bendShort", False) and getattr(a, "chordFit", 0) and \
                 json.load(open(f"{W_}/chord.json"))["own"].get(str(k), 0) >= math.ceil((a.windowKB or 400) * 1000 / 99) * 0.5:
@@ -467,6 +467,9 @@ def main():
                     help="phase 0: partition.py k-medoids, or restructure.py lanes (CLAUDE.md §8 item 84), or the "
                          "k-medoids clusters of --src split around critical cells far apart (subch.py, item 114)")
     ap.add_argument("--src", default="", help="--partition=subch: the k-medoids work folder of the same map")
+    ap.add_argument("--crit", default="", help="J1 task K9: CSV q,r of the critical cells (all clusters) instead of "
+                    "Algorithm 3; copied once into the work folder as crit.csv, which the tour, the plan and the "
+                    "reports then read")
     ap.add_argument("--dmin", type=float, default=6, help="--partition=subch: seeds at least this many cells apart")
     ap.add_argument("--minsize", type=int, default=20, help="--partition=subch: smaller sub-clusters are merged")
     ap.add_argument("--pairs", action="store_true", help="--partition=subch: subCH-K (item 118), every --src cluster "
@@ -514,9 +517,15 @@ def main():
     a = ap.parse_args()
     a.bin = os.path.abspath(a.bin)
     a.src = os.path.abspath(a.src) if a.src else ""
+    a.crit = os.path.abspath(a.crit) if a.crit else ""
     os.makedirs(a.work, exist_ok=True)
     W_ = os.path.abspath(a.work)
     os.chdir(W_)
+    if a.crit:   # K9: written once, like env.txt, so every stage and every later reader uses the same set
+        new = open(a.crit).read()
+        if os.path.exists("crit.csv") and open("crit.csv").read() != new:
+            sys.exit(f"{W_} has another crit.csv")
+        open("crit.csv", "w").write(new)
     stage_map(a, W_)
     K = json.load(open("map.json"))["clusters"]
     b = stage_deploy(a, W_, K)

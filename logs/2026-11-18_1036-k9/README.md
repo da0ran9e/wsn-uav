@@ -77,7 +77,7 @@ B0–B3.
 
 ## Giai đoạn 6 (B5): tổng thời gian hai pha, phương án D3
 
-- Script `paper/j1/analysis/b5_phase2.py`; lệnh ở `b5-phase2-seed1.md`; kết quả `data/b5-seed1.{md,csv}`. Chạy khoảng 3 phút,
+- Script `paper/j1/analysis/b5_phase2.py`; lệnh ở `b5-phase2-seed1.md`; kết quả `data/b5-seed1.{md,csv}`. Chạy 30 s,
   không cần ns-3.
 - Đầu vào: 8 thư mục B4. Pha 1 là số đo ns-3: cell chưa xong tính bằng 900 s, nên rho200 là cận dưới. Pha 2 dùng mô hình V1
   của `mission_policy.py`: đội 2 bay 15 m/s, rời trạm gốc ở báo cáo đầu tiên, thăm theo điểm. Mỗi lần xác minh tốn 78 s theo

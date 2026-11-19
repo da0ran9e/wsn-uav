@@ -480,3 +480,29 @@ Nhận xét:
 - Kênh A2G xác định LoS bằng hình học thật: tia từ UAV tới node có cắt khối nhà nào không, thay cho xác suất Al-Hourani.
   Kênh G2G có LoS khi đoạn nối hai node không cắt nhà (K1c).
 - Nhà cao hơn độ cao bay thành vùng cấm bay cho tour (K5); điểm lơ lửng của V1 chọn chỗ có LoS tới node.
+
+**Chín khu ứng viên, ô 4 × 4 km bằng cỡ bản đồ k8** (mục 351; log `logs/2026-11-19_0800-osm-areas/`, hình
+`paper/j1/figures/osm-*.png`):
+
+| Khu | Nhà (diện tích) | Nước | Đất trống có thẻ | Số nhà | Có chiều cao | Nhà > 100 m / > 120 m | Cao nhất | Cell nước | Cell không chỗ đặt node |
+|---|---|---|---|---|---|---|---|---|---|
+| Hà Nội, Ocean Park | 6 % | 5 % | 20 % | 4 266 | 5 % | 8 / 7 | 226 m | 2 % | 6 % |
+| Hà Nội, Ecopark | 2 % | 7 % | 8 % | 1 776 | 2 % | 8 / 0 | 120 m | 1 % | 10 % |
+| Hà Nội, Mỹ Đình | 14 % | 3 % | 14 % | 9 607 | 50 % | 49 / 32 | 336 m | 2 % | 0 % |
+| Hà Nội, Linh Đàm | 5 % | 9 % | 8 % | 1 838 | 8 % | 22 / 20 | 174 m | 7 % | 2 % |
+| Hà Nội, Starlake (Tây Hồ Tây) | 9 % | 16 % | 10 % | 7 469 | 9 % | 9 / 2 | 135 m | 14 % | 1 % |
+| TP.HCM, Thủ Thiêm | 7 % | 19 % | 22 % | 3 911 | 15 % | 45 / 38 | 461 m | 17 % | 9 % |
+| TP.HCM, Phú Mỹ Hưng | 6 % | 7 % | 9 % | 3 322 | 8 % | 11 / 0 | 111 m | 4 % | 14 % |
+| Singapore, trung tâm và Marina | 17 % | 1 % (thiếu biển) | 21 % | 5 148 | 85 % | 340 / 282 | 305 m | 0 % | 11 % |
+| Singapore, Punggol | 15 % | 5 % | 22 % | 2 598 | 77 % | 0 / 0 | 78 m | 4 % | 9 % |
+
+"Cell không chỗ đặt node": cell R = 100 m không có nhà và có dưới 50 m đường. Biển không được tính là nước (OSM vẽ biển bằng
+đường bờ), và 34–69 % diện tích chưa gắn thẻ, nên số đất trống chỉ là cận dưới.
+
+Nhận xét:
+- Đủ cả hồ hoặc sông, đất trống và nhà cao: Thủ Thiêm (sông Sài Gòn 19 %, nhiều lô đất trống, 38 nhà trên 120 m, có Landmark
+  81) và Starlake (một phần Hồ Tây, 16 % nước, khu mới còn nhiều lô trống). Cả hai thiếu chiều cao (9–15 %).
+- Linh Đàm có nhiều hồ nhỏ xen chung cư cao tầng (20 nhà trên 120 m), dữ liệu chiều cao kém (8 %).
+- Mỹ Đình có dữ liệu chiều cao tốt nhất ở Việt Nam (50 %) và dày nhà cao, nhưng ít nước và gần như không có cell trống.
+- Punggol (Singapore) là khu đô thị mới sạch nhất: 77 % có chiều cao, kênh và công viên, nhà đều dưới 100 m nên UAV bay qua
+  được; Marina có dữ liệu chiều cao tốt nhất (85 %), nhiều nhà trên 120 m.

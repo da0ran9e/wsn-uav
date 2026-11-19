@@ -357,3 +357,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 348 | 2026-11-19 | kế hoạch · B4 dừng ở 1 seed; ý thử điểm nghi vấn ở legacy node | [2026-11](2026-11.md) |
 | 349 | 2026-11-19 | bối cảnh · chốt điểm kết thúc pha 2; hỏi còn gì chưa bàn | [2026-11](2026-11.md) |
 | 350 | 2026-11-19 | bối cảnh · dùng bản đồ thật của một khu đô thị làm mẫu | [2026-11](2026-11.md) |
+| 351 | 2026-11-19 | bối cảnh · tìm khu đô thị mẫu xét cả hồ và đất trống | [2026-11](2026-11.md) |

@@ -35,7 +35,7 @@ B0–B3.
 - Hệ quả: D1, D2 không khả thi ở mọi ρ thật trên 802.15.4; D3 chỉ chịu được phố vắng tới phố thường nếu có khoảng 100 AI cell
   trở lên. Ở mức ρ khả thi, năng lực tính của AI node không bị chạm (N = 8: khoảng 2 bản ghi mỗi giây vào AI node bận nhất).
 
-## Giai đoạn 4 (B3): chọn critical cell cho D3 (đang làm)
+## Giai đoạn 4 (B3): chọn critical cell cho D3
 
 - Script `paper/j1/analysis/cc_select.py`: River theo surrogate C4 (công thức, mỗi critical cell thêm vào làm cả cụm chậm hơn
   qua cluLack), mạng nền theo `bg_load.py` (ngân sách 10 / 20 %, 30 % node là camera, 528 B mỗi người, giới hạn 5 cell); số
@@ -54,3 +54,23 @@ B0–B3.
   (B1: chỉ tới khoảng 18 người/h trên k8).
 - Surrogate khớp trên 4–9 critical cell mỗi cụm; tập tới 20 critical cell mỗi cụm nằm ngoài vùng khớp, B4 cần kiểm bằng ns-3.
 - Chưa làm: T2 (pha 2) chưa vào hàm mục tiêu, để B5.
+
+## Giai đoạn 5 (B4): kiểm surrogate bằng ns-3, seed 1
+
+- Script `paper/j1/analysis/b4_run.sh` (pha 1 trong ns-3 với binary đóng băng CAMP-BIN5 và cờ của C4, bản đồ k8-s1, `--crit`
+  lấy tập của B3) và `paper/j1/analysis/b4_compare.py` (doneS đo so với surrogate từng critical cell, T_k từng cụm, T1).
+  Lệnh ở `b4-seed1.md`, `b4-compare-seed1.md`; kết quả `data/b4-seed1.{md,csv}`; đầu ra River từng cấu hình (`r*-rf-crit.csv`,
+  `tour.json`, `mission.log`) ở `data/b4-seed1-raw/`. Thư mục làm việc đầy đủ 271 MB nằm trong scratchpad, không commit.
+- 8 cấu hình: kênh r100, r200 × tập Algorithm 3, ρ = 20, 100, 200 (ngân sách 10 %), runSeed 1, 4 cấu hình song song, khoảng
+  2 giờ 20 phút (rho200 chậm nhất).
+- T1 đo / mô hình (s): r100 alg3 770 / 753, rho20 687 / 661, rho100 733 / 728, rho200 ≥ 1 231 / 906; r200 alg3 743 / 740,
+  rho20 658 / 654, rho100 755 / 714, rho200 ≥ 1 231 / 876. Ở rho200, cụm 7 và 8 mỗi kênh còn 1 critical cell chưa xong khi River
+  chạm giới hạn 900 s, nên T1 đo chỉ là cận dưới.
+- Tới 70 critical cell (rho100), mô hình giữ đúng thứ tự trên r100 và lệch T1 dưới 41 s; trên r200 nó xếp rho100 nhanh hơn
+  Algorithm 3 trong khi ns-3 đo chậm hơn 12 s. Ở 161 critical cell (rho200), mô hình sai hẳn: trong một cụm ns-3 trải từ 75 tới
+  trên 900 s, mô hình đoán gần như một số cho cả cụm.
+- Mô hình đoán T_k thấp hơn đo ở mọi cấu hình (lệch trung bình −7 tới −44 s khi chưa tới 70 cell). Phần lớn do cụm 7 và 8: ở
+  Algorithm 3 r100, cụm 8 đoán 91 s, đo 248 s. Số đo cụm 8 trùng từng số với dữ liệu khớp surrogate, còn cụm 2 thì không (dữ
+  liệu khớp 147–300 s, B4 99–188 s, cùng tập Algorithm 3); dữ liệu khớp đến từ thư mục FIX với CAMP-BIN4. Nguyên nhân chưa rõ.
+  Một seed chưa tách được sai số của mô hình khỏi biến động theo lần chạy.
+- Chưa làm: seed thứ hai (chờ người dùng quyết), B5 (T2).

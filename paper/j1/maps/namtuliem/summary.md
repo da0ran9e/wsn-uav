@@ -10,7 +10,7 @@ updated: 2026-11-19
 - Vùng cao tầng (nhà ≥ 60 m nới 100 m): 10.8 % diện tích.
 - Địa hình (Terrarium z13): thấp nhất -12 m, trung vị 9 m, cao nhất 33 m; 1.6 % điểm cao hơn trung vị 5 m.
 - Cell R = 100 m: 1238; chủ yếu nước 34 (3 %); chủ yếu trong vùng cao tầng 126 (10 %); chủ yếu trong vùng cấm bay hoặc vật cản 61 (5 %).
-- Vùng cấm bay ước theo OSM (sân bay, đất quân sự): 2.5 % diện tích; (không tên) (military), Ban Chỉ huy Quân sự phường Từ Liêm (military), Ban Chỉ huy Quân sự quận Nam Từ Liêm (military), Bảo tàng Lịch sử Quân sự Việt Nam (military), Bộ Tư lệnh Thủ đô Hà Nội (military), Cảnh sát biển Việt Nam (military), Doanh trại Quân đội nhân dân Việt Nam (military), Tiểu đoàn 77 (military).
+- Vùng cấm bay ước theo OSM (sân bay, đất quân sự): 2.5 % diện tích; Ban Chỉ huy Quân sự phường Từ Liêm (military), Ban Chỉ huy Quân sự quận Nam Từ Liêm (military), Bảo tàng Lịch sử Quân sự Việt Nam (military), Bộ Tư lệnh Thủ đô Hà Nội (military), Cảnh sát biển Việt Nam (military), Doanh trại Quân đội nhân dân Việt Nam (military), Tiểu đoàn 77 (military), Trụ sở Tổng cục Công nghiệp quốc phòng (military).
 - Vật cản (nhà ≥ 100 m nới 50 m): 74 toà, 3.3 % diện tích.
 
 | Hồ | Diện tích (ha) |

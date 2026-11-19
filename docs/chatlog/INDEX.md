@@ -362,3 +362,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 353 | 2026-11-19 | bối cảnh · cắt thêm các khu khác; vùng cấm bay | [2026-11](2026-11.md) |
 | 354 | 2026-11-19 | kế hoạch · duyệt làm B5 (K9) | [2026-11](2026-11.md) |
 | 355 | 2026-11-19 | bối cảnh · thêm bản đồ vài thành phố hiện đại nước ngoài | [2026-11](2026-11.md) |
+| 356 | 2026-11-19 | bối cảnh · đặt node IoT trên bản đồ thật, xem liên thông và lỗ hổng của lưới cell | [2026-11](2026-11.md) |

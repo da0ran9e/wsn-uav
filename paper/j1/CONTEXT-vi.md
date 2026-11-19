@@ -566,3 +566,33 @@ Nhận xét: dữ liệu chiều cao tốt nhất ở Singapore (73–79 %), H�
 đoan: vật cản chiếm 36 % diện tích, gần như không bay được ở 100 m. Downtown Core và Yau Tsim Mong có vật cản 9–11 % và vùng cao
 tầng 27–36 %; Yau Tsim Mong có 39 % là biển. Punggol sạch nhất: nhà đều dưới 100 m, có kênh và hồ. Gangnam là nơi duy nhất có
 địa hình cao thật (đồi tới gần 300 m ở phía nam), nên độ cao bay phải tính từ mặt đất chứ không từ trạm gốc.
+
+## 20. Đặt node trên bản đồ thật: lưới cell liên thông và hổng ra sao (2026-11-19, mục 356)
+
+Script `paper/j1/analysis/urban_nodes.py`, log `logs/2026-11-19_1000-urban-nodes/`, hình `paper/j1/figures/cells-*.png`.
+Node đặt theo viền nhà mỗi 40 m (chuông cửa, camera tường; 45 % chạy pin và không chuyển tiếp) và dọc phố mỗi 30 m (camera
+cột, máy bán hàng; cắm điện), không đặt trên nước, lấy mẫu về 816 node/km² đất. Kênh G2G của mô phỏng (liên kết dùng được khi
+q ≥ 0,5); biến thể "tường" trừ thêm 15 dB cho mỗi toà nhà mà đoạn nối cắt qua (tối đa 3), bước đầu của K1c.
+
+| Bản đồ | Kênh | Node | Chạy pin | Cell đất | Cell nước | Cell rỗng | Cell đứt bên trong | Cặp kề không có gateway | Thành phần | Cell trong thành phần lớn nhất | Node pin không với tới node điện |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Punggol | như hiện tại | 7 058 | 22 % | 328 | 32 | 3 % | 2 % | 2 % | 1 | 100 % | 0 % |
+| Punggol | có tường | 7 058 | 22 % | 328 | 32 | 3 % | 28 % | 4 % | 1 | 100 % | 5 % |
+| Downtown Core | như hiện tại | 4 094 | 18 % | 192 | 3 | 6 % | 1 % | 1 % | 1 | 100 % | 0 % |
+| Downtown Core | có tường | 4 094 | 18 % | 192 | 3 | 6 % | 38 % | 5 % | 1 | 100 % | 6 % |
+| Nam Từ Liêm | như hiện tại | 25 081 | 17 % | 1 199 | 39 | 5 % | 1 % | 2 % | 2 | 99,9 % | 0 % |
+| Nam Từ Liêm | có tường | 25 081 | 17 % | 1 199 | 39 | 5 % | 9 % | 3 % | 2 | 99,9 % | 3 % |
+| Hoàng Mai | như hiện tại | 26 929 | 11 % | 1 285 | 267 | 2 % | 1 % | 2 % | 1 | 100 % | 0 % |
+| Hoàng Mai | có tường | 26 929 | 11 % | 1 285 | 267 | 2 % | 4 % | 2 % | 1 | 100 % | 1 % |
+
+Nhận xét:
+- Lưới cell vẫn là một khối liền ở cả bốn bản đồ (99,9–100 % cell nằm trong thành phần lớn nhất). Lỗ hổng gồm cell nước
+  (1–17 % số cell, hồ Hoàng Mai nhiều nhất) và cell đất không có node cắm điện (2–6 %: công viên, nút giao lớn, đất trống, chỗ
+  OSM thiếu dữ liệu). Các lỗ nằm rải rác nên không cắt lưới; sông có cầu và node dọc đường nên vẫn nối được.
+- Với kênh hiện tại gần như mọi cell liên thông bên trong (1–2 % bị đứt) và 1–2 % cặp cell kề thiếu gateway.
+- Khi tính xuyên tường, khu nhà dày đặc vỡ nhiều: 28–38 % cell ở Singapore bị đứt bên trong (các node trong cell không còn
+  đường tới nhau mà không ra khỏi cell), 4–5 % cặp kề mất gateway, 5–6 % node pin không với tới node điện. Ở Hà Nội chỉ 4–9 %,
+  một phần vì OSM thiếu nhà thấp tầng nên ít tường hơn thực tế.
+- Hệ quả: giả định "mọi node của cell tới được CL bên trong cell" không còn giữ ở khu dày đặc khi tính tường. Hướng xử lý:
+  cho phép đường trong cell mượn cell kề, giảm R, hoặc thêm node chuyển tiếp ở cột đèn dọc phố. Mô hình 15 dB mỗi toà là thô,
+  cần hiệu chỉnh ở K1c.

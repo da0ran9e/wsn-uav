@@ -1,12 +1,12 @@
 # sg-punggol
 
-- Bắt đầu: 2026-11-19 08:29:31, chạy 18 s, mã thoát 0
+- Bắt đầu: 2026-11-19 09:41:37, chạy 21 s, mã thoát 0
 - Thư mục: `/home/user/wsn-uav`
 
 **Lệnh**
 
 ```bash
-python3 paper/j1/analysis/osm_district.py 19910146 sg-punggol $S/OSM/district-sg-punggol paper/j1/maps/sg-punggol paper/j1/figures
+python3 paper/j1/analysis/osm_district.py 19910146 sg-punggol /tmp/claude-0/-home-user-wsn-uav/fd83db84-4832-5a0e-be6a-d1201f4d6a60/scratchpad/OSM/district-sg-punggol paper/j1/maps/sg-punggol paper/j1/figures
 ```
 
 **Kết quả**

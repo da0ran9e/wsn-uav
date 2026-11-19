@@ -233,6 +233,11 @@ def geo(path, geoms):
                "features": [{"type": "Feature", "properties": pr, "geometry": mapping(g)} for g, pr in geoms]},
               open(path, "w"))
 geo(f"{A.out}/boundary.geojson", [(bound, {"name": rtags.get("name"), "osm_relation": A.rel})])
+geo(f"{A.out}/water_all.geojson", [(W, {"kind": "all water incl. sea"})])
+with gzip.open(f"{A.out}/roads.csv.gz", "wt") as f:
+    wr = csv.writer(f); wr.writerow(["wkt"])
+    for g in getattr(R, "geoms", [R]):
+        if g.geom_type == "LineString" and g.length > 1: wr.writerow([g.simplify(0.5).wkt])
 geo(f"{A.out}/water.geojson", [(g, {"name": nm, "ha": round(ha, 2)}) for nm, ha, g in lakes])
 geo(f"{A.out}/highrise.geojson", [(Z, {"tall_m": A.tall, "zone_m": A.zone})])
 geo(f"{A.out}/nofly.geojson", [(NF, {"kind": "aerodrome or military land (OSM proxy)"}), (OB, {"kind": f"buildings >= {A.fly:.0f} m grown {A.clear:.0f} m"})])

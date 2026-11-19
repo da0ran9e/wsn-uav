@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 # J1 · Bối cảnh, thực thể và tham số của bài toán
 
@@ -426,11 +426,21 @@ Bốn cách xác minh:
 | V4 | UAV tới vị trí lần thấy mới nhất, nhìn bằng camera của chính nó | không (ảnh của UAV) | bay + thời gian quan sát | có |
 
 Nhận xét:
-- Ở khu cao tầng, tầm A2G chỉ còn khoảng 45 m (Al-Hourani, mục 9), nên lơ lửng ở 100 m để gửi 1 MB như V1 hiện nay gần như
-  không qua được; UAV phải hạ thấp vào lòng phố gần node, chậm và khó về pháp lý. V1 trong mô hình hiện tại vì vậy lạc quan
-  cho đô thị cao tầng.
+- (Sửa ngày 2026-11-19, mục 347.) Tầm R50 khoảng 45 m ở khu cao tầng là cự ly ngang của một UAV bay qua. Lơ lửng ngay trên
+  node thì góc ngẩng gần 90°, xác suất LoS theo Al-Hourani (cao tầng) là 0,85; gói qua được 0,87 nếu lệch 0 m, 0,73 nếu lệch
+  20 m, 0,49 nếu lệch 45 m. V1 vì vậy vẫn làm được nếu UAV lơ lửng gần đúng trên node (toạ độ node có từ pha 0), thời gian gửi
+  R tăng khoảng 1/0,8 lần; nếu node bị che (NLoS) từ điểm lơ lửng thì gói qua chỉ khoảng 0,13 và UAV phải đổi chỗ. Nhà cao hơn
+  độ cao bay thì không lơ lửng trên được.
 - V2 bỏ hẳn đội 2 nếu chu kỳ LoRa cho phép, nhưng chậm khi nhiều nghi vấn cùng chờ một CH, và chỉ giữ được hướng 4 một phần.
 - V3 nhanh nhất về thời gian ở mỗi điểm và hợp với UAV khó tới sát node, đổi lại ảnh nghi vấn rời thiết bị.
 - V4 chỉ có ích khi lần thấy rất mới; người đã đi khỏi thì vô ích, và đây là việc của đội cứu hộ hơn là của mạng.
 - Hướng 4 (giữ dữ liệu tại chỗ) chọn V1; nếu chấp nhận ảnh nghi vấn rời thiết bị trong tình huống khẩn cấp thì V3 hoặc V2.
   So sánh V1, V2, V3 trên tổng thời gian hai pha là một thí nghiệm rẻ (mô hình, không cần ns-3).
+
+**Quyết định (mục 347).** Bỏ V3: UAV phải thu mọi ảnh nghi vấn nên thời gian pha 2 như nhau ở mọi baseline, không làm rõ lợi
+thế của pha 1. Chọn V1 và V4. V1 giữ dữ liệu tại chỗ và để thứ tự thăm (theo xác suất từ pha 1) quyết định thời gian pha
+2, nên chất lượng pha 1 hiện ra trong tổng thời gian. V4 cần thêm mô hình người di chuyển kể từ lúc được thấy (vùng tìm nở
+ra theo thời gian) và xác suất UAV nhìn thấy người.
+
+Còn mở: pha 2 kết thúc ở đâu. Đề xuất: V1 xác nhận đúng lần thấy (mức dữ liệu) là kết thúc pha 2 của bài; V4 (tìm thấy người
+ngoài thực địa) là bước tiếp theo, chỉ làm khi lần thấy đã xác nhận còn đủ mới.

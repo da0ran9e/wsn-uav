@@ -53,7 +53,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 | Tham số | Bản hội nghị (ICC) | J1 | Trạng thái |
 |---|---|---|---|
 | Diện tích vùng | 617 cell ≈ 16 km² (bản đồ k8) | vừa một chuyến bay của một UAV; ước lượng thô khoảng 100 km², cỡ 50 cụm (mục 7) | chốt (nguyên tắc), mở (con số) |
-| Số cell | 617 | khoảng 4 000 nếu 100 km² và giữ R = 100 m | mở (giữ R hay tăng R) |
+| Số cell | 617 | khoảng 4 000 nếu 100 km² và giữ R = 100 m | chốt (R = 100 m, mục 10) |
 | Mật độ node | khoảng 21 node một cell (13 086 node) | giữ khoảng 816 node/km² làm mức chính (hướng tới, mục 335); thêm 400 và 280 node/km² để xem độ nhạy (vẫn trong vùng lưới cell liên thông, mục 10) | chốt (mức chính), đề xuất (mức phụ) |
 | Số CC | 45 CC trên 8 cụm (k8), cho sẵn theo bản đồ | J1 giải bài chọn CC (mục 335), số CC là một phần lời giải | chốt |
 | Kênh A2G, G2G | A2G hai đoạn + suy hao môi trường cố định, Rician K = 2; G2G 3GPP UMi NLoS | làm phức tạp dần theo từng bước (mục 335): LoS phụ thuộc góc ngẩng, che khuất tương quan, fading tương quan, cấu trúc phố hay địa hình cho G2G (mục 9; việc K1) | chốt (hướng), đề xuất (thứ tự bước) |
@@ -89,10 +89,17 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - i. (mục 342) Ai sở hữu và vận hành mạng, ai chạy pha 0, thiết bị của chủ khác nhau có tham gia không.
 - j. Phần lớn đã trả lời (mục 344): không giới hạn thời gian, tìm tới khi thấy (chỉ bị chặn bởi năng lượng UAV); camera
   trả lời "thấy người trông giống mục tiêu". Cửa sổ mặc định 2 giờ (mục 345).
-- k. (mục 342) Pha 2 ở đô thị cao tầng: UAV cánh quay bay thấp giữa nhà, xác minh nghĩa là gì (tới chỗ camera, nhận ảnh
-  cắt qua UAV, hay báo người đến hiện trường).
+- k. Đã trả lời (mục 347, 349): V1 và V4; pha 2 của bài kết thúc khi V1 xác nhận đúng lần thấy, V4 là bước sau (mục 17).
 - l. (mục 342) Vận hành UAV ở đô thị: điểm cất cánh, độ cao bay khi có nhà cao hơn 100–120 m, vùng cấm bay, sức bền.
-- m. (mục 342) Nguồn điện của node: cắm điện lưới hay pin; quyết định năng lượng có phải ràng buộc không.
+- m. (mục 342) Nguồn điện của node: cắm điện lưới hay pin; quyết định năng lượng có phải ràng buộc không. Đề xuất ở
+  mục 15: tỉ lệ node chạy pin là tham số, node chạy pin không chuyển tiếp.
+- n. (mục 349) Trạm gốc ở đâu: trong đô thị (đồn công an, trạm cứu hoả) hay ngoài rìa như bản đồ k8 (cách cell gần nhất
+  1 km); quyết định quãng bay của cả hai pha.
+- o. (mục 349) Bản đồ đô thị: bản đồ hiện là "khối có hồ" với node rải đều; đô thị cần nhà (chiều cao), phố, node bám theo
+  nhà và phố. Cần cho kênh K1a, K1c, cho vùng cấm bay (nhà cao hơn độ cao bay) và cho điểm lơ lửng của V1.
+- p. (mục 349) Mạng thay đổi: thiết bị vào ra, chủ tắt máy; bao lâu chạy lại pha 0; lúc có sự cố một phần node vắng mặt.
+- q. (mục 349) Phạm vi: nhiều sự cố cùng lúc, node gian lận hay báo sai có thuộc J1 không (đề xuất: ngoài phạm vi, nêu ở
+  phần giới hạn).
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 
@@ -442,5 +449,5 @@ thế của pha 1. Chọn V1 và V4. V1 giữ dữ liệu tại chỗ và để 
 2, nên chất lượng pha 1 hiện ra trong tổng thời gian. V4 cần thêm mô hình người di chuyển kể từ lúc được thấy (vùng tìm nở
 ra theo thời gian) và xác suất UAV nhìn thấy người.
 
-Còn mở: pha 2 kết thúc ở đâu. Đề xuất: V1 xác nhận đúng lần thấy (mức dữ liệu) là kết thúc pha 2 của bài; V4 (tìm thấy người
-ngoài thực địa) là bước tiếp theo, chỉ làm khi lần thấy đã xác nhận còn đủ mới.
+Chốt (mục 349): pha 2 của bài kết thúc khi V1 xác nhận đúng lần thấy (mức dữ liệu); V4 (tìm thấy người ngoài thực địa) là
+bước tiếp theo, chỉ làm khi lần thấy đã xác nhận còn đủ mới.

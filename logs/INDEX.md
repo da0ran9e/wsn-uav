@@ -78,3 +78,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-18_1036-k9/` | K9: chọn critical cell, đánh đổi số critical cell (B2 nối `crit.csv`, ...) |
 | `2026-11-19_0730-osm-probe/` | Thăm dò dữ liệu toà nhà OpenStreetMap ở sáu khu đô thị ứng viên |
 | `2026-11-19_0800-osm-areas/` | So chín khu đô thị ứng viên (nhà, chiều cao, nước, đất trống, cell trống) từ OpenStreetMap |
+| `2026-11-19_0900-district-map/` | Cắt bản đồ quận Hoàng Mai từ OSM, đánh dấu hồ và vùng cao tầng |

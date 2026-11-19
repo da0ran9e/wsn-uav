@@ -506,3 +506,11 @@ Nhận xét:
 - Mỹ Đình có dữ liệu chiều cao tốt nhất ở Việt Nam (50 %) và dày nhà cao, nhưng ít nước và gần như không có cell trống.
 - Punggol (Singapore) là khu đô thị mới sạch nhất: 77 % có chiều cao, kênh và công viên, nhà đều dưới 100 m nên UAV bay qua
   được; Marina có dữ liệu chiều cao tốt nhất (85 %), nhiều nhà trên 120 m.
+
+**Bản đồ một quận: Hoàng Mai** (mục 352; log `logs/2026-11-19_0900-district-map/`, dữ liệu `paper/j1/maps/hoangmai/`, hình
+`paper/j1/figures/map-hoangmai-labelled.png`). Chọn Hoàng Mai vì có nhiều hồ xen chung cư cao tầng. Ranh giới là quận cũ
+(OSM giữ dưới dạng boundary=historic sau cải cách 2025). 40,2 km²; nước 17,9 % (50 hồ từ 2 ha và một đoạn sông Hồng);
+2 921 toà nhà, 13 % có chiều cao, 81 toà từ 60 m, 23 toà từ 120 m, cao nhất 174 m; vùng cao tầng (nhà từ 60 m nới 100 m)
+5,2 % diện tích; 1 552 cell R = 100 m, trong đó 16 % chủ yếu là nước và 5 % nằm trong vùng cao tầng. Địa hình phẳng (trung vị
+9 m), nên "vùng cao" ở đây là vùng nhà cao tầng; lớp độ cao 30 m nhiễu (đánh dấu cả mặt hồ) nên không vẽ. OSM thiếu nhiều
+nhà thấp tầng và chiều cao, nên vùng cao tầng chỉ gồm các toà đã có dữ liệu.

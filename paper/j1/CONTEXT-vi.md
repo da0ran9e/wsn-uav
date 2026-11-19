@@ -95,7 +95,8 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   mục 15: tỉ lệ node chạy pin là tham số, node chạy pin không chuyển tiếp.
 - n. (mục 349) Trạm gốc ở đâu: trong đô thị (đồn công an, trạm cứu hoả) hay ngoài rìa như bản đồ k8 (cách cell gần nhất
   1 km); quyết định quãng bay của cả hai pha.
-- o. Đang làm (mục 350): dùng bản đồ thật của một khu đô thị làm mẫu; thăm dò dữ liệu ở mục 18.
+- o. Đã trả lời (mục 350–358): bản đồ thật từ OSM, 12 khu, bộ đề xuất bốn khu; quy tắc đặt node, cột đèn theo nhu cầu, node lá
+  (mục 18–21, việc K14).
 - p. (mục 349) Mạng thay đổi: thiết bị vào ra, chủ tắt máy; bao lâu chạy lại pha 0; lúc có sự cố một phần node vắng mặt.
 - q. (mục 349) Phạm vi: nhiều sự cố cùng lúc, node gian lận hay báo sai có thuộc J1 không (đề xuất: ngoài phạm vi, nêu ở
   phần giới hạn).
@@ -626,5 +627,21 @@ Nhận xét:
   khoảng 3 node lạc mỗi cell đứt. Các node này nên coi là node lá (chỉ nhận, không cần chuyển tiếp) hoặc nối qua cell kề; cell
   "đứt" theo định nghĩa chặt (một node lạc cũng tính) vì vậy là cách đếm bi quan.
 - Đặt cột ở mọi phố đôi khi làm tăng số cell đứt (Punggol 15 % lên 18 %): cột trên lối đi bộ trong khu nhà cũng có thể bị lạc.
-- Đề xuất cho mô hình: thêm lớp node chuyển tiếp trên cột đèn, đặt theo nhu cầu ở pha 0; node trên nhà không với tới nhóm chính
+- Chốt (mục 358), đưa vào K14: thêm lớp node chuyển tiếp trên cột đèn, đặt theo nhu cầu ở pha 0; node trên nhà không với tới nhóm chính
   của cell thì làm node lá.
+
+## 22. Trạm gốc, điểm cất cánh, độ cao bay (2026-11-19, mục 358, đề xuất để bàn)
+
+**Trạm gốc đặt ở đâu.** Trên bốn bản đồ đề xuất, OSM có sẵn đồn công an và trạm cứu hoả trong ranh giới: Nam Từ Liêm 9 đồn công
+an, 1 đội chữa cháy và cứu nạn cứu hộ (khu vực 16), 1 bãi đỗ trực thăng; Hoàng Mai 27 đồn công an, 1 đội chữa cháy và cứu nạn
+cứu hộ (khu vực 12); Punggol 3 đồn công an, 1 trạm cứu hoả; Downtown Core 1 đồn công an, 2 trạm cứu hoả. Đề xuất: trạm gốc là
+đội chữa cháy và cứu nạn cứu hộ của khu vực, vì đây là lực lượng làm tìm kiếm cứu nạn và có sân để UAV cất hạ cánh; LoRa
+gateway đặt ở đó. Khác bản đồ k8: trạm gốc nằm trong khu vực, không cách cell gần nhất 1 km.
+
+**Cất cánh.** Đô thị không có đường băng, nên UAV cánh bằng là loại VTOL (cất hạ cánh thẳng đứng), như các mẫu ở mục 7. Tốc độ
+và bán kính quay giữ như bản hiện tại.
+
+**Độ cao bay.** Giữ 100 m so với mặt đất. Nhà từ 100 m (nới 50 m) là vùng cấm cho tour (K5): Downtown Core 10,9 % diện tích,
+Yau Tsim Mong 8,6 %, Minato 8,7 %, Nam Từ Liêm 3,3 %. Gangnam có đồi gần 300 m, nên độ cao bay tính theo mặt đất bên dưới.
+
+**Sức bền.** Các quận 5–60 km² nằm gọn trong một chuyến bay của loại VTOL 1–3 h (tour bản đồ k8 16 km² hết khoảng 13 phút).

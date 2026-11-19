@@ -162,13 +162,20 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 
-- [ ] **K14** Bản đồ đô thị mẫu từ OpenStreetMap (chatlog mục 350, CONTEXT mục 18): toà nhà (đường viền, chiều cao), đường
-  phố, node đặt theo nhà và phố ở mật độ khoảng 816 node/km², lưới cell lục giác phủ lên; xuất cùng định dạng bản đồ hiện có
-  để `mission.py` chạy được
-  - Đầu ra cho K1a (LoS A2G bằng hình học), K1c (LoS G2G), K5 (nhà cao hơn độ cao bay thành vùng cấm) và điểm lơ lửng V1.
-    Chỉ dùng API của www.openstreetmap.org (Overpass, Geofabrik bị chặn). Ghi nguồn ODbL.
-  - Chờ người dùng chọn khu mẫu.
-  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+- [ ] **K14** Bản đồ đô thị mẫu từ OpenStreetMap (chatlog mục 350–358, CONTEXT mục 18–21): toà nhà (đường viền, chiều cao),
+  đường phố, nước (cả biển dựng từ đường bờ), vùng cấm bay ước theo OSM; node đặt theo nhà và phố ở khoảng 816 node/km² đất;
+  lưới cell lục giác R = 100 m phủ lên; xuất cùng định dạng bản đồ hiện có để `mission.py` chạy được
+  - Đã có (bước dữ liệu): `paper/j1/analysis/osm_district.py` (12 khu trong `paper/j1/maps/`), `urban_nodes.py` (đặt node,
+    kiểm lưới cell, cột đèn). Bộ bản đồ đề xuất: Nam Từ Liêm, Hoàng Mai, Punggol, Downtown Core.
+  - Quy tắc đặt node đã chốt (mục 358): thiết bị trên viền nhà mỗi 40 m (45 % chạy pin, không chuyển tiếp) và dọc phố mỗi 30 m
+    (cắm điện); thêm node chuyển tiếp trên cột đèn mỗi 35 m chỉ ở các cell cần (rỗng, đứt bên trong, thiếu gateway) ở pha 0;
+    node trên nhà không với tới nhóm chính của cell làm node lá (chỉ nhận, như node chạy pin).
+  - Còn làm: xuất node, cell, CL, CH, cặp gateway, tuyến sang định dạng của `uav-coop-deploy` / `mission.py`; kênh G2G có
+    tường (15 dB mỗi toà, cần hiệu chỉnh ở K1c) trong ns-3; LoS A2G bằng hình học cho K1a; nhà ≥ 100 m thành vùng cấm cho K5;
+    điểm lơ lửng V1 có LoS tới node.
+  - Đầu ra cho K1a, K1c, K5 và điểm lơ lửng V1. Chỉ dùng API của www.openstreetmap.org (Overpass, Geofabrik bị chặn). Ghi
+    nguồn ODbL.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo: bước dữ liệu xong 2026-11-19 (commit 812ec94), chưa nhận phần ns-3.
 
 ## Điểm gặp
 

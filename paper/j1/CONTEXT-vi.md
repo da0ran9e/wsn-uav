@@ -514,3 +514,38 @@ Nhận xét:
 5,2 % diện tích; 1 552 cell R = 100 m, trong đó 16 % chủ yếu là nước và 5 % nằm trong vùng cao tầng. Địa hình phẳng (trung vị
 9 m), nên "vùng cao" ở đây là vùng nhà cao tầng; lớp độ cao 30 m nhiễu (đánh dấu cả mặt hồ) nên không vẽ. OSM thiếu nhiều
 nhà thấp tầng và chiều cao, nên vùng cao tầng chỉ gồm các toà đã có dữ liệu.
+
+## 19. Vùng cấm bay (2026-11-19, mục 353)
+
+**Quy định** [web]: Bộ Quốc phòng công bố cổng tra cứu khu vực cấm bay, hạn chế bay tại cambay.mod.gov.vn từ 15/6/2025, theo
+Quyết định 18/2020/QĐ-TTg; dữ liệu bản đồ này được quản lý theo luật bảo vệ bí mật nhà nước, nên không tải về làm dữ liệu
+được (cổng cũng không vào được từ container). Nghị định 288/2025/NĐ-CP (hiệu lực 5/11/2025): trong khu vực cấm bay chỉ cấp
+phép cho nhiệm vụ công vụ (quốc phòng, an ninh, an toàn bay, trật tự xã hội), và nộp hồ sơ không đồng nghĩa được cấp.
+TP.HCM công bố 63 phường, xã, đặc khu thuộc phạm vi cấm bay drone; Hải Phòng 30, với lưu ý danh sách chỉ nói địa bàn có
+vùng cấm, không phải cả địa bàn bị cấm. Chưa tìm thấy danh sách của Hà Nội.
+
+**Hệ quả cho bài:**
+- Nhiệm vụ tìm người là bay công vụ, nhóm duy nhất được xét cấp phép trong vùng cấm (đã chọn ở mục 11). Vùng cấm theo quy
+  định vì vậy là điều kiện xin phép, không chặn hẳn nhiệm vụ.
+- Vùng phải tránh thật sự là vùng an toàn: quanh sân bay (đường tiếp cận), đất quân sự, và vật cản vật lý là nhà cao hơn độ
+  cao bay. Bài mô hình hoá ba loại này bằng dữ liệu OSM (aeroway=aerodrome, landuse=military, nhà từ 100 m nới 50 m), nối
+  với việc K5 (tour né vùng cấm) và Hệ quả 2 (vùng cấm làm chặn dưới không hợp tác vô hạn).
+- Đây là ước lượng: vùng cấm thật có thể rộng hơn (ví dụ quanh cơ quan nhà nước), nên kết quả cần ghi là trên vùng cấm ước
+  theo OSM.
+
+**Sáu quận đã cắt** (mục 353; dữ liệu `paper/j1/maps/<quận>/`, hình `paper/j1/figures/map-<quận>[-labelled].png`, log
+`logs/2026-11-19_0900-district-map/`). Cấm bay ước theo OSM gồm sân bay và đất quân sự; vật cản là nhà từ 100 m nới 50 m.
+
+| Quận | km² | Nước | Hồ ≥ 2 ha | Nhà có chiều cao | Nhà ≥ 120 m | Cao nhất | Vùng cao tầng | Cấm bay ước theo OSM | Vật cản (toà) |
+|---|---|---|---|---|---|---|---|---|---|
+| Hoàng Mai | 40.2 | 17.9 % | 50 | 13 % | 23 | 174 m | 5.2 % | 0.3 % | 31 |
+| Cầu Giấy | 12.5 | 2.7 % | 3 | 3 % | 10 | 165 m | 17.0 % | 1.8 % | 16 |
+| Tây Hồ | 24.7 | 23.5 % | 8 | 11 % | 0 | 110 m | 2.6 % | 0.1 % | 4 |
+| Nam Từ Liêm | 32.2 | 4.5 % | 12 | 78 % | 12 | 186 m | 10.8 % | 2.5 % | 74 |
+| Long Biên | 60.2 | 9.6 % | 37 | 3 % | 0 | 81 m | 0.9 % | 2.7 % | 0 |
+| Quận 7 (TP.HCM) | 35.8 | 12.8 % | 16 | 7 % | 0 | 111 m | 3.0 % | 0.1 % | 11 |
+
+Nhận xét: Nam Từ Liêm có dữ liệu chiều cao tốt nhất (78 %) và nhiều nhà cao, nhiều đất quân sự (2,5 %); Hoàng Mai và Tây Hồ
+nhiều nước nhất (18 %, 24 %); Cầu Giấy dày nhà, vùng cao tầng lớn nhất (17 %); Long Biên có sân bay Gia Lâm và nhiều đất quân
+sự (2,7 %) nhưng không có nhà trên 100 m; Quận 7 nhiều kênh rạch. Vùng cấm bay ước theo OSM chỉ chiếm 0,1–2,7 % diện tích
+mỗi quận; vùng cấm chính thức (không tải được) chắc chắn rộng hơn.

@@ -9,7 +9,9 @@ updated: 2026-11-19
 - Nước: 17.9 % diện tích; hồ từ 2 ha: 50.
 - Vùng cao tầng (nhà ≥ 60 m nới 100 m): 5.2 % diện tích.
 - Địa hình (Terrarium z13): thấp nhất -23 m, trung vị 9 m, cao nhất 41 m; 3.5 % điểm cao hơn trung vị 5 m.
-- Cell R = 100 m: 1552; chủ yếu nước 250 (16 %); chủ yếu trong vùng cao tầng 71 (5 %).
+- Cell R = 100 m: 1552; chủ yếu nước 250 (16 %); chủ yếu trong vùng cao tầng 71 (5 %); chủ yếu trong vùng cấm bay hoặc vật cản 12 (1 %).
+- Vùng cấm bay ước theo OSM (sân bay, đất quân sự): 0.3 % diện tích; (không tên) (military), Ban Chỉ huy Quân sự phường Hoàng Mai (military), Học viện Khoa học Quân sự (military), Tiểu đoàn Thông tin 610 (military), Đài K2 Lữ đoàn 918 QCPKKQ (military).
+- Vật cản (nhà ≥ 100 m nới 50 m): 31 toà, 0.8 % diện tích.
 
 | Hồ | Diện tích (ha) |
 |---|---|

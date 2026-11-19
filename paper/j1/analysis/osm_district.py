@@ -12,7 +12,11 @@ since the 2025 reform, e.g. 9421133 Quận Hoàng Mai, 9421132 Quận Cầu Gi�
   5 terrain: ground elevation from the public Terrarium tiles (Mapzen/AWS open data, zoom 13, about 19 m pixels), min,
     median, max inside the district and the share above median + 5 m (statistics only, not drawn: on flat cities the
     30 m SRTM-based tiles are dominated by noise, buildings and trees, and even mark points on lakes);
-  6 the R = 100 m hexagonal cells (flat-top) over the district: share mostly water, share in a high-rise zone.
+  6 no-fly proxies from OSM (the official no-fly map of the Ministry of Defence, cambay.mod.gov.vn, is managed as a state
+    secret and not downloadable): aerodromes (aeroway=aerodrome) and military land (landuse=military) inside the box, and
+    physical obstacles: buildings at least FLY m tall (the flight altitude) grown by CLEAR m;
+  7 the R = 100 m hexagonal cells (flat-top) over the district: shares mostly water, in a high-rise zone, in a no-fly
+    proxy or obstacle.
 Writes OUT_DIR/{boundary.geojson, water.geojson, highrise.geojson, buildings.csv.gz, summary.md} (local metres around the
 district centre, plus the centre in WGS84), FIG_DIR/map-NAME.png (no text) and FIG_DIR/map-NAME-labelled.png (legend,
 lake names, scale bar). Data (c) OpenStreetMap contributors, ODbL; elevation: Terrarium tiles (SRTM and others).
@@ -27,6 +31,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("rel"); ap.add_argument("name"); ap.add_argument("cache"); ap.add_argument("out"); ap.add_argument("figs")
 ap.add_argument("--tall", type=float, default=60.0); ap.add_argument("--zone", type=float, default=100.0)
 ap.add_argument("--tile", type=float, default=0.012)
+ap.add_argument("--fly", type=float, default=100.0); ap.add_argument("--clear", type=float, default=50.0)
 A = ap.parse_args()
 UA = {"User-Agent": "research-map-probe/0.1"}
 os.makedirs(A.cache, exist_ok=True); os.makedirs(A.out, exist_ok=True); os.makedirs(A.figs, exist_ok=True)
@@ -89,14 +94,18 @@ def height(tags):
     return None, "unknown"
 
 
+def is_nofly(t):
+    return t.get("aeroway") == "aerodrome" or t.get("landuse") == "military" or t.get("military") in ("base", "barracks", "airfield")
+
+
 def is_water(t):
     return t.get("natural") == "water" or t.get("waterway") == "riverbank" or t.get("landuse") in ("reservoir", "basin") or "water" in t
 
 
 # 3 features
-bld, water, roads, used = [], [], [], set()
+bld, water, roads, used, nofly = [], [], [], set(), []
 for rid, (mem, t) in rels.items():
-    if t.get("type") != "multipolygon" or not ("building" in t or is_water(t)): continue
+    if t.get("type") != "multipolygon" or not ("building" in t or is_water(t) or is_nofly(t)): continue
     lines = []
     for ref, role in mem:
         if ref in ways and role in ("outer", "") and len(ways[ref][0]) > 1 and all(q in nodes for q in ways[ref][0]):
@@ -104,16 +113,18 @@ for rid, (mem, t) in rels.items():
     for p in (polygonize(linemerge(lines)) if lines else []):
         if p.area > 1:
             if "building" in t: bld.append((p, *height(t), t.get("name", "")))
+            elif is_nofly(t): nofly.append((p, t.get("name", ""), t.get("aeroway") or "military"))
             else: water.append((p, t.get("name", "")))
 for wid, (nds, t) in ways.items():
     if len(nds) < 2 or not all(q in nodes for q in nds): continue
     if "highway" in t and nds[0] != nds[-1]:
         roads.append(LineString([xy(q) for q in nds])); continue
     if wid in used or nds[0] != nds[-1] or len(nds) < 4: continue
-    if "building" in t or is_water(t):
+    if "building" in t or is_water(t) or is_nofly(t):
         p = Polygon([xy(q) for q in nds]); p = p if p.is_valid else p.buffer(0)
         if p.area <= 1: continue
         if "building" in t: bld.append((p, *height(t), t.get("name", "")))
+        elif is_nofly(t): nofly.append((p, t.get("name", ""), t.get("aeroway") or "military"))
         else: water.append((p, t.get("name", "")))
 pb = prepared.prep(bound)
 bld = [(p.intersection(bound), h, src, nm) for p, h, src, nm in bld if pb.intersects(p)]
@@ -130,6 +141,12 @@ R = unary_union(roads).intersection(bound) if roads else LineString()
 hs = [b for b in bld if b[1] is not None]
 tall = [b for b in hs if b[1] >= A.tall]
 Z = unary_union([b[0].buffer(A.zone) for b in tall]).intersection(bound) if tall else Polygon()
+
+NF = unary_union([p for p, _, _ in nofly]).intersection(bound) if nofly else Polygon()
+obst = [b for b in hs if b[1] >= A.fly]
+OB = unary_union([b[0].buffer(A.clear) for b in obst]).intersection(bound) if obst else Polygon()
+NFall = unary_union([NF, OB])
+nf_named = sorted({(nm or "(không tên)", kd) for p, nm, kd in nofly if p.intersects(bound)}, key=lambda x: (x[1] != "aerodrome", x[0] == "(không tên)", x[0]))
 
 # 5 terrain (Terrarium tiles, zoom 13)
 def tile_xy(lat, lon, z):
@@ -156,7 +173,8 @@ ev = np.array([v for _, v in elev]) if elev else np.array([np.nan])
 emed = float(np.nanmedian(ev))
 
 # 6 cells
-Rc = 100.0; cells = wcell = zcell = 0
+Rc = 100.0; cells = wcell = zcell = ncell = 0
+pn = prepared.prep(NFall) if not NFall.is_empty else None
 pw = prepared.prep(W) if not W.is_empty else None; pz = prepared.prep(Z) if not Z.is_empty else None
 bx0, by0, bx1, by1 = bound.bounds
 q = int(bx0 / (1.5 * Rc)) - 1
@@ -169,6 +187,7 @@ while 1.5 * Rc * q <= bx1 + Rc:
             cells += 1
             if pw and pw.intersects(hexp) and W.intersection(hexp).area > 0.5 * hexp.area: wcell += 1
             if pz and pz.intersects(hexp) and Z.intersection(hexp).area > 0.5 * hexp.area: zcell += 1
+            if pn and pn.intersects(hexp) and NFall.intersection(hexp).area > 0.5 * hexp.area: ncell += 1
         r += 1
     q += 1
 
@@ -180,6 +199,7 @@ def geo(path, geoms):
 geo(f"{A.out}/boundary.geojson", [(bound, {"name": rtags.get("name"), "osm_relation": A.rel})])
 geo(f"{A.out}/water.geojson", [(g, {"name": nm, "ha": round(ha, 2)}) for nm, ha, g in lakes])
 geo(f"{A.out}/highrise.geojson", [(Z, {"tall_m": A.tall, "zone_m": A.zone})])
+geo(f"{A.out}/nofly.geojson", [(NF, {"kind": "aerodrome or military land (OSM proxy)"}), (OB, {"kind": f"buildings >= {A.fly:.0f} m grown {A.clear:.0f} m"})])
 with gzip.open(f"{A.out}/buildings.csv.gz", "wt") as f:
     wr = csv.writer(f); wr.writerow(["cx", "cy", "area_m2", "height_m", "height_src", "name", "wkt"])
     for p, h, src, nm in bld:
@@ -195,7 +215,11 @@ summ = ["---", "status: reference", f"updated: {time.strftime('%Y-%m-%d')}", "--
         f"- Địa hình (Terrarium z13): thấp nhất {np.nanmin(ev):.0f} m, trung vị {emed:.0f} m, cao nhất {np.nanmax(ev):.0f} m; "
         f"{np.mean(ev > emed + 5) * 100:.1f} % điểm cao hơn trung vị 5 m.",
         f"- Cell R = 100 m: {cells}; chủ yếu nước {wcell} ({wcell / max(cells, 1) * 100:.0f} %); "
-        f"chủ yếu trong vùng cao tầng {zcell} ({zcell / max(cells, 1) * 100:.0f} %).", "",
+        f"chủ yếu trong vùng cao tầng {zcell} ({zcell / max(cells, 1) * 100:.0f} %); chủ yếu trong vùng cấm bay hoặc vật cản {ncell} "
+        f"({ncell / max(cells, 1) * 100:.0f} %).",
+        f"- Vùng cấm bay ước theo OSM (sân bay, đất quân sự): {NF.area / bound.area * 100:.1f} % diện tích; "
+        + (", ".join(f"{nm} ({kd})" for nm, kd in nf_named[:8]) or "không có") + ".",
+        f"- Vật cản (nhà ≥ {A.fly:.0f} m nới {A.clear:.0f} m): {len(obst)} toà, {OB.area / bound.area * 100:.1f} % diện tích.", "",
         "| Hồ | Diện tích (ha) |", "|---|---|"] + [f"| {nm} | {ha:.1f} |" for nm, ha, _ in lakes[:25]]
 open(f"{A.out}/summary.md", "w").write("\n".join(summ) + "\n"); print("\n".join(summ))
 
@@ -222,6 +246,8 @@ def draw(labelled):
         if g.geom_type == "LineString": ax.plot(*g.xy, c="#ffffff", lw=0.6)
     patch(ax, Z, facecolor="#e8a0a0", edgecolor="#b03030", lw=0.8, alpha=0.45)
     patch(ax, W, facecolor="#7fb3e0", edgecolor="none")
+    patch(ax, NF, facecolor="#8e5ad6", edgecolor="#5b2fa3", lw=0.8, alpha=0.35, hatch="///")
+    patch(ax, OB, facecolor="#8e5ad6", edgecolor="#5b2fa3", lw=0.8, alpha=0.55)
     for p, h, src, nm in bld:
         col = "#9a9a9a" if h is None else ("#555555" if h < A.tall else ("#b03030" if h < 120 else "#5a0f0f"))
         patch(ax, p, facecolor=col, edgecolor="none")
@@ -233,7 +259,9 @@ def draw(labelled):
         ax.plot([x0, x0 + 1000], [y0, y0], c="k", lw=2); ax.text(x0 + 500, y0 + 60, "1 km", ha="center", fontsize=7)
         ax.legend(handles=[Patch(color="#7fb3e0", label="hồ, sông"), Patch(color="#e8a0a0", label=f"vùng cao tầng (nhà ≥ {A.tall:.0f} m, nới {A.zone:.0f} m)"),
                            Patch(color="#555555", label=f"nhà < {A.tall:.0f} m"), Patch(color="#b03030", label=f"nhà {A.tall:.0f}–120 m"),
-                           Patch(color="#5a0f0f", label="nhà > 120 m"), Patch(color="#9a9a9a", label="nhà chưa rõ chiều cao")]
+                           Patch(color="#5a0f0f", label="nhà > 120 m"), Patch(color="#9a9a9a", label="nhà chưa rõ chiều cao"),
+                           Patch(facecolor="#8e5ad6", alpha=0.35, hatch="///", label="cấm bay ước theo OSM (sân bay, quân sự)"),
+                           Patch(facecolor="#8e5ad6", alpha=0.55, label=f"vật cản: nhà ≥ {A.fly:.0f} m nới {A.clear:.0f} m")]
 ,
                   loc="upper right", fontsize=7, frameon=True)
     fig.savefig(f"{A.figs}/map-{A.name}{'-labelled' if labelled else ''}.png", dpi=170); plt.close(fig)

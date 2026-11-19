@@ -359,3 +359,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 350 | 2026-11-19 | bối cảnh · dùng bản đồ thật của một khu đô thị làm mẫu | [2026-11](2026-11.md) |
 | 351 | 2026-11-19 | bối cảnh · tìm khu đô thị mẫu xét cả hồ và đất trống | [2026-11](2026-11.md) |
 | 352 | 2026-11-19 | bối cảnh · cắt bản đồ một quận, đánh dấu hồ và vùng cao | [2026-11](2026-11.md) |
+| 353 | 2026-11-19 | bối cảnh · cắt thêm các khu khác; vùng cấm bay | [2026-11](2026-11.md) |

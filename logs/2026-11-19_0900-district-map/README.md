@@ -1,4 +1,4 @@
-# 2026-11-19 · Cắt bản đồ quận Hoàng Mai, đánh dấu hồ và vùng cao tầng (chatlog mục 352)
+# 2026-11-19 · Cắt bản đồ quận, đánh dấu hồ, vùng cao tầng và vùng cấm bay (chatlog mục 352–353)
 
 Mục đích: lấy bản đồ một quận làm bản đồ đô thị mẫu, đánh dấu hồ và vùng cao.
 
@@ -17,3 +17,8 @@ nhưng nhiễu (đánh dấu cả điểm trên mặt hồ) nên đã bỏ khỏ
 
 Giới hạn: OSM ở Hà Nội thiếu nhiều nhà dân thấp tầng (2 921 toà là quá ít cho 40 km²) và 87 % nhà thiếu chiều cao, nên vùng
 cao tầng chỉ gồm các toà đã có dữ liệu. Dữ liệu (c) OpenStreetMap contributors, ODbL.
+
+**Bổ sung (mục 353):** thêm lớp cấm bay ước theo OSM (aeroway=aerodrome, landuse=military) và vật cản (nhà từ 100 m nới
+50 m), chạy cho sáu quận: Hoàng Mai, Cầu Giấy, Tây Hồ, Nam Từ Liêm, Long Biên, Quận 7 (TP.HCM); mỗi quận một file log
+`<quận>.md`. Bảng ở `paper/j1/CONTEXT-vi.md` mục 19. Bản đồ cấm bay chính thức (cambay.mod.gov.vn) là dữ liệu mật,
+không dùng được.

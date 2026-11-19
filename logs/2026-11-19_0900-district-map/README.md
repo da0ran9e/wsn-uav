@@ -22,3 +22,7 @@ cao tầng chỉ gồm các toà đã có dữ liệu. Dữ liệu (c) OpenStree
 50 m), chạy cho sáu quận: Hoàng Mai, Cầu Giấy, Tây Hồ, Nam Từ Liêm, Long Biên, Quận 7 (TP.HCM); mỗi quận một file log
 `<quận>.md`. Bảng ở `paper/j1/CONTEXT-vi.md` mục 19. Bản đồ cấm bay chính thức (cambay.mod.gov.vn) là dữ liệu mật,
 không dùng được.
+
+**Bổ sung (mục 355):** sáu khu nước ngoài (Downtown Core, Punggol, Yau Tsim Mong, Dubai Marina, Minato, Gangnam). Script thêm
+hai việc: tự chia ô khi API báo quá nhiều node, và dựng biển từ các đường bờ (natural=coastline, đất ở bên trái). Hà Nội và
+Quận 7 không có biển nên kết quả không đổi. Bảng ở `paper/j1/CONTEXT-vi.md` mục 19.

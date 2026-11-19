@@ -21,7 +21,7 @@ Writes OUT_DIR/{boundary.geojson, water.geojson, highrise.geojson, buildings.csv
 district centre, plus the centre in WGS84), FIG_DIR/map-NAME.png (no text) and FIG_DIR/map-NAME-labelled.png (legend,
 lake names, scale bar). Data (c) OpenStreetMap contributors, ODbL; elevation: Terrarium tiles (SRTM and others).
 """
-import argparse, csv, gzip, io, json, math, os, time, urllib.request, xml.etree.ElementTree as ET
+import argparse, csv, gzip, io, json, math, os, time, urllib.error, urllib.request, xml.etree.ElementTree as ET
 import numpy as np
 from shapely.geometry import Polygon, LineString, Point, box, mapping
 from shapely.ops import unary_union, linemerge, polygonize
@@ -38,14 +38,19 @@ os.makedirs(A.cache, exist_ok=True); os.makedirs(A.out, exist_ok=True); os.maked
 
 
 def get(url, path):
+    """Download url to path once; None when it fails (HTTP 400 from the map call = too many nodes: split the tile)."""
     if not os.path.exists(path):
         for k in range(3):
             try:
-                open(path, "wb").write(urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=120).read()); break
+                open(path, "wb").write(urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=180).read()); break
+            except urllib.error.HTTPError as ex:
+                if ex.code in (400, 509):
+                    time.sleep(1); return None
+                print("  retry", url, ex); time.sleep(5)
             except Exception as ex:
                 print("  retry", url, ex); time.sleep(5)
         time.sleep(1)
-    return path
+    return path if os.path.exists(path) else None
 
 
 def parse(path, nodes, ways, rels):
@@ -73,12 +78,17 @@ print(f"{rtags.get('name')}: {bound.area / 1e6:.1f} km², bbox {e - w:.3f} x {n 
 
 # 2 tiles
 nodes, ways, rels = {}, {}, {}
+def fetch_box(x0, y0, x1, y1, tag):
+    f = get(f"https://www.openstreetmap.org/api/0.6/map?bbox={x0:.6f},{y0:.6f},{x1:.6f},{y1:.6f}", f"{A.cache}/{tag}.osm")
+    if f:
+        parse(f, nodes, ways, rels); return 1
+    xm, ym = (x0 + x1) / 2, (y0 + y1) / 2   # too many nodes: four quarters
+    return sum(fetch_box(*b, f"{tag}{k}") for k, b in enumerate(((x0, y0, xm, ym), (xm, y0, x1, ym), (x0, ym, xm, y1), (xm, ym, x1, y1))))
 i = 0; y = s
 while y < n:
     x = w
     while x < e:
-        parse(get(f"https://www.openstreetmap.org/api/0.6/map?bbox={x:.6f},{y:.6f},{min(x + A.tile, e):.6f},{min(y + A.tile, n):.6f}",
-                  f"{A.cache}/t{i}.osm"), nodes, ways, rels)
+        fetch_box(x, y, min(x + A.tile, e), min(y + A.tile, n), f"t{i}_")
         i += 1; x += A.tile
     y += A.tile
 print(f"{i} tiles, {len(nodes)} nodes, {len(ways)} ways")
@@ -103,7 +113,7 @@ def is_water(t):
 
 
 # 3 features
-bld, water, roads, used, nofly = [], [], [], set(), []
+bld, water, roads, used, nofly, coast = [], [], [], set(), [], []
 for rid, (mem, t) in rels.items():
     if t.get("type") != "multipolygon" or not ("building" in t or is_water(t) or is_nofly(t)): continue
     lines = []
@@ -119,6 +129,8 @@ for wid, (nds, t) in ways.items():
     if len(nds) < 2 or not all(q in nodes for q in nds): continue
     if "highway" in t and nds[0] != nds[-1]:
         roads.append(LineString([xy(q) for q in nds])); continue
+    if t.get("natural") == "coastline":
+        coast.append(LineString([xy(q) for q in nds])); continue
     if wid in used or nds[0] != nds[-1] or len(nds) < 4: continue
     if "building" in t or is_water(t) or is_nofly(t):
         p = Polygon([xy(q) for q in nds]); p = p if p.is_valid else p.buffer(0)
@@ -127,6 +139,30 @@ for wid, (nds, t) in ways.items():
         elif is_nofly(t): nofly.append((p, t.get("name", ""), t.get("aeroway") or "military"))
         else: water.append((p, t.get("name", "")))
 pb = prepared.prep(bound)
+# sea: OSM draws it only as coastline ways with land on the left; split the district by them and keep the pieces whose
+# nearest coastline segment has them on its right
+if coast:
+    pieces = [bound]
+    cl = unary_union(coast)
+    try:   # node the district outline with the coastline and rebuild the faces
+        faces = polygonize(unary_union([LineString(bound.exterior.coords), cl.intersection(bound.buffer(1))]))
+        pieces = [f for f in faces if pb.contains(f.representative_point())] or [bound]
+    except Exception as ex:
+        print("coastline split failed:", ex)
+    segs = []
+    for c in coast:
+        cs = list(c.coords); segs += list(zip(cs, cs[1:]))
+    for pc in pieces:
+        if pc.area < 1e3: continue
+        rp = pc.representative_point()
+        best = None
+        for (ax_, ay_), (bx_, by_) in segs:
+            dx, dy = bx_ - ax_, by_ - ay_; L2 = dx * dx + dy * dy
+            if L2 == 0: continue
+            u = max(0, min(1, ((rp.x - ax_) * dx + (rp.y - ay_) * dy) / L2))
+            d = math.hypot(ax_ + u * dx - rp.x, ay_ + u * dy - rp.y)
+            if best is None or d < best[0]: best = (d, dx * (rp.y - ay_) - dy * (rp.x - ax_))
+        if best and best[1] < 0: water.append((pc, "(biển)"))
 bld = [(p.intersection(bound), h, src, nm) for p, h, src, nm in bld if pb.intersects(p)]
 bld = [b for b in bld if not b[0].is_empty]
 W = unary_union([p for p, _ in water]).intersection(bound) if water else Polygon()

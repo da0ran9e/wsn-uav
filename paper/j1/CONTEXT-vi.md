@@ -549,3 +549,20 @@ Nhận xét: Nam Từ Liêm có dữ liệu chiều cao tốt nhất (78 %) và 
 nhiều nước nhất (18 %, 24 %); Cầu Giấy dày nhà, vùng cao tầng lớn nhất (17 %); Long Biên có sân bay Gia Lâm và nhiều đất quân
 sự (2,7 %) nhưng không có nhà trên 100 m; Quận 7 nhiều kênh rạch. Vùng cấm bay ước theo OSM chỉ chiếm 0,1–2,7 % diện tích
 mỗi quận; vùng cấm chính thức (không tải được) chắc chắn rộng hơn.
+
+**Sáu khu đô thị hiện đại ở nước ngoài** (mục 355; cùng script, cùng tham số; nước gồm cả biển dựng từ đường bờ, vì OSM chỉ vẽ
+biển bằng đường bờ; cột cuối là cao độ mặt đất trung vị – cao nhất theo ô Terrarium, gồm cả nhà và cây nên chỉ để tham khảo):
+
+| Khu | km² | Nước | Nhà có chiều cao | Nhà ≥ 120 m | Cao nhất | Vùng cao tầng | Cấm bay ước theo OSM | Vật cản (toà) | Vật cản (diện tích) | Cao độ đất |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Singapore, Downtown Core | 5.1 | 2.0 % | 79 % | 38 | 245 m | 27.0 % | 0.0 % | 42 | 10.9 % | 13–127 m |
+| Singapore, Punggol | 9.5 | 8.7 % | 73 % | 0 | 78 m | 5.6 % | 0.0 % | 0 | 0.0 % | 9–51 m |
+| Hồng Kông, Yau Tsim Mong | 11.5 | 39.3 % | 50 % | 87 | 484 m | 36.0 % | 0.8 % | 127 | 8.6 % | 5–81 m |
+| Dubai Marina | 1.9 | 0.1 % | 48 % | 44 | 395 m | 74.7 % | 0.0 % | 58 | 36.2 % | 1–25 m |
+| Tokyo, Minato | 23.9 | 14.1 % | 10 % | 89 | 325 m | 28.6 % | 0.1 % | 123 | 8.7 % | 20–86 m |
+| Seoul, Gangnam | 40.4 | 1.1 % | 19 % | 27 | 264 m | 22.7 % | 0.0 % | 70 | 2.4 % | 33–296 m |
+
+Nhận xét: dữ liệu chiều cao tốt nhất ở Singapore (73–79 %), Hồng Kông và Dubai (48–50 %). Dubai Marina là trường hợp cực
+đoan: vật cản chiếm 36 % diện tích, gần như không bay được ở 100 m. Downtown Core và Yau Tsim Mong có vật cản 9–11 % và vùng cao
+tầng 27–36 %; Yau Tsim Mong có 39 % là biển. Punggol sạch nhất: nhà đều dưới 100 m, có kênh và hồ. Gangnam là nơi duy nhất có
+địa hình cao thật (đồi tới gần 300 m ở phía nam), nên độ cao bay phải tính từ mặt đất chứ không từ trạm gốc.

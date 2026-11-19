@@ -1,0 +1,1 @@
+{"type": "FeatureCollection", "crs_note": "local metres, origin lat 1.405414 lon 103.910046", "features": [{"type": "Feature", "properties": {"kind": "aerodrome or military land (OSM proxy)"}, "geometry": {"type": "Polygon", "coordinates": []}}, {"type": "Feature", "properties": {"kind": "buildings >= 100 m grown 50 m"}, "geometry": {"type": "Polygon", "coordinates": []}}]}

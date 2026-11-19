@@ -354,3 +354,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 345 | 2026-11-18 | bối cảnh · chốt cửa sổ 2 giờ; bàn tiếp pha 2 | [2026-11](2026-11.md) |
 | 346 | 2026-11-19 | kế hoạch · duyệt B4 (K9) chạy trước 1 seed | [2026-11](2026-11.md) |
 | 347 | 2026-11-19 | bối cảnh · pha 2 chọn V1 và V4, bỏ V3 | [2026-11](2026-11.md) |
+| 348 | 2026-11-19 | kế hoạch · B4 dừng ở 1 seed; ý thử điểm nghi vấn ở legacy node | [2026-11](2026-11.md) |

@@ -134,7 +134,8 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
     (5) chạy lại với tập tối ưu. Đầu ra: `assign.csv`, tập critical cell, đường đánh đổi, T\* so với Algorithm 3.
   - μ chưa có nguồn đo (mục 338): dùng mô hình theo bậc thiết bị của K12 và quét độ nhạy. Bước (1) làm được ngay.
   - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
-  - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c); làm B2, B0, B1, B3 trước, B4 chờ duyệt · Báo cáo:
+  - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c); xong B2, B0, B1, B3, B4 seed 1 (mục 348:
+    tạm dừng ở 1 seed); còn B5–B7 · Báo cáo: [logs/2026-11-18_1036-k9](../../logs/2026-11-18_1036-k9/README.md)
 - [ ] **K10** Mật độ phụ 400 và 280 node/km² (giãn cách 50 và 60 m, CONTEXT mục 4 và 10)
   - `uav-l2/tools/map_gen.py --spacing`; kiểm deploy, partition và chọn cặp gateway với cell 7–10 node, rồi chạy pha 1.
     Đầu ra: T\*, P_k mức cell và số cặp gateway theo mật độ.
@@ -154,6 +155,10 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
 - [ ] **K13** Pha 2 trong J1 (chatlog mục 338): mục tiêu chung là tối thiểu tổng thời gian pha 1 + pha 2. Đưa mô hình đội 2
   (UAV cánh quay, `uav-l2/docs/MISSION-vi.md`, `mission_policy.py`) vào cùng đường đo với pha 1, báo T_pha1 + T_pha2
   - Đầu ra: thời gian hai pha theo từng bản đồ và từng tập critical cell (dùng cho K9); báo L1 để đưa vào phát biểu bài toán.
+  - Cần thử (mục 348): trường hợp điểm nghi vấn nằm ở legacy node. Cách hiểu của người ghi, chờ người dùng xác nhận: người
+    được thấy ở camera của một node thường (không có AI), AI node chỉ giữ bản ghi; ảnh nằm ở node thường nên với V1 việc đối
+    sánh lại bằng bộ tham chiếu R không làm tại chỗ được, phải chuyển về AI node (thêm số chặng giao) hoặc lên UAV. So pha 2
+    khi nghi vấn ở AI node và ở node thường, theo khoảng cách giao.
   - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 

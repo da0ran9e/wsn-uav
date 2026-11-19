@@ -15,3 +15,7 @@ Kết quả: bảng ở `paper/j1/CONTEXT-vi.md` mục 20; hình `paper/j1/figur
 
 Dang dở: OSM ở Hà Nội thiếu nhiều nhà thấp tầng nên biến thể có tường đánh giá thấp mức đứt ở Hà Nội; một seed; mô hình
 xuyên tường là bước đầu của K1c, chưa hiệu chỉnh.
+
+**Bổ sung (mục 357):** thêm node chuyển tiếp trên cột đèn mỗi 35 m (`--poles 35`), hai cách đặt: chỉ ở cell cần và trên mọi
+phố; log `<bản đồ>-poles.md`. Che khuất giờ cố định theo từng cặp node (băm mã hai node), nên số của biến thể không cột đèn
+lệch nhẹ so với lần chạy đầu (cùng mô hình, khác lần bốc). Bảng ở `paper/j1/CONTEXT-vi.md` mục 21.

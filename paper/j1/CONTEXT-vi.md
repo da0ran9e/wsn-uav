@@ -596,3 +596,35 @@ Nhận xét:
 - Hệ quả: giả định "mọi node của cell tới được CL bên trong cell" không còn giữ ở khu dày đặc khi tính tường. Hướng xử lý:
   cho phép đường trong cell mượn cell kề, giảm R, hoặc thêm node chuyển tiếp ở cột đèn dọc phố. Mô hình 15 dB mỗi toà là thô,
   cần hiệu chỉnh ở K1c.
+
+## 21. Thêm node chuyển tiếp trên cột đèn (2026-11-19, mục 357)
+
+Thêm node cắm điện trên cột đèn mỗi 35 m dọc phố, cách mép đường 3 m, chồng lên các thiết bị đã có; hai cách đặt: chỉ ở các
+cell cần (rỗng, đứt bên trong, hoặc thiếu gateway với cell kề, xét ở kênh có tường) và trên mọi phố. Che khuất cố định theo
+từng cặp node để so cặp; số không cột đèn vì vậy lệch nhẹ so với mục 20 (cùng mô hình, khác lần bốc). Log
+`logs/2026-11-19_1000-urban-nodes/<bản đồ>-poles.md`, hình `paper/j1/figures/cells-*-walls-poles-*.png`.
+
+| Bản đồ | Kênh có tường | Cột đèn thêm | Cell đứt bên trong | Cặp kề không có gateway | Node pin không với tới node điện | Node điện lạc khỏi nhóm chính của cell (phần trên nhà) |
+|---|---|---|---|---|---|---|
+| Punggol | không cột đèn | 0 | 31 % | 5 % | 5 % | 5,7 % (73 %) |
+| Punggol | cột ở cell cần | +1 876 (+27 %) | 15 % | 1 % | 4 % | 2,3 % (68 %) |
+| Punggol | cột mọi phố | +4 995 (+71 %) | 18 % | 1 % | 3 % | 1,8 % (68 %) |
+| Downtown Core | không cột đèn | 0 | 45 % | 4 % | 7 % | 8,8 % (62 %) |
+| Downtown Core | cột ở cell cần | +1 476 (+36 %) | 29 % | 2 % | 4 % | 3,3 % (53 %) |
+| Downtown Core | cột mọi phố | +3 488 (+85 %) | 29 % | 2 % | 4 % | 2,6 % (49 %) |
+| Nam Từ Liêm | không cột đèn | 0 | 11 % | 3 % | 3 % | 2,0 % (77 %) |
+| Nam Từ Liêm | cột ở cell cần | +2 319 (+9 %) | 7 % | 1 % | 2 % | 1,1 % (80 %) |
+| Nam Từ Liêm | cột mọi phố | +15 348 (+61 %) | 6 % | 1 % | 2 % | 0,7 % (80 %) |
+| Hoàng Mai | không cột đèn | 0 | 4 % | 2 % | 1 % | 0,3 % (57 %) |
+| Hoàng Mai | cột ở cell cần | +1 062 (+4 %) | 1 % | 1 % | 1 % | 0,1 % (55 %) |
+| Hoàng Mai | cột mọi phố | +18 639 (+69 %) | 2 % | 1 % | 1 % | 0,1 % (70 %) |
+
+Nhận xét:
+- Đặt cột đèn chỉ ở cell cần cho kết quả gần bằng đặt mọi phố, với số node thêm ít hơn nhiều (4–36 % thay vì 61–85 %).
+- Cột đèn sửa được phần khung: cặp cell kề thiếu gateway giảm từ 2–5 % xuống 1–2 %, node điện bị lạc giảm 2–3 lần.
+- Phần còn đứt chủ yếu là vài node gắn trên nhà, nằm sau toà nhà so với phố (49–80 % số node lạc là node trên nhà); trung bình
+  khoảng 3 node lạc mỗi cell đứt. Các node này nên coi là node lá (chỉ nhận, không cần chuyển tiếp) hoặc nối qua cell kề; cell
+  "đứt" theo định nghĩa chặt (một node lạc cũng tính) vì vậy là cách đếm bi quan.
+- Đặt cột ở mọi phố đôi khi làm tăng số cell đứt (Punggol 15 % lên 18 %): cột trên lối đi bộ trong khu nhà cũng có thể bị lạc.
+- Đề xuất cho mô hình: thêm lớp node chuyển tiếp trên cột đèn, đặt theo nhu cầu ở pha 0; node trên nhà không với tới nhóm chính
+  của cell thì làm node lá.

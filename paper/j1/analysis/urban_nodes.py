@@ -18,6 +18,13 @@ Cells: flat-top hexagons, R = 100 m. Per variant: land cells; empty cells (no ma
 split (no usable path inside the cell); adjacent pairs of non-empty cells without a usable gateway link; battery nodes
 with no usable link to a mains node of their cell; components of the cell graph (cells joined by gateway links) and the
 share of non-empty cells in the largest one.
+Street-light relays (chatlog item 357): --poles SPACING adds mains relay nodes on street-light poles every SPACING m along
+the streets, 3 m to the side, on top of the devices above. Two placements are reported with the wall channel: on every
+street ("all"), and only in the cells that need them ("needed": cells that are empty, split inside, or miss a gateway to
+a neighbour in the wall channel without poles). Shadowing is fixed per node pair (a hash of the two node ids), so adding
+poles keeps the draws of the existing pairs.
+The last column counts the mains nodes cut off from the largest group of their own cell, and the share of them standing
+on buildings (wall devices behind a building, as opposed to street nodes and poles).
 Writes FIG_DIR/cells-NAME-<variant>.png (no text) and prints a Markdown table row per variant.
 """
 import argparse, csv, gzip, json, math, os
@@ -31,6 +38,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("map"); ap.add_argument("name"); ap.add_argument("figs")
 ap.add_argument("--density", type=float, default=816.0); ap.add_argument("--seed", type=int, default=1)
 ap.add_argument("--battery", type=float, default=0.45); ap.add_argument("--wall", type=float, default=15.0)
+ap.add_argument("--poles", type=float, default=0.0)
 A = ap.parse_args()
 rng = np.random.default_rng(A.seed)
 PT, F1, NEXP, SIG, S, R = 10.0, 40.05, 3.5, 7.8, -101.04, 100.0
@@ -92,23 +100,41 @@ water_cells = sum(1 for qq in range(int(x0 / (1.5 * R)) - 2, int(x1 / (1.5 * R))
                   if bound.contains(Point(centre((qq, rr)))) and (qq, rr) not in land_cells)
 
 # links
-tree = cKDTree(cand)
-pairs = np.array(sorted(tree.query_pairs(280.0)))
-d = np.hypot(*(cand[pairs[:, 0]] - cand[pairs[:, 1]]).T)
-sh = rng.normal(0, SIG, len(pairs))
-mean = PT - F1 - 10 * NEXP * np.log10(np.maximum(d, 1)) - sh
-qopen = np.exp(-10 ** ((S - mean) / 10))
-walls = np.zeros(len(pairs))
-cands = np.nonzero(qopen >= 0.5)[0]
-if len(cands) and blds:
-    bt = STRtree(blds)
-    segs = [LineString([cand[pairs[i, 0]], cand[pairs[i, 1]]]) for i in cands]
-    hit = bt.query(segs, predicate="intersects")
-    np.add.at(walls, cands[hit[0]], 1)
-qwall = np.exp(-10 ** ((S - (mean - A.wall * np.minimum(walls, 3))) / 10))
+bt = STRtree(blds) if blds else None
 
 
-def analyse(qv):
+def shadow(a, b):
+    """N(0, SIG) fixed per node pair: splitmix64 of the pair, Box-Muller."""
+    def mix(x):
+        x = (x + np.uint64(0x9E3779B97F4A7C15)) & np.uint64(0xFFFFFFFFFFFFFFFF)
+        x = ((x ^ (x >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)) & np.uint64(0xFFFFFFFFFFFFFFFF)
+        x = ((x ^ (x >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)) & np.uint64(0xFFFFFFFFFFFFFFFF)
+        return x ^ (x >> np.uint64(31))
+    lo, hi = np.minimum(a, b).astype(np.uint64), np.maximum(a, b).astype(np.uint64)
+    with np.errstate(over="ignore"):
+        h1 = mix(lo * np.uint64(1000003) + hi + np.uint64(A.seed)); h2 = mix(h1)
+    u1 = (h1 >> np.uint64(11)).astype(float) / 2 ** 53; u2 = (h2 >> np.uint64(11)).astype(float) / 2 ** 53
+    return SIG * np.sqrt(-2 * np.log(np.maximum(u1, 1e-12))) * np.cos(2 * np.pi * u2)
+
+
+def links(pts):
+    tree = cKDTree(pts)
+    pairs = np.array(sorted(tree.query_pairs(280.0)))
+    d = np.hypot(*(pts[pairs[:, 0]] - pts[pairs[:, 1]]).T)
+    mean = PT - F1 - 10 * NEXP * np.log10(np.maximum(d, 1)) - shadow(pairs[:, 0], pairs[:, 1])
+    qopen = np.exp(-10 ** ((S - mean) / 10))
+    walls = np.zeros(len(pairs))
+    cands = np.nonzero(qopen >= 0.5)[0]
+    if len(cands) and bt is not None:
+        segs = [LineString([pts[pairs[i, 0]], pts[pairs[i, 1]]]) for i in cands]
+        hit = bt.query(segs, predicate="intersects")
+        np.add.at(walls, cands[hit[0]], 1)
+    qwall = np.exp(-10 ** ((S - (mean - A.wall * np.minimum(walls, 3))) / 10))
+    return pairs, qopen, qwall
+
+
+def analyse(qv, pairs, battery, cell, KIND):
+    N = len(cell)
     ok = qv >= 0.5
     P = pairs[ok]
     mains = ~battery
@@ -130,6 +156,14 @@ def analyse(qv):
         if mains[i]: comps.setdefault(cell[i], set()).add(f(i))
     nonempty = [c for c in comps if c in land_cells]
     split = sum(1 for c in nonempty if len(comps[c]) > 1)
+    # mains nodes outside the largest in-cell group, and of those how many sit on buildings (kind 0)
+    from collections import Counter
+    grp = Counter((cell[i], f(i)) for i in range(N) if mains[i])
+    top = {}
+    for (c, root), k in grp.items():
+        if k > top.get(c, (0, None))[0]: top[c] = (k, root)
+    strand = [i for i in range(N) if mains[i] and f(i) != top[cell[i]][1]]
+    strand_bld = sum(1 for i in strand if KIND[i] == 0)
     empty = len(land_cells) - len(nonempty)
     nb = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, -1), (-1, 1)]
     adj = [(c, (c[0] + a, c[1] + b)) for c in nonempty for a, b in nb if (c[0] + a, c[1] + b) in comps and (c[0] + a, c[1] + b) > c]
@@ -145,22 +179,31 @@ def analyse(qv):
     for c in nonempty: sizes[g(c)] = sizes.get(g(c), 0) + 1
     giant = max(sizes.values()) if sizes else 0
     orph = int(np.sum(battery & ~orphan_ok))
-    return dict(empty=empty, split=split, nogw=nogw, adj=len(adj), comps=len(sizes), giant=giant, nonempty=len(nonempty),
-                orph=orph, gw=gw, comps_map=comps, root={c: g(c) for c in nonempty}, sizes=sizes)
+    bad = {c for c in land_cells if c not in comps} | {c for c in nonempty if len(comps[c]) > 1} | \
+          {c for e in adj if tuple(sorted(e)) not in gw for c in e}
+    return dict(strand=len(strand), strand_bld=strand_bld, mains=int(mains.sum()), empty=empty, split=split, nogw=nogw, adj=len(adj), comps=len(sizes), giant=giant, nonempty=len(nonempty),
+                orph=orph, gw=gw, comps_map=comps, root={c: g(c) for c in nonempty}, sizes=sizes, bad=bad)
 
 
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon as MPoly, PathPatch
-from matplotlib.path import Path as MPath
+from matplotlib.patches import Polygon as MPoly
 print(f"| Bản đồ | Biến thể | Node (node/km² đất) | Chạy pin | Cell đất | Cell nước | Cell rỗng | Cell đứt bên trong | Cặp kề không có gateway | "
-      f"Thành phần | Cell trong thành phần lớn nhất | Node pin không với tới node điện |")
-print("|---|---|---|---|---|---|---|---|---|---|---|---|")
-for name, qv in (("open", qopen), ("walls", qwall)):
-    r = analyse(qv)
-    print(f"| {A.name} | {name} | {N} ({N / (land.area / 1e6):.0f}) | {battery.mean() * 100:.0f} % | {len(land_cells)} | {water_cells} | "
-          f"{r['empty']} ({r['empty'] / max(len(land_cells), 1) * 100:.0f} %) | {r['split']} ({r['split'] / max(r['nonempty'], 1) * 100:.0f} %) | "
-          f"{r['nogw']} / {r['adj']} ({r['nogw'] / max(r['adj'], 1) * 100:.0f} %) | {r['comps']} | "
-          f"{r['giant'] / max(r['nonempty'], 1) * 100:.1f} % | {r['orph']} ({r['orph'] / max(battery.sum(), 1) * 100:.0f} %) |", flush=True)
+      f"Thành phần | Cell trong thành phần lớn nhất | Node pin không với tới node điện | Node điện lạc khỏi nhóm chính của cell |")
+print("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+
+
+def report(label, pts, bat, cl, qv, pr, kd, extra=0):
+    r = analyse(qv, pr, bat, cl, kd)
+    n = len(cl)
+    print(f"| {A.name} | {label} | {n} ({n / (land.area / 1e6):.0f}){f', +{extra} cột đèn' if extra else ''} | {bat.mean() * 100:.0f} % | "
+          f"{len(land_cells)} | {water_cells} | {r['empty']} ({r['empty'] / max(len(land_cells), 1) * 100:.0f} %) | "
+          f"{r['split']} ({r['split'] / max(r['nonempty'], 1) * 100:.0f} %) | {r['nogw']} / {r['adj']} ({r['nogw'] / max(r['adj'], 1) * 100:.0f} %) | "
+          f"{r['comps']} | {r['giant'] / max(r['nonempty'], 1) * 100:.1f} % | {r['orph']} ({r['orph'] / max(bat.sum(), 1) * 100:.0f} %) | "
+          f"{r['strand']} ({r['strand'] / max(r['mains'], 1) * 100:.1f} %), {r['strand_bld'] / max(r['strand'], 1) * 100:.0f} % trên nhà |", flush=True)
+    return r
+
+
+def figure(tag, pts, bat, r):
     W_, H_ = x1 - x0, y1 - y0
     fig = plt.figure(figsize=(8, 8 * H_ / W_)); ax = fig.add_axes([0, 0, 1, 1])
     ax.set_xlim(x0 - 50, x1 + 50); ax.set_ylim(y0 - 50, y1 + 50); ax.set_aspect("equal"); ax.axis("off")
@@ -175,6 +218,28 @@ for name, qv in (("open", qopen), ("walls", qwall)):
         else: col = "#a6d39a"                                            # fine
         ax.add_patch(MPoly(h, facecolor=col, edgecolor="#777777", lw=0.2))
     ax.plot(*np.array(bound.exterior.coords).T, c="#222222", lw=1)
-    sub = rng.choice(N, min(N, 6000), replace=False)
-    ax.scatter(cand[sub, 0], cand[sub, 1], s=0.3, c=np.where(battery[sub], "#7f7f7f", "#222222"), lw=0)
-    os.makedirs(A.figs, exist_ok=True); fig.savefig(f"{A.figs}/cells-{A.name}-{name}.png", dpi=140); plt.close(fig)
+    sub = rng.choice(len(pts), min(len(pts), 6000), replace=False)
+    ax.scatter(pts[sub, 0], pts[sub, 1], s=0.3, c=np.where(bat[sub], "#7f7f7f", "#222222"), lw=0)
+    os.makedirs(A.figs, exist_ok=True); fig.savefig(f"{A.figs}/cells-{A.name}-{tag}.png", dpi=140); plt.close(fig)
+
+
+pairs, qopen, qwall = links(cand)
+r0 = report("như hiện tại", cand, battery, cell, qopen, pairs, kind); figure("open", cand, battery, r0)
+r1 = report("có tường", cand, battery, cell, qwall, pairs, kind); figure("walls", cand, battery, r1)
+if A.poles > 0:
+    poles = []
+    for rd in roads:
+        n = int(rd.length // A.poles)
+        for i in range(n):
+            dd = (i + 0.5) * A.poles; p = rd.interpolate(dd); q = rd.interpolate(min(dd + 1, rd.length))
+            dx, dy = q.x - p.x, q.y - p.y; L = math.hypot(dx, dy) or 1
+            poles.append((p.x - dy / L * 3, p.y + dx / L * 3))
+    poles = np.array([pp for pp in poles if pl.contains(Point(*pp))])
+    pcell = [hexcell(x, y) for x, y in poles]
+    for tag, keep in (("needed", np.array([c in r1["bad"] for c in pcell])), ("all", np.ones(len(poles), bool))):
+        pts = np.vstack([cand, poles[keep]]); bat = np.concatenate([battery, np.zeros(keep.sum(), bool)])
+        cl = cell + [c for c, k in zip(pcell, keep) if k]
+        pr, qo, qw = links(pts)
+        label = "có tường, cột đèn ở cell cần" if tag == "needed" else "có tường, cột đèn mọi phố"
+        kd = np.concatenate([kind, np.full(keep.sum(), 2)])
+        rr = report(label, pts, bat, cl, qw, pr, kd, extra=int(keep.sum())); figure(f"walls-poles-{tag}", pts, bat, rr)

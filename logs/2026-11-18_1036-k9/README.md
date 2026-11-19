@@ -73,4 +73,32 @@ B0–B3.
   Algorithm 3 r100, cụm 8 đoán 91 s, đo 248 s. Số đo cụm 8 trùng từng số với dữ liệu khớp surrogate, còn cụm 2 thì không (dữ
   liệu khớp 147–300 s, B4 99–188 s, cùng tập Algorithm 3); dữ liệu khớp đến từ thư mục FIX với CAMP-BIN4. Nguyên nhân chưa rõ.
   Một seed chưa tách được sai số của mô hình khỏi biến động theo lần chạy.
-- Chưa làm: seed thứ hai (chờ người dùng quyết), B5 (T2).
+- Chưa làm: seed thứ hai (mục 348: tạm dừng ở 1 seed).
+
+## Giai đoạn 6 (B5): tổng thời gian hai pha, phương án D3
+
+- Script `paper/j1/analysis/b5_phase2.py`; lệnh ở `b5-phase2-seed1.md`; kết quả `data/b5-seed1.{md,csv}`. Chạy khoảng 3 phút,
+  không cần ns-3.
+- Đầu vào: 8 thư mục B4. Pha 1 là số đo ns-3: cell chưa xong tính bằng 900 s, nên rho200 là cận dưới. Pha 2 dùng mô hình V1
+  của `mission_policy.py`: đội 2 bay 15 m/s, rời trạm gốc ở báo cáo đầu tiên, thăm theo điểm. Mỗi lần xác minh tốn 78 s theo
+  CONTEXT mục 17. Pha 2 kết thúc khi V1 xác nhận đúng AI cell (mục 349).
+- Lớp 1 cho D3:
+  - mỗi node giao về AI cell gần nhất trong cụm;
+  - kho của AI cell c có ρ · 2 h · 0,3 · n_c vector;
+  - mỗi AI cell đặt ngưỡng riêng để cell chỉ có người lạ báo YES với xác suất 0,1 (CONTEXT mục 16);
+  - điểm số theo mô hình binormal của `l1_mission.py`, k = 1 hoặc 3 vector của mục tiêu;
+  - node thật rút đều trên mọi node;
+  - 300 lượt rút, ghép cặp giữa các tập.
+- Mỗi tập ở đúng ρ nó được chọn (r100, k = 1 / 3): rho20 cho T 823 / 820 s, thành công 0,63 / 0,93; rho100 cho T 962 / 940 s,
+  0,60 / 0,93; rho200 cho T 1 312 / 1 153 s, 0,61 / 0,92. Algorithm 3 ở ρ = 20 (vượt ngưỡng tải một chút, ρ_max 18) cho T
+  889 / 862 s, 0,66 / 0,95. r200 cùng xu hướng.
+- Ở cùng ρ = 20, tập ít AI cell nhanh nhất: 24 cell cho T 823 s, 45 cho 889 s, 69 cho 933 s, 161 cho 1 234 s (k = 1). Pha 2
+  cộng thêm khoảng 130–250 s sau T1. Phần pha 2 tăng theo số AI cell, vì mỗi AI cell báo nhầm với xác suất 0,1: số cell báo YES
+  tăng từ 2,8 lên 16,5, số lần thăm từ 1,8 lên 3,6.
+- Kho lớn ít làm giảm tỉ lệ bắt được mục tiêu: kho 12 780 vector cho 0,63, kho 1 368 vector cho 0,71 (k = 1). Lý do là ngưỡng chỉ
+  tăng theo log của cỡ kho.
+- Kết quả phụ thuộc giả định báo nhầm 0,1 cho mỗi AI cell: giả định này làm tập nhiều AI cell chịu nhiều lần thăm sai. Nếu giữ
+  tỉ lệ báo nhầm của cả hệ thống cố định thì phải nâng ngưỡng theo số AI cell; B6 nên so hai cách.
+- Mục 348 (nghi vấn ở node thường): khoảng cách từ node thật tới AI cell của nó trung bình 2,5 cell (tối đa 5) ở rho20, 1,0 cell
+  (tối đa 4) ở rho200. B5 cho V1 xác minh tại AI cell; nếu V1 cần ảnh gốc ở node thường thì phải cộng thời gian chuyển ảnh
+  hoặc bay tới cell đó.

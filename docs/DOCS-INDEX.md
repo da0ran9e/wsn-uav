@@ -35,7 +35,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (82): còn đúng, dùng để tra cứu nền
+## Tham khảo (87): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -44,7 +44,12 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/L3-TECHREPORT-vi.md`](../paper/L3-TECHREPORT-vi.md) | River: hợp tác mặt đất có lập kế hoạch sau một lượt bay UAV | 2026-10-22 |  |
 | [`paper/RIVER-L3-vi.md`](../paper/RIVER-L3-vi.md) | River: cơ chế lớp 3 | 2026-10-22 |  |
 | [`paper/icc-v5/README.md`](../paper/icc-v5/README.md) | Draft v5: Algorithm 3 and Evaluation (CLAUDE.md §8 item 184) | 2026-10-26 |  |
+| [`paper/j1/maps/caugiay/summary.md`](../paper/j1/maps/caugiay/summary.md) | Quận Cầu Giấy (OSM relation 9421132) | 2026-11-19 |  |
+| [`paper/j1/maps/hcmc-quan7/summary.md`](../paper/j1/maps/hcmc-quan7/summary.md) | Quận 7 (OSM relation 2764875) | 2026-11-19 |  |
 | [`paper/j1/maps/hoangmai/summary.md`](../paper/j1/maps/hoangmai/summary.md) | Quận Hoàng Mai (OSM relation 9421133) | 2026-11-19 |  |
+| [`paper/j1/maps/longbien/summary.md`](../paper/j1/maps/longbien/summary.md) | Quận Long Biên (OSM relation 7115863) | 2026-11-19 |  |
+| [`paper/j1/maps/namtuliem/summary.md`](../paper/j1/maps/namtuliem/summary.md) | Quận Nam Từ Liêm (OSM relation 9421137) | 2026-11-19 |  |
+| [`paper/j1/maps/tayho/summary.md`](../paper/j1/maps/tayho/summary.md) | Quận Tây Hồ (OSM relation 9421139) | 2026-11-19 |  |
 | [`reports/l1-edge-recognition.md`](../reports/l1-edge-recognition.md) | Lớp 1: tính đúng số false alarm trước khi tính bit | 2026-10-15 |  |
 | [`reports/l1-signature-matching.md`](../reports/l1-signature-matching.md) | Ống kính, không phải con chip, làm lệch điểm khớp | 2026-10-18 |  |
 | [`research_notes/l1-edge-recognition/edge_devices.md`](../research_notes/l1-edge-recognition/edge_devices.md) | Edge camera device compute capabilities and feasible recognition pipelines (Layer 1 node tiers) | 2026-10-15 |  |

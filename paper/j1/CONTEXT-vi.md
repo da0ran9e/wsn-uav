@@ -95,8 +95,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   mục 15: tỉ lệ node chạy pin là tham số, node chạy pin không chuyển tiếp.
 - n. (mục 349) Trạm gốc ở đâu: trong đô thị (đồn công an, trạm cứu hoả) hay ngoài rìa như bản đồ k8 (cách cell gần nhất
   1 km); quyết định quãng bay của cả hai pha.
-- o. (mục 349) Bản đồ đô thị: bản đồ hiện là "khối có hồ" với node rải đều; đô thị cần nhà (chiều cao), phố, node bám theo
-  nhà và phố. Cần cho kênh K1a, K1c, cho vùng cấm bay (nhà cao hơn độ cao bay) và cho điểm lơ lửng của V1.
+- o. Đang làm (mục 350): dùng bản đồ thật của một khu đô thị làm mẫu; thăm dò dữ liệu ở mục 18.
 - p. (mục 349) Mạng thay đổi: thiết bị vào ra, chủ tắt máy; bao lâu chạy lại pha 0; lúc có sự cố một phần node vắng mặt.
 - q. (mục 349) Phạm vi: nhiều sự cố cùng lúc, node gian lận hay báo sai có thuộc J1 không (đề xuất: ngoài phạm vi, nêu ở
   phần giới hạn).
@@ -451,3 +450,33 @@ ra theo thời gian) và xác suất UAV nhìn thấy người.
 
 Chốt (mục 349): pha 2 của bài kết thúc khi V1 xác nhận đúng lần thấy (mức dữ liệu); V4 (tìm thấy người ngoài thực địa) là
 bước tiếp theo, chỉ làm khi lần thấy đã xác nhận còn đủ mới.
+
+## 18. Bản đồ đô thị mẫu từ OpenStreetMap (2026-11-19, mục 350)
+
+Người dùng chọn dùng bản đồ thật của một khu đô thị làm mẫu. Thăm dò một ô khoảng 0,4 km² ở mỗi khu ứng viên qua API của
+OpenStreetMap (log `logs/2026-11-19_0730-osm-probe/`; Overpass và Geofabrik bị chặn trong container này):
+
+| Khu | Toà nhà trong ô | Có chiều cao hoặc số tầng | Cao nhất | Đường |
+|---|---|---|---|---|
+| Hà Nội, Cầu Giấy | 193 | 12 % | 87 m | 360 |
+| Hà Nội, Vinhomes Ocean Park | 47 | 70 % | 90 m | 248 |
+| Hà Nội, Royal City | 86 | 10 % | 135 m | 236 |
+| TP.HCM, Quận 1 | 164 | 16 % | 193 m | 346 |
+| Singapore, khu trung tâm | 287 | 92 % | 245 m | 507 |
+| New York, Midtown | 232 | 79 % | 366 m | 598 |
+
+Nhận xét:
+- Các khu cũ của Hà Nội và TP.HCM thiếu chiều cao (10–16 %), và số toà nhà có vẻ thiếu so với thực tế; phải đoán chiều cao
+  cho phần lớn nhà nên mô hình kênh kém tin cậy.
+- Vinhomes Ocean Park là khu đô thị mới đúng kiểu "hiện đại", dữ liệu chiều cao khá (70 %), nhà cao nhất khoảng 90 m, sát
+  độ cao bay 100 m.
+- Singapore có dữ liệu tốt nhất (92 %) và nhiều nhà cao hơn 120 m, hợp để thử trường hợp khó: nhà thành vật cản, UAV phải
+  bay vòng.
+
+**Dùng bản đồ thật thế nào (đề xuất):**
+- Toà nhà (đường viền + chiều cao, thiếu thì đoán theo diện tích và loại nhà) và đường phố lấy từ OSM, tải theo ô nhỏ.
+- Node đặt theo nhà và phố, không rải đều: chuông cửa ở lối vào nhà, camera trên cột dọc phố, máy bán hàng ở vỉa hè;
+  tổng mật độ giữ khoảng 816 node/km².
+- Kênh A2G xác định LoS bằng hình học thật: tia từ UAV tới node có cắt khối nhà nào không, thay cho xác suất Al-Hourani.
+  Kênh G2G có LoS khi đoạn nối hai node không cắt nhà (K1c).
+- Nhà cao hơn độ cao bay thành vùng cấm bay cho tour (K5); điểm lơ lửng của V1 chọn chỗ có LoS tới node.

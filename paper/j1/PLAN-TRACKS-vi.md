@@ -162,6 +162,14 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 
+- [ ] **K14** Bản đồ đô thị mẫu từ OpenStreetMap (chatlog mục 350, CONTEXT mục 18): toà nhà (đường viền, chiều cao), đường
+  phố, node đặt theo nhà và phố ở mật độ khoảng 816 node/km², lưới cell lục giác phủ lên; xuất cùng định dạng bản đồ hiện có
+  để `mission.py` chạy được
+  - Đầu ra cho K1a (LoS A2G bằng hình học), K1c (LoS G2G), K5 (nhà cao hơn độ cao bay thành vùng cấm) và điểm lơ lửng V1.
+    Chỉ dùng API của www.openstreetmap.org (Overpass, Geofabrik bị chặn). Ghi nguồn ODbL.
+  - Chờ người dùng chọn khu mẫu.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+
 ## Điểm gặp
 
 Cứ 3–4 tuần một lần, hoặc khi một việc có phụ thuộc vừa xong. Mỗi lần ghi một dòng: ngày, việc đã đối chiếu, kết luận,

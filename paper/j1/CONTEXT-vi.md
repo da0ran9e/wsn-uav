@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 # J1 · Bối cảnh, thực thể và tham số của bài toán
 
@@ -81,7 +81,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - d. Đã trả lời (mục 335): tìm người.
 - e. Vì sao không phát truy vấn từ trạm gốc qua mạng mặt đất hay qua LoRa: phép tính ở mục 12 (mục 334). Còn mở: cách
   bài đối đáp với kiểu flood đồng bộ (Pando).
-- f. Số sự cố trong vòng đời mạng (để chia chi phí pha 0).
+- f. Số sự cố trong vòng đời mạng: ước lượng ở mục 23 (mục 359).
 - g. Môi trường như bài giả định có thật không, mỗi cụm thường rộng bao nhiêu (mục 327), mật độ node thường gặp (mục 329),
   kích thước vùng đô thị và kênh có hợp với đô thị không (mục 332), pháp lý UAV đô thị và giãn cách node
   tối đa (mục 333). Đối chiếu ở mục 7–11.
@@ -97,7 +97,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   1 km); quyết định quãng bay của cả hai pha.
 - o. Đã trả lời (mục 350–358): bản đồ thật từ OSM, 12 khu, bộ đề xuất bốn khu; quy tắc đặt node, cột đèn theo nhu cầu, node lá
   (mục 18–21, việc K14).
-- p. (mục 349) Mạng thay đổi: thiết bị vào ra, chủ tắt máy; bao lâu chạy lại pha 0; lúc có sự cố một phần node vắng mặt.
+- p. Mạng thay đổi theo thời gian: thử nghiệm và đề xuất ở mục 23 (mục 359).
 - q. (mục 349) Phạm vi: nhiều sự cố cùng lúc, node gian lận hay báo sai có thuộc J1 không (đề xuất: ngoài phạm vi, nêu ở
   phần giới hạn).
 
@@ -630,7 +630,7 @@ Nhận xét:
 - Chốt (mục 358), đưa vào K14: thêm lớp node chuyển tiếp trên cột đèn, đặt theo nhu cầu ở pha 0; node trên nhà không với tới nhóm chính
   của cell thì làm node lá.
 
-## 22. Trạm gốc, điểm cất cánh, độ cao bay (2026-11-19, mục 358, đề xuất để bàn)
+## 22. Trạm gốc, điểm cất cánh, độ cao bay (2026-11-19, mục 358; chốt ở mục 359)
 
 **Trạm gốc đặt ở đâu.** Trên bốn bản đồ đề xuất, OSM có sẵn đồn công an và trạm cứu hoả trong ranh giới: Nam Từ Liêm 9 đồn công
 an, 1 đội chữa cháy và cứu nạn cứu hộ (khu vực 16), 1 bãi đỗ trực thăng; Hoàng Mai 27 đồn công an, 1 đội chữa cháy và cứu nạn
@@ -645,3 +645,37 @@ và bán kính quay giữ như bản hiện tại.
 Yau Tsim Mong 8,6 %, Minato 8,7 %, Nam Từ Liêm 3,3 %. Gangnam có đồi gần 300 m, nên độ cao bay tính theo mặt đất bên dưới.
 
 **Sức bền.** Các quận 5–60 km² nằm gọn trong một chuyến bay của loại VTOL 1–3 h (tour bản đồ k8 16 km² hết khoảng 13 phút).
+
+## 23. Mạng thay đổi theo thời gian và số sự cố trong vòng đời (2026-11-20, mục 359)
+
+**Số sự cố** [web]: Singapore nhận khoảng 1 300 báo cáo người mất tích mỗi năm trong 2021–2025 (1 095 năm 2023, 1 355 năm 2024),
+khoảng 20 % chưa giải quyết; với khoảng 6 triệu dân là khoảng 22 báo cáo mỗi 100 000 dân mỗi năm. Anh và xứ Wales có khoảng
+5,5 sự việc mất tích mỗi 1 000 dân mỗi năm (đếm cả lần báo lặp lại, nhiều trẻ ở cơ sở bảo trợ), nên không so thẳng được. Áp
+tỉ lệ Singapore cho một quận vài trăm nghìn dân (dân số Hoàng Mai, Nam Từ Liêm, Punggol tôi nhớ cỡ 200–500 nghìn, chưa kiểm)
+được vài chục tới khoảng 100 báo cáo mỗi năm, tức khoảng một tới hai lần mỗi tuần; chỉ một phần (trẻ em, người già sa sút trí
+tuệ, người có nguy cơ) cần tới nhiệm vụ UAV. Pha 0 vì vậy được chia cho hàng chục truy vấn mỗi năm.
+
+**Mạng thay đổi.** Không tìm thấy số đo tỉ lệ thiết bị IoT gia đình ngoại tuyến; các nghiên cứu đo lưu lượng nhà thông minh (hơn
+200 nhà, 1 237 thiết bị) không báo độ sẵn sàng. Thử trên bản đồ thật (kênh có tường, có cột đèn ở cell cần; tắt ngẫu nhiên một
+phần thiết bị, cột đèn giữ nguyên; log `logs/2026-11-19_1000-urban-nodes/*-absent.md`):
+
+| Bản đồ | Thiết bị vắng | Cell đứt bên trong | Cặp kề thiếu gateway | Thành phần | Node điện lạc |
+|---|---|---|---|---|---|
+| Punggol | 0 % | 15 % | 1 % | 1 | 2,3 % |
+| Punggol | 10 % | 20 % | 2 % | 1 | 2,8 % |
+| Punggol | 20 % | 26 % | 3 % | 1 | 3,4 % |
+| Punggol | 30 % | 32 % | 4 % | 1 | 4,8 % |
+| Nam Từ Liêm | 0 % | 7 % | 1 % | 2 | 1,1 % |
+| Nam Từ Liêm | 10 % | 8 % | 2 % | 2 | 1,6 % |
+| Nam Từ Liêm | 20 % | 10 % | 2 % | 1 | 2,2 % |
+| Nam Từ Liêm | 30 % | 13 % | 3 % | 1 | 2,9 % |
+
+Lưới xuống cấp từ từ, vẫn là một khối liền khi 30 % thiết bị vắng, nhờ lớp cột đèn. Chỗ yếu thật là vai trò gắn với node cụ thể:
+nếu đúng node CL hay node gateway vắng thì kế hoạch River tính từ topo cũ sẽ gửi vào chỗ không còn ai.
+
+**Đề xuất chính sách pha 0:**
+- Dựng đầy đủ một lần (lưới cell, CL, cặp gateway, cột đèn theo nhu cầu); làm lại khi thay đổi tích luỹ vượt ngưỡng.
+- Cập nhật nhẹ định kỳ (ví dụ mỗi đêm): mỗi cell báo node còn sống và chất lượng liên kết lên trạm gốc.
+- Trước mỗi nhiệm vụ: điểm danh nhanh trong cell, chọn lại CL và gateway nếu node cũ vắng, rồi trạm gốc phát kế hoạch; mỗi cạnh
+  giữ một cặp gateway dự phòng.
+- Trong mô phỏng: tỉ lệ thiết bị vắng là tham số (0, 10, 20 %); chi phí điểm danh và phát kế hoạch tính vào thời gian nhiệm vụ.

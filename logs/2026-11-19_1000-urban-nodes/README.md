@@ -19,3 +19,6 @@ xuyên tường là bước đầu của K1c, chưa hiệu chỉnh.
 **Bổ sung (mục 357):** thêm node chuyển tiếp trên cột đèn mỗi 35 m (`--poles 35`), hai cách đặt: chỉ ở cell cần và trên mọi
 phố; log `<bản đồ>-poles.md`. Che khuất giờ cố định theo từng cặp node (băm mã hai node), nên số của biến thể không cột đèn
 lệch nhẹ so với lần chạy đầu (cùng mô hình, khác lần bốc). Bảng ở `paper/j1/CONTEXT-vi.md` mục 21.
+
+**Bổ sung (mục 359):** `--absent 0.1,0.2,0.3` tắt ngẫu nhiên một phần thiết bị (cột đèn giữ nguyên) ở biến thể có cột đèn theo
+nhu cầu; chạy cho Punggol và Nam Từ Liêm (log `<bản đồ>-absent.md`). Bảng ở `paper/j1/CONTEXT-vi.md` mục 23.

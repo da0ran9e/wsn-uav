@@ -25,6 +25,8 @@ a neighbour in the wall channel without poles). Shadowing is fixed per node pair
 poles keeps the draws of the existing pairs.
 The last column counts the mains nodes cut off from the largest group of their own cell, and the share of them standing
 on buildings (wall devices behind a building, as opposed to street nodes and poles).
+--absent F1,F2,...: with the needed poles, also report the grid when a fraction F of the devices (not the poles) is
+switched off at incident time (network churn, chatlog item 359).
 Writes FIG_DIR/cells-NAME-<variant>.png (no text) and prints a Markdown table row per variant.
 """
 import argparse, csv, gzip, json, math, os
@@ -39,6 +41,7 @@ ap.add_argument("map"); ap.add_argument("name"); ap.add_argument("figs")
 ap.add_argument("--density", type=float, default=816.0); ap.add_argument("--seed", type=int, default=1)
 ap.add_argument("--battery", type=float, default=0.45); ap.add_argument("--wall", type=float, default=15.0)
 ap.add_argument("--poles", type=float, default=0.0)
+ap.add_argument("--absent", default="")
 A = ap.parse_args()
 rng = np.random.default_rng(A.seed)
 PT, F1, NEXP, SIG, S, R = 10.0, 40.05, 3.5, 7.8, -101.04, 100.0
@@ -243,3 +246,13 @@ if A.poles > 0:
         label = "có tường, cột đèn ở cell cần" if tag == "needed" else "có tường, cột đèn mọi phố"
         kd = np.concatenate([kind, np.full(keep.sum(), 2)])
         rr = report(label, pts, bat, cl, qw, pr, kd, extra=int(keep.sum())); figure(f"walls-poles-{tag}", pts, bat, rr)
+        if tag == "needed" and A.absent:   # devices switched off at incident time (poles stay), same pair shadowing
+            ids = np.arange(len(pts))
+            for fr in [float(x) for x in A.absent.split(",")]:
+                gone = (kd != 2) & (np.random.default_rng(A.seed + 7).random(len(pts)) < fr)
+                sub = ids[~gone]
+                pr2 = pr[np.isin(pr[:, 0], sub) & np.isin(pr[:, 1], sub)]
+                remap = -np.ones(len(pts), int); remap[sub] = np.arange(len(sub))
+                q2 = qw[np.isin(pr[:, 0], sub) & np.isin(pr[:, 1], sub)]
+                report(f"có tường, cột đèn ở cell cần, {fr * 100:.0f} % thiết bị vắng", pts[sub], bat[sub], [cl[i] for i in sub],
+                       q2, remap[pr2], kd[sub], extra=int(keep.sum()))

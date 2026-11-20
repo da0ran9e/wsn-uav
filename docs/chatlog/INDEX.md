@@ -365,3 +365,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 356 | 2026-11-19 | bối cảnh · đặt node IoT trên bản đồ thật, xem liên thông và lỗ hổng của lưới cell | [2026-11](2026-11.md) |
 | 357 | 2026-11-19 | bối cảnh · thêm node chuyển tiếp trên cột đèn, chạy lại kiểm lưới cell | [2026-11](2026-11.md) |
 | 358 | 2026-11-19 | bối cảnh · đưa cột đèn và node lá vào K14; bàn tiếp | [2026-11](2026-11.md) |
+| 359 | 2026-11-20 | bối cảnh · chốt trạm gốc, VTOL, độ cao bay; sang mạng thay đổi và số sự cố | [2026-11](2026-11.md) |

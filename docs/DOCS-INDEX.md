@@ -21,7 +21,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
 | [`paper/j1/PLAN-K9-DATA-vi.md`](../paper/j1/PLAN-K9-DATA-vi.md) | Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu | 2026-11-18 |  |
 | [`paper/j1/PLAN-TRACKS-vi.md`](../paper/j1/PLAN-TRACKS-vi.md) | Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật | 2026-11-18 |  |
-| [`paper/j1/draft-v1/README-vi.md`](../paper/j1/draft-v1/README-vi.md) | Bản thảo journal v1 (J1): hướng dẫn đánh giá | 2026-11-17 |  |
+| [`paper/j1/draft-v1/README-vi.md`](../paper/j1/draft-v1/README-vi.md) | Bản thảo journal v1 (J1): hướng dẫn đánh giá | 2026-11-20 |  |
 | [`paper/j1/draft-v1/REQUEST-vi.md`](../paper/j1/draft-v1/REQUEST-vi.md) | Yêu cầu của người dùng cho bản thảo journal v1 | 2026-11-16 |  |
 | [`research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md`](../research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md) | Tổng hợp tìm tài liệu cho kế hoạch tiếp theo (2026-11-12) | 2026-11-12 |  |
 | [`research_notes/literature/METHOD-vi.md`](../research_notes/literature/METHOD-vi.md) | Phương pháp ghi chú bài báo | 2026-11-12 |  |
@@ -151,12 +151,13 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/archive/SYSTEM-vi.md`](../paper/archive/SYSTEM-vi.md) | System Model — keyword | 2026-10-20 | bản nộp ICC v5.3 |
 | [`uav-l2/docs/PARAM-SOURCES-vi.md`](../uav-l2/docs/PARAM-SOURCES-vi.md) | Rà soát nguồn gốc tham số giả lập (CLAUDE.md §8 mục 102) | 2026-10-19 | paper/PARAMS-vi.md |
 
-## Lịch sử (23): thử nghiệm hoặc hướng đã đóng, giữ để tra lại
+## Lịch sử (24): thử nghiệm hoặc hướng đã đóng, giữ để tra lại
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
 | [`paper/j1/draft-v1/runs/bound-lp.md`](../paper/j1/draft-v1/runs/bound-lp.md) | bound-lp | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/bound-nc.md`](../paper/j1/draft-v1/runs/bound-nc.md) | bound-nc | 2026-11-16 |  |
+| [`paper/j1/draft-v1/runs/fig-k9.md`](../paper/j1/draft-v1/runs/fig-k9.md) | fig-k9 | 2026-11-20 |  |
 | [`paper/j1/draft-v1/runs/fig-tstar.md`](../paper/j1/draft-v1/runs/fig-tstar.md) | fig-tstar | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/ground-lb.md`](../paper/j1/draft-v1/runs/ground-lb.md) | ground-lb | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/lb-compare-seed1.md`](../paper/j1/draft-v1/runs/lb-compare-seed1.md) | lb-compare-seed1 | 2026-11-17 |  |

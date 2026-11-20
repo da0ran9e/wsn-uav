@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-17
+updated: 2026-11-20
 ---
 # Bản thảo journal v1 (J1): hướng dẫn đánh giá
 
@@ -67,6 +67,14 @@ Dựng lại PDF: `paper/j1/draft-v1/tex/build.sh`.
    Cả 45/45 critical cell đều xong ở mọi biến thể. Hệ số so với chặn một radio giảm từ 5,1 xuống 4,1 (trung vị). Cụm
    chậm nhất (cụm 8) giảm từ 248 s xuống 80 s. Đây mới là một seed; chưa chạy 4 seed còn lại, chưa thử `--members`.
 
+10. **Đặt AI node (K9), mục VIII-F, Bảng VII, Hình 8–9.** Node thường (legacy) gửi về AI node gần nhất một bản ghi cho mỗi
+    người đi qua. Khung hình và ảnh cắt không khả thi trên 802.15.4, chỉ vector đặc trưng (528 B) qua được. Bộ chọn tập AI cell
+    (facility location có sức chứa, giới hạn 5 chặng, surrogate River) cần 24 / 69 / 161 AI cell ở ρ = 20 / 100 / 200 người/h
+    trên k8. Kiểm bằng ns-3 một seed: surrogate đúng tới khoảng 70 AI cell, sai ở 161. Tính cả hai pha, tập ít AI cell nhanh
+    nhất ở cả hai cách đặt ngưỡng báo nhầm. Số liệu và lệnh: `logs/2026-11-18_1036-k9/README.md`, hình do
+    `analysis/fig_k9.py`. Hai chỗ TODO đỏ: vector rời camera có hợp với giả định giữ dữ liệu tại chỗ không, và seed thứ hai
+    cùng thời gian River ở mật độ 400 và 280 node/km².
+
 ## Nguồn của từng nhóm số
 
 | Nhóm số trong bài | Loại | Nguồn |
@@ -111,5 +119,5 @@ Dựng lại PDF: `paper/j1/draft-v1/tex/build.sh`.
    cho thấy nguyên nhân chính là tải dồn vào Bank và cell trung chuyển, cần sửa lại. Muốn đưa vào bài thì chạy đủ 5 seed
    (khoảng 1,5 giờ cho 120 lượt, 4 nhân) bằng `analysis/run_lb.sh`, rồi `analysis/lb_compare.py`.
 4. **Bối cảnh vườn quốc gia, nhiều UAV, AI node** (`paper/j1/CONTEXT-vi.md`) chưa được đưa vào bản thảo, vì chưa chốt và
-   chưa có số liệu. Bản thảo giữ kịch bản của bản ICC.
+   chưa có số liệu. Bản thảo giữ kịch bản của bản ICC. Riêng phần đặt AI node (K9) đã vào mục VIII-F, dùng bản đồ và kênh của C4.
 5. Tên bài giữ như bản ICC.

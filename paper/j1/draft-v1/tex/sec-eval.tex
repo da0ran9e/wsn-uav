@@ -170,6 +170,71 @@ nominal $-22\pm184$\,s. (In a single realisation at $\sigma=200$\,m, which excee
 times, River alone completes 3 of 45 critical cells and River with takeover 45 of 45.) The adaptive radius of
 Algorithm~\ref{alg:takeover} is evaluated offline in Table~\ref{tab:radius}.
 
+\subsection{Where to place the AI nodes}\label{sec:aicells}
+So far $K$ was fixed by score outliers. Here $K$ is chosen, with the legacy cameras of Section~\ref{sec:model} sending,
+before any incident, one record per passer-by to the nearest AI node of their cluster: a frame (40\,kB), a person crop
+(10\,kB) or a feature vector (512-d INT8 plus 16\,B, 528\,B). \todo{vectors leave the legacy camera; check against the
+keep-data-on-device assumption.} The background load uses the per-cell model fitted on the River trace (1.5 frames per
+packet at the end cells, 1.7 in transit, 1 per gateway pair, 6.5\,ms per frame); every medium may be busy at most 10\,\% of
+the time and 30\,\% of the nodes are cameras, each seen by $\rho$ people per hour.
+
+\textbf{Which record.} On the 8-cluster map, with 8 to 128 AI cells placed by $k$-medoids, the largest $\rho$ under the
+budget is 0.2--1.9 for frames, 0.7--7.7 for crops and 13--145 for vectors; the busiest medium is the cell of the AI node
+itself. Frames and crops are therefore infeasible at any urban flow, and only vectors are kept. The 45 critical cells of
+the outlier rule carry at most 18 people/h and lie up to 8 cells from some assigned node.
+
+\textbf{Choosing $K$.} For each $\rho$ we take the fewest AI cells per cluster that keep the busiest medium under the
+budget with every node at most $H=5$ cell hops from its AI cell (a capacitated facility location), placed by local search
+on the River surrogate. Table~\ref{tab:aicells} lists the result: fewer than the outlier rule up to $\rho=50$, more above.
+Fig.~\ref{fig:k9surr} checks the surrogate in ns-3 (both $R_{50}=199$ and 99\,m, one seed): up to 70 AI cells the
+measured end of phase~1 is within 41\,s of the model and the order of the sets is kept, except that at 199\,m 69 AI
+cells finish 12\,s after the outlier set instead of 41\,s before. With 161 AI cells (20 per cluster, outside the range
+the surrogate was fitted on) the model fails: in one cluster ns-3 spreads from 75 to more than 900\,s, and phase~1 ends
+at 1\,231\,s or later against 906\,s predicted.
+
+\begin{table}[t]\centering\caption{AI cells needed and modelled end of phase~1 (s) at a 10\,\% budget, $R_{50}=99$\,m;
+in brackets the ns-3 value (8 clusters, one seed).}\label{tab:aicells}
+\begin{tabular}{lccc}\toprule
+$\rho$ (people/h) & 8 clusters & 12 clusters & 15 clusters\\\midrule
+20 & 24: 661 (687) & 32: 992 & 49: 1162\\
+50 & 34: 674 & 52: 1005 & 64: 1168\\
+100 & 69: 728 (733) & 98: 1061 & 123: 1235\\
+200 & 161: 906 ($\ge$1231) & 220: 1147 & 275: 1362\\
+outlier rule & 45: 753 (770) & 66: 1021 & 92: 1232\\\bottomrule
+\end{tabular}\end{table}
+
+\begin{figure}[t]\centering
+\includegraphics[width=0.9\columnwidth]{k9-surrogate-vs-ns3.pdf}
+\caption{End of the query at each AI cell, from the UAV leaving its cluster: River surrogate versus ns-3, for the sets
+chosen at $\rho=20$, 100 and 200 and for the outlier rule ($R_{50}=199$ and 99\,m, one seed). Hollow: not complete when
+River stops at 900\,s.}\label{fig:k9surr}
+\end{figure}
+
+\textbf{Both phases.} Phase~2 follows the model of Section~\ref{sec:model} with verification by re-matching at the AI
+node (5\,s to settle and 73\,s to send the full reference). An AI cell indexes $\rho\cdot 2\,\mathrm{h}\cdot 0.3\, n_c$
+vectors for its $n_c$ assigned nodes and sets its threshold for a given false-alarm probability; the target passes a
+uniformly drawn node. Fig.~\ref{fig:k9time} shows the time until the true AI cell is confirmed at $\rho=20$ (300 paired
+draws). With a false-alarm probability of 0.1 per AI cell, the time grows from 823 to 1\,234\,s between 24 and 161 AI
+cells, because the AI cells answering YES grow from 2.8 to 16.5. Holding the false alarms of the whole system at 2.4
+narrows the gap (823 to 1\,061\,s) without reversing it, and the smaller set then also detects more often (0.63 against
+0.58 with one target vector), since its per-cell threshold is lower. A larger index costs little detection: the
+threshold grows with the logarithm of the index size.
+
+\begin{figure}[t]\centering
+\includegraphics[width=\columnwidth]{k9-time-vs-ai-cells.pdf}
+\caption{Time from take-off to the confirmation of the true AI cell versus the number of AI cells, $\rho=20$,
+$R_{50}=99$\,m, under the two false-alarm rules; grey: last AI cell holding the query (hollow: lower bound).}\label{fig:k9time}
+\end{figure}
+
+\textbf{Sensitivity.} With an AI node in every cell, vectors fit up to $\rho=640$ people/h (1\,275 at a 20\,\% budget),
+below a busy commercial street (about 1\,500) and a Manhattan peak (3\,700). All loads and index sizes scale with
+$\rho$ times the camera share times the node density, so at 400 and 280 nodes/km$^2$ a set serves about 2.0 and 2.9
+times the flow; thinning the nodes cell by cell confirms the scaling within 2\,\% for 24 AI cells but shows up to 23\,\%
+more load for 161 AI cells at 280 nodes/km$^2$. The device tier does not change the choice: embedding one crop per
+passer-by keeps an ESP32-class camera at most 28\,\% busy, and searching 152\,280 vectors with a 20-image reference takes
+at most 5.4\,s at the AI node; only a microcontroller AI node needs external storage for the larger indexes (80\,MB).
+\todo{second seed of the ns-3 check; River times at 400 and 280 nodes/km$^2$.}
+
 \subsection{Stability across network realisations}
 Differences between schemes that share River are stable across seeds (e.g., \lmtour{} minus DTSP-N+River on the
 15-cluster map at 199\,m: $-425$\,s on the first seed, $-429\pm70$\,s on the others). Absolute values are not: with River,

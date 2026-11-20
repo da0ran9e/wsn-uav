@@ -141,3 +141,14 @@ B0–B3.
   nhất (152 280 vector, 80 MB) cộng trích bộ tham chiếu mất dưới 1 s ở lượt đầu và dưới 5,5 s cho V1 (L = 20), nhỏ so với 78 s
   mỗi lần xác minh. Giới hạn duy nhất là bộ nhớ: MCU không chứa nổi kho lớn (80 MB) nếu không có thẻ nhớ, chứa được kho nhỏ nhất
   (0,7 MB).
+
+## Giai đoạn 9 (B7): viết vào bản thảo J1
+
+- Mục VIII-F "Where to place the AI nodes" trong `paper/j1/draft-v1/tex/sec-eval.tex` (tiếng Anh), Bảng VII (số AI cell cần và
+  T1 theo ρ, ba bản đồ), Hình 8 (surrogate so với ns-3) và Hình 9 (thời gian xác nhận theo số AI cell, hai cách đặt ngưỡng).
+  Hai chỗ TODO đỏ: vector rời camera so với giả định giữ dữ liệu tại chỗ (mục 343), seed thứ hai và thời gian River ở mật độ
+  thấp.
+- Hình do `paper/j1/draft-v1/analysis/fig_k9.py` sinh: bản có nhãn ở `paper/j1/draft-v1/figs/k9-*.{pdf,png}`, bản không chữ ở
+  `paper/j1/figures/` (INDEX). Lệnh ở `paper/j1/draft-v1/runs/fig-k9.md`. PDF dựng lại bằng `tex/build.sh` (cài thêm texlive
+  trong container): 13 trang, không còn tham chiếu hỏng.
+- Mã thí nghiệm K9 thêm vào `docs/EXPERIMENTS-INDEX.md`; mục 10 thêm vào README của bản thảo.

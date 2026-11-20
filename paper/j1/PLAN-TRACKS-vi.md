@@ -135,7 +135,7 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - μ chưa có nguồn đo (mục 338): dùng mô hình theo bậc thiết bị của K12 và quét độ nhạy. Bước (1) làm được ngay.
   - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
   - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c); xong B2, B0, B1, B3, B4 seed 1 (mục 348:
-    tạm dừng ở 1 seed), B5; còn B6, B7 · Báo cáo: [logs/2026-11-18_1036-k9](../../logs/2026-11-18_1036-k9/README.md)
+    tạm dừng ở 1 seed), B5, B6 phần báo nhầm (mục 360); còn phần còn lại của B6, B7 · Báo cáo: [logs/2026-11-18_1036-k9](../../logs/2026-11-18_1036-k9/README.md)
 - [ ] **K10** Mật độ phụ 400 và 280 node/km² (giãn cách 50 và 60 m, CONTEXT mục 4 và 10)
   - `uav-l2/tools/map_gen.py --spacing`; kiểm deploy, partition và chọn cặp gateway với cell 7–10 node, rồi chạy pha 1.
     Đầu ra: T\*, P_k mức cell và số cặp gateway theo mật độ.

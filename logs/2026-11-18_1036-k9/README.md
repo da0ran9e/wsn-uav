@@ -102,3 +102,24 @@ B0–B3.
 - Mục 348 (nghi vấn ở node thường): khoảng cách từ node thật tới AI cell của nó trung bình 2,5 cell (tối đa 5) ở rho20, 1,0 cell
   (tối đa 4) ở rho200. B5 cho V1 xác minh tại AI cell; nếu V1 cần ảnh gốc ở node thường thì phải cộng thời gian chuyển ảnh
   hoặc bay tới cell đó.
+
+## Giai đoạn 7 (B6, phần báo nhầm): hai cách đặt ngưỡng
+
+- Cùng script `b5_phase2.py`, thêm `--fa`. `cell:0.1` là cách của B5: mỗi AI cell chỉ có người lạ báo YES với xác suất 0,1,
+  nên số báo nhầm tăng theo số AI cell; kết quả trùng từng số với B5. `sys:E` giữ kỳ vọng E lần báo nhầm cho cả hệ thống
+  (xác suất mỗi cell E / số AI cell). Chạy E = 2,4 (bằng tập 24 cell ở cách B5) và E = 1. Lệnh ở `b6-fa-*.md`, kết quả
+  `data/b6-fa-{cell-0-1,sys-2-4,sys-1}.{md,csv}`, mỗi lần 30 s.
+- r100, ρ = 20, k = 1, T (s) / thành công:
+
+  | tập | cell 0,1 | hệ thống E = 2,4 | hệ thống E = 1 |
+  |---|---|---|---|
+  | rho20 (24 cell) | 823 / 0,63 | 823 / 0,63 | 781 / 0,55 |
+  | Algorithm 3 (45) | 889 / 0,66 | 836 / 0,58 | 823 / 0,52 |
+  | rho100 (69) | 933 / 0,69 | 879 / 0,59 | 864 / 0,54 |
+  | rho200 (161) | 1 234 / 0,71 | 1 061 / 0,58 | 1 051 / 0,53 |
+
+- Khi giữ báo nhầm cố định cho cả hệ thống, số cell báo YES gần như bằng nhau ở mọi tập (khoảng 3 với E = 2,4), khoảng cách T
+  giữa các tập hẹp lại (rho100 hơn rho20 56 s thay vì 110 s) nhưng thứ tự giữ nguyên. Tỉ lệ thành công đổi chiều: tập ít cell
+  được ngưỡng mỗi cell thấp hơn nên bắt mục tiêu tốt hơn (0,63 so với 0,58 ở E = 2,4). Như vậy tập ít AI cell thắng ở cả hai
+  cách; phần chênh còn lại đến từ T1 và số lần thăm.
+- r200 và các ρ, k khác cùng xu hướng. Phần còn lại của B6 (ρ cao, bậc thiết bị, mật độ) chưa làm.

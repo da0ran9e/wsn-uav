@@ -100,6 +100,12 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - p. Mạng thay đổi theo thời gian: thử nghiệm và đề xuất ở mục 23 (mục 359).
 - q. (mục 349) Phạm vi: nhiều sự cố cùng lúc, node gian lận hay báo sai có thuộc J1 không (đề xuất: ngoài phạm vi, nêu ở
   phần giới hạn).
+- r. (mục 363) Đánh thức: node chạy pin ngủ phần lớn thời gian, sự cố đến bất ngờ; node phải thức đúng lúc UAV bay qua và lúc
+  River chạy. Đề cương ND0 đã nêu cơ chế đánh thức theo lịch bay do trạm gốc phát.
+- s. (mục 363) Nhiễu 2,4 GHz ở đô thị: WiFi, Bluetooth, chính radio điều khiển của UAV (ghi chú `papers/dargie2021-lqe.md`: PRR theo
+  kênh 0,13–1,0). Mô hình hiện không có nhiễu ngoài.
+- t. (mục 363) Vị trí node: trạm gốc cần toạ độ node để lập kế hoạch và chọn điểm lơ lửng V1; lấy từ địa chỉ lắp đặt, GPS hay
+  định vị trong mạng, và sai số bao nhiêu.
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 
@@ -648,15 +654,28 @@ Yau Tsim Mong 8,6 %, Minato 8,7 %, Nam Từ Liêm 3,3 %. Gangnam có đồi gầ
 
 ## 23. Mạng thay đổi theo thời gian và số sự cố trong vòng đời (2026-11-20, mục 359)
 
-**Số sự cố** [web]: Singapore nhận khoảng 1 300 báo cáo người mất tích mỗi năm trong 2021–2025 (1 095 năm 2023, 1 355 năm 2024),
-khoảng 20 % chưa giải quyết; với khoảng 6 triệu dân là khoảng 22 báo cáo mỗi 100 000 dân mỗi năm. Anh và xứ Wales có khoảng
-5,5 sự việc mất tích mỗi 1 000 dân mỗi năm (đếm cả lần báo lặp lại, nhiều trẻ ở cơ sở bảo trợ), nên không so thẳng được. Áp
-tỉ lệ Singapore cho một quận vài trăm nghìn dân (dân số Hoàng Mai, Nam Từ Liêm, Punggol tôi nhớ cỡ 200–500 nghìn, chưa kiểm)
-được vài chục tới khoảng 100 báo cáo mỗi năm, tức khoảng một tới hai lần mỗi tuần; chỉ một phần (trẻ em, người già sa sút trí
-tuệ, người có nguy cơ) cần tới nhiệm vụ UAV. Pha 0 vì vậy được chia cho hàng chục truy vấn mỗi năm.
+**Số sự cố** [web; sửa và ghi nguồn ở mục 362]: Singapore nhận khoảng 1 300 báo cáo người mất tích mỗi năm trong 2021–2025
+(tổng khoảng 6 500, khoảng 20 % chưa giải quyết), theo trả lời chất vấn Quốc hội của Bộ Nội vụ Singapore (MHA); số theo năm
+1 211 (2022), 1 095 (2023), 1 355 (2024) theo Straits Times. Chia cho tổng dân số khoảng 6 triệu được khoảng 22 báo cáo mỗi
+100 000 dân mỗi năm (khoảng 31 nếu chỉ tính 4,2 triệu cư dân); đây là phép chia của tôi. Anh và xứ Wales: khoảng 5,5 sự việc
+mất tích mỗi 1 000 dân mỗi năm theo số của UK Missing Persons Unit (NCA) mà một tài liệu của cảnh sát Greater Manchester trích
+lại; đếm cả lần báo lặp lại nên không so thẳng được. Dân số: Hoàng Mai 506 347 (điều tra 2019, qua Wikipedia và CityPopulation,
+nguồn gốc là Tổng cục Thống kê), Punggol 204 490 cư dân năm 2026 (SingStat, Population Trends 2026, qua Mothership), Nam Từ
+Liêm chưa tìm được số 2019. Áp tỉ lệ Singapore: Hoàng Mai khoảng 110–160 báo cáo mỗi năm, Punggol khoảng 45–65, tức một tới ba
+lần mỗi tuần; chỉ một phần (trẻ em, người già sa sút trí tuệ, người có nguy cơ) cần tới nhiệm vụ UAV. Pha 0 vì vậy được chia
+cho hàng chục truy vấn mỗi năm.
 
-**Mạng thay đổi.** Không tìm thấy số đo tỉ lệ thiết bị IoT gia đình ngoại tuyến; các nghiên cứu đo lưu lượng nhà thông minh (hơn
-200 nhà, 1 237 thiết bị) không báo độ sẵn sàng. Thử trên bản đồ thật (kênh có tường, có cột đèn ở cell cần; tắt ngẫu nhiên một
+Nguồn trích dẫn được (cần mở bản gốc trước khi đưa vào bài; trang MHA không vào được từ container):
+- MHA, "Written Reply to Parliamentary Question on Missing Persons in Singapore", https://www.mha.gov.sg/media-room/newsroom/written-reply-to-pq-on-missing-persons-in-singapore/
+- MHA, "Breakdown of unresolved missing persons reports by age group and disability status", https://www.mha.gov.sg/media-room/newsroom/breakdown-of-unresolved-missing-persons-reports-by-age-group-and-disability-status/
+- National Crime Agency, UK Missing Persons Unit, Annual Data Report 2022–23 (bản lưu): https://tnaqa.mirrorweb.com/ukgwa/20260803081315mp_/https://www.nationalcrimeagency.gov.uk/images/mpu/downloads/UKMPU%20Annual%20Data%20Report%202022-23.pdf
+- SingStat, Population Trends 2026: https://www.singstat.gov.sg/publication-resources/population-trends-2026
+- Tổng cục Thống kê, Kết quả Tổng điều tra dân số và nhà ở 2019 (cần tìm bản gốc cho số theo quận).
+Nguồn thứ cấp chỉ dùng để tra, không trích: The Online Citizen, Straits Times (qua Magzter), Mothership, Wikipedia, CityPopulation.
+
+**Mạng thay đổi.** Không tìm thấy số đo tỉ lệ thiết bị IoT gia đình ngoại tuyến, nên tỉ lệ vắng là giả định và được quét. Các
+nghiên cứu đo lưu lượng nhà thông minh (Mazhar và Shafiq, IoTDI 2020, hơn 200 nhà, 1 237 thiết bị, arXiv 2001.08288; Kumar và
+cộng sự, USENIX Security 2019) không báo độ sẵn sàng, nên không trích làm nguồn cho tỉ lệ vắng. Thử trên bản đồ thật (kênh có tường, có cột đèn ở cell cần; tắt ngẫu nhiên một
 phần thiết bị, cột đèn giữ nguyên; log `logs/2026-11-19_1000-urban-nodes/*-absent.md`):
 
 | Bản đồ | Thiết bị vắng | Cell đứt bên trong | Cặp kề thiếu gateway | Thành phần | Node điện lạc |
@@ -673,7 +692,7 @@ phần thiết bị, cột đèn giữ nguyên; log `logs/2026-11-19_1000-urban-
 Lưới xuống cấp từ từ, vẫn là một khối liền khi 30 % thiết bị vắng, nhờ lớp cột đèn. Chỗ yếu thật là vai trò gắn với node cụ thể:
 nếu đúng node CL hay node gateway vắng thì kế hoạch River tính từ topo cũ sẽ gửi vào chỗ không còn ai.
 
-**Đề xuất chính sách pha 0:**
+**Đề xuất chính sách pha 0** (người dùng còn cân nhắc, mục 363):
 - Dựng đầy đủ một lần (lưới cell, CL, cặp gateway, cột đèn theo nhu cầu); làm lại khi thay đổi tích luỹ vượt ngưỡng.
 - Cập nhật nhẹ định kỳ (ví dụ mỗi đêm): mỗi cell báo node còn sống và chất lượng liên kết lên trạm gốc.
 - Trước mỗi nhiệm vụ: điểm danh nhanh trong cell, chọn lại CL và gateway nếu node cũ vắng, rồi trạm gốc phát kế hoạch; mỗi cạnh

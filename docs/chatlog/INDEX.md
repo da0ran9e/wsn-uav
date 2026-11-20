@@ -368,3 +368,5 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 359 | 2026-11-20 | bối cảnh · chốt trạm gốc, VTOL, độ cao bay; sang mạng thay đổi và số sự cố | [2026-11](2026-11.md) |
 | 360 | 2026-11-20 | kế hoạch · B6 (K9) so hai cách đặt ngưỡng báo nhầm | [2026-11](2026-11.md) |
 | 361 | 2026-11-20 | kế hoạch · mở session song song xem VaN3Twin | [2026-11](2026-11.md) |
+| 362 | 2026-11-20 | bối cảnh · hỏi nguồn trích dẫn được cho số liệu sự cố và thiết bị | [2026-11](2026-11.md) |
+| 363 | 2026-11-20 | bối cảnh · ghi chính sách pha 0 (chờ người dùng cân nhắc); bàn tiếp | [2026-11](2026-11.md) |

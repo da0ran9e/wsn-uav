@@ -875,3 +875,22 @@ cắt nhỏ.
 
 **Đề xuất:** phương án lai: node có NPU gửi vector của mô hình nhẹ (D3), node yếu gửi ảnh cắt nhỏ (D2); bài chọn critical cell
 dùng tải thực của từng node. Tỉ lệ node có NPU là tham số (khảo sát ở K12).
+
+**Có bao nhiêu loại mô hình và vector khác nhau** (mục 374):
+- Không có con số chung; trong một mạng cụ thể thì biết được: mỗi thiết bị khai mã mô hình và phiên bản khi tham gia mạng (pha 0),
+  nên trạm gốc biết mỗi AI node phải giữ những mô hình nào (K mô hình).
+- Mức độ đa dạng [web]: NIST FRTE 1:1 đã nhận 1 385 thuật toán khuôn mặt từ 426 nhà phát triển kể từ 2017, riêng 2025 là 123 thuật
+  toán từ 94 nhà phát triển (trang FRTE 1:1, cập nhật 3/2026). NIST chuẩn hoá cách gọi thuật toán, không chuẩn hoá mẫu đặc trưng;
+  theo hiểu biết của tôi (chưa kiểm trong nguồn), mẫu của thuật toán này không so được với mẫu của thuật toán khác.
+- Thị trường camera tập trung [web, số của công ty nghiên cứu thị trường, khác nhau theo nguồn]: Hikvision và Dahua khoảng một phần
+  ba doanh thu toàn cầu (Memoori); ba hãng đầu (Hikvision, Dahua, Axis) khoảng 49 % theo một báo cáo khác. Một khu phố vì vậy có
+  thể chỉ có vài nhóm hãng, nhưng mỗi hãng có nhiều dòng sản phẩm và phiên bản phần mềm.
+- Chuẩn mô tả chung: MPEG CDVA (ISO/IEC 15938-15:2019) chuẩn hoá đặc trưng sâu nhỏ gọn cho tìm đối tượng trong video, nhưng loại trừ
+  nhận dạng người và khuôn mặt [web]; tức chưa có chuẩn vector người dùng chung.
+- Mô hình đã có trong repo [`edge_devices.md`]: ArcFace-MobileFaceNet (2,04 triệu tham số) và ArcFace-R50 (31 triệu) cho khuôn mặt;
+  re-ID RepVGG-A0 vector 512 và 2 048 chiều (Hailo); ResNet-50 2 048 chiều; CLIP ViT-B/32. AI node giữ vài mô hình cỡ vài MB tới vài
+  chục MB là được.
+- Đề xuất: số mô hình mỗi AI node K là tham số (1, 3, 5); chi phí khi truy vấn tới là K × L lần trích đặc trưng, vài giây.
+
+Nguồn: NIST FRTE 1:1, https://pages.nist.gov/frvt/html/frvt11.html; Memoori, https://memoori.com/video-surveillance-market-leaders-2026/;
+ISO/IEC 15938-15:2019, https://webstore.iec.ch/publication/65535.

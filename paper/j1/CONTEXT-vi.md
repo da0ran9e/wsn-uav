@@ -703,8 +703,8 @@ nếu đúng node CL hay node gateway vắng thì kế hoạch River tính từ 
 **Lịch kênh hiện tại trùng WiFi.** Kênh 802.15.4 số k ở 2405 + 5(k − 11) MHz, rộng 2 MHz; WiFi kênh 1, 6, 11 rộng khoảng 22 MHz
 quanh 2412, 2437, 2462 MHz, nên chồng lên kênh 802.15.4 số 11–14, 16–19 và 21–24. Chỉ bốn kênh 15, 20, 25, 26 nằm ngoài WiFi
 1/6/11; với cách đặt WiFi 1/5/9/13 kiểu châu Âu là 15, 16, 21, 22 [web: ICEST 2019; ghi chú ứng dụng]. Mô phỏng hiện dùng kênh
-11 cho lượt bay (\`coop-pass.cc\`, \`kChannel = 11\`, chồng WiFi 1), kênh 11–17 cho 7 màu cell và 18–26 cho cặp gateway
-(\`coop2-river.cc\`), tức phần lớn nằm dưới WiFi; mô hình chưa có nhiễu ngoài.
+11 cho lượt bay (`coop-pass.cc`, `kChannel = 11`, chồng WiFi 1), kênh 11–17 cho 7 màu cell và 18–26 cho cặp gateway
+(`coop2-river.cc`), tức phần lớn nằm dưới WiFi; mô hình chưa có nhiễu ngoài.
 
 **Số đo đã có** [web, chưa đọc toàn văn; repo ghi ở chỗ có]:
 - WiFi chủ yếu làm hỏng phần đầu (header) của khung 802.15.4 nên mất cả khung; thêm header và mã Reed–Solomon (BuzzBuzz) tăng
@@ -712,8 +712,8 @@ quanh 2412, 2437, 2462 MHz, nên chồng lên kênh 802.15.4 số 11–14, 16–
 - Môi trường vô tuyến trong căn hộ đông và biến động hơn văn phòng nhiều (Sha và cộng sự, FIU, đo 16 kênh ở 10 căn hộ, IWQoS
   2011 và IEEE TNSM 2013).
 - Đo 24 h ở một văn phòng: kênh 15, 20, 25, 26 giao 96–99,8 % gói, kênh 16–18 còn 80–91 % (blog cá nhân, không trích).
-- Radio điều khiển của chính drone gây nhiễu: PRR 0,13–1,0 theo kênh [repo: \`papers/dargie2021-lqe.md\`]; Nekrasov 2019
-  điều khiển drone ở 5,8 GHz để tránh [repo: \`papers/nekrasov2019-aerial154.md\`].
+- Radio điều khiển của chính drone gây nhiễu: PRR 0,13–1,0 theo kênh [repo: `papers/dargie2021-lqe.md`]; Nekrasov 2019
+  điều khiển drone ở 5,8 GHz để tránh [repo: `papers/nekrasov2019-aerial154.md`].
 - Chưa tìm thấy số đo phần trăm thời gian bận của WiFi ngoài phố đô thị; báo cáo Ofcom (ARMMS 2014) và Hà Lan (2017) chỉ nói
   2,4 GHz nghẽn, trung tâm thương mại tệ nhất.
 

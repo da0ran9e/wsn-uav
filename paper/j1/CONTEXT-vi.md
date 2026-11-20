@@ -100,6 +100,12 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - p. Mạng thay đổi theo thời gian: thử nghiệm và đề xuất ở mục 23 (mục 359).
 - q. (mục 349) Phạm vi: nhiều sự cố cùng lúc, node gian lận hay báo sai có thuộc J1 không (đề xuất: ngoài phạm vi, nêu ở
   phần giới hạn).
+- r. (mục 363) Đánh thức: node chạy pin ngủ phần lớn thời gian, sự cố đến bất ngờ; node phải thức đúng lúc UAV bay qua và lúc
+  River chạy. Đề cương ND0 đã nêu cơ chế đánh thức theo lịch bay do trạm gốc phát.
+- s. (mục 363) Nhiễu 2,4 GHz ở đô thị: WiFi, Bluetooth, chính radio điều khiển của UAV (ghi chú `papers/dargie2021-lqe.md`: PRR theo
+  kênh 0,13–1,0). Mô hình hiện không có nhiễu ngoài.
+- t. (mục 363) Vị trí node: trạm gốc cần toạ độ node để lập kế hoạch và chọn điểm lơ lửng V1; lấy từ địa chỉ lắp đặt, GPS hay
+  định vị trong mạng, và sai số bao nhiêu.
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 
@@ -686,7 +692,7 @@ phần thiết bị, cột đèn giữ nguyên; log `logs/2026-11-19_1000-urban-
 Lưới xuống cấp từ từ, vẫn là một khối liền khi 30 % thiết bị vắng, nhờ lớp cột đèn. Chỗ yếu thật là vai trò gắn với node cụ thể:
 nếu đúng node CL hay node gateway vắng thì kế hoạch River tính từ topo cũ sẽ gửi vào chỗ không còn ai.
 
-**Đề xuất chính sách pha 0:**
+**Đề xuất chính sách pha 0** (người dùng còn cân nhắc, mục 363):
 - Dựng đầy đủ một lần (lưới cell, CL, cặp gateway, cột đèn theo nhu cầu); làm lại khi thay đổi tích luỹ vượt ngưỡng.
 - Cập nhật nhẹ định kỳ (ví dụ mỗi đêm): mỗi cell báo node còn sống và chất lượng liên kết lên trạm gốc.
 - Trước mỗi nhiệm vụ: điểm danh nhanh trong cell, chọn lại CL và gateway nếu node cũ vắng, rồi trạm gốc phát kế hoạch; mỗi cạnh

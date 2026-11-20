@@ -96,6 +96,13 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Cần bản đồ vật cản và sửa `Link` trong `uav-coop2/examples/coop2-river.cc`; nặng, có thể để sau J1. Đầu vào: CONTEXT
     mục 9.
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+- [ ] **K1d** Nhiễu 2,4 GHz ở đô thị (chatlog mục 364–365, CONTEXT mục 24): lượt bay chuyển sang kênh sạch 26; ba kênh sạch
+  15, 20, 25 cho các môi trường bận nhất (cell Bank, cell trung chuyển dọc River); mô hình nhiễu WiFi trên các kênh trùng
+  WiFi 1/6/11: độ bận u theo cell, CSMA lùi khi bận, khung hỏng với xác suất u, mất gói theo cụm (hai trạng thái), quét u = 0,
+  0,2, 0,5; UAV điều khiển ngoài 2,4 GHz
+  - Sửa `uav-coop/examples/coop-pass.cc` (`kChannel`) và lịch kênh trong `uav-coop2/examples/coop2-river.cc`; mô hình nhiễu
+    đặt ở tầng kênh hoặc MAC của ns-3. Đầu ra: T\* và số khung theo u, so với không nhiễu.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K2** Quỹ đạo sinh từ động lực bay: dẫn đường L1, gió đều 0–15 m/s cộng nhiễu loạn Dryden; có sai số dọc đường bay
   - Đầu vào: `uav-l2/tools/wind_path.py`, `research_notes/literature/2026-11-12/05-wind-deviation.md`. Đầu ra: bộ
     sinh quỹ đạo mới, `track.csv`.

@@ -371,3 +371,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 362 | 2026-11-20 | bối cảnh · hỏi nguồn trích dẫn được cho số liệu sự cố và thiết bị | [2026-11](2026-11.md) |
 | 363 | 2026-11-20 | bối cảnh · ghi chính sách pha 0 (chờ người dùng cân nhắc); bàn tiếp | [2026-11](2026-11.md) |
 | 364 | 2026-11-20 | bối cảnh · chốt sở hữu, nguồn điện, phạm vi; bàn nhiễu 2,4 GHz | [2026-11](2026-11.md) |
+| 365 | 2026-11-20 | bối cảnh · nhiễu 2,4 GHz vào K1d; bàn đánh thức | [2026-11](2026-11.md) |

@@ -101,7 +101,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 - q. Đã trả lời (mục 364): nhiều sự cố cùng lúc và node gian lận để ngoài J1, nêu ở phần giới hạn.
 - r. (mục 363) Đánh thức: node chạy pin ngủ phần lớn thời gian, sự cố đến bất ngờ; node phải thức đúng lúc UAV bay qua và lúc
   River chạy. Đề cương ND0 đã nêu cơ chế đánh thức theo lịch bay do trạm gốc phát.
-- s. (mục 363) Nhiễu 2,4 GHz ở đô thị: WiFi, Bluetooth, chính radio điều khiển của UAV (ghi chú `papers/dargie2021-lqe.md`: PRR theo
+- s. Đã trả lời (mục 365, việc K1d, mục 24). Ghi chú gốc: nhiễu 2,4 GHz ở đô thị: WiFi, Bluetooth, chính radio điều khiển của UAV (ghi chú `papers/dargie2021-lqe.md`: PRR theo
   kênh 0,13–1,0). Mô hình hiện không có nhiễu ngoài.
 - t. (mục 363) Vị trí node: trạm gốc cần toạ độ node để lập kế hoạch và chọn điểm lơ lửng V1; lấy từ địa chỉ lắp đặt, GPS hay
   định vị trong mạng, và sai số bao nhiêu.
@@ -698,7 +698,7 @@ nếu đúng node CL hay node gateway vắng thì kế hoạch River tính từ 
   giữ một cặp gateway dự phòng.
 - Trong mô phỏng: tỉ lệ thiết bị vắng là tham số (0, 10, 20 %); chi phí điểm danh và phát kế hoạch tính vào thời gian nhiệm vụ.
 
-## 24. Nhiễu 2,4 GHz ở đô thị (2026-11-20, mục 364, đề xuất để bàn)
+## 24. Nhiễu 2,4 GHz ở đô thị (2026-11-20, mục 364; chốt ở mục 365, việc K1d)
 
 **Lịch kênh hiện tại trùng WiFi.** Kênh 802.15.4 số k ở 2405 + 5(k − 11) MHz, rộng 2 MHz; WiFi kênh 1, 6, 11 rộng khoảng 22 MHz
 quanh 2412, 2437, 2462 MHz, nên chồng lên kênh 802.15.4 số 11–14, 16–19 và 21–24. Chỉ bốn kênh 15, 20, 25, 26 nằm ngoài WiFi
@@ -725,3 +725,28 @@ quanh 2412, 2437, 2462 MHz, nên chồng lên kênh 802.15.4 số 11–14, 16–
   phát hỏng với xác suất u; mất gói theo cụm (hai trạng thái tốt/xấu). Quét u = 0, 0,2, 0,5.
 - UAV điều khiển ở băng khác 2,4 GHz (900 MHz hoặc 5,8 GHz).
 - Phương án xa hơn: 802.15.4 băng dưới 1 GHz tránh hẳn WiFi, nhưng Thread và thiết bị nhà thông minh hiện ở 2,4 GHz.
+
+## 25. Đánh thức và đồng bộ (2026-11-20, mục 365, đề xuất để bàn)
+
+**Ai phải thức.** Node chuyển tiếp (cột đèn, thiết bị dọc phố, thiết bị trên nhà cắm điện) cắm điện nên luôn bật radio, không cần
+đánh thức. Node chạy pin (11–22 %) là node lá: không chuyển tiếp, không bao giờ là AI node, nên không cần truy vấn. Đề xuất: node
+pin không tham gia pha 1, chỉ nghe lượt bay nếu tình cờ đang thức; xác suất nhận ở mức cell P_k tính trên node cắm điện. Vấn đề
+"đánh thức" vì vậy thu về chuyện chỉnh kênh đúng lúc của node cắm điện.
+
+**Chỉnh kênh đúng lúc.** Lúc rảnh, node cắm điện nghe trên kênh cell của mình; lượt bay phát trên kênh 26 (K1d). Mỗi cell phải
+chuyển sang kênh 26 trong cửa sổ UAV bay qua. Cửa sổ ngắn: UAV bay 25–50 m/s, tầm nhận ở đô thị dày khoảng 200 m, nên một cell
+gần đường bay nghe được khoảng 10–15 s; cả cụm (khoảng 1,6 km) khoảng 1 phút.
+
+**Đề xuất: kế hoạch tính sẵn, nhiệm vụ chỉ cần một bản tin bắt đầu.**
+- Tập critical cell, tour và kế hoạch River chỉ phụ thuộc bản đồ và tập critical cell, không phụ thuộc truy vấn, nên trạm gốc tính
+  sẵn ở pha 0 (cập nhật mỗi đêm khi mạng thay đổi, mục 23) và phát xuống mọi cell trước.
+- Khi có sự cố, trạm gốc chỉ phát qua LoRa một bản tin vài byte (mã nhiệm vụ, giờ cất cánh, mã kế hoạch); một khung SF7 khoảng
+  0,35 s. CH truyền tiếp trong cụm qua 802.15.4, khoảng 30 chặng node, dưới 1 s. Mỗi cell tự tính cửa sổ chuyển kênh từ kế
+  hoạch và giờ cất cánh.
+- Đồng bộ đồng hồ: thạch anh thường lệch cỡ vài chục ppm, tức vài giây mỗi ngày; đồng bộ lại mỗi đêm cùng lúc cập nhật kế hoạch,
+  và bản tin bắt đầu mang giờ của trạm gốc, nên sai số còn cỡ dưới 1 s. Cửa sổ mở rộng thêm vài giây mỗi phía.
+- Nếu UAV lệch kế hoạch (gió, đổi đường), UAV phát kèm vị trí trong header gói (đã có trong takeover); cell nghe thấy gói thì
+  giữ kênh 26 tới khi hết nghe.
+
+**Hệ quả cho mô hình:** thời gian từ lúc có sự cố tới khi cất cánh gồm một khung LoRa và vài giây phát trong cụm; P_k giảm vì bỏ
+node pin (khoảng 78–89 % node còn lại); không cần mô hình ngủ/thức cho node chuyển tiếp.

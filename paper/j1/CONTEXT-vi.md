@@ -110,9 +110,9 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   cần mã hoá để chỉ AI node đọc được, và cần ký để node biết truy vấn thật do trạm gốc phát.
 - v. (mục 369) Giấy phép bay: bay công vụ vẫn phải xin phép; nếu xin theo từng lần thì thời gian chờ có thể lớn hơn cả nhiệm
   vụ. Đề xuất giả định đội cứu nạn có giấy phép thường trực cho vùng của mình.
-- w. (mục 369) Thiết bị di động: camera hành trình, điện thoại (đề cương mục 2.1 có nhắc) có thuộc mạng không; đề xuất chỉ xét
+- w. Đã trả lời (mục 370): bỏ camera hành trình, chỉ xét thiết bị cố định. Ghi chú gốc: thiết bị di động: camera hành trình, điện thoại (đề cương mục 2.1 có nhắc) có thuộc mạng không; đề xuất chỉ xét
   thiết bị cố định.
-- x. (mục 369) Ban đêm và thời tiết: camera hồng ngoại ban đêm làm đối sánh kém; mưa và gió ảnh hưởng UAV (đã có thí nghiệm gió
+- x. Đã trả lời (mục 370): thời tiết đưa vào làm cận trên (kịch bản xấu nhất về gió, mưa cho thời gian nhiệm vụ). Ghi chú gốc: ban đêm và thời tiết: camera hồng ngoại ban đêm làm đối sánh kém; mưa và gió ảnh hưởng UAV (đã có thí nghiệm gió
   WND); có cần xét không.
 - y. (mục 369) Phương án dữ liệu gửi về AI node (D0–D3, mục 14, PLAN-K9-DATA) chưa chọn.
 
@@ -786,3 +786,38 @@ từ 0,87 xuống 0,73 (mục 17).
 - V1: UAV lơ lửng theo toạ độ ghi sẵn rồi dò quanh theo cường độ tín hiệu nếu gói hỏng nhiều.
 
 Nguồn: GPS.gov, "GPS Accuracy", https://www.gps.gov/systems/gps/performance/accuracy/ (trang ghi không cập nhật từ 2/2025).
+
+## 27. Nội dung và cỡ truy vấn (2026-11-20, mục 370, đề xuất để bàn)
+
+**Hai cách đóng gói truy vấn.**
+- Ảnh (hiện tại): L ảnh tham chiếu, khoảng 400 KB, Q = 4 041 gói. Cần khi các AI node chạy mô hình khác nhau, vì mỗi node tự trích
+  đặc trưng từ ảnh bằng mô hình của mình (`l1_mission.py`: `match_time` gồm giải mã và trích đặc trưng L ảnh).
+- Vector đặc trưng: mỗi ảnh thành một vector (ResNet-50 2 048 chiều fp16 khoảng 4 KB; mô hình re-ID nhỏ 512 chiều khoảng
+  0,5–1 KB); 12–24 vector khoảng 10–100 KB, Q khoảng 100–1 000 gói. Chỉ dùng được khi mọi AI node chung một mô hình và chung thang
+  điểm; `paper/L1-MODEL-vi.md` hiện đã giả định đúng như vậy.
+
+**Cỡ truy vấn quyết định lợi thế của hợp tác** (tính mới, bản đồ k8; chặn phủ tỉ lệ với Q, chặn có tính quãng bay chạy lại
+`bound_nc.py` với Q nhỏ; log `logs/2026-11-20_0900-query-size/`):
+
+| Q (gói) | Chặn dưới không hợp tác ở r200 (s) | ở r100 (s) | CHORD bay xong / sẵn sàng trung bình (s) |
+|---|---|---|---|
+| 4 041 (ảnh) | 842 | 1 283 | 784 / 436–452 |
+| 1 000 | 208 | 318 | như trên |
+| 400 | 146 | 201 | như trên |
+
+Với ảnh, chặn dưới của mọi phương án không hợp tác vượt thời điểm CHORD bay xong ở r100; với vector, chặn dưới chỉ còn 150–320 s,
+thấp hơn nhiều so với thời gian bay, nên lý thuyết không còn chứng nhận lợi thế của hợp tác. Khi Q nhỏ, cả hai cách đều bị quãng
+bay chi phối, và đi gần từng critical cell (DTSP-N) có thể nhanh ngang đi một lượt qua cụm rồi thêm River.
+
+**Lý do giữ truy vấn lớn có thể bảo vệ:**
+- Mạng dùng chung nhiều chủ (kiểu Sidewalk) không ép được mọi thiết bị chạy cùng một mô hình và cùng phiên bản; ảnh là định dạng
+  chung duy nhất.
+- Nhiều khía cạnh và nhiều góc nhìn (mặt, dáng, quần áo; trước, sau, bên) làm tăng xác suất bắt được (mục 16: 1 ảnh 0,54, 3 ảnh
+  0,90 ở cửa sổ 2 giờ).
+- Pha 2 vẫn cần bộ tham chiếu đầy đủ R (1 MB).
+
+**Bảo mật truy vấn:** dù là ảnh hay vector, truy vấn mang dữ liệu sinh trắc của người cần tìm; đề xuất mã hoá cho riêng AI node
+và ký bằng khoá của trạm gốc để node chỉ nhận truy vấn thật (chi phí vài chục byte, không đổi Q đáng kể).
+
+**Đề xuất cho bài:** giữ truy vấn ảnh làm trường hợp chính với lý do mô hình khác nhau; báo kết quả theo Q (400, 1 000, 4 041) để
+chỉ rõ từ cỡ truy vấn nào hợp tác bắt đầu có lợi.

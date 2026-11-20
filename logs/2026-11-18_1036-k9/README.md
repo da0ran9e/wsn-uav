@@ -122,4 +122,22 @@ B0–B3.
   giữa các tập hẹp lại (rho100 hơn rho20 56 s thay vì 110 s) nhưng thứ tự giữ nguyên. Tỉ lệ thành công đổi chiều: tập ít cell
   được ngưỡng mỗi cell thấp hơn nên bắt mục tiêu tốt hơn (0,63 so với 0,58 ở E = 2,4). Như vậy tập ít AI cell thắng ở cả hai
   cách; phần chênh còn lại đến từ T1 và số lần thăm.
-- r200 và các ρ, k khác cùng xu hướng. Phần còn lại của B6 (ρ cao, bậc thiết bị, mật độ) chưa làm.
+- r200 và các ρ, k khác cùng xu hướng.
+
+## Giai đoạn 8 (B6, phần còn lại): ρ cao, mật độ, bậc thiết bị
+
+- ρ cao: `cc_select.py` trên k8 r100 với ρ = 400, 800, 1 500, 3 700 (lệnh `b6-high-rho.md`, kết quả `data/b6-high/`, 289 s). Ngân
+  sách 10 %: ρ = 400 cần 344 critical cell; từ ρ = 800 thì đặt AI node ở cả 617 cell vẫn không đủ, ρ lớn nhất khi mọi cell có AI
+  node là 640 người/h (ngân sách 20 %: 1 275). Phố thương mại (1 500) và giờ cao điểm Manhattan (3 700) vì vậy không khả thi với
+  D3 ở 30 % node là camera. T1 của các tập trên 70 critical cell lấy từ surrogate nên không tin được (B4).
+- Mật độ (`b6_sens.py`, lệnh `b6-density-devices.md`, kết quả `data/b6-density-devices.md`). Mọi tải ở B1, B3 và cỡ kho ở B5
+  tuyến tính theo ρ × tỉ lệ camera × mật độ, nên bản đồ 400 node/km² ở ρ tương đương bản đồ 816 ở ρ × 400 / 816. Tập chọn cho
+  ρ = 20 / 100 / 200 ở 816 chở được ρ = 41 / 204 / 408 ở 400 và 58 / 291 / 583 ở 280; ρ lớn nhất khi mọi cell có AI node là
+  1 306 (400) và 1 865 (280). Kiểm bằng cách lọc ngẫu nhiên node từng cell: tỉ số đúng tới 1–2 % với 24 cell, nhưng lệch tới
+  23 % ở 280 node/km² với 161 cell, vì cell bận nhất nặng thêm khi mỗi AI cell chỉ gom vài cell. Thời gian River đổi theo mật độ
+  thì cần bản đồ ns-3 của K10.
+- Bậc thiết bị: D3 đặt việc trích đặc trưng ở camera, AI node chỉ tìm vector, nên bậc thiết bị không đổi kết luận. Camera bận
+  1,5 % ở ρ = 200 và 28 % ở ρ = 3 700 với ESP32-S3 (trường hợp xấu nhất); các bậc khác dưới 10 %. Ở AI node, tìm trong kho lớn
+  nhất (152 280 vector, 80 MB) cộng trích bộ tham chiếu mất dưới 1 s ở lượt đầu và dưới 5,5 s cho V1 (L = 20), nhỏ so với 78 s
+  mỗi lần xác minh. Giới hạn duy nhất là bộ nhớ: MCU không chứa nổi kho lớn (80 MB) nếu không có thẻ nhớ, chứa được kho nhỏ nhất
+  (0,7 MB).

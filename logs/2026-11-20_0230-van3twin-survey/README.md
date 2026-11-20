@@ -16,3 +16,14 @@ Bài arXiv 2505.14184 đọc qua web (bản HTML v3; mục IV–VI chỉ qua b�
 Đầu ra: `paper/j1/TOOL-VAN3TWIN-vi.md`. Kết quả chính: VaN3Twin nền ns-3.35, không có 802.15.4, dò tia mọi cặp nên không
 chạy được ở 13 000 node; đề xuất không dùng, giữ LoS hình học, có thể dùng Sionna RT ngoại tuyến trên một ô nhỏ để hiệu
 chỉnh K1c. Còn dang dở: chưa thử cài Sionna, chưa đo thời gian dò tia trên CPU.
+
+## Phần hai: Sionna RT (chatlog mục 364)
+
+```sh
+pip index versions sionna-rt          # 2.2.0
+pip download sionna-rt --no-deps -d <scratchpad>/sw   # wheel 8,5 MB, giải nén để đọc, không cài
+grep trong sionna/rt/__init__.py, radio_materials/itu.py, radio_map_solvers/radio_map_solver.py, scene.py
+```
+
+Đầu ra: `paper/j1/TOOL-SIONNA-vi.md`. Chạy CPU được (biến thể LLVM), vật liệu ITU phủ 2,4 GHz. Dang dở: thử nghiệm nhỏ
+(cài, dựng mesh một ô Punggol, đo thời gian) chờ người dùng duyệt.

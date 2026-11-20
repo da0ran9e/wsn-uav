@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (27): nguồn số liệu và mô tả đang dùng
+## Hiện hành (28): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -21,6 +21,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
 | [`paper/j1/PLAN-K9-DATA-vi.md`](../paper/j1/PLAN-K9-DATA-vi.md) | Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu | 2026-11-18 |  |
 | [`paper/j1/PLAN-TRACKS-vi.md`](../paper/j1/PLAN-TRACKS-vi.md) | Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật | 2026-11-18 |  |
+| [`paper/j1/TOOL-SIONNA-vi.md`](../paper/j1/TOOL-SIONNA-vi.md) | Sionna RT cho kênh đô thị của J1 (2026-11-20, chatlog mục 364) | 2026-11-20 |  |
 | [`paper/j1/TOOL-VAN3TWIN-vi.md`](../paper/j1/TOOL-VAN3TWIN-vi.md) | VaN3Twin: có dùng được cho J1 không (2026-11-20, chatlog mục 361) | 2026-11-20 |  |
 | [`paper/j1/draft-v1/README-vi.md`](../paper/j1/draft-v1/README-vi.md) | Bản thảo journal v1 (J1): hướng dẫn đánh giá | 2026-11-17 |  |
 | [`paper/j1/draft-v1/REQUEST-vi.md`](../paper/j1/draft-v1/REQUEST-vi.md) | Yêu cầu của người dùng cho bản thảo journal v1 | 2026-11-16 |  |

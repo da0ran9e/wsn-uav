@@ -146,8 +146,8 @@ B0–B3.
 
 - Mục VIII-F "Where to place the AI nodes" trong `paper/j1/draft-v1/tex/sec-eval.tex` (tiếng Anh), Bảng VII (số AI cell cần và
   T1 theo ρ, ba bản đồ), Hình 8 (surrogate so với ns-3) và Hình 9 (thời gian xác nhận theo số AI cell, hai cách đặt ngưỡng).
-  Hai chỗ TODO đỏ: vector rời camera so với giả định giữ dữ liệu tại chỗ (mục 343), seed thứ hai và thời gian River ở mật độ
-  thấp.
+  Chỗ TODO đỏ còn lại: seed thứ hai và thời gian River ở mật độ thấp. Câu vector rời camera đã chốt (mục 376): vector chỉ đi
+  từ camera tới AI node, trạm gốc vẫn chỉ nhận điểm số; TODO đó thay bằng một câu.
 - Hình do `paper/j1/draft-v1/analysis/fig_k9.py` sinh: bản có nhãn ở `paper/j1/draft-v1/figs/k9-*.{pdf,png}`, bản không chữ ở
   `paper/j1/figures/` (INDEX). Lệnh ở `paper/j1/draft-v1/runs/fig-k9.md`. PDF dựng lại bằng `tex/build.sh` (cài thêm texlive
   trong container): 13 trang, không còn tham chiếu hỏng.

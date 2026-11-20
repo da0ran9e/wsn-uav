@@ -398,6 +398,10 @@ riêng tư (hướng 4). Kịch bản là khu đô thị nhiều chuông cửa, 
 - Câu i có hướng trả lời: chủ thiết bị tham gia một mạng dùng chung kiểu Sidewalk, một bên vận hành (thành phố hay nhà cung
   cấp) chạy pha 0.
 
+
+Chốt (mục 376): giữ D3, vector đặc trưng được rời camera để tới AI node trong mạng mặt đất; ra khỏi mạng (tới trạm gốc) vẫn
+chỉ có điểm số. Hướng 4 hiểu là dữ liệu không rời mạng, khớp với mục 29.
+
 ## 16. Cửa sổ truy vấn, kiểu trả lời của camera, giới hạn thời gian (2026-11-18, mục 344)
 
 **Đã chốt:** nhiệm vụ không giới hạn thời gian, tìm tới khi thấy, chỉ bị chặn bởi năng lượng (sức bền) của UAV. Camera trả

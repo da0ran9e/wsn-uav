@@ -72,8 +72,8 @@ Dựng lại PDF: `paper/j1/draft-v1/tex/build.sh`.
     (facility location có sức chứa, giới hạn 5 chặng, surrogate River) cần 24 / 69 / 161 AI cell ở ρ = 20 / 100 / 200 người/h
     trên k8. Kiểm bằng ns-3 một seed: surrogate đúng tới khoảng 70 AI cell, sai ở 161. Tính cả hai pha, tập ít AI cell nhanh
     nhất ở cả hai cách đặt ngưỡng báo nhầm. Số liệu và lệnh: `logs/2026-11-18_1036-k9/README.md`, hình do
-    `analysis/fig_k9.py`. Hai chỗ TODO đỏ: vector rời camera có hợp với giả định giữ dữ liệu tại chỗ không, và seed thứ hai
-    cùng thời gian River ở mật độ 400 và 280 node/km².
+    `analysis/fig_k9.py`. Chỗ TODO đỏ: seed thứ hai và thời gian River ở mật độ 400 và
+    280 node/km². Vector được rời camera tới AI node (chatlog mục 376), trạm gốc vẫn chỉ nhận điểm số.
 
 ## Nguồn của từng nhóm số
 

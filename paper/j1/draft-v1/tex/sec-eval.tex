@@ -173,8 +173,8 @@ Algorithm~\ref{alg:takeover} is evaluated offline in Table~\ref{tab:radius}.
 \subsection{Where to place the AI nodes}\label{sec:aicells}
 So far $K$ was fixed by score outliers. Here $K$ is chosen, with the legacy cameras of Section~\ref{sec:model} sending,
 before any incident, one record per passer-by to the nearest AI node of their cluster: a frame (40\,kB), a person crop
-(10\,kB) or a feature vector (512-d INT8 plus 16\,B, 528\,B). \todo{vectors leave the legacy camera; check against the
-keep-data-on-device assumption.} The background load uses the per-cell model fitted on the River trace (1.5 frames per
+(10\,kB) or a feature vector (512-d INT8 plus 16\,B, 528\,B). Records travel only inside the mesh, from a camera to its
+AI node; the BS still receives scores only. The background load uses the per-cell model fitted on the River trace (1.5 frames per
 packet at the end cells, 1.7 in transit, 1 per gateway pair, 6.5\,ms per frame); every medium may be busy at most 10\,\% of
 the time and 30\,\% of the nodes are cameras, each seen by $\rho$ people per hour.
 

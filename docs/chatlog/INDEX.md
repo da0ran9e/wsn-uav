@@ -375,3 +375,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 366 | 2026-11-20 | kế hoạch · làm phần còn lại của B6 (K9) | [2026-11](2026-11.md) |
 | 367 | 2026-11-20 | bối cảnh · chốt đánh thức; bàn vị trí node | [2026-11](2026-11.md) |
 | 368 | 2026-11-20 | kế hoạch · làm B7 (K9): viết vào bản thảo J1 | [2026-11](2026-11.md) |
+| 369 | 2026-11-20 | bối cảnh · rà lại các khía cạnh chưa bàn | [2026-11](2026-11.md) |

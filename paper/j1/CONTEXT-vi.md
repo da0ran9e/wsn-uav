@@ -14,7 +14,7 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 |---|---|---|
 | Vùng nhiệm vụ | Đô thị hiện đại (mục 338): càng hiện đại thì mạng IoT càng dày, nhưng nhà cao tầng và hạ tầng làm kênh A2G kém đi nhiều. Kênh là phần sẽ làm phức tạp dần. Vì J1 chỉ xét một UAV, vùng thử nghiệm thu lại vừa đủ cho một UAV làm trong một chuyến bay (mục 327) | chốt |
 | Vì sao khó | Nhà cao tầng và hạ tầng che khuất kênh từ trên không xuống, nên kênh yếu và biến động; đô thị càng hiện đại thì càng dày node nhưng kênh A2G càng kém (mục 338) | chốt |
-| Thiết bị | Nhiều thiết bị IoT có sẵn: camera, cảm biến; phần lớn là node yếu, một số node mạnh chạy được AI | chốt |
+| Thiết bị | Chuông cửa, camera tường, camera cột, máy bán hàng; thêm node chuyển tiếp trên cột đèn ở cell cần; 11–22 % chạy pin và không chuyển tiếp; một số node mạnh chạy được AI (mục 15, 20–21) | chốt |
 | Sự cố | Mục tiêu điển hình là tìm người (mục 335): truy vấn là bộ ảnh tham chiếu của người cần tìm, AI node đối sánh với ảnh camera đã gửi về; mạng phục vụ nhiều lượt truy vấn trong suốt vòng đời | chốt |
 | Phân bố thiết bị | Rải ngẫu nhiên, càng đều càng tốt, phủ cả vùng (mục 325). Mật độ giữ như bản hội nghị (khoảng 816 node/km²) như giả định hướng tới: mạng dày chưa phổ biến nhưng nhiều khả năng sớm có (mục 335); chạy thêm vài mức để xem độ nhạy | chốt |
 | Vì sao cần UAV | Hai lý do (mục 343): node rẻ chỉ có radio 802.15.4, không nối Internet; dữ liệu phải ở lại thiết bị vì quyền riêng tư, chỉ điểm số vài byte rời node. Qua LoRa mất ít nhất 1,8 h, qua mạng mặt đất từ trạm gốc xem mục 12. Chi tiết ở mục 15 | chốt (lý do), đề xuất (lập luận) |
@@ -23,7 +23,7 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 
 | Thực thể | Mô tả | Trạng thái |
 |---|---|---|
-| Trạm gốc (BS) | Lập kế hoạch pha 0, pha 1 (tour và kế hoạch River), nhận kết quả qua LoRa | chốt |
+| Trạm gốc (BS) | Đội chữa cháy và cứu nạn cứu hộ của khu vực, có LoRa gateway và sân cất hạ cánh (mục 22); lập kế hoạch pha 0, pha 1, nhận kết quả qua LoRa | chốt |
 | UAV cánh bằng (đội 1) | J1 xét một UAV phát truy vấn ở pha 1. Nhiều UAV để sau, chỉ khi có cơ chế phối hợp thật (mục 326), xem mục 5 | chốt |
 | UAV cánh quay (đội 2) | Đến xác minh các cell nghi vấn ở pha 2. J1 xét cả pha 2: mục tiêu chung là tối thiểu tổng thời gian pha 1 và pha 2 (mục 338). Mô hình pha 2 hiện có: `uav-l2/docs/MISSION-vi.md` (15 m/s, tour qua các nghi vấn, lơ lửng 30 s mỗi điểm) | chốt |
 | Node thường | Camera hoặc cảm biến yếu, ghi dữ liệu và gửi dữ liệu về AI node phụ trách nó (trước khi có truy vấn); chuyển tiếp gói 802.15.4 | chốt (mục 325) |
@@ -52,18 +52,18 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 
 | Tham số | Bản hội nghị (ICC) | J1 | Trạng thái |
 |---|---|---|---|
-| Diện tích vùng | 617 cell ≈ 16 km² (bản đồ k8) | vừa một chuyến bay của một UAV; ước lượng thô khoảng 100 km², cỡ 50 cụm (mục 7) | chốt (nguyên tắc), mở (con số) |
-| Số cell | 617 | khoảng 4 000 nếu 100 km² và giữ R = 100 m | chốt (R = 100 m, mục 10) |
+| Diện tích vùng | 617 cell ≈ 16 km² (bản đồ k8) | một quận đô thị thật 5–60 km², nằm gọn trong một chuyến bay (mục 18–22); bộ bản đồ đề xuất Nam Từ Liêm, Hoàng Mai, Punggol, Downtown Core | chốt |
+| Số cell | 617 | 195–1 552 cell tuỳ quận (R = 100 m, mục 10, 18–20) | chốt |
 | Mật độ node | khoảng 21 node một cell (13 086 node) | giữ khoảng 816 node/km² làm mức chính (hướng tới, mục 335); thêm 400 và 280 node/km² để xem độ nhạy (vẫn trong vùng lưới cell liên thông, mục 10) | chốt (mức chính), đề xuất (mức phụ) |
 | Số CC | 45 CC trên 8 cụm (k8), cho sẵn theo bản đồ | J1 giải bài chọn CC (mục 335), số CC là một phần lời giải | chốt |
 | Kênh A2G, G2G | A2G hai đoạn + suy hao môi trường cố định, Rician K = 2; G2G 3GPP UMi NLoS | làm phức tạp dần theo từng bước (mục 335): LoS phụ thuộc góc ngẩng, che khuất tương quan, fading tương quan, cấu trúc phố hay địa hình cho G2G (mục 9; việc K1) | chốt (hướng), đề xuất (thứ tự bước) |
-| UAV cánh bằng | 1 chiếc, 25–50 m/s, H = 100 m, ρ = 63,7 m | vẫn 1 chiếc, giữ động học; thời gian bay tối đa một chuyến và điểm cất hạ cánh còn mở | chốt (1 UAV) |
-| Số truy vấn trong vòng đời mạng | 1 | nhiều; dùng để chia chi phí pha 0 | chốt (nhiều), mở (bao nhiêu) |
+| UAV cánh bằng | 1 chiếc, 25–50 m/s, H = 100 m, ρ = 63,7 m | 1 chiếc VTOL, giữ động học, bay 100 m so với mặt đất, cất cánh từ đội cứu nạn cứu hộ, sức bền 1–3 h (mục 22) | chốt |
+| Số truy vấn trong vòng đời mạng | 1 | vài chục tới khoảng 150 báo cáo mất tích mỗi năm mỗi quận, một phần cần UAV (mục 23) | chốt (ước lượng) |
 
 ## 5. Hệ quả của các lựa chọn đã chốt
 
-- Phủ đều ở quy mô vườn quốc gia buộc mật độ node thấp hơn nhiều. Mật độ quyết định số node mỗi cell, nên quyết định xác
-  suất nhận ở mức cell P_k và dung lượng giữa các cell. Có thể phải tăng R; R bị chặn bởi tầm G2G để CGW còn nối được.
+- (Cũ, đã thay bởi mục 338.) Ý ban đầu về vườn quốc gia mật độ thấp không còn dùng; kịch bản là đô thị hiện đại mật độ cao,
+  giới hạn giãn cách node do tầm G2G quyết định (mục 10).
 - Dữ liệu nằm ở AI node nên trước truy vấn đã có luồng nền từ node thường về AI node. Bài toán chọn CC (mục 3) có thêm
   ràng buộc phủ: mỗi node thường cách một AI node không quá h hop, và AI node có giới hạn bộ nhớ. Lập luận "bộ nhớ đầy
   thì dữ liệu bị ghi đè" đặt ở AI node.
@@ -105,6 +105,16 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   kênh 0,13–1,0). Mô hình hiện không có nhiễu ngoài.
 - t. (mục 363) Vị trí node: trạm gốc cần toạ độ node để lập kế hoạch và chọn điểm lơ lửng V1; lấy từ địa chỉ lắp đặt, GPS hay
   định vị trong mạng, và sai số bao nhiêu.
+- u. (mục 369) Nội dung và cỡ truy vấn: truy vấn là ảnh (400 KB, Q = 4 041 gói) hay vector đặc trưng (vài chục KB); ảnh cần khi
+  thiết bị chạy mô hình khác nhau, vector cần khi mọi AI node dùng chung mô hình. Truy vấn chứa ảnh của người cần tìm, nên có
+  cần mã hoá để chỉ AI node đọc được, và cần ký để node biết truy vấn thật do trạm gốc phát.
+- v. (mục 369) Giấy phép bay: bay công vụ vẫn phải xin phép; nếu xin theo từng lần thì thời gian chờ có thể lớn hơn cả nhiệm
+  vụ. Đề xuất giả định đội cứu nạn có giấy phép thường trực cho vùng của mình.
+- w. (mục 369) Thiết bị di động: camera hành trình, điện thoại (đề cương mục 2.1 có nhắc) có thuộc mạng không; đề xuất chỉ xét
+  thiết bị cố định.
+- x. (mục 369) Ban đêm và thời tiết: camera hồng ngoại ban đêm làm đối sánh kém; mưa và gió ảnh hưởng UAV (đã có thí nghiệm gió
+  WND); có cần xét không.
+- y. (mục 369) Phương án dữ liệu gửi về AI node (D0–D3, mục 14, PLAN-K9-DATA) chưa chọn.
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 

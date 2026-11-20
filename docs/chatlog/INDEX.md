@@ -383,3 +383,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 374 | 2026-11-20 | bối cảnh · có bao nhiêu loại mô hình với vector khác nhau | [2026-11](2026-11.md) |
 | 375 | 2026-11-20 | kế hoạch · chốt phương án lai dữ liệu về AI node; cập nhật K9 | [2026-11](2026-11.md) |
 | 376 | 2026-11-20 | bối cảnh · giữ D3, vector được rời camera | [2026-11](2026-11.md) |
+| 377 | 2026-11-20 | bối cảnh · bàn tiếp bối cảnh trước | [2026-11](2026-11.md) |

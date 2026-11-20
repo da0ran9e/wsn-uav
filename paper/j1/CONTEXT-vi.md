@@ -898,3 +898,20 @@ dùng tải thực của từng node. Tỉ lệ node có NPU là tham số (kh�
 
 Nguồn: NIST FRTE 1:1, https://pages.nist.gov/frvt/html/frvt11.html; Memoori, https://memoori.com/video-surveillance-market-leaders-2026/;
 ISO/IEC 15938-15:2019, https://webstore.iec.ch/publication/65535.
+
+## 30. Giấy phép bay (2026-11-20, mục 377, đề xuất để bàn)
+
+- Việt Nam [web]: Nghị định 288/2025/NĐ-CP (đã sửa bởi Nghị định 14/2026/NĐ-CP): trong khu vực cấm bay chỉ cấp phép cho nhiệm vụ công
+  vụ (quốc phòng, an ninh, an toàn bay, trật tự xã hội); hồ sơ nộp tới cơ quan của Bộ Quốc phòng. Chưa tìm thấy thời hạn giải quyết
+  cấp phép bay, cũng chưa thấy thủ tục riêng cho cứu nạn khẩn cấp; thủ tục cấp lại giấy phép người điều khiển là 7 ngày làm việc.
+- EU [web]: Quy định (EU) 2018/1139, Điều 2, loại trừ khỏi phạm vi các tàu bay (cả loại điều khiển từ xa) dùng cho quân sự, hải
+  quan, cảnh sát, tìm kiếm cứu nạn, chữa cháy, biên phòng và hoạt động tương tự; các nước tự quản lý và phải bảo đảm mục tiêu an
+  toàn. Tức UAV của lực lượng cứu nạn là hoạt động nhà nước, không đi theo thủ tục của drone dân sự.
+- Đề xuất: giả định đội cứu nạn có giấy phép thường trực (hoặc là hoạt động nhà nước) cho khu vực phụ trách, nên thời gian xin
+  phép không cộng vào thời gian nhiệm vụ; nêu rõ đây là giả định và nêu tiền lệ EU.
+
+Nguồn: Regulation (EU) 2018/1139 (Easy Access Rules, EASA),
+https://www.easa.europa.eu/document-library/easy-access-rules/online-publications/regulation-eu-20181139-european-parliament;
+LuatVietnam về thủ tục cấp phép bay theo Nghị định 288,
+https://luatvietnam.vn/hanh-chinh/thu-tuc-cap-phep-bay-doi-voi-may-bay-khong-nguoi-lai-tu-05-11-2025-the-nao-570-105247-article.html
+(nguồn thứ cấp; cần đối chiếu văn bản hợp nhất).

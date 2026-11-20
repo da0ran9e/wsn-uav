@@ -105,7 +105,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   kênh 0,13–1,0). Mô hình hiện không có nhiễu ngoài.
 - t. (mục 363) Vị trí node: trạm gốc cần toạ độ node để lập kế hoạch và chọn điểm lơ lửng V1; lấy từ địa chỉ lắp đặt, GPS hay
   định vị trong mạng, và sai số bao nhiêu.
-- u. (mục 369) Nội dung và cỡ truy vấn: truy vấn là ảnh (400 KB, Q = 4 041 gói) hay vector đặc trưng (vài chục KB); ảnh cần khi
+- u. Đã trả lời (mục 371): truy vấn là ảnh, Q = 4 041, không dùng vector (mục 27). Ghi chú gốc: nội dung và cỡ truy vấn: truy vấn là ảnh (400 KB, Q = 4 041 gói) hay vector đặc trưng (vài chục KB); ảnh cần khi
   thiết bị chạy mô hình khác nhau, vector cần khi mọi AI node dùng chung mô hình. Truy vấn chứa ảnh của người cần tìm, nên có
   cần mã hoá để chỉ AI node đọc được, và cần ký để node biết truy vấn thật do trạm gốc phát.
 - v. (mục 369) Giấy phép bay: bay công vụ vẫn phải xin phép; nếu xin theo từng lần thì thời gian chờ có thể lớn hơn cả nhiệm
@@ -114,7 +114,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   thiết bị cố định.
 - x. Đã trả lời (mục 370): thời tiết đưa vào làm cận trên (kịch bản xấu nhất về gió, mưa cho thời gian nhiệm vụ). Ghi chú gốc: ban đêm và thời tiết: camera hồng ngoại ban đêm làm đối sánh kém; mưa và gió ảnh hưởng UAV (đã có thí nghiệm gió
   WND); có cần xét không.
-- y. (mục 369) Phương án dữ liệu gửi về AI node (D0–D3, mục 14, PLAN-K9-DATA) chưa chọn.
+- y. Đã trả lời (mục 371): node thường gửi ảnh cắt người (D2), không gửi vector; D0 giữ làm đối chứng (mục 28).
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 
@@ -787,7 +787,7 @@ từ 0,87 xuống 0,73 (mục 17).
 
 Nguồn: GPS.gov, "GPS Accuracy", https://www.gps.gov/systems/gps/performance/accuracy/ (trang ghi không cập nhật từ 2/2025).
 
-## 27. Nội dung và cỡ truy vấn (2026-11-20, mục 370, đề xuất để bàn)
+## 27. Nội dung và cỡ truy vấn (2026-11-20, mục 370; chốt ở mục 371)
 
 **Hai cách đóng gói truy vấn.**
 - Ảnh (hiện tại): L ảnh tham chiếu, khoảng 400 KB, Q = 4 041 gói. Cần khi các AI node chạy mô hình khác nhau, vì mỗi node tự trích
@@ -821,3 +821,26 @@ và ký bằng khoá của trạm gốc để node chỉ nhận truy vấn thậ
 
 **Đề xuất cho bài:** giữ truy vấn ảnh làm trường hợp chính với lý do mô hình khác nhau; báo kết quả theo Q (400, 1 000, 4 041) để
 chỉ rõ từ cỡ truy vấn nào hợp tác bắt đầu có lợi.
+
+**Chốt (mục 371).** Truy vấn là ảnh (Q = 4 041), không dùng vector. Kết quả vẫn báo thêm theo Q = 400 và 1 000 làm độ nhạy.
+
+## 28. Hệ quả của truy vấn ảnh: node thường gửi ảnh cắt người về AI node (2026-11-20, mục 371)
+
+Không dùng vector thì node thường gửi ảnh cắt người (D2) về AI node, AI node trích đặc trưng khi ảnh tới (mục 16). Giới hạn là luồng
+nền G2G: một AI node nhận được khoảng 1–2 KB/s nếu luồng nền chỉ chiếm 10–20 % thời gian (PLAN-K9-DATA mục 2). Tính mới:
+
+| Luồng nền cho phép | Ảnh cắt | Người/h một AI node nhận | Số camera ở 30 người/h | 60 người/h | 200 người/h |
+|---|---|---|---|---|---|
+| 1 KB/s | 5 KB | 720 | 24 | 12 | 3–4 |
+| 1 KB/s | 15 KB | 240 | 8 | 4 | 1 |
+| 2 KB/s | 5 KB | 1 440 | 48 | 24 | 7 |
+| 2 KB/s | 15 KB | 480 | 16 | 8 | 2 |
+
+Nhận xét:
+- Mỗi AI node chỉ phục vụ được vài tới vài chục camera, tuỳ số người qua camera và cỡ ảnh cắt; phố đông (hàng trăm người/h) gần
+  như mỗi camera cần một AI node. Lưu lượng người qua camera (K12) vì vậy quyết định số critical cell.
+- Đây đúng là đánh đổi của K9: nhiều critical cell thì luồng nền nhẹ nhưng giao truy vấn nặng hơn. Ràng buộc luồng nền là ràng
+  buộc chính của bài chọn critical cell, mạnh hơn bộ nhớ.
+- Cách giảm: ảnh cắt nhỏ (2–5 KB, vẫn là ảnh), chỉ gửi ảnh cắt tốt nhất mỗi người, ưu tiên camera hướng ra phố đông cho AI node gần.
+  Kéo ảnh cắt theo yêu cầu sau khi truy vấn tới thì quá chậm (cửa sổ 2 giờ có hàng nghìn tới hàng chục nghìn ảnh).
+- D0 (AI node chỉ tìm trong camera của chính nó) giữ làm đối chứng.

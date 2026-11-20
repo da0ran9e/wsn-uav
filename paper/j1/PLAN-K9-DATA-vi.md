@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-18
+updated: 2026-11-20
 ---
 # Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu
 
@@ -115,3 +115,26 @@ Thứ tự: B0 và B2 làm song song ngay; B1 sau B0; B3 sau B1, B2; B4 cần du
    được tìm; D0 là mốc, không xếp hạng chung.
 6. **Hạ tầng.** Mục 7.3 đúng cho container của phiên viết kế hoạch; container khác phải build lại ns-3.46 (khoảng 30–45 phút,
    dùng chung cho K11). B4 nên chờ K11 vì K11 quyết định binary và kế hoạch River.
+
+## 9. B8: phương án lai (2026-11-20, chatlog mục 373–375)
+
+Người dùng chốt phương án lai làm phương án chính (CONTEXT mục 28–29): truy vấn vẫn là ảnh (Q = 4 041); ở bước luồng nền, node
+có NPU gửi vector của mô hình nhẹ, node yếu gửi ảnh cắt nhỏ; AI node giữ mô hình của từng nhóm node nó phục vụ.
+
+| Tham số | Giá trị quét | Ghi chú |
+|---|---|---|
+| Tỉ lệ camera có NPU, f_npu | 0,2, 0,5, 0,8 | node có NPU gửi vector, còn lại gửi ảnh cắt |
+| Cỡ vector | 0,5 KB (512 chiều INT8 + 20 B) | 4,1 KB (2 048 chiều fp16) làm độ nhạy |
+| Cỡ ảnh cắt | 5 KB | 15 KB làm độ nhạy |
+| Số mô hình mỗi AI node, K | 1, 3, 5 | chỉ ảnh hưởng thời gian đối sánh (K × L lần trích đặc trưng) và bộ nhớ AI node |
+| Luồng nền cho phép | 10 %, 20 % thời gian kênh | như B1 |
+| ρ (người/h mỗi camera) | thấp, giữa, cao theo `K9-PARAMS-vi.md` | như B0 |
+
+Các bước:
+1. B1 lai: `bg_load.py` tính tải mỗi node theo loại dữ liệu của nó (vector hoặc ảnh cắt) thay vì một loại chung; đầu ra vùng khả
+   thi (ρ, f_npu, số AI node).
+2. B3 lai: `cc_select.py` dùng tải thực của từng node trong ràng buộc luồng nền; thời gian đối sánh thêm K × L lần trích đặc trưng
+   (`match_time`).
+3. B5 lai: tổng thời gian hai pha theo f_npu và K, so với D0, D2 (chỉ ảnh cắt), D3 (chỉ vector) đã có.
+4. Ghi kết quả vào báo cáo K9 và đoạn VIII-F của bản thảo; ns-3 chỉ chạy lại nếu tập critical cell tối ưu đổi nhiều so với B4
+   (bàn chi phí trước, mục 35).

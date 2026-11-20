@@ -381,3 +381,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 372 | 2026-11-20 | bối cảnh · hỏi lại phần băng thông luồng nền | [2026-11](2026-11.md) |
 | 373 | 2026-11-20 | bối cảnh · node cùng mô hình gửi vector về AI node, truy vấn vẫn là ảnh | [2026-11](2026-11.md) |
 | 374 | 2026-11-20 | bối cảnh · có bao nhiêu loại mô hình với vector khác nhau | [2026-11](2026-11.md) |
+| 375 | 2026-11-20 | kế hoạch · chốt phương án lai dữ liệu về AI node; cập nhật K9 | [2026-11](2026-11.md) |

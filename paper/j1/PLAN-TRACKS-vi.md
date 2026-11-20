@@ -142,7 +142,11 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - μ chưa có nguồn đo (mục 338): dùng mô hình theo bậc thiết bị của K12 và quét độ nhạy. Bước (1) làm được ngay.
   - Chatlog mục 371: truy vấn là ảnh (Q = 4 041); node thường gửi ảnh cắt người (D2), không gửi vector; D0 làm đối chứng. Ràng
     buộc luồng nền G2G (1–2 KB/s mỗi AI node) là ràng buộc chính của bài chọn (CONTEXT mục 28).
-  - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
+  - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7; B8 phương án lai, mục 9 của file đó).
+  - Chatlog mục 373–375 (người dùng chốt, thay ghi chú mục 371 ở trên về D2): phương án lai làm phương án chính. Node có NPU gửi
+    vector của mô hình nhẹ (512 chiều INT8, khoảng 0,5 KB mỗi người), node yếu gửi ảnh cắt nhỏ (khoảng 5 KB); truy vấn vẫn là ảnh;
+    mỗi AI node giữ K mô hình của các nhóm node nó phục vụ (K = 1, 3, 5), trích vector từ L ảnh truy vấn bằng từng mô hình; D0 làm
+    đối chứng. Tham số mới: tỉ lệ node có NPU (0,2, 0,5, 0,8) và K. CONTEXT mục 28–29.
   - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c); xong B2, B0, B1, B3, B4 seed 1 (mục 348:
     tạm dừng ở 1 seed), B5, B6 (mục 360, 366), B7 (mục 368: bản thảo J1 mục VIII-F) · Báo cáo: [logs/2026-11-18_1036-k9](../../logs/2026-11-18_1036-k9/README.md)
 - [ ] **K10** Mật độ phụ 400 và 280 node/km² (giãn cách 50 và 60 m, CONTEXT mục 4 và 10)

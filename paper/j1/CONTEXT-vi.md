@@ -99,7 +99,7 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   (mục 18–21, việc K14).
 - p. Mạng thay đổi theo thời gian: thử nghiệm và đề xuất ở mục 23 (mục 359).
 - q. Đã trả lời (mục 364): nhiều sự cố cùng lúc và node gian lận để ngoài J1, nêu ở phần giới hạn.
-- r. (mục 363) Đánh thức: node chạy pin ngủ phần lớn thời gian, sự cố đến bất ngờ; node phải thức đúng lúc UAV bay qua và lúc
+- r. Đã trả lời (mục 367, mục 25). Ghi chú gốc: đánh thức: node chạy pin ngủ phần lớn thời gian, sự cố đến bất ngờ; node phải thức đúng lúc UAV bay qua và lúc
   River chạy. Đề cương ND0 đã nêu cơ chế đánh thức theo lịch bay do trạm gốc phát.
 - s. Đã trả lời (mục 365, việc K1d, mục 24). Ghi chú gốc: nhiễu 2,4 GHz ở đô thị: WiFi, Bluetooth, chính radio điều khiển của UAV (ghi chú `papers/dargie2021-lqe.md`: PRR theo
   kênh 0,13–1,0). Mô hình hiện không có nhiễu ngoài.
@@ -726,7 +726,7 @@ quanh 2412, 2437, 2462 MHz, nên chồng lên kênh 802.15.4 số 11–14, 16–
 - UAV điều khiển ở băng khác 2,4 GHz (900 MHz hoặc 5,8 GHz).
 - Phương án xa hơn: 802.15.4 băng dưới 1 GHz tránh hẳn WiFi, nhưng Thread và thiết bị nhà thông minh hiện ở 2,4 GHz.
 
-## 25. Đánh thức và đồng bộ (2026-11-20, mục 365, đề xuất để bàn)
+## 25. Đánh thức và đồng bộ (2026-11-20, mục 365; chốt ở mục 367)
 
 **Ai phải thức.** Node chuyển tiếp (cột đèn, thiết bị dọc phố, thiết bị trên nhà cắm điện) cắm điện nên luôn bật radio, không cần
 đánh thức. Node chạy pin (11–22 %) là node lá: không chuyển tiếp, không bao giờ là AI node, nên không cần truy vấn. Đề xuất: node
@@ -750,3 +750,29 @@ gần đường bay nghe được khoảng 10–15 s; cả cụm (khoảng 1,6 k
 
 **Hệ quả cho mô hình:** thời gian từ lúc có sự cố tới khi cất cánh gồm một khung LoRa và vài giây phát trong cụm; P_k giảm vì bỏ
 node pin (khoảng 78–89 % node còn lại); không cần mô hình ngủ/thức cho node chuyển tiếp.
+
+## 26. Vị trí node (2026-11-20, mục 367, đề xuất để bàn)
+
+**Vị trí dùng vào đâu.** Trạm gốc cần toạ độ node để: gán node vào cell, chọn CL và cặp gateway, lập kế hoạch River và tour, xét LoS
+A2G và G2G với nhà (K1a, K1c), và chọn điểm lơ lửng của V1.
+
+**Lấy vị trí từ đâu, sai số bao nhiêu:**
+- Cột đèn: thành phố có bản đồ hạ tầng, sai số dưới vài mét (giả định, chưa có nguồn).
+- Thiết bị nhà dân: ghi lúc thiết bị tham gia mạng, bằng GPS điện thoại của người cài đặt hoặc địa chỉ lắp đặt. GPS điện thoại
+  ngoài trời thoáng sai trong bán kính khoảng 4,9 m (GPS.gov, dẫn ION); gần nhà cao tầng và trong nhà kém hơn nhiều, chưa có số
+  đo trích được cho phố đô thị. Địa chỉ chỉ cho tới toà nhà, không cho tầng.
+- Định vị trong mạng theo cường độ tín hiệu: sai hàng chục mét, chỉ dùng để kiểm chéo.
+
+**Sai số ảnh hưởng thế nào** (tính mới, Monte Carlo trên lưới lục giác R = 100 m): node bị gán sang cell khác 2,8 % khi sai số
+3 m, 4,6 % khi 5 m, 9,0 % khi 10 m, 17,7 % khi 20 m, 26,2 % khi 30 m. Với V1, lệch ngang 20 m làm xác suất gói qua ở khu cao tầng
+từ 0,87 xuống 0,73 (mục 17).
+
+**Đề xuất:**
+- Gán cell theo kết nối thật ở pha 0 (node thuộc cell của CL mà nó nối được tốt nhất), toạ độ chỉ để khởi tạo; như vậy sai số vị
+  trí không làm sai cấu trúc cell.
+- Mỗi thiết bị kèm một nhãn vị trí thô: ngoài trời (cột, mặt tiền) hay trong nhà, và tầng nếu có; thiết bị trong nhà bị trừ suy hao
+  xuyên tường khoảng 15–20 dB với A2G (như biến thể indoor của `a2g_radius.py`).
+- Trong mô phỏng: kế hoạch dùng toạ độ có nhiễu σ = 10 m (cột đèn 2 m), kênh dùng toạ độ thật, để đo độ bền của kế hoạch.
+- V1: UAV lơ lửng theo toạ độ ghi sẵn rồi dò quanh theo cường độ tín hiệu nếu gói hỏng nhiều.
+
+Nguồn: GPS.gov, "GPS Accuracy", https://www.gps.gov/systems/gps/performance/accuracy/ (trang ghi không cập nhật từ 2/2025).

@@ -86,20 +86,19 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   kích thước vùng đô thị và kênh có hợp với đô thị không (mục 332), pháp lý UAV đô thị và giãn cách node
   tối đa (mục 333). Đối chiếu ở mục 7–11.
 - h. Đã trả lời (mục 343): hướng 1 (node chỉ có 802.15.4) và hướng 4 (giữ dữ liệu tại chỗ). Lập luận ở mục 15.
-- i. (mục 342) Ai sở hữu và vận hành mạng, ai chạy pha 0, thiết bị của chủ khác nhau có tham gia không.
+- i. Đã trả lời (mục 364): mạng dùng chung kiểu Sidewalk, thành phố hoặc nhà cung cấp chạy pha 0.
 - j. Phần lớn đã trả lời (mục 344): không giới hạn thời gian, tìm tới khi thấy (chỉ bị chặn bởi năng lượng UAV); camera
   trả lời "thấy người trông giống mục tiêu". Cửa sổ mặc định 2 giờ (mục 345).
 - k. Đã trả lời (mục 347, 349): V1 và V4; pha 2 của bài kết thúc khi V1 xác nhận đúng lần thấy, V4 là bước sau (mục 17).
 - l. (mục 342) Vận hành UAV ở đô thị: điểm cất cánh, độ cao bay khi có nhà cao hơn 100–120 m, vùng cấm bay, sức bền.
-- m. (mục 342) Nguồn điện của node: cắm điện lưới hay pin; quyết định năng lượng có phải ràng buộc không. Đề xuất ở
-  mục 15: tỉ lệ node chạy pin là tham số, node chạy pin không chuyển tiếp.
+- m. Đã trả lời (mục 364): 45 % node trên nhà chạy pin (11–22 % tổng số node), không chuyển tiếp; năng lượng chỉ ràng buộc
+  ở node pin.
 - n. (mục 349) Trạm gốc ở đâu: trong đô thị (đồn công an, trạm cứu hoả) hay ngoài rìa như bản đồ k8 (cách cell gần nhất
   1 km); quyết định quãng bay của cả hai pha.
 - o. Đã trả lời (mục 350–358): bản đồ thật từ OSM, 12 khu, bộ đề xuất bốn khu; quy tắc đặt node, cột đèn theo nhu cầu, node lá
   (mục 18–21, việc K14).
 - p. Mạng thay đổi theo thời gian: thử nghiệm và đề xuất ở mục 23 (mục 359).
-- q. (mục 349) Phạm vi: nhiều sự cố cùng lúc, node gian lận hay báo sai có thuộc J1 không (đề xuất: ngoài phạm vi, nêu ở
-  phần giới hạn).
+- q. Đã trả lời (mục 364): nhiều sự cố cùng lúc và node gian lận để ngoài J1, nêu ở phần giới hạn.
 - r. (mục 363) Đánh thức: node chạy pin ngủ phần lớn thời gian, sự cố đến bất ngờ; node phải thức đúng lúc UAV bay qua và lúc
   River chạy. Đề cương ND0 đã nêu cơ chế đánh thức theo lịch bay do trạm gốc phát.
 - s. (mục 363) Nhiễu 2,4 GHz ở đô thị: WiFi, Bluetooth, chính radio điều khiển của UAV (ghi chú `papers/dargie2021-lqe.md`: PRR theo
@@ -698,3 +697,31 @@ nếu đúng node CL hay node gateway vắng thì kế hoạch River tính từ 
 - Trước mỗi nhiệm vụ: điểm danh nhanh trong cell, chọn lại CL và gateway nếu node cũ vắng, rồi trạm gốc phát kế hoạch; mỗi cạnh
   giữ một cặp gateway dự phòng.
 - Trong mô phỏng: tỉ lệ thiết bị vắng là tham số (0, 10, 20 %); chi phí điểm danh và phát kế hoạch tính vào thời gian nhiệm vụ.
+
+## 24. Nhiễu 2,4 GHz ở đô thị (2026-11-20, mục 364, đề xuất để bàn)
+
+**Lịch kênh hiện tại trùng WiFi.** Kênh 802.15.4 số k ở 2405 + 5(k − 11) MHz, rộng 2 MHz; WiFi kênh 1, 6, 11 rộng khoảng 22 MHz
+quanh 2412, 2437, 2462 MHz, nên chồng lên kênh 802.15.4 số 11–14, 16–19 và 21–24. Chỉ bốn kênh 15, 20, 25, 26 nằm ngoài WiFi
+1/6/11; với cách đặt WiFi 1/5/9/13 kiểu châu Âu là 15, 16, 21, 22 [web: ICEST 2019; ghi chú ứng dụng]. Mô phỏng hiện dùng kênh
+11 cho lượt bay (\`coop-pass.cc\`, \`kChannel = 11\`, chồng WiFi 1), kênh 11–17 cho 7 màu cell và 18–26 cho cặp gateway
+(\`coop2-river.cc\`), tức phần lớn nằm dưới WiFi; mô hình chưa có nhiễu ngoài.
+
+**Số đo đã có** [web, chưa đọc toàn văn; repo ghi ở chỗ có]:
+- WiFi chủ yếu làm hỏng phần đầu (header) của khung 802.15.4 nên mất cả khung; thêm header và mã Reed–Solomon (BuzzBuzz) tăng
+  tỉ lệ giao 70 % trên testbed (Liang, Priyantha, Liu, Terzis, SenSys 2010).
+- Môi trường vô tuyến trong căn hộ đông và biến động hơn văn phòng nhiều (Sha và cộng sự, FIU, đo 16 kênh ở 10 căn hộ, IWQoS
+  2011 và IEEE TNSM 2013).
+- Đo 24 h ở một văn phòng: kênh 15, 20, 25, 26 giao 96–99,8 % gói, kênh 16–18 còn 80–91 % (blog cá nhân, không trích).
+- Radio điều khiển của chính drone gây nhiễu: PRR 0,13–1,0 theo kênh [repo: \`papers/dargie2021-lqe.md\`]; Nekrasov 2019
+  điều khiển drone ở 5,8 GHz để tránh [repo: \`papers/nekrasov2019-aerial154.md\`].
+- Chưa tìm thấy số đo phần trăm thời gian bận của WiFi ngoài phố đô thị; báo cáo Ofcom (ARMMS 2014) và Hà Lan (2017) chỉ nói
+  2,4 GHz nghẽn, trung tâm thương mại tệ nhất.
+
+**Đề xuất cho mô hình:**
+- Lượt bay chuyển sang kênh sạch (26), vì gói A2G mất là phần River phải bù.
+- Ba kênh sạch còn lại dành cho các môi trường bận nhất (cell Bank và cell trung chuyển dọc River, theo trace mục 9 của bản
+  thảo); các cell và cặp gateway khác chấp nhận chung kênh với WiFi.
+- Thêm mô hình nhiễu: mỗi kênh trùng WiFi có độ bận u (phần thời gian WiFi phát) theo cell; khi bận, CSMA lùi lại và khung đang
+  phát hỏng với xác suất u; mất gói theo cụm (hai trạng thái tốt/xấu). Quét u = 0, 0,2, 0,5.
+- UAV điều khiển ở băng khác 2,4 GHz (900 MHz hoặc 5,8 GHz).
+- Phương án xa hơn: 802.15.4 băng dưới 1 GHz tránh hẳn WiFi, nhưng Thread và thiết bị nhà thông minh hiện ở 2,4 GHz.

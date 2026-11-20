@@ -378,3 +378,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 369 | 2026-11-20 | bối cảnh · rà lại các khía cạnh chưa bàn | [2026-11](2026-11.md) |
 | 370 | 2026-11-20 | bối cảnh · bỏ camera hành trình; thời tiết làm cận trên; bàn tiếp các câu còn lại | [2026-11](2026-11.md) |
 | 371 | 2026-11-20 | bối cảnh · giữ truy vấn ảnh, không gửi vector | [2026-11](2026-11.md) |
+| 372 | 2026-11-20 | bối cảnh · hỏi lại phần băng thông luồng nền | [2026-11](2026-11.md) |

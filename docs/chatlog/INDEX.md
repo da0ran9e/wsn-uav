@@ -379,3 +379,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 370 | 2026-11-20 | bối cảnh · bỏ camera hành trình; thời tiết làm cận trên; bàn tiếp các câu còn lại | [2026-11](2026-11.md) |
 | 371 | 2026-11-20 | bối cảnh · giữ truy vấn ảnh, không gửi vector | [2026-11](2026-11.md) |
 | 372 | 2026-11-20 | bối cảnh · hỏi lại phần băng thông luồng nền | [2026-11](2026-11.md) |
+| 373 | 2026-11-20 | bối cảnh · node cùng mô hình gửi vector về AI node, truy vấn vẫn là ảnh | [2026-11](2026-11.md) |

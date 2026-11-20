@@ -844,3 +844,34 @@ Nhận xét:
 - Cách giảm: ảnh cắt nhỏ (2–5 KB, vẫn là ảnh), chỉ gửi ảnh cắt tốt nhất mỗi người, ưu tiên camera hướng ra phố đông cho AI node gần.
   Kéo ảnh cắt theo yêu cầu sau khi truy vấn tới thì quá chậm (cửa sổ 2 giờ có hàng nghìn tới hàng chục nghìn ảnh).
 - D0 (AI node chỉ tìm trong camera của chính nó) giữ làm đối chứng.
+
+## 29. Node cùng mô hình gửi vector về AI node, truy vấn vẫn là ảnh (2026-11-20, mục 373, đề xuất để bàn)
+
+Ý của người dùng: ở bước luồng nền, các node chạy cùng một mô hình gửi vector đặc trưng về AI node thay vì ảnh cắt; truy vấn vẫn là
+ảnh. Hai quyết định không mâu thuẫn: truy vấn là ảnh để mọi AI node, dù chạy mô hình nào, tự trích đặc trưng; khi truy vấn tới, AI
+node trích vector từ L ảnh bằng đúng mô hình của nhóm node gửi về rồi so với các vector đã nhận.
+
+**Luồng nền nhẹ đi bao nhiêu** (tính mới, luồng nền 1 KB/s mỗi AI node):
+
+| Dữ liệu mỗi người | Cỡ | Người/h một AI node nhận | Camera ở 60 người/h | 200 người/h |
+|---|---|---|---|---|
+| Ảnh cắt | 15 KB | 240 | 4 | 1 |
+| Ảnh cắt nhỏ | 5 KB | 720 | 12 | 4 |
+| Vector 2 048 chiều fp16 (ResNet-50) + 20 B | 4,1 KB | 874 | 15 | 4 |
+| Vector 512 chiều INT8 (re-ID nhẹ) + 20 B | 0,5 KB | 6 800 | 113 | 34 |
+
+Lợi ích chỉ lớn với mô hình nhẹ (vector 512 chiều INT8 nhẹ hơn ảnh cắt 10–30 lần); vector ResNet-50 2 048 chiều fp16 gần bằng ảnh
+cắt nhỏ.
+
+**Điều kiện và chi phí:**
+- Node thường phải tự phát hiện người và trích vector: cần chip có NPU cỡ 1 TOPS; MCU như ESP32-S3 chỉ trích được khoảng 3 khuôn
+  mặt mỗi giây và không chạy được re-ID toàn thân [repo: `research_notes/l1-edge-recognition/edge_devices.md`]. Node yếu vẫn gửi
+  ảnh cắt.
+- "Cùng mô hình" không cần áp lên cả mạng: AI node giữ mô hình của từng nhóm node nó phục vụ, khi truy vấn tới thì trích vector từ
+  L ảnh bằng từng mô hình (K mô hình × L ảnh, vài giây). Ràng buộc chỉ là AI node phải có mô hình của nhóm.
+- Điểm của các mô hình khác nhau không cùng thang, nên mỗi AI node chuẩn hoá điểm theo từng mô hình trước khi báo về (đã nêu trong
+  `paper/L1-MODEL-vi.md`).
+- Vector vẫn là dữ liệu sinh trắc nhưng không rời mạng (chỉ từ node tới AI node), hợp với hướng giữ dữ liệu tại chỗ.
+
+**Đề xuất:** phương án lai: node có NPU gửi vector của mô hình nhẹ (D3), node yếu gửi ảnh cắt nhỏ (D2); bài chọn critical cell
+dùng tải thực của từng node. Tỉ lệ node có NPU là tham số (khảo sát ở K12).

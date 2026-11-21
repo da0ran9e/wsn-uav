@@ -994,3 +994,8 @@ xác suất của pha 2:
   vấn đặt mặc định (2 giờ, quét tới 24 giờ).
 - Ở mọi mức, báo cáo đầu tiên từ mạng (camera có điểm cao) trở thành "nơi thấy lần cuối" mới: bản đồ cập nhật, pha 2 và phần còn
   lại của pha 1 ưu tiên quanh đó (nối với khoảng trống 4, lập lại kế hoạch giữa nhiệm vụ).
+
+**Chốt (mục 384).** Bài hướng theo mức không biết gì: tiên nghiệm đều trên cả quận. Mục tiêu chính giữ trường hợp xấu nhất (max) như
+mục 13, báo kèm trung bình; cửa sổ truy vấn mặc định 2 giờ (quét 1–24 giờ). Ba mức có thông tin trước (nơi thấy lần cuối, nơi
+xuất phát, vị trí thô) để ở phần thảo luận hoặc mở rộng. Báo cáo đầu tiên từ mạng vẫn được dùng làm thông tin mới cho pha 2 và phần
+còn lại của nhiệm vụ.

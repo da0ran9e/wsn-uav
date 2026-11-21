@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 # J1 · Bối cảnh bài toán (bản tóm tắt)
 
@@ -11,6 +11,8 @@ trong ngoặc là mục của file đó. Dòng có nhãn **[chờ]** là đề x
 
 - Đô thị hiện đại: càng hiện đại thì mạng IoT càng dày, nhưng nhà cao tầng và hạ tầng làm kênh từ trên không xuống kém (mục 1).
 - Mục tiêu điển hình là tìm người mất tích; nhiệm vụ không giới hạn thời gian, tìm tới khi thấy (mục 16).
+- Không biết trước người đó ở đâu: tiên nghiệm đều trên cả quận; các mức có thông tin trước (nơi thấy lần cuối) để thảo luận
+  (mục 32, chatlog mục 384).
 - Vùng nhiệm vụ là một quận thật 5–60 km², vừa một chuyến bay của một UAV (mục 18–22).
 - Một UAV ở pha 1. Nhiều UAV để sau, khi có cơ chế phối hợp thật; khi đó mục tiêu vẫn là min-max (mục 5).
 - Tần suất: Singapore khoảng 1 300 báo cáo mất tích mỗi năm (khoảng 22 trên 100 000 dân); quy ra vài chục tới khoảng 150 vụ
@@ -72,7 +74,8 @@ trong ngoặc là mục của file đó. Dòng có nhãn **[chờ]** là đề x
 
 - J1 giải bài này: chọn AI node trong node mạnh và giao node thường cho AI node (mục 13).
 - Ràng buộc: không quá H chặng, bộ nhớ, luồng nền; không dùng khoảng cách tối thiểu D_min (mục 13, 28).
-- Mục tiêu: tối thiểu tổng thời gian pha 1 + pha 2 (mục 13).
+- Mục tiêu: tối thiểu tổng thời gian pha 1 + pha 2, lấy trường hợp xấu nhất (max) qua vị trí người cần tìm, báo kèm trung bình
+  (mục 13, 32).
 - Đánh đổi: ít critical cell thì pha 1 nhẹ nhưng luồng nền và đối sánh nặng; nhiều thì ngược lại (mục 13).
 
 ## 7. Pha 0

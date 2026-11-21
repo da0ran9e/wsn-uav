@@ -15,7 +15,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/SIM-REPORT-2026-10-31-vi.md`](../paper/SIM-REPORT-2026-10-31-vi.md) | Báo cáo giả lập 30–31/10/2026: vận chuyển mặt đất trên pass CHORD cố định và sai số quỹ đạo | 2026-10-31 |  |
 | [`paper/SIM-REPORT-2026-11-01-takeover-vi.md`](../paper/SIM-REPORT-2026-11-01-takeover-vi.md) | Báo cáo mô phỏng 2026-11-01: cơ chế takeover (dấu ranh giới) cho River khi đường bay lệch | 2026-11-01 |  |
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
-| [`paper/j1/CONTEXT-SUMMARY-vi.md`](../paper/j1/CONTEXT-SUMMARY-vi.md) | J1 · Bối cảnh bài toán (bản tóm tắt) | 2026-11-20 |  |
+| [`paper/j1/CONTEXT-SUMMARY-vi.md`](../paper/j1/CONTEXT-SUMMARY-vi.md) | J1 · Bối cảnh bài toán (bản tóm tắt) | 2026-11-21 |  |
 | [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-20 |  |
 | [`paper/j1/K9-PARAMS-vi.md`](../paper/j1/K9-PARAMS-vi.md) | K9 bước B0: tham số cho bài node thường gửi gì về AI node | 2026-11-18 |  |
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
@@ -36,7 +36,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (95): còn đúng, dùng để tra cứu nền
+## Tham khảo (97): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -99,6 +99,8 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/hui2004-deluge.md`](../research_notes/literature/papers/hui2004-deluge.md) | Hui, Culler 2004 · Deluge: phổ biến dữ liệu lớn trong WSN đa chặng | 2026-11-12 |  |
 | [`research_notes/literature/papers/isaacs2011-dtspn.md`](../research_notes/literature/papers/isaacs2011-dtspn.md) | Isaacs, Klein, Hespanha 2011 · Algorithms for the TSP with neighborhoods involving a Dubins vehicle | 2026-11-12 |  |
 | [`research_notes/literature/papers/kissling2024-wildcam.md`](../research_notes/literature/papers/kissling2024-wildcam.md) | Kissling et al. 2024 · Mạng camera động vật hoang dã tự động, chi phí thấp ở một khu Natura 2000 | 2026-11-17 |  |
+| [`research_notes/literature/papers/koester1992-alzprofiles.md`](../research_notes/literature/papers/koester1992-alzprofiles.md) | Koester và Stooksbury 1992 · Người mắc Alzheimer đi lạc: hồ sơ hành vi và số liệu ở Virginia | 2026-11-21 |  |
+| [`research_notes/literature/papers/koester1998-adrd.md`](../research_notes/literature/papers/koester1998-adrd.md) | Koester 1998 · Người mắc Alzheimer và chứng mất trí liên quan đi lạc: số liệu tìm kiếm cứu nạn ở Virginia | 2026-11-21 |  |
 | [`research_notes/literature/papers/kulkarni2005-mnp.md`](../research_notes/literature/papers/kulkarni2005-mnp.md) | Kulkarni, Wang 2005 · MNP: dịch vụ lập trình lại đa chặng cho mạng cảm biến | 2026-11-12 |  |
 | [`research_notes/literature/papers/leny2007-highdensity.md`](../research_notes/literature/papers/leny2007-highdensity.md) | Le Ny, Frazzoli, Feron 2007 · DTSP khi mật độ điểm cao (bản hội nghị) | 2026-11-12 |  |
 | [`research_notes/literature/papers/leny2012-dtsp.md`](../research_notes/literature/papers/leny2012-dtsp.md) | Le Ny, Feron, Frazzoli 2012 · On the Dubins traveling salesman problem | 2026-11-12 |  |

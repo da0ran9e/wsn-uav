@@ -236,8 +236,9 @@ at most 5.4\,s at the AI node; only a microcontroller AI node needs external sto
 \textbf{Hybrid records.} If only a share $F$ of the cameras has an NPU, the others send a 5\,kB crop that the AI node embeds
 itself, and the mean record grows to $F\cdot532+(1-F)\cdot5000$\,B. At $\rho=20$ and a 10\,\% budget the network then needs
 39, 74 and 114 AI cells for $F=0.8$, 0.5 and 0.2, and 140 with crops only (24 with vectors only); at $\rho=100$ only
-$F\ge0.5$ remains feasible, with 212--454 AI cells. Read off Fig.~\ref{fig:k9time}, the target is confirmed 47--257\,s
-later than with vectors only. Holding $K$ embedding models per AI node, one per group of cameras, adds at most 6.4\,s
+$F\ge0.5$ remains feasible, with 212--454 AI cells. In ns-3 (one seed, both ranges) phase~1 of the 39- and 74-cell sets
+ends within 15\,s of the model, and at $R_{50}=99$\,m the target is confirmed 56 and 185\,s later than with vectors only
+(false alarms 0.1 per AI cell; 20 and 82\,s with 2.4 alarms system-wide). Holding $K$ embedding models per AI node, one per group of cameras, adds at most 6.4\,s
 per verification ($K=5$, 20 reference images, Pi~5 CPU).
 \todo{second seed of the ns-3 check; River times at 400 and 280 nodes/km$^2$.}
 

@@ -172,3 +172,17 @@ B0–B3.
   thô. Phần ảnh cắt được AI node trích bằng mô hình đầy đủ nên có thể chính xác hơn vector của mô hình nhẹ; B8 chưa tính khác
   biệt này (cùng mô hình điểm số với B5). Tập lai khác hẳn tập của B4, nên muốn chắc phải chạy ns-3 cho F = 0,8 và 0,5 ở ρ = 20
   (39 và 74 AI cell).
+
+## Giai đoạn 11 (B8): ns-3 cho hai tập lai, seed 1 (mục 382)
+
+- Tập chọn ở ρ = 20, ngân sách 10 %: F = 0,8 có 39 AI cell (cả r100 và r200), F = 0,5 có 74 (r100) và 75 (r200); tập r200 chọn lại
+  bằng `cc_select.py` trên thư mục r200 (`b8-cc-r200-*.md`). Chạy `b4_run.sh` với CAMP-BIN5, runSeed 1, 4 cấu hình song song, 2 905 s
+  (`b8-ns3-seed1.md`; crit ở `data/b8/crit/`; thư mục làm việc trong scratchpad, không commit).
+- So với surrogate (`b8-compare-seed1.md`, `data/b8-ns3-seed1.{md,csv}`): mọi cell xong trước giới hạn. T1 đo / mô hình: r100 F = 0,8
+  689 / 674 s, F = 0,5 733 / 728 s; r200 658 / 665 s và 712 / 714 s. Lệch T1 dưới 15 s; T_k vẫn bị đoán thấp ở cụm 7 và 8 như B4.
+- Pha 2 trên các thư mục này (`b8-phase2-*.md`, `data/b8-phase2-*.md`, ρ = 20, 300 lượt): báo nhầm 0,1 mỗi AI cell, k = 1, r100: T
+  879 s (F = 0,8) và 1 008 s (F = 0,5), so với 823 s của D3 (24 cell); thành công 0,64 và 0,69. Giữ 2,4 lần báo nhầm cho cả hệ thống:
+  843 và 905 s. r200: 862 / 1 002 s và 822 / 898 s. Số đọc trên đường B5 ở giai đoạn 10 (870 và 949 s) thấp hơn số tính trên thư
+  mục thật 9 và 59 s.
+- Cột `feasible` và `rho_max` của `b5_phase2.py` tính theo cỡ D3 (528 B), không đúng cho tập lai; khả thi của tập lai lấy từ
+  `cc_select.py` (đã thoả ở ρ = 20).

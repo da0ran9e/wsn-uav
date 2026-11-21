@@ -47,6 +47,8 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Đầu vào: `research_notes/literature/papers/leny2012-dtsp.md`, phác thảo ở `paper/j1/ND1-TRIAL-vi.md`. Đầu ra: mục
     Problem formulation trong `paper/j1/`.
   - Mục tiêu chung: tối thiểu tổng thời gian pha 1 + pha 2; tập critical cell là biến (chatlog mục 335, 338).
+  - Mục tiêu đo bằng phân vị 0,9 của T\* (dạng 1 − δ), báo kèm trung bình; tiên nghiệm đều về vị trí người cần tìm (chatlog mục
+    384, 387).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **L2** Định lý A bản chặt: biên an toàn theo file, số gói nhận khi bay ngang, số hạng √(Q ln m), trích Zeng 2018
   - Đầu vào: `uav-l2/tools/theory/theorem_a.py`, dữ liệu C4. Kiểm lại trên kênh K1 khi có. Đầu ra: phát biểu và chứng
@@ -189,6 +191,12 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Đầu ra cho K1a, K1c, K5 và điểm lơ lửng V1. Chỉ dùng API của www.openstreetmap.org (Overpass, Geofabrik bị chặn). Ghi
     nguồn ODbL.
   - Trạng thái: chưa nhận · Phiên: · Báo cáo: bước dữ liệu xong 2026-11-19 (commit 812ec94), chưa nhận phần ns-3.
+
+- [ ] **K15** Cơ chế vá cell bị sót (chatlog mục 385–387, CONTEXT mục 33): critical cell chưa đủ truy vấn sau hạn T_fb được đội 2
+  phát trực tiếp khi bay ngang (lơ lửng, unicast như baseline B6) hoặc đội 1 bay lượt hai nếu còn pin; chọn T_fb; so với không vá
+  - Đầu vào: \`uav-l2/tools/l1_rank.py\` (đội 2), \`uav-l2/tools/mission_baselines.py\` (B6). Đo theo mục tiêu mới: phân vị 0,9 của
+    T\* và trung bình; phân bố thời gian sẵn sàng ở mức critical cell để có đủ mẫu.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 
 ## Điểm gặp
 

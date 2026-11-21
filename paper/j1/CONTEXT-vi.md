@@ -1000,7 +1000,7 @@ mục 13, báo kèm trung bình; cửa sổ truy vấn mặc định 2 giờ (qu
 xuất phát, vị trí thô) để ở phần thảo luận hoặc mở rộng. Báo cáo đầu tiên từ mạng vẫn được dùng làm thông tin mới cho pha 2 và phần
 còn lại của nhiệm vụ.
 
-## 33. Ngưỡng tin cậy và lập lại kế hoạch giữa nhiệm vụ (2026-11-21, mục 385, đề xuất để bàn)
+## 33. Ngưỡng tin cậy và lập lại kế hoạch giữa nhiệm vụ (2026-11-21, mục 385; chốt ở mục 387)
 
 **Ngưỡng tin cậy.** Kênh, MAC và lần thấy là ngẫu nhiên, nên thời gian nhiệm vụ là biến ngẫu nhiên. Các cách viết mục tiêu:
 - Ràng buộc xác suất cho từng đích: mỗi critical cell nhận đủ trước T với xác suất ≥ P̄ (cách của Zeng 2018 [repo]).
@@ -1023,3 +1023,6 @@ xuất:
 - Cell bị sót: critical cell chưa đủ truy vấn sau một hạn T_fb thì được vá, bằng đội 2 phát trực tiếp khi bay ngang (như baseline B6:
   UAV cánh quay lơ lửng và unicast) hoặc bằng lượt bay thứ hai của đội 1 nếu còn pin.
 - Sự kiện khác đã có cách xử lý: UAV lệch đường (takeover, mục 25), node vắng (điểm danh, mục 23).
+
+**Chốt (mục 387).** Mục tiêu là phân vị 0,9 của T\* (báo kèm trung bình). Có cơ chế vá: critical cell chưa đủ truy vấn sau hạn T_fb
+được đội 2 phát trực tiếp khi bay ngang, hoặc đội 1 bay lượt thứ hai nếu còn pin; cần một baseline không vá để so (việc K15).

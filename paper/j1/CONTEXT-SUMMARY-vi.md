@@ -74,8 +74,8 @@ trong ngoặc là mục của file đó. Dòng có nhãn **[chờ]** là đề x
 
 - J1 giải bài này: chọn AI node trong node mạnh và giao node thường cho AI node (mục 13).
 - Ràng buộc: không quá H chặng, bộ nhớ, luồng nền; không dùng khoảng cách tối thiểu D_min (mục 13, 28).
-- Mục tiêu: tối thiểu tổng thời gian pha 1 + pha 2, lấy trường hợp xấu nhất (max) qua vị trí người cần tìm, báo kèm trung bình
-  (mục 13, 32).
+- Mục tiêu: tối thiểu phân vị 0,9 của tổng thời gian pha 1 + pha 2 (trường hợp xấu nhất qua vị trí người cần tìm), báo kèm
+  trung bình; khớp dạng 1 − δ của Định lý 2 (mục 13, 32, 33).
 - Đánh đổi: ít critical cell thì pha 1 nhẹ nhưng luồng nền và đối sánh nặng; nhiều thì ngược lại (mục 13).
 
 ## 7. Pha 0
@@ -95,6 +95,8 @@ trong ngoặc là mục của file đó. Dòng có nhãn **[chờ]** là đề x
 - Giấy phép **[chờ]**: đội cứu nạn có giấy phép thường trực, tiền lệ EU coi UAV cứu nạn là hoạt động nhà nước (mục 30).
 - Khởi động: một bản tin LoRa vài byte (mã nhiệm vụ, giờ cất cánh); node cắm điện tự tính cửa sổ chuyển sang kênh 26 (10–15 s
   mỗi cell); đồng bộ đồng hồ mỗi đêm (mục 25).
+- Kế hoạch pha 1 cố định khi có báo cáo; critical cell chưa đủ sau hạn T_fb được vá (đội 2 phát trực tiếp hoặc đội 1 bay
+  lượt hai) (mục 33).
 - Phân phối: CHORD hoặc LM-Tour + River; thêm cây dùng chung và lập kế hoạch cân tải (thử trên một seed: nhanh hơn 26 %) (bản
   thảo J1 mục 9, việc K11).
 
@@ -103,6 +105,7 @@ trong ngoặc là mục của file đó. Dòng có nhãn **[chờ]** là đề x
 - UAV cánh quay, xác minh theo V1: mang bộ tham chiếu R (1 MB) tới node nghi vấn, node đối sánh lại và chỉ báo điểm; lơ lửng gần
   đúng trên node (khu cao tầng: gói qua 0,87 khi lệch 0 m, 0,73 khi lệch 20 m) (mục 17).
 - Thứ tự thăm theo xác suất từ pha 1, nên chất lượng pha 1 hiện ra trong thời gian pha 2 (mục 17).
+- Pha 2 thích nghi: đội 2 cất cánh khi có báo cáo đầu tiên, chọn cell theo xác suất cập nhật (mục 33).
 - Pha 2 kết thúc khi V1 xác nhận đúng lần thấy; V4 (UAV tới chỗ thấy lần cuối, nhìn bằng camera của nó) là bước sau (mục 17).
 
 ## 10. Ngoài phạm vi và giới hạn

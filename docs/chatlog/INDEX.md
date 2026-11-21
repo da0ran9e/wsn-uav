@@ -392,3 +392,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 383 | 2026-11-21 | bối cảnh · khi không có vị trí thấy lần cuối | [2026-11](2026-11.md) |
 | 384 | 2026-11-21 | bối cảnh · hướng bài theo mức không biết gì (tiên nghiệm đều) | [2026-11](2026-11.md) |
 | 385 | 2026-11-21 | bối cảnh · ngưỡng tin cậy; lập lại kế hoạch giữa nhiệm vụ | [2026-11](2026-11.md) |
+| 386 | 2026-11-21 | bối cảnh · hỏi nghĩa của phân vị 0,9 | [2026-11](2026-11.md) |

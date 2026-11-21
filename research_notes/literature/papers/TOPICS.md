@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-17
+updated: 2026-11-21
 ---
 # Chủ đề → bài
 
@@ -176,6 +176,8 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `sar` · bối cảnh tìm kiếm cứu nạn, thảm hoạ
 
+- [koester1992-alzprofiles](koester1992-alzprofiles.md) ★★ · Nghiên cứu đầu tiên tách riêng người mắc Alzheimer khỏi nhóm người già trong số liệu tìm kiếm cứu nạn: 29 vụ trong 245 vụ của
+- [koester1998-adrd](koester1998-adrd.md) ★★ · Phân tích 87 vụ tìm người mắc Alzheimer và chứng mất trí liên quan (ADRD) trong 565 vụ tìm kiếm cứu nạn của bang Virginia
 - [oubbati2023-rescue](oubbati2023-rescue.md) ★ · MARLF: nhóm UAV làm trạm gốc bay, giữ liên kết với nhau và với trạm mặt đất, theo dõi các thành viên cứu hộ di chuyển khó đoán; học quỹ đạo tiết kiệm năng lượng bằng MADDPG để tối đa số người được phủ và thông lượng; tốt hơn các phương pháp cơ sở (ví dụ 20 thành viên, 7 UAV).
 - [wang2025-fwcoverage](wang2025-fwcoverage.md) ★ · Mô hình DCCPP (phủ kín động) cho nhiều UAV cánh bằng: lồi hoá vùng, chia đường thành đường thao tác (quét), đường vào và đường chuyển vùng (nối bằng Dubins), phân vùng cho UAV bằng tham lam theo chỉ số phân bổ, tối ưu tổ hợp bằng quy hoạch động cải tiến (IDP), rồi nâng lên 3D theo địa hình bằng hạ độ cao; kiểm chứng mô phỏng và bán vật lý thực tế hỗn hợp.
 

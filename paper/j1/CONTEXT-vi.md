@@ -981,3 +981,16 @@ báo cáo, rồi cho đội 2 thăm theo P / (thời gian bay + xác minh); tiê
 
 Nguồn: dbS Productions, "Lost Alzheimer's Subjects: Profiles and Statistics", https://www.dbs-sar.com/SAR_Research/response.pdf;
 dbS Productions, https://dbs-sar.com/SAR_Research/lost_alzheimer.htm; Koester, Lost Person Behavior (sách).
+
+**Khi không có ai thấy lần cuối** (mục 383). Thuật ngữ tìm kiếm cứu nạn phân biệt nơi thấy lần cuối (có người chứng kiến) và vị
+trí biết lần cuối (từ dấu vết: điện thoại, đồ vật, giao dịch). Đề xuất xếp thành bốn mức thông tin, mức nào cũng dùng chung khung
+xác suất của pha 2:
+- Có nơi thấy lần cuối và thời điểm: bản đồ tập trung như trên.
+- Chỉ biết nơi xuất phát và lúc liên lạc lần cuối (nhà, trường): vẫn là một tâm, nhưng thời gian trôi qua dài và không chắc, nên
+  vùng rộng hơn; thường gặp ở người già và trẻ đi lạc từ nhà.
+- Chỉ có vị trí thô, ví dụ trạm di động mà điện thoại bám vào (vài trăm mét tới vài km, cần cơ quan có thẩm quyền): một vùng thay
+  cho một điểm.
+- Không biết gì: tiên nghiệm đều trên cả quận; mục tiêu chính là trường hợp xấu nhất (max, như mục 13) và trung bình; cửa sổ truy
+  vấn đặt mặc định (2 giờ, quét tới 24 giờ).
+- Ở mọi mức, báo cáo đầu tiên từ mạng (camera có điểm cao) trở thành "nơi thấy lần cuối" mới: bản đồ cập nhật, pha 2 và phần còn
+  lại của pha 1 ưu tiên quanh đó (nối với khoảng trống 4, lập lại kế hoạch giữa nhiệm vụ).

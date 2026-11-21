@@ -954,3 +954,30 @@ Nguồn web: ReXCam, https://arxiv.org/abs/1811.01268v2; Sharma và Villanyi, IE
 arXiv 2411.10148 (multi-UAV SAR với mô hình xác suất theo tác tử); MDPI Drones 9(9):628, 2025 (60 kịch bản SAR có bản đồ xác suất
 30 m); arXiv 2009.03976 (lập kế hoạch UAV có tính đội tìm kiếm mặt đất); Koester, Lost Person Behavior (sách, theo trích dẫn trong
 par.nsf.gov/servlets/purl/10302700).
+
+## 32. Thông tin trước về vị trí người cần tìm (2026-11-21, mục 380, đề xuất để bàn)
+
+**Số liệu** [web, nguồn gốc là nghiên cứu của Koester (dbS Productions), cần đối chiếu bản gốc]:
+- Người sa sút trí tuệ đi lạc: khoảng 89 % được tìm thấy trong vòng 1,2 km (1 dặm) quanh nơi thấy lần cuối.
+- Mọi người được tìm thấy trong 24 giờ đầu đều sống; quá 24 giờ chỉ 54 % còn sống.
+- Khoảng cách đường chim bay trung bình: người già sa sút trí tuệ khoảng 0,88 km, người già bình thường bị lạc khoảng 2,56 km
+  (Koester và Stooksbury 1995, qua nguồn thứ cấp).
+- Vòng 1,2 km rộng khoảng 4,5 km², chỉ bằng một phần nhỏ của một quận (Hoàng Mai 40 km²): thông tin trước tập trung mạnh.
+
+**Repo đã có sẵn khung xác suất:** mô hình pha 2 (`uav-l2/tools/l1_rank.py`) tính P(cell là cell thật) từ tiên nghiệm và các
+báo cáo, rồi cho đội 2 thăm theo P / (thời gian bay + xác minh); tiên nghiệm hiện đều cho mọi critical cell.
+
+**Đề xuất:**
+- Hai chế độ: có nơi thấy lần cuối (bản đồ xác suất) và không có (tiên nghiệm đều).
+- Bản đồ xác suất: tâm là nơi thấy lần cuối, nở theo thời gian đã trôi qua, chặn bởi tốc độ đi bộ, chỉ trên đất đi được (đường,
+  vỉa hè từ bản đồ OSM đã cắt), phân bố khoảng cách theo số của Koester cho từng nhóm người.
+- Mục tiêu: thời gian kỳ vọng tới khi xác minh đúng người, lấy kỳ vọng theo bản đồ xác suất; báo thêm trường hợp xấu nhất (max)
+  như đã chọn ở mục 13. Với tiên nghiệm đều, kỳ vọng là trung bình qua các cell, còn max vẫn là chỉ số an toàn.
+- Tập critical cell chọn ở pha 0 khi chưa biết sự cố, nên không đổi; thông tin trước chỉ đổi các quyết định lúc có sự cố: thứ tự
+  cụm trong tour (bản tin bắt đầu mang thêm thứ tự này, vài byte), thứ tự thăm ở pha 2 (đã có khung).
+- Cửa sổ truy vấn lấy theo thời gian từ lúc thấy lần cuối (cộng một khoảng dự phòng), thay cho 2 giờ cố định.
+- Giao truy vấn theo kiểu "càng sớm càng tốt" cho vùng xác suất cao; các cụm xác suất thấp xong sau vẫn được, vì mục tiêu kỳ vọng
+  không phạt nhiều.
+
+Nguồn: dbS Productions, "Lost Alzheimer's Subjects: Profiles and Statistics", https://www.dbs-sar.com/SAR_Research/response.pdf;
+dbS Productions, https://dbs-sar.com/SAR_Research/lost_alzheimer.htm; Koester, Lost Person Behavior (sách).

@@ -148,7 +148,7 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
     mỗi AI node giữ K mô hình của các nhóm node nó phục vụ (K = 1, 3, 5), trích vector từ L ảnh truy vấn bằng từng mô hình; D0 làm
     đối chứng. Tham số mới: tỉ lệ node có NPU (0,2, 0,5, 0,8) và K. CONTEXT mục 28–29.
   - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c); xong B2, B0, B1, B3, B4 seed 1 (mục 348:
-    tạm dừng ở 1 seed), B5, B6 (mục 360, 366), B7 (mục 368: bản thảo J1 mục VIII-F) · Báo cáo: [logs/2026-11-18_1036-k9](../../logs/2026-11-18_1036-k9/README.md)
+    tạm dừng ở 1 seed), B5, B6 (mục 360, 366), B7 (mục 368: bản thảo J1 mục VIII-F), B8 mức mô hình (mục 381; ns-3 cho tập lai chờ duyệt) · Báo cáo: [logs/2026-11-18_1036-k9](../../logs/2026-11-18_1036-k9/README.md)
 - [ ] **K10** Mật độ phụ 400 và 280 node/km² (giãn cách 50 và 60 m, CONTEXT mục 4 và 10)
   - `uav-l2/tools/map_gen.py --spacing`; kiểm deploy, partition và chọn cặp gateway với cell 7–10 node, rồi chạy pha 1.
     Đầu ra: T\*, P_k mức cell và số cặp gateway theo mật độ.

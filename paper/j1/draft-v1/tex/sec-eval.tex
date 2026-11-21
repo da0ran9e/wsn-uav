@@ -233,6 +233,12 @@ times the flow; thinning the nodes cell by cell confirms the scaling within 2\,\
 more load for 161 AI cells at 280 nodes/km$^2$. The device tier does not change the choice: embedding one crop per
 passer-by keeps an ESP32-class camera at most 28\,\% busy, and searching 152\,280 vectors with a 20-image reference takes
 at most 5.4\,s at the AI node; only a microcontroller AI node needs external storage for the larger indexes (80\,MB).
+\textbf{Hybrid records.} If only a share $F$ of the cameras has an NPU, the others send a 5\,kB crop that the AI node embeds
+itself, and the mean record grows to $F\cdot532+(1-F)\cdot5000$\,B. At $\rho=20$ and a 10\,\% budget the network then needs
+39, 74 and 114 AI cells for $F=0.8$, 0.5 and 0.2, and 140 with crops only (24 with vectors only); at $\rho=100$ only
+$F\ge0.5$ remains feasible, with 212--454 AI cells. Read off Fig.~\ref{fig:k9time}, the target is confirmed 47--257\,s
+later than with vectors only. Holding $K$ embedding models per AI node, one per group of cameras, adds at most 6.4\,s
+per verification ($K=5$, 20 reference images, Pi~5 CPU).
 \todo{second seed of the ns-3 check; River times at 400 and 280 nodes/km$^2$.}
 
 \subsection{Stability across network realisations}

@@ -74,6 +74,8 @@ Dựng lại PDF: `paper/j1/draft-v1/tex/build.sh`.
     nhất ở cả hai cách đặt ngưỡng báo nhầm. Số liệu và lệnh: `logs/2026-11-18_1036-k9/README.md`, hình do
     `analysis/fig_k9.py`. Chỗ TODO đỏ: seed thứ hai và thời gian River ở mật độ 400 và
     280 node/km². Vector được rời camera tới AI node (chatlog mục 376), trạm gốc vẫn chỉ nhận điểm số.
+    Đoạn "Hybrid records" (B8, mức mô hình): chỉ một phần camera có NPU gửi vector, số còn lại gửi ảnh cắt 5 KB, nên số AI
+    cell cần tăng 1,6–5,8 lần ở ρ = 20.
 
 ## Nguồn của từng nhóm số
 

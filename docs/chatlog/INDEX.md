@@ -387,3 +387,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 378 | 2026-11-20 | bối cảnh · viết bản bối cảnh chi tiết dạng gạch ý | [2026-11](2026-11.md) |
 | 379 | 2026-11-21 | bối cảnh · đối chiếu bối cảnh với các bài liên quan | [2026-11](2026-11.md) |
 | 380 | 2026-11-21 | bối cảnh · thông tin trước về vị trí người cần tìm | [2026-11](2026-11.md) |
+| 381 | 2026-11-21 | kế hoạch · làm B8 (K9); session ghi chú 3 bài | [2026-11](2026-11.md) |

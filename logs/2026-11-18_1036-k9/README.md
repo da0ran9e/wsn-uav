@@ -152,3 +152,23 @@ B0–B3.
   `paper/j1/figures/` (INDEX). Lệnh ở `paper/j1/draft-v1/runs/fig-k9.md`. PDF dựng lại bằng `tex/build.sh` (cài thêm texlive
   trong container): 13 trang, không còn tham chiếu hỏng.
 - Mã thí nghiệm K9 thêm vào `docs/EXPERIMENTS-INDEX.md`; mục 10 thêm vào README của bản thảo.
+
+## Giai đoạn 10 (B8): phương án lai (mục 375)
+
+- `cc_select.py` thêm `--npu F --vec B --crop B`: tỉ lệ F camera có NPU gửi vector, còn lại gửi ảnh cắt. Camera có NPU coi như
+  rải đều, nên mỗi môi trường chở tải kỳ vọng với bản ghi trung bình F · vec + (1 − F) · crop mỗi người. Chạy trên k8 r100 với
+  F = 0,8 / 0,5 / 0,2 / 0 (vector 532 B, ảnh cắt 5 KB) và hai độ nhạy ở F = 0,5 (ảnh cắt 15 KB; vector 4,1 KB), ρ = 20 / 50 /
+  100 / 200, ngân sách 10 và 20 %; 6 lượt song song, mỗi lượt 225–337 s. Lệnh ở `b8-cc-*.md`, kết quả `data/b8/<tag>/`.
+- Tổng hợp bằng `paper/j1/analysis/b8_summary.py` (lệnh `b8-summary.md`, kết quả `data/b8/summary.md`). Ngân sách 10 %, số AI
+  cell cần ở ρ = 20 / 50 / 100: D3 24 / 34 / 69; lai F = 0,8 cần 39 / 94 / 212; F = 0,5 cần 74 / 198 / 454; F = 0,2 cần 114 / 334 /
+  không đủ; chỉ ảnh cắt 140 / 414 / không đủ. Ngân sách 20 % thì gần như chia đôi số cell cần. Ảnh cắt 15 KB làm F = 0,5 cần
+  237 cell ngay ở ρ = 20; vector 4,1 KB (2 048 chiều fp16) thì F = 0,5 cần 122, gần bằng chỉ ảnh cắt.
+- Pha 2, đọc trên đường của B5 (ρ = 20, r100, k = 1, nội suy theo số AI cell): T là 823 s với D3, 870 / 949 / 1 080 s với F = 0,8
+  / 0,5 / 0,2 và 1 165 s khi chỉ có ảnh cắt (báo nhầm 0,1 mỗi AI cell); 823 / 832 / 889 / 968 / 1 019 s khi giữ 2,4 lần báo nhầm
+  cho cả hệ thống.
+- K mô hình mỗi AI node: AI node trích đặc trưng L ảnh truy vấn bằng từng mô hình. Với K = 5 trên Pi 5 CPU thêm 0,95 s ở lượt đầu
+  (L = 3) và 6,4 s khi xác minh V1 (L = 20, mỗi lần thăm 78 s); với Hailo-8L dưới 0,4 s. K gần như không đổi kết quả.
+- Giới hạn: các tập trên khoảng 70 AI cell nằm ngoài vùng surrogate đúng (B4), nên T1 và T của F ≤ 0,5 ở ρ ≥ 50 chỉ là ước lượng
+  thô. Phần ảnh cắt được AI node trích bằng mô hình đầy đủ nên có thể chính xác hơn vector của mô hình nhẹ; B8 chưa tính khác
+  biệt này (cùng mô hình điểm số với B5). Tập lai khác hẳn tập của B4, nên muốn chắc phải chạy ns-3 cho F = 0,8 và 0,5 ở ρ = 20
+  (39 và 74 AI cell).

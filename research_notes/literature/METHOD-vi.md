@@ -157,6 +157,8 @@ Trường `topics` chỉ dùng các mã dưới đây; `paper_index.py` cảnh b
 | `testbed` | thực nghiệm phần cứng, testbed |
 | `sar` | bối cảnh tìm kiếm cứu nạn, thảm hoạ |
 | `deployment` | triển khai thật ngoài hiện trường: quy mô, mật độ, diện tích, chi phí vận hành |
+| `camera-analytics` | phân tích video trên mạng nhiều camera: re-ID, theo vết qua camera, lọc camera theo tương quan |
+| `search-prob` | bản đồ xác suất vị trí mục tiêu (người mất tích), lập kế hoạch tìm kiếm theo xác suất |
 
 ## 7. Mức liên quan và độ sâu đọc
 

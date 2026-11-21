@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-17
+updated: 2026-11-21
 ---
 # Chủ đề → bài
 
@@ -143,6 +143,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `multi-uav` · nhiều UAV
 
+- [ge2024-sarprob](ge2024-sarprob.md) ★★ · Mô phỏng Monte Carlo 1 080 tác tử xuất phát từ vị trí biết cuối (LKP), mỗi tác tử chọn hành vi người lạc (đi ngẫu nhiên, đi thẳng một hướng, theo đường, đứng yên, lên cao, quay lại) và chịu ảnh hưởng địa hình, ra bản đồ mật độ xác suất theo thời gian; bốn UAV tìm phân tán bằng tối ưu tầm nhìn trượt có chia vùng Voronoi động, thành công 46–58 % trong 2 giờ, hơn phương pháp đường đồng xác suất tới 81 % ở địa hình gồ ghề.
 - [rathinam2007-multivehicle](rathinam2007-multivehicle.md) ★★ · Với các mục tiêu cách nhau (và cách điểm xuất phát) ≥ 2r, giải TSP Euclid bằng Christofides rồi nối liên tiếp bằng đường LS/RS (hướng tại mục tiêu tự do) cho xấp xỉ hằng số 4,56 với một xe; nhiều xe dùng MST có cạnh 0 giữa các xe, nhân đôi cạnh, đi Euler, cho hệ số 6,07; mục tiêu là tổng quãng đường.
 - [li2023-coverage](li2023-coverage.md) ★ · Chia môi trường đã biết thành ô phủ; EDM giải chính xác bằng MILP (đồ thị điểm đầu–cuối của các dải phủ, cạnh là đường Dubins) cho đường phủ ngắn nhất ở cảnh nhỏ; CDM heuristic dùng mô hình "tín dụng" cân tải giữa robot và chia cây để giảm độ phức tạp ở cảnh lớn; thử trên mô hình UAV cánh bằng độ trung thực cao.
 - [nayak2023-minmax](nayak2023-minmax.md) ★ · MD-GmTSP: m xe Dubins, mỗi điểm chọn một trong h hướng rời rạc (one-in-a-set), tối thiểu độ dài tour dài nhất; MILP giải bằng CPLEX cho 16 instance TSPLIB (16–137 thành phố) nhưng không mở rộng được; heuristic chèn + VNS (GVNS tốt nhất) trong 600 s; GNN + học tăng cường tốt ở instance nhỏ, VNS tốt nhất ở instance lớn.
@@ -166,6 +167,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
 - [doddavenkatappa2013-splash](doddavenkatappa2013-splash.md) ★★ · Splash bỏ hẳn tranh chấp kênh bằng "tree pipelining": mỗi tầng của cây thu thập phát đồng thời cùng gói (giao thoa xây dựng) trên kênh riêng; ba vòng phát (đổi mật độ người phát, đổi kênh, vòng 3 là gói XOR) rồi khôi phục cục bộ; 32 KB trong ~25 s trên 139 nút, nhanh hơn DelugeT2 trung bình 21×.
 - [ferrari2012-lwb](ferrari2012-lwb.md) ★★ · LWB biến mạng đa chặng thành "bus chung": mọi trao đổi là một lần flood Glossy, các flood được lập lịch toàn cục theo vòng do một nút host tính và phát; không giữ trạng thái topo nên chịu được nhiễu, hỏng nút và nút di động; hỗ trợ 1–nhiều, nhiều–1, nhiều–nhiều với >99 % gói và duty cycle thấp.
+- [jain2019-rexcam](jain2019-rexcam.md) ★★ · Học từ video cũ xác suất người rời camera này sẽ tới camera kia (không gian) và sau bao lâu (thời gian), rồi khi theo vết một người chỉ chạy phát hiện và re-ID trên camera và khung giờ có tương quan, tìm lại trên video vừa bỏ qua nếu sót; giảm tính toán 8,3 lần trên 8 camera Duke, 23–38 lần trên 130 camera mô phỏng, độ chính xác tăng từ khoảng 51 % lên 90 %.
 - [kissling2024-wildcam](kissling2024-wildcam.md) ★★ · Lắp 65 camera bẫy ảnh 4G chạy pin mặt trời trên 34 km² đụn cát ven biển Hà Lan (lưới 1 camera mỗi km², thêm tuyến khảo sát và cặp trong/ngoài rào), ảnh tự gửi về cổng dữ liệu rồi qua AI nhận loài; tổng chi phí 10 năm thấp hơn bẫy ảnh truyền thống 43 %.
 - [liang2008-typhoon](liang2008-typhoon.md) ★★ · Typhoon phổ biến đối tượng lớn tới mọi nút bằng bắt tay yêu cầu trang, truyền unicast có ACK từng gói kèm nghe lén, ưu tiên nút xa nguồn chuyển tiếp và đổi kênh ngẫu nhiên cho từng lần truyền trang; nhanh hơn Deluge tới khoảng 3× ở mạng thưa và mất gói nhiều, đổi lại lưu lượng điều khiển và dữ liệu gấp khoảng 3×.
 - [liu2013-greenorbs](liu2013-greenorbs.md) ★★ · Đo một mạng TelosB thu gom đa chặng (CTP) tới 330 node trong rừng suốt 29 ngày: dưới 10 % node nghẽn gánh 80 % lưu lượng và gây 61 % số gói mất, link vật lý ổn định nhưng tải cao thì yield rơi từ hơn 60 % xuống dưới 10 %, còn bảng định tuyến cố định cho yield ngang CTP động.
@@ -176,6 +178,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `sar` · bối cảnh tìm kiếm cứu nạn, thảm hoạ
 
+- [ge2024-sarprob](ge2024-sarprob.md) ★★ · Mô phỏng Monte Carlo 1 080 tác tử xuất phát từ vị trí biết cuối (LKP), mỗi tác tử chọn hành vi người lạc (đi ngẫu nhiên, đi thẳng một hướng, theo đường, đứng yên, lên cao, quay lại) và chịu ảnh hưởng địa hình, ra bản đồ mật độ xác suất theo thời gian; bốn UAV tìm phân tán bằng tối ưu tầm nhìn trượt có chia vùng Voronoi động, thành công 46–58 % trong 2 giờ, hơn phương pháp đường đồng xác suất tới 81 % ở địa hình gồ ghề.
 - [oubbati2023-rescue](oubbati2023-rescue.md) ★ · MARLF: nhóm UAV làm trạm gốc bay, giữ liên kết với nhau và với trạm mặt đất, theo dõi các thành viên cứu hộ di chuyển khó đoán; học quỹ đạo tiết kiệm năng lượng bằng MADDPG để tối đa số người được phủ và thông lượng; tốt hơn các phương pháp cơ sở (ví dụ 20 thành viên, 7 UAV).
 - [wang2025-fwcoverage](wang2025-fwcoverage.md) ★ · Mô hình DCCPP (phủ kín động) cho nhiều UAV cánh bằng: lồi hoá vùng, chia đường thành đường thao tác (quét), đường vào và đường chuyển vùng (nối bằng Dubins), phân vùng cho UAV bằng tham lam theo chỉ số phân bổ, tối ưu tổ hợp bằng quy hoạch động cải tiến (IDP), rồi nâng lên 3D theo địa hình bằng hạ độ cao; kiểm chứng mô phỏng và bán vật lý thực tế hỗn hợp.
 
@@ -186,3 +189,11 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [liu2013-greenorbs](liu2013-greenorbs.md) ★★ · Đo một mạng TelosB thu gom đa chặng (CTP) tới 330 node trong rừng suốt 29 ngày: dưới 10 % node nghẽn gánh 80 % lưu lượng và gây 61 % số gói mất, link vật lý ổn định nhưng tải cao thì yield rơi từ hơn 60 % xuống dưới 10 %, còn bảng định tuyến cố định cho yield ngang CTP động.
 - [liu2013-citysee](liu2013-citysee.md) ★ · Bài tổng quan giai đoạn 1 của CitySee ở Vô Tích: 1 196 node TelosB đo CO₂ và môi trường cùng 4 node mesh 802.11a, chạy liên tục từ 8/2011, thu gom CTP sâu tới 21 chặng, kèm bài học về triển khai, chẩn đoán và đẩy dữ liệu lên cloud.
 - [sanchez2014-smartsantander](sanchez2014-smartsantander.md) ★ · Mô tả kiến trúc ba tầng (node IoT, gateway, server) và đợt triển khai ở Santander: 740 điểm cảm biến gắn cột đèn, 390 cảm biến đỗ xe chôn dưới mặt đường, 23 gateway, dồn dày trong khoảng 1 km² trung tâm, mỗi node có hai radio 802.15.4 (một cho thử nghiệm, một Digimesh cho quản lý).
+
+## `camera-analytics` · phân tích video trên mạng nhiều camera: re-ID, theo vết qua camera, lọc camera theo tương quan
+
+- [jain2019-rexcam](jain2019-rexcam.md) ★★ · Học từ video cũ xác suất người rời camera này sẽ tới camera kia (không gian) và sau bao lâu (thời gian), rồi khi theo vết một người chỉ chạy phát hiện và re-ID trên camera và khung giờ có tương quan, tìm lại trên video vừa bỏ qua nếu sót; giảm tính toán 8,3 lần trên 8 camera Duke, 23–38 lần trên 130 camera mô phỏng, độ chính xác tăng từ khoảng 51 % lên 90 %.
+
+## `search-prob` · bản đồ xác suất vị trí mục tiêu (người mất tích), lập kế hoạch tìm kiếm theo xác suất
+
+- [ge2024-sarprob](ge2024-sarprob.md) ★★ · Mô phỏng Monte Carlo 1 080 tác tử xuất phát từ vị trí biết cuối (LKP), mỗi tác tử chọn hành vi người lạc (đi ngẫu nhiên, đi thẳng một hướng, theo đường, đứng yên, lên cao, quay lại) và chịu ảnh hưởng địa hình, ra bản đồ mật độ xác suất theo thời gian; bốn UAV tìm phân tán bằng tối ưu tầm nhìn trượt có chia vùng Voronoi động, thành công 46–58 % trong 2 giờ, hơn phương pháp đường đồng xác suất tới 81 % ở địa hình gồ ghề.

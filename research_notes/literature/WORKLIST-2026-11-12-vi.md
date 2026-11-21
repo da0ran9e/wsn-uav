@@ -78,6 +78,9 @@ Người dùng gửi PDF qua chat (mục 330–331, 2026-11-17), không nằm tr
 | 49 | ExScal.pdf (mục 331) | `arora2005-exscal` | ★★ | full | deployment, wsn-gathering, testbed | ✓ |
 | 50 | COMNET-D-12-497R1-final-submitted.pdf (mục 331) | `sanchez2014-smartsantander` | ★ | partial | deployment, testbed | ✓ |
 | 51 | liu2013.pdf (mục 331; CitySee, khác bài GreenOrbs) | `liu2013-citysee` | ★ | full | deployment, wsn-gathering, testbed | ✓ |
+| 52 | ReXCam, arXiv 1811.01268v4 (2026-11-21, CONTEXT mục 31) | `jain2019-rexcam` | ★★ | full | camera-analytics, testbed | ✓ |
+| 53 | Multi-UAV SAR, agent-based probability, arXiv 2411.10148v1 (2026-11-21) | `ge2024-sarprob` | ★★ | full | sar, search-prob, multi-uav | ✓ |
+| 54 | SAREnv, Drones 9(9):628, 2025 (2026-11-21) | | ★★ | | sar, search-prob | chờ PDF (MDPI chặn tải từ container) |
 
 Mức sao là đề xuất. Nếu đọc xong thấy khác thì sửa `relevance` trong ghi chú, giữ thứ tự làm như bảng.
 

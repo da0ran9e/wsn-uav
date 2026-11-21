@@ -81,3 +81,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-19_0900-district-map/` | Cắt bản đồ sáu quận từ OSM, đánh dấu hồ, vùng cao tầng, vùng cấm bay ước theo OSM |
 | `2026-11-19_1000-urban-nodes/` | Đặt node IoT theo nhà và phố trên bốn bản đồ thật, kiểm liên thông và lỗ hổng của lưới cell |
 | `2026-11-20_0900-query-size/` | Chặn dưới không hợp tác khi truy vấn nhỏ (Q = 400, 1 000 gói) |
+| `2026-11-21_0205-paper-notes-rexcam-sar/` | Ghi chú ReXCam và Ge 2024 (SAR nhiều UAV theo bản đồ xác suất); SAREnv chờ PDF |

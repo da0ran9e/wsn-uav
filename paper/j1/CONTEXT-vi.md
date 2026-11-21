@@ -915,3 +915,42 @@ https://www.easa.europa.eu/document-library/easy-access-rules/online-publication
 LuatVietnam về thủ tục cấp phép bay theo Nghị định 288,
 https://luatvietnam.vn/hanh-chinh/thu-tuc-cap-phep-bay-doi-voi-may-bay-khong-nguoi-lai-tu-05-11-2025-the-nao-570-105247-article.html
 (nguồn thứ cấp; cần đối chiếu văn bản hợp nhất).
+
+## 31. Đối chiếu bối cảnh với các bài liên quan (2026-11-21, mục 379)
+
+Đọc phần mô hình hệ thống của các bài đã ghi chú trong repo (nhãn [GĐ], [TS]) và tra thêm vài bài trên web. Bảng: khía cạnh mà
+các bài mô tả, bài nào, và bối cảnh của ta đã có chưa.
+
+| Khía cạnh | Bài mô tả | Ta đã có |
+|---|---|---|
+| Vị trí node biết trước, phân bố | Zeng 2018 (biết trước), Miao 2020 (đều) [repo] | có (mục 20, 26) |
+| UAV: độ cao, tốc độ, bán kính quay ρ = v²/a_max | Zeng 2018, Pěnička 2019 [repo] | có |
+| Năng lượng UAV (mô hình công suất bay, không chỉ sức bền) | Hoseini 2021 (pin, khoảng 18 phút) [repo] | chỉ có sức bền 1–3 h |
+| Kênh: suy hao, fading, LoS theo góc, K Rician theo góc ngẩng | Zeng 2018, Al-Hourani 2014, Bensaoud 2025 [repo] | có, trừ K theo góc ngẩng |
+| Tệp, chia gói, mã hoá (RLNC), thời gian một gói | Zeng 2018 [repo] | có |
+| Mục tiêu có ngưỡng tin cậy: mọi đích giải được với xác suất ≥ P̄ | Zeng 2018 [repo] | có δ trong Định lý 2, chưa đưa vào mục tiêu |
+| Bỏ qua chi phí điều khiển | Stojanovic 2009 [repo] | ta tính chi phí điều khiển (điểm mạnh) |
+| Hạ tầng mất sau thảm hoạ, người cứu hộ di động | Oubbati 2023 [repo] | không chọn (mục 15) |
+| Sự kiện động làm lập lại kế hoạch giữa nhiệm vụ | Wang 2025 [repo] | chưa (kế hoạch pha 1 cố định) |
+| Lưu lượng có mức ưu tiên và hạn chót | Fahim 2023, Hoseini 2021 [repo] | chưa (mọi critical cell như nhau) |
+| Ký số để chống mã giả khi phát mã qua UAV; bay lại cho thiết bị bị sót | Sharma và Villanyi, IEEE OJCOMS 2024 [web] | ký số có (mục 27); bay lại chưa |
+| Tương quan không gian–thời gian giữa các camera để thu hẹp vùng tìm | ReXCam (Jain và cộng sự, arXiv 1811.01268) [web] | chưa |
+| Vị trí thấy lần cuối, hành vi người lạc, bản đồ xác suất theo thời gian | Koester (Lost Person Behavior); arXiv 2411.10148; MDPI Drones 9(9):628, 2025 [web] | chưa |
+| Phối hợp với đội tìm kiếm mặt đất | arXiv 2009.03976 [web] | chưa (V4 để sau) |
+
+**Khoảng trống đáng bàn** (theo mức ảnh hưởng tới bài toán):
+1. Thông tin trước về vị trí người cần tìm: nơi thấy lần cuối, thời gian đã trôi qua, hành vi di chuyển cho ra bản đồ xác suất.
+   Có thông tin này thì không phải mọi critical cell đều như nhau: mục tiêu có thể là cực tiểu thời gian kỳ vọng tới khi xác minh
+   đúng, có trọng số theo xác suất, thay cho min-max; pha 1 có thể giao trước cho vùng xác suất cao. Người dùng từng chọn max ở mục
+   13; câu này cần bàn lại khi có bản đồ xác suất.
+2. Tương quan giữa các camera: người đi qua camera này thì sau một khoảng sẽ tới camera kề; dùng để thu hẹp tập camera và khung
+   giờ cần tìm (ReXCam giảm tính toán 4,6–38 lần), và để nối các lần thấy thành đường đi.
+3. Ngưỡng tin cậy trong mục tiêu: "mọi critical cell nhận đủ với xác suất ≥ P̄" như Zeng 2018, thay vì chỉ trung bình.
+4. Lập lại kế hoạch khi có thông tin mới giữa nhiệm vụ (báo cáo đầu tiên đổi bản đồ xác suất), và bay lại cho cell bị sót.
+5. Mô hình năng lượng bay của UAV (công suất theo tốc độ), cần nếu ràng buộc sức bền bị chạm.
+6. K Rician theo góc ngẩng (đã nằm trong hướng K1a).
+
+Nguồn web: ReXCam, https://arxiv.org/abs/1811.01268v2; Sharma và Villanyi, IEEE OJCOMS 2024, doi:10.1109/ojcoms.2024.3368275;
+arXiv 2411.10148 (multi-UAV SAR với mô hình xác suất theo tác tử); MDPI Drones 9(9):628, 2025 (60 kịch bản SAR có bản đồ xác suất
+30 m); arXiv 2009.03976 (lập kế hoạch UAV có tính đội tìm kiếm mặt đất); Koester, Lost Person Behavior (sách, theo trích dẫn trong
+par.nsf.gov/servlets/purl/10302700).

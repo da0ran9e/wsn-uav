@@ -395,3 +395,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 386 | 2026-11-21 | bối cảnh · hỏi nghĩa của phân vị 0,9 | [2026-11](2026-11.md) |
 | 387 | 2026-11-21 | bối cảnh · chốt phân vị 0,9 và cơ chế vá cell bị sót | [2026-11](2026-11.md) |
 | 388 | 2026-11-21 | khác · ghi chú cá nhân và tâm lý bầy đàn, hỏi cách tham khảo thông minh (chưa rõ ngữ cảnh) | [2026-11](2026-11.md) |
+| 389 | 2026-11-21 | bối cảnh · tổng hợp bản bối cảnh; bàn biến quyết định | [2026-11](2026-11.md) |

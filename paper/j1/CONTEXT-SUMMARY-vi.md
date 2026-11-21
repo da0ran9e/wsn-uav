@@ -4,7 +4,7 @@ updated: 2026-11-21
 ---
 # J1 · Bối cảnh bài toán (bản tóm tắt)
 
-Tóm tắt những gì đã chốt qua thảo luận (chatlog mục 323–378). Chi tiết, số liệu và nguồn ở [CONTEXT-vi.md](CONTEXT-vi.md); số
+Tóm tắt những gì đã chốt qua thảo luận (chatlog mục 323–389). Chi tiết, số liệu và nguồn ở [CONTEXT-vi.md](CONTEXT-vi.md); số
 trong ngoặc là mục của file đó. Dòng có nhãn **[chờ]** là đề xuất chưa được xác nhận, **[giả định]** là số chưa có nguồn trích.
 
 ## 1. Kịch bản
@@ -102,7 +102,7 @@ trong ngoặc là mục của file đó. Dòng có nhãn **[chờ]** là đề x
 
 ## 9. Pha 2
 
-- UAV cánh quay, xác minh theo V1: mang bộ tham chiếu R (1 MB) tới node nghi vấn, node đối sánh lại và chỉ báo điểm; lơ lửng gần
+- UAV cánh quay riêng (đội 2), xác minh theo V1: mang bộ tham chiếu R (1 MB) tới node nghi vấn, node đối sánh lại và chỉ báo điểm; lơ lửng gần
   đúng trên node (khu cao tầng: gói qua 0,87 khi lệch 0 m, 0,73 khi lệch 20 m) (mục 17).
 - Thứ tự thăm theo xác suất từ pha 1, nên chất lượng pha 1 hiện ra trong thời gian pha 2 (mục 17).
 - Pha 2 thích nghi: đội 2 cất cánh khi có báo cáo đầu tiên, chọn cell theo xác suất cập nhật (mục 33).
@@ -114,6 +114,9 @@ trong ngoặc là mục của file đó. Dòng có nhãn **[chờ]** là đề x
 - Camera hành trình và thiết bị di động (mục 6, câu w).
 - Thời tiết đưa vào làm cận trên: kịch bản xấu nhất về gió, mưa (mục 6, câu x).
 - Nhiều UAV (mục 5).
+- Các mức có thông tin trước về vị trí người cần tìm (nơi thấy lần cuối, nơi xuất phát, vị trí thô): để thảo luận (mục 32).
+- Mở rộng **[chờ]**: tương quan giữa các camera sau lần thấy đầu tiên, mô hình năng lượng bay của UAV, hệ số K theo góc ngẩng
+  (gộp vào K1a) (mục 31).
 
 ## 11. Giả định chưa có nguồn trích (cần kiểm trước khi vào bài)
 

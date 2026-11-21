@@ -194,7 +194,7 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
 
 - [ ] **K15** Cơ chế vá cell bị sót (chatlog mục 385–387, CONTEXT mục 33): critical cell chưa đủ truy vấn sau hạn T_fb được đội 2
   phát trực tiếp khi bay ngang (lơ lửng, unicast như baseline B6) hoặc đội 1 bay lượt hai nếu còn pin; chọn T_fb; so với không vá
-  - Đầu vào: \`uav-l2/tools/l1_rank.py\` (đội 2), \`uav-l2/tools/mission_baselines.py\` (B6). Đo theo mục tiêu mới: phân vị 0,9 của
+  - Đầu vào: `uav-l2/tools/l1_rank.py` (đội 2), `uav-l2/tools/mission_baselines.py` (B6). Đo theo mục tiêu mới: phân vị 0,9 của
     T\* và trung bình; phân bố thời gian sẵn sàng ở mức critical cell để có đủ mẫu.
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 

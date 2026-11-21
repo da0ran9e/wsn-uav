@@ -999,3 +999,27 @@ xác suất của pha 2:
 mục 13, báo kèm trung bình; cửa sổ truy vấn mặc định 2 giờ (quét 1–24 giờ). Ba mức có thông tin trước (nơi thấy lần cuối, nơi
 xuất phát, vị trí thô) để ở phần thảo luận hoặc mở rộng. Báo cáo đầu tiên từ mạng vẫn được dùng làm thông tin mới cho pha 2 và phần
 còn lại của nhiệm vụ.
+
+## 33. Ngưỡng tin cậy và lập lại kế hoạch giữa nhiệm vụ (2026-11-21, mục 385, đề xuất để bàn)
+
+**Ngưỡng tin cậy.** Kênh, MAC và lần thấy là ngẫu nhiên, nên thời gian nhiệm vụ là biến ngẫu nhiên. Các cách viết mục tiêu:
+- Ràng buộc xác suất cho từng đích: mỗi critical cell nhận đủ trước T với xác suất ≥ P̄ (cách của Zeng 2018 [repo]).
+- Ràng buộc chung: mọi critical cell nhận đủ trước T với xác suất ≥ P̄; đây là dạng 1 − δ của Định lý 2 trong bản thảo.
+- Phân vị: lấy phân vị P̄ (ví dụ 0,9) của T\* = max qua critical cell; tương đương ràng buộc chung.
+- Kỳ vọng của max; dễ đo nhưng không nói về đuôi.
+
+Đề xuất: mục tiêu là phân vị 0,9 của T\* (dạng ràng buộc chung, khớp 1 − δ của Định lý 2), báo kèm trung bình. Chi phí đo: phân vị
+0,9 cần nhiều lượt chạy (repo đặt quy tắc N ≥ 120 cho số định lượng [`uav-l2/docs/MISSION-vi.md`], còn các chiến dịch hiện có 5–10
+seed). Cách giảm: dựng phân bố thời gian sẵn sàng ở mức critical cell (mỗi lượt k8 có 45 critical cell) rồi suy phân vị của max,
+và chỉ chạy nhiều seed cho vài cấu hình chính.
+
+**Lập lại kế hoạch giữa nhiệm vụ.** Repo đã có pha 2 thích nghi [`uav-l2/tools/l1_rank.py`]: đội 2 cất cánh khi có báo cáo đầu tiên,
+chọn cell kế tiếp theo P(cell thật) / thời gian sau mỗi lần xác minh và mỗi báo cáo mới, có chế độ đổi đích giữa đường (-redir). Đề
+xuất:
+- Pha 1 giữ kế hoạch tính sẵn: tour và River không đổi khi có báo cáo (không có thông tin trước, và đội 1 là UAV riêng nên bay tiếp
+  không làm chậm đội 2).
+- Pha 2 thích nghi theo các chính sách đã có.
+- Nhiệm vụ kết thúc khi xác minh đúng người (mục 17), không chờ pha 1 xong mọi cụm.
+- Cell bị sót: critical cell chưa đủ truy vấn sau một hạn T_fb thì được vá, bằng đội 2 phát trực tiếp khi bay ngang (như baseline B6:
+  UAV cánh quay lơ lửng và unicast) hoặc bằng lượt bay thứ hai của đội 1 nếu còn pin.
+- Sự kiện khác đã có cách xử lý: UAV lệch đường (takeover, mục 25), node vắng (điểm danh, mục 23).

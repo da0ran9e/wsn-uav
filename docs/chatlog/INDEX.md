@@ -391,3 +391,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 382 | 2026-11-21 | kế hoạch · ns-3 cho hai tập lai (B8); ghi chú hai bài Koester | [2026-11](2026-11.md) |
 | 383 | 2026-11-21 | bối cảnh · khi không có vị trí thấy lần cuối | [2026-11](2026-11.md) |
 | 384 | 2026-11-21 | bối cảnh · hướng bài theo mức không biết gì (tiên nghiệm đều) | [2026-11](2026-11.md) |
+| 385 | 2026-11-21 | bối cảnh · ngưỡng tin cậy; lập lại kế hoạch giữa nhiệm vụ | [2026-11](2026-11.md) |

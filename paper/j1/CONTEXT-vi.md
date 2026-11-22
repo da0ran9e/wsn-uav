@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-20
+updated: 2026-11-22
 ---
 # J1 · Bối cảnh, thực thể và tham số của bài toán
 
@@ -219,6 +219,11 @@ khoảng 2–5 tuỳ hình dạng phố [web]. Các chỗ chưa khớp:
   vùng trung tâm khoảng 1 km² (tr. 10); ở GreenOrbs dưới 10 % số node gánh 80 % lưu lượng (tr. 8), cùng loại với nút cổ
   chai ở cell Bank mà trace River cho thấy.
 
+![Xác suất nhận gói theo khoảng cách ngang, bốn chế độ kênh A2G](draft-v1/figs/nd1-channel-p-of-d-model-vs-ns3.png)
+
+*Hình 9.1. Xác suất node nhận được một gói A2G theo khoảng cách ngang (0–1,5 km, độ cao 100 m), bốn chế độ từ R50 = 1016 m
+(phải nhất) tới 99 m; chấm đo trên lượt bay ns-3, đường là mô hình.*
+
 ## 10. Mật độ node và lưới cell G2G (2026-11-17, mục 333)
 
 Tính Monte Carlo trên đúng kênh G2G của mô phỏng (10 dBm, số mũ 3,5, che khuất 7,8 dB mỗi cặp, Rayleigh; liên kết dùng được
@@ -339,6 +344,12 @@ CHORD/LM-Tour + River cho tập K đã chọn, đo T\* bằng ns-3. Bài chọn 
 **Cần quyết hoặc cần số liệu:** tốc độ đối sánh μ (chưa có nguồn đo re-ID đầu cuối, mục 338; repo có số thành phần và mô
 hình suy ra theo bậc thiết bị ở `research_notes/l1-edge-recognition/edge_devices.md`), lượng ảnh mỗi camera trong cửa sổ
 W và chính sách giữ/bỏ (mục 14), giá trị H. Đánh đổi số critical cell làm thành việc kỹ thuật K9 (mục 338).
+
+![Thời gian tới khi xác nhận đúng theo số AI cell](figures/k9-time-vs-ai-cells.png)
+
+*Hình 13.1. Kết quả thử đánh đổi ở K9 (20 người/h, R50 = 99 m, một seed): thời gian từ cất cánh tới khi xác nhận đúng AI
+cell theo số AI cell; xám là lúc AI cell cuối nhận đủ truy vấn (rỗng là cận dưới), xanh là báo nhầm 0,1 mỗi AI cell, đỏ là
+2,4 lần báo nhầm cho cả hệ thống; trái một vector mục tiêu, phải ba.*
 
 ## 14. Bộ nhớ node và chính sách giữ/bỏ dữ liệu (2026-11-18, mục 338)
 
@@ -535,6 +546,11 @@ Nhận xét:
 9 m), nên "vùng cao" ở đây là vùng nhà cao tầng; lớp độ cao 30 m nhiễu (đánh dấu cả mặt hồ) nên không vẽ. OSM thiếu nhiều
 nhà thấp tầng và chiều cao, nên vùng cao tầng chỉ gồm các toà đã có dữ liệu.
 
+![Quận Hoàng Mai: hồ, vùng cao tầng, vùng cấm bay ước theo OSM](figures/map-hoangmai-labelled.png)
+
+*Hình 18.1. Quận Hoàng Mai: hồ và sông xanh dương, vùng cao tầng đỏ nhạt (nhà từ 60 m nới 100 m), cấm bay ước theo OSM tím
+gạch chéo, nhà xám tới nâu đỏ theo chiều cao.*
+
 ## 19. Vùng cấm bay (2026-11-19, mục 353)
 
 **Quy định** [web]: Bộ Quốc phòng công bố cổng tra cứu khu vực cấm bay, hạn chế bay tại cambay.mod.gov.vn từ 15/6/2025, theo
@@ -617,6 +633,15 @@ Nhận xét:
   cho phép đường trong cell mượn cell kề, giảm R, hoặc thêm node chuyển tiếp ở cột đèn dọc phố. Mô hình 15 dB mỗi toà là thô,
   cần hiệu chỉnh ở K1c.
 
+![Lưới cell ở Hoàng Mai, kênh có tường](figures/cells-hoangmai-walls.png)
+
+*Hình 20.1. Hoàng Mai, kênh có tường: cell xanh lá là liên thông, cam là đứt bên trong cell, trắng là cell đất không có node
+cắm điện, xanh dương là nước. Lỗ hổng chủ yếu là hồ.*
+
+![Lưới cell ở Downtown Core, kênh có tường](figures/cells-sg-downtown-walls.png)
+
+*Hình 20.2. Downtown Core, kênh có tường, cùng màu: khu nhà dày đặc, 38 % cell đứt bên trong.*
+
 ## 21. Thêm node chuyển tiếp trên cột đèn (2026-11-19, mục 357)
 
 Thêm node cắm điện trên cột đèn mỗi 35 m dọc phố, cách mép đường 3 m, chồng lên các thiết bị đã có; hai cách đặt: chỉ ở các
@@ -648,6 +673,11 @@ Nhận xét:
 - Đặt cột ở mọi phố đôi khi làm tăng số cell đứt (Punggol 15 % lên 18 %): cột trên lối đi bộ trong khu nhà cũng có thể bị lạc.
 - Chốt (mục 358), đưa vào K14: thêm lớp node chuyển tiếp trên cột đèn, đặt theo nhu cầu ở pha 0; node trên nhà không với tới nhóm chính
   của cell thì làm node lá.
+
+![Lưới cell ở Downtown Core, kênh có tường, thêm cột đèn ở cell cần](figures/cells-sg-downtown-walls-poles-needed.png)
+
+*Hình 21.1. Downtown Core như Hình 20.2, thêm node chuyển tiếp trên cột đèn mỗi 35 m ở cell cần: cell đứt giảm còn 29 %, phần
+còn lại chủ yếu là vài node trên nhà bị lạc (làm node lá).*
 
 ## 22. Trạm gốc, điểm cất cánh, độ cao bay (2026-11-19, mục 358; chốt ở mục 359)
 

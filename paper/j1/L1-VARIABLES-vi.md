@@ -68,3 +68,22 @@ suất hậu nghiệm trên thời gian bay tới (bản thảo, `draft-v1/tex/s
 nhận đúng. Thời gian pha 2 khi đó là kết quả mô phỏng, phụ thuộc pha 1 qua thời điểm và độ chính xác của các báo cáo. Đưa t₂ và
 thứ tự thăm vào làm biến thì pha 2 thành bài tìm kiếm ngẫu nhiên riêng, nặng và lệch khỏi trọng tâm của bài. Phần đánh giá có thể
 so vài quy tắc (cất cánh ở báo cáo đầu tiên, hay đợi pha 1 xong).
+
+## 7. Chốt câu 2 và 3 (chatlog mục 393)
+
+**Câu 2.** Phần mặt đất đưa vào bài tối ưu (cách tường minh). Đề xuất cách viết: biến luồng f theo từng critical cell k và từng
+nhóm đoạn gói, đi trên đồ thị cell từ Bank tới node trợ giúp; ràng buộc sức chứa mỗi môi trường (cell, cặp gateway: một radio phát
+một lúc) theo khe thời gian; thời gian xong của k là lúc UAV qua cộng thời gian mặt đất do f quyết định. Để giải được: vòng ngoài
+tìm (π, q, s), vòng trong giải LP của luồng (bản đầu là LP tải lớn nhất trong `river_lb.py --lp`), làm tròn ra kế hoạch nguyên bằng
+bộ lập kế hoạch cân tải. River gốc là một nghiệm khả thi của bài này, LP là chặn dưới.
+
+**Câu 3.** Pha 2 cũng là đối tượng tối ưu, cần tìm hiểu thêm. Đặt bài: cho bản đồ xác suất hậu nghiệm trên các cell nghi vấn (cập
+nhật mỗi khi có báo cáo), chọn t₂ và lộ trình đội 2 để tối thiểu thời gian tới khi xác nhận đúng (phân vị 0,9 hoặc kỳ vọng).
+- Bản tĩnh (đủ báo cáo, mục tiêu đứng yên, xác minh gần chắc chắn): tối thiểu kỳ vọng là bài độ trễ nhỏ nhất có trọng số, một dạng
+  của bài đường đi tìm kiếm tối ưu, NP-khó (Trummel và Weisinger 1986) [web]. Quy tắc hiện tại (xác suất trên thời gian bay) là
+  heuristic tham lam của bài này.
+- Bản động: báo cáo tới dần trong lúc pha 1 chạy, nên là bài trực tuyến; hướng làm là giải lại khi có báo cáo mới (rolling horizon).
+- t₂: cất cánh sớm thì đến gần vùng nghi vấn sớm nhưng có thể bay phí, đợi thì có thêm thông tin.
+- Kiểm chất lượng: với ít cell nghi vấn (khoảng 15 trở xuống) giải đúng bằng quy hoạch động để so với tham lam.
+- Câu còn mở: tối ưu pha 2 khi kế hoạch pha 1 đã cố định, hay chọn thứ tự cụm của pha 1 cùng với pha 2 (thứ tự cụm quyết định lúc
+  báo cáo tới).

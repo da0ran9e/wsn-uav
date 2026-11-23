@@ -398,3 +398,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 390 | 2026-11-22 | khác · xoá câu gửi nhầm (mục 388 cũ); chèn hình vào bản bối cảnh | [2026-11](2026-11.md) |
 | 391 | 2026-11-23 | kế hoạch · báo cáo kỹ thuật K9 | [2026-11](2026-11.md) |
 | 392 | 2026-11-23 | bối cảnh · chốt pha 0 và pha 1 giải riêng; hỏi River là hàm T_g, chính sách pha 2 | [2026-11](2026-11.md) |
+| 393 | 2026-11-23 | bối cảnh · đưa phần mặt đất vào bài tối ưu; pha 2 cần tìm hiểu tối ưu | [2026-11](2026-11.md) |

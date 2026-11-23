@@ -396,3 +396,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 387 | 2026-11-21 | bối cảnh · chốt phân vị 0,9 và cơ chế vá cell bị sót | [2026-11](2026-11.md) |
 | 389 | 2026-11-21 | bối cảnh · tổng hợp bản bối cảnh; bàn biến quyết định | [2026-11](2026-11.md) |
 | 390 | 2026-11-22 | khác · xoá câu gửi nhầm (mục 388 cũ); chèn hình vào bản bối cảnh | [2026-11](2026-11.md) |
+| 391 | 2026-11-23 | kế hoạch · báo cáo kỹ thuật K9 | [2026-11](2026-11.md) |

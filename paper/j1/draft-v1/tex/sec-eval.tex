@@ -187,8 +187,8 @@ the outlier rule carry at most 18 people/h and lie up to 8 cells from some assig
 budget with every node at most $H=5$ cell hops from its AI cell (a capacitated facility location), placed by local search
 on the River surrogate. Table~\ref{tab:aicells} lists the result: fewer than the outlier rule up to $\rho=50$, more above.
 Fig.~\ref{fig:k9surr} checks the surrogate in ns-3 (both $R_{50}=199$ and 99\,m, one seed): up to 70 AI cells the
-measured end of phase~1 is within 41\,s of the model and the order of the sets is kept, except that at 199\,m 69 AI
-cells finish 12\,s after the outlier set instead of 41\,s before. With 161 AI cells (20 per cluster, outside the range
+measured end of phase~1 is within 41\,s of the model and the order of the sets is kept, except that at 199\,m 70 AI
+cells finish 12\,s after the outlier set instead of 26\,s before. With 161 AI cells (20 per cluster, outside the range
 the surrogate was fitted on) the model fails: in one cluster ns-3 spreads from 75 to more than 900\,s, and phase~1 ends
 at 1\,231\,s or later against 906\,s predicted.
 

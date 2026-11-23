@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-21
+updated: 2026-11-23
 ---
 # J1 · Biến quyết định (bản bàn, chatlog mục 389)
 
@@ -46,3 +46,25 @@ quyết định, và đề xuất cái nào là biến của bài toán L1, cái
 1. L1 gồm cả biến pha 0 (y, x) và biến pha 1 (π, q, s) trong một bài, hay tách hai tầng (chọn critical cell rồi lập tour)?
 2. Kế hoạch River là biến tường minh (luồng trên đồ thị cell) hay là một hàm thời gian mặt đất T_g(K, q, s) do thuật toán cho?
 3. Pha 2 là chính sách cố định, hay đưa t₂ vào làm biến?
+
+## 6. Trả lời (chatlog mục 392)
+
+**Câu 1, chốt.** Pha 0 và pha 1 giải riêng. Tầng pha 0 chọn (y, x), tức tập critical cell K và phép giao node; tầng pha 1 nhận K
+cố định rồi lập π, q, s. Tầng pha 0 vẫn cần một ước lượng thời gian pha 1 theo K để so các tập với nhau (ví dụ surrogate của K9,
+`figures/k9-surrogate-vs-ns3.png`).
+
+**Câu 2, đề xuất: coi River là hàm.** Thời gian pha 1 của critical cell k gồm phần nghe trực tiếp lúc UAV bay qua và phần mặt đất
+T_g: các gói còn thiếu được cell lân cận chuyển tới theo kế hoạch River. Có hai cách đưa phần này vào bài toán.
+- Tường minh: luồng River là biến (đoạn gói nào đi từ Bank nào, qua cell nào, tới node trợ giúp nào), ràng buộc mỗi cell một lúc chỉ
+  một radio phát. Bài thành bài luồng nhiều hàng có sức chứa ghép với π, q, s; nhiều biến nguyên, khó giải tới tối ưu ở hàng trăm
+  cell.
+- Hàm: River là thủ tục có sẵn. Cho (K, q, s), `uav-coop2/tools/river_lb.py` sinh kế hoạch, mô hình tải (hiệu chỉnh trên trace,
+  R² 0,89) cho ra T_g(K, q, s) của từng critical cell. L1 chỉ tối ưu π, q, s và gọi hàm này mỗi lần đánh giá một phương án. Chặn
+  dưới LP (`--lp`) cho biết River cách tối ưu bao xa.
+
+**Câu 3, đề xuất: cố định chính sách pha 2.** Chính sách gồm lúc đội 2 cất cánh t₂ và thứ tự thăm các cell nghi vấn. Cố định
+nghĩa là L1 không tối ưu hai thứ này mà dùng quy tắc sẵn: t₂ là lúc có báo cáo đầu tiên (CONTEXT mục 33); thứ tự thăm theo xác
+suất hậu nghiệm trên thời gian bay tới (bản thảo, `draft-v1/tex/sec-model.tex`), mỗi lần xác minh V1 khoảng 78 s, dừng khi xác
+nhận đúng. Thời gian pha 2 khi đó là kết quả mô phỏng, phụ thuộc pha 1 qua thời điểm và độ chính xác của các báo cáo. Đưa t₂ và
+thứ tự thăm vào làm biến thì pha 2 thành bài tìm kiếm ngẫu nhiên riêng, nặng và lệch khỏi trọng tâm của bài. Phần đánh giá có thể
+so vài quy tắc (cất cánh ở báo cáo đầu tiên, hay đợi pha 1 xong).

@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (28): nguồn số liệu và mô tả đang dùng
+## Hiện hành (29): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -18,7 +18,8 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/j1/CONTEXT-SUMMARY-vi.md`](../paper/j1/CONTEXT-SUMMARY-vi.md) | J1 · Bối cảnh bài toán (bản tóm tắt) | 2026-11-22 |  |
 | [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-22 |  |
 | [`paper/j1/K9-PARAMS-vi.md`](../paper/j1/K9-PARAMS-vi.md) | K9 bước B0: tham số cho bài node thường gửi gì về AI node | 2026-11-18 |  |
-| [`paper/j1/L1-VARIABLES-vi.md`](../paper/j1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-21 |  |
+| [`paper/j1/K9-REPORT-vi.md`](../paper/j1/K9-REPORT-vi.md) | Báo cáo kỹ thuật K9: đặt AI node và dữ liệu node thường gửi về | 2026-11-23 |  |
+| [`paper/j1/L1-VARIABLES-vi.md`](../paper/j1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-23 |  |
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
 | [`paper/j1/PLAN-K9-DATA-vi.md`](../paper/j1/PLAN-K9-DATA-vi.md) | Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu | 2026-11-20 |  |

@@ -38,7 +38,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (97): còn đúng, dùng để tra cứu nền
+## Tham khảo (99): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -119,6 +119,8 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/nayak2023-minmax.md`](../research_notes/literature/papers/nayak2023-minmax.md) | Nayak, Rathinam 2023 · Heuristic và mô hình học cho Dubins mTSP dạng min–max | 2026-11-12 |  |
 | [`research_notes/literature/papers/nekrasov2019-aerial154.md`](../research_notes/literature/papers/nekrasov2019-aerial154.md) | Nekrasov, Allen, Artamonova, Belding 2019 · Tối ưu mạng 802.15.4 ngoài trời cho thu dữ liệu bằng UAV | 2026-11-12 |  |
 | [`research_notes/literature/papers/nelson2007-vfield.md`](../research_notes/literature/papers/nelson2007-vfield.md) | Nelson, Barber, McLain, Beard 2007 · Bám đường bằng trường vector cho máy bay nhỏ | 2026-11-12 |  |
+| [`research_notes/literature/papers/nguyen2021-hole.md`](../research_notes/literature/papers/nguyen2021-hole.md) | Nguyen, Nguyen, Nguyen, Do, Chlamtac 2021 · Energy-efficient routing in the proximity of a complicated hole in WSN | 2026-11-23 |  |
+| [`research_notes/literature/papers/nguyen2023-gambac.md`](../research_notes/literature/papers/nguyen2023-gambac.md) | Nguyen, Nguyen, Do, Rotter 2023 · Multi-UAV data gathering with balanced clustering (GAMBAC) | 2026-11-23 |  |
 | [`research_notes/literature/papers/noon1993-gtsp.md`](../research_notes/literature/papers/noon1993-gtsp.md) | Noon, Bean 1993 · Phép biến đổi hiệu quả GTSP sang ATSP | 2026-11-12 |  |
 | [`research_notes/literature/papers/obermeyer2009-recon.md`](../research_notes/literature/papers/obermeyer2009-recon.md) | Obermeyer 2009 · Lập đường cho UAV trinh sát mục tiêu mặt đất trong địa hình | 2026-11-12 |  |
 | [`research_notes/literature/papers/oubbati2023-rescue.md`](../research_notes/literature/papers/oubbati2023-rescue.md) | Oubbati et al. 2023 · Tối ưu vùng phủ bằng nhiều UAV cho cứu hộ dùng học tăng cường | 2026-11-12 |  |

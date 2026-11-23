@@ -401,3 +401,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 393 | 2026-11-23 | bối cảnh · đưa phần mặt đất vào bài tối ưu; pha 2 cần tìm hiểu tối ưu | [2026-11](2026-11.md) |
 | 394 | 2026-11-23 | bối cảnh · bài có bao nhiêu mục tiêu tối ưu | [2026-11](2026-11.md) |
 | 395 | 2026-11-23 | nghiên cứu · ghi chú bài k-MLP (2021) và GAMBAC (2023); học cách viết đặt vấn đề, phát biểu bài toán | [2026-11](2026-11.md) |
+| 396 | 2026-11-23 | kế hoạch · dàn ý bài J1 và tổng hợp kết quả hai nhánh | [2026-11](2026-11.md) |

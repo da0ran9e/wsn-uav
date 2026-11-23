@@ -82,3 +82,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-19_1000-urban-nodes/` | Đặt node IoT theo nhà và phố trên bốn bản đồ thật, kiểm liên thông và lỗ hổng của lưới cell |
 | `2026-11-20_0900-query-size/` | Chặn dưới không hợp tác khi truy vấn nhỏ (Q = 400, 1 000 gói) |
 | `2026-11-21_0230-koester-notes/` | ghi chú hai bài Koester về người mất trí đi lạc (mục 382) |
+| `2026-11-23_1000-paper-notes/` | ghi chú hai bài: k-MLP quanh lỗ mạng (2021), GAMBAC nhiều UAV gom dữ liệu (2023) (mục 395) |

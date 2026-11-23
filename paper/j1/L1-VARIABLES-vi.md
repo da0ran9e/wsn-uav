@@ -87,3 +87,21 @@ nhật mỗi khi có báo cáo), chọn t₂ và lộ trình đội 2 để tố
 - Kiểm chất lượng: với ít cell nghi vấn (khoảng 15 trở xuống) giải đúng bằng quy hoạch động để so với tham lam.
 - Câu còn mở: tối ưu pha 2 khi kế hoạch pha 1 đã cố định, hay chọn thứ tự cụm của pha 1 cùng với pha 2 (thứ tự cụm quyết định lúc
   báo cáo tới).
+
+## 8. Các mục tiêu tối ưu (chatlog mục 394)
+
+Một mục tiêu chung cho cả bài, mỗi bài con một mục tiêu riêng thay cho nó.
+
+| Mức | Biến | Mục tiêu | Ràng buộc chính |
+|---|---|---|---|
+| Chung | toàn bộ | tối thiểu phân vị 0,9 của T\* (lúc xác nhận đúng người, tính từ cất cánh), báo kèm trung bình | sức bền hai UAV |
+| Pha 0 | y, x | tối thiểu ước lượng phân vị 0,9 của T\* theo tập K (surrogate, vì pha 0 giải riêng) | H chặng, bộ nhớ, luồng nền |
+| Pha 1 | π, q, s, luồng mặt đất f | tối thiểu phân vị 0,9 của lúc critical cell cuối cùng nhận đủ truy vấn | Dubins, vùng cấm, sức chứa môi trường |
+| Pha 2 | t₂, lộ trình đội 2 | tối thiểu thời gian tới khi xác nhận đúng, theo bản đồ xác suất hậu nghiệm | sức bền đội 2 |
+
+Câu còn mở:
+- Phân vị 0,9 lấy qua phần ngẫu nhiên (kênh, MAC, lần thấy) với vị trí người lấy xấu nhất, hay lấy qua cả vị trí người theo tiên
+  nghiệm đều? Cách đầu khớp "trường hợp xấu nhất" của mục 13; cách sau mềm hơn và khớp tiên nghiệm đều (mục 384).
+- Mục tiêu pha 2 dùng cùng thước đo với mục tiêu chung (phân vị 0,9) hay kỳ vọng (bài độ trễ nhỏ nhất có trọng số dùng kỳ vọng)?
+- Pha 1 tối ưu riêng như trên, hay chọn cùng pha 2 (mục 7)? Nếu chọn cùng thì mục tiêu pha 1 thay bằng mục tiêu chung.
+

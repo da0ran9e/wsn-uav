@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-23
+updated: 2026-11-24
 ---
 # J1 · Biến quyết định (bản bàn, chatlog mục 389)
 
@@ -105,3 +105,4 @@ Câu còn mở:
 - Mục tiêu pha 2 dùng cùng thước đo với mục tiêu chung (phân vị 0,9) hay kỳ vọng (bài độ trễ nhỏ nhất có trọng số dùng kỳ vọng)?
 - Pha 1 tối ưu riêng như trên, hay chọn cùng pha 2 (mục 7)? Nếu chọn cùng thì mục tiêu pha 1 thay bằng mục tiêu chung.
 
+Dạng cốt lõi của ba bài (biến, ràng buộc, mục tiêu, lớp bài kinh điển) ở [PROBLEMS-vi.md](PROBLEMS-vi.md) (chatlog mục 399).

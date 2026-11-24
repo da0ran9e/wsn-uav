@@ -404,3 +404,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 396 | 2026-11-23 | kế hoạch · dàn ý bài J1 và tổng hợp kết quả hai nhánh | [2026-11](2026-11.md) |
 | 397 | 2026-11-23 | kế hoạch · thuật toán mới so với bản nộp ICC | [2026-11](2026-11.md) |
 | 398 | 2026-11-23 | kế hoạch · mô tả ngắn năm thuật toán mới | [2026-11](2026-11.md) |
+| 399 | 2026-11-24 | bối cảnh · ba bài toán ở dạng cốt lõi (PROBLEMS-vi) | [2026-11](2026-11.md) |

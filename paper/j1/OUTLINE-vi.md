@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-23
+updated: 2026-11-24
 ---
 # J1 · Dàn ý bài (chatlog mục 396)
 
@@ -105,7 +105,7 @@ Mục giả định tách riêng và ghi rõ giả định nào chỉ dùng đ�
 
 ## V. Problem formulation and complexity
 
-Viết thành công thức, khác hai bài mẫu. Khuôn tham khảo là bài (P1) ở phương trình (12) của Zeng 2018. **sửa** (bản thảo có một bài
+Dạng cốt lõi của ba bài đã viết ở [PROBLEMS-vi.md](PROBLEMS-vi.md) (chatlog mục 399). Viết thành công thức, khác hai bài mẫu. Khuôn tham khảo là bài (P1) ở phương trình (12) của Zeng 2018. **sửa** (bản thảo có một bài
 gộp, cần tách)
 1. **Mục tiêu chung.** min Q₀,₉(T\*), báo kèm E[T\*]. Ràng buộc sức bền hai UAV.
 2. **(P0) Chọn AI cell.**

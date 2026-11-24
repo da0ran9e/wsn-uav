@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (29): nguồn số liệu và mô tả đang dùng
+## Hiện hành (31): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -19,11 +19,13 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-22 |  |
 | [`paper/j1/K9-PARAMS-vi.md`](../paper/j1/K9-PARAMS-vi.md) | K9 bước B0: tham số cho bài node thường gửi gì về AI node | 2026-11-18 |  |
 | [`paper/j1/K9-REPORT-vi.md`](../paper/j1/K9-REPORT-vi.md) | Báo cáo kỹ thuật K9: đặt AI node và dữ liệu node thường gửi về | 2026-11-23 |  |
-| [`paper/j1/L1-VARIABLES-vi.md`](../paper/j1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-23 |  |
+| [`paper/j1/L1-VARIABLES-vi.md`](../paper/j1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-24 |  |
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
+| [`paper/j1/OUTLINE-vi.md`](../paper/j1/OUTLINE-vi.md) | J1 · Dàn ý bài (chatlog mục 396) | 2026-11-24 |  |
 | [`paper/j1/PLAN-K9-DATA-vi.md`](../paper/j1/PLAN-K9-DATA-vi.md) | Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu | 2026-11-20 |  |
 | [`paper/j1/PLAN-TRACKS-vi.md`](../paper/j1/PLAN-TRACKS-vi.md) | Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật | 2026-11-18 |  |
+| [`paper/j1/RESULTS-vi.md`](../paper/j1/RESULTS-vi.md) | J1 · Tổng hợp kết quả hai nhánh (chatlog mục 396) | 2026-11-23 |  |
 | [`paper/j1/draft-v1/README-vi.md`](../paper/j1/draft-v1/README-vi.md) | Bản thảo journal v1 (J1): hướng dẫn đánh giá | 2026-11-20 |  |
 | [`paper/j1/draft-v1/REQUEST-vi.md`](../paper/j1/draft-v1/REQUEST-vi.md) | Yêu cầu của người dùng cho bản thảo journal v1 | 2026-11-16 |  |
 | [`research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md`](../research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md) | Tổng hợp tìm tài liệu cho kế hoạch tiếp theo (2026-11-12) | 2026-11-12 |  |

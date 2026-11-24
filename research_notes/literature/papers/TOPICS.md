@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-17
+updated: 2026-11-23
 ---
 # Chủ đề → bài
 
@@ -70,6 +70,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [nekrasov2019-aerial154](nekrasov2019-aerial154.md) ★★★ · Đo thực 9 giờ bay (quadcopter, XBee3 802.15.4 2,4 GHz, 13 độ cao 9–122 m, cự ly ngang tới > 250 m): RSSI gần như không đổi theo cấu hình nhưng PRR thay đổi mạnh; PRR tốt nhất ở ~46 m, giảm ~5 %/25 m sau 50 m, gói xa nhất thu được ở 297 m dù hãng quảng cáo 1200 m.
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
+- [nguyen2023-gambac](nguyen2023-gambac.md) ★★ · Phân cụm WSN và lập tour cho M UAV có giới hạn quãng bay ℓmax; chặn dưới năng lượng node gửi về CH tỉ lệ S²/ℓmax, đạt gần khi các cụm cân năng lượng; ba heuristic GAMBAC tìm số cụm lớn nhất bằng chia đôi, so MILP ở 50 node và vượt CHP.
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
 - [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
 - [amodu2024-aoi](amodu2024-aoi.md) ★ · Khảo sát các công trình dùng DRL (DQN, DDPG, TD3, PPO, đa tác tử) để tối ưu quỹ đạo UAV, điểm thu, lịch truyền của nút nhằm tối thiểu Age of Information khi UAV thu dữ liệu từ WSN/IoT; phân loại theo mục tiêu, kiến trúc, thư viện mô phỏng, độ phức tạp; nêu thách thức và hướng mở.
@@ -143,6 +144,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `multi-uav` · nhiều UAV
 
+- [nguyen2023-gambac](nguyen2023-gambac.md) ★★ · Phân cụm WSN và lập tour cho M UAV có giới hạn quãng bay ℓmax; chặn dưới năng lượng node gửi về CH tỉ lệ S²/ℓmax, đạt gần khi các cụm cân năng lượng; ba heuristic GAMBAC tìm số cụm lớn nhất bằng chia đôi, so MILP ở 50 node và vượt CHP.
 - [rathinam2007-multivehicle](rathinam2007-multivehicle.md) ★★ · Với các mục tiêu cách nhau (và cách điểm xuất phát) ≥ 2r, giải TSP Euclid bằng Christofides rồi nối liên tiếp bằng đường LS/RS (hướng tại mục tiêu tự do) cho xấp xỉ hằng số 4,56 với một xe; nhiều xe dùng MST có cạnh 0 giữa các xe, nhân đôi cạnh, đi Euler, cho hệ số 6,07; mục tiêu là tổng quãng đường.
 - [li2023-coverage](li2023-coverage.md) ★ · Chia môi trường đã biết thành ô phủ; EDM giải chính xác bằng MILP (đồ thị điểm đầu–cuối của các dải phủ, cạnh là đường Dubins) cho đường phủ ngắn nhất ở cảnh nhỏ; CDM heuristic dùng mô hình "tín dụng" cân tải giữa robot và chia cây để giảm độ phức tạp ở cảnh lớn; thử trên mô hình UAV cánh bằng độ trung thực cao.
 - [nayak2023-minmax](nayak2023-minmax.md) ★ · MD-GmTSP: m xe Dubins, mỗi điểm chọn một trong h hướng rời rạc (one-in-a-set), tối thiểu độ dài tour dài nhất; MILP giải bằng CPLEX cho 16 instance TSPLIB (16–137 thành phố) nhưng không mở rộng được; heuristic chèn + VNS (GVNS tốt nhất) trong 600 s; GNN + học tăng cường tốt ở instance nhỏ, VNS tốt nhất ở instance lớn.
@@ -153,6 +155,8 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [arora2005-exscal](arora2005-exscal.md) ★★ · Triển khai 983 mote XSM (433 MHz) và 203 Stargate XSS (802.11b) trên 1 260 m × 288 m ở Florida tháng 12/2004 để phát hiện xâm nhập: lưới phân cấp, mỗi XSS quản 20–50 XSM trong 5–6 chặng, yield định tuyến đầu cuối 85,27 %.
 - [liu2013-greenorbs](liu2013-greenorbs.md) ★★ · Đo một mạng TelosB thu gom đa chặng (CTP) tới 330 node trong rừng suốt 29 ngày: dưới 10 % node nghẽn gánh 80 % lưu lượng và gây 61 % số gói mất, link vật lý ổn định nhưng tải cao thì yield rơi từ hơn 60 % xuống dưới 10 %, còn bảng định tuyến cố định cho yield ngang CTP động.
+- [nguyen2021-hole](nguyen2021-hole.md) ★★ · Định tuyến k-MLP: dựng k làn gần song song bám đường ngắn nhất quanh một lỗ mạng hình phức tạp (có hang, có khúc gấp), mỗi gói chọn ngẫu nhiên một làn; chứng minh độ dài đường ≤ (1 + ε) lần ngắn nhất và tăng thời gian sống của mạng so với GPSR, ALBA-R, ADAV, STABLE.
+- [nguyen2023-gambac](nguyen2023-gambac.md) ★★ · Phân cụm WSN và lập tour cho M UAV có giới hạn quãng bay ℓmax; chặn dưới năng lượng node gửi về CH tỉ lệ S²/ℓmax, đạt gần khi các cụm cân năng lượng; ba heuristic GAMBAC tìm số cụm lớn nhất bằng chia đôi, so MILP ở 50 node và vượt CHP.
 - [liu2013-citysee](liu2013-citysee.md) ★ · Bài tổng quan giai đoạn 1 của CitySee ở Vô Tích: 1 196 node TelosB đo CO₂ và môi trường cùng 4 node mesh 802.11a, chạy liên tục từ 8/2011, thu gom CTP sâu tới 21 chặng, kèm bài học về triển khai, chẩn đoán và đẩy dữ liệu lên cloud.
 - [tan2003-pedap](tan2003-pedap.md) ★ · PEDAP định tuyến gom dữ liệu theo cây khung nhỏ nhất (MST) với tổng hợp tại nút, PEDAP-PA là bản có tính năng lượng còn lại để cân tải; tuổi thọ mạng hơn LEACH 4–20 lần và hơn PEGASIS (định tuyến chuỗi) khoảng 3 lần, kể cả khi trạm gốc ở giữa vùng.
 
@@ -176,6 +180,8 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `sar` · bối cảnh tìm kiếm cứu nạn, thảm hoạ
 
+- [koester1992-alzprofiles](koester1992-alzprofiles.md) ★★ · Nghiên cứu đầu tiên tách riêng người mắc Alzheimer khỏi nhóm người già trong số liệu tìm kiếm cứu nạn: 29 vụ trong 245 vụ của
+- [koester1998-adrd](koester1998-adrd.md) ★★ · Phân tích 87 vụ tìm người mắc Alzheimer và chứng mất trí liên quan (ADRD) trong 565 vụ tìm kiếm cứu nạn của bang Virginia
 - [oubbati2023-rescue](oubbati2023-rescue.md) ★ · MARLF: nhóm UAV làm trạm gốc bay, giữ liên kết với nhau và với trạm mặt đất, theo dõi các thành viên cứu hộ di chuyển khó đoán; học quỹ đạo tiết kiệm năng lượng bằng MADDPG để tối đa số người được phủ và thông lượng; tốt hơn các phương pháp cơ sở (ví dụ 20 thành viên, 7 UAV).
 - [wang2025-fwcoverage](wang2025-fwcoverage.md) ★ · Mô hình DCCPP (phủ kín động) cho nhiều UAV cánh bằng: lồi hoá vùng, chia đường thành đường thao tác (quét), đường vào và đường chuyển vùng (nối bằng Dubins), phân vùng cho UAV bằng tham lam theo chỉ số phân bổ, tối ưu tổ hợp bằng quy hoạch động cải tiến (IDP), rồi nâng lên 3D theo địa hình bằng hạ độ cao; kiểm chứng mô phỏng và bán vật lý thực tế hỗn hợp.
 
@@ -186,3 +192,11 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [liu2013-greenorbs](liu2013-greenorbs.md) ★★ · Đo một mạng TelosB thu gom đa chặng (CTP) tới 330 node trong rừng suốt 29 ngày: dưới 10 % node nghẽn gánh 80 % lưu lượng và gây 61 % số gói mất, link vật lý ổn định nhưng tải cao thì yield rơi từ hơn 60 % xuống dưới 10 %, còn bảng định tuyến cố định cho yield ngang CTP động.
 - [liu2013-citysee](liu2013-citysee.md) ★ · Bài tổng quan giai đoạn 1 của CitySee ở Vô Tích: 1 196 node TelosB đo CO₂ và môi trường cùng 4 node mesh 802.11a, chạy liên tục từ 8/2011, thu gom CTP sâu tới 21 chặng, kèm bài học về triển khai, chẩn đoán và đẩy dữ liệu lên cloud.
 - [sanchez2014-smartsantander](sanchez2014-smartsantander.md) ★ · Mô tả kiến trúc ba tầng (node IoT, gateway, server) và đợt triển khai ở Santander: 740 điểm cảm biến gắn cột đèn, 390 cảm biến đỗ xe chôn dưới mặt đường, 23 gateway, dồn dày trong khoảng 1 km² trung tâm, mỗi node có hai radio 802.15.4 (một cho thử nghiệm, một Digimesh cho quản lý).
+
+## `geo-routing` · định tuyến địa lý, đi vòng lỗ mạng, cân tải đường đi
+
+- [nguyen2021-hole](nguyen2021-hole.md) ★★ · Định tuyến k-MLP: dựng k làn gần song song bám đường ngắn nhất quanh một lỗ mạng hình phức tạp (có hang, có khúc gấp), mỗi gói chọn ngẫu nhiên một làn; chứng minh độ dài đường ≤ (1 + ε) lần ngắn nhất và tăng thời gian sống của mạng so với GPSR, ALBA-R, ADAV, STABLE.
+
+## `clustering` · phân cụm node, chọn cluster head
+
+- [nguyen2023-gambac](nguyen2023-gambac.md) ★★ · Phân cụm WSN và lập tour cho M UAV có giới hạn quãng bay ℓmax; chặn dưới năng lượng node gửi về CH tỉ lệ S²/ℓmax, đạt gần khi các cụm cân năng lượng; ba heuristic GAMBAC tìm số cụm lớn nhất bằng chia đôi, so MILP ở 50 node và vượt CHP.

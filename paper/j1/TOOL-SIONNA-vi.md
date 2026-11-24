@@ -2,7 +2,7 @@
 status: current
 updated: 2026-11-20
 ---
-# Sionna RT cho kênh đô thị của J1 (2026-11-20, chatlog mục 364)
+# Sionna RT cho kênh đô thị của J1 (2026-11-20, chatlog mục 399)
 
 Tiếp [TOOL-VAN3TWIN-vi.md](TOOL-VAN3TWIN-vi.md): bỏ VaN3Twin, xét dùng thẳng Sionna RT. Chưa cài, chưa chạy. Nguồn: [gói]
 là đọc wheel `sionna-rt` 2.2.0 tải từ PyPI (không cài), [web] là tra mới hôm nay, [repo] là tài liệu trong repo.

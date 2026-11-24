@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-12
+updated: 2026-11-23
 ---
 # Phương pháp ghi chú bài báo
 
@@ -157,6 +157,8 @@ Trường `topics` chỉ dùng các mã dưới đây; `paper_index.py` cảnh b
 | `testbed` | thực nghiệm phần cứng, testbed |
 | `sar` | bối cảnh tìm kiếm cứu nạn, thảm hoạ |
 | `deployment` | triển khai thật ngoài hiện trường: quy mô, mật độ, diện tích, chi phí vận hành |
+| `geo-routing` | định tuyến địa lý, đi vòng lỗ mạng, cân tải đường đi |
+| `clustering` | phân cụm node, chọn cluster head |
 
 ## 7. Mức liên quan và độ sâu đọc
 

@@ -47,6 +47,8 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Đầu vào: `research_notes/literature/papers/leny2012-dtsp.md`, phác thảo ở `paper/j1/ND1-TRIAL-vi.md`. Đầu ra: mục
     Problem formulation trong `paper/j1/`.
   - Mục tiêu chung: tối thiểu tổng thời gian pha 1 + pha 2; tập critical cell là biến (chatlog mục 335, 338).
+  - Mục tiêu đo bằng phân vị 0,9 của T\* (dạng 1 − δ), báo kèm trung bình; tiên nghiệm đều về vị trí người cần tìm (chatlog mục
+    384, 387).
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **L2** Định lý A bản chặt: biên an toàn theo file, số gói nhận khi bay ngang, số hạng √(Q ln m), trích Zeng 2018
   - Đầu vào: `uav-l2/tools/theory/theorem_a.py`, dữ liệu C4. Kiểm lại trên kênh K1 khi có. Đầu ra: phát biểu và chứng
@@ -96,6 +98,13 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Cần bản đồ vật cản và sửa `Link` trong `uav-coop2/examples/coop2-river.cc`; nặng, có thể để sau J1. Đầu vào: CONTEXT
     mục 9.
   - Trạng thái: chưa nhận · Phiên: · Báo cáo:
+- [ ] **K1d** Nhiễu 2,4 GHz ở đô thị (chatlog mục 364–365, CONTEXT mục 24): lượt bay chuyển sang kênh sạch 26; ba kênh sạch
+  15, 20, 25 cho các môi trường bận nhất (cell Bank, cell trung chuyển dọc River); mô hình nhiễu WiFi trên các kênh trùng
+  WiFi 1/6/11: độ bận u theo cell, CSMA lùi khi bận, khung hỏng với xác suất u, mất gói theo cụm (hai trạng thái), quét u = 0,
+  0,2, 0,5; UAV điều khiển ngoài 2,4 GHz
+  - Sửa `uav-coop/examples/coop-pass.cc` (`kChannel`) và lịch kênh trong `uav-coop2/examples/coop2-river.cc`; mô hình nhiễu
+    đặt ở tầng kênh hoặc MAC của ns-3. Đầu ra: T\* và số khung theo u, so với không nhiễu.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 - [ ] **K2** Quỹ đạo sinh từ động lực bay: dẫn đường L1, gió đều 0–15 m/s cộng nhiễu loạn Dryden; có sai số dọc đường bay
   - Đầu vào: `uav-l2/tools/wind_path.py`, `research_notes/literature/2026-11-12/05-wind-deviation.md`. Đầu ra: bộ
     sinh quỹ đạo mới, `track.csv`.
@@ -133,9 +142,15 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
     cell (ít đến nhiều) trên cùng bản đồ, đo T\* pha 1 bằng ns-3 và thời gian pha 2 bằng mô hình đội 2, vẽ đường đánh đổi;
     (5) chạy lại với tập tối ưu. Đầu ra: `assign.csv`, tập critical cell, đường đánh đổi, T\* so với Algorithm 3.
   - μ chưa có nguồn đo (mục 338): dùng mô hình theo bậc thiết bị của K12 và quét độ nhạy. Bước (1) làm được ngay.
-  - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7).
+  - Chatlog mục 371: truy vấn là ảnh (Q = 4 041); node thường gửi ảnh cắt người (D2), không gửi vector; D0 làm đối chứng. Ràng
+    buộc luồng nền G2G (1–2 KB/s mỗi AI node) là ràng buộc chính của bài chọn (CONTEXT mục 28).
+  - Kế hoạch chi tiết: [PLAN-K9-DATA-vi.md](PLAN-K9-DATA-vi.md) (bước B0–B7; B8 phương án lai, mục 9 của file đó).
+  - Chatlog mục 373–375 (người dùng chốt, thay ghi chú mục 371 ở trên về D2): phương án lai làm phương án chính. Node có NPU gửi
+    vector của mô hình nhẹ (512 chiều INT8, khoảng 0,5 KB mỗi người), node yếu gửi ảnh cắt nhỏ (khoảng 5 KB); truy vấn vẫn là ảnh;
+    mỗi AI node giữ K mô hình của các nhóm node nó phục vụ (K = 1, 3, 5), trích vector từ L ảnh truy vấn bằng từng mô hình; D0 làm
+    đối chứng. Tham số mới: tỉ lệ node có NPU (0,2, 0,5, 0,8) và K. CONTEXT mục 28–29.
   - Trạng thái: đang làm · Phiên: 2026-11-18, phiên ghi chú bài báo (session_01Anfb7c); xong B2, B0, B1, B3, B4 seed 1 (mục 348:
-    tạm dừng ở 1 seed), B5, B6 phần báo nhầm (mục 360); còn phần còn lại của B6, B7 · Báo cáo: [logs/2026-11-18_1036-k9](../../logs/2026-11-18_1036-k9/README.md)
+    tạm dừng ở 1 seed), B5, B6 (mục 360, 366), B7 (mục 368: bản thảo J1 mục VIII-F), B8 mức mô hình (mục 381; ns-3 seed 1 cho hai tập lai xong, mục 382) · Báo cáo: [K9-REPORT-vi.md](K9-REPORT-vi.md), log [logs/2026-11-18_1036-k9](../../logs/2026-11-18_1036-k9/README.md)
 - [ ] **K10** Mật độ phụ 400 và 280 node/km² (giãn cách 50 và 60 m, CONTEXT mục 4 và 10)
   - `uav-l2/tools/map_gen.py --spacing`; kiểm deploy, partition và chọn cặp gateway với cell 7–10 node, rồi chạy pha 1.
     Đầu ra: T\*, P_k mức cell và số cặp gateway theo mật độ.
@@ -176,6 +191,12 @@ Dữ liệu cũ dùng được ngay: C4 (`logs/2026-10-27_1714-campaign4/`), gi�
   - Đầu ra cho K1a, K1c, K5 và điểm lơ lửng V1. Chỉ dùng API của www.openstreetmap.org (Overpass, Geofabrik bị chặn). Ghi
     nguồn ODbL.
   - Trạng thái: chưa nhận · Phiên: · Báo cáo: bước dữ liệu xong 2026-11-19 (commit 812ec94), chưa nhận phần ns-3.
+
+- [ ] **K15** Cơ chế vá cell bị sót (chatlog mục 385–387, CONTEXT mục 33): critical cell chưa đủ truy vấn sau hạn T_fb được đội 2
+  phát trực tiếp khi bay ngang (lơ lửng, unicast như baseline B6) hoặc đội 1 bay lượt hai nếu còn pin; chọn T_fb; so với không vá
+  - Đầu vào: `uav-l2/tools/l1_rank.py` (đội 2), `uav-l2/tools/mission_baselines.py` (B6). Đo theo mục tiêu mới: phân vị 0,9 của
+    T\* và trung bình; phân bố thời gian sẵn sàng ở mức critical cell để có đủ mẫu.
+  - Trạng thái: chưa nhận · Phiên: · Báo cáo:
 
 ## Điểm gặp
 

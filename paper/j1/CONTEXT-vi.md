@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-20
+updated: 2026-11-22
 ---
 # J1 · Bối cảnh, thực thể và tham số của bài toán
 
@@ -14,7 +14,7 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 |---|---|---|
 | Vùng nhiệm vụ | Đô thị hiện đại (mục 338): càng hiện đại thì mạng IoT càng dày, nhưng nhà cao tầng và hạ tầng làm kênh A2G kém đi nhiều. Kênh là phần sẽ làm phức tạp dần. Vì J1 chỉ xét một UAV, vùng thử nghiệm thu lại vừa đủ cho một UAV làm trong một chuyến bay (mục 327) | chốt |
 | Vì sao khó | Nhà cao tầng và hạ tầng che khuất kênh từ trên không xuống, nên kênh yếu và biến động; đô thị càng hiện đại thì càng dày node nhưng kênh A2G càng kém (mục 338) | chốt |
-| Thiết bị | Nhiều thiết bị IoT có sẵn: camera, cảm biến; phần lớn là node yếu, một số node mạnh chạy được AI | chốt |
+| Thiết bị | Chuông cửa, camera tường, camera cột, máy bán hàng; thêm node chuyển tiếp trên cột đèn ở cell cần; 11–22 % chạy pin và không chuyển tiếp; một số node mạnh chạy được AI (mục 15, 20–21) | chốt |
 | Sự cố | Mục tiêu điển hình là tìm người (mục 335): truy vấn là bộ ảnh tham chiếu của người cần tìm, AI node đối sánh với ảnh camera đã gửi về; mạng phục vụ nhiều lượt truy vấn trong suốt vòng đời | chốt |
 | Phân bố thiết bị | Rải ngẫu nhiên, càng đều càng tốt, phủ cả vùng (mục 325). Mật độ giữ như bản hội nghị (khoảng 816 node/km²) như giả định hướng tới: mạng dày chưa phổ biến nhưng nhiều khả năng sớm có (mục 335); chạy thêm vài mức để xem độ nhạy | chốt |
 | Vì sao cần UAV | Hai lý do (mục 343): node rẻ chỉ có radio 802.15.4, không nối Internet; dữ liệu phải ở lại thiết bị vì quyền riêng tư, chỉ điểm số vài byte rời node. Qua LoRa mất ít nhất 1,8 h, qua mạng mặt đất từ trạm gốc xem mục 12. Chi tiết ở mục 15 | chốt (lý do), đề xuất (lập luận) |
@@ -23,7 +23,7 @@ phát biểu bài toán tối ưu pha 1 (L1 trong `PLAN-TRACKS-vi.md`) dựa tr�
 
 | Thực thể | Mô tả | Trạng thái |
 |---|---|---|
-| Trạm gốc (BS) | Lập kế hoạch pha 0, pha 1 (tour và kế hoạch River), nhận kết quả qua LoRa | chốt |
+| Trạm gốc (BS) | Đội chữa cháy và cứu nạn cứu hộ của khu vực, có LoRa gateway và sân cất hạ cánh (mục 22); lập kế hoạch pha 0, pha 1, nhận kết quả qua LoRa | chốt |
 | UAV cánh bằng (đội 1) | J1 xét một UAV phát truy vấn ở pha 1. Nhiều UAV để sau, chỉ khi có cơ chế phối hợp thật (mục 326), xem mục 5 | chốt |
 | UAV cánh quay (đội 2) | Đến xác minh các cell nghi vấn ở pha 2. J1 xét cả pha 2: mục tiêu chung là tối thiểu tổng thời gian pha 1 và pha 2 (mục 338). Mô hình pha 2 hiện có: `uav-l2/docs/MISSION-vi.md` (15 m/s, tour qua các nghi vấn, lơ lửng 30 s mỗi điểm) | chốt |
 | Node thường | Camera hoặc cảm biến yếu, ghi dữ liệu và gửi dữ liệu về AI node phụ trách nó (trước khi có truy vấn); chuyển tiếp gói 802.15.4 | chốt (mục 325) |
@@ -52,18 +52,18 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
 
 | Tham số | Bản hội nghị (ICC) | J1 | Trạng thái |
 |---|---|---|---|
-| Diện tích vùng | 617 cell ≈ 16 km² (bản đồ k8) | vừa một chuyến bay của một UAV; ước lượng thô khoảng 100 km², cỡ 50 cụm (mục 7) | chốt (nguyên tắc), mở (con số) |
-| Số cell | 617 | khoảng 4 000 nếu 100 km² và giữ R = 100 m | chốt (R = 100 m, mục 10) |
+| Diện tích vùng | 617 cell ≈ 16 km² (bản đồ k8) | một quận đô thị thật 5–60 km², nằm gọn trong một chuyến bay (mục 18–22); bộ bản đồ đề xuất Nam Từ Liêm, Hoàng Mai, Punggol, Downtown Core | chốt |
+| Số cell | 617 | 195–1 552 cell tuỳ quận (R = 100 m, mục 10, 18–20) | chốt |
 | Mật độ node | khoảng 21 node một cell (13 086 node) | giữ khoảng 816 node/km² làm mức chính (hướng tới, mục 335); thêm 400 và 280 node/km² để xem độ nhạy (vẫn trong vùng lưới cell liên thông, mục 10) | chốt (mức chính), đề xuất (mức phụ) |
 | Số CC | 45 CC trên 8 cụm (k8), cho sẵn theo bản đồ | J1 giải bài chọn CC (mục 335), số CC là một phần lời giải | chốt |
 | Kênh A2G, G2G | A2G hai đoạn + suy hao môi trường cố định, Rician K = 2; G2G 3GPP UMi NLoS | làm phức tạp dần theo từng bước (mục 335): LoS phụ thuộc góc ngẩng, che khuất tương quan, fading tương quan, cấu trúc phố hay địa hình cho G2G (mục 9; việc K1) | chốt (hướng), đề xuất (thứ tự bước) |
-| UAV cánh bằng | 1 chiếc, 25–50 m/s, H = 100 m, ρ = 63,7 m | vẫn 1 chiếc, giữ động học; thời gian bay tối đa một chuyến và điểm cất hạ cánh còn mở | chốt (1 UAV) |
-| Số truy vấn trong vòng đời mạng | 1 | nhiều; dùng để chia chi phí pha 0 | chốt (nhiều), mở (bao nhiêu) |
+| UAV cánh bằng | 1 chiếc, 25–50 m/s, H = 100 m, ρ = 63,7 m | 1 chiếc VTOL, giữ động học, bay 100 m so với mặt đất, cất cánh từ đội cứu nạn cứu hộ, sức bền 1–3 h (mục 22) | chốt |
+| Số truy vấn trong vòng đời mạng | 1 | vài chục tới khoảng 150 báo cáo mất tích mỗi năm mỗi quận, một phần cần UAV (mục 23) | chốt (ước lượng) |
 
 ## 5. Hệ quả của các lựa chọn đã chốt
 
-- Phủ đều ở quy mô vườn quốc gia buộc mật độ node thấp hơn nhiều. Mật độ quyết định số node mỗi cell, nên quyết định xác
-  suất nhận ở mức cell P_k và dung lượng giữa các cell. Có thể phải tăng R; R bị chặn bởi tầm G2G để CGW còn nối được.
+- (Cũ, đã thay bởi mục 338.) Ý ban đầu về vườn quốc gia mật độ thấp không còn dùng; kịch bản là đô thị hiện đại mật độ cao,
+  giới hạn giãn cách node do tầm G2G quyết định (mục 10).
 - Dữ liệu nằm ở AI node nên trước truy vấn đã có luồng nền từ node thường về AI node. Bài toán chọn CC (mục 3) có thêm
   ràng buộc phủ: mỗi node thường cách một AI node không quá h hop, và AI node có giới hạn bộ nhớ. Lập luận "bộ nhớ đầy
   thì dữ liệu bị ghi đè" đặt ở AI node.
@@ -86,26 +86,35 @@ ghi tham số của kịch bản mới và chỗ phải đổi.
   kích thước vùng đô thị và kênh có hợp với đô thị không (mục 332), pháp lý UAV đô thị và giãn cách node
   tối đa (mục 333). Đối chiếu ở mục 7–11.
 - h. Đã trả lời (mục 343): hướng 1 (node chỉ có 802.15.4) và hướng 4 (giữ dữ liệu tại chỗ). Lập luận ở mục 15.
-- i. (mục 342) Ai sở hữu và vận hành mạng, ai chạy pha 0, thiết bị của chủ khác nhau có tham gia không.
+- i. Đã trả lời (mục 364): mạng dùng chung kiểu Sidewalk, thành phố hoặc nhà cung cấp chạy pha 0.
 - j. Phần lớn đã trả lời (mục 344): không giới hạn thời gian, tìm tới khi thấy (chỉ bị chặn bởi năng lượng UAV); camera
   trả lời "thấy người trông giống mục tiêu". Cửa sổ mặc định 2 giờ (mục 345).
 - k. Đã trả lời (mục 347, 349): V1 và V4; pha 2 của bài kết thúc khi V1 xác nhận đúng lần thấy, V4 là bước sau (mục 17).
 - l. (mục 342) Vận hành UAV ở đô thị: điểm cất cánh, độ cao bay khi có nhà cao hơn 100–120 m, vùng cấm bay, sức bền.
-- m. (mục 342) Nguồn điện của node: cắm điện lưới hay pin; quyết định năng lượng có phải ràng buộc không. Đề xuất ở
-  mục 15: tỉ lệ node chạy pin là tham số, node chạy pin không chuyển tiếp.
+- m. Đã trả lời (mục 364): 45 % node trên nhà chạy pin (11–22 % tổng số node), không chuyển tiếp; năng lượng chỉ ràng buộc
+  ở node pin.
 - n. (mục 349) Trạm gốc ở đâu: trong đô thị (đồn công an, trạm cứu hoả) hay ngoài rìa như bản đồ k8 (cách cell gần nhất
   1 km); quyết định quãng bay của cả hai pha.
 - o. Đã trả lời (mục 350–358): bản đồ thật từ OSM, 12 khu, bộ đề xuất bốn khu; quy tắc đặt node, cột đèn theo nhu cầu, node lá
   (mục 18–21, việc K14).
 - p. Mạng thay đổi theo thời gian: thử nghiệm và đề xuất ở mục 23 (mục 359).
-- q. (mục 349) Phạm vi: nhiều sự cố cùng lúc, node gian lận hay báo sai có thuộc J1 không (đề xuất: ngoài phạm vi, nêu ở
-  phần giới hạn).
-- r. (mục 363) Đánh thức: node chạy pin ngủ phần lớn thời gian, sự cố đến bất ngờ; node phải thức đúng lúc UAV bay qua và lúc
+- q. Đã trả lời (mục 364): nhiều sự cố cùng lúc và node gian lận để ngoài J1, nêu ở phần giới hạn.
+- r. Đã trả lời (mục 367, mục 25). Ghi chú gốc: đánh thức: node chạy pin ngủ phần lớn thời gian, sự cố đến bất ngờ; node phải thức đúng lúc UAV bay qua và lúc
   River chạy. Đề cương ND0 đã nêu cơ chế đánh thức theo lịch bay do trạm gốc phát.
-- s. (mục 363) Nhiễu 2,4 GHz ở đô thị: WiFi, Bluetooth, chính radio điều khiển của UAV (ghi chú `papers/dargie2021-lqe.md`: PRR theo
+- s. Đã trả lời (mục 365, việc K1d, mục 24). Ghi chú gốc: nhiễu 2,4 GHz ở đô thị: WiFi, Bluetooth, chính radio điều khiển của UAV (ghi chú `papers/dargie2021-lqe.md`: PRR theo
   kênh 0,13–1,0). Mô hình hiện không có nhiễu ngoài.
 - t. (mục 363) Vị trí node: trạm gốc cần toạ độ node để lập kế hoạch và chọn điểm lơ lửng V1; lấy từ địa chỉ lắp đặt, GPS hay
   định vị trong mạng, và sai số bao nhiêu.
+- u. Đã trả lời (mục 371): truy vấn là ảnh, Q = 4 041, không dùng vector (mục 27). Ghi chú gốc: nội dung và cỡ truy vấn: truy vấn là ảnh (400 KB, Q = 4 041 gói) hay vector đặc trưng (vài chục KB); ảnh cần khi
+  thiết bị chạy mô hình khác nhau, vector cần khi mọi AI node dùng chung mô hình. Truy vấn chứa ảnh của người cần tìm, nên có
+  cần mã hoá để chỉ AI node đọc được, và cần ký để node biết truy vấn thật do trạm gốc phát.
+- v. (mục 369) Giấy phép bay: bay công vụ vẫn phải xin phép; nếu xin theo từng lần thì thời gian chờ có thể lớn hơn cả nhiệm
+  vụ. Đề xuất giả định đội cứu nạn có giấy phép thường trực cho vùng của mình.
+- w. Đã trả lời (mục 370): bỏ camera hành trình, chỉ xét thiết bị cố định. Ghi chú gốc: thiết bị di động: camera hành trình, điện thoại (đề cương mục 2.1 có nhắc) có thuộc mạng không; đề xuất chỉ xét
+  thiết bị cố định.
+- x. Đã trả lời (mục 370): thời tiết đưa vào làm cận trên (kịch bản xấu nhất về gió, mưa cho thời gian nhiệm vụ). Ghi chú gốc: ban đêm và thời tiết: camera hồng ngoại ban đêm làm đối sánh kém; mưa và gió ảnh hưởng UAV (đã có thí nghiệm gió
+  WND); có cần xét không.
+- y. Đã trả lời (mục 371): node thường gửi ảnh cắt người (D2), không gửi vector; D0 giữ làm đối chứng (mục 28).
 
 ## 7. Đối chiếu với triển khai thật (2026-11-17, tra nhanh trên web, số của nhà sản xuất chưa kiểm độc lập)
 
@@ -209,6 +218,11 @@ khoảng 2–5 tuỳ hình dạng phố [web]. Các chỗ chưa khớp:
   `papers/liu2013-greenorbs.md`]: node SmartSantander gắn cột đèn dùng hai module XBee-Pro 2,4 GHz, node dồn dày nhất ở
   vùng trung tâm khoảng 1 km² (tr. 10); ở GreenOrbs dưới 10 % số node gánh 80 % lưu lượng (tr. 8), cùng loại với nút cổ
   chai ở cell Bank mà trace River cho thấy.
+
+![Xác suất nhận gói theo khoảng cách ngang, bốn chế độ kênh A2G](draft-v1/figs/nd1-channel-p-of-d-model-vs-ns3.png)
+
+*Hình 9.1. Xác suất node nhận được một gói A2G theo khoảng cách ngang (0–1,5 km, độ cao 100 m), bốn chế độ từ R50 = 1016 m
+(phải nhất) tới 99 m; chấm đo trên lượt bay ns-3, đường là mô hình.*
 
 ## 10. Mật độ node và lưới cell G2G (2026-11-17, mục 333)
 
@@ -331,6 +345,12 @@ CHORD/LM-Tour + River cho tập K đã chọn, đo T\* bằng ns-3. Bài chọn 
 hình suy ra theo bậc thiết bị ở `research_notes/l1-edge-recognition/edge_devices.md`), lượng ảnh mỗi camera trong cửa sổ
 W và chính sách giữ/bỏ (mục 14), giá trị H. Đánh đổi số critical cell làm thành việc kỹ thuật K9 (mục 338).
 
+![Thời gian tới khi xác nhận đúng theo số AI cell](figures/k9-time-vs-ai-cells.png)
+
+*Hình 13.1. Kết quả thử đánh đổi ở K9 (20 người/h, R50 = 99 m, một seed): thời gian từ cất cánh tới khi xác nhận đúng AI
+cell theo số AI cell; xám là lúc AI cell cuối nhận đủ truy vấn (rỗng là cận dưới), xanh là báo nhầm 0,1 mỗi AI cell, đỏ là
+2,4 lần báo nhầm cho cả hệ thống; trái một vector mục tiêu, phải ba.*
+
 ## 14. Bộ nhớ node và chính sách giữ/bỏ dữ liệu (2026-11-18, mục 338)
 
 **Đã có trong repo** [`research_notes/l1-edge-recognition/edge_devices.md`, ngày 2026-10-15]:
@@ -388,6 +408,10 @@ riêng tư (hướng 4). Kịch bản là khu đô thị nhiều chuông cửa, 
   nói rõ căn cứ (tình huống khẩn cấp, chủ thiết bị đồng ý khi tham gia).
 - Câu i có hướng trả lời: chủ thiết bị tham gia một mạng dùng chung kiểu Sidewalk, một bên vận hành (thành phố hay nhà cung
   cấp) chạy pha 0.
+
+
+Chốt (mục 376): giữ D3, vector đặc trưng được rời camera để tới AI node trong mạng mặt đất; ra khỏi mạng (tới trạm gốc) vẫn
+chỉ có điểm số. Hướng 4 hiểu là dữ liệu không rời mạng, khớp với mục 29.
 
 ## 16. Cửa sổ truy vấn, kiểu trả lời của camera, giới hạn thời gian (2026-11-18, mục 344)
 
@@ -522,6 +546,11 @@ Nhận xét:
 9 m), nên "vùng cao" ở đây là vùng nhà cao tầng; lớp độ cao 30 m nhiễu (đánh dấu cả mặt hồ) nên không vẽ. OSM thiếu nhiều
 nhà thấp tầng và chiều cao, nên vùng cao tầng chỉ gồm các toà đã có dữ liệu.
 
+![Quận Hoàng Mai: hồ, vùng cao tầng, vùng cấm bay ước theo OSM](figures/map-hoangmai-labelled.png)
+
+*Hình 18.1. Quận Hoàng Mai: hồ và sông xanh dương, vùng cao tầng đỏ nhạt (nhà từ 60 m nới 100 m), cấm bay ước theo OSM tím
+gạch chéo, nhà xám tới nâu đỏ theo chiều cao.*
+
 ## 19. Vùng cấm bay (2026-11-19, mục 353)
 
 **Quy định** [web]: Bộ Quốc phòng công bố cổng tra cứu khu vực cấm bay, hạn chế bay tại cambay.mod.gov.vn từ 15/6/2025, theo
@@ -604,6 +633,15 @@ Nhận xét:
   cho phép đường trong cell mượn cell kề, giảm R, hoặc thêm node chuyển tiếp ở cột đèn dọc phố. Mô hình 15 dB mỗi toà là thô,
   cần hiệu chỉnh ở K1c.
 
+![Lưới cell ở Hoàng Mai, kênh có tường](figures/cells-hoangmai-walls.png)
+
+*Hình 20.1. Hoàng Mai, kênh có tường: cell xanh lá là liên thông, cam là đứt bên trong cell, trắng là cell đất không có node
+cắm điện, xanh dương là nước. Lỗ hổng chủ yếu là hồ.*
+
+![Lưới cell ở Downtown Core, kênh có tường](figures/cells-sg-downtown-walls.png)
+
+*Hình 20.2. Downtown Core, kênh có tường, cùng màu: khu nhà dày đặc, 38 % cell đứt bên trong.*
+
 ## 21. Thêm node chuyển tiếp trên cột đèn (2026-11-19, mục 357)
 
 Thêm node cắm điện trên cột đèn mỗi 35 m dọc phố, cách mép đường 3 m, chồng lên các thiết bị đã có; hai cách đặt: chỉ ở các
@@ -635,6 +673,11 @@ Nhận xét:
 - Đặt cột ở mọi phố đôi khi làm tăng số cell đứt (Punggol 15 % lên 18 %): cột trên lối đi bộ trong khu nhà cũng có thể bị lạc.
 - Chốt (mục 358), đưa vào K14: thêm lớp node chuyển tiếp trên cột đèn, đặt theo nhu cầu ở pha 0; node trên nhà không với tới nhóm chính
   của cell thì làm node lá.
+
+![Lưới cell ở Downtown Core, kênh có tường, thêm cột đèn ở cell cần](figures/cells-sg-downtown-walls-poles-needed.png)
+
+*Hình 21.1. Downtown Core như Hình 20.2, thêm node chuyển tiếp trên cột đèn mỗi 35 m ở cell cần: cell đứt giảm còn 29 %, phần
+còn lại chủ yếu là vài node trên nhà bị lạc (làm node lá).*
 
 ## 22. Trạm gốc, điểm cất cánh, độ cao bay (2026-11-19, mục 358; chốt ở mục 359)
 
@@ -698,3 +741,318 @@ nếu đúng node CL hay node gateway vắng thì kế hoạch River tính từ 
 - Trước mỗi nhiệm vụ: điểm danh nhanh trong cell, chọn lại CL và gateway nếu node cũ vắng, rồi trạm gốc phát kế hoạch; mỗi cạnh
   giữ một cặp gateway dự phòng.
 - Trong mô phỏng: tỉ lệ thiết bị vắng là tham số (0, 10, 20 %); chi phí điểm danh và phát kế hoạch tính vào thời gian nhiệm vụ.
+
+## 24. Nhiễu 2,4 GHz ở đô thị (2026-11-20, mục 364; chốt ở mục 365, việc K1d)
+
+**Lịch kênh hiện tại trùng WiFi.** Kênh 802.15.4 số k ở 2405 + 5(k − 11) MHz, rộng 2 MHz; WiFi kênh 1, 6, 11 rộng khoảng 22 MHz
+quanh 2412, 2437, 2462 MHz, nên chồng lên kênh 802.15.4 số 11–14, 16–19 và 21–24. Chỉ bốn kênh 15, 20, 25, 26 nằm ngoài WiFi
+1/6/11; với cách đặt WiFi 1/5/9/13 kiểu châu Âu là 15, 16, 21, 22 [web: ICEST 2019; ghi chú ứng dụng]. Mô phỏng hiện dùng kênh
+11 cho lượt bay (`coop-pass.cc`, `kChannel = 11`, chồng WiFi 1), kênh 11–17 cho 7 màu cell và 18–26 cho cặp gateway
+(`coop2-river.cc`), tức phần lớn nằm dưới WiFi; mô hình chưa có nhiễu ngoài.
+
+**Số đo đã có** [web, chưa đọc toàn văn; repo ghi ở chỗ có]:
+- WiFi chủ yếu làm hỏng phần đầu (header) của khung 802.15.4 nên mất cả khung; thêm header và mã Reed–Solomon (BuzzBuzz) tăng
+  tỉ lệ giao 70 % trên testbed (Liang, Priyantha, Liu, Terzis, SenSys 2010).
+- Môi trường vô tuyến trong căn hộ đông và biến động hơn văn phòng nhiều (Sha và cộng sự, FIU, đo 16 kênh ở 10 căn hộ, IWQoS
+  2011 và IEEE TNSM 2013).
+- Đo 24 h ở một văn phòng: kênh 15, 20, 25, 26 giao 96–99,8 % gói, kênh 16–18 còn 80–91 % (blog cá nhân, không trích).
+- Radio điều khiển của chính drone gây nhiễu: PRR 0,13–1,0 theo kênh [repo: `papers/dargie2021-lqe.md`]; Nekrasov 2019
+  điều khiển drone ở 5,8 GHz để tránh [repo: `papers/nekrasov2019-aerial154.md`].
+- Chưa tìm thấy số đo phần trăm thời gian bận của WiFi ngoài phố đô thị; báo cáo Ofcom (ARMMS 2014) và Hà Lan (2017) chỉ nói
+  2,4 GHz nghẽn, trung tâm thương mại tệ nhất.
+
+**Đề xuất cho mô hình:**
+- Lượt bay chuyển sang kênh sạch (26), vì gói A2G mất là phần River phải bù.
+- Ba kênh sạch còn lại dành cho các môi trường bận nhất (cell Bank và cell trung chuyển dọc River, theo trace mục 9 của bản
+  thảo); các cell và cặp gateway khác chấp nhận chung kênh với WiFi.
+- Thêm mô hình nhiễu: mỗi kênh trùng WiFi có độ bận u (phần thời gian WiFi phát) theo cell; khi bận, CSMA lùi lại và khung đang
+  phát hỏng với xác suất u; mất gói theo cụm (hai trạng thái tốt/xấu). Quét u = 0, 0,2, 0,5.
+- UAV điều khiển ở băng khác 2,4 GHz (900 MHz hoặc 5,8 GHz).
+- Phương án xa hơn: 802.15.4 băng dưới 1 GHz tránh hẳn WiFi, nhưng Thread và thiết bị nhà thông minh hiện ở 2,4 GHz.
+
+## 25. Đánh thức và đồng bộ (2026-11-20, mục 365; chốt ở mục 367)
+
+**Ai phải thức.** Node chuyển tiếp (cột đèn, thiết bị dọc phố, thiết bị trên nhà cắm điện) cắm điện nên luôn bật radio, không cần
+đánh thức. Node chạy pin (11–22 %) là node lá: không chuyển tiếp, không bao giờ là AI node, nên không cần truy vấn. Đề xuất: node
+pin không tham gia pha 1, chỉ nghe lượt bay nếu tình cờ đang thức; xác suất nhận ở mức cell P_k tính trên node cắm điện. Vấn đề
+"đánh thức" vì vậy thu về chuyện chỉnh kênh đúng lúc của node cắm điện.
+
+**Chỉnh kênh đúng lúc.** Lúc rảnh, node cắm điện nghe trên kênh cell của mình; lượt bay phát trên kênh 26 (K1d). Mỗi cell phải
+chuyển sang kênh 26 trong cửa sổ UAV bay qua. Cửa sổ ngắn: UAV bay 25–50 m/s, tầm nhận ở đô thị dày khoảng 200 m, nên một cell
+gần đường bay nghe được khoảng 10–15 s; cả cụm (khoảng 1,6 km) khoảng 1 phút.
+
+**Đề xuất: kế hoạch tính sẵn, nhiệm vụ chỉ cần một bản tin bắt đầu.**
+- Tập critical cell, tour và kế hoạch River chỉ phụ thuộc bản đồ và tập critical cell, không phụ thuộc truy vấn, nên trạm gốc tính
+  sẵn ở pha 0 (cập nhật mỗi đêm khi mạng thay đổi, mục 23) và phát xuống mọi cell trước.
+- Khi có sự cố, trạm gốc chỉ phát qua LoRa một bản tin vài byte (mã nhiệm vụ, giờ cất cánh, mã kế hoạch); một khung SF7 khoảng
+  0,35 s. CH truyền tiếp trong cụm qua 802.15.4, khoảng 30 chặng node, dưới 1 s. Mỗi cell tự tính cửa sổ chuyển kênh từ kế
+  hoạch và giờ cất cánh.
+- Đồng bộ đồng hồ: thạch anh thường lệch cỡ vài chục ppm, tức vài giây mỗi ngày; đồng bộ lại mỗi đêm cùng lúc cập nhật kế hoạch,
+  và bản tin bắt đầu mang giờ của trạm gốc, nên sai số còn cỡ dưới 1 s. Cửa sổ mở rộng thêm vài giây mỗi phía.
+- Nếu UAV lệch kế hoạch (gió, đổi đường), UAV phát kèm vị trí trong header gói (đã có trong takeover); cell nghe thấy gói thì
+  giữ kênh 26 tới khi hết nghe.
+
+**Hệ quả cho mô hình:** thời gian từ lúc có sự cố tới khi cất cánh gồm một khung LoRa và vài giây phát trong cụm; P_k giảm vì bỏ
+node pin (khoảng 78–89 % node còn lại); không cần mô hình ngủ/thức cho node chuyển tiếp.
+
+## 26. Vị trí node (2026-11-20, mục 367, đề xuất để bàn)
+
+**Vị trí dùng vào đâu.** Trạm gốc cần toạ độ node để: gán node vào cell, chọn CL và cặp gateway, lập kế hoạch River và tour, xét LoS
+A2G và G2G với nhà (K1a, K1c), và chọn điểm lơ lửng của V1.
+
+**Lấy vị trí từ đâu, sai số bao nhiêu:**
+- Cột đèn: thành phố có bản đồ hạ tầng, sai số dưới vài mét (giả định, chưa có nguồn).
+- Thiết bị nhà dân: ghi lúc thiết bị tham gia mạng, bằng GPS điện thoại của người cài đặt hoặc địa chỉ lắp đặt. GPS điện thoại
+  ngoài trời thoáng sai trong bán kính khoảng 4,9 m (GPS.gov, dẫn ION); gần nhà cao tầng và trong nhà kém hơn nhiều, chưa có số
+  đo trích được cho phố đô thị. Địa chỉ chỉ cho tới toà nhà, không cho tầng.
+- Định vị trong mạng theo cường độ tín hiệu: sai hàng chục mét, chỉ dùng để kiểm chéo.
+
+**Sai số ảnh hưởng thế nào** (tính mới, Monte Carlo trên lưới lục giác R = 100 m): node bị gán sang cell khác 2,8 % khi sai số
+3 m, 4,6 % khi 5 m, 9,0 % khi 10 m, 17,7 % khi 20 m, 26,2 % khi 30 m. Với V1, lệch ngang 20 m làm xác suất gói qua ở khu cao tầng
+từ 0,87 xuống 0,73 (mục 17).
+
+**Đề xuất:**
+- Gán cell theo kết nối thật ở pha 0 (node thuộc cell của CL mà nó nối được tốt nhất), toạ độ chỉ để khởi tạo; như vậy sai số vị
+  trí không làm sai cấu trúc cell.
+- Mỗi thiết bị kèm một nhãn vị trí thô: ngoài trời (cột, mặt tiền) hay trong nhà, và tầng nếu có; thiết bị trong nhà bị trừ suy hao
+  xuyên tường khoảng 15–20 dB với A2G (như biến thể indoor của `a2g_radius.py`).
+- Trong mô phỏng: kế hoạch dùng toạ độ có nhiễu σ = 10 m (cột đèn 2 m), kênh dùng toạ độ thật, để đo độ bền của kế hoạch.
+- V1: UAV lơ lửng theo toạ độ ghi sẵn rồi dò quanh theo cường độ tín hiệu nếu gói hỏng nhiều.
+
+Nguồn: GPS.gov, "GPS Accuracy", https://www.gps.gov/systems/gps/performance/accuracy/ (trang ghi không cập nhật từ 2/2025).
+
+## 27. Nội dung và cỡ truy vấn (2026-11-20, mục 370; chốt ở mục 371)
+
+**Hai cách đóng gói truy vấn.**
+- Ảnh (hiện tại): L ảnh tham chiếu, khoảng 400 KB, Q = 4 041 gói. Cần khi các AI node chạy mô hình khác nhau, vì mỗi node tự trích
+  đặc trưng từ ảnh bằng mô hình của mình (`l1_mission.py`: `match_time` gồm giải mã và trích đặc trưng L ảnh).
+- Vector đặc trưng: mỗi ảnh thành một vector (ResNet-50 2 048 chiều fp16 khoảng 4 KB; mô hình re-ID nhỏ 512 chiều khoảng
+  0,5–1 KB); 12–24 vector khoảng 10–100 KB, Q khoảng 100–1 000 gói. Chỉ dùng được khi mọi AI node chung một mô hình và chung thang
+  điểm; `paper/L1-MODEL-vi.md` hiện đã giả định đúng như vậy.
+
+**Cỡ truy vấn quyết định lợi thế của hợp tác** (tính mới, bản đồ k8; chặn phủ tỉ lệ với Q, chặn có tính quãng bay chạy lại
+`bound_nc.py` với Q nhỏ; log `logs/2026-11-20_0900-query-size/`):
+
+| Q (gói) | Chặn dưới không hợp tác ở r200 (s) | ở r100 (s) | CHORD bay xong / sẵn sàng trung bình (s) |
+|---|---|---|---|
+| 4 041 (ảnh) | 842 | 1 283 | 784 / 436–452 |
+| 1 000 | 208 | 318 | như trên |
+| 400 | 146 | 201 | như trên |
+
+Với ảnh, chặn dưới của mọi phương án không hợp tác vượt thời điểm CHORD bay xong ở r100; với vector, chặn dưới chỉ còn 150–320 s,
+thấp hơn nhiều so với thời gian bay, nên lý thuyết không còn chứng nhận lợi thế của hợp tác. Khi Q nhỏ, cả hai cách đều bị quãng
+bay chi phối, và đi gần từng critical cell (DTSP-N) có thể nhanh ngang đi một lượt qua cụm rồi thêm River.
+
+**Lý do giữ truy vấn lớn có thể bảo vệ:**
+- Mạng dùng chung nhiều chủ (kiểu Sidewalk) không ép được mọi thiết bị chạy cùng một mô hình và cùng phiên bản; ảnh là định dạng
+  chung duy nhất.
+- Nhiều khía cạnh và nhiều góc nhìn (mặt, dáng, quần áo; trước, sau, bên) làm tăng xác suất bắt được (mục 16: 1 ảnh 0,54, 3 ảnh
+  0,90 ở cửa sổ 2 giờ).
+- Pha 2 vẫn cần bộ tham chiếu đầy đủ R (1 MB).
+
+**Bảo mật truy vấn:** dù là ảnh hay vector, truy vấn mang dữ liệu sinh trắc của người cần tìm; đề xuất mã hoá cho riêng AI node
+và ký bằng khoá của trạm gốc để node chỉ nhận truy vấn thật (chi phí vài chục byte, không đổi Q đáng kể).
+
+**Đề xuất cho bài:** giữ truy vấn ảnh làm trường hợp chính với lý do mô hình khác nhau; báo kết quả theo Q (400, 1 000, 4 041) để
+chỉ rõ từ cỡ truy vấn nào hợp tác bắt đầu có lợi.
+
+**Chốt (mục 371).** Truy vấn là ảnh (Q = 4 041), không dùng vector. Kết quả vẫn báo thêm theo Q = 400 và 1 000 làm độ nhạy.
+
+## 28. Hệ quả của truy vấn ảnh: node thường gửi ảnh cắt người về AI node (2026-11-20, mục 371)
+
+Không dùng vector thì node thường gửi ảnh cắt người (D2) về AI node, AI node trích đặc trưng khi ảnh tới (mục 16). Giới hạn là luồng
+nền G2G: một AI node nhận được khoảng 1–2 KB/s nếu luồng nền chỉ chiếm 10–20 % thời gian (PLAN-K9-DATA mục 2). Tính mới:
+
+| Luồng nền cho phép | Ảnh cắt | Người/h một AI node nhận | Số camera ở 30 người/h | 60 người/h | 200 người/h |
+|---|---|---|---|---|---|
+| 1 KB/s | 5 KB | 720 | 24 | 12 | 3–4 |
+| 1 KB/s | 15 KB | 240 | 8 | 4 | 1 |
+| 2 KB/s | 5 KB | 1 440 | 48 | 24 | 7 |
+| 2 KB/s | 15 KB | 480 | 16 | 8 | 2 |
+
+Nhận xét:
+- Mỗi AI node chỉ phục vụ được vài tới vài chục camera, tuỳ số người qua camera và cỡ ảnh cắt; phố đông (hàng trăm người/h) gần
+  như mỗi camera cần một AI node. Lưu lượng người qua camera (K12) vì vậy quyết định số critical cell.
+- Đây đúng là đánh đổi của K9: nhiều critical cell thì luồng nền nhẹ nhưng giao truy vấn nặng hơn. Ràng buộc luồng nền là ràng
+  buộc chính của bài chọn critical cell, mạnh hơn bộ nhớ.
+- Cách giảm: ảnh cắt nhỏ (2–5 KB, vẫn là ảnh), chỉ gửi ảnh cắt tốt nhất mỗi người, ưu tiên camera hướng ra phố đông cho AI node gần.
+  Kéo ảnh cắt theo yêu cầu sau khi truy vấn tới thì quá chậm (cửa sổ 2 giờ có hàng nghìn tới hàng chục nghìn ảnh).
+- D0 (AI node chỉ tìm trong camera của chính nó) giữ làm đối chứng.
+
+## 29. Node cùng mô hình gửi vector về AI node, truy vấn vẫn là ảnh (2026-11-20, mục 373, đề xuất để bàn)
+
+Ý của người dùng: ở bước luồng nền, các node chạy cùng một mô hình gửi vector đặc trưng về AI node thay vì ảnh cắt; truy vấn vẫn là
+ảnh. Hai quyết định không mâu thuẫn: truy vấn là ảnh để mọi AI node, dù chạy mô hình nào, tự trích đặc trưng; khi truy vấn tới, AI
+node trích vector từ L ảnh bằng đúng mô hình của nhóm node gửi về rồi so với các vector đã nhận.
+
+**Luồng nền nhẹ đi bao nhiêu** (tính mới, luồng nền 1 KB/s mỗi AI node):
+
+| Dữ liệu mỗi người | Cỡ | Người/h một AI node nhận | Camera ở 60 người/h | 200 người/h |
+|---|---|---|---|---|
+| Ảnh cắt | 15 KB | 240 | 4 | 1 |
+| Ảnh cắt nhỏ | 5 KB | 720 | 12 | 4 |
+| Vector 2 048 chiều fp16 (ResNet-50) + 20 B | 4,1 KB | 874 | 15 | 4 |
+| Vector 512 chiều INT8 (re-ID nhẹ) + 20 B | 0,5 KB | 6 800 | 113 | 34 |
+
+Lợi ích chỉ lớn với mô hình nhẹ (vector 512 chiều INT8 nhẹ hơn ảnh cắt 10–30 lần); vector ResNet-50 2 048 chiều fp16 gần bằng ảnh
+cắt nhỏ.
+
+**Điều kiện và chi phí:**
+- Node thường phải tự phát hiện người và trích vector: cần chip có NPU cỡ 1 TOPS; MCU như ESP32-S3 chỉ trích được khoảng 3 khuôn
+  mặt mỗi giây và không chạy được re-ID toàn thân [repo: `research_notes/l1-edge-recognition/edge_devices.md`]. Node yếu vẫn gửi
+  ảnh cắt.
+- "Cùng mô hình" không cần áp lên cả mạng: AI node giữ mô hình của từng nhóm node nó phục vụ, khi truy vấn tới thì trích vector từ
+  L ảnh bằng từng mô hình (K mô hình × L ảnh, vài giây). Ràng buộc chỉ là AI node phải có mô hình của nhóm.
+- Điểm của các mô hình khác nhau không cùng thang, nên mỗi AI node chuẩn hoá điểm theo từng mô hình trước khi báo về (đã nêu trong
+  `paper/L1-MODEL-vi.md`).
+- Vector vẫn là dữ liệu sinh trắc nhưng không rời mạng (chỉ từ node tới AI node), hợp với hướng giữ dữ liệu tại chỗ.
+
+**Đề xuất:** phương án lai: node có NPU gửi vector của mô hình nhẹ (D3), node yếu gửi ảnh cắt nhỏ (D2); bài chọn critical cell
+dùng tải thực của từng node. Tỉ lệ node có NPU là tham số (khảo sát ở K12).
+
+**Có bao nhiêu loại mô hình và vector khác nhau** (mục 374):
+- Không có con số chung; trong một mạng cụ thể thì biết được: mỗi thiết bị khai mã mô hình và phiên bản khi tham gia mạng (pha 0),
+  nên trạm gốc biết mỗi AI node phải giữ những mô hình nào (K mô hình).
+- Mức độ đa dạng [web]: NIST FRTE 1:1 đã nhận 1 385 thuật toán khuôn mặt từ 426 nhà phát triển kể từ 2017, riêng 2025 là 123 thuật
+  toán từ 94 nhà phát triển (trang FRTE 1:1, cập nhật 3/2026). NIST chuẩn hoá cách gọi thuật toán, không chuẩn hoá mẫu đặc trưng;
+  theo hiểu biết của tôi (chưa kiểm trong nguồn), mẫu của thuật toán này không so được với mẫu của thuật toán khác.
+- Thị trường camera tập trung [web, số của công ty nghiên cứu thị trường, khác nhau theo nguồn]: Hikvision và Dahua khoảng một phần
+  ba doanh thu toàn cầu (Memoori); ba hãng đầu (Hikvision, Dahua, Axis) khoảng 49 % theo một báo cáo khác. Một khu phố vì vậy có
+  thể chỉ có vài nhóm hãng, nhưng mỗi hãng có nhiều dòng sản phẩm và phiên bản phần mềm.
+- Chuẩn mô tả chung: MPEG CDVA (ISO/IEC 15938-15:2019) chuẩn hoá đặc trưng sâu nhỏ gọn cho tìm đối tượng trong video, nhưng loại trừ
+  nhận dạng người và khuôn mặt [web]; tức chưa có chuẩn vector người dùng chung.
+- Mô hình đã có trong repo [`edge_devices.md`]: ArcFace-MobileFaceNet (2,04 triệu tham số) và ArcFace-R50 (31 triệu) cho khuôn mặt;
+  re-ID RepVGG-A0 vector 512 và 2 048 chiều (Hailo); ResNet-50 2 048 chiều; CLIP ViT-B/32. AI node giữ vài mô hình cỡ vài MB tới vài
+  chục MB là được.
+- Đề xuất: số mô hình mỗi AI node K là tham số (1, 3, 5); chi phí khi truy vấn tới là K × L lần trích đặc trưng, vài giây.
+
+Nguồn: NIST FRTE 1:1, https://pages.nist.gov/frvt/html/frvt11.html; Memoori, https://memoori.com/video-surveillance-market-leaders-2026/;
+ISO/IEC 15938-15:2019, https://webstore.iec.ch/publication/65535.
+
+## 30. Giấy phép bay (2026-11-20, mục 377, đề xuất để bàn)
+
+- Việt Nam [web]: Nghị định 288/2025/NĐ-CP (đã sửa bởi Nghị định 14/2026/NĐ-CP): trong khu vực cấm bay chỉ cấp phép cho nhiệm vụ công
+  vụ (quốc phòng, an ninh, an toàn bay, trật tự xã hội); hồ sơ nộp tới cơ quan của Bộ Quốc phòng. Chưa tìm thấy thời hạn giải quyết
+  cấp phép bay, cũng chưa thấy thủ tục riêng cho cứu nạn khẩn cấp; thủ tục cấp lại giấy phép người điều khiển là 7 ngày làm việc.
+- EU [web]: Quy định (EU) 2018/1139, Điều 2, loại trừ khỏi phạm vi các tàu bay (cả loại điều khiển từ xa) dùng cho quân sự, hải
+  quan, cảnh sát, tìm kiếm cứu nạn, chữa cháy, biên phòng và hoạt động tương tự; các nước tự quản lý và phải bảo đảm mục tiêu an
+  toàn. Tức UAV của lực lượng cứu nạn là hoạt động nhà nước, không đi theo thủ tục của drone dân sự.
+- Đề xuất: giả định đội cứu nạn có giấy phép thường trực (hoặc là hoạt động nhà nước) cho khu vực phụ trách, nên thời gian xin
+  phép không cộng vào thời gian nhiệm vụ; nêu rõ đây là giả định và nêu tiền lệ EU.
+
+Nguồn: Regulation (EU) 2018/1139 (Easy Access Rules, EASA),
+https://www.easa.europa.eu/document-library/easy-access-rules/online-publications/regulation-eu-20181139-european-parliament;
+LuatVietnam về thủ tục cấp phép bay theo Nghị định 288,
+https://luatvietnam.vn/hanh-chinh/thu-tuc-cap-phep-bay-doi-voi-may-bay-khong-nguoi-lai-tu-05-11-2025-the-nao-570-105247-article.html
+(nguồn thứ cấp; cần đối chiếu văn bản hợp nhất).
+
+## 31. Đối chiếu bối cảnh với các bài liên quan (2026-11-21, mục 379)
+
+Đọc phần mô hình hệ thống của các bài đã ghi chú trong repo (nhãn [GĐ], [TS]) và tra thêm vài bài trên web. Bảng: khía cạnh mà
+các bài mô tả, bài nào, và bối cảnh của ta đã có chưa.
+
+| Khía cạnh | Bài mô tả | Ta đã có |
+|---|---|---|
+| Vị trí node biết trước, phân bố | Zeng 2018 (biết trước), Miao 2020 (đều) [repo] | có (mục 20, 26) |
+| UAV: độ cao, tốc độ, bán kính quay ρ = v²/a_max | Zeng 2018, Pěnička 2019 [repo] | có |
+| Năng lượng UAV (mô hình công suất bay, không chỉ sức bền) | Hoseini 2021 (pin, khoảng 18 phút) [repo] | chỉ có sức bền 1–3 h |
+| Kênh: suy hao, fading, LoS theo góc, K Rician theo góc ngẩng | Zeng 2018, Al-Hourani 2014, Bensaoud 2025 [repo] | có, trừ K theo góc ngẩng |
+| Tệp, chia gói, mã hoá (RLNC), thời gian một gói | Zeng 2018 [repo] | có |
+| Mục tiêu có ngưỡng tin cậy: mọi đích giải được với xác suất ≥ P̄ | Zeng 2018 [repo] | có δ trong Định lý 2, chưa đưa vào mục tiêu |
+| Bỏ qua chi phí điều khiển | Stojanovic 2009 [repo] | ta tính chi phí điều khiển (điểm mạnh) |
+| Hạ tầng mất sau thảm hoạ, người cứu hộ di động | Oubbati 2023 [repo] | không chọn (mục 15) |
+| Sự kiện động làm lập lại kế hoạch giữa nhiệm vụ | Wang 2025 [repo] | chưa (kế hoạch pha 1 cố định) |
+| Lưu lượng có mức ưu tiên và hạn chót | Fahim 2023, Hoseini 2021 [repo] | chưa (mọi critical cell như nhau) |
+| Ký số để chống mã giả khi phát mã qua UAV; bay lại cho thiết bị bị sót | Sharma và Villanyi, IEEE OJCOMS 2024 [web] | ký số có (mục 27); bay lại chưa |
+| Tương quan không gian–thời gian giữa các camera để thu hẹp vùng tìm | ReXCam (Jain và cộng sự, arXiv 1811.01268) [web] | chưa |
+| Vị trí thấy lần cuối, hành vi người lạc, bản đồ xác suất theo thời gian | Koester (Lost Person Behavior); arXiv 2411.10148; MDPI Drones 9(9):628, 2025 [web] | chưa |
+| Phối hợp với đội tìm kiếm mặt đất | arXiv 2009.03976 [web] | chưa (V4 để sau) |
+
+**Khoảng trống đáng bàn** (theo mức ảnh hưởng tới bài toán):
+1. Thông tin trước về vị trí người cần tìm: nơi thấy lần cuối, thời gian đã trôi qua, hành vi di chuyển cho ra bản đồ xác suất.
+   Có thông tin này thì không phải mọi critical cell đều như nhau: mục tiêu có thể là cực tiểu thời gian kỳ vọng tới khi xác minh
+   đúng, có trọng số theo xác suất, thay cho min-max; pha 1 có thể giao trước cho vùng xác suất cao. Người dùng từng chọn max ở mục
+   13; câu này cần bàn lại khi có bản đồ xác suất.
+2. Tương quan giữa các camera: người đi qua camera này thì sau một khoảng sẽ tới camera kề; dùng để thu hẹp tập camera và khung
+   giờ cần tìm (ReXCam giảm tính toán 4,6–38 lần), và để nối các lần thấy thành đường đi.
+3. Ngưỡng tin cậy trong mục tiêu: "mọi critical cell nhận đủ với xác suất ≥ P̄" như Zeng 2018, thay vì chỉ trung bình.
+4. Lập lại kế hoạch khi có thông tin mới giữa nhiệm vụ (báo cáo đầu tiên đổi bản đồ xác suất), và bay lại cho cell bị sót.
+5. Mô hình năng lượng bay của UAV (công suất theo tốc độ), cần nếu ràng buộc sức bền bị chạm.
+6. K Rician theo góc ngẩng (đã nằm trong hướng K1a).
+
+Nguồn web: ReXCam, https://arxiv.org/abs/1811.01268v2; Sharma và Villanyi, IEEE OJCOMS 2024, doi:10.1109/ojcoms.2024.3368275;
+arXiv 2411.10148 (multi-UAV SAR với mô hình xác suất theo tác tử); MDPI Drones 9(9):628, 2025 (60 kịch bản SAR có bản đồ xác suất
+30 m); arXiv 2009.03976 (lập kế hoạch UAV có tính đội tìm kiếm mặt đất); Koester, Lost Person Behavior (sách, theo trích dẫn trong
+par.nsf.gov/servlets/purl/10302700).
+
+## 32. Thông tin trước về vị trí người cần tìm (2026-11-21, mục 380, đề xuất để bàn)
+
+**Số liệu** [web, nguồn gốc là nghiên cứu của Koester (dbS Productions), cần đối chiếu bản gốc]:
+- Người sa sút trí tuệ đi lạc: khoảng 89 % được tìm thấy trong vòng 1,2 km (1 dặm) quanh nơi thấy lần cuối.
+- Mọi người được tìm thấy trong 24 giờ đầu đều sống; quá 24 giờ chỉ 54 % còn sống.
+- Khoảng cách đường chim bay trung bình: người già sa sút trí tuệ khoảng 0,88 km, người già bình thường bị lạc khoảng 2,56 km
+  (Koester và Stooksbury 1995, qua nguồn thứ cấp).
+- Vòng 1,2 km rộng khoảng 4,5 km², chỉ bằng một phần nhỏ của một quận (Hoàng Mai 40 km²): thông tin trước tập trung mạnh.
+
+**Repo đã có sẵn khung xác suất:** mô hình pha 2 (`uav-l2/tools/l1_rank.py`) tính P(cell là cell thật) từ tiên nghiệm và các
+báo cáo, rồi cho đội 2 thăm theo P / (thời gian bay + xác minh); tiên nghiệm hiện đều cho mọi critical cell.
+
+**Đề xuất:**
+- Hai chế độ: có nơi thấy lần cuối (bản đồ xác suất) và không có (tiên nghiệm đều).
+- Bản đồ xác suất: tâm là nơi thấy lần cuối, nở theo thời gian đã trôi qua, chặn bởi tốc độ đi bộ, chỉ trên đất đi được (đường,
+  vỉa hè từ bản đồ OSM đã cắt), phân bố khoảng cách theo số của Koester cho từng nhóm người.
+- Mục tiêu: thời gian kỳ vọng tới khi xác minh đúng người, lấy kỳ vọng theo bản đồ xác suất; báo thêm trường hợp xấu nhất (max)
+  như đã chọn ở mục 13. Với tiên nghiệm đều, kỳ vọng là trung bình qua các cell, còn max vẫn là chỉ số an toàn.
+- Tập critical cell chọn ở pha 0 khi chưa biết sự cố, nên không đổi; thông tin trước chỉ đổi các quyết định lúc có sự cố: thứ tự
+  cụm trong tour (bản tin bắt đầu mang thêm thứ tự này, vài byte), thứ tự thăm ở pha 2 (đã có khung).
+- Cửa sổ truy vấn lấy theo thời gian từ lúc thấy lần cuối (cộng một khoảng dự phòng), thay cho 2 giờ cố định.
+- Giao truy vấn theo kiểu "càng sớm càng tốt" cho vùng xác suất cao; các cụm xác suất thấp xong sau vẫn được, vì mục tiêu kỳ vọng
+  không phạt nhiều.
+
+Nguồn: dbS Productions, "Lost Alzheimer's Subjects: Profiles and Statistics", https://www.dbs-sar.com/SAR_Research/response.pdf;
+dbS Productions, https://dbs-sar.com/SAR_Research/lost_alzheimer.htm; Koester, Lost Person Behavior (sách).
+
+**Khi không có ai thấy lần cuối** (mục 383). Thuật ngữ tìm kiếm cứu nạn phân biệt nơi thấy lần cuối (có người chứng kiến) và vị
+trí biết lần cuối (từ dấu vết: điện thoại, đồ vật, giao dịch). Đề xuất xếp thành bốn mức thông tin, mức nào cũng dùng chung khung
+xác suất của pha 2:
+- Có nơi thấy lần cuối và thời điểm: bản đồ tập trung như trên.
+- Chỉ biết nơi xuất phát và lúc liên lạc lần cuối (nhà, trường): vẫn là một tâm, nhưng thời gian trôi qua dài và không chắc, nên
+  vùng rộng hơn; thường gặp ở người già và trẻ đi lạc từ nhà.
+- Chỉ có vị trí thô, ví dụ trạm di động mà điện thoại bám vào (vài trăm mét tới vài km, cần cơ quan có thẩm quyền): một vùng thay
+  cho một điểm.
+- Không biết gì: tiên nghiệm đều trên cả quận; mục tiêu chính là trường hợp xấu nhất (max, như mục 13) và trung bình; cửa sổ truy
+  vấn đặt mặc định (2 giờ, quét tới 24 giờ).
+- Ở mọi mức, báo cáo đầu tiên từ mạng (camera có điểm cao) trở thành "nơi thấy lần cuối" mới: bản đồ cập nhật, pha 2 và phần còn
+  lại của pha 1 ưu tiên quanh đó (nối với khoảng trống 4, lập lại kế hoạch giữa nhiệm vụ).
+
+**Chốt (mục 384).** Bài hướng theo mức không biết gì: tiên nghiệm đều trên cả quận. Mục tiêu chính giữ trường hợp xấu nhất (max) như
+mục 13, báo kèm trung bình; cửa sổ truy vấn mặc định 2 giờ (quét 1–24 giờ). Ba mức có thông tin trước (nơi thấy lần cuối, nơi
+xuất phát, vị trí thô) để ở phần thảo luận hoặc mở rộng. Báo cáo đầu tiên từ mạng vẫn được dùng làm thông tin mới cho pha 2 và phần
+còn lại của nhiệm vụ.
+
+## 33. Ngưỡng tin cậy và lập lại kế hoạch giữa nhiệm vụ (2026-11-21, mục 385; chốt ở mục 387)
+
+**Ngưỡng tin cậy.** Kênh, MAC và lần thấy là ngẫu nhiên, nên thời gian nhiệm vụ là biến ngẫu nhiên. Các cách viết mục tiêu:
+- Ràng buộc xác suất cho từng đích: mỗi critical cell nhận đủ trước T với xác suất ≥ P̄ (cách của Zeng 2018 [repo]).
+- Ràng buộc chung: mọi critical cell nhận đủ trước T với xác suất ≥ P̄; đây là dạng 1 − δ của Định lý 2 trong bản thảo.
+- Phân vị: lấy phân vị P̄ (ví dụ 0,9) của T\* = max qua critical cell; tương đương ràng buộc chung.
+- Kỳ vọng của max; dễ đo nhưng không nói về đuôi.
+
+Đề xuất: mục tiêu là phân vị 0,9 của T\* (dạng ràng buộc chung, khớp 1 − δ của Định lý 2), báo kèm trung bình. Chi phí đo: phân vị
+0,9 cần nhiều lượt chạy (repo đặt quy tắc N ≥ 120 cho số định lượng [`uav-l2/docs/MISSION-vi.md`], còn các chiến dịch hiện có 5–10
+seed). Cách giảm: dựng phân bố thời gian sẵn sàng ở mức critical cell (mỗi lượt k8 có 45 critical cell) rồi suy phân vị của max,
+và chỉ chạy nhiều seed cho vài cấu hình chính.
+
+**Lập lại kế hoạch giữa nhiệm vụ.** Repo đã có pha 2 thích nghi [`uav-l2/tools/l1_rank.py`]: đội 2 cất cánh khi có báo cáo đầu tiên,
+chọn cell kế tiếp theo P(cell thật) / thời gian sau mỗi lần xác minh và mỗi báo cáo mới, có chế độ đổi đích giữa đường (-redir). Đề
+xuất:
+- Pha 1 giữ kế hoạch tính sẵn: tour và River không đổi khi có báo cáo (không có thông tin trước, và đội 1 là UAV riêng nên bay tiếp
+  không làm chậm đội 2).
+- Pha 2 thích nghi theo các chính sách đã có.
+- Nhiệm vụ kết thúc khi xác minh đúng người (mục 17), không chờ pha 1 xong mọi cụm.
+- Cell bị sót: critical cell chưa đủ truy vấn sau một hạn T_fb thì được vá, bằng đội 2 phát trực tiếp khi bay ngang (như baseline B6:
+  UAV cánh quay lơ lửng và unicast) hoặc bằng lượt bay thứ hai của đội 1 nếu còn pin.
+- Sự kiện khác đã có cách xử lý: UAV lệch đường (takeover, mục 25), node vắng (điểm danh, mục 23).
+
+**Chốt (mục 387).** Mục tiêu là phân vị 0,9 của T\* (báo kèm trung bình). Có cơ chế vá: critical cell chưa đủ truy vấn sau hạn T_fb
+được đội 2 phát trực tiếp khi bay ngang, hoặc đội 1 bay lượt thứ hai nếu còn pin; cần một baseline không vá để so (việc K15).

@@ -20,6 +20,7 @@
 | DLG | Lập kế hoạch so với khám phá: River vs kéo trực tiếp vs Deluge/Trickle | pass CHORD, k8-s1, r100, seed 1–5 | `logs/2026-10-30_1545-deluge-r100/` | trong log | `paper/SIM-REPORT-2026-10-31-vi.md` | §VI (1,9–2,5× frame) |
 | WND | Sai số quỹ đạo do gió | k8-s1, r100, σ 50/100/200 m, seed 1–3 | `logs/2026-10-31_0000-wind/` | trong log | `paper/SIM-REPORT-2026-10-31-vi.md` | §VI |
 | TKO | Takeover (dấu ranh giới) bù sai lệch đường bay | lặp lại bảng WND | `logs/2026-11-01_0600-takeover/` | trong log | `paper/SIM-REPORT-2026-11-01-takeover-vi.md` | §IV, §VI (112–118 s) |
+| K9 | Đặt AI node (critical cell): node thường gửi gì, cần bao nhiêu AI cell, tổng thời gian hai pha | k8-s1 (B1, B3 thêm k12, k16), kênh r100 và r200; ns-3 một seed (8 cấu hình, CAMP-BIN5) cho B4, còn lại mức mô hình | `logs/2026-11-18_1036-k9/` | `logs/2026-11-18_1036-k9/data/` | `paper/j1/PLAN-K9-DATA-vi.md`, `paper/j1/K9-PARAMS-vi.md` | bản thảo J1 `draft-v1` §VIII-F, Bảng VII, Hình 8–9 |
 
 ## Tham khảo và việc dở
 

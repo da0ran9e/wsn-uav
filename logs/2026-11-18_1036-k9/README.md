@@ -122,4 +122,67 @@ B0–B3.
   giữa các tập hẹp lại (rho100 hơn rho20 56 s thay vì 110 s) nhưng thứ tự giữ nguyên. Tỉ lệ thành công đổi chiều: tập ít cell
   được ngưỡng mỗi cell thấp hơn nên bắt mục tiêu tốt hơn (0,63 so với 0,58 ở E = 2,4). Như vậy tập ít AI cell thắng ở cả hai
   cách; phần chênh còn lại đến từ T1 và số lần thăm.
-- r200 và các ρ, k khác cùng xu hướng. Phần còn lại của B6 (ρ cao, bậc thiết bị, mật độ) chưa làm.
+- r200 và các ρ, k khác cùng xu hướng.
+
+## Giai đoạn 8 (B6, phần còn lại): ρ cao, mật độ, bậc thiết bị
+
+- ρ cao: `cc_select.py` trên k8 r100 với ρ = 400, 800, 1 500, 3 700 (lệnh `b6-high-rho.md`, kết quả `data/b6-high/`, 289 s). Ngân
+  sách 10 %: ρ = 400 cần 344 critical cell; từ ρ = 800 thì đặt AI node ở cả 617 cell vẫn không đủ, ρ lớn nhất khi mọi cell có AI
+  node là 640 người/h (ngân sách 20 %: 1 275). Phố thương mại (1 500) và giờ cao điểm Manhattan (3 700) vì vậy không khả thi với
+  D3 ở 30 % node là camera. T1 của các tập trên 70 critical cell lấy từ surrogate nên không tin được (B4).
+- Mật độ (`b6_sens.py`, lệnh `b6-density-devices.md`, kết quả `data/b6-density-devices.md`). Mọi tải ở B1, B3 và cỡ kho ở B5
+  tuyến tính theo ρ × tỉ lệ camera × mật độ, nên bản đồ 400 node/km² ở ρ tương đương bản đồ 816 ở ρ × 400 / 816. Tập chọn cho
+  ρ = 20 / 100 / 200 ở 816 chở được ρ = 41 / 204 / 408 ở 400 và 58 / 291 / 583 ở 280; ρ lớn nhất khi mọi cell có AI node là
+  1 306 (400) và 1 865 (280). Kiểm bằng cách lọc ngẫu nhiên node từng cell: tỉ số đúng tới 1–2 % với 24 cell, nhưng lệch tới
+  23 % ở 280 node/km² với 161 cell, vì cell bận nhất nặng thêm khi mỗi AI cell chỉ gom vài cell. Thời gian River đổi theo mật độ
+  thì cần bản đồ ns-3 của K10.
+- Bậc thiết bị: D3 đặt việc trích đặc trưng ở camera, AI node chỉ tìm vector, nên bậc thiết bị không đổi kết luận. Camera bận
+  1,5 % ở ρ = 200 và 28 % ở ρ = 3 700 với ESP32-S3 (trường hợp xấu nhất); các bậc khác dưới 10 %. Ở AI node, tìm trong kho lớn
+  nhất (152 280 vector, 80 MB) cộng trích bộ tham chiếu mất dưới 1 s ở lượt đầu và dưới 5,5 s cho V1 (L = 20), nhỏ so với 78 s
+  mỗi lần xác minh. Giới hạn duy nhất là bộ nhớ: MCU không chứa nổi kho lớn (80 MB) nếu không có thẻ nhớ, chứa được kho nhỏ nhất
+  (0,7 MB).
+
+## Giai đoạn 9 (B7): viết vào bản thảo J1
+
+- Mục VIII-F "Where to place the AI nodes" trong `paper/j1/draft-v1/tex/sec-eval.tex` (tiếng Anh), Bảng VII (số AI cell cần và
+  T1 theo ρ, ba bản đồ), Hình 8 (surrogate so với ns-3) và Hình 9 (thời gian xác nhận theo số AI cell, hai cách đặt ngưỡng).
+  Chỗ TODO đỏ còn lại: seed thứ hai và thời gian River ở mật độ thấp. Câu vector rời camera đã chốt (mục 376): vector chỉ đi
+  từ camera tới AI node, trạm gốc vẫn chỉ nhận điểm số; TODO đó thay bằng một câu.
+- Hình do `paper/j1/draft-v1/analysis/fig_k9.py` sinh: bản có nhãn ở `paper/j1/draft-v1/figs/k9-*.{pdf,png}`, bản không chữ ở
+  `paper/j1/figures/` (INDEX). Lệnh ở `paper/j1/draft-v1/runs/fig-k9.md`. PDF dựng lại bằng `tex/build.sh` (cài thêm texlive
+  trong container): 13 trang, không còn tham chiếu hỏng.
+- Mã thí nghiệm K9 thêm vào `docs/EXPERIMENTS-INDEX.md`; mục 10 thêm vào README của bản thảo.
+
+## Giai đoạn 10 (B8): phương án lai (mục 375)
+
+- `cc_select.py` thêm `--npu F --vec B --crop B`: tỉ lệ F camera có NPU gửi vector, còn lại gửi ảnh cắt. Camera có NPU coi như
+  rải đều, nên mỗi môi trường chở tải kỳ vọng với bản ghi trung bình F · vec + (1 − F) · crop mỗi người. Chạy trên k8 r100 với
+  F = 0,8 / 0,5 / 0,2 / 0 (vector 532 B, ảnh cắt 5 KB) và hai độ nhạy ở F = 0,5 (ảnh cắt 15 KB; vector 4,1 KB), ρ = 20 / 50 /
+  100 / 200, ngân sách 10 và 20 %; 6 lượt song song, mỗi lượt 225–337 s. Lệnh ở `b8-cc-*.md`, kết quả `data/b8/<tag>/`.
+- Tổng hợp bằng `paper/j1/analysis/b8_summary.py` (lệnh `b8-summary.md`, kết quả `data/b8/summary.md`). Ngân sách 10 %, số AI
+  cell cần ở ρ = 20 / 50 / 100: D3 24 / 34 / 69; lai F = 0,8 cần 39 / 94 / 212; F = 0,5 cần 74 / 198 / 454; F = 0,2 cần 114 / 334 /
+  không đủ; chỉ ảnh cắt 140 / 414 / không đủ. Ngân sách 20 % thì gần như chia đôi số cell cần. Ảnh cắt 15 KB làm F = 0,5 cần
+  237 cell ngay ở ρ = 20; vector 4,1 KB (2 048 chiều fp16) thì F = 0,5 cần 122, gần bằng chỉ ảnh cắt.
+- Pha 2, đọc trên đường của B5 (ρ = 20, r100, k = 1, nội suy theo số AI cell): T là 823 s với D3, 870 / 949 / 1 080 s với F = 0,8
+  / 0,5 / 0,2 và 1 165 s khi chỉ có ảnh cắt (báo nhầm 0,1 mỗi AI cell); 823 / 832 / 889 / 968 / 1 019 s khi giữ 2,4 lần báo nhầm
+  cho cả hệ thống.
+- K mô hình mỗi AI node: AI node trích đặc trưng L ảnh truy vấn bằng từng mô hình. Với K = 5 trên Pi 5 CPU thêm 0,95 s ở lượt đầu
+  (L = 3) và 6,4 s khi xác minh V1 (L = 20, mỗi lần thăm 78 s); với Hailo-8L dưới 0,4 s. K gần như không đổi kết quả.
+- Giới hạn: các tập trên khoảng 70 AI cell nằm ngoài vùng surrogate đúng (B4), nên T1 và T của F ≤ 0,5 ở ρ ≥ 50 chỉ là ước lượng
+  thô. Phần ảnh cắt được AI node trích bằng mô hình đầy đủ nên có thể chính xác hơn vector của mô hình nhẹ; B8 chưa tính khác
+  biệt này (cùng mô hình điểm số với B5). Tập lai khác hẳn tập của B4, nên muốn chắc phải chạy ns-3 cho F = 0,8 và 0,5 ở ρ = 20
+  (39 và 74 AI cell).
+
+## Giai đoạn 11 (B8): ns-3 cho hai tập lai, seed 1 (mục 382)
+
+- Tập chọn ở ρ = 20, ngân sách 10 %: F = 0,8 có 39 AI cell (cả r100 và r200), F = 0,5 có 74 (r100) và 75 (r200); tập r200 chọn lại
+  bằng `cc_select.py` trên thư mục r200 (`b8-cc-r200-*.md`). Chạy `b4_run.sh` với CAMP-BIN5, runSeed 1, 4 cấu hình song song, 2 905 s
+  (`b8-ns3-seed1.md`; crit ở `data/b8/crit/`; thư mục làm việc trong scratchpad, không commit).
+- So với surrogate (`b8-compare-seed1.md`, `data/b8-ns3-seed1.{md,csv}`): mọi cell xong trước giới hạn. T1 đo / mô hình: r100 F = 0,8
+  689 / 674 s, F = 0,5 733 / 728 s; r200 658 / 665 s và 712 / 714 s. Lệch T1 dưới 15 s; T_k vẫn bị đoán thấp ở cụm 7 và 8 như B4.
+- Pha 2 trên các thư mục này (`b8-phase2-*.md`, `data/b8-phase2-*.md`, ρ = 20, 300 lượt): báo nhầm 0,1 mỗi AI cell, k = 1, r100: T
+  879 s (F = 0,8) và 1 008 s (F = 0,5), so với 823 s của D3 (24 cell); thành công 0,64 và 0,69. Giữ 2,4 lần báo nhầm cho cả hệ thống:
+  843 và 905 s. r200: 862 / 1 002 s và 822 / 898 s. Số đọc trên đường B5 ở giai đoạn 10 (870 và 949 s) thấp hơn số tính trên thư
+  mục thật 9 và 59 s.
+- Cột `feasible` và `rho_max` của `b5_phase2.py` tính theo cỡ D3 (528 B), không đúng cho tập lai; khả thi của tập lai lấy từ
+  `cc_select.py` (đã thoả ở ρ = 20).

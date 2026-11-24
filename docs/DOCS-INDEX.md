@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (28): nguồn số liệu và mô tả đang dùng
+## Hiện hành (33): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -15,29 +15,34 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/SIM-REPORT-2026-10-31-vi.md`](../paper/SIM-REPORT-2026-10-31-vi.md) | Báo cáo giả lập 30–31/10/2026: vận chuyển mặt đất trên pass CHORD cố định và sai số quỹ đạo | 2026-10-31 |  |
 | [`paper/SIM-REPORT-2026-11-01-takeover-vi.md`](../paper/SIM-REPORT-2026-11-01-takeover-vi.md) | Báo cáo mô phỏng 2026-11-01: cơ chế takeover (dấu ranh giới) cho River khi đường bay lệch | 2026-11-01 |  |
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
-| [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-20 |  |
+| [`paper/j1/CONTEXT-SUMMARY-vi.md`](../paper/j1/CONTEXT-SUMMARY-vi.md) | J1 · Bối cảnh bài toán (bản tóm tắt) | 2026-11-22 |  |
+| [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-22 |  |
 | [`paper/j1/K9-PARAMS-vi.md`](../paper/j1/K9-PARAMS-vi.md) | K9 bước B0: tham số cho bài node thường gửi gì về AI node | 2026-11-18 |  |
+| [`paper/j1/K9-REPORT-vi.md`](../paper/j1/K9-REPORT-vi.md) | Báo cáo kỹ thuật K9: đặt AI node và dữ liệu node thường gửi về | 2026-11-23 |  |
+| [`paper/j1/L1-VARIABLES-vi.md`](../paper/j1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-23 |  |
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
-| [`paper/j1/PLAN-K9-DATA-vi.md`](../paper/j1/PLAN-K9-DATA-vi.md) | Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu | 2026-11-18 |  |
+| [`paper/j1/OUTLINE-vi.md`](../paper/j1/OUTLINE-vi.md) | J1 · Dàn ý bài (chatlog mục 396) | 2026-11-23 |  |
+| [`paper/j1/PLAN-K9-DATA-vi.md`](../paper/j1/PLAN-K9-DATA-vi.md) | Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu | 2026-11-20 |  |
 | [`paper/j1/PLAN-TRACKS-vi.md`](../paper/j1/PLAN-TRACKS-vi.md) | Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật | 2026-11-18 |  |
-| [`paper/j1/TOOL-SIONNA-vi.md`](../paper/j1/TOOL-SIONNA-vi.md) | Sionna RT cho kênh đô thị của J1 (2026-11-20, chatlog mục 364) | 2026-11-20 |  |
+| [`paper/j1/RESULTS-vi.md`](../paper/j1/RESULTS-vi.md) | J1 · Tổng hợp kết quả hai nhánh (chatlog mục 396) | 2026-11-23 |  |
+| [`paper/j1/TOOL-SIONNA-vi.md`](../paper/j1/TOOL-SIONNA-vi.md) | Sionna RT cho kênh đô thị của J1 (2026-11-20, chatlog mục 399) | 2026-11-20 |  |
 | [`paper/j1/TOOL-VAN3TWIN-vi.md`](../paper/j1/TOOL-VAN3TWIN-vi.md) | VaN3Twin: có dùng được cho J1 không (2026-11-20, chatlog mục 361) | 2026-11-20 |  |
-| [`paper/j1/draft-v1/README-vi.md`](../paper/j1/draft-v1/README-vi.md) | Bản thảo journal v1 (J1): hướng dẫn đánh giá | 2026-11-17 |  |
+| [`paper/j1/draft-v1/README-vi.md`](../paper/j1/draft-v1/README-vi.md) | Bản thảo journal v1 (J1): hướng dẫn đánh giá | 2026-11-20 |  |
 | [`paper/j1/draft-v1/REQUEST-vi.md`](../paper/j1/draft-v1/REQUEST-vi.md) | Yêu cầu của người dùng cho bản thảo journal v1 | 2026-11-16 |  |
 | [`research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md`](../research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md) | Tổng hợp tìm tài liệu cho kế hoạch tiếp theo (2026-11-12) | 2026-11-12 |  |
-| [`research_notes/literature/METHOD-vi.md`](../research_notes/literature/METHOD-vi.md) | Phương pháp ghi chú bài báo | 2026-11-12 |  |
+| [`research_notes/literature/METHOD-vi.md`](../research_notes/literature/METHOD-vi.md) | Phương pháp ghi chú bài báo | 2026-11-23 |  |
 | [`research_notes/literature/NOTES-DRIVE-PDF-vi.md`](../research_notes/literature/NOTES-DRIVE-PDF-vi.md) | Ghi chú đọc 32 PDF trong thư mục Drive (2026-11-12) | 2026-11-13 |  |
 | [`research_notes/literature/PDF-LIST-2026-11-12-vi.md`](../research_notes/literature/PDF-LIST-2026-11-12-vi.md) | Danh sách PDF cần đọc (từ đợt tìm tài liệu 2026-11-12) | 2026-11-12 |  |
 | [`research_notes/literature/WORKLIST-2026-11-12-vi.md`](../research_notes/literature/WORKLIST-2026-11-12-vi.md) | Danh sách ghi chú 50 PDF trong Drive (phạm vi C, chạy tuần tự) | 2026-11-12 |  |
-| [`research_notes/literature/papers/INDEX.md`](../research_notes/literature/papers/INDEX.md) | Danh mục ghi chú bài báo | 2026-11-17 |  |
-| [`research_notes/literature/papers/TOPICS.md`](../research_notes/literature/papers/TOPICS.md) | Chủ đề → bài | 2026-11-17 |  |
+| [`research_notes/literature/papers/INDEX.md`](../research_notes/literature/papers/INDEX.md) | Danh mục ghi chú bài báo | 2026-11-23 |  |
+| [`research_notes/literature/papers/TOPICS.md`](../research_notes/literature/papers/TOPICS.md) | Chủ đề → bài | 2026-11-23 |  |
 | [`research_notes/proposal/SIGDROP-PROPOSAL-vi.md`](../research_notes/proposal/SIGDROP-PROPOSAL-vi.md) | Đề cương nghiên cứu SigDrop (bản nháp) | 2026-11-06 |  |
 | [`uav-l2/docs/ENERGY-vi.md`](../uav-l2/docs/ENERGY-vi.md) | Mô hình năng lượng cho bảng "Ground transport on fixed CHORD passes" (CLAUDE.md §8 mục 227, phần 3) | 2026-10-30 |  |
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (93): còn đúng, dùng để tra cứu nền
+## Tham khảo (99): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -46,6 +51,8 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/L3-TECHREPORT-vi.md`](../paper/L3-TECHREPORT-vi.md) | River: hợp tác mặt đất có lập kế hoạch sau một lượt bay UAV | 2026-10-22 |  |
 | [`paper/RIVER-L3-vi.md`](../paper/RIVER-L3-vi.md) | River: cơ chế lớp 3 | 2026-10-22 |  |
 | [`paper/icc-v5/README.md`](../paper/icc-v5/README.md) | Draft v5: Algorithm 3 and Evaluation (CLAUDE.md §8 item 184) | 2026-10-26 |  |
+| [`paper/j1/figs-q/bound-nc-Q1000.md`](../paper/j1/figs-q/bound-nc-Q1000.md) | bound-nc-Q1000.md | 2026-11-20 |  |
+| [`paper/j1/figs-q/bound-nc-Q400.md`](../paper/j1/figs-q/bound-nc-Q400.md) | bound-nc-Q400.md | 2026-11-20 |  |
 | [`paper/j1/maps/caugiay/summary.md`](../paper/j1/maps/caugiay/summary.md) | Quận Cầu Giấy (OSM relation 9421132) | 2026-11-19 |  |
 | [`paper/j1/maps/dubai-marina/summary.md`](../paper/j1/maps/dubai-marina/summary.md) | مرسى دبي (OSM relation 11912728) | 2026-11-19 |  |
 | [`paper/j1/maps/hcmc-quan7/summary.md`](../paper/j1/maps/hcmc-quan7/summary.md) | Quận 7 (OSM relation 2764875) | 2026-11-19 |  |
@@ -98,6 +105,8 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/hui2004-deluge.md`](../research_notes/literature/papers/hui2004-deluge.md) | Hui, Culler 2004 · Deluge: phổ biến dữ liệu lớn trong WSN đa chặng | 2026-11-12 |  |
 | [`research_notes/literature/papers/isaacs2011-dtspn.md`](../research_notes/literature/papers/isaacs2011-dtspn.md) | Isaacs, Klein, Hespanha 2011 · Algorithms for the TSP with neighborhoods involving a Dubins vehicle | 2026-11-12 |  |
 | [`research_notes/literature/papers/kissling2024-wildcam.md`](../research_notes/literature/papers/kissling2024-wildcam.md) | Kissling et al. 2024 · Mạng camera động vật hoang dã tự động, chi phí thấp ở một khu Natura 2000 | 2026-11-17 |  |
+| [`research_notes/literature/papers/koester1992-alzprofiles.md`](../research_notes/literature/papers/koester1992-alzprofiles.md) | Koester và Stooksbury 1992 · Người mắc Alzheimer đi lạc: hồ sơ hành vi và số liệu ở Virginia | 2026-11-21 |  |
+| [`research_notes/literature/papers/koester1998-adrd.md`](../research_notes/literature/papers/koester1998-adrd.md) | Koester 1998 · Người mắc Alzheimer và chứng mất trí liên quan đi lạc: số liệu tìm kiếm cứu nạn ở Virginia | 2026-11-21 |  |
 | [`research_notes/literature/papers/kulkarni2005-mnp.md`](../research_notes/literature/papers/kulkarni2005-mnp.md) | Kulkarni, Wang 2005 · MNP: dịch vụ lập trình lại đa chặng cho mạng cảm biến | 2026-11-12 |  |
 | [`research_notes/literature/papers/leny2007-highdensity.md`](../research_notes/literature/papers/leny2007-highdensity.md) | Le Ny, Frazzoli, Feron 2007 · DTSP khi mật độ điểm cao (bản hội nghị) | 2026-11-12 |  |
 | [`research_notes/literature/papers/leny2012-dtsp.md`](../research_notes/literature/papers/leny2012-dtsp.md) | Le Ny, Feron, Frazzoli 2012 · On the Dubins traveling salesman problem | 2026-11-12 |  |
@@ -114,6 +123,8 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/nayak2023-minmax.md`](../research_notes/literature/papers/nayak2023-minmax.md) | Nayak, Rathinam 2023 · Heuristic và mô hình học cho Dubins mTSP dạng min–max | 2026-11-12 |  |
 | [`research_notes/literature/papers/nekrasov2019-aerial154.md`](../research_notes/literature/papers/nekrasov2019-aerial154.md) | Nekrasov, Allen, Artamonova, Belding 2019 · Tối ưu mạng 802.15.4 ngoài trời cho thu dữ liệu bằng UAV | 2026-11-12 |  |
 | [`research_notes/literature/papers/nelson2007-vfield.md`](../research_notes/literature/papers/nelson2007-vfield.md) | Nelson, Barber, McLain, Beard 2007 · Bám đường bằng trường vector cho máy bay nhỏ | 2026-11-12 |  |
+| [`research_notes/literature/papers/nguyen2021-hole.md`](../research_notes/literature/papers/nguyen2021-hole.md) | Nguyen, Nguyen, Nguyen, Do, Chlamtac 2021 · Energy-efficient routing in the proximity of a complicated hole in WSN | 2026-11-23 |  |
+| [`research_notes/literature/papers/nguyen2023-gambac.md`](../research_notes/literature/papers/nguyen2023-gambac.md) | Nguyen, Nguyen, Do, Rotter 2023 · Multi-UAV data gathering with balanced clustering (GAMBAC) | 2026-11-23 |  |
 | [`research_notes/literature/papers/noon1993-gtsp.md`](../research_notes/literature/papers/noon1993-gtsp.md) | Noon, Bean 1993 · Phép biến đổi hiệu quả GTSP sang ATSP | 2026-11-12 |  |
 | [`research_notes/literature/papers/obermeyer2009-recon.md`](../research_notes/literature/papers/obermeyer2009-recon.md) | Obermeyer 2009 · Lập đường cho UAV trinh sát mục tiêu mặt đất trong địa hình | 2026-11-12 |  |
 | [`research_notes/literature/papers/oubbati2023-rescue.md`](../research_notes/literature/papers/oubbati2023-rescue.md) | Oubbati et al. 2023 · Tối ưu vùng phủ bằng nhiều UAV cho cứu hộ dùng học tăng cường | 2026-11-12 |  |
@@ -153,12 +164,13 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/archive/SYSTEM-vi.md`](../paper/archive/SYSTEM-vi.md) | System Model — keyword | 2026-10-20 | bản nộp ICC v5.3 |
 | [`uav-l2/docs/PARAM-SOURCES-vi.md`](../uav-l2/docs/PARAM-SOURCES-vi.md) | Rà soát nguồn gốc tham số giả lập (CLAUDE.md §8 mục 102) | 2026-10-19 | paper/PARAMS-vi.md |
 
-## Lịch sử (23): thử nghiệm hoặc hướng đã đóng, giữ để tra lại
+## Lịch sử (24): thử nghiệm hoặc hướng đã đóng, giữ để tra lại
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
 | [`paper/j1/draft-v1/runs/bound-lp.md`](../paper/j1/draft-v1/runs/bound-lp.md) | bound-lp | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/bound-nc.md`](../paper/j1/draft-v1/runs/bound-nc.md) | bound-nc | 2026-11-16 |  |
+| [`paper/j1/draft-v1/runs/fig-k9.md`](../paper/j1/draft-v1/runs/fig-k9.md) | fig-k9 | 2026-11-20 |  |
 | [`paper/j1/draft-v1/runs/fig-tstar.md`](../paper/j1/draft-v1/runs/fig-tstar.md) | fig-tstar | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/ground-lb.md`](../paper/j1/draft-v1/runs/ground-lb.md) | ground-lb | 2026-11-16 |  |
 | [`paper/j1/draft-v1/runs/lb-compare-seed1.md`](../paper/j1/draft-v1/runs/lb-compare-seed1.md) | lb-compare-seed1 | 2026-11-17 |  |

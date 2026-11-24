@@ -370,4 +370,39 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 361 | 2026-11-20 | kế hoạch · mở session song song xem VaN3Twin | [2026-11](2026-11.md) |
 | 362 | 2026-11-20 | bối cảnh · hỏi nguồn trích dẫn được cho số liệu sự cố và thiết bị | [2026-11](2026-11.md) |
 | 363 | 2026-11-20 | bối cảnh · ghi chính sách pha 0 (chờ người dùng cân nhắc); bàn tiếp | [2026-11](2026-11.md) |
-| 364 | 2026-11-20 | kế hoạch · bỏ VaN3Twin, bàn Sionna RT | [2026-11](2026-11.md) |
+| 364 | 2026-11-20 | bối cảnh · chốt sở hữu, nguồn điện, phạm vi; bàn nhiễu 2,4 GHz | [2026-11](2026-11.md) |
+| 365 | 2026-11-20 | bối cảnh · nhiễu 2,4 GHz vào K1d; bàn đánh thức | [2026-11](2026-11.md) |
+| 366 | 2026-11-20 | kế hoạch · làm phần còn lại của B6 (K9) | [2026-11](2026-11.md) |
+| 367 | 2026-11-20 | bối cảnh · chốt đánh thức; bàn vị trí node | [2026-11](2026-11.md) |
+| 368 | 2026-11-20 | kế hoạch · làm B7 (K9): viết vào bản thảo J1 | [2026-11](2026-11.md) |
+| 369 | 2026-11-20 | bối cảnh · rà lại các khía cạnh chưa bàn | [2026-11](2026-11.md) |
+| 370 | 2026-11-20 | bối cảnh · bỏ camera hành trình; thời tiết làm cận trên; bàn tiếp các câu còn lại | [2026-11](2026-11.md) |
+| 371 | 2026-11-20 | bối cảnh · giữ truy vấn ảnh, không gửi vector | [2026-11](2026-11.md) |
+| 372 | 2026-11-20 | bối cảnh · hỏi lại phần băng thông luồng nền | [2026-11](2026-11.md) |
+| 373 | 2026-11-20 | bối cảnh · node cùng mô hình gửi vector về AI node, truy vấn vẫn là ảnh | [2026-11](2026-11.md) |
+| 374 | 2026-11-20 | bối cảnh · có bao nhiêu loại mô hình với vector khác nhau | [2026-11](2026-11.md) |
+| 375 | 2026-11-20 | kế hoạch · chốt phương án lai dữ liệu về AI node; cập nhật K9 | [2026-11](2026-11.md) |
+| 376 | 2026-11-20 | bối cảnh · giữ D3, vector được rời camera | [2026-11](2026-11.md) |
+| 377 | 2026-11-20 | bối cảnh · bàn tiếp bối cảnh trước | [2026-11](2026-11.md) |
+| 378 | 2026-11-20 | bối cảnh · viết bản bối cảnh chi tiết dạng gạch ý | [2026-11](2026-11.md) |
+| 379 | 2026-11-21 | bối cảnh · đối chiếu bối cảnh với các bài liên quan | [2026-11](2026-11.md) |
+| 380 | 2026-11-21 | bối cảnh · thông tin trước về vị trí người cần tìm | [2026-11](2026-11.md) |
+| 381 | 2026-11-21 | kế hoạch · làm B8 (K9); session ghi chú 3 bài | [2026-11](2026-11.md) |
+| 382 | 2026-11-21 | kế hoạch · ns-3 cho hai tập lai (B8); ghi chú hai bài Koester | [2026-11](2026-11.md) |
+| 383 | 2026-11-21 | bối cảnh · khi không có vị trí thấy lần cuối | [2026-11](2026-11.md) |
+| 384 | 2026-11-21 | bối cảnh · hướng bài theo mức không biết gì (tiên nghiệm đều) | [2026-11](2026-11.md) |
+| 385 | 2026-11-21 | bối cảnh · ngưỡng tin cậy; lập lại kế hoạch giữa nhiệm vụ | [2026-11](2026-11.md) |
+| 386 | 2026-11-21 | bối cảnh · hỏi nghĩa của phân vị 0,9 | [2026-11](2026-11.md) |
+| 387 | 2026-11-21 | bối cảnh · chốt phân vị 0,9 và cơ chế vá cell bị sót | [2026-11](2026-11.md) |
+| 389 | 2026-11-21 | bối cảnh · tổng hợp bản bối cảnh; bàn biến quyết định | [2026-11](2026-11.md) |
+| 390 | 2026-11-22 | khác · xoá câu gửi nhầm (mục 388 cũ); chèn hình vào bản bối cảnh | [2026-11](2026-11.md) |
+| 391 | 2026-11-23 | kế hoạch · báo cáo kỹ thuật K9 | [2026-11](2026-11.md) |
+| 392 | 2026-11-23 | bối cảnh · chốt pha 0 và pha 1 giải riêng; hỏi River là hàm T_g, chính sách pha 2 | [2026-11](2026-11.md) |
+| 393 | 2026-11-23 | bối cảnh · đưa phần mặt đất vào bài tối ưu; pha 2 cần tìm hiểu tối ưu | [2026-11](2026-11.md) |
+| 394 | 2026-11-23 | bối cảnh · bài có bao nhiêu mục tiêu tối ưu | [2026-11](2026-11.md) |
+| 395 | 2026-11-23 | nghiên cứu · ghi chú bài k-MLP (2021) và GAMBAC (2023); học cách viết đặt vấn đề, phát biểu bài toán | [2026-11](2026-11.md) |
+| 396 | 2026-11-23 | kế hoạch · dàn ý bài J1 và tổng hợp kết quả hai nhánh | [2026-11](2026-11.md) |
+| 397 | 2026-11-23 | kế hoạch · thuật toán mới so với bản nộp ICC | [2026-11](2026-11.md) |
+| 398 | 2026-11-23 | kế hoạch · mô tả ngắn năm thuật toán mới | [2026-11](2026-11.md) |
+| 399 | 2026-11-20 | kế hoạch · bỏ VaN3Twin, bàn Sionna RT (ghi muộn) | [2026-11](2026-11.md) |
+| 400 | 2026-11-24 | bối cảnh · hỏi hệ số suy hao đang dùng trong giả lập | [2026-11](2026-11.md) |

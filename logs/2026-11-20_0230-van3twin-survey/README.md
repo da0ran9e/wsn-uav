@@ -17,7 +17,7 @@ Bài arXiv 2505.14184 đọc qua web (bản HTML v3; mục IV–VI chỉ qua b�
 chạy được ở 13 000 node; đề xuất không dùng, giữ LoS hình học, có thể dùng Sionna RT ngoại tuyến trên một ô nhỏ để hiệu
 chỉnh K1c. Còn dang dở: chưa thử cài Sionna, chưa đo thời gian dò tia trên CPU.
 
-## Phần hai: Sionna RT (chatlog mục 364)
+## Phần hai: Sionna RT (chatlog mục 399)
 
 ```sh
 pip index versions sionna-rt          # 2.2.0

@@ -2,6 +2,7 @@
 send 512-d INT8 vectors to their AI node; paper/j1/PLAN-K9-DATA-vi.md, chatlog items 341-342).
 
     python3 cc_select.py WORK OUT_DIR [--rho 20,50,100,200] [--fcam 0.3] [--umax 0.1,0.2] [--hmax 5]
+                         [--npu F --vec 532 --crop 5000]
 
 Two forces, both at model level (B4 checks them in ns-3):
   River     the River surrogate (uav-l2/tools/river_surrogate.py, formula fitted on C4):
@@ -21,6 +22,9 @@ is not feasible, the cameras send only a share (option a, item 342): coverage = 
 T1 = max_k (leave_k + T_k), leave_k from WORK/tour.json (team 1 leaves cluster k). Algorithm 3's set is scored the same
 way for comparison. Writes OUT_DIR/cc-<map>.md and .csv, and the chosen sets as crit-<map>-u<umax>-rho<rho>.csv
 (mission.py --crit). A check recomputes T_k of each chosen set from the real plan (river_plan with crit.csv).
+Hybrid option (step B8, chatlog item 375): with --npu F a share F of the cameras (those with an NPU) send a vector of
+--vec bytes and the others a person crop of --crop bytes. The NPU cameras are taken as spread evenly, so every medium
+carries the expected load, i.e. the mean record F vec + (1 - F) crop per person in place of 528 B.
 """
 import argparse, csv, json, math, os, sys
 
@@ -142,7 +146,11 @@ def main():
     ap.add_argument("--fcam", type=float, default=0.3)
     ap.add_argument("--umax", default="0.1,0.2")
     ap.add_argument("--hmax", type=int, default=5)
+    ap.add_argument("--npu", type=float, default=None)
+    ap.add_argument("--vec", type=float, default=532)
+    ap.add_argument("--crop", type=float, default=5000)
     A = ap.parse_args()
+    size = SIZE if A.npu is None else A.npu * A.vec + (1 - A.npu) * A.crop
     W = A.work.rstrip("/")
     name = "-".join(W.split("/")[-3:])
     os.makedirs(A.out, exist_ok=True)
@@ -169,7 +177,7 @@ def main():
     a3 = {k: (t_cluster(alg3[k], terms[k], d), *busy(cls[k], alg3[k])) for k in cls}
     for u in map(float, A.umax.split(",")):
         for rho in map(float, A.rho.split(",")):
-            cap = u / (A.fcam * rho / 3600 * SIZE)   # largest busy fraction per unit rate (1 B/s per node)
+            cap = u / (A.fcam * rho / 3600 * size)   # largest busy fraction per unit rate (1 B/s per node)
             res = {}
             for k, cl in cls.items():
                 n = len(cl.cells)
@@ -220,7 +228,8 @@ def main():
                 w.writerow([r["umax"], r["rho"], k, len(v[3]), f"{v[0]:.1f}", f"{v[1]:.6g}", v[2], f"{v[4]:.3f}",
                             f"{leave[k]:.0f}"])
     with open(f"{A.out}/cc-{name}.md", "w") as f:
-        f.write(f"# Critical cells chosen for D3 on {name}\n\nfcam {A.fcam:g}, hmax {A.hmax} cells, River surrogate "
+        opt = "D3" if A.npu is None else f"the hybrid option (NPU share {A.npu:g}, vector {A.vec:g} B, crop {A.crop:g} B)"
+        f.write(f"# Critical cells chosen for {opt} on {name}\n\nMean record {size:.0f} B per person, fcam {A.fcam:g}, hmax {A.hmax} cells, River surrogate "
                 f"(formula). T1: last critical cell done, seconds from take-off (model). Algorithm 3: "
                 f"{r0['cc_a3']} critical cells. Check against the real plan: largest |T_k| difference "
                 f"{worst:.2f} s.\n\n| umax | rho (people/h) | critical cells | T1 (s) | coverage | farthest (cells) | "

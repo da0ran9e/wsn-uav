@@ -409,3 +409,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 401 | 2026-11-25 | nghiên cứu · thư mục toàn văn trích từ PDF trong Drive (không commit) | [2026-11](2026-11.md) |
 | 402 | 2026-11-25 | nghiên cứu · hỏi có được commit toàn văn trích từ PDF không | [2026-11](2026-11.md) |
 | 403 | 2026-11-25 | nghiên cứu · hỏi private cho một branch | [2026-11](2026-11.md) |
+| 404 | 2026-11-25 | nghiên cứu · tạo repo private sigdrop-fulltext chứa toàn văn | [2026-11](2026-11.md) |

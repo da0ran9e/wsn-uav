@@ -84,3 +84,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-21_0230-koester-notes/` | ghi chú hai bài Koester về người mất trí đi lạc (mục 382) |
 | `2026-11-23_1000-paper-notes/` | ghi chú hai bài: k-MLP quanh lỗ mạng (2021), GAMBAC nhiều UAV gom dữ liệu (2023) (mục 395) |
 | `2026-11-25_0900-formulation-read/` | đọc phần phát biểu bài toán của 7 bài tiêu biểu làm mẫu cho J1 (mục 400) |
+| `2026-11-25_1000-drive-fulltext/` | tải 50 PDF từ Drive, trích toàn văn và hình 51 bài (không commit toàn văn) (mục 401) |

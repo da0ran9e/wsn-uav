@@ -406,3 +406,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 398 | 2026-11-23 | kế hoạch · mô tả ngắn năm thuật toán mới | [2026-11](2026-11.md) |
 | 399 | 2026-11-24 | bối cảnh · ba bài toán ở dạng cốt lõi (PROBLEMS-vi) | [2026-11](2026-11.md) |
 | 400 | 2026-11-25 | nghiên cứu · mẫu phát biểu bài toán từ 7 bài tiêu biểu (FORMULATION-EXAMPLES) | [2026-11](2026-11.md) |
+| 401 | 2026-11-25 | nghiên cứu · thư mục toàn văn trích từ PDF trong Drive (không commit) | [2026-11](2026-11.md) |

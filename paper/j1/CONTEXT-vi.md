@@ -58,9 +58,11 @@ Lập luận của bản đô thị có mấy chỗ phản biện dễ hỏi (ur
 |---|---|---|
 | a | Nhiệm vụ điển hình: tìm người mất tích (chatlog mục 409) | chốt |
 | b | Thiết bị và mật độ: camera bẫy ảnh thưa cộng cảm biến dày hơn dọc tuyến (đường mòn, suối, ranh giới), hay rải đều; mức mật độ mục tiêu. Hướng đã chốt (mục 409): mật độ hiện nay chưa đạt nhưng hợp lý trong tương lai, bài vẫn khảo sát và báo số thật (mục 5) | mở một phần |
-| c | Băng tần mặt đất: giữ 802.15.4 2,4 GHz (cell nhỏ, cần mạng dày) hay chuyển sub-GHz (cell lớn, mạng thưa được) | mở |
+| c | Băng tần mặt đất: giữ 802.15.4 2,4 GHz (cell nhỏ, cần mạng dày) hay chuyển sub-GHz (cell lớn, mạng thưa được). Đã trả lời ở dòng g | chốt |
 | d | Vùng mẫu: khu thật nào để cắt bản đồ (ranh giới vườn quốc gia, đường mòn, suối, địa hình) | mở |
 | e | Giữ cơ chế và cấu trúc ba pha như mục 2 | đề xuất |
+| f | Kịch bản chính: rừng đất thấp (kiểu Cát Tiên); vườn núi là trường hợp khó cho phần độ nhạy hoặc mở rộng (mục 6, chatlog mục 411) | chốt |
+| g | Băng tần mặt đất: giữ 802.15.4 2,4 GHz (chatlog mục 410) | chốt |
 
 ## 5. Mật độ thiết bị hiện có ở rừng và khu bảo tồn (2026-11-26, mục 409)
 
@@ -130,7 +132,32 @@ Nhận xét:
 - Đường mòn và đường xe chỉ phủ 4–8 % số cell ở các vườn Việt Nam và Kinabalu, 19–44 % ở các vườn Mỹ và Đức. Đặt mạng dày dọc tuyến
   thì ở Việt Nam mạng sẽ là các dải hẹp, có thể đứt; OSM thiếu đường mòn nên con số thật có thể cao hơn. Người đi lạc lại thường rời
   khỏi đường mòn [chung, cần nguồn từ Koester], nên mạng chỉ dọc tuyến chưa chắc phủ được nơi người đó ở.
-- Đề xuất để bàn: kịch bản chính đặt ở rừng đất thấp hoặc đồi thoải (kiểu Cát Tiên, Bayerischer Wald), giữ được mô hình mặt đất phẳng và
+- Chốt (mục 411): kịch bản chính đặt ở rừng đất thấp hoặc đồi thoải (kiểu Cát Tiên, Bayerischer Wald), giữ được mô hình mặt đất phẳng và
   chỉ thêm suy hao qua tán rừng; vườn núi (kiểu Hoàng Liên, Bạch Mã) là trường hợp khó, đưa vào phần độ nhạy hoặc mở rộng có che khuất
   địa hình.
+
+## 7. Các khía cạnh tiếp theo cho kịch bản rừng đất thấp (2026-11-26, mục 411, đề xuất để bàn)
+
+1. **Kênh A2G qua tán rừng.** Bốn chế độ kênh của bản ICC (suy hao môi trường 0 / 9 / 20 / 26 dB, R50 = 1 016 / 498 / 199 / 99 m) đã
+   được đối chiếu với mô hình tán lá Weissberger ở 2,4 GHz: 9 / 20 / 26 dB ứng với 17 / 66 / 103 m đường đi ngang qua cây; tán dày 10 m
+   nhìn xiên cho khoảng 8 dB ở góc ngẩng 45°, 17 dB ở 11°, 26 dB ở 6° [repo, `research_notes/literature/2026-11-12/04-a2g-channel.md`
+   mục 1.8]. Bốn chế độ vì vậy hợp với rừng hơn hợp với đô thị. Đề xuất giữ nguyên, ghi rõ Weissberger vốn đo cho đường ngang nên áp cho
+   đường xiên là ngoại suy; có bộ dữ liệu 802.15.4 2,4 GHz từ UAV của Nekrasov và cộng sự trên Dryad để hiệu chỉnh sau [repo].
+2. **Kênh G2G dưới tán.** Mô hình hiện tại là 3GPP UMi NLoS (mô hình phố đô thị). Dưới tán, cả đường truyền đi qua cây: theo Weissberger
+   thêm khoảng 12,6 dB ở 30 m, 17 dB ở 50 m, 26 dB ở 100 m [tính]. Cần một mô hình đo cho node đặt sát đất trong rừng; repo chưa có
+   nguồn nào [cần tra].
+3. **Thiết bị và nguồn điện.** Camera bẫy ảnh (chụp cả người lẫn động vật), cảm biến cháy kiểu Dryad, cảm biến âm thanh; mọi node chạy
+   pin, có hoặc không có tấm pin mặt trời (dưới tán, pin mặt trời yếu [chung]). AI node là camera thông minh hoặc gateway đặt ở chỗ
+   trống, có tấm pin lớn. Hệ quả: mọi node đều có ngân sách năng lượng, khác bản đô thị nơi phần lớn node cắm điện.
+4. **Đánh thức.** Node ngủ phần lớn thời gian; giữ cách của bản đô thị (bản tin LoRa vài byte báo mã nhiệm vụ và giờ cất cánh, node tự
+   tính cửa sổ thức) và thêm chi phí năng lượng của việc thức dậy.
+5. **Truy vấn và dữ liệu nền.** Truy vấn vẫn là bộ ảnh người mất tích. Camera bẫy ảnh vốn chụp khi có chuyển động; dữ liệu nền gửi về AI
+   node là ảnh cắt hoặc vector của người xuất hiện trong ảnh. Lưu lượng người trong rừng thấp hơn đô thị rất nhiều, nên luồng nền nhẹ
+   hơn hẳn (K9 ở bản đô thị bị luồng nền chặn).
+6. **Tiên nghiệm vị trí.** Bản đô thị chọn tiên nghiệm đều. Tìm kiếm cứu nạn ngoài hoang dã thường có điểm xuất phát đã biết (xe đỗ ở đầu
+   tuyến, nơi thấy lần cuối) và phân bố khoảng cách theo loại người đi lạc (Koester) [chung, repo có hai bài Koester về người mất trí].
+   Cần quyết: giữ tiên nghiệm đều, hay dùng tiên nghiệm quanh điểm xuất phát.
+7. **Trạm gốc.** Trụ sở vườn hoặc trạm kiểm lâm ở bìa rừng, có LoRa gateway và chỗ cất hạ cánh cho VTOL.
+8. **Vùng mẫu.** Cửa sổ Cát Tiên đã có. Có thể thêm một rừng đất thấp khác để so (ví dụ rừng nguyên sinh Białowieża ở Ba Lan, phẳng
+   và có dữ liệu OSM tốt).
 

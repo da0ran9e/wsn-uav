@@ -416,3 +416,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 408 | 2026-11-26 | bối cảnh · chuyển sang kịch bản rừng, khu bảo tồn; đóng gói bản đô thị (archive/urban-v1) | [2026-11](2026-11.md) |
 | 409 | 2026-11-26 | bối cảnh · rừng: chốt tìm người mất tích; khảo sát mật độ thiết bị thật ở rừng, khu bảo tồn | [2026-11](2026-11.md) |
 | 410 | 2026-11-26 | bối cảnh · giữ 802.15.4; khảo sát địa hình 8 khu rừng, khu bảo tồn | [2026-11](2026-11.md) |
+| 411 | 2026-11-26 | bối cảnh · chốt rừng đất thấp làm kịch bản chính; đề xuất các khía cạnh tiếp theo | [2026-11](2026-11.md) |

@@ -1,0 +1,62 @@
+% SigDrop journal draft v2 (2026-11-26): forest scenario, front part (Introduction to Problem Formulation).
+% Build: ./build.sh -> main.pdf. Sources of every number: ../README-vi.md.
+\documentclass[journal,10pt]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{cite}
+\usepackage{xcolor}
+\usepackage{url}
+\graphicspath{{../../figures/}{../../draft-v1/figs/}}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\open}[1]{\textcolor{blue}{[OPEN: #1]}}
+\newcommand{\Tp}{T_{\mathrm p}}
+\newcommand{\spine}{\textsc{Spine}}
+\newcommand{\lmtour}{\textsc{LM-Tour}}
+\newcommand{\chord}{\textsc{Chord}}
+\newcommand{\river}{\textsc{River}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\begin{document}
+\title{Finding a Missing Person with a Forest IoT Network: Single-Pass UAV Query Delivery with Planned Ground Cooperation}
+\author{\todo{authors and affiliations}%
+\thanks{Draft v2 of the journal version (2026-11-26), forest scenario; Sections I--V only. A preliminary version was
+submitted to IEEE ICC 2027.}}
+\maketitle
+
+\begin{abstract}
+When a person goes missing in a national park, the cameras and sensors already installed in the forest may have seen
+them, but the forest core has no cellular coverage and its battery-powered devices are linked only by low-power radios.
+We push a compact search query, a set of reference images of several hundred kilobytes, from the ranger station to the
+few AI-capable devices, and let them report matches over LoRa. A fixed-wing UAV can broadcast the query over IEEE
+802.15.4 in one pass, but under the canopy its air-to-ground range drops to 100--200\,m, so most AI nodes hear only a
+fraction of the query. We split the mission into three phases: an offline phase that selects the AI cells and plans the
+operation, a delivery phase in which one fixed-wing pass is completed by a ground transport planned from the flight
+geometry, and a verification phase in which a rotary-wing UAV visits the cells that reported a match. The objective is
+the 0.9-quantile of the time from take-off until the person is confirmed. We formulate the three phases as three
+optimisation problems, a capacitated facility location problem with congestion constraints, a Dubins routing problem
+with neighbourhoods coupled with a time-expanded unit-capacity flow, and a latency-type online routing problem, and we
+place each in its known complexity class. \todo{results sentence once Sections VI--VIII are rewritten for the forest
+scenario.}
+\end{abstract}
+\begin{IEEEkeywords}
+UAV, search and rescue, forest wireless sensor networks, IEEE 802.15.4, cooperative dissemination, Dubins traveling
+salesman problem, facility location, edge AI.
+\end{IEEEkeywords}
+
+\input{sec-intro}
+\input{sec-system}
+\input{sec-model}
+\input{sec-problem}
+\input{refs}
+
+\end{document}

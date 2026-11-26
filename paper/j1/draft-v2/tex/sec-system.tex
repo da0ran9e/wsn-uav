@@ -1,0 +1,43 @@
+\section{System Operation}\label{sec:system}
+This section describes one mission in words; Section~\ref{sec:model} gives the model and notation.
+
+\textbf{Setting.} The protected area is a lowland forest with gentle relief, such as Cat Tien National Park in southern
+Vietnam (Fig.~\ref{fig:scenario}). The park operator owns a network of battery-powered devices: camera traps that take
+pictures on motion, acoustic and wildfire sensors, and a few AI nodes, i.e., smart cameras or edge boxes placed in
+clearings where a solar panel can power a neural accelerator. The devices share an IEEE 802.15.4 mesh at 2.4\,GHz. A
+cluster head (CH) in each cluster of cells also has a LoRa radio that reaches the ranger station. The ranger station at
+the forest edge hosts the base station (BS), a LoRa gateway, and the take-off sites of two UAVs: a fixed-wing VTOL for
+delivery (team~1) and a rotary-wing UAV with a camera for verification (team~2).
+
+\textbf{Step 1: phase 0, offline.} Long before any incident, the BS
+\begin{enumerate}
+\item tiles the area into hexagonal cells, elects a cell leader (CL) in every cell and a gateway pair between adjacent
+cells, and groups the cells into clusters;
+\item selects the AI cells and assigns every ordinary device to one AI node within a hop limit, so that the background
+data of the devices (crops or embeddings of the persons they detect) stay within the traffic and memory budgets;
+\item precomputes, for a set of plausible incident areas, the flight plan of team~1 and the ground transport that
+complements it, and distributes the per-cell part of the plan through the mesh.
+\end{enumerate}
+The selection is refreshed when devices fail or are added; the plans are cheap to recompute.
+
+\textbf{Step 2: incident.} A person is reported missing, with a last-seen point and a description. The BS builds the
+query from reference photographs supplied by relatives, fixes the incident area around the last-seen point, picks or
+recomputes the plan, and broadcasts a LoRa wake-up message of a few bytes with the mission identifier and the take-off
+time. From the plan, every device in the incident area computes when it must be awake.
+
+\textbf{Step 3: phase 1, delivery.} Team~1 takes off and flies the planned pass at constant altitude, broadcasting the
+query packets in a fixed order. Every cell under the track keeps what its devices hear. As soon as a cell holds the
+segment it is planned to forward, it sends it towards the AI cells over the cell-level routes of the plan. A repair
+step fills the gaps left by lost packets or by a track that deviates from the plan, e.g., because of wind. When an AI
+node holds the complete query, it matches the query against its stored detections and those of its assigned devices,
+and sends a score of a few bytes through its CH to the BS over LoRa.
+
+\textbf{Step 4: phase 2, verification.} The BS turns the reports into a posterior over the cells. Team~2 takes off,
+flies to the cell with the best ratio of posterior to travel time, verifies it with its own camera, and continues with
+the next cell; the order is recomputed when new reports arrive. The mission ends when team~2 confirms the person; the
+coordinates are passed to the ground team.
+
+Two remarks on scope. First, a single UAV serves phase~1; several UAVs would need a coordination mechanism that we leave
+for future work. Second, the scenario is restricted to flat or gently rolling forest, where the UAV can hold a constant
+altitude and the ground can be treated as a plane. Mountain parks add terrain shadowing and terrain-following flight
+(Section~\ref{sec:model}), which we treat as an extension.

@@ -1,8 +1,10 @@
 ---
-status: current
-updated: 2026-11-24
+status: reference
+updated: 2026-11-26
 ---
 # J1 · Ba bài toán cốt lõi (chatlog mục 399)
+
+> Phiên bản đô thị (urban-v1), đóng gói ngày 2026-11-26 khi bài chuyển sang kịch bản rừng và khu bảo tồn (chatlog mục 408). Xem [README](README.md).
 
 Phát biểu (P0), (P1), (P2) ở dạng toán gọn, bỏ chi tiết cài đặt, để mỗi bài nhận ra được là một lớp bài đã biết. Quyết định đầu
 vào ở [L1-VARIABLES](L1-VARIABLES-vi.md) mục 6–8. Bài thay mục V của [dàn ý](OUTLINE-vi.md). Công thức viết theo ký hiệu của bản

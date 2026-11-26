@@ -1,8 +1,10 @@
 ---
-status: current
-updated: 2026-11-22
+status: reference
+updated: 2026-11-26
 ---
 # J1 · Bối cảnh bài toán (bản tóm tắt)
+
+> Phiên bản đô thị (urban-v1), đóng gói ngày 2026-11-26 khi bài chuyển sang kịch bản rừng và khu bảo tồn (chatlog mục 408). Xem [README](README.md).
 
 Tóm tắt những gì đã chốt qua thảo luận (chatlog mục 323–389). Chi tiết, số liệu và nguồn ở [CONTEXT-vi.md](CONTEXT-vi.md); số
 trong ngoặc là mục của file đó. Dòng có nhãn **[chờ]** là đề xuất chưa được xác nhận, **[giả định]** là số chưa có nguồn trích.
@@ -20,12 +22,12 @@ mục.
 - Tần suất: Singapore khoảng 1 300 báo cáo mất tích mỗi năm (khoảng 22 trên 100 000 dân); quy ra vài chục tới khoảng 150 vụ
   mỗi quận mỗi năm, một phần cần UAV (mục 23).
 
-![Quận Hoàng Mai: hồ, vùng cao tầng, vùng cấm bay ước theo OSM](figures/map-hoangmai-labelled.png)
+![Quận Hoàng Mai: hồ, vùng cao tầng, vùng cấm bay ước theo OSM](../../figures/map-hoangmai-labelled.png)
 
 *Hình 1. Quận Hoàng Mai (ranh giới cũ, 40,2 km²) dựng từ OSM: hồ và sông xanh dương (17,9 % diện tích), vùng cao tầng đỏ
 nhạt (nhà từ 60 m nới 100 m), cấm bay ước theo OSM tím gạch chéo, nhà xám tới nâu đỏ theo chiều cao (mục 18, 19).*
 
-![Downtown Core, Singapore: khu cao tầng ven biển](figures/map-sg-downtown-labelled.png)
+![Downtown Core, Singapore: khu cao tầng ven biển](../../figures/map-sg-downtown-labelled.png)
 
 *Hình 2. Downtown Core, Singapore, cùng cách vẽ: khu nhà cao tầng dày, biển dựng từ đường bờ. Mười khu còn lại (Việt Nam và
 nước ngoài) ở `figures/map-*-labelled.png` (mục 18).*
@@ -54,13 +56,13 @@ nước ngoài) ở `figures/map-*-labelled.png` (mục 18).*
 - Vị trí node **[chờ]**: gán cell theo kết nối thật ở pha 0; nhãn ngoài trời/trong nhà; kế hoạch dùng toạ độ nhiễu σ = 10 m
   (mục 26).
 
-![Lưới cell ở Hoàng Mai khi tính tường và thêm cột đèn ở cell cần](figures/cells-hoangmai-walls-poles-needed.png)
+![Lưới cell ở Hoàng Mai khi tính tường và thêm cột đèn ở cell cần](../../figures/cells-hoangmai-walls-poles-needed.png)
 
 *Hình 3. Hoàng Mai, 816 node/km² đất, kênh G2G trừ 15 dB mỗi toà nhà, thêm node chuyển tiếp trên cột đèn ở cell cần: cell
 R = 100 m xanh lá là liên thông, cam là đứt bên trong cell, trắng là cell đất không có node cắm điện, xanh dương là nước
 (mục 20, 21).*
 
-![Lưới cell ở Downtown Core khi tính tường, chưa có cột đèn](figures/cells-sg-downtown-walls.png)
+![Lưới cell ở Downtown Core khi tính tường, chưa có cột đèn](../../figures/cells-sg-downtown-walls.png)
 
 *Hình 4. Downtown Core, cùng cách đặt node và kênh có tường, chưa thêm cột đèn: khu nhà dày đặc vỡ nhiều nhất (38 % cell đứt
 bên trong; thêm cột đèn ở cell cần còn 29 %). Màu như Hình 3 (mục 20, 21).*
@@ -76,7 +78,7 @@ bên trong; thêm cột đèn ở cell cần còn 29 %). Màu như Hình 3 (mụ
 - Nhiễu: lượt bay chuyển sang kênh 26; ba kênh sạch 15, 20, 25 cho môi trường bận nhất; kênh trùng WiFi có độ bận u = 0, 0,2, 0,5
   **[giả định]**; UAV điều khiển ngoài 2,4 GHz (mục 24).
 
-![Xác suất nhận gói theo khoảng cách ngang, bốn chế độ kênh A2G](draft-v1/figs/nd1-channel-p-of-d-model-vs-ns3.png)
+![Xác suất nhận gói theo khoảng cách ngang, bốn chế độ kênh A2G](../../draft-v1/figs/nd1-channel-p-of-d-model-vs-ns3.png)
 
 *Hình 5. Xác suất node nhận được một gói A2G theo khoảng cách ngang từ UAV (0–1,5 km, độ cao 100 m), bốn chế độ kênh từ
 R50 = 1016 m (phải nhất) tới 99 m; chấm đo trên lượt bay ns-3, đường là mô hình (mục 9).*
@@ -106,7 +108,7 @@ R50 = 1016 m (phải nhất) tới 99 m; chấm đo trên lượt bay ns-3, đư
   trung bình; khớp dạng 1 − δ của Định lý 2 (mục 13, 32, 33).
 - Đánh đổi: ít critical cell thì pha 1 nhẹ nhưng luồng nền và đối sánh nặng; nhiều thì ngược lại (mục 13).
 
-![Thời gian tới khi xác nhận đúng theo số AI cell](figures/k9-time-vs-ai-cells.png)
+![Thời gian tới khi xác nhận đúng theo số AI cell](../../figures/k9-time-vs-ai-cells.png)
 
 *Hình 6. Đánh đổi số critical cell (thử K9, 20 người/h, R50 = 99 m, một seed): thời gian từ cất cánh tới khi xác nhận đúng AI
 cell theo số AI cell. Xám là lúc AI cell cuối nhận đủ truy vấn (rỗng là cận dưới), xanh là báo nhầm 0,1 mỗi AI cell, đỏ là
@@ -134,18 +136,18 @@ cell theo số AI cell. Xám là lúc AI cell cuối nhận đủ truy vấn (r�
 - Phân phối: CHORD hoặc LM-Tour + River; thêm cây dùng chung và lập kế hoạch cân tải (thử trên một seed: nhanh hơn 26 %) (bản
   thảo J1 mục 9, việc K11).
 
-![Vai trò River: Spine, dải River, Bank](draft-v1/figs/concept-river.png) ![Vòng quanh một critical cell](draft-v1/figs/concept-circle.png)
+![Vai trò River: Spine, dải River, Bank](../../draft-v1/figs/concept-river.png) ![Vòng quanh một critical cell](../../draft-v1/figs/concept-circle.png)
 
 *Hình 7. Vai trò của River trên một cụm có đường bay thẳng. Trái: cell Spine dưới đường bay (xanh đậm), dải River (nhạt dần
 ra mép) và Bank ở mép. Phải: vòng quanh một critical cell (chấm đỏ); mỗi node trợ giúp lấy một nhóm đoạn liên tiếp từ Bank
 và chuyển tiếp một chặng (bản thảo J1, `draft-v1/tex/sec-river.tex`).*
 
-![Khung replay CHORD trên bản đồ k8](../../uav-l2/docs/figures/chord-anim-k8-s1-mission-frame.png)
+![Khung replay CHORD trên bản đồ k8](../../../../uav-l2/docs/figures/chord-anim-k8-s1-mission-frame.png)
 
 *Hình 8. Khung chụp trang replay CHORD trên bản đồ k8-s1 (8 cụm) giữa lúc đội 1 phát qua một cụm: cell đậm dần theo phần dữ
 liệu nghe được, tam giác là đội 1, chấm đỏ là đội 2, dải thời gian bên dưới.*
 
-![River gốc so với lập kế hoạch cân tải và cây dùng chung](draft-v1/figs/lb-seed1.png)
+![River gốc so với lập kế hoạch cân tải và cây dùng chung](../../draft-v1/figs/lb-seed1.png)
 
 *Hình 9. Mỗi chấm một critical cell, thời gian xong sau khi UAV rời cụm: trục ngang là River theo kế hoạch gốc, trục dọc là
 biến thể (trái cân tải, giữa cân tải + cây dùng chung, phải River + cây dùng chung); chấm dưới đường chéo là nhanh hơn (seed 1,

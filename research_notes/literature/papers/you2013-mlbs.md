@@ -67,7 +67,7 @@ dưới đơn giản (chatlog mục 400).
   than T?" (tr. 2)
 
 ## Liên hệ SigDrop
-- **[NX] [D]** Phần F (luồng mặt đất) của (P1) trong `paper/j1/PROBLEMS-vi.md`: cho quỹ đạo cố định, một gói và một cell nguồn, bài gần
+- **[NX] [D]** Phần F (luồng mặt đất) của (P1) trong `paper/j1/archive/urban-v1/PROBLEMS-vi.md`: cho quỹ đạo cố định, một gói và một cell nguồn, bài gần
   với MLBS, nên có thể chứng minh NP-khó bằng thu hẹp như Định lý 1 của bài này. Cần kiểm mô hình va chạm: bài dùng va chạm theo đồ thị
   đĩa đơn vị, SigDrop dùng môi trường (cell, cặp gateway) một máy phát mỗi khe.
 - **[NX]** Chặn T ≥ độ sâu SPT ứng với chặn một radio (Mệnh đề 2 của bản thảo J1): cả hai là chặn hiển nhiên mà thuật toán được so cùng.

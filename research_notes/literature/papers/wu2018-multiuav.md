@@ -87,7 +87,7 @@ Mẫu phát biểu bài toán quen thuộc nhất của mảng tối ưu UAV, d�
   still non-convex constraints" (tr. 4)
 
 ## Liên hệ SigDrop
-- **[NX] [TOUR]** Khuôn cho (P1) của J1 (`paper/j1/PROBLEMS-vi.md`): ba khối biến Q (quỹ đạo), S (lịch phát), F (luồng mặt đất); biến
+- **[NX] [TOUR]** Khuôn cho (P1) của J1 (`paper/j1/archive/urban-v1/PROBLEMS-vi.md`): ba khối biến Q (quỹ đạo), S (lịch phát), F (luồng mặt đất); biến
   phụ θ cho makespan; đoạn "vì sao khó" nêu hai lý do; chia khối giải luân phiên. Bước "Q cố định thì A là LP" ứng với "q cố định thì
   F nới lỏng thành LP tải lớn nhất" (`uav-coop2/tools/river_lb.py --lp`).
 - **[NX]** Chặn trên (41) khi bỏ thời gian bay là cùng kiểu với chặn của SigDrop khi UAV treo tại chỗ (Định lý 2 của bản thảo J1).

@@ -1,8 +1,10 @@
 ---
-status: current
-updated: 2026-11-24
+status: reference
+updated: 2026-11-26
 ---
 # J1 · Biến quyết định (bản bàn, chatlog mục 389)
+
+> Phiên bản đô thị (urban-v1), đóng gói ngày 2026-11-26 khi bài chuyển sang kịch bản rừng và khu bảo tồn (chatlog mục 408). Xem [README](README.md).
 
 Đầu vào là [bản tóm tắt bối cảnh](CONTEXT-SUMMARY-vi.md). File này liệt kê các thứ có thể chọn được trong hệ thống, chia theo lúc
 quyết định, và đề xuất cái nào là biến của bài toán L1, cái nào cố định hay để thuật toán xử lý. Chưa chốt.

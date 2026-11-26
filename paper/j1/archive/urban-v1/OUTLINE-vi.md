@@ -1,8 +1,10 @@
 ---
-status: current
-updated: 2026-11-24
+status: reference
+updated: 2026-11-26
 ---
 # J1 · Dàn ý bài (chatlog mục 396)
+
+> Phiên bản đô thị (urban-v1), đóng gói ngày 2026-11-26 khi bài chuyển sang kịch bản rừng và khu bảo tồn (chatlog mục 408). Xem [README](README.md).
 
 Dàn ý ghép quyết định bối cảnh (CONTEXT-SUMMARY, L1-VARIABLES), kết quả kỹ thuật ([RESULTS-vi.md](RESULTS-vi.md)) và cách viết học
 từ hai bài mẫu (`research_notes/literature/papers/nguyen2021-hole.md`, `nguyen2023-gambac.md`, chatlog mục 395). Mỗi mục ghi:

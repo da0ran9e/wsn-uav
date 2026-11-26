@@ -5,7 +5,7 @@ updated: 2026-11-26
 # J1 · Mẫu phát biểu bài toán từ các bài tiêu biểu (chatlog mục 400)
 
 Đọc phần phát biểu bài toán của bảy bài có cách viết quen thuộc, để học cách viết (P0), (P1), (P2) ở
-[PROBLEMS-vi.md](PROBLEMS-vi.md). Nhãn nguồn:
+[PROBLEMS-vi.md](archive/urban-v1/PROBLEMS-vi.md). Nhãn nguồn:
 - **[repo]**: lấy từ ghi chú đã có trong repo;
 - **[web]**: đọc trực tiếp bản arXiv, chưa ghi chú vào repo.
 

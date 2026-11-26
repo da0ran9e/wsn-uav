@@ -5,7 +5,7 @@ updated: 2026-11-20
 # Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu
 
 Kế hoạch chi tiết cho K9, K12, K13 trong [PLAN-TRACKS](PLAN-TRACKS-vi.md) (chatlog mục 338, 339). Bối cảnh ở
-[CONTEXT](CONTEXT-vi.md) mục 13–14. Chưa chạy gì; các bước có ns-3 cần người dùng duyệt chi phí trước (mục 35).
+[CONTEXT](archive/urban-v1/CONTEXT-vi.md) mục 13–14. Chưa chạy gì; các bước có ns-3 cần người dùng duyệt chi phí trước (mục 35).
 
 ## 1. Câu hỏi
 

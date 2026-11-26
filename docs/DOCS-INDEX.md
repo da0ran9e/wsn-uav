@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (33): nguồn số liệu và mô tả đang dùng
+## Hiện hành (27): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -15,19 +15,13 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/SIM-REPORT-2026-10-31-vi.md`](../paper/SIM-REPORT-2026-10-31-vi.md) | Báo cáo giả lập 30–31/10/2026: vận chuyển mặt đất trên pass CHORD cố định và sai số quỹ đạo | 2026-10-31 |  |
 | [`paper/SIM-REPORT-2026-11-01-takeover-vi.md`](../paper/SIM-REPORT-2026-11-01-takeover-vi.md) | Báo cáo mô phỏng 2026-11-01: cơ chế takeover (dấu ranh giới) cho River khi đường bay lệch | 2026-11-01 |  |
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
-| [`paper/j1/CONTEXT-SUMMARY-vi.md`](../paper/j1/CONTEXT-SUMMARY-vi.md) | J1 · Bối cảnh bài toán (bản tóm tắt) | 2026-11-22 |  |
-| [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-22 |  |
 | [`paper/j1/FORMULATION-EXAMPLES-vi.md`](../paper/j1/FORMULATION-EXAMPLES-vi.md) | J1 · Mẫu phát biểu bài toán từ các bài tiêu biểu (chatlog mục 400) | 2026-11-26 |  |
 | [`paper/j1/K9-PARAMS-vi.md`](../paper/j1/K9-PARAMS-vi.md) | K9 bước B0: tham số cho bài node thường gửi gì về AI node | 2026-11-18 |  |
 | [`paper/j1/K9-REPORT-vi.md`](../paper/j1/K9-REPORT-vi.md) | Báo cáo kỹ thuật K9: đặt AI node và dữ liệu node thường gửi về | 2026-11-23 |  |
-| [`paper/j1/L1-VARIABLES-vi.md`](../paper/j1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-24 |  |
 | [`paper/j1/MODEL-vi.md`](../paper/j1/MODEL-vi.md) | J1 · Mô hình hệ thống (bản nháp, ND1 tuần 1) | 2026-11-10 |  |
 | [`paper/j1/ND1-TRIAL-vi.md`](../paper/j1/ND1-TRIAL-vi.md) | ND1 · Sổ thử nghiệm | 2026-11-10 |  |
-| [`paper/j1/OUTLINE-vi.md`](../paper/j1/OUTLINE-vi.md) | J1 · Dàn ý bài (chatlog mục 396) | 2026-11-24 |  |
 | [`paper/j1/PLAN-K9-DATA-vi.md`](../paper/j1/PLAN-K9-DATA-vi.md) | Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu | 2026-11-20 |  |
 | [`paper/j1/PLAN-TRACKS-vi.md`](../paper/j1/PLAN-TRACKS-vi.md) | Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật | 2026-11-18 |  |
-| [`paper/j1/PROBLEMS-vi.md`](../paper/j1/PROBLEMS-vi.md) | J1 · Ba bài toán cốt lõi (chatlog mục 399) | 2026-11-24 |  |
-| [`paper/j1/RESULTS-vi.md`](../paper/j1/RESULTS-vi.md) | J1 · Tổng hợp kết quả hai nhánh (chatlog mục 396) | 2026-11-23 |  |
 | [`paper/j1/draft-v1/README-vi.md`](../paper/j1/draft-v1/README-vi.md) | Bản thảo journal v1 (J1): hướng dẫn đánh giá | 2026-11-20 |  |
 | [`paper/j1/draft-v1/REQUEST-vi.md`](../paper/j1/draft-v1/REQUEST-vi.md) | Yêu cầu của người dùng cho bản thảo journal v1 | 2026-11-16 |  |
 | [`research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md`](../research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md) | Tổng hợp tìm tài liệu cho kế hoạch tiếp theo (2026-11-12) | 2026-11-12 |  |
@@ -42,7 +36,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (103): còn đúng, dùng để tra cứu nền
+## Tham khảo (109): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -51,6 +45,12 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/L3-TECHREPORT-vi.md`](../paper/L3-TECHREPORT-vi.md) | River: hợp tác mặt đất có lập kế hoạch sau một lượt bay UAV | 2026-10-22 |  |
 | [`paper/RIVER-L3-vi.md`](../paper/RIVER-L3-vi.md) | River: cơ chế lớp 3 | 2026-10-22 |  |
 | [`paper/icc-v5/README.md`](../paper/icc-v5/README.md) | Draft v5: Algorithm 3 and Evaluation (CLAUDE.md §8 item 184) | 2026-10-26 |  |
+| [`paper/j1/archive/urban-v1/CONTEXT-SUMMARY-vi.md`](../paper/j1/archive/urban-v1/CONTEXT-SUMMARY-vi.md) | J1 · Bối cảnh bài toán (bản tóm tắt) | 2026-11-26 |  |
+| [`paper/j1/archive/urban-v1/CONTEXT-vi.md`](../paper/j1/archive/urban-v1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-26 |  |
+| [`paper/j1/archive/urban-v1/L1-VARIABLES-vi.md`](../paper/j1/archive/urban-v1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-26 |  |
+| [`paper/j1/archive/urban-v1/OUTLINE-vi.md`](../paper/j1/archive/urban-v1/OUTLINE-vi.md) | J1 · Dàn ý bài (chatlog mục 396) | 2026-11-26 |  |
+| [`paper/j1/archive/urban-v1/PROBLEMS-vi.md`](../paper/j1/archive/urban-v1/PROBLEMS-vi.md) | J1 · Ba bài toán cốt lõi (chatlog mục 399) | 2026-11-26 |  |
+| [`paper/j1/archive/urban-v1/RESULTS-vi.md`](../paper/j1/archive/urban-v1/RESULTS-vi.md) | J1 · Tổng hợp kết quả hai nhánh (chatlog mục 396) | 2026-11-26 |  |
 | [`paper/j1/figs-q/bound-nc-Q1000.md`](../paper/j1/figs-q/bound-nc-Q1000.md) | bound-nc-Q1000.md | 2026-11-20 |  |
 | [`paper/j1/figs-q/bound-nc-Q400.md`](../paper/j1/figs-q/bound-nc-Q400.md) | bound-nc-Q400.md | 2026-11-20 |  |
 | [`paper/j1/maps/caugiay/summary.md`](../paper/j1/maps/caugiay/summary.md) | Quận Cầu Giấy (OSM relation 9421132) | 2026-11-19 |  |

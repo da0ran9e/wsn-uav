@@ -73,7 +73,7 @@ Không có. Bài chủ yếu là công thức; các hình là ví dụ đồ th�
 - **[TRÍCH]** "the pathwise search problem can be seen as a node-weighted version of the minimum latency problem" (tr. 3)
 
 ## Liên hệ SigDrop
-- **[NX] [L1]** (P2) của J1 (`paper/j1/PROBLEMS-vi.md` mục 3): đội 2 bay theo kiểu pathwise (phải bay từ chỗ đang đứng), λ là thời
+- **[NX] [L1]** (P2) của J1 (`paper/j1/archive/urban-v1/PROBLEMS-vi.md` mục 3): đội 2 bay theo kiểu pathwise (phải bay từ chỗ đang đứng), λ là thời
   gian bay cộng 78 s xác minh mỗi cell; độ khó dẫn theo Trummel và Weisinger 1986 và Sitters 2002 như bài này.
 - **[NX]** Quy tắc tham lam xác suất chia thời gian bay của pha 2 (`uav-l2/tools/l1_rank.py`) là bản pathwise của "mật độ tìm"; bài cho
   bảo đảm hệ số 8 chỉ ở bản expanding, bản pathwise cần lập luận riêng.

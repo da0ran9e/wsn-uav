@@ -77,7 +77,7 @@ mẫu cho (P1) của J1 (chatlog mục 400).
   ensure that the target amount of data from each SN is collected reliably." (tr. 2)
 
 ## Liên hệ SigDrop
-- **[NX] [TOUR]** Ràng buộc (7) Σ_k x_k[m] ≤ 1 là đúng dạng ràng buộc môi trường của (P1) trong `paper/j1/PROBLEMS-vi.md`: mỗi cell hoặc
+- **[NX] [TOUR]** Ràng buộc (7) Σ_k x_k[m] ≤ 1 là đúng dạng ràng buộc môi trường của (P1) trong `paper/j1/archive/urban-v1/PROBLEMS-vi.md`: mỗi cell hoặc
   cặp gateway một máy phát mỗi khe.
 - **[NX]** Độ tin cậy đưa vào qua F⁻¹(ε) ở tham số kênh, không thành ràng buộc xác suất; SigDrop có thể làm tương tự khi lập kế hoạch
   trên bản đồ nhận dự báo (ngưỡng θ cho P_c).

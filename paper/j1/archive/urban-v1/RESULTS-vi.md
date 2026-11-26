@@ -1,8 +1,10 @@
 ---
-status: current
-updated: 2026-11-23
+status: reference
+updated: 2026-11-26
 ---
 # J1 · Tổng hợp kết quả hai nhánh (chatlog mục 396)
+
+> Phiên bản đô thị (urban-v1), đóng gói ngày 2026-11-26 khi bài chuyển sang kịch bản rừng và khu bảo tồn (chatlog mục 408). Xem [README](README.md).
 
 Gom kết quả đã có của nhánh lý thuyết và bối cảnh (CONTEXT, L1-VARIABLES) và nhánh kỹ thuật (bản thảo `draft-v1`, chiến dịch C4,
 K9, thử thuật toán mặt đất mới) tính tới 2026-11-23. Dàn ý bài đi kèm ở [OUTLINE-vi.md](OUTLINE-vi.md).
@@ -90,7 +92,7 @@ Nguồn: bản thảo Bảng III và IV. Điều kiện: ns-3, 6–10 seed, mỗ
 
 ## 6. Đặt AI node và dữ liệu nền (K9)
 
-Nguồn: [K9-REPORT-vi.md](K9-REPORT-vi.md). Điều kiện: bản đồ k8-s1 (617 cell, 13 086 node), luồng nền tối đa 10 % thời gian kênh,
+Nguồn: [K9-REPORT-vi.md](../../K9-REPORT-vi.md). Điều kiện: bản đồ k8-s1 (617 cell, 13 086 node), luồng nền tối đa 10 % thời gian kênh,
 30 % node là camera.
 
 - Trên 802.15.4 chỉ vector (528 B) chạy được làm luồng nền. Khi số AI cell tăng từ 8 lên 128: **[mô hình]**

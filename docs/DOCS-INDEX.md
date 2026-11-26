@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (27): nguồn số liệu và mô tả đang dùng
+## Hiện hành (28): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -15,6 +15,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/SIM-REPORT-2026-10-31-vi.md`](../paper/SIM-REPORT-2026-10-31-vi.md) | Báo cáo giả lập 30–31/10/2026: vận chuyển mặt đất trên pass CHORD cố định và sai số quỹ đạo | 2026-10-31 |  |
 | [`paper/SIM-REPORT-2026-11-01-takeover-vi.md`](../paper/SIM-REPORT-2026-11-01-takeover-vi.md) | Báo cáo mô phỏng 2026-11-01: cơ chế takeover (dấu ranh giới) cho River khi đường bay lệch | 2026-11-01 |  |
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
+| [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh bài toán, phiên bản rừng và khu bảo tồn (v2) | 2026-11-26 |  |
 | [`paper/j1/FORMULATION-EXAMPLES-vi.md`](../paper/j1/FORMULATION-EXAMPLES-vi.md) | J1 · Mẫu phát biểu bài toán từ các bài tiêu biểu (chatlog mục 400) | 2026-11-26 |  |
 | [`paper/j1/K9-PARAMS-vi.md`](../paper/j1/K9-PARAMS-vi.md) | K9 bước B0: tham số cho bài node thường gửi gì về AI node | 2026-11-18 |  |
 | [`paper/j1/K9-REPORT-vi.md`](../paper/j1/K9-REPORT-vi.md) | Báo cáo kỹ thuật K9: đặt AI node và dữ liệu node thường gửi về | 2026-11-23 |  |
@@ -36,7 +37,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (109): còn đúng, dùng để tra cứu nền
+## Tham khảo (110): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -50,6 +51,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/j1/archive/urban-v1/L1-VARIABLES-vi.md`](../paper/j1/archive/urban-v1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-26 |  |
 | [`paper/j1/archive/urban-v1/OUTLINE-vi.md`](../paper/j1/archive/urban-v1/OUTLINE-vi.md) | J1 · Dàn ý bài (chatlog mục 396) | 2026-11-26 |  |
 | [`paper/j1/archive/urban-v1/PROBLEMS-vi.md`](../paper/j1/archive/urban-v1/PROBLEMS-vi.md) | J1 · Ba bài toán cốt lõi (chatlog mục 399) | 2026-11-26 |  |
+| [`paper/j1/archive/urban-v1/README.md`](../paper/j1/archive/urban-v1/README.md) | J1 phiên bản đô thị (urban-v1) | 2026-11-26 |  |
 | [`paper/j1/archive/urban-v1/RESULTS-vi.md`](../paper/j1/archive/urban-v1/RESULTS-vi.md) | J1 · Tổng hợp kết quả hai nhánh (chatlog mục 396) | 2026-11-26 |  |
 | [`paper/j1/figs-q/bound-nc-Q1000.md`](../paper/j1/figs-q/bound-nc-Q1000.md) | bound-nc-Q1000.md | 2026-11-20 |  |
 | [`paper/j1/figs-q/bound-nc-Q400.md`](../paper/j1/figs-q/bound-nc-Q400.md) | bound-nc-Q400.md | 2026-11-20 |  |

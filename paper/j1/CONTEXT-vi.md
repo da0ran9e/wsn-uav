@@ -56,8 +56,43 @@ Lập luận của bản đô thị có mấy chỗ phản biện dễ hỏi (ur
 
 | Mã | Câu hỏi | Trạng thái |
 |---|---|---|
-| a | Nhiệm vụ điển hình: tìm người đi lạc, săn trộm, cá thể động vật, hay loại khác | mở |
-| b | Thiết bị và mật độ: camera bẫy ảnh thưa cộng cảm biến dày hơn dọc tuyến (đường mòn, suối, ranh giới), hay rải đều; mức mật độ mục tiêu | mở |
+| a | Nhiệm vụ điển hình: tìm người mất tích (chatlog mục 409) | chốt |
+| b | Thiết bị và mật độ: camera bẫy ảnh thưa cộng cảm biến dày hơn dọc tuyến (đường mòn, suối, ranh giới), hay rải đều; mức mật độ mục tiêu. Hướng đã chốt (mục 409): mật độ hiện nay chưa đạt nhưng hợp lý trong tương lai, bài vẫn khảo sát và báo số thật (mục 5) | mở một phần |
 | c | Băng tần mặt đất: giữ 802.15.4 2,4 GHz (cell nhỏ, cần mạng dày) hay chuyển sub-GHz (cell lớn, mạng thưa được) | mở |
 | d | Vùng mẫu: khu thật nào để cắt bản đồ (ranh giới vườn quốc gia, đường mòn, suối, địa hình) | mở |
 | e | Giữ cơ chế và cấu trúc ba pha như mục 2 | đề xuất |
+
+## 5. Mật độ thiết bị hiện có ở rừng và khu bảo tồn (2026-11-26, mục 409)
+
+Mật độ do tôi chia số thiết bị cho diện tích nêu trong nguồn. Số [web] lấy từ đoạn trích tìm kiếm, chưa đọc toàn văn.
+
+| Triển khai | Loại thiết bị, kết nối | Số thiết bị, diện tích | Mật độ (thiết bị/km²) | Nguồn |
+|---|---|---|---|---|
+| Dryad Silvanet, thí điểm Lebanon | cảm biến khí cháy, mesh LoRa, 2 gateway | 91 trên 78 ha | khoảng 117 | [repo] urban-v1 CONTEXT mục 7; [web] eenewseurope |
+| Dryad Silvanet, Marsden Moor (Anh, 2024) | như trên | 50 trên khoảng 2 500 ha | khoảng 2 | [web] dryad.net, rcrwireless |
+| Dryad, tổng | như trên | hơn 30 000 cảm biến ở khoảng 100 điểm (trung bình khoảng 300 mỗi điểm); điểm thí điểm tối thiểu 1 000 ha | — | [web] ITU EW4All, dryad.net |
+| Camera 4G, Natura 2000 Hà Lan (Kissling 2024) | camera bẫy ảnh, 4G, pin mặt trời | 65 trên 34 km² | khoảng 1,9 | [repo] `kissling2024-wildcam` |
+| VQG Pù Mát | camera bẫy ảnh, không nối mạng | 152 camera ở 5 điểm, vườn hơn 900 km² | khoảng 0,17 trên cả vườn | [web] Saola Working Group 2019 |
+| KBT Pù Hoạt | camera bẫy ảnh | 45 trạm trên khoảng 350 km² | khoảng 0,13 | [web] đoạn trích tìm kiếm, chưa xác định bài gốc |
+| VQG Bạch Mã, KBT Sao La, Xe Sap | camera bẫy ảnh | 138 trạm lưới thô ở 5 khu (53 ở Bạch Mã) | chưa tính (thiếu diện tích khảo sát) | [web] |
+| TrailGuard AI (Grumeti, Tanzania) | camera AI chống săn trộm, 3G rồi LoRa và vệ tinh | bắt đầu với 6 thiết bị | rất thấp | [web] Smithsonian, Mongabay |
+| Rainforest Connection Guardian | cảm biến âm thanh, phát hiện tiếng súng, cưa, xe | tầm nghe 50–1 500 m; không có số mật độ | — | [web] rfcx.org |
+| ALERTCalifornia | camera PTZ phát hiện cháy trên tháp | khoảng 1 300 camera trên cả bang (khoảng 424 000 km²) | khoảng 1 trên 330 km² (dày hơn ở vùng nguy cơ cao) | [web] PetaPixel 2026, UCSD |
+| GreenOrbs | TelosB 802.15.4, mesh nhiều chặng | tới 330 node, không ghi diện tích | — | [repo] `liu2013-greenorbs` |
+
+Nhận xét:
+- Trên toàn vườn, các mạng đang chạy thật chỉ có khoảng 0,003–2 thiết bị mỗi km². Mức trên 100 chỉ gặp ở ô thí điểm nhỏ (Dryad
+  Lebanon, 78 ha). Bài đang dùng khoảng 820, cao hơn mức toàn vườn hàng trăm tới hàng trăm nghìn lần.
+- Các mạng thưa này đều không dùng mesh 2,4 GHz. Chúng nối thẳng bằng 4G, LoRa hay vệ tinh, hoặc không nối mạng (camera bẫy ảnh thu thẻ
+  nhớ theo đợt). Riêng Dryad dùng mesh sub-GHz. GreenOrbs là mesh 802.15.4 duy nhất trong rừng mà repo có số liệu.
+- Ở bản đô thị, lưới cell R = 100 m dùng 802.15.4 chỉ còn liền khi các node cách nhau không quá khoảng 50–60 m, tức khoảng 300 node/km²
+  trở lên (urban-v1 CONTEXT mục 10). Trong rừng, suy hao qua tán lá làm con số này còn cao hơn. Ở mật độ hiện nay, hợp tác mặt đất qua
+  802.15.4 vì vậy không chạy được. Bài cần chọn một trong hai: lấy mật độ hướng tới tương lai làm giả định chính và nói rõ đó là giả
+  định, hoặc chuyển lớp mặt đất sang sub-GHz.
+- Lý lẽ cho mật độ tương lai: Dryad đã giao hơn 30 000 cảm biến và đặt quy mô thí điểm tối thiểu 1 000 ha; giá node giảm; nhiều mạng
+  khác nhau (cảm biến cháy, camera, âm thanh) có thể dùng chung một lớp mesh. Đây là suy luận, chưa có nguồn nói thẳng xu hướng mật độ.
+
+Tần suất tìm kiếm cứu nạn [web]: các khu do Cục Vườn quốc gia Hoa Kỳ (NPS) quản lý có 2 890 vụ tìm kiếm cứu nạn năm 2017 (159 người
+chết). Trung bình giai đoạn 1992–2007 là 11,2 vụ mỗi ngày (bài "Dead men walking: search and rescue in US National Parks", Wilderness & Environmental Medicine 2009, theo đoạn trích). Grand Canyon
+có 785 vụ trong ba năm 2018–2020, Yosemite 732 (phân tích của Outforia, không phải số chính thức). Chưa có số cho Việt Nam.
+

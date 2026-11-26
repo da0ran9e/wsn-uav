@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-25
+updated: 2026-11-26
 ---
 # J1 · Mẫu phát biểu bài toán từ các bài tiêu biểu (chatlog mục 400)
 
@@ -138,3 +138,6 @@ Bốn bài nên thêm ghi chú theo `research_notes/literature/METHOD-vi.md`, v�
 - You và cộng sự 2013 (arXiv 1304.5330).
 
 Bài SSCFLP 2025 chỉ cần dẫn mô hình chuẩn; nguồn kinh điển của mô hình này là Holmberg, Rönnqvist, Yuan 1999 (EJOR), chưa đọc.
+
+Bản dịch phần phát biểu bài toán của bảy bài, kèm tóm tắt hoàn cảnh, ở repo private `da0ran9e/sigdrop-fulltext`, file
+`translations/PROBLEM-SECTIONS-vi.md` (chatlog mục 407). File để ở repo private vì là bản dịch gần nguyên văn.

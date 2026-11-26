@@ -17,7 +17,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
 | [`paper/j1/CONTEXT-SUMMARY-vi.md`](../paper/j1/CONTEXT-SUMMARY-vi.md) | J1 · Bối cảnh bài toán (bản tóm tắt) | 2026-11-22 |  |
 | [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-22 |  |
-| [`paper/j1/FORMULATION-EXAMPLES-vi.md`](../paper/j1/FORMULATION-EXAMPLES-vi.md) | J1 · Mẫu phát biểu bài toán từ các bài tiêu biểu (chatlog mục 400) | 2026-11-25 |  |
+| [`paper/j1/FORMULATION-EXAMPLES-vi.md`](../paper/j1/FORMULATION-EXAMPLES-vi.md) | J1 · Mẫu phát biểu bài toán từ các bài tiêu biểu (chatlog mục 400) | 2026-11-26 |  |
 | [`paper/j1/K9-PARAMS-vi.md`](../paper/j1/K9-PARAMS-vi.md) | K9 bước B0: tham số cho bài node thường gửi gì về AI node | 2026-11-18 |  |
 | [`paper/j1/K9-REPORT-vi.md`](../paper/j1/K9-REPORT-vi.md) | Báo cáo kỹ thuật K9: đặt AI node và dữ liệu node thường gửi về | 2026-11-23 |  |
 | [`paper/j1/L1-VARIABLES-vi.md`](../paper/j1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-24 |  |
@@ -42,7 +42,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |
 | [`uav-l2/docs/RESULTS-vi.md`](../uav-l2/docs/RESULTS-vi.md) | Kết quả CHORD và các baseline, kèm seed để chạy lại (CLAUDE.md §8 mục 166–169, 182) | 2026-10-28 |  |
 
-## Tham khảo (99): còn đúng, dùng để tra cứu nền
+## Tham khảo (103): còn đúng, dùng để tra cứu nền
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -101,6 +101,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/ghaderi2008-ncrel.md`](../research_notes/literature/papers/ghaderi2008-ncrel.md) | Ghaderi, Towsley, Kurose 2008 · Lợi ích độ tin cậy của network coding trong mạng không dây mất gói | 2026-11-12 |  |
 | [`research_notes/literature/papers/gudmundson1991-shadow.md`](../research_notes/literature/papers/gudmundson1991-shadow.md) | Gudmundson 1991 · Mô hình tương quan cho shadow fading | 2026-11-12 |  |
 | [`research_notes/literature/papers/helsgaun2000-lkh.md`](../research_notes/literature/papers/helsgaun2000-lkh.md) | Helsgaun 2000 · LKH: cài đặt hiệu quả heuristic Lin–Kernighan | 2026-11-12 |  |
+| [`research_notes/literature/papers/hermans2019-expsearch.md`](../research_notes/literature/papers/hermans2019-expsearch.md) | Hermans, Leus, Matuschke 2019 · Exact and approximation algorithms for the expanding search problem | 2026-11-26 |  |
 | [`research_notes/literature/papers/hoseini2021-dql.md`](../research_notes/literature/papers/hoseini2021-dql.md) | Hoseini et al. 2021 · Thiết kế quỹ đạo UAV-BS theo năng lượng và ưu tiên dịch vụ bằng Double Q-Learning | 2026-11-12 |  |
 | [`research_notes/literature/papers/hui2004-deluge.md`](../research_notes/literature/papers/hui2004-deluge.md) | Hui, Culler 2004 · Deluge: phổ biến dữ liệu lớn trong WSN đa chặng | 2026-11-12 |  |
 | [`research_notes/literature/papers/isaacs2011-dtspn.md`](../research_notes/literature/papers/isaacs2011-dtspn.md) | Isaacs, Klein, Hespanha 2011 · Algorithms for the TSP with neighborhoods involving a Dubins vehicle | 2026-11-12 |  |
@@ -140,8 +141,11 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/papers/techy2009-wind.md`](../research_notes/literature/papers/techy2009-wind.md) | Techy, Woolsey 2009 · Lập đường bay thời gian ngắn nhất cho UAV trong gió đều | 2026-11-12 |  |
 | [`research_notes/literature/papers/vana2017-budget.md`](../research_notes/literature/papers/vana2017-budget.md) | Váňa, Faigl, Sláma, Pěnička 2017 · Lập kế hoạch thu dữ liệu với mô hình máy bay Dubins và ngân sách quãng bay | 2026-11-12 |  |
 | [`research_notes/literature/papers/wang2025-fwcoverage.md`](../research_notes/literature/papers/wang2025-fwcoverage.md) | Wang, Zhang, Li, Zhang 2025 · Lập đường phủ 3D phối hợp cho nhiều UAV cánh bằng ở vùng phức tạp | 2026-11-12 |  |
+| [`research_notes/literature/papers/wu2018-multiuav.md`](../research_notes/literature/papers/wu2018-multiuav.md) | Wu, Zeng, Zhang 2018 · Joint trajectory and communication design for multi-UAV enabled wireless networks | 2026-11-26 |  |
+| [`research_notes/literature/papers/you2013-mlbs.md`](../research_notes/literature/papers/you2013-mlbs.md) | You, Yuan, Tang, Chen 2013 · Minimum latency broadcast scheduling in single-radio multi-channel WANETs | 2026-11-26 |  |
 | [`research_notes/literature/papers/zeng2018-multicast.md`](../research_notes/literature/papers/zeng2018-multicast.md) | Zeng, Xu, Zhang 2018 · Trajectory design for completion time minimization in UAV-enabled multicasting | 2026-11-12 |  |
 | [`research_notes/literature/papers/zhai2022-hetcov.md`](../research_notes/literature/papers/zhai2022-hetcov.md) | Zhai et al. 2022 · Tối đa vùng phủ cho mạng không trung không đồng nhất | 2026-11-12 |  |
+| [`research_notes/literature/papers/zhan2018-wsncollect.md`](../research_notes/literature/papers/zhan2018-wsncollect.md) | Zhan, Zeng, Zhang 2018 · Energy-efficient data collection in UAV enabled WSN | 2026-11-26 |  |
 | [`uav-l2/docs/ANIM-vi.md`](../uav-l2/docs/ANIM-vi.md) | Các animation (không chữ trên bản đồ) | 2026-10-25 |  |
 | [`uav-l2/docs/FLIGHTLINE-vi.md`](../uav-l2/docs/FLIGHTLINE-vi.md) | Chọn đường bay qua mỗi cluster (FlightLine) | 2026-10-15 |  |
 | [`uav-l2/docs/SAT-vi.md`](../uav-l2/docs/SAT-vi.md) | Ngưỡng bão hoà và điểm tối ưu theo hình dạng cụm | 2026-10-21 |  |

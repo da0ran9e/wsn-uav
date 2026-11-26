@@ -35,8 +35,8 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`research_notes/literature/NOTES-DRIVE-PDF-vi.md`](../research_notes/literature/NOTES-DRIVE-PDF-vi.md) | Ghi chú đọc 32 PDF trong thư mục Drive (2026-11-12) | 2026-11-13 |  |
 | [`research_notes/literature/PDF-LIST-2026-11-12-vi.md`](../research_notes/literature/PDF-LIST-2026-11-12-vi.md) | Danh sách PDF cần đọc (từ đợt tìm tài liệu 2026-11-12) | 2026-11-12 |  |
 | [`research_notes/literature/WORKLIST-2026-11-12-vi.md`](../research_notes/literature/WORKLIST-2026-11-12-vi.md) | Danh sách ghi chú 50 PDF trong Drive (phạm vi C, chạy tuần tự) | 2026-11-12 |  |
-| [`research_notes/literature/papers/INDEX.md`](../research_notes/literature/papers/INDEX.md) | Danh mục ghi chú bài báo | 2026-11-23 |  |
-| [`research_notes/literature/papers/TOPICS.md`](../research_notes/literature/papers/TOPICS.md) | Chủ đề → bài | 2026-11-23 |  |
+| [`research_notes/literature/papers/INDEX.md`](../research_notes/literature/papers/INDEX.md) | Danh mục ghi chú bài báo | 2026-11-26 |  |
+| [`research_notes/literature/papers/TOPICS.md`](../research_notes/literature/papers/TOPICS.md) | Chủ đề → bài | 2026-11-26 |  |
 | [`research_notes/proposal/SIGDROP-PROPOSAL-vi.md`](../research_notes/proposal/SIGDROP-PROPOSAL-vi.md) | Đề cương nghiên cứu SigDrop (bản nháp) | 2026-11-06 |  |
 | [`uav-l2/docs/ENERGY-vi.md`](../uav-l2/docs/ENERGY-vi.md) | Mô hình năng lượng cho bảng "Ground transport on fixed CHORD passes" (CLAUDE.md §8 mục 227, phần 3) | 2026-10-30 |  |
 | [`uav-l2/docs/PIPELINE-vi.md`](../uav-l2/docs/PIPELINE-vi.md) | Luồng thực thi của mô phỏng ns-3 (một nhiệm vụ pha 1) | 2026-11-09 |  |

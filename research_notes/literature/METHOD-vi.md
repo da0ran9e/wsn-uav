@@ -159,6 +159,8 @@ Trường `topics` chỉ dùng các mã dưới đây; `paper_index.py` cảnh b
 | `deployment` | triển khai thật ngoài hiện trường: quy mô, mật độ, diện tích, chi phí vận hành |
 | `geo-routing` | định tuyến địa lý, đi vòng lỗ mạng, cân tải đường đi |
 | `clustering` | phân cụm node, chọn cluster head |
+| `search-theory` | lý thuyết tìm kiếm: tìm mục tiêu theo xác suất, độ trễ nhỏ nhất có trọng số |
+| `scheduling` | lập lịch truyền theo khe, trễ quảng bá nhỏ nhất, xung đột kênh |
 
 ## 7. Mức liên quan và độ sâu đọc
 

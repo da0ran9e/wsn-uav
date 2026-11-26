@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-23
+updated: 2026-11-26
 ---
 # Chủ đề → bài
 
@@ -34,15 +34,19 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [leny2012-dtsp](leny2012-dtsp.md) ★★★ · Chứng minh Dubins TSP (tour và path) NP-khó bằng phép quy từ TSP Euclid có phóng to; chỉ ra heuristic theo thứ tự Euclid kém tối ưu cỡ Ω(n); đề xuất thuật toán rời rạc hoá hướng qua GTSP → ATSP.
 - [babel2017-obstacles](babel2017-obstacles.md) ★★ · Đặt bài toán CTSPO (DTSP + tránh chướng ngại), dùng mạng "Mikado" (đường thẳng ngẫu nhiên nối bằng clothoid) để tìm đường bay được, tối ưu hướng bay qua bằng đồ thị phụ p hướng/điểm và đường ngắn nhất, dựng tour bằng chèn dần (NEARIN, FARIN, RANDIN, CHEAPIN); kèm câu "DTSP-N NP-khó vì khi vùng co về điểm thì về DTSP".
+- [hermans2019-expsearch](hermans2019-expsearch.md) ★★ · Mục tiêu ẩn ở một đỉnh của đồ thị có trọng số theo xác suất đã biết; tìm thứ tự tìm tối thiểu quãng đường kỳ vọng tới khi thấy, theo kiểu expanding (đi tiếp từ mọi đỉnh đã thăm); LP chính xác cho cây, MIP và branch-and-cut cho đồ thị, thuật toán tham lam theo mật độ tìm đạt hệ số 8.
 - [leny2007-highdensity](leny2007-highdensity.md) ★★ · Bản hội nghị trước của Le Ny 2012: phác thảo chứng minh DTSP (tour và path) NP-khó từ phép quy Papadimitriou; mọi thuật toán theo thứ tự ETSP tối ưu có hệ số xấp xỉ Ω(n) khi điểm dày; thuật toán cố định hướng + ATSP cho hệ số O(min{(1 + ρ/ε) log n, (1 + ρ/ε)²}).
+- [you2013-mlbs](you2013-mlbs.md) ★★ · Lập lịch quảng bá trễ nhỏ nhất (MLBS) từ một nguồn trên đồ thị đĩa đơn vị khi mỗi node có một radio và kênh nhận cố định trong k kênh; chứng minh NP-khó bằng thu hẹp về MLBS một kênh, thuật toán BTS tỉ số 4k + 12 và ETS tỉ số k + 23, chặn dưới là độ sâu cây đường đi ngắn nhất.
 
 ## `approx-bound` · hệ số xấp xỉ, cận trên và cận dưới của tour
 
 - [isaacs2011-dtspn](isaacs2011-dtspn.md) ★★★ · Hai thuật toán cho Dubins TSP với lân cận (DTSPN): vùng rời nhau thì lấy một mẫu mỗi vùng cho hệ số xấp xỉ không phụ thuộc số vùng; vùng chồng nhau thì lấy mẫu rồi biến GTSP có nhóm chồng nhau sang ATSP (Noon–Bean), tour ngắn tới gần một nửa so với RCM.
 - [leny2012-dtsp](leny2012-dtsp.md) ★★★ · Chứng minh Dubins TSP (tour và path) NP-khó bằng phép quy từ TSP Euclid có phóng to; chỉ ra heuristic theo thứ tự Euclid kém tối ưu cỡ Ω(n); đề xuất thuật toán rời rạc hoá hướng qua GTSP → ATSP.
 - [savla2008-dtsp](savla2008-dtsp.md) ★★★ · Ba kết quả cho DTSP: (1) trường hợp xấu nhất độ dài tour tăng tuyến tính theo n, ALTERNATING ALGORITHM (giữ thứ tự ETSP, bỏ xen kẽ cạnh) xấp xỉ hằng số khi khoảng cách điểm bị chặn dưới, kèm cận điểm–điểm D ≤ E + κπρ; (2) điểm ngẫu nhiên đều: tour cỡ n^{2/3}, RECURSIVE BEAD-TILING đạt hằng số với xác suất 1; (3) DTRP: thời gian hệ thống cỡ λ² (Euclid chỉ cỡ λ).
+- [hermans2019-expsearch](hermans2019-expsearch.md) ★★ · Mục tiêu ẩn ở một đỉnh của đồ thị có trọng số theo xác suất đã biết; tìm thứ tự tìm tối thiểu quãng đường kỳ vọng tới khi thấy, theo kiểu expanding (đi tiếp từ mọi đỉnh đã thăm); LP chính xác cho cây, MIP và branch-and-cut cho đồ thị, thuật toán tham lam theo mật độ tìm đạt hệ số 8.
 - [leny2007-highdensity](leny2007-highdensity.md) ★★ · Bản hội nghị trước của Le Ny 2012: phác thảo chứng minh DTSP (tour và path) NP-khó từ phép quy Papadimitriou; mọi thuật toán theo thứ tự ETSP tối ưu có hệ số xấp xỉ Ω(n) khi điểm dày; thuật toán cố định hướng + ATSP cho hệ số O(min{(1 + ρ/ε) log n, (1 + ρ/ε)²}).
 - [rathinam2007-multivehicle](rathinam2007-multivehicle.md) ★★ · Với các mục tiêu cách nhau (và cách điểm xuất phát) ≥ 2r, giải TSP Euclid bằng Christofides rồi nối liên tiếp bằng đường LS/RS (hướng tại mục tiêu tự do) cho xấp xỉ hằng số 4,56 với một xe; nhiều xe dùng MST có cạnh 0 giữa các xe, nhân đôi cạnh, đi Euler, cho hệ số 6,07; mục tiêu là tổng quãng đường.
+- [you2013-mlbs](you2013-mlbs.md) ★★ · Lập lịch quảng bá trễ nhỏ nhất (MLBS) từ một nguồn trên đồ thị đĩa đơn vị khi mỗi node có một radio và kênh nhận cố định trong k kênh; chứng minh NP-khó bằng thu hẹp về MLBS một kênh, thuật toán BTS tỉ số 4k + 12 và ETS tỉ số k + 23, chặn dưới là độ sâu cây đường đi ngắn nhất.
 
 ## `tsp-solver` · bộ giải TSP, biến đổi GTSP sang ATSP
 
@@ -73,6 +77,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [nguyen2023-gambac](nguyen2023-gambac.md) ★★ · Phân cụm WSN và lập tour cho M UAV có giới hạn quãng bay ℓmax; chặn dưới năng lượng node gửi về CH tỉ lệ S²/ℓmax, đạt gần khi các cụm cân năng lượng; ba heuristic GAMBAC tìm số cụm lớn nhất bằng chia đôi, so MILP ở 50 node và vượt CHP.
 - [penicka2017-dopn](penicka2017-dopn.md) ★★ · Định nghĩa DOPN: chọn tập con điểm và đường Dubins có độ dài ≤ T_max để tối đa tổng thưởng, thưởng thu được khi vào đĩa bán kính δ quanh điểm; giải bằng Variable Neighborhood Search với lấy mẫu o vị trí trên biên đĩa và m hướng; δ lớn tăng thưởng, ρ lớn giảm thưởng.
 - [penicka2019-datacoll](penicka2019-datacoll.md) ★★ · Bản tạp chí của DOPN (penicka2017-dopn): VNS ghép tối ưu tổ hợp (chọn và sắp điểm) với tối ưu liên tục vị trí waypoint trong đĩa δ (Waypoint Shake / Waypoint Improvement); lấy mẫu thưa ban đầu cho lời giải ~90 % thưởng tốt nhất trong vài giây, vượt kỷ lục cũ và phương pháp SOM; thử thực tế với hexarotor (δ = 4 m, T_max = 150 m).
+- [zhan2018-wsncollect](zhan2018-wsncollect.md) ★★ · Một UAV bay từ q₀ tới q_F trong thời gian T thu dữ liệu của K cảm biến; chọn chung lịch đánh thức (mỗi khe tối đa một cảm biến) và quỹ đạo để tối thiểu năng lượng lớn nhất của các cảm biến, với độ tin cậy đưa vào qua xác suất mất gói ε; nới lỏng nhị phân, giải luân phiên LP và QCQP.
 - [amodu2024-aoi](amodu2024-aoi.md) ★ · Khảo sát các công trình dùng DRL (DQN, DDPG, TD3, PPO, đa tác tử) để tối ưu quỹ đạo UAV, điểm thu, lịch truyền của nút nhằm tối thiểu Age of Information khi UAV thu dữ liệu từ WSN/IoT; phân loại theo mục tiêu, kiến trúc, thư viện mô phỏng, độ phức tạp; nêu thách thức và hướng mở.
 - [faigl2017-ceop](faigl2017-ceop.md) ★ · CEDOP (cùng bài toán với DOPN: chọn điểm, thứ tự, waypoint trong đĩa bán kính δ và hướng sao cho đường Dubins ≤ T_max và tổng thưởng lớn nhất) được giải bằng bản đồ tự tổ chức (SOM); kết quả kém VNS một chút, nhất là trên lưới đều (Set 64, 66), nhưng nhẹ tính hơn nhiều.
 - [hoseini2021-dql](hoseini2021-dql.md) ★ · UAV làm trạm gốc phục vụ các nút IoT có mức ưu tiên khác nhau; tối ưu quỹ đạo bằng Double Q-Learning để giảm năng lượng bay và trễ phục vụ cho nút ưu tiên cao; tốt hơn thuật toán phục vụ tham lam.
@@ -82,6 +87,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [alhourani2014-lap](alhourani2014-lap.md) ★★★ · Mô hình suy hao không–đất trung bình = FSPL + η theo nhóm LoS/NLoS, xác suất LoS theo góc ngẩng xấp xỉ bằng hàm S P(LoS, θ) = 1/(1 + a·exp(−b(θ − a))) với a, b khớp theo tham số đô thị ITU (α, β, γ); bán kính phủ R(h) có cực đại, góc ngẩng tối ưu θ_OPT không phụ thuộc PL_max.
 - [miao2020-d2d](miao2020-d2d.md) ★★ · UAV treo ở tâm vùng (cao 100 m) phục vụ trực tiếp tối đa M người dùng; người dùng khác nhận lại qua D2D một chặng (≤ 10 m) từ người đã được UAV phục vụ (ràng buộc nhân quả thông tin); tối đa ω·tổng tốc độ + (1 − ω)·số người được phục vụ, bài nhị phân NP-khó được nới thành LP giải bằng CVX.
+- [wu2018-multiuav](wu2018-multiuav.md) ★★ · M UAV phát xuống K người dùng chung một băng tần; tối đa tốc độ trung bình nhỏ nhất bằng cách chọn chung lịch và gán người dùng (nhị phân), quỹ đạo và công suất; nới lỏng biến nhị phân rồi giải luân phiên ba khối (LP cho lịch, tối ưu lồi kế tiếp cho quỹ đạo và công suất), có chứng minh hội tụ.
 - [bensaoud2025-covopt](bensaoud2025-covopt.md) ★ · Với mô hình LoS xác suất (nhà phân bố Poisson, chiều cao trong [h_min, h_max]) và fading Rician có hệ số K phụ thuộc góc ngẩng, bán kính phủ đạt ngưỡng SNR hoặc hiệu suất phổ tăng theo độ cao rồi giảm (hai chế độ), có độ cao tối ưu ứng cùng một góc ngẩng cho mọi chỉ số; bay trên bề mặt bê tông cho bán kính lớn tới 5 lần so với đất gồ ghề có cây.
 - [fahim2023-lte](fahim2023-lte.md) ★ · Tối ưu đồng thời vị trí 3D của một trạm gốc LTE gắn drone và lập lịch tài nguyên để phủ nhiều thiết bị M2M nhất, ưu tiên lưu lượng nhạy trễ; lời giải chính xác cho cận tối ưu (quá nặng cho thời gian thực) và heuristic gần tối ưu độ phức tạp thấp; tốt hơn đặt drone tĩnh về tỉ lệ trễ hạn, thông lượng, SNR.
 - [hoseini2021-dql](hoseini2021-dql.md) ★ · UAV làm trạm gốc phục vụ các nút IoT có mức ưu tiên khác nhau; tối ưu quỹ đạo bằng Double Q-Learning để giảm năng lượng bay và trễ phục vụ cho nút ưu tiên cao; tốt hơn thuật toán phục vụ tham lam.
@@ -106,6 +112,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [ferrari2012-lwb](ferrari2012-lwb.md) ★★ · LWB biến mạng đa chặng thành "bus chung": mọi trao đổi là một lần flood Glossy, các flood được lập lịch toàn cục theo vòng do một nút host tính và phát; không giữ trạng thái topo nên chịu được nhiễu, hỏng nút và nút di động; hỗ trợ 1–nhiều, nhiều–1, nhiều–nhiều với >99 % gói và duty cycle thấp.
 - [kulkarni2005-mnp](kulkarni2005-mnp.md) ★★ · MNP chọn người phát bằng cạnh tranh tham lam theo số yêu cầu khác nhau (ReqCtr) để mỗi vùng lân cận chỉ có một nguồn phát, pipeline theo đoạn, cho nút "ngủ" khi hàng xóm phát đoạn không cần — giảm ~38 % thời gian bật radio do nghe rỗi so với để radio luôn bật như Deluge.
 - [liang2008-typhoon](liang2008-typhoon.md) ★★ · Typhoon phổ biến đối tượng lớn tới mọi nút bằng bắt tay yêu cầu trang, truyền unicast có ACK từng gói kèm nghe lén, ưu tiên nút xa nguồn chuyển tiếp và đổi kênh ngẫu nhiên cho từng lần truyền trang; nhanh hơn Deluge tới khoảng 3× ở mạng thưa và mất gói nhiều, đổi lại lưu lượng điều khiển và dữ liệu gấp khoảng 3×.
+- [you2013-mlbs](you2013-mlbs.md) ★★ · Lập lịch quảng bá trễ nhỏ nhất (MLBS) từ một nguồn trên đồ thị đĩa đơn vị khi mỗi node có một radio và kênh nhận cố định trong k kênh; chứng minh NP-khó bằng thu hẹp về MLBS một kênh, thuật toán BTS tỉ số 4k + 12 và ETS tỉ số k + 23, chặn dưới là độ sâu cây đường đi ngắn nhất.
 
 ## `coding` · fountain code, RLNC, network coding
 
@@ -124,6 +131,8 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [zeng2018-multicast](zeng2018-multicast.md) ★★★ · UAV phát một file chung (RLNC) cho K trạm mặt đất; chặn dưới xác suất giải được đưa ràng buộc về "thời gian kết nối tối thiểu trong bán kính D", quỹ đạo tối ưu gồm các đoạn thẳng, waypoint chọn qua đặt trạm ảo (VBS) + TSP + tối ưu lồi, tốc độ qua LP.
 - [dargie2021-lqe](dargie2021-lqe.md) ★★ · Đo liên kết 802.15.4 giữa nút do drone DJI Mavic 2 mang (treo ở nhiều độ cao) và 9 nút mặt đất trên 16 kênh: PRR rất khác theo kênh (0,13–1,0) do nhiễu chéo công nghệ (CTI) từ điều khiển drone; mô hình số gói nhận theo thời gian là quá trình Poisson P(x(t) = k) = (λt)^k e^{−λt}/k!, kèm thống kê chuỗi thành công/thất bại liên tiếp cho độ ổn định ngắn hạn.
 - [gudmundson1991-shadow](gudmundson1991-shadow.md) ★★ · Shadow fading (dB) mô hình Gauss quanh trung bình K₁ − K₂ log d với tự tương quan mũ theo khoảng cách R(k) = σ²a^{|k|}, a = ε_D^{vT/D}; khớp tốt ở ngoại ô (σ = 7,5 dB, tương quan 0,82 ở 100 m) nhưng kém ở vi tế bào đô thị (σ = 4,3 dB, tương quan 0,3 ở 10 m).
+- [wu2018-multiuav](wu2018-multiuav.md) ★★ · M UAV phát xuống K người dùng chung một băng tần; tối đa tốc độ trung bình nhỏ nhất bằng cách chọn chung lịch và gán người dùng (nhị phân), quỹ đạo và công suất; nới lỏng biến nhị phân rồi giải luân phiên ba khối (LP cho lịch, tối ưu lồi kế tiếp cho quỹ đạo và công suất), có chứng minh hội tụ.
+- [zhan2018-wsncollect](zhan2018-wsncollect.md) ★★ · Một UAV bay từ q₀ tới q_F trong thời gian T thu dữ liệu của K cảm biến; chọn chung lịch đánh thức (mỗi khe tối đa một cảm biến) và quỹ đạo để tối thiểu năng lượng lớn nhất của các cảm biến, với độ tin cậy đưa vào qua xác suất mất gói ε; nới lỏng nhị phân, giải luân phiên LP và QCQP.
 - [bensaoud2025-covopt](bensaoud2025-covopt.md) ★ · Với mô hình LoS xác suất (nhà phân bố Poisson, chiều cao trong [h_min, h_max]) và fading Rician có hệ số K phụ thuộc góc ngẩng, bán kính phủ đạt ngưỡng SNR hoặc hiệu suất phổ tăng theo độ cao rồi giảm (hai chế độ), có độ cao tối ưu ứng cùng một góc ngẩng cho mọi chỉ số; bay trên bề mặt bê tông cho bán kính lớn tới 5 lần so với đất gồ ghề có cây.
 - [zhai2022-hetcov](zhai2022-hetcov.md) ★ · Một trạm gốc độ cao lớn (HABS) bay quỹ đạo tròn và nhiều trạm gốc độ cao thấp (LABS) đứng yên; tìm độ cao tối ưu LABS bằng chia đôi theo đặc tính kênh A2G, vị trí ngang LABS bằng thuật toán bầy đàn hạt + cá, bán kính bay của HABS bằng thuật toán co khoảng ngẫu nhiên, nhằm tối đa số người dùng được phủ.
 
@@ -146,6 +155,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 - [nguyen2023-gambac](nguyen2023-gambac.md) ★★ · Phân cụm WSN và lập tour cho M UAV có giới hạn quãng bay ℓmax; chặn dưới năng lượng node gửi về CH tỉ lệ S²/ℓmax, đạt gần khi các cụm cân năng lượng; ba heuristic GAMBAC tìm số cụm lớn nhất bằng chia đôi, so MILP ở 50 node và vượt CHP.
 - [rathinam2007-multivehicle](rathinam2007-multivehicle.md) ★★ · Với các mục tiêu cách nhau (và cách điểm xuất phát) ≥ 2r, giải TSP Euclid bằng Christofides rồi nối liên tiếp bằng đường LS/RS (hướng tại mục tiêu tự do) cho xấp xỉ hằng số 4,56 với một xe; nhiều xe dùng MST có cạnh 0 giữa các xe, nhân đôi cạnh, đi Euler, cho hệ số 6,07; mục tiêu là tổng quãng đường.
+- [wu2018-multiuav](wu2018-multiuav.md) ★★ · M UAV phát xuống K người dùng chung một băng tần; tối đa tốc độ trung bình nhỏ nhất bằng cách chọn chung lịch và gán người dùng (nhị phân), quỹ đạo và công suất; nới lỏng biến nhị phân rồi giải luân phiên ba khối (LP cho lịch, tối ưu lồi kế tiếp cho quỹ đạo và công suất), có chứng minh hội tụ.
 - [li2023-coverage](li2023-coverage.md) ★ · Chia môi trường đã biết thành ô phủ; EDM giải chính xác bằng MILP (đồ thị điểm đầu–cuối của các dải phủ, cạnh là đường Dubins) cho đường phủ ngắn nhất ở cảnh nhỏ; CDM heuristic dùng mô hình "tín dụng" cân tải giữa robot và chia cây để giảm độ phức tạp ở cảnh lớn; thử trên mô hình UAV cánh bằng độ trung thực cao.
 - [nayak2023-minmax](nayak2023-minmax.md) ★ · MD-GmTSP: m xe Dubins, mỗi điểm chọn một trong h hướng rời rạc (one-in-a-set), tối thiểu độ dài tour dài nhất; MILP giải bằng CPLEX cho 16 instance TSPLIB (16–137 thành phố) nhưng không mở rộng được; heuristic chèn + VNS (GVNS tốt nhất) trong 600 s; GNN + học tăng cường tốt ở instance nhỏ, VNS tốt nhất ở instance lớn.
 - [oubbati2023-rescue](oubbati2023-rescue.md) ★ · MARLF: nhóm UAV làm trạm gốc bay, giữ liên kết với nhau và với trạm mặt đất, theo dõi các thành viên cứu hộ di chuyển khó đoán; học quỹ đạo tiết kiệm năng lượng bằng MADDPG để tối đa số người được phủ và thông lượng; tốt hơn các phương pháp cơ sở (ví dụ 20 thành viên, 7 UAV).
@@ -157,6 +167,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 - [liu2013-greenorbs](liu2013-greenorbs.md) ★★ · Đo một mạng TelosB thu gom đa chặng (CTP) tới 330 node trong rừng suốt 29 ngày: dưới 10 % node nghẽn gánh 80 % lưu lượng và gây 61 % số gói mất, link vật lý ổn định nhưng tải cao thì yield rơi từ hơn 60 % xuống dưới 10 %, còn bảng định tuyến cố định cho yield ngang CTP động.
 - [nguyen2021-hole](nguyen2021-hole.md) ★★ · Định tuyến k-MLP: dựng k làn gần song song bám đường ngắn nhất quanh một lỗ mạng hình phức tạp (có hang, có khúc gấp), mỗi gói chọn ngẫu nhiên một làn; chứng minh độ dài đường ≤ (1 + ε) lần ngắn nhất và tăng thời gian sống của mạng so với GPSR, ALBA-R, ADAV, STABLE.
 - [nguyen2023-gambac](nguyen2023-gambac.md) ★★ · Phân cụm WSN và lập tour cho M UAV có giới hạn quãng bay ℓmax; chặn dưới năng lượng node gửi về CH tỉ lệ S²/ℓmax, đạt gần khi các cụm cân năng lượng; ba heuristic GAMBAC tìm số cụm lớn nhất bằng chia đôi, so MILP ở 50 node và vượt CHP.
+- [zhan2018-wsncollect](zhan2018-wsncollect.md) ★★ · Một UAV bay từ q₀ tới q_F trong thời gian T thu dữ liệu của K cảm biến; chọn chung lịch đánh thức (mỗi khe tối đa một cảm biến) và quỹ đạo để tối thiểu năng lượng lớn nhất của các cảm biến, với độ tin cậy đưa vào qua xác suất mất gói ε; nới lỏng nhị phân, giải luân phiên LP và QCQP.
 - [liu2013-citysee](liu2013-citysee.md) ★ · Bài tổng quan giai đoạn 1 của CitySee ở Vô Tích: 1 196 node TelosB đo CO₂ và môi trường cùng 4 node mesh 802.11a, chạy liên tục từ 8/2011, thu gom CTP sâu tới 21 chặng, kèm bài học về triển khai, chẩn đoán và đẩy dữ liệu lên cloud.
 - [tan2003-pedap](tan2003-pedap.md) ★ · PEDAP định tuyến gom dữ liệu theo cây khung nhỏ nhất (MST) với tổng hợp tại nút, PEDAP-PA là bản có tính năng lượng còn lại để cân tải; tuổi thọ mạng hơn LEACH 4–20 lần và hơn PEGASIS (định tuyến chuỗi) khoảng 3 lần, kể cả khi trạm gốc ở giữa vùng.
 
@@ -180,6 +191,7 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 
 ## `sar` · bối cảnh tìm kiếm cứu nạn, thảm hoạ
 
+- [hermans2019-expsearch](hermans2019-expsearch.md) ★★ · Mục tiêu ẩn ở một đỉnh của đồ thị có trọng số theo xác suất đã biết; tìm thứ tự tìm tối thiểu quãng đường kỳ vọng tới khi thấy, theo kiểu expanding (đi tiếp từ mọi đỉnh đã thăm); LP chính xác cho cây, MIP và branch-and-cut cho đồ thị, thuật toán tham lam theo mật độ tìm đạt hệ số 8.
 - [koester1992-alzprofiles](koester1992-alzprofiles.md) ★★ · Nghiên cứu đầu tiên tách riêng người mắc Alzheimer khỏi nhóm người già trong số liệu tìm kiếm cứu nạn: 29 vụ trong 245 vụ của
 - [koester1998-adrd](koester1998-adrd.md) ★★ · Phân tích 87 vụ tìm người mắc Alzheimer và chứng mất trí liên quan (ADRD) trong 565 vụ tìm kiếm cứu nạn của bang Virginia
 - [oubbati2023-rescue](oubbati2023-rescue.md) ★ · MARLF: nhóm UAV làm trạm gốc bay, giữ liên kết với nhau và với trạm mặt đất, theo dõi các thành viên cứu hộ di chuyển khó đoán; học quỹ đạo tiết kiệm năng lượng bằng MADDPG để tối đa số người được phủ và thông lượng; tốt hơn các phương pháp cơ sở (ví dụ 20 thành viên, 7 UAV).
@@ -200,3 +212,11 @@ Sinh tự động bởi `tools/papers/paper_index.py`. Mỗi dòng: bài, mức 
 ## `clustering` · phân cụm node, chọn cluster head
 
 - [nguyen2023-gambac](nguyen2023-gambac.md) ★★ · Phân cụm WSN và lập tour cho M UAV có giới hạn quãng bay ℓmax; chặn dưới năng lượng node gửi về CH tỉ lệ S²/ℓmax, đạt gần khi các cụm cân năng lượng; ba heuristic GAMBAC tìm số cụm lớn nhất bằng chia đôi, so MILP ở 50 node và vượt CHP.
+
+## `search-theory` · lý thuyết tìm kiếm: tìm mục tiêu theo xác suất, độ trễ nhỏ nhất có trọng số
+
+- [hermans2019-expsearch](hermans2019-expsearch.md) ★★ · Mục tiêu ẩn ở một đỉnh của đồ thị có trọng số theo xác suất đã biết; tìm thứ tự tìm tối thiểu quãng đường kỳ vọng tới khi thấy, theo kiểu expanding (đi tiếp từ mọi đỉnh đã thăm); LP chính xác cho cây, MIP và branch-and-cut cho đồ thị, thuật toán tham lam theo mật độ tìm đạt hệ số 8.
+
+## `scheduling` · lập lịch truyền theo khe, trễ quảng bá nhỏ nhất, xung đột kênh
+
+- [you2013-mlbs](you2013-mlbs.md) ★★ · Lập lịch quảng bá trễ nhỏ nhất (MLBS) từ một nguồn trên đồ thị đĩa đơn vị khi mỗi node có một radio và kênh nhận cố định trong k kênh; chứng minh NP-khó bằng thu hẹp về MLBS một kênh, thuật toán BTS tỉ số 4k + 12 và ETS tỉ số k + 23, chặn dưới là độ sâu cây đường đi ngắn nhất.

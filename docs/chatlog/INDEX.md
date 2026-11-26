@@ -411,3 +411,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 403 | 2026-11-25 | nghiên cứu · hỏi private cho một branch | [2026-11](2026-11.md) |
 | 404 | 2026-11-25 | nghiên cứu · tạo repo private sigdrop-fulltext chứa toàn văn | [2026-11](2026-11.md) |
 | 405 | 2026-11-26 | nghiên cứu · kiểm repo private sigdrop-fulltext, push 51 bài toàn văn | [2026-11](2026-11.md) |
+| 406 | 2026-11-26 | nghiên cứu · 7 bài arXiv vào repo private; ghi chú Wu, Zhan, Hermans, You | [2026-11](2026-11.md) |

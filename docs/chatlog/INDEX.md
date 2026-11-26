@@ -415,3 +415,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 407 | 2026-11-26 | nghiên cứu · bản dịch phần phát biểu bài toán của 7 bài mẫu (repo private) | [2026-11](2026-11.md) |
 | 408 | 2026-11-26 | bối cảnh · chuyển sang kịch bản rừng, khu bảo tồn; đóng gói bản đô thị (archive/urban-v1) | [2026-11](2026-11.md) |
 | 409 | 2026-11-26 | bối cảnh · rừng: chốt tìm người mất tích; khảo sát mật độ thiết bị thật ở rừng, khu bảo tồn | [2026-11](2026-11.md) |
+| 410 | 2026-11-26 | bối cảnh · giữ 802.15.4; khảo sát địa hình 8 khu rừng, khu bảo tồn | [2026-11](2026-11.md) |

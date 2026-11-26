@@ -86,3 +86,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-25_0900-formulation-read/` | đọc phần phát biểu bài toán của 7 bài tiêu biểu làm mẫu cho J1 (mục 400) |
 | `2026-11-25_1000-drive-fulltext/` | tải 50 PDF từ Drive, trích toàn văn và hình 51 bài (không commit toàn văn) (mục 401) |
 | `2026-11-26_0900-arxiv-fulltext/` | trích 7 bài arXiv mở vào repo private; ghi chú Wu 2018, Zhan 2018, Hermans 2019, You 2013 (mục 406) |
+| `2026-11-26_1500-park-maps/` | địa hình 8 khu rừng, khu bảo tồn (cửa sổ 10 × 10 km): đường mòn, suối, độ dốc, chênh cao cell (mục 410) |

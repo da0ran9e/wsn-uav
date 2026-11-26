@@ -96,3 +96,41 @@ Tần suất tìm kiếm cứu nạn [web]: các khu do Cục Vườn quốc gia
 chết). Trung bình giai đoạn 1992–2007 là 11,2 vụ mỗi ngày (bài "Dead men walking: search and rescue in US National Parks", Wilderness & Environmental Medicine 2009, theo đoạn trích). Grand Canyon
 có 785 vụ trong ba năm 2018–2020, Yosemite 732 (phân tích của Outforia, không phải số chính thức). Chưa có số cho Việt Nam.
 
+## 6. Địa hình của tám khu mẫu (2026-11-26, mục 410)
+
+Băng tần mặt đất giữ 802.15.4 2,4 GHz (chốt, mục 410). Tám khu, mỗi khu một cửa sổ 10 × 10 km cỡ một chuyến bay, bảng đầy đủ ở
+[maps-forest/INDEX.md](maps-forest/INDEX.md), script `analysis/osm_park.py`, log `logs/2026-11-26_1500-park-maps/` [mới tính].
+
+| Khu | Địa hình | Độ cao (m) | Dốc trung vị | Diện tích dốc > 30° | Chênh cao trong 100 m quanh tâm cell (trung vị / p90) | Cell sát đường mòn hoặc đường xe |
+|---|---|---|---|---|---|---|
+| Cát Tiên | rừng đất thấp | 83–247 | 4° | 0 % | 14 / 26 m | 8 % |
+| Bayerischer Wald | núi thấp thoải | 764–1 440 | 10° | 0 % | 44 / 79 m | 44 % |
+| Cúc Phương | karst | 20–600 | 23° | 27 % | 92 / 140 m | 8 % |
+| Yosemite | granit, thung lũng sâu | 1 203–2 766 | 20° | 29 % | 91 / 295 m | 27 % |
+| Bạch Mã | núi ven biển | 32–1 455 | 28° | 40 % | 126 / 185 m | 4 % |
+| Great Smoky Mountains | núi rừng | 730–2 025 | 29° | 42 % | 118 / 157 m | 19 % |
+| Kinabalu | núi cao | 1 002–4 057 | 31° | 52 % | 152 / 296 m | 4 % |
+| Hoàng Liên | núi cao | 1 180–3 117 | 32° | 58 % | 156 / 227 m | 5 % |
+
+![Cát Tiên: rừng đất thấp, gần như phẳng](figures/park-cattien-labelled.png)
+
+*Hình 6.1. Cửa sổ 10 × 10 km ở VQG Cát Tiên: địa hình phẳng, vài tuyến đường mòn dài; bóng đổ chủ yếu là nhiễu tán rừng.*
+
+![Hoàng Liên: núi cao quanh Fansipan](figures/park-hoanglien-labelled.png)
+
+*Hình 6.2. Cửa sổ 10 × 10 km ở VQG Hoàng Liên: chênh cao gần 2 000 m trong cửa sổ, hơn một nửa diện tích dốc trên 30°.*
+
+Nhận xét:
+- Tám khu chia rõ hai nhóm. Nhóm phẳng hoặc thoải (Cát Tiên, Bayerischer Wald) có chênh cao trong một cell dưới 50 m, gần với giả định
+  mặt đất phẳng của mô hình hiện tại. Nhóm núi (sáu khu còn lại) có chênh cao trong bán kính 100 m quanh tâm cell khoảng 90–160 m
+  (trung vị), tới gần 300 m ở phân vị 90. Con số này ngang hoặc lớn hơn độ cao bay 100 m so với mặt đất.
+- Ở nhóm núi, UAV không bay ở một độ cao cố định được mà phải bám địa hình; sườn núi chắn tầm nhìn từ UAV xuống các node ở thung lũng
+  và sườn khuất; các node trong cùng một cell lệch nhau hàng trăm mét độ cao, nên kênh G2G trong cell cũng bị sườn chắn. Mô hình kênh
+  hiện tại (khoảng cách ngang, không có địa hình) không mô tả được các hiệu ứng này.
+- Đường mòn và đường xe chỉ phủ 4–8 % số cell ở các vườn Việt Nam và Kinabalu, 19–44 % ở các vườn Mỹ và Đức. Đặt mạng dày dọc tuyến
+  thì ở Việt Nam mạng sẽ là các dải hẹp, có thể đứt; OSM thiếu đường mòn nên con số thật có thể cao hơn. Người đi lạc lại thường rời
+  khỏi đường mòn [chung, cần nguồn từ Koester], nên mạng chỉ dọc tuyến chưa chắc phủ được nơi người đó ở.
+- Đề xuất để bàn: kịch bản chính đặt ở rừng đất thấp hoặc đồi thoải (kiểu Cát Tiên, Bayerischer Wald), giữ được mô hình mặt đất phẳng và
+  chỉ thêm suy hao qua tán rừng; vườn núi (kiểu Hoàng Liên, Bạch Mã) là trường hợp khó, đưa vào phần độ nhạy hoặc mở rộng có che khuất
+  địa hình.
+

@@ -8,6 +8,9 @@ Soạn theo chatlog mục 412: viết lại phần đầu bài tới phát biể
 có hình minh hoạ. Bài viết tiếng Anh, khuôn IEEEtran: `tex/main.pdf`, 8 trang. Mục VI–X (chặn, thuật toán, đánh giá, thảo luận) chưa
 viết lại; phần cũ còn ở [draft-v1](../draft-v1/README-vi.md). Dựng lại PDF: `tex/build.sh` (cần TeX Live có IEEEtran).
 
+Bản này viết trước khi có dàn ý (chatlog mục 413), chỉ là bản thử. Dàn ý ở [OUTLINE-vi.md](../OUTLINE-vi.md); sau khi dàn ý được
+duyệt thì viết lại các mục theo đó.
+
 Trong PDF, chữ đỏ [TODO] là việc phải làm hoặc số phải kiểm, chữ xanh [OPEN] là câu chưa chốt trong bối cảnh.
 
 ## Cấu trúc bài

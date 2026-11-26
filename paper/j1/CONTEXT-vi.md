@@ -63,6 +63,7 @@ Lập luận của bản đô thị có mấy chỗ phản biện dễ hỏi (ur
 | e | Giữ cơ chế và cấu trúc ba pha như mục 2 | đề xuất |
 | f | Kịch bản chính: rừng đất thấp (kiểu Cát Tiên); vườn núi là trường hợp khó cho phần độ nhạy hoặc mở rộng (mục 6, chatlog mục 411) | chốt |
 | g | Băng tần mặt đất: giữ 802.15.4 2,4 GHz (chatlog mục 410) | chốt |
+| h | Tiên nghiệm vị trí: đều trên vùng mạng phủ; không có điểm thấy cuối, không có thông tin gì ngoài bộ ảnh truy vấn (chatlog mục 414) | chốt |
 
 ## 5. Mật độ thiết bị hiện có ở rừng và khu bảo tồn (2026-11-26, mục 409)
 
@@ -157,6 +158,8 @@ Nhận xét:
 6. **Tiên nghiệm vị trí.** Bản đô thị chọn tiên nghiệm đều. Tìm kiếm cứu nạn ngoài hoang dã thường có điểm xuất phát đã biết (xe đỗ ở đầu
    tuyến, nơi thấy lần cuối) và phân bố khoảng cách theo loại người đi lạc (Koester) [chung, repo có hai bài Koester về người mất trí].
    Cần quyết: giữ tiên nghiệm đều, hay dùng tiên nghiệm quanh điểm xuất phát.
+   **Chốt (chatlog mục 414):** không dùng điểm thấy cuối; ngoài bộ ảnh truy vấn không có thông tin gì, nên tiên nghiệm đều trên vùng mạng
+   phủ.
 7. **Trạm gốc.** Trụ sở vườn hoặc trạm kiểm lâm ở bìa rừng, có LoRa gateway và chỗ cất hạ cánh cho VTOL.
 8. **Vùng mẫu.** Cửa sổ Cát Tiên đã có. Có thể thêm một rừng đất thấp khác để so (ví dụ rừng nguyên sinh Białowieża ở Ba Lan, phẳng
    và có dữ liệu OSM tốt).

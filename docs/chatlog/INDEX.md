@@ -419,3 +419,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 411 | 2026-11-26 | bối cảnh · chốt rừng đất thấp làm kịch bản chính; đề xuất các khía cạnh tiếp theo | [2026-11](2026-11.md) |
 | 412 | 2026-11-26 | bản thảo · soạn lại bản nháp paper theo kịch bản rừng, phần đầu tới phát biểu bài toán, có hình | [2026-11](2026-11.md) |
 | 413 | 2026-11-26 | bản thảo · dựng dàn ý trước khi viết bản nháp | [2026-11](2026-11.md) |
+| 414 | 2026-11-26 | bài toán · không dùng điểm thấy cuối (tiên nghiệm đều); bàn ba bài toán trước | [2026-11](2026-11.md) |

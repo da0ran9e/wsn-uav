@@ -81,7 +81,8 @@ Kể theo bước đánh số như mục III của GAMBAC, chưa dùng ký hiệ
    - dựng lưới cell, chọn CL, cặp gateway và cụm;
    - chọn AI cell, giao thiết bị thường cho AI node;
    - tính sẵn kế hoạch bay và vận chuyển mặt đất cho các vùng sự cố có thể xảy ra.
-2. Có sự cố: trạm kiểm lâm dựng truy vấn, khoanh vùng quanh điểm thấy cuối, rồi phát bản tin LoRa đánh thức.
+2. Có sự cố: trạm kiểm lâm dựng truy vấn từ ảnh người thân cung cấp rồi phát bản tin LoRa đánh thức; không có thông tin vị trí
+   (chatlog mục 414).
 3. Pha 1: bay một lượt; mạng mặt đất chuyển phần còn thiếu, có bước sửa; AI node đối sánh rồi báo qua LoRa.
 4. Pha 2: tính hậu nghiệm, UAV cánh quay thăm cell nghi vấn, dừng khi xác nhận đúng người.
 5. Phạm vi: một UAV ở pha 1; chỉ xét rừng phẳng hoặc thoải; vườn núi để phần mở rộng.
@@ -110,9 +111,8 @@ Có bảng ký hiệu. Tách riêng giả định chỉ dùng cho phân tích (m
 7. **Truy vấn, mã, thời điểm hoàn tất.** 12 ảnh, Q = 4 041 gói. **có**
 8. **Dữ liệu nền.** Ở rừng ít người qua lại nên luồng nền nhẹ. **thiếu** (tần suất ảnh có người của camera bẫy ảnh, lấy từ một bộ dữ
    liệu đã công bố)
-9. **Tiên nghiệm, báo cáo, xác minh.** Viết tiên nghiệm dạng tổng quát; hai trường hợp là đều, và quanh điểm thấy cuối theo phân bố
-   khoảng cách. Mô hình điểm binormal; báo cáo qua LoRa. **thiếu** (chọn trường hợp chính; số phân bố khoảng cách cho người đi rừng,
-   repo mới có số cho người mất trí)
+9. **Tiên nghiệm, báo cáo, xác minh.** Tiên nghiệm đều trên vùng mạng phủ, không có điểm thấy cuối (chatlog mục 414). Mô hình điểm
+   binormal; báo cáo qua LoRa. **có**
 10. **Độ đo.** Phân vị 0,9 của T\*, trung bình, tỉ lệ tìm thấy trong sức bền UAV. **thiếu** (phân vị lấy qua những gì)
 
 ## V. Problem formulation and complexity
@@ -129,8 +129,8 @@ Khuôn viết theo Zeng 2018 và Zhan 2018 ([FORMULATION-EXAMPLES-vi.md](FORMULA
    báo, rồi sửa). **sửa**
    - Thêm cho rừng: ràng buộc năng lượng và cửa sổ thức của từng cell.
    - Hình bản đồ nhận gói của một cụm, có đánh dấu critical cell. **thiếu**
-4. **(P2) Pha 2.** Bài độ trễ nhỏ nhất có trọng số trực tuyến, hoặc quota TSP. Tiên nghiệm quanh điểm thấy cuối làm hậu nghiệm lệch
-   mạnh hơn tiên nghiệm đều. **sửa**
+4. **(P2) Pha 2.** Bài độ trễ nhỏ nhất có trọng số trực tuyến, hoặc quota TSP; hậu nghiệm chỉ đến từ điểm số của AI node.
+   **sửa** (đang bàn ở [PROBLEMS-vi.md](PROBLEMS-vi.md))
 5. **Độ khó.**
    - Định lý 1 cho (P1). **có**
    - (P0) chứa SSCFLP; (P2) chứa bài độ trễ nhỏ nhất có trọng số. Cần viết thành mệnh đề có chứng minh. **thiếu**
@@ -169,7 +169,6 @@ Khuôn viết theo Zeng 2018 và Zhan 2018 ([FORMULATION-EXAMPLES-vi.md](FORMULA
    - mật độ 816, 400, 280 thiết bị/km² và thấp hơn;
    - suy hao theo góc ngẩng;
    - kênh G2G dưới tán;
-   - tiên nghiệm đều so với quanh điểm thấy cuối;
    - cỡ truy vấn.
 
 ## IX. Discussion and limitations
@@ -206,7 +205,7 @@ Khuôn viết theo Zeng 2018 và Zhan 2018 ([FORMULATION-EXAMPLES-vi.md](FORMULA
 ## Câu cần chốt trước khi viết bản nháp
 
 1. Tên bài.
-2. Tiên nghiệm chính: đều, hay quanh điểm thấy cuối (CONTEXT mục 7, ý 6).
+2. ~~Tiên nghiệm chính~~: đã chốt là tiên nghiệm đều (chatlog mục 414).
 3. Phân vị lấy chung qua cả vị trí người, hay lấy trường hợp xấu nhất theo vị trí.
 4. Năng lượng có vào bài toán không: chỉ (P1), cả (P0), hay chỉ báo trong phần đánh giá.
 5. Đánh giá có thêm bản đồ ns-3 dựng từ Cát Tiên không. Việc này tốn chạy máy, cần bàn trước (mục 35).
@@ -214,6 +213,6 @@ Khuôn viết theo Zeng 2018 và Zhan 2018 ([FORMULATION-EXAMPLES-vi.md](FORMULA
 ## Thứ tự việc đề xuất
 
 1. Bạn duyệt dàn ý và chốt năm câu trên.
-2. Tra số còn thiếu: mô hình G2G dưới tán, năng lượng thiết bị, tần suất ảnh có người, phân bố khoảng cách của người đi rừng.
+2. Tra số còn thiếu: mô hình G2G dưới tán, năng lượng thiết bị, tần suất ảnh có người, phân bố khoảng cách của người đi rừng (không cần nữa, mục 414).
 3. Viết lại mục I–V theo dàn ý (sửa từ bản thử draft-v2).
 4. Bàn kế hoạch chạy cho mục VI–VIII trên bản đồ rừng.

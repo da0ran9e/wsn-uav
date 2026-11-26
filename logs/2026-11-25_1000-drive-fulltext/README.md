@@ -14,3 +14,6 @@ Lệnh:
 
 Lưu ý: file Typhoon bản Springer chỉ có 2 trang, toàn văn ở bản EWSN; `meta.txt` tra Crossref tự động có chỗ sai (gudmundson1991),
 INDEX lấy tên bài từ ghi chú repo.
+
+Cập nhật 2026-11-26 (chatlog mục 405): thư mục đã được push lên repo private `da0ran9e/sigdrop-fulltext`, nhánh `main`, commit
+eb81e26 (585 tệp). Người dùng tạo repo, session push nội dung.

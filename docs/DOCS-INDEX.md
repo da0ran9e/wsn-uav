@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (32): nguồn số liệu và mô tả đang dùng
+## Hiện hành (33): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -17,6 +17,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/TECHREPORT-vi.md`](../paper/TECHREPORT-vi.md) | Technical report: SigDrop, chiến dịch 4 (CHORD, LM-Tour, DTSP-N + River, FC + DTSP-N) | 2026-10-29 |  |
 | [`paper/j1/CONTEXT-SUMMARY-vi.md`](../paper/j1/CONTEXT-SUMMARY-vi.md) | J1 · Bối cảnh bài toán (bản tóm tắt) | 2026-11-22 |  |
 | [`paper/j1/CONTEXT-vi.md`](../paper/j1/CONTEXT-vi.md) | J1 · Bối cảnh, thực thể và tham số của bài toán | 2026-11-22 |  |
+| [`paper/j1/FORMULATION-EXAMPLES-vi.md`](../paper/j1/FORMULATION-EXAMPLES-vi.md) | J1 · Mẫu phát biểu bài toán từ các bài tiêu biểu (chatlog mục 400) | 2026-11-25 |  |
 | [`paper/j1/K9-PARAMS-vi.md`](../paper/j1/K9-PARAMS-vi.md) | K9 bước B0: tham số cho bài node thường gửi gì về AI node | 2026-11-18 |  |
 | [`paper/j1/K9-REPORT-vi.md`](../paper/j1/K9-REPORT-vi.md) | Báo cáo kỹ thuật K9: đặt AI node và dữ liệu node thường gửi về | 2026-11-23 |  |
 | [`paper/j1/L1-VARIABLES-vi.md`](../paper/j1/L1-VARIABLES-vi.md) | J1 · Biến quyết định (bản bàn, chatlog mục 389) | 2026-11-24 |  |
@@ -30,7 +31,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/j1/draft-v1/README-vi.md`](../paper/j1/draft-v1/README-vi.md) | Bản thảo journal v1 (J1): hướng dẫn đánh giá | 2026-11-20 |  |
 | [`paper/j1/draft-v1/REQUEST-vi.md`](../paper/j1/draft-v1/REQUEST-vi.md) | Yêu cầu của người dùng cho bản thảo journal v1 | 2026-11-16 |  |
 | [`research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md`](../research_notes/literature/LIT-SYNTHESIS-2026-11-12-vi.md) | Tổng hợp tìm tài liệu cho kế hoạch tiếp theo (2026-11-12) | 2026-11-12 |  |
-| [`research_notes/literature/METHOD-vi.md`](../research_notes/literature/METHOD-vi.md) | Phương pháp ghi chú bài báo | 2026-11-23 |  |
+| [`research_notes/literature/METHOD-vi.md`](../research_notes/literature/METHOD-vi.md) | Phương pháp ghi chú bài báo | 2026-11-26 |  |
 | [`research_notes/literature/NOTES-DRIVE-PDF-vi.md`](../research_notes/literature/NOTES-DRIVE-PDF-vi.md) | Ghi chú đọc 32 PDF trong thư mục Drive (2026-11-12) | 2026-11-13 |  |
 | [`research_notes/literature/PDF-LIST-2026-11-12-vi.md`](../research_notes/literature/PDF-LIST-2026-11-12-vi.md) | Danh sách PDF cần đọc (từ đợt tìm tài liệu 2026-11-12) | 2026-11-12 |  |
 | [`research_notes/literature/WORKLIST-2026-11-12-vi.md`](../research_notes/literature/WORKLIST-2026-11-12-vi.md) | Danh sách ghi chú 50 PDF trong Drive (phạm vi C, chạy tuần tự) | 2026-11-12 |  |

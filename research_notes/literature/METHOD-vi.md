@@ -1,6 +1,6 @@
 ---
 status: current
-updated: 2026-11-23
+updated: 2026-11-26
 ---
 # Phương pháp ghi chú bài báo
 
@@ -178,6 +178,11 @@ Trường `topics` chỉ dùng các mã dưới đây; `paper_index.py` cảnh b
 PDF và chữ trích toàn văn không bao giờ được commit. Hình trích được commit theo quyết định của người dùng (mục 311),
 dù repo đang public; chỉ commit những hình mà ghi chú dùng, và luôn ghi nguồn (DOI ở front matter, số hình và trang ở
 chú thích). Trích nguyên văn giữ ngắn (≤ 2 câu mỗi chỗ).
+
+Toàn văn và hình đầy đủ (`pages.txt`, `meta.txt`, `fig/` của từng bài, do `pdf_extract.py` sinh) nằm ở repo **private** riêng
+`da0ran9e/sigdrop-fulltext` (chatlog mục 404, 405), mỗi bài một thư mục theo khoá ghi chú, có `INDEX.md`. Repo này phải giữ private,
+không đưa nội dung của nó vào repo public này. Session cần tra toàn văn thì gắn thêm repo đó. Thêm bài mới: trích bằng
+`pdf_extract.py` vào một clone của repo private rồi commit ở đó, không commit vào `wsn-uav`.
 
 ## 10. Kiểm tra trước khi commit
 

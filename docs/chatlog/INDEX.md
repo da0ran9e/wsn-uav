@@ -426,3 +426,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 418 | 2026-11-27 | bài toán · phát biểu lại bài toán trong một đoạn, bỏ ba bài con | [2026-11](2026-11.md) |
 | 419 | 2026-11-27 | bài toán · viết lại đoạn phát biểu ngắn và khái quát hơn | [2026-11](2026-11.md) |
 | 420 | 2026-11-27 | bài toán · các bài tương tự trong IoT, WSN | [2026-11](2026-11.md) |
+| 421 | 2026-11-27 | bài toán · phát biểu tổng quát chung cho các bài tương tự | [2026-11](2026-11.md) |

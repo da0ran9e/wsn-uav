@@ -430,3 +430,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 422 | 2026-11-27 | bài toán · cốt lõi: liên kết UAV–mặt đất không nhị phân và không tin cậy, cửa sổ hạn chế, truy vấn lớn | [2026-11](2026-11.md) |
 | 423 | 2026-11-27 | bài toán · rút ngắn đoạn phát biểu | [2026-11](2026-11.md) |
 | 424 | 2026-11-27 | bài toán · viết lại đoạn phát biểu bằng văn tiếng Việt, tránh dịch từng chữ | [2026-11](2026-11.md) |
+| 425 | 2026-11-27 | bài toán · viết lại đoạn phát biểu trang trọng hơn | [2026-11](2026-11.md) |

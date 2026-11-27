@@ -88,3 +88,4 @@ Thêm một dòng mỗi khi tạo thư mục log mới.
 | `2026-11-26_0900-arxiv-fulltext/` | trích 7 bài arXiv mở vào repo private; ghi chú Wu 2018, Zhan 2018, Hermans 2019, You 2013 (mục 406) |
 | `2026-11-26_1500-park-maps/` | địa hình 8 khu rừng, khu bảo tồn (cửa sổ 10 × 10 km): đường mòn, suối, độ dốc, chênh cao cell (mục 410) |
 | `2026-11-26_1800-draft-v2/` | bản nháp J1 v2 (rừng), mục I–V: sinh 4 hình mới, dựng PDF (mục 412) |
+| `2026-11-27_1000-cluster-sizes/` | cỡ cụm bản đồ C4 k8/k12/k16 (k16 ra 15 cụm); thời gian LoRa cho truy vấn dạng vector (mục 416) |

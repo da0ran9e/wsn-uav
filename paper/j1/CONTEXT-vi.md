@@ -164,3 +164,59 @@ Nhận xét:
 8. **Vùng mẫu.** Cửa sổ Cát Tiên đã có. Có thể thêm một rừng đất thấp khác để so (ví dụ rừng nguyên sinh Białowieża ở Ba Lan, phẳng
    và có dữ liệu OSM tốt).
 
+
+## 8. Truy vấn là ảnh hay vector khi mạng chung chủ (2026-11-27, mục 416, mở)
+
+Bản ICC và bản đô thị gửi ảnh vì mạng nhiều chủ: mỗi chủ chạy một mô hình riêng, vector của các mô hình khác nhau không so được với
+nhau (Shen 2020) [repo]. Nếu mọi AI node trong rừng do một chủ vận hành và chạy cùng một mô hình, trạm gốc tự tính vector của 12 ảnh rồi
+gửi vector. Truy vấn khi đó nhỏ hơn hàng chục lần [tính, `logs/2026-11-27_1000-cluster-sizes/README.md`]:
+
+| Dạng (12 vector 512 chiều) | Cỡ | LoRa SF7, chu kỳ 10 % | LoRa SF7, chu kỳ 1 % | LoRa SF12, chu kỳ 10 % |
+|---|---|---|---|---|
+| ảnh (bản hiện tại) | 400 KB | 1,8 h | 17,9 h | 55 h |
+| float32 | 24 KB | 6,4 phút | 64 phút | 3,3 h |
+| int8 | 6 KB | 1,6 phút | 16 phút | 50 phút |
+
+Truy vấn vector 6 KB chỉ khoảng 28 gói 802.15.4 [tính]. Nếu trưởng cụm nghe được trạm gốc ở SF7, LoRa đưa truy vấn tới mọi cụm trong
+vài phút; trong cụm chỉ còn vài chục gói 802.15.4. Cách này ngang hoặc nhanh hơn pha 1 hiện tại (critical cell cuối xong khoảng 12 phút
+trên k8, r100). Định lý 2 cũng yếu đi khi truy vấn nhỏ (urban-v1 README, `figs-q/`). Đây vì vậy là lỗ hổng lớn nhất của kịch bản chung
+chủ: nó lấy mất lý do dùng UAV để gửi truy vấn.
+
+Các hướng xử lý (đề xuất để bàn):
+1. **Mạng rừng nhiều chủ.** Lớp mesh dùng chung, nhưng thiết bị thuộc nhiều tổ chức: ban quản lý vườn, các dự án nghiên cứu đặt camera
+   bẫy ảnh, lực lượng phòng cháy đặt cảm biến, tổ chức bảo tồn đặt cảm biến âm thanh. Camera bẫy ảnh trong vườn quốc gia thường thuộc
+   dự án nghiên cứu [chung, cần nguồn]. Mỗi chủ một mô hình nên vẫn phải gửi ảnh, giữ được lập luận cũ.
+2. **Một chủ nhưng nhiều đời thiết bị.** Thiết bị mua qua nhiều năm từ nhiều hãng; mô hình nhúng trong firmware của hãng, trạm gốc không
+   tính được vector của từng hãng [chung, cần nguồn]. Lập luận yếu hơn hướng 1, vì trạm gốc có thể giữ sẵn mọi mô hình đang dùng.
+3. **Nhận vector là trường hợp đặc biệt.** Bài giữ truy vấn ảnh làm trường hợp chính, và báo thêm một đường so sánh "vector qua LoRa"
+   để chỉ ra khi nào cách đơn giản đó đủ. Cách này trung thực nhất với phản biện.
+4. **Đổi tải trọng.** Thứ phải gửi xuống là thứ lớn, ví dụ mô hình được tinh chỉnh cho đúng người cần tìm (vài trăm KB tới vài MB).
+   Hướng này đổi bài nhiều và chưa có nguồn.
+
+Đề xuất: kết hợp 1 và 3. Câu này ảnh hưởng tới cỡ cụm (mục 9), nên cần chốt trước khi chốt cơ chế chia cụm.
+
+## 9. Nguyên lý chia cụm và trần 80 cell (2026-11-27, mục 416)
+
+Hiện trạng [repo]:
+- Trần 80 cell do người dùng đặt khi bàn pha 0 (chatlog mục 285); `uav-l2/docs/PARAM-SOURCES-vi.md` ghi là tham số thiết kế, không có
+  nguồn.
+- Thuật toán `uav-l2/tools/partition.py`: số cụm k = ⌈số cell đất / 80⌉; k-medoids có sức chứa, khoảng cách là số chặng giữa các cell
+  đất (đi vòng hồ); cụm lớn dần đồng thời từ medoid nên luôn liền; cụm quá trần thì đẩy cell biên sang cụm kề còn chỗ. Không cụm nào
+  vượt 80 cell.
+- Bản đồ C4 sinh bằng `restructure.domain(K)`: đặt 80·K cell rồi đục K hồ, mỗi hồ khoảng 10 cell. Số cụm tính lại từ số cell đất, nên
+  "k16" có 1 126 cell đất và ra ⌈1 126 / 80⌉ = 15 cụm (cỡ 57–80 cell); k8 ra 8 cụm (70–80), k12 ra 12 cụm (53–80)
+  [`logs/2026-11-27_1000-cluster-sizes/`]. Chữ "k16" là tham số sinh bản đồ; trong bài nên gọi theo số cụm thật (k8, k12, k15).
+- Cụm 91 cell trong Bảng I của bản ICC là cụm của chiến dịch cũ, trước khi có trần 80 (chatlog 2026-10, dòng 1893).
+
+Nguyên lý nên viết trong bài (đề xuất):
+1. **Một bản truy vấn trải dài một cụm.** UAV phát một bản truy vấn trên quãng Q·T_p·v = 4 041 × 10 ms × 50 m/s ≈ 2 km. Cụm 80 cell
+   rộng 2,08 km², đường kính cỡ 1,6–2 km, nên một bản truy vấn phát xong khi UAV băng qua một cụm (`uav-l2/docs/SWATH-vi.md` mục 1)
+   [repo]. Đây là lý do thật của cỡ 80 cell: cỡ cụm khớp với quãng bay của một bản truy vấn.
+2. **Một trưởng cụm một LoRa uplink.** Báo cáo của mọi AI node trong cụm đi qua trưởng cụm; LoRa một tin mỗi 40 s, nên cụm càng lớn thì
+   càng nhiều AI node chờ chung một uplink.
+3. **Cụm là đơn vị của tour và của kế hoạch mặt đất.** Đường bay thăm từng cụm; kế hoạch River tính trong từng cụm.
+
+Hệ quả: cỡ cụm phụ thuộc cỡ truy vấn. Nếu truy vấn nhỏ đi (vector, mục 8), một bản truy vấn chỉ dài vài chục mét bay, và trần 80 cell
+mất lý do; cụm khi đó nên chia theo uplink LoRa và theo tải báo cáo. Nếu giữ truy vấn ảnh, trần nên viết thành điều kiện: đường kính
+cụm khoảng bằng quãng bay của một bản truy vấn. `uav-l2/docs/SAT-vi.md` từng đề xuất cụm dạng luồng 110–190 cell; đó là phương án khác,
+chưa dùng.

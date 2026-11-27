@@ -423,3 +423,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 415 | 2026-11-27 | bài toán · tạm đồng ý đề xuất ba bài toán; bản nháp phần đặt vấn đề theo từng ý; phiên phụ hỏi khái niệm | [2026-11](2026-11.md) |
 | 416 | 2026-11-27 | bài toán · truy vấn vector khi chung chủ; nguyên lý chia cụm; quỹ đạo người và c\* hiện tại; bộ ký hiệu mới; bài toán thành câu văn | [2026-11](2026-11.md) |
 | 417 | 2026-11-27 | bài toán · phát biểu lại bài toán trong 100 từ | [2026-11](2026-11.md) |
+| 418 | 2026-11-27 | bài toán · phát biểu lại bài toán trong một đoạn, bỏ ba bài con | [2026-11](2026-11.md) |

@@ -427,3 +427,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 419 | 2026-11-27 | bài toán · viết lại đoạn phát biểu ngắn và khái quát hơn | [2026-11](2026-11.md) |
 | 420 | 2026-11-27 | bài toán · các bài tương tự trong IoT, WSN | [2026-11](2026-11.md) |
 | 421 | 2026-11-27 | bài toán · phát biểu tổng quát chung cho các bài tương tự | [2026-11](2026-11.md) |
+| 422 | 2026-11-27 | bài toán · cốt lõi: liên kết UAV–mặt đất không nhị phân và không tin cậy, cửa sổ hạn chế, truy vấn lớn | [2026-11](2026-11.md) |

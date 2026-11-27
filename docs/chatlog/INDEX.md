@@ -420,3 +420,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 412 | 2026-11-26 | bản thảo · soạn lại bản nháp paper theo kịch bản rừng, phần đầu tới phát biểu bài toán, có hình | [2026-11](2026-11.md) |
 | 413 | 2026-11-26 | bản thảo · dựng dàn ý trước khi viết bản nháp | [2026-11](2026-11.md) |
 | 414 | 2026-11-26 | bài toán · không dùng điểm thấy cuối (tiên nghiệm đều); bàn ba bài toán trước | [2026-11](2026-11.md) |
+| 415 | 2026-11-27 | bài toán · tạm đồng ý đề xuất ba bài toán; bản nháp phần đặt vấn đề theo từng ý; phiên phụ hỏi khái niệm | [2026-11](2026-11.md) |

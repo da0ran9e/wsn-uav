@@ -112,6 +112,10 @@ ghi.
 
 ## 6. Câu cần bạn quyết
 
+**Tạm chốt (chatlog mục 415):** người dùng tạm đồng ý các đề xuất: cách B làm mục tiêu chính (makespan là độ đo phụ); kế hoạch pha 1
+tính sẵn từ pha 0; (P0) và (P1) tách khi phát biểu, giải lặp khi làm thuật toán; năng lượng đưa vào (P1), còn (P0) để mở; (P2) chỉ
+xét nhiệm vụ có ít nhất một thiết bị thấy người. Bản nháp phần đặt vấn đề theo các quyết định này: [STATEMENT-vi.md](STATEMENT-vi.md).
+
 1. Phân vị lấy theo cách B (chung qua kênh và vị trí người; (P1) thành phân vị có trọng số) hay cách A (trường hợp xấu nhất; (P1) là
    makespan).
 2. Kế hoạch pha 1 tính sẵn từ pha 0 cho cả vùng mạng (tiền đề 3): đồng ý không.

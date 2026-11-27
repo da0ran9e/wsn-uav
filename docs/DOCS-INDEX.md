@@ -4,7 +4,7 @@ Sinh bằng `python3 tools/build_index.py` từ phần đầu (front matter) c�
 Thí nghiệm: `docs/EXPERIMENTS-INDEX.md`. Log: `logs/INDEX.md`. Chat log: `docs/chatlog/INDEX.md`.
 Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (xem bản đồ trong `CLAUDE.md`).
 
-## Hiện hành (39): nguồn số liệu và mô tả đang dùng
+## Hiện hành (40): nguồn số liệu và mô tả đang dùng
 
 | Tệp | Tiêu đề | Cập nhật | Thay bằng |
 |---|---|---|---|
@@ -24,6 +24,7 @@ Module `uav-sar/`, `uav-coop/`, `uav-coop2/` có README và tài liệu riêng (
 | [`paper/j1/OUTLINE-vi.md`](../paper/j1/OUTLINE-vi.md) | J1 · Dàn ý bài, phiên bản rừng (v2) | 2026-11-26 |  |
 | [`paper/j1/PLAN-K9-DATA-vi.md`](../paper/j1/PLAN-K9-DATA-vi.md) | Kế hoạch kỹ thuật: node thường gửi gì về AI node, và số critical cell tối ưu | 2026-11-20 |  |
 | [`paper/j1/PLAN-TRACKS-vi.md`](../paper/j1/PLAN-TRACKS-vi.md) | Kế hoạch J1 theo hai nhánh: lý thuyết và kỹ thuật | 2026-11-18 |  |
+| [`paper/j1/PROBLEMS-vi.md`](../paper/j1/PROBLEMS-vi.md) | J1 · Ba bài toán cốt lõi, phiên bản rừng (v2, đang bàn) | 2026-11-26 |  |
 | [`paper/j1/draft-v1/README-vi.md`](../paper/j1/draft-v1/README-vi.md) | Bản thảo journal v1 (J1): hướng dẫn đánh giá | 2026-11-20 |  |
 | [`paper/j1/draft-v1/REQUEST-vi.md`](../paper/j1/draft-v1/REQUEST-vi.md) | Yêu cầu của người dùng cho bản thảo journal v1 | 2026-11-16 |  |
 | [`paper/j1/draft-v2/README-vi.md`](../paper/j1/draft-v2/README-vi.md) | Bản thảo journal v2 (J1), kịch bản rừng: hướng dẫn đọc | 2026-11-26 |  |

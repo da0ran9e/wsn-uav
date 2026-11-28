@@ -433,3 +433,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 425 | 2026-11-27 | bài toán · viết lại đoạn phát biểu trang trọng hơn | [2026-11](2026-11.md) |
 | 426 | 2026-11-28 | cách viết · thêm quy tắc viết đoạn phát biểu bài toán vào CLAUDE.md §8 | [2026-11](2026-11.md) |
 | 427 | 2026-11-28 | bài toán · bài toán tổng quát của cả bài trong một câu và một đoạn | [2026-11](2026-11.md) |
+| 428 | 2026-11-28 | bài toán · rút ngắn đoạn diễn giải bài toán tổng quát | [2026-11](2026-11.md) |

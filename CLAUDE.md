@@ -233,6 +233,23 @@ dụ trước/sau), `slides.md` (slide, lời thuyết trình, tài liệu dài)
   nhân hoá thì đọc `docs/style/chat.md`. Sửa văn dài thì rà theo `docs/style/patterns.md`, nhất là nhóm I (cả bài) và
   nhóm K (văn dịch).
 
+### Đoạn phát biểu bài toán, tóm tắt ngắn (mục 417–426)
+Rút từ tám lần viết lại một đoạn phát biểu bài toán (chatlog mục 417–425). Áp dụng cho đoạn phát biểu vấn đề, tóm tắt, câu mở
+đầu của mục.
+- Mức khái quát vừa phải. Nêu những tính chất làm bài khó; bỏ số cụ thể, tên chuẩn, tên công nghệ, bảng liệt kê các bài con.
+  Không khái quát tới mức gom mọi bài cùng họ vào một câu rỗng.
+- Một đoạn, ba bốn câu. Thứ tự ý: ai cần làm gì; vì sao cách thẳng không đủ; phải dựa vào đâu; khó khăn chính và mục tiêu.
+- Văn viết trang trọng, giọng trung tính của tài liệu kỹ thuật. Không dùng khẩu ngữ: "lúc ... lúc ...", "chẳng", "nhờ ...
+  giúp", "cái khó nằm ở chỗ". Thay bằng "không ổn định", "không", "được ... chuyển tiếp", "khó khăn chính là".
+- Trang trọng không có nghĩa là dịch từng chữ. Tránh câu giữ nguyên cấu trúc tiếng Anh (chủ ngữ là vật trừu tượng đi với động
+  từ tiếng Anh, chuỗi "theo xác suất", "để ... sớm nhất" dịch từ "so that ... earliest"). Bị động "được" và từ Hán Việt
+  quen dùng trong văn kỹ thuật thì giữ.
+- Mẫu đã được duyệt (mục 425): "UAV cần đưa một khối dữ liệu lớn tới một số thiết bị trong mạng mặt đất năng lượng thấp. Liên
+  kết từ UAV xuống mặt đất không ổn định, và mỗi thiết bị chỉ nhận được tín hiệu trong khoảng thời gian ngắn khi UAV bay ngang
+  qua, nên không thiết bị nào nhận đủ dữ liệu trực tiếp từ UAV. Phần còn thiếu phải được mạng mặt đất chuyển tiếp. Khó khăn
+  chính là phải đồng thời chọn đường bay và phương án chuyển tiếp dưới mặt đất, sao cho các thiết bị đích nhận đủ dữ liệu
+  trong thời gian ngắn nhất."
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

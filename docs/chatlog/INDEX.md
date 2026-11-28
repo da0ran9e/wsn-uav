@@ -436,3 +436,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 428 | 2026-11-28 | bài toán · rút ngắn đoạn diễn giải bài toán tổng quát | [2026-11](2026-11.md) |
 | 429 | 2026-11-28 | bài toán · tách bài toán tổng quát thành các vấn đề thứ cấp | [2026-11](2026-11.md) |
 | 430 | 2026-11-28 | bài toán · ba vấn đề thứ cấp ở mức tổng quát hơn | [2026-11](2026-11.md) |
+| 431 | 2026-11-28 | bài toán · gộp vấn đề 2 (phân phối dữ liệu) và 3 (tìm kiếm) thành một | [2026-11](2026-11.md) |

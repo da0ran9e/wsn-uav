@@ -443,3 +443,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 435 | 2026-11-28 | bài toán · dạng tổng quát của ba vấn đề, viết thành câu văn | [2026-11](2026-11.md) |
 | 436 | 2026-11-28 | bài toán · tách ba vấn đề thành vấn đề con | [2026-11](2026-11.md) |
 | 437 | 2026-11-28 | bài toán · phát biểu lại bài toán tổng quát sau khi tách vấn đề | [2026-11](2026-11.md) |
+| 438 | 2026-11-28 | bài toán · cây vấn đề của bài và lý thuyết, định lý bám cho từng vấn đề | [2026-11](2026-11.md) |

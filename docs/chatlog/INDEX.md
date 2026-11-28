@@ -440,3 +440,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 432 | 2026-11-28 | bài toán · bỏ vấn đề 1 thì bài có thành SAR dùng UAV truyền thống không | [2026-11](2026-11.md) |
 | 433 | 2026-11-28 | bài toán · giữ ba vấn đề chính, vấn đề 2 làm trung tâm | [2026-11](2026-11.md) |
 | 434 | 2026-11-28 | bài toán · ba vấn đề chính viết thành câu văn | [2026-11](2026-11.md) |
+| 435 | 2026-11-28 | bài toán · dạng tổng quát của ba vấn đề, viết thành câu văn | [2026-11](2026-11.md) |

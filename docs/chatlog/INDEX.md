@@ -438,3 +438,4 @@ Khi có mâu thuẫn, lời mới hơn thắng. Mục xếp theo số; tháng l�
 | 430 | 2026-11-28 | bài toán · ba vấn đề thứ cấp ở mức tổng quát hơn | [2026-11](2026-11.md) |
 | 431 | 2026-11-28 | bài toán · gộp vấn đề 2 (phân phối dữ liệu) và 3 (tìm kiếm) thành một | [2026-11](2026-11.md) |
 | 432 | 2026-11-28 | bài toán · bỏ vấn đề 1 thì bài có thành SAR dùng UAV truyền thống không | [2026-11](2026-11.md) |
+| 433 | 2026-11-28 | bài toán · giữ ba vấn đề chính, vấn đề 2 làm trung tâm | [2026-11](2026-11.md) |
